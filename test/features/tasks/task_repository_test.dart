@@ -61,6 +61,25 @@ void main() {
     expect(reloadedParkedTask.isTopThree, isFalse);
   });
 
+  test('task repository moves a task to today', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = TaskRepository(
+      database,
+      now: () => DateTime(2026, 5, 2, 11, 30),
+    );
+
+    final task = await repository.createTask(title: 'Shift this into today');
+
+    await repository.moveToToday(task.taskId);
+
+    final reloadedTask = await repository.getById(task.taskId);
+
+    expect(reloadedTask.status, 'Today');
+    expect(reloadedTask.updatedAt, DateTime(2026, 5, 2, 11, 30));
+  });
+
   test(
     'task repository updates task fields and clears Top 3 when done',
     () async {
@@ -190,6 +209,53 @@ void main() {
       final plan = await dailyPlanRepository.getTodayPlan();
 
       expect(reloadedTask.status, 'Done');
+      expect(reloadedTask.isTopThree, isFalse);
+      expect(plan.topTask1Id, isNull);
+    },
+  );
+
+  test(
+    'tasks controller parks a Top 3 task and removes it from today plan',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day, 11);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => database),
+          databaseReadyProvider.overrideWith((ref) async {}),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final taskRepository = TaskRepository(database, now: () => today);
+      final dailyPlanRepository = DailyPlanRepository(
+        database,
+        now: () => today,
+      );
+      await database
+          .into(database.dailyPlans)
+          .insert(
+            DailyPlansCompanion.insert(
+              dailyPlanId:
+                  'daily-plan-${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
+              date: DateTime(today.year, today.month, today.day),
+              createdAt: today,
+              updatedAt: today,
+            ),
+          );
+
+      final task = await taskRepository.createTask(title: 'Park this one');
+      await dailyPlanRepository.saveTopThreeTaskIds([task.taskId]);
+
+      await container.read(tasksControllerProvider).parkTask(task.taskId);
+
+      final reloadedTask = await taskRepository.getById(task.taskId);
+      final plan = await dailyPlanRepository.getTodayPlan();
+
+      expect(reloadedTask.status, 'Parked');
       expect(reloadedTask.isTopThree, isFalse);
       expect(plan.topTask1Id, isNull);
     },

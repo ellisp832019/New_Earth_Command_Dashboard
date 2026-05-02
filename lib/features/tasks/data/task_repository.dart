@@ -132,6 +132,15 @@ class TaskRepository {
     );
   }
 
+  Future<void> moveToToday(String taskId) async {
+    final timestamp = _now();
+    await (_database.update(
+      _database.tasks,
+    )..where((table) => table.taskId.equals(taskId))).write(
+      TasksCompanion(status: const Value('Today'), updatedAt: Value(timestamp)),
+    );
+  }
+
   Future<void> parkTask(String taskId) async {
     final timestamp = _now();
     await (_database.update(

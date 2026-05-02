@@ -6,6 +6,20 @@ import '../../planner/application/planner_controller.dart';
 import '../../projects/application/projects_controller.dart';
 import '../data/task_repository.dart';
 
+class TaskStatusFilterNotifier extends Notifier<String> {
+  @override
+  String build() => 'All';
+
+  void setFilter(String value) => state = value;
+}
+
+class TaskProjectFilterNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void setFilter(String? value) => state = value;
+}
+
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return TaskRepository(database);
@@ -15,6 +29,16 @@ final tasksProvider = FutureProvider<List<Task>>((ref) async {
   await ref.watch(databaseReadyProvider.future);
   return ref.watch(taskRepositoryProvider).getActiveTasks();
 });
+
+final selectedTaskStatusFilterProvider =
+    NotifierProvider<TaskStatusFilterNotifier, String>(
+      TaskStatusFilterNotifier.new,
+    );
+
+final selectedTaskProjectFilterProvider =
+    NotifierProvider<TaskProjectFilterNotifier, String?>(
+      TaskProjectFilterNotifier.new,
+    );
 
 final tasksControllerProvider = Provider<TasksController>((ref) {
   return TasksController(ref);
@@ -57,6 +81,7 @@ class TasksController {
   }
 
   Future<void> markTaskDone(String taskId) async {
+    final task = await _ref.read(taskRepositoryProvider).getById(taskId);
     final todayPlan = await _ref.read(todayPlanProvider.future);
     final selectedTaskIds = _selectedTopTaskIds(todayPlan);
     final isTopTask = selectedTaskIds.contains(taskId);
@@ -71,7 +96,32 @@ class TasksController {
           );
     }
 
-    _refreshTaskViews();
+    _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
+  }
+
+  Future<void> moveTaskToToday(String taskId) async {
+    final task = await _ref.read(taskRepositoryProvider).getById(taskId);
+    await _ref.read(taskRepositoryProvider).moveToToday(taskId);
+    _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
+  }
+
+  Future<void> parkTask(String taskId) async {
+    final task = await _ref.read(taskRepositoryProvider).getById(taskId);
+    final todayPlan = await _ref.read(todayPlanProvider.future);
+    final selectedTaskIds = _selectedTopTaskIds(todayPlan);
+    final isTopTask = selectedTaskIds.contains(taskId);
+
+    await _ref.read(taskRepositoryProvider).parkTask(taskId);
+
+    if (isTopTask) {
+      await _ref
+          .read(dailyPlanRepositoryProvider)
+          .saveTopThreeTaskIds(
+            selectedTaskIds.where((id) => id != taskId).toList(),
+          );
+    }
+
+    _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
   }
 
   Future<Task> createTask({

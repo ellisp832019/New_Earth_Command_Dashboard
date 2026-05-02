@@ -9,12 +9,18 @@ class TaskListCard extends StatelessWidget {
     required this.projectName,
     required this.onTopThreeToggle,
     required this.onTap,
+    required this.onMoveToToday,
+    required this.onMarkDone,
+    required this.onPark,
   });
 
   final Task task;
   final String? projectName;
   final Future<void> Function() onTopThreeToggle;
   final VoidCallback onTap;
+  final Future<void> Function() onMoveToToday;
+  final Future<void> Function() onMarkDone;
+  final Future<void> Function() onPark;
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +81,34 @@ class TaskListCard extends StatelessWidget {
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (task.status != 'Today' && task.status != 'Done')
+                          OutlinedButton.icon(
+                            key: Key('taskMoveToTodayButton-${task.taskId}'),
+                            onPressed: onMoveToToday,
+                            icon: const Icon(Icons.today_outlined),
+                            label: const Text('Move To Today'),
+                          ),
+                        if (task.status != 'Done')
+                          FilledButton.tonalIcon(
+                            key: Key('taskDoneButton-${task.taskId}'),
+                            onPressed: onMarkDone,
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('Mark Done'),
+                          ),
+                        if (task.status != 'Parked')
+                          OutlinedButton.icon(
+                            key: Key('taskParkButton-${task.taskId}'),
+                            onPressed: onPark,
+                            icon: const Icon(Icons.inventory_2_outlined),
+                            label: const Text('Park'),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerLeft,
