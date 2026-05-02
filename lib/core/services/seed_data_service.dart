@@ -1,0 +1,80 @@
+import 'package:drift/drift.dart';
+
+import '../constants/default_seed_data.dart';
+import '../database/app_database.dart';
+
+class SeedDataService {
+  const SeedDataService(this._database);
+
+  final AppDatabase _database;
+
+  Future<void> ensureSeedData() async {
+    await _database.transaction(() async {
+      await _seedProjects();
+      await _seedSettings();
+    });
+  }
+
+  Future<void> _seedProjects() async {
+    final existingProjects = await _database.select(_database.projects).get();
+    final existingProjectIds = existingProjects
+        .map((project) => project.projectId)
+        .toSet();
+    final missingProjects = DefaultSeedData.projects
+        .where((project) => !existingProjectIds.contains(project.id))
+        .toList();
+    if (missingProjects.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now();
+    await _database.batch((batch) {
+      batch.insertAll(
+        _database.projects,
+        missingProjects.map((project) {
+          return ProjectsCompanion.insert(
+            projectId: project.id,
+            name: project.name,
+            shortDescription: Value(project.shortDescription),
+            vision: Value(project.vision),
+            status: Value(project.status),
+            priority: Value(project.priority),
+            currentMilestone: Value(project.currentMilestone),
+            nextAction: Value(project.nextAction),
+            createdAt: now,
+            updatedAt: now,
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Future<void> _seedSettings() async {
+    final settings =
+        await (_database.select(_database.appSettings)..where(
+              (table) => table.settingsId.equals(DefaultSeedData.settingsId),
+            ))
+            .getSingleOrNull();
+    if (settings != null) {
+      return;
+    }
+
+    final now = DateTime.now();
+    await _database
+        .into(_database.appSettings)
+        .insert(
+          AppSettingsCompanion.insert(
+            settingsId: DefaultSeedData.settingsId,
+            themeMode: const Value('System'),
+            defaultDashboardView: const Value('Dashboard'),
+            showWellbeingCard: const Value(true),
+            showBusinessCard: const Value(true),
+            showLearningCard: const Value(true),
+            showContentCard: const Value(true),
+            dailyTopTaskLimit: const Value(3),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+  }
+}

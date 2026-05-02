@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import '../services/seed_data_service.dart';
 import 'tables/app_settings_table.dart';
 import 'tables/business_opportunities_table.dart';
 import 'tables/content_items_table.dart';
@@ -60,4 +61,5 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 final databaseReadyProvider = FutureProvider<void>((ref) async {
   final database = ref.watch(appDatabaseProvider);
   await database.customSelect('SELECT 1').getSingle();
+  await SeedDataService(database).ensureSeedData();
 });

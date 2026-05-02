@@ -1,86 +1,40 @@
-# TASK — Build New Earth Command Dashboard App Shell
+# TASK - Seed Default New Earth Projects
 
 ## Goal
 
-Create the initial Flutter app shell for the New Earth Command Dashboard.
+Add first-launch seed data for the New Earth Command Dashboard.
 
 ## Source of Truth
 
-Read this file first:
+Read these files first:
 
-docs/fsd/new_earth_command_dashboard_fsd.md
-
-Follow the FSD, but only implement the first app shell task. Do not build the database yet.
+- `docs/fsd/00_master_index.md`
+- `docs/fsd/05_data_model.md`
+- `docs/fsd/08_technical_architecture.md`
 
 ## Requirements
 
-1. Use Flutter and Material 3.
-2. Add a clean New Earth style theme.
-3. Create bottom navigation with:
-   - Dashboard
-   - Projects
-   - Tasks
-   - Planner
-   - More
-
-4. Create placeholder screens:
-   - DashboardScreen
-   - ProjectsScreen
-   - TasksScreen
-   - PlannerScreen
-   - MoreScreen
-   - JournalScreen
-   - LearningScreen
-   - ContentScreen
-   - BusinessScreen
-   - WellbeingScreen
-   - InboxScreen
-   - SettingsScreen
-
-5. The More screen must link to:
-   - Journal
-   - Learning
-   - Content
-   - Business
-   - Wellbeing
-   - Inbox
-   - Settings
-
-6. Dashboard screen should show placeholder cards for:
-   - Today’s Focus
-   - Top 3 Tasks
-   - Active Projects
-   - Learning Focus
-   - Content Focus
-   - Business Reminder
-   - Wellbeing
-   - Quick Capture
-   - Evening Review
-
-7. Use a feature-based folder structure:
-   - core/
-   - features/dashboard/
-   - features/projects/
-   - features/tasks/
-   - features/planner/
-   - features/journal/
-   - features/learning/
-   - features/content/
-   - features/business/
-   - features/wellbeing/
-   - features/inbox/
-   - features/settings/
-
-8. Use go_router for routing.
-9. Use clear file names and clean structure.
-10. Do not add database logic in this task.
+1. Create default seed data for the nine New Earth projects:
+   - MicroGrow
+   - MicroGrow Field Scanner
+   - New Earth Website
+   - New Earth Living App
+   - Smart Growing Systems Book
+   - LinkedIn / Public Awareness
+   - Business & Funding
+   - Learning & Skills
+   - Future Ideas
+2. Add a seed data service that creates default projects on first launch.
+3. Add default app settings:
+   - `theme_mode = System`
+   - dashboard cards visible for wellbeing, business, learning, and content
+   - `daily_top_task_limit = 3`
+4. Keep the seed operation idempotent so records are not duplicated.
+5. Add focused tests for the seed data.
+6. Do not wire the Projects screen to live data yet.
 
 ## Expected Result
 
-The app should launch to the Dashboard.
+The database should contain the default projects and app settings after startup readiness runs.
 
-Bottom navigation should work.
-
-The More screen should navigate to all supporting screens.
-
-All screens can be placeholders but should have clear titles and descriptions.
+Running the seed operation multiple times should not duplicate records.
