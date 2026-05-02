@@ -12,6 +12,7 @@ import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
+import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
 import '../widgets/app_shell.dart';
 import 'route_names.dart';
@@ -113,6 +114,11 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.settings,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceAssistant,
+      builder: (context, state) => const VoiceAssistantScreen(),
     ),
   ],
 );

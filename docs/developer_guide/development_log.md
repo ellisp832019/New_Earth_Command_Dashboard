@@ -90,3 +90,37 @@ Next recommended slice:
 ```text
 Wire Projects screen to local data
 ```
+
+## 2026-05-02 - Live Dashboard, Projects, Tasks, and Parked Voice Bridge
+
+Moved the app from placeholder shell into a working local-first flow:
+
+- Startup now ensures default seed data and today's blank DailyPlan exist
+- Dashboard reads today's plan, active project count, and Top 3 tasks
+- Projects screen reads seeded local projects as calm cards
+- Tasks screen reads local tasks with project labels, status, and priority
+- Voice Assistant v0.1 scaffold is present, routed from `More`, and can safely save reviewed commands into local dashboard data
+- Python voice bridge scaffold is present under `tools/voice_bridge`
+
+Intentionally still parked or read-only:
+
+- Planner screen live data
+- Project detail navigation
+- Task creation and editing UI
+- Persistent voice history
+- Real microphone capture
+
+Verification:
+
+```powershell
+flutter analyze
+flutter test
+flutter build windows
+python -m py_compile tools/voice_bridge/voice_bridge.py
+```
+
+Next recommended slice:
+
+```text
+Wire Planner screen to today's DailyPlan
+```

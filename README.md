@@ -6,15 +6,20 @@ Local-first Flutter app for managing New Earth projects, tasks, daily focus, lea
 
 ## Current Status
 
-V0.1 app shell is in place:
+V0.1 foundation is live:
 
 - Dashboard-first launch
 - Material 3 New Earth theme
 - Bottom navigation
 - More screen links
-- Placeholder module screens
 - Drift/SQLite database foundation
 - MVP database tables
+- Default seed data and app settings
+- Startup DailyPlan creation
+- Dashboard reads local startup data
+- Projects screen reads seeded projects
+- Tasks screen reads local tasks
+- Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation
 

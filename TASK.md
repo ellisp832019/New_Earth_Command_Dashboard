@@ -1,8 +1,8 @@
-# TASK - Dashboard Data Foundation
+# TASK - Tasks Screen Reads Local Tasks
 
 ## Goal
 
-Connect the Dashboard screen to startup data without adding edit actions yet.
+Show the local task list on the Tasks screen.
 
 ## Source of Truth
 
@@ -14,15 +14,15 @@ Read these files first:
 
 ## Requirements
 
-1. Add dashboard data loading for today's DailyPlan.
-2. Load selected Top 3 task titles.
-3. Load the active project count.
-4. Expose dashboard data through Riverpod.
-5. Update the Dashboard screen to show real startup data and calm blank states.
-6. Do not add editing, task creation, or project detail navigation yet.
+1. Add local task loading for the Tasks screen.
+2. Read tasks from the local database.
+3. Show tasks with title, status, priority, and linked project name when available.
+4. Add focused tests for task loading.
+5. Keep the screen read-only for now.
+6. Do not add task creation or editing yet.
 
 ## Expected Result
 
-The Dashboard should reflect the seeded projects, today's blank DailyPlan, and selected Top 3 tasks.
+The Tasks screen should show local tasks from dashboard data.
 
-When no Top 3 tasks are selected, the Dashboard should show a clear empty state.
+If no tasks are available, the screen should show a clear empty state.

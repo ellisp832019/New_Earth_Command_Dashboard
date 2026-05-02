@@ -47,6 +47,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.inbox,
     ),
     _MoreItem(
+      title: 'Voice Assistant',
+      description:
+          'Review spoken commands safely before turning them into dashboard actions.',
+      icon: Icons.mic_none_rounded,
+      route: RouteNames.voiceAssistant,
+    ),
+    _MoreItem(
       title: 'Settings',
       description: 'Configure the dashboard.',
       icon: Icons.settings_outlined,
