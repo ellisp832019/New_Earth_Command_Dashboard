@@ -54,6 +54,80 @@ void main() {
     expect(plan.mainFocus, 'Finish the planner editing slice');
   });
 
+  test('daily plan repository saves focus reason for today', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime(2026, 5, 2, 9);
+    final repository = DailyPlanRepository(database, now: () => today);
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await repository.updateFocusReason(
+      'This keeps the build aligned and calm.',
+    );
+
+    final plan = await repository.getTodayPlan();
+
+    expect(plan.focusReason, 'This keeps the build aligned and calm.');
+  });
+
+  test('daily plan repository can clear focus fields', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime(2026, 5, 2, 9);
+    final repository = DailyPlanRepository(database, now: () => today);
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+    await repository.updateMainFocus('Finish the planner editing slice');
+    await repository.updateFocusReason('Keep the build coherent.');
+    await repository.updateMorningIntention('Stay calm and finish one step.');
+
+    await repository.clearFocus();
+
+    final plan = await repository.getTodayPlan();
+
+    expect(plan.mainFocus, isNull);
+    expect(plan.focusReason, isNull);
+    expect(plan.morningIntention, isNull);
+  });
+
+  test('daily plan repository saves carry forward notes for today', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime(2026, 5, 2, 9);
+    final repository = DailyPlanRepository(database, now: () => today);
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await repository.updateCarryForwardNotes(
+      'Carry forward the website copy pass if the dashboard slice runs long.',
+    );
+
+    final plan = await repository.getTodayPlan();
+
+    expect(
+      plan.carryForwardNotes,
+      'Carry forward the website copy pass if the dashboard slice runs long.',
+    );
+  });
+
+  test('daily plan repository saves tomorrow focus for today', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime(2026, 5, 2, 9);
+    final repository = DailyPlanRepository(database, now: () => today);
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await repository.updateTomorrowFocus(
+      'Start the first evening review save flow.',
+    );
+
+    final plan = await repository.getTodayPlan();
+
+    expect(plan.tomorrowFocus, 'Start the first evening review save flow.');
+  });
+
   test(
     'daily plan repository saves top 3 task ids and syncs task flags',
     () async {

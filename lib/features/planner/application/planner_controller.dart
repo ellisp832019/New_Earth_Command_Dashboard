@@ -43,6 +43,26 @@ class PlannerController {
     _refreshPlannerData();
   }
 
+  Future<void> saveFocusReason(String value) async {
+    await _ref.read(dailyPlanRepositoryProvider).updateFocusReason(value);
+    _refreshPlannerData();
+  }
+
+  Future<void> clearFocus() async {
+    await _ref.read(dailyPlanRepositoryProvider).clearFocus();
+    _refreshPlannerData();
+  }
+
+  Future<void> saveCarryForwardNotes(String value) async {
+    await _ref.read(dailyPlanRepositoryProvider).updateCarryForwardNotes(value);
+    _refreshPlannerData();
+  }
+
+  Future<void> saveTomorrowFocus(String value) async {
+    await _ref.read(dailyPlanRepositoryProvider).updateTomorrowFocus(value);
+    _refreshPlannerData();
+  }
+
   Future<void> saveTopThreeTaskIds(List<String> taskIds) async {
     await _ref.read(dailyPlanRepositoryProvider).saveTopThreeTaskIds(taskIds);
     _refreshPlannerData();

@@ -1,7 +1,7 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:drift/native.dart';
 
 import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
@@ -11,8 +11,8 @@ import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_re
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
-import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
+import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
 
 void main() {
@@ -28,6 +28,7 @@ void main() {
             topTasks: const [],
             topTaskTitles: const [],
             mainFocus: null,
+            focusReason: null,
             morningIntention: null,
           ),
         ),
@@ -214,6 +215,7 @@ void main() {
     expect(find.text('New Earth Command Dashboard'), findsOneWidget);
     expect(find.text('Today\'s Focus'), findsOneWidget);
     expect(find.text('A blank daily plan is ready for today.'), findsOneWidget);
+    expect(find.text('No focus reason set yet.'), findsOneWidget);
     expect(find.text('No morning intention set yet.'), findsOneWidget);
     expect(find.text('No Top 3 tasks selected yet.'), findsOneWidget);
     expect(find.text('9 projects are available.'), findsOneWidget);
@@ -318,6 +320,13 @@ void main() {
       findsOneWidget,
     );
     await tester.scrollUntilVisible(
+      find.text('Why It Matters'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Why It Matters'), findsAtLeastNWidgets(1));
+    await tester.scrollUntilVisible(
       find.text('Top 3 Tasks'),
       200,
       scrollable: find.byType(Scrollable).first,
@@ -326,6 +335,22 @@ void main() {
     expect(find.text('Top 3 Tasks'), findsOneWidget);
     expect(find.text('2 of 3 selected'), findsOneWidget);
     expect(find.text('Review MicroGrow diagnostics'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Carry Forward'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Carry Forward'), findsOneWidget);
+    expect(
+      find.text('Note what should move into tomorrow or be parked calmly.'),
+      findsOneWidget,
+    );
+    expect(find.text('Tomorrow\'s Focus'), findsOneWidget);
+    expect(
+      find.text('Capture tomorrow\'s likely focus while it is still clear.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('planner saves main focus and dashboard shows it', (
@@ -364,7 +389,7 @@ void main() {
     expect(find.text('Finish the planner editing slice'), findsOneWidget);
   });
 
-  testWidgets('dashboard quick edit saves focus and planner reflects it', (
+  testWidgets('dashboard quick edit saves focus to local plan', (
     WidgetTester tester,
   ) async {
     final database = AppDatabase(NativeDatabase.memory());
@@ -381,24 +406,112 @@ void main() {
 
     await tester.enterText(
       find.byKey(const Key('dashboardMainFocusField')),
-      'Stabilise today’s dashboard flow',
+      'Stabilise today dashboard flow',
+    );
+    await tester.enterText(
+      find.byKey(const Key('dashboardFocusReasonField')),
+      'This keeps the dashboard aligned and useful.',
     );
     await tester.enterText(
       find.byKey(const Key('dashboardMorningIntentionField')),
       'Stay calm and finish one useful step.',
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('dashboardFocusSaveButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('dashboardFocusSaveButton')));
     await tester.pumpAndSettle();
 
     expect(find.text('Today\'s focus saved.'), findsOneWidget);
-    expect(find.text('Stabilise today’s dashboard flow'), findsOneWidget);
-    expect(find.text('Stay calm and finish one useful step.'), findsOneWidget);
+    expect(find.text('Stabilise today dashboard flow'), findsOneWidget);
+
+    final plan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
+    expect(plan.mainFocus, 'Stabilise today dashboard flow');
+    expect(plan.focusReason, 'This keeps the dashboard aligned and useful.');
+    expect(plan.morningIntention, 'Stay calm and finish one useful step.');
+  });
+
+  testWidgets('planner saves carry forward notes to local plan', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Planner').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Stabilise today’s dashboard flow'), findsOneWidget);
-    expect(find.text('Stay calm and finish one useful step.'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerCarryForwardField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('plannerCarryForwardField')),
+      'Carry forward the website tidy-up if the planner review runs long.',
+    );
+    await tester.tap(find.byKey(const Key('plannerCarryForwardSaveButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Carry forward saved.'), findsOneWidget);
+
+    final plan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
+    expect(
+      plan.carryForwardNotes,
+      'Carry forward the website tidy-up if the planner review runs long.',
+    );
+  });
+
+  testWidgets('planner saves tomorrow focus to local plan', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Planner').last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerTomorrowFocusField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('plannerTomorrowFocusField')),
+      'Start the evening review save flow.',
+    );
+    await tester.tap(find.byKey(const Key('plannerTomorrowFocusSaveButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tomorrow\'s focus saved.'), findsOneWidget);
+
+    final plan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
+    expect(plan.tomorrowFocus, 'Start the evening review save flow.');
   });
 
   testWidgets('planner saves Top 3 tasks and dashboard shows them', (

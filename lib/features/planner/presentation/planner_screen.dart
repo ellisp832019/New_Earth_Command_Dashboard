@@ -68,9 +68,15 @@ class _PlannerView extends ConsumerStatefulWidget {
 class _PlannerViewState extends ConsumerState<_PlannerView> {
   late final TextEditingController _morningIntentionController;
   late final TextEditingController _mainFocusController;
+  late final TextEditingController _focusReasonController;
+  late final TextEditingController _carryForwardController;
+  late final TextEditingController _tomorrowFocusController;
 
   bool _isSavingMorningIntention = false;
   bool _isSavingMainFocus = false;
+  bool _isSavingFocusReason = false;
+  bool _isSavingCarryForward = false;
+  bool _isSavingTomorrowFocus = false;
   bool _isSavingTopThree = false;
   late List<String> _selectedTopTaskIds;
 
@@ -82,6 +88,15 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     );
     _mainFocusController = TextEditingController(
       text: widget.plan.mainFocus ?? '',
+    );
+    _focusReasonController = TextEditingController(
+      text: widget.plan.focusReason ?? '',
+    );
+    _carryForwardController = TextEditingController(
+      text: widget.plan.carryForwardNotes ?? '',
+    );
+    _tomorrowFocusController = TextEditingController(
+      text: widget.plan.tomorrowFocus ?? '',
     );
     _selectedTopTaskIds = _topTaskIdsFromPlan(widget.plan);
   }
@@ -98,6 +113,18 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       _mainFocusController.text = widget.plan.mainFocus ?? '';
     }
 
+    if (oldWidget.plan.focusReason != widget.plan.focusReason) {
+      _focusReasonController.text = widget.plan.focusReason ?? '';
+    }
+
+    if (oldWidget.plan.carryForwardNotes != widget.plan.carryForwardNotes) {
+      _carryForwardController.text = widget.plan.carryForwardNotes ?? '';
+    }
+
+    if (oldWidget.plan.tomorrowFocus != widget.plan.tomorrowFocus) {
+      _tomorrowFocusController.text = widget.plan.tomorrowFocus ?? '';
+    }
+
     final previousTopTaskIds = _topTaskIdsFromPlan(oldWidget.plan);
     final currentTopTaskIds = _topTaskIdsFromPlan(widget.plan);
     if (!_sameIds(previousTopTaskIds, currentTopTaskIds)) {
@@ -109,6 +136,9 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
   void dispose() {
     _morningIntentionController.dispose();
     _mainFocusController.dispose();
+    _focusReasonController.dispose();
+    _carryForwardController.dispose();
+    _tomorrowFocusController.dispose();
     super.dispose();
   }
 
@@ -157,6 +187,17 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           onSave: () => _saveMainFocus(context),
         ),
         const SizedBox(height: 12),
+        _EditablePlannerCard(
+          title: 'Why It Matters',
+          fieldKey: const Key('plannerFocusReasonField'),
+          buttonKey: const Key('plannerFocusReasonSaveButton'),
+          controller: _focusReasonController,
+          hintText: 'Name why this focus matters today.',
+          buttonLabel: 'Save Focus Reason',
+          isSaving: _isSavingFocusReason,
+          onSave: () => _saveFocusReason(context),
+        ),
+        const SizedBox(height: 12),
         _TopThreePlannerCard(
           title: 'Top 3 Tasks',
           tasks: widget.taskOptions,
@@ -171,15 +212,26 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           body: plan.eveningReview ?? 'No evening review recorded yet.',
         ),
         const SizedBox(height: 12),
-        _PlannerCard(
+        _EditablePlannerCard(
           title: 'Carry Forward',
-          body:
-              plan.carryForwardNotes ?? 'Nothing parked for carry forward yet.',
+          fieldKey: const Key('plannerCarryForwardField'),
+          buttonKey: const Key('plannerCarryForwardSaveButton'),
+          controller: _carryForwardController,
+          hintText: 'Note what should move into tomorrow or be parked calmly.',
+          buttonLabel: 'Save Carry Forward',
+          isSaving: _isSavingCarryForward,
+          onSave: () => _saveCarryForward(context),
         ),
         const SizedBox(height: 12),
-        _PlannerCard(
+        _EditablePlannerCard(
           title: 'Tomorrow\'s Focus',
-          body: plan.tomorrowFocus ?? 'Tomorrow\'s likely focus is still open.',
+          fieldKey: const Key('plannerTomorrowFocusField'),
+          buttonKey: const Key('plannerTomorrowFocusSaveButton'),
+          controller: _tomorrowFocusController,
+          hintText: 'Capture tomorrow\'s likely focus while it is still clear.',
+          buttonLabel: 'Save Tomorrow\'s Focus',
+          isSaving: _isSavingTomorrowFocus,
+          onSave: () => _saveTomorrowFocus(context),
         ),
       ],
     );
@@ -217,6 +269,60 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     } finally {
       if (mounted) {
         setState(() => _isSavingMainFocus = false);
+      }
+    }
+  }
+
+  Future<void> _saveFocusReason(BuildContext context) async {
+    setState(() => _isSavingFocusReason = true);
+
+    try {
+      await ref
+          .read(plannerControllerProvider)
+          .saveFocusReason(_focusReasonController.text);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Focus reason saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingFocusReason = false);
+      }
+    }
+  }
+
+  Future<void> _saveCarryForward(BuildContext context) async {
+    setState(() => _isSavingCarryForward = true);
+
+    try {
+      await ref
+          .read(plannerControllerProvider)
+          .saveCarryForwardNotes(_carryForwardController.text);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Carry forward saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingCarryForward = false);
+      }
+    }
+  }
+
+  Future<void> _saveTomorrowFocus(BuildContext context) async {
+    setState(() => _isSavingTomorrowFocus = true);
+
+    try {
+      await ref
+          .read(plannerControllerProvider)
+          .saveTomorrowFocus(_tomorrowFocusController.text);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tomorrow\'s focus saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingTomorrowFocus = false);
       }
     }
   }

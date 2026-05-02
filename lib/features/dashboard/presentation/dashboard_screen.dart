@@ -71,6 +71,7 @@ class _DashboardCardList extends StatelessWidget {
         description: null,
         icon: Icons.flag_outlined,
         mainFocus: snapshot.mainFocus,
+        focusReason: snapshot.focusReason,
         morningIntention: snapshot.morningIntention,
       ),
       _DashboardCardData(
@@ -130,6 +131,7 @@ class _DashboardCardList extends StatelessWidget {
               title: card.title,
               icon: card.icon,
               mainFocus: card.mainFocus,
+              focusReason: card.focusReason,
               morningIntention: card.morningIntention,
             );
           }
@@ -153,6 +155,7 @@ class _DashboardCardData {
     required this.icon,
     this.topTasks = const [],
     this.mainFocus,
+    this.focusReason,
     this.morningIntention,
   });
 
@@ -161,6 +164,7 @@ class _DashboardCardData {
   final IconData icon;
   final List<DashboardTopTask> topTasks;
   final String? mainFocus;
+  final String? focusReason;
   final String? morningIntention;
 }
 
@@ -169,12 +173,14 @@ class _DashboardFocusCard extends ConsumerStatefulWidget {
     required this.title,
     required this.icon,
     required this.mainFocus,
+    required this.focusReason,
     required this.morningIntention,
   });
 
   final String title;
   final IconData icon;
   final String? mainFocus;
+  final String? focusReason;
   final String? morningIntention;
 
   @override
@@ -184,6 +190,7 @@ class _DashboardFocusCard extends ConsumerStatefulWidget {
 
 class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
   late final TextEditingController _mainFocusController;
+  late final TextEditingController _focusReasonController;
   late final TextEditingController _morningIntentionController;
 
   bool _isEditing = false;
@@ -193,6 +200,9 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
   void initState() {
     super.initState();
     _mainFocusController = TextEditingController(text: widget.mainFocus ?? '');
+    _focusReasonController = TextEditingController(
+      text: widget.focusReason ?? '',
+    );
     _morningIntentionController = TextEditingController(
       text: widget.morningIntention ?? '',
     );
@@ -206,6 +216,10 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
       _mainFocusController.text = widget.mainFocus ?? '';
     }
 
+    if (oldWidget.focusReason != widget.focusReason) {
+      _focusReasonController.text = widget.focusReason ?? '';
+    }
+
     if (oldWidget.morningIntention != widget.morningIntention) {
       _morningIntentionController.text = widget.morningIntention ?? '';
     }
@@ -214,6 +228,7 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
   @override
   void dispose() {
     _mainFocusController.dispose();
+    _focusReasonController.dispose();
     _morningIntentionController.dispose();
     super.dispose();
   }
@@ -222,6 +237,7 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasFocus = widget.mainFocus?.isNotEmpty == true;
+    final hasReason = widget.focusReason?.isNotEmpty == true;
     final hasIntention = widget.morningIntention?.isNotEmpty == true;
 
     return Card(
@@ -236,14 +252,12 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Text(widget.title, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      Expanded(
-                        child: Text(
-                          widget.title,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
                       TextButton.icon(
                         key: const Key('dashboardFocusEditButton'),
                         onPressed: _isSaving
@@ -254,6 +268,8 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
                                   if (!_isEditing) {
                                     _mainFocusController.text =
                                         widget.mainFocus ?? '';
+                                    _focusReasonController.text =
+                                        widget.focusReason ?? '';
                                     _morningIntentionController.text =
                                         widget.morningIntention ?? '';
                                   }
@@ -263,6 +279,14 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
                           _isEditing ? Icons.close : Icons.edit_outlined,
                         ),
                         label: Text(_isEditing ? 'Close' : 'Quick Edit'),
+                      ),
+                      TextButton.icon(
+                        key: const Key('dashboardFocusClearButton'),
+                        onPressed: _isSaving
+                            ? null
+                            : () => _clearFocus(context),
+                        icon: const Icon(Icons.clear_outlined),
+                        label: const Text('Clear Focus'),
                       ),
                     ],
                   ),
@@ -275,6 +299,17 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
                       maxLines: 3,
                       decoration: const InputDecoration(
                         labelText: 'Main Focus',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('dashboardFocusReasonField'),
+                      controller: _focusReasonController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Why It Matters',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -310,6 +345,15 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 10),
+                    Text('Why It Matters', style: theme.textTheme.bodySmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      hasReason
+                          ? widget.focusReason!
+                          : 'No focus reason set yet.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 10),
                     Text('Morning Intention', style: theme.textTheme.bodySmall),
                     const SizedBox(height: 4),
                     Text(
@@ -334,6 +378,7 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
     try {
       final plannerController = ref.read(plannerControllerProvider);
       await plannerController.saveMainFocus(_mainFocusController.text);
+      await plannerController.saveFocusReason(_focusReasonController.text);
       await plannerController.saveMorningIntention(
         _morningIntentionController.text,
       );
@@ -341,6 +386,23 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Today\'s focus saved.')));
+      setState(() => _isEditing = false);
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _clearFocus(BuildContext context) async {
+    setState(() => _isSaving = true);
+
+    try {
+      await ref.read(plannerControllerProvider).clearFocus();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Today\'s focus cleared.')));
       setState(() => _isEditing = false);
     } finally {
       if (mounted) {

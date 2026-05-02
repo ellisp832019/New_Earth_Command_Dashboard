@@ -124,3 +124,29 @@ Next recommended slice:
 ```text
 Wire Planner screen to today's DailyPlan
 ```
+
+## 2026-05-02 - Planner Carry Forward and Tomorrow Focus
+
+Moved the planner one step closer to a real daily loop:
+
+- Added a living MVP execution tracker in [docs/roadmap/mvp_execution_plan.md](../roadmap/mvp_execution_plan.md)
+- Shifted `TASK.md` into a rolling one-slice workflow
+- Added local save support for `carryForwardNotes`
+- Added local save support for `tomorrowFocus`
+- Made `Carry Forward` editable from the Planner
+- Made `Tomorrow's Focus` editable from the Planner
+- Added focused repository and widget coverage for both fields
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add the first Evening Review fields and save flow
+```

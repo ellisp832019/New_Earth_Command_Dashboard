@@ -10,6 +10,7 @@ class DashboardSnapshot {
     required this.topTasks,
     required this.topTaskTitles,
     this.mainFocus,
+    this.focusReason,
     this.morningIntention,
   });
 
@@ -19,6 +20,7 @@ class DashboardSnapshot {
   final List<DashboardTopTask> topTasks;
   final List<String> topTaskTitles;
   final String? mainFocus;
+  final String? focusReason;
   final String? morningIntention;
 }
 
@@ -57,6 +59,7 @@ class DashboardRepository {
       date: today,
       hasTodayPlan: todayPlan != null,
       mainFocus: todayPlan?.mainFocus,
+      focusReason: todayPlan?.focusReason,
       morningIntention: todayPlan?.morningIntention,
       activeProjectCount: activeProjectCount,
       topTasks: topTasks,

@@ -1,6 +1,12 @@
 # Build Strategy
 
-This document condenses the FSD files into a practical build path for the current repository.
+This document is now a short companion to the living execution tracker:
+
+- [MVP Execution Plan](../roadmap/mvp_execution_plan.md)
+
+Use that file for the current route through the FSDs.
+
+This page keeps the core build principles in one place.
 
 ## FSD Source Map
 
@@ -16,28 +22,19 @@ This document condenses the FSD files into a practical build path for the curren
 - `docs/fsd/10_testing_release.md`: Acceptance tests and release checklist for V0.1.
 - `docs/fsd/11_build_instructions.md`: Codex-ready task order and first build instructions.
 
-## Current Repo State
+## Working Rule
 
-Completed:
+We build in two layers:
 
-- Flutter app shell
-- Material 3 New Earth theme
-- go_router app routing
-- Bottom navigation
-- Placeholder screens
-- More screen links
-- Dashboard placeholder cards
-- Widget tests for app-shell navigation
-- Local build documentation
-- Drift/SQLite database foundation
-- MVP table definitions
-- Riverpod database provider
-- Database smoke test
+1. `docs/roadmap/mvp_execution_plan.md` tracks the wider MVP route.
+2. `TASK.md` tracks the one slice that is active right now.
 
-Not started yet:
+When a slice is complete:
 
-- Seed data service
-- Real Projects, Tasks, DailyPlan, Journal, Learning, Content, Business, Wellbeing, Inbox, or Settings data flows
+1. verify it
+2. update the execution plan if priorities changed
+3. rewrite `TASK.md`
+4. move to the next slice
 
 ## Core Build Rule
 
@@ -70,39 +67,17 @@ Each slice should include only the pieces needed for that behaviour:
 
 Keep UI separate from data logic. Screens should call providers/controllers, not Drift directly.
 
-## Immediate Next Build Task
+## Strategic Direction
 
-The next task should be:
+Finish the core daily loop before widening the app:
 
-```text
-TASK - Add Seed Data for Default New Earth Projects
-```
-
-Scope:
-
-- Create `SeedDataService`.
-- Insert default New Earth projects once.
-- Insert default app settings once.
-- Prevent duplicate seed data.
-- Add the first Projects repository/provider needed to read seeded projects.
-- Show seeded projects on the Projects screen.
-- Verify projects persist after restart and do not duplicate.
-
-Do not build full project create/edit/detail flows in the same task unless `TASK.md` explicitly asks for them.
-
-## Recommended Next Sprint Order
-
-1. Database foundation
-2. Seed default projects and app settings
-3. Projects list, cards, details, add/edit, archive
-4. Tasks list, add/edit, status changes, filters, project linking
-5. DailyPlan auto-create and real Dashboard cards
-6. Top 3 task selection and enforcement
-7. Planner morning intention and evening review
-8. Journal list and entry form
-9. Learning, Content, Business, and Wellbeing basic CRUD
-10. Quick Capture and Inbox processing
-11. Empty states, error handling, manual test pass, V0.1 release notes
+1. Planner completion
+2. Project CRUD completion
+3. Task CRUD and filters completion
+4. Journal foundation
+5. Quick Capture and Inbox
+6. Supporting modules
+7. Testing and polish
 
 ## Non-Negotiable Product Rules
 

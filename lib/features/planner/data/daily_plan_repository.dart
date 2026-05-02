@@ -35,6 +35,44 @@ class DailyPlanRepository {
     );
   }
 
+  Future<void> updateFocusReason(String value) async {
+    await _updateTodayPlan(
+      DailyPlansCompanion(
+        focusReason: Value(_normalizeText(value)),
+        updatedAt: Value(_now()),
+      ),
+    );
+  }
+
+  Future<void> updateCarryForwardNotes(String value) async {
+    await _updateTodayPlan(
+      DailyPlansCompanion(
+        carryForwardNotes: Value(_normalizeText(value)),
+        updatedAt: Value(_now()),
+      ),
+    );
+  }
+
+  Future<void> updateTomorrowFocus(String value) async {
+    await _updateTodayPlan(
+      DailyPlansCompanion(
+        tomorrowFocus: Value(_normalizeText(value)),
+        updatedAt: Value(_now()),
+      ),
+    );
+  }
+
+  Future<void> clearFocus() async {
+    await _updateTodayPlan(
+      DailyPlansCompanion(
+        mainFocus: const Value(null),
+        focusReason: const Value(null),
+        morningIntention: const Value(null),
+        updatedAt: Value(_now()),
+      ),
+    );
+  }
+
   Future<void> saveTopThreeTaskIds(List<String> taskIds) async {
     final normalizedTaskIds = _normalizeTaskIds(taskIds);
     if (normalizedTaskIds.length > 3) {
