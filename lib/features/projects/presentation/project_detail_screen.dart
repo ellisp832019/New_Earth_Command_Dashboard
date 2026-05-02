@@ -21,6 +21,18 @@ class ProjectDetailScreen extends ConsumerWidget {
         title: const Text('Project Detail'),
         actions: [
           IconButton(
+            key: const Key('archiveProjectButton'),
+            onPressed: projectDetail.hasValue
+                ? () => _confirmArchive(
+                    context,
+                    ref,
+                    projectDetail.requireValue.project,
+                  )
+                : null,
+            icon: const Icon(Icons.archive_outlined),
+            tooltip: 'Archive Project',
+          ),
+          IconButton(
             key: const Key('addProjectTaskButton'),
             onPressed: () =>
                 context.push(RouteNames.newTaskForProject(projectId)),
@@ -148,6 +160,49 @@ class ProjectDetailScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmArchive(
+    BuildContext context,
+    WidgetRef ref,
+    Project project,
+  ) async {
+    final shouldArchive = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Archive Project'),
+          content: const Text('Archive this item? You can restore it later.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Archive'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldArchive != true) {
+      return;
+    }
+
+    await ref
+        .read(projectActionsControllerProvider)
+        .archiveProject(project.projectId);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    context.go(RouteNames.projects);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${project.name} archived.')));
   }
 }
 

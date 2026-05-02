@@ -23,6 +23,7 @@ The current build now includes:
 - Automatic blank DailyPlan creation for today
 - Live Dashboard cards for focus, Top 3 tasks, active projects, and evening review entry
 - Live Projects and Tasks screens
+- Project detail, add/edit, and archive flows
 - Task create/edit flows
 - Task status actions for Move To Today, Mark Done, Park, and Archive
 - Task status and project filters
@@ -38,7 +39,6 @@ The current build now includes:
 
 Still intentionally early:
 
-- Project detail and add/edit flows
 - Journal data flow
 - Supporting modules beyond navigation scaffolds
 - Quick Capture to real Inbox flow
@@ -71,6 +71,7 @@ Recommended rhythm:
 Use:
 
 - `Projects` to stay oriented around the wider mission
+- `Project Detail` to review a single project, add a linked task, edit it, or archive it when it should leave the active build view
 - `Tasks` to create tasks, edit them, search them, move them into Today, mark them Done, park them, archive older work, and manage Top 3 status
 - `Dashboard` to stay anchored on today's focus
 

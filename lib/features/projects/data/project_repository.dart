@@ -196,6 +196,19 @@ class ProjectRepository {
     return getProject(projectId);
   }
 
+  Future<Project> archiveProject(String projectId) async {
+    await (_database.update(
+      _database.projects,
+    )..where((table) => table.projectId.equals(projectId))).write(
+      ProjectsCompanion(
+        isArchived: const Value(true),
+        updatedAt: Value(_now()),
+      ),
+    );
+
+    return getProject(projectId);
+  }
+
   int _priorityRank(String priority) => switch (priority) {
     'High' => 0,
     'Medium' => 1,

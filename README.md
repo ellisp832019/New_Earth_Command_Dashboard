@@ -18,6 +18,8 @@ V0.1 foundation is live:
 - Startup DailyPlan creation
 - Dashboard reads local startup data
 - Projects screen reads seeded projects
+- Project detail and add/edit flows are live
+- Project archive from Project Detail is live
 - Tasks screen reads local tasks
 - Task create/edit flows are live
 - Task status actions, filters, and archive foundation are live

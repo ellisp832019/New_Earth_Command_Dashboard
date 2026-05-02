@@ -199,3 +199,28 @@ Next recommended slice:
 ```text
 Add project archive foundation
 ```
+
+## 2026-05-02 - Project Archive Foundation
+
+Added the first safe archive flow for projects:
+
+- Added repository support to archive a project with `isArchived = true`
+- Added controller support so project list and dashboard active project counts refresh after archiving
+- Added archive confirmation from the Project Detail screen
+- Archived projects now leave the active Projects screen and dashboard counts by default
+- Related task history stays linked locally after a project is archived
+- Updated README and getting started docs to reflect the live Projects workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add journal foundation
+```

@@ -105,4 +105,42 @@ void main() {
     expect(detail.activeTasks.first.title, 'Check diagnostics status card');
     expect(detail.blockedTasks.first.title, 'Wait for missing sensor board');
   });
+
+  test(
+    'project repository archives a project without removing linked tasks',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final projectRepository = ProjectRepository(database);
+      final taskRepository = TaskRepository(database);
+
+      final project = await projectRepository.createProject(
+        name: 'Archive Ready Project',
+        status: 'Active',
+        priority: 'Medium',
+      );
+      await taskRepository.createTask(
+        title: 'Keep this task history',
+        projectId: project.projectId,
+        status: 'Today',
+      );
+
+      final archivedProject = await projectRepository.archiveProject(
+        project.projectId,
+      );
+      final activeProjects = await projectRepository.getProjects();
+      final relatedTasks = await (database.select(
+        database.tasks,
+      )..where((table) => table.projectId.equals(project.projectId))).get();
+
+      expect(archivedProject.isArchived, isTrue);
+      expect(
+        activeProjects.any((item) => item.projectId == project.projectId),
+        isFalse,
+      );
+      expect(relatedTasks, hasLength(1));
+      expect(relatedTasks.first.title, 'Keep this task history');
+    },
+  );
 }

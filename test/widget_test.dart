@@ -933,6 +933,47 @@ void main() {
     expect(createdTask.projectId, project.projectId);
   });
 
+  testWidgets('project detail can archive a project after confirmation', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Archive Me Calmly',
+      status: 'Active',
+      priority: 'Medium',
+      progressPercentage: 15,
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/projects/${project.projectId}');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('archiveProjectButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Archive Project'), findsOneWidget);
+    expect(
+      find.text('Archive this item? You can restore it later.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Archive'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Project Detail'), findsNothing);
+    expect(find.text('Archive Me Calmly'), findsNothing);
+
+    final archivedProject = await projectRepository.getProject(
+      project.projectId,
+    );
+    expect(archivedProject.isArchived, isTrue);
+  });
+
   testWidgets('planner saves Top 3 tasks and dashboard shows them', (
     WidgetTester tester,
   ) async {

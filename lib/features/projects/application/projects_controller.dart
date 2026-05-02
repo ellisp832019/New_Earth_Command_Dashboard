@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../dashboard/application/dashboard_controller.dart';
 import '../data/project_repository.dart';
 
 final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
@@ -104,6 +105,17 @@ class ProjectActionsController {
     _ref.invalidate(projectsProvider);
     _ref.invalidate(projectDetailProvider(projectId));
     _ref.invalidate(projectProvider(projectId));
+    return project;
+  }
+
+  Future<Project> archiveProject(String projectId) async {
+    final project = await _ref
+        .read(projectRepositoryProvider)
+        .archiveProject(projectId);
+    _ref.invalidate(projectsProvider);
+    _ref.invalidate(projectDetailProvider(projectId));
+    _ref.invalidate(projectProvider(projectId));
+    _ref.invalidate(dashboardSnapshotProvider);
     return project;
   }
 }
