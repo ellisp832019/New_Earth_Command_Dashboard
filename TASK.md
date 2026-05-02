@@ -1,8 +1,8 @@
-# TASK - Task Repository Foundation
+# TASK - Dashboard Data Foundation
 
 ## Goal
 
-Add the first task data operations and protect the Top 3 task rule.
+Connect the Dashboard screen to startup data without adding edit actions yet.
 
 ## Source of Truth
 
@@ -14,15 +14,15 @@ Read these files first:
 
 ## Requirements
 
-1. Add a TaskRepository for creating tasks and reading active tasks.
-2. Add repository actions for marking a task Done and moving a task to Parked.
-3. Add a task selection service that enforces the Top 3 task limit.
-4. Keep Top 3 selection limited to three tasks.
-5. Add focused tests for task creation, status changes, and Top 3 enforcement.
-6. Do not wire the Tasks screen or Dashboard to live data yet.
+1. Add dashboard data loading for today's DailyPlan.
+2. Load selected Top 3 task titles.
+3. Load the active project count.
+4. Expose dashboard data through Riverpod.
+5. Update the Dashboard screen to show real startup data and calm blank states.
+6. Do not add editing, task creation, or project detail navigation yet.
 
 ## Expected Result
 
-The database should support creating, listing, completing, parking, and selecting tasks.
+The Dashboard should reflect the seeded projects, today's blank DailyPlan, and selected Top 3 tasks.
 
-The Top 3 task rule should prevent selecting a fourth active top task.
+When no Top 3 tasks are selected, the Dashboard should show a clear empty state.

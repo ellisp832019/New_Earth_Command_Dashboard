@@ -4,11 +4,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
+import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
 
 void main() {
   Widget buildTestApp() {
     return ProviderScope(
-      overrides: [databaseReadyProvider.overrideWith((ref) async {})],
+      overrides: [
+        databaseReadyProvider.overrideWith((ref) async {}),
+        dashboardSnapshotProvider.overrideWith(
+          (ref) async => DashboardSnapshot(
+            date: DateTime(2026, 5, 2),
+            hasTodayPlan: true,
+            activeProjectCount: 9,
+            topTaskTitles: const [],
+          ),
+        ),
+      ],
       child: const NewEarthCommandDashboardApp(),
     );
   }
@@ -19,6 +31,9 @@ void main() {
 
     expect(find.text('New Earth Command Dashboard'), findsOneWidget);
     expect(find.text('Today\'s Focus'), findsOneWidget);
+    expect(find.text('A blank daily plan is ready for today.'), findsOneWidget);
+    expect(find.text('No Top 3 tasks selected yet.'), findsOneWidget);
+    expect(find.text('9 projects are available.'), findsOneWidget);
     expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Projects'), findsOneWidget);
     expect(find.text('Tasks'), findsOneWidget);
