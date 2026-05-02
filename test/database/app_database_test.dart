@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/core/constants/default_seed_data.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
 
 void main() {
@@ -82,5 +84,47 @@ void main() {
       projects.map((project) => project.name),
       containsAll(['Custom Project', 'MicroGrow', 'Future Ideas']),
     );
+  });
+
+  test('daily plan service creates today plan once', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime(2026, 5, 2, 14, 30);
+    final service = DailyPlanService(database, now: () => today);
+
+    await service.ensureTodayPlan();
+    await service.ensureTodayPlan();
+
+    final plans = await database.select(database.dailyPlans).get();
+
+    expect(plans, hasLength(1));
+    expect(plans.single.dailyPlanId, 'daily-plan-2026-05-02');
+    expect(plans.single.date, DateTime(2026, 5, 2));
+    expect(plans.single.mainFocus, isNull);
+    expect(plans.single.morningIntention, isNull);
+  });
+
+  test('daily plan service creates one blank plan per date', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final service = DailyPlanService(
+      database,
+      now: () => DateTime(2026, 5, 2, 9),
+    );
+
+    await service.ensurePlanForDate(DateTime(2026, 5, 2, 23, 59));
+    await service.ensurePlanForDate(DateTime(2026, 5, 3, 0, 1));
+
+    final plans = await (database.select(
+      database.dailyPlans,
+    )..orderBy([(table) => OrderingTerm.asc(table.date)])).get();
+
+    expect(plans, hasLength(2));
+    expect(plans.map((plan) => plan.dailyPlanId), [
+      'daily-plan-2026-05-02',
+      'daily-plan-2026-05-03',
+    ]);
   });
 }
