@@ -19,6 +19,9 @@ V0.1 foundation is live:
 - Dashboard reads local startup data
 - Projects screen reads seeded projects
 - Tasks screen reads local tasks
+- Task create/edit flows are live
+- Task status actions, filters, and archive foundation are live
+- Task search by title and notes is live
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

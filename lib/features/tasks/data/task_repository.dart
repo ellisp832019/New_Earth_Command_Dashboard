@@ -154,6 +154,19 @@ class TaskRepository {
     );
   }
 
+  Future<void> archiveTask(String taskId) async {
+    final timestamp = _now();
+    await (_database.update(
+      _database.tasks,
+    )..where((table) => table.taskId.equals(taskId))).write(
+      TasksCompanion(
+        isArchived: const Value(true),
+        isTopThree: const Value(false),
+        updatedAt: Value(timestamp),
+      ),
+    );
+  }
+
   Future<void> setTopThree(String taskId, {required bool isTopThree}) async {
     await (_database.update(
       _database.tasks,

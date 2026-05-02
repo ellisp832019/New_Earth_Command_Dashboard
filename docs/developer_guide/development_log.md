@@ -150,3 +150,52 @@ Next recommended slice:
 ```text
 Add the first Evening Review fields and save flow
 ```
+
+## 2026-05-02 - Task Archive Foundation
+
+Added the first safe archive flow for tasks:
+
+- Added repository support to archive a task with `isArchived = true`
+- Added controller support to keep `DailyPlan` and Top 3 selections in sync when archiving
+- Added an archive confirmation flow from the Tasks screen
+- Archived tasks now disappear from active task and related project task views by default
+- Updated README and getting started docs to reflect the live Tasks workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add task search foundation
+```
+
+## 2026-05-02 - Task Search Foundation
+
+Added the first local task search flow:
+
+- Added task search query state in the Tasks module
+- Added calm task search input with clear action
+- Search now matches task title and notes
+- Search combines with the existing status and project filters
+- Added focused widget coverage for title search, notes search, clear search, and combined filter search
+- Updated README and getting started docs to reflect the live search flow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add project archive foundation
+```

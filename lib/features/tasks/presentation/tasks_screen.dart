@@ -31,6 +31,7 @@ class TasksScreen extends ConsumerWidget {
     final todayPlan = ref.watch(todayPlanProvider);
     final statusFilter = ref.watch(selectedTaskStatusFilterProvider);
     final projectFilter = ref.watch(selectedTaskProjectFilterProvider);
+    final searchQuery = ref.watch(taskSearchQueryProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -52,6 +53,7 @@ class TasksScreen extends ConsumerWidget {
               projects: projectItems,
               statusFilter: statusFilter,
               projectFilter: projectFilter,
+              searchQuery: searchQuery,
               topTaskIds: [
                 plan.topTask1Id,
                 plan.topTask2Id,
@@ -104,6 +106,7 @@ class _TaskListView extends ConsumerWidget {
     required this.projects,
     required this.statusFilter,
     required this.projectFilter,
+    required this.searchQuery,
     required this.topTaskIds,
   });
 
@@ -111,11 +114,13 @@ class _TaskListView extends ConsumerWidget {
   final List<Project> projects;
   final String statusFilter;
   final String? projectFilter;
+  final String searchQuery;
   final List<String> topTaskIds;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final normalizedQuery = searchQuery.trim().toLowerCase();
     final projectNames = {
       for (final project in projects) project.projectId: project.name,
     };
@@ -124,7 +129,11 @@ class _TaskListView extends ConsumerWidget {
           statusFilter == 'All' || task.status == statusFilter;
       final matchesProject =
           projectFilter == null || task.projectId == projectFilter;
-      return matchesStatus && matchesProject;
+      final matchesSearch =
+          normalizedQuery.isEmpty ||
+          task.title.toLowerCase().contains(normalizedQuery) ||
+          (task.notes?.toLowerCase().contains(normalizedQuery) ?? false);
+      return matchesStatus && matchesProject && matchesSearch;
     }).toList();
 
     if (tasks.isEmpty) {
@@ -162,6 +171,37 @@ class _TaskListView extends ConsumerWidget {
                   Text(
                     '${topTaskIds.length} of 3 priority tasks selected for today.',
                     style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('taskSearchField'),
+                    controller: TextEditingController(text: searchQuery)
+                      ..selection = TextSelection.collapsed(
+                        offset: searchQuery.length,
+                      ),
+                    decoration: InputDecoration(
+                      labelText: 'Search Tasks',
+                      hintText: 'Search title or notes',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: searchQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              key: const Key('clearTaskSearchButton'),
+                              onPressed: () {
+                                ref
+                                    .read(taskSearchQueryProvider.notifier)
+                                    .clear();
+                              },
+                              icon: const Icon(Icons.close),
+                              tooltip: 'Clear Search',
+                            ),
+                    ),
+                    onChanged: (value) {
+                      ref
+                          .read(taskSearchQueryProvider.notifier)
+                          .setQuery(value);
+                    },
                   ),
                   const SizedBox(height: 12),
                   Text('Status', style: theme.textTheme.titleSmall),
@@ -219,7 +259,9 @@ class _TaskListView extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'No tasks match the current filters. Try a different status or project view.',
+                normalizedQuery.isEmpty
+                    ? 'No tasks match the current filters. Try a different status or project view.'
+                    : 'No tasks match the current search and filters yet. Try a different word or clear the search.',
                 style: theme.textTheme.bodyMedium,
               ),
             ),
@@ -241,6 +283,7 @@ class _TaskListView extends ConsumerWidget {
           onMarkDone: () =>
               ref.read(tasksControllerProvider).markTaskDone(task.taskId),
           onPark: () => ref.read(tasksControllerProvider).parkTask(task.taskId),
+          onArchive: () => _confirmArchiveTask(context, ref, task),
           onTopThreeToggle: () async {
             try {
               await ref
@@ -256,5 +299,42 @@ class _TaskListView extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _confirmArchiveTask(
+    BuildContext context,
+    WidgetRef ref,
+    Task task,
+  ) async {
+    final shouldArchive = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Archive Task'),
+        content: const Text('Archive this task? You can restore it later.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Archive'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldArchive != true || !context.mounted) {
+      return;
+    }
+
+    await ref.read(tasksControllerProvider).archiveTask(task.taskId);
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${task.title} archived.')));
   }
 }

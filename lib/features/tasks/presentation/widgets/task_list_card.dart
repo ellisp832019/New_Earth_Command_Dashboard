@@ -12,6 +12,7 @@ class TaskListCard extends StatelessWidget {
     required this.onMoveToToday,
     required this.onMarkDone,
     required this.onPark,
+    required this.onArchive,
   });
 
   final Task task;
@@ -21,6 +22,7 @@ class TaskListCard extends StatelessWidget {
   final Future<void> Function() onMoveToToday;
   final Future<void> Function() onMarkDone;
   final Future<void> Function() onPark;
+  final Future<void> Function() onArchive;
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +109,12 @@ class TaskListCard extends StatelessWidget {
                             icon: const Icon(Icons.inventory_2_outlined),
                             label: const Text('Park'),
                           ),
+                        OutlinedButton.icon(
+                          key: Key('taskArchiveButton-${task.taskId}'),
+                          onPressed: onArchive,
+                          icon: const Icon(Icons.archive_outlined),
+                          label: const Text('Archive'),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),

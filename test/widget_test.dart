@@ -1156,6 +1156,140 @@ void main() {
     expect(find.text('Website task'), findsNothing);
   });
 
+  testWidgets('tasks screen searches by title', (WidgetTester tester) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final taskRepository = TaskRepository(database);
+    await taskRepository.createTask(title: 'Dashboard wireframe');
+    await taskRepository.createTask(title: 'Website tidy-up');
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('taskSearchField')),
+      'wireframe',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dashboard wireframe'), findsOneWidget);
+    expect(find.text('Website tidy-up'), findsNothing);
+  });
+
+  testWidgets('tasks screen searches by notes', (WidgetTester tester) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final taskRepository = TaskRepository(database);
+    await taskRepository.createTask(
+      title: 'Task one',
+      notes: 'Sensor diagnostics follow-up',
+    );
+    await taskRepository.createTask(
+      title: 'Task two',
+      notes: 'Website navigation tidy-up',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('taskSearchField')), 'sensor');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Task one'), findsOneWidget);
+    expect(find.text('Task two'), findsNothing);
+  });
+
+  testWidgets('tasks screen can clear search', (WidgetTester tester) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final taskRepository = TaskRepository(database);
+    await taskRepository.createTask(title: 'First task');
+    await taskRepository.createTask(title: 'Second task');
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('taskSearchField')), 'First');
+    await tester.pumpAndSettle();
+    expect(find.text('Second task'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('clearTaskSearchButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('First task'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Second task'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Second task'), findsOneWidget);
+  });
+
+  testWidgets('tasks screen combines search with filters', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+    final projectRepository = ProjectRepository(database);
+    final taskRepository = TaskRepository(database);
+    final projects = await projectRepository.getProjects();
+    final microGrow = projects.firstWhere(
+      (project) => project.name == 'MicroGrow',
+    );
+    final website = projects.firstWhere(
+      (project) => project.name == 'New Earth Website',
+    );
+
+    await taskRepository.createTask(
+      title: 'Diagnostics follow-up',
+      projectId: microGrow.projectId,
+      status: 'Today',
+      notes: 'Sensor review',
+    );
+    await taskRepository.createTask(
+      title: 'Diagnostics draft',
+      projectId: website.projectId,
+      status: 'Planned',
+      notes: 'Website wording',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('taskSearchField')),
+      'diagnostics',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('taskStatusFilter-Today')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('taskProjectFilterField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics follow-up'), findsOneWidget);
+    expect(find.text('Diagnostics draft'), findsNothing);
+  });
+
   testWidgets('tasks screen can move a task to today', (
     WidgetTester tester,
   ) async {
@@ -1171,6 +1305,12 @@ void main() {
     await tester.tap(find.text('Tasks').last);
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.byKey(Key('taskMoveToTodayButton-${task.taskId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('taskMoveToTodayButton-${task.taskId}')));
     await tester.pumpAndSettle();
 
@@ -1199,6 +1339,12 @@ void main() {
       await tester.tap(find.text('Tasks').last);
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.byKey(Key('taskParkButton-${task.taskId}')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(Key('taskParkButton-${task.taskId}')));
       await tester.pumpAndSettle();
 
@@ -1209,6 +1355,45 @@ void main() {
       );
     },
   );
+
+  testWidgets('tasks screen can archive a task after confirmation', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final taskRepository = TaskRepository(database);
+    final task = await taskRepository.createTask(title: 'Archive this task');
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(Key('taskArchiveButton-${task.taskId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('taskArchiveButton-${task.taskId}')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Archive Task'), findsOneWidget);
+    expect(
+      find.text('Archive this task? You can restore it later.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Archive'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Archive this task'), findsNothing);
+
+    final reloadedTask = await taskRepository.getById(task.taskId);
+    expect(reloadedTask.isArchived, isTrue);
+  });
 
   testWidgets('voice assistant screen opens from more', (
     WidgetTester tester,

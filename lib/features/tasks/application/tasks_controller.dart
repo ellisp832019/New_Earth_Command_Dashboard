@@ -20,6 +20,15 @@ class TaskProjectFilterNotifier extends Notifier<String?> {
   void setFilter(String? value) => state = value;
 }
 
+class TaskSearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void setQuery(String value) => state = value;
+
+  void clear() => state = '';
+}
+
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return TaskRepository(database);
@@ -38,6 +47,11 @@ final selectedTaskStatusFilterProvider =
 final selectedTaskProjectFilterProvider =
     NotifierProvider<TaskProjectFilterNotifier, String?>(
       TaskProjectFilterNotifier.new,
+    );
+
+final taskSearchQueryProvider =
+    NotifierProvider<TaskSearchQueryNotifier, String>(
+      TaskSearchQueryNotifier.new,
     );
 
 final tasksControllerProvider = Provider<TasksController>((ref) {
@@ -122,6 +136,26 @@ class TasksController {
     }
 
     _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
+  }
+
+  Future<void> archiveTask(String taskId) async {
+    final task = await _ref.read(taskRepositoryProvider).getById(taskId);
+    final todayPlan = await _ref.read(todayPlanProvider.future);
+    final selectedTaskIds = _selectedTopTaskIds(todayPlan);
+    final isTopTask = selectedTaskIds.contains(taskId);
+
+    await _ref.read(taskRepositoryProvider).archiveTask(taskId);
+
+    if (isTopTask) {
+      await _ref
+          .read(dailyPlanRepositoryProvider)
+          .saveTopThreeTaskIds(
+            selectedTaskIds.where((id) => id != taskId).toList(),
+          );
+    }
+
+    _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
+    _ref.invalidate(taskProvider(taskId));
   }
 
   Future<Task> createTask({
