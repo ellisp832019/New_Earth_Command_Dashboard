@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../application/projects_controller.dart';
 import 'widgets/project_card.dart';
 
@@ -13,7 +15,17 @@ class ProjectsScreen extends ConsumerWidget {
     final projects = ref.watch(projectsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Projects')),
+      appBar: AppBar(
+        title: const Text('Projects'),
+        actions: [
+          IconButton(
+            key: const Key('addProjectButton'),
+            onPressed: () => context.push(RouteNames.newProject),
+            icon: const Icon(Icons.add),
+            tooltip: 'Add Project',
+          ),
+        ],
+      ),
       body: projects.when(
         data: (items) {
           if (items.isEmpty) {
@@ -56,7 +68,12 @@ class ProjectsScreen extends ConsumerWidget {
                 );
               }
 
-              return ProjectCard(project: items[index - 1]);
+              final project = items[index - 1];
+              return ProjectCard(
+                project: project,
+                onTap: () =>
+                    context.push(RouteNames.projectDetail(project.projectId)),
+              );
             },
           );
         },

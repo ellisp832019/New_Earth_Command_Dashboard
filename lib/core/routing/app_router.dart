@@ -9,6 +9,8 @@ import '../../features/journal/presentation/journal_screen.dart';
 import '../../features/learning/presentation/learning_screen.dart';
 import '../../features/more/presentation/more_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
+import '../../features/projects/presentation/add_edit_project_screen.dart';
+import '../../features/projects/presentation/project_detail_screen.dart';
 import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
@@ -48,6 +50,26 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.projects,
               builder: (context, state) => const ProjectsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  builder: (context, state) => const AddEditProjectScreen(),
+                ),
+                GoRoute(
+                  path: ':projectId',
+                  builder: (context, state) => ProjectDetailScreen(
+                    projectId: state.pathParameters['projectId']!,
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'edit',
+                      builder: (context, state) => AddEditProjectScreen(
+                        projectId: state.pathParameters['projectId']!,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),

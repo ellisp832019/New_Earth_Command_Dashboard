@@ -7,11 +7,13 @@ import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/routing/app_router.dart';
 import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
+import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
+import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
@@ -611,6 +613,158 @@ void main() {
         'Moved forward: The planner daily loop is starting to feel complete.',
       ),
     );
+  });
+
+  testWidgets('projects screen opens project detail from the list', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+    final projectRepository = ProjectRepository(database);
+    final taskRepository = TaskRepository(database);
+    final microGrow = (await projectRepository.getProjects()).firstWhere(
+      (project) => project.name == 'MicroGrow',
+    );
+    await taskRepository.createTask(
+      title: 'Review current MicroGrow build priorities',
+      projectId: microGrow.projectId,
+      status: 'Planned',
+      priority: 'High',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Projects').last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(Key('projectCard-${microGrow.projectId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('projectCard-${microGrow.projectId}')));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Active Tasks'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Project Detail'), findsOneWidget);
+    expect(find.text('Active Tasks'), findsOneWidget);
+    expect(
+      find.text('Review current MicroGrow build priorities'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('projects screen can create a project', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/projects/new');
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('projectNameField')),
+      'New Earth Garden Lab',
+    );
+    await tester.enterText(
+      find.byKey(const Key('projectShortDescriptionField')),
+      'A practical space for testing local growing systems.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('projectVisionField')),
+      'Create a calm place to test ideas before scaling them.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('projectCurrentMilestoneField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('projectCurrentMilestoneField')),
+      'Define the first build scope',
+    );
+    await tester.enterText(
+      find.byKey(const Key('projectNextActionField')),
+      'Write the first setup checklist',
+    );
+    await tester.enterText(
+      find.byKey(const Key('projectNotesField')),
+      'Keep this project grounded and practical.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveProjectButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveProjectButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Project Detail'), findsOneWidget);
+    expect(find.text('New Earth Garden Lab'), findsOneWidget);
+    expect(find.text('Define the first build scope'), findsOneWidget);
+  });
+
+  testWidgets('project detail can open edit screen and save changes', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Field Systems Alpha',
+      shortDescription: 'Initial diagnostics project.',
+      vision: 'Make diagnostics easier to trust in the field.',
+      status: 'Active',
+      priority: 'High',
+      progressPercentage: 20,
+      currentMilestone: 'Build the first project detail view',
+      nextAction: 'Check the original next action',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/projects/${project.projectId}/edit');
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('projectNextActionField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('projectNextActionField')),
+      'Review the edited next action',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveProjectButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveProjectButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Project Detail'), findsOneWidget);
+    expect(find.text('Review the edited next action'), findsOneWidget);
   });
 
   testWidgets('planner saves Top 3 tasks and dashboard shows them', (

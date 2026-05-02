@@ -1,8 +1,8 @@
-# TASK - Evening Review Fields and Save Flow
+# TASK - Project Detail and Add/Edit Project Foundation
 
 ## Goal
 
-Let the user complete the first real `Evening Review` in the Planner and save it locally as part of today's `DailyPlan`.
+Let the user open a project, create a project, and edit a project using calm local-first flows that match the existing Projects screen.
 
 ## Source of Truth
 
@@ -18,22 +18,32 @@ Read these files first:
 
 ## Requirements
 
-1. Keep loading today's local `DailyPlan`.
-2. Add local save support for the first evening review fields:
-   - `whatMovedForward`
-   - `whatWasCompleted`
-   - `whatWasLearned`
-   - `blockers`
-3. Let the user edit and save those fields from the Planner.
-4. Keep the Planner copy calm and aligned with the FSD review wording.
-5. Persist the review locally and reload it after refresh.
-6. Update the stored `eveningReview` summary field when saving the review.
-7. Add focused repository and widget coverage for the evening review save flow.
-8. Keep dashboard review navigation polish out of scope for this slice.
-9. Keep automatic carry-forward task movement out of scope for this slice.
+1. Keep loading the seeded local project list.
+2. Add local repository support to:
+   - load one project by id
+   - load a simple project detail snapshot
+   - create a project
+   - update a project
+3. Build a `Project Detail` screen and route.
+4. Build a shared `Add / Edit Project` screen and route.
+5. Let the user create a project with at least:
+   - name
+   - short description
+   - vision
+   - status
+   - priority
+   - progress percentage
+   - current milestone
+   - next action
+   - notes
+6. Let the user edit the same fields for an existing project.
+7. Let the user open project detail from the Projects list.
+8. Show related task sections on the detail screen using currently available local task data.
+9. Add focused repository and widget coverage for detail, create, and edit flows.
+10. Keep archive flow, task creation from project detail, and date pickers out of scope for this slice.
 
 ## Expected Result
 
-The Planner should let the user record what moved forward, what was completed, what was learned, and what blocked progress today.
+The app should let the user move from the Projects list into a real project detail screen, and create or edit project records locally.
 
-The evening review should save locally, reload correctly, and prepare the app for the next dashboard review-entry slice.
+Project changes should save locally, reload correctly, and prepare the next slice for archive and deeper project-linked workflows.
