@@ -61,6 +61,50 @@ void main() {
     expect(reloadedParkedTask.isTopThree, isFalse);
   });
 
+  test(
+    'task repository updates task fields and clears Top 3 when done',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = TaskRepository(
+        database,
+        now: () => DateTime(2026, 5, 2, 12),
+      );
+
+      final task = await repository.createTask(
+        title: 'Original task',
+        status: 'Inbox',
+      );
+      await repository.setTopThree(task.taskId, isTopThree: true);
+
+      final updatedTask = await repository.updateTask(
+        taskId: task.taskId,
+        title: 'Updated task',
+        projectId: 'project-microgrow',
+        description: 'A more useful next step.',
+        category: 'Build',
+        priority: 'High',
+        status: 'Done',
+        energyLevel: 'High',
+        estimatedMinutes: 30,
+        notes: 'Keep this grounded.',
+      );
+
+      expect(updatedTask.title, 'Updated task');
+      expect(updatedTask.projectId, 'project-microgrow');
+      expect(updatedTask.description, 'A more useful next step.');
+      expect(updatedTask.category, 'Build');
+      expect(updatedTask.priority, 'High');
+      expect(updatedTask.status, 'Done');
+      expect(updatedTask.energyLevel, 'High');
+      expect(updatedTask.estimatedMinutes, 30);
+      expect(updatedTask.notes, 'Keep this grounded.');
+      expect(updatedTask.completedAt, DateTime(2026, 5, 2, 12));
+      expect(updatedTask.isTopThree, isFalse);
+    },
+  );
+
   test('task selection service enforces the Top 3 task limit', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

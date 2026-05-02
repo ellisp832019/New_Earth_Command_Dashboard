@@ -21,6 +21,13 @@ class ProjectDetailScreen extends ConsumerWidget {
         title: const Text('Project Detail'),
         actions: [
           IconButton(
+            key: const Key('addProjectTaskButton'),
+            onPressed: () =>
+                context.push(RouteNames.newTaskForProject(projectId)),
+            icon: const Icon(Icons.add_task_outlined),
+            tooltip: 'Add Task',
+          ),
+          IconButton(
             key: const Key('editProjectButton'),
             onPressed: () => context.push(RouteNames.editProject(projectId)),
             icon: const Icon(Icons.edit_outlined),

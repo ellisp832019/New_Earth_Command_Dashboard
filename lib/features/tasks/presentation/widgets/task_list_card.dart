@@ -8,82 +8,96 @@ class TaskListCard extends StatelessWidget {
     required this.task,
     required this.projectName,
     required this.onTopThreeToggle,
+    required this.onTap,
   });
 
   final Task task;
   final String? projectName;
   final Future<void> Function() onTopThreeToggle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Icon(
-                task.status == 'Done'
-                    ? Icons.check_circle_outline
-                    : Icons.radio_button_unchecked,
-                color: theme.colorScheme.primary,
+      child: InkWell(
+        key: Key('taskCard-${task.taskId}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(
+                  task.status == 'Done'
+                      ? Icons.check_circle_outline
+                      : Icons.radio_button_unchecked,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(task.title, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _TaskBadge(label: 'Status: ${task.status}'),
-                      _TaskBadge(label: 'Priority: ${task.priority}'),
-                      if (projectName != null) _TaskBadge(label: projectName!),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(task.title, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _TaskBadge(label: 'Status: ${task.status}'),
+                        _TaskBadge(label: 'Priority: ${task.priority}'),
+                        if (projectName != null)
+                          _TaskBadge(label: projectName!),
+                      ],
+                    ),
+                    if (task.description != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        task.description!,
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     ],
-                  ),
-                  if (task.description != null) ...[
+                    if (task.energyLevel != null || task.category != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        [
+                          if (task.category != null)
+                            'Category: ${task.category}',
+                          if (task.energyLevel != null)
+                            'Energy: ${task.energyLevel}',
+                        ].join('   '),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
                     const SizedBox(height: 12),
-                    Text(task.description!, style: theme.textTheme.bodyMedium),
-                  ],
-                  if (task.energyLevel != null || task.category != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      [
-                        if (task.category != null) 'Category: ${task.category}',
-                        if (task.energyLevel != null)
-                          'Energy: ${task.energyLevel}',
-                      ].join('   '),
-                      style: theme.textTheme.bodySmall,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        key: Key('taskTopThreeButton-${task.taskId}'),
+                        onPressed: onTopThreeToggle,
+                        icon: Icon(
+                          task.isTopThree
+                              ? Icons.filter_3
+                              : Icons.filter_3_outlined,
+                        ),
+                        label: Text(
+                          task.isTopThree
+                              ? 'Remove From Top 3'
+                              : 'Mark As Top 3',
+                        ),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      key: Key('taskTopThreeButton-${task.taskId}'),
-                      onPressed: onTopThreeToggle,
-                      icon: Icon(
-                        task.isTopThree
-                            ? Icons.filter_3
-                            : Icons.filter_3_outlined,
-                      ),
-                      label: Text(
-                        task.isTopThree ? 'Remove From Top 3' : 'Mark As Top 3',
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

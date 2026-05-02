@@ -303,6 +303,120 @@ void main() {
     );
   });
 
+  testWidgets('tasks screen can create a task', (WidgetTester tester) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/tasks/new');
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('taskTitleField')),
+      'Build task add edit flow',
+    );
+    await tester.enterText(
+      find.byKey(const Key('taskDescriptionField')),
+      'Create the first shared task editor screen.',
+    );
+    await tester.tap(find.byKey(const Key('taskProjectField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('taskCategoryField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Build').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('taskPriorityField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('High').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('taskEstimatedMinutesField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('taskEstimatedMinutesField')),
+      '45',
+    );
+    await tester.enterText(
+      find.byKey(const Key('taskNotesField')),
+      'Keep the first pass focused.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveTaskButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveTaskButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tasks'), findsAtLeastNWidgets(1));
+    expect(find.text('Build task add edit flow'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsOneWidget);
+
+    final tasks = await TaskRepository(database).getActiveTasks();
+    expect(
+      tasks.any((task) => task.title == 'Build task add edit flow'),
+      isTrue,
+    );
+  });
+
+  testWidgets('tasks screen can edit an existing task', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final taskRepository = TaskRepository(database);
+    final project = await projectRepository.createProject(name: 'Task Project');
+    final task = await taskRepository.createTask(
+      title: 'Original task title',
+      projectId: project.projectId,
+      status: 'Inbox',
+      priority: 'Medium',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/tasks/${task.taskId}/edit');
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('taskTitleField')),
+      'Edited task title',
+    );
+    await tester.tap(find.byKey(const Key('taskStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Today').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('taskPriorityField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('High').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveTaskButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveTaskButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edited task title'), findsOneWidget);
+    expect(find.text('Status: Today'), findsOneWidget);
+    expect(find.text('Priority: High'), findsOneWidget);
+  });
+
   testWidgets('planner screen shows today plan summary', (
     WidgetTester tester,
   ) async {
@@ -765,6 +879,50 @@ void main() {
 
     expect(find.text('Project Detail'), findsOneWidget);
     expect(find.text('Review the edited next action'), findsOneWidget);
+  });
+
+  testWidgets('project detail can open task form with project preselected', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Project Linked Task Flow',
+      status: 'Active',
+      priority: 'High',
+      progressPercentage: 0,
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/projects/${project.projectId}');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('addProjectTaskButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New Task'), findsOneWidget);
+    expect(find.text('Project Linked Task Flow'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('taskTitleField')),
+      'Add task from project detail',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveTaskButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveTaskButton')));
+    await tester.pumpAndSettle();
+
+    final createdTask = (await TaskRepository(database).getActiveTasks())
+        .firstWhere((task) => task.title == 'Add task from project detail');
+    expect(createdTask.projectId, project.projectId);
   });
 
   testWidgets('planner saves Top 3 tasks and dashboard shows them', (

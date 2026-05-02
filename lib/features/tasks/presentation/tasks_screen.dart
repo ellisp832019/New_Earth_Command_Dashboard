@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/routing/route_names.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/tasks_controller.dart';
@@ -18,7 +20,17 @@ class TasksScreen extends ConsumerWidget {
     final todayPlan = ref.watch(todayPlanProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tasks')),
+      appBar: AppBar(
+        title: const Text('Tasks'),
+        actions: [
+          IconButton(
+            key: const Key('addTaskButton'),
+            onPressed: () => context.push(RouteNames.newTask),
+            icon: const Icon(Icons.add_task_outlined),
+            tooltip: 'Add Task',
+          ),
+        ],
+      ),
       body: tasks.when(
         data: (taskItems) => projects.when(
           data: (projectItems) => todayPlan.when(
@@ -140,6 +152,7 @@ class _TaskListView extends ConsumerWidget {
           projectName: task.projectId == null
               ? null
               : projectNames[task.projectId],
+          onTap: () => context.push(RouteNames.editTask(task.taskId)),
           onTopThreeToggle: () async {
             try {
               await ref

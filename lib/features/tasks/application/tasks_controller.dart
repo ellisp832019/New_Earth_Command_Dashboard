@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../dashboard/application/dashboard_controller.dart';
 import '../../planner/application/planner_controller.dart';
+import '../../projects/application/projects_controller.dart';
 import '../data/task_repository.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
@@ -17,6 +18,11 @@ final tasksProvider = FutureProvider<List<Task>>((ref) async {
 
 final tasksControllerProvider = Provider<TasksController>((ref) {
   return TasksController(ref);
+});
+
+final taskProvider = FutureProvider.family<Task, String>((ref, taskId) async {
+  await ref.watch(databaseReadyProvider.future);
+  return ref.watch(taskRepositoryProvider).getById(taskId);
 });
 
 class TasksController {
@@ -68,6 +74,83 @@ class TasksController {
     _refreshTaskViews();
   }
 
+  Future<Task> createTask({
+    required String title,
+    String? projectId,
+    String? description,
+    String? category,
+    String priority = 'Medium',
+    String status = 'Inbox',
+    String? energyLevel,
+    int? estimatedMinutes,
+    String? notes,
+  }) async {
+    final task = await _ref
+        .read(taskRepositoryProvider)
+        .createTask(
+          title: title,
+          projectId: projectId,
+          description: description,
+          category: category,
+          priority: priority,
+          status: status,
+          energyLevel: energyLevel,
+          estimatedMinutes: estimatedMinutes,
+          notes: notes,
+        );
+
+    _refreshTaskViews(projectIds: {projectId}.whereType<String>().toSet());
+    _ref.invalidate(taskProvider(task.taskId));
+    return task;
+  }
+
+  Future<Task> updateTask({
+    required String taskId,
+    required String title,
+    String? projectId,
+    String? description,
+    String? category,
+    required String priority,
+    required String status,
+    String? energyLevel,
+    int? estimatedMinutes,
+    String? notes,
+  }) async {
+    final existing = await _ref.read(taskRepositoryProvider).getById(taskId);
+    final todayPlan = await _ref.read(todayPlanProvider.future);
+    final selectedTaskIds = _selectedTopTaskIds(todayPlan);
+
+    final task = await _ref
+        .read(taskRepositoryProvider)
+        .updateTask(
+          taskId: taskId,
+          title: title,
+          projectId: projectId,
+          description: description,
+          category: category,
+          priority: priority,
+          status: status,
+          energyLevel: energyLevel,
+          estimatedMinutes: estimatedMinutes,
+          notes: notes,
+        );
+
+    if ((status == 'Done' || status == 'Parked') &&
+        selectedTaskIds.contains(taskId)) {
+      await _ref
+          .read(dailyPlanRepositoryProvider)
+          .saveTopThreeTaskIds(
+            selectedTaskIds.where((id) => id != taskId).toList(),
+          );
+    }
+
+    _refreshTaskViews(
+      projectIds: {existing.projectId, projectId}.whereType<String>().toSet(),
+    );
+    _ref.invalidate(taskProvider(taskId));
+    return task;
+  }
+
   List<String> _selectedTopTaskIds(DailyPlan todayPlan) {
     return [
       todayPlan.topTask1Id,
@@ -76,10 +159,14 @@ class TasksController {
     ].whereType<String>().toList();
   }
 
-  void _refreshTaskViews() {
+  void _refreshTaskViews({Set<String> projectIds = const {}}) {
     _ref.invalidate(todayPlanProvider);
     _ref.invalidate(tasksProvider);
     _ref.invalidate(plannerTaskOptionsProvider);
     _ref.invalidate(dashboardSnapshotProvider);
+    _ref.invalidate(projectsProvider);
+    for (final projectId in projectIds) {
+      _ref.invalidate(projectDetailProvider(projectId));
+    }
   }
 }

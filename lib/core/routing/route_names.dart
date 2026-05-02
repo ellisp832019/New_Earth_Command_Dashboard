@@ -3,6 +3,7 @@ abstract final class RouteNames {
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const tasks = '/tasks';
+  static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
   static const journal = '/journal';
@@ -17,4 +18,13 @@ abstract final class RouteNames {
   static String projectDetail(String projectId) => '/projects/$projectId';
 
   static String editProject(String projectId) => '/projects/$projectId/edit';
+
+  static String editTask(String taskId) => '/tasks/$taskId/edit';
+
+  static String newTaskForProject(String projectId) {
+    return Uri(
+      path: newTask,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
 }

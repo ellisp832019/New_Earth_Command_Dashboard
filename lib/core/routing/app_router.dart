@@ -13,6 +13,7 @@ import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
 import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
@@ -79,6 +80,20 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.tasks,
               builder: (context, state) => const TasksScreen(),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  builder: (context, state) => AddEditTaskScreen(
+                    projectId: state.uri.queryParameters['projectId'],
+                  ),
+                ),
+                GoRoute(
+                  path: ':taskId/edit',
+                  builder: (context, state) => AddEditTaskScreen(
+                    taskId: state.pathParameters['taskId']!,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

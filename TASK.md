@@ -1,8 +1,8 @@
-# TASK - Project Detail and Add/Edit Project Foundation
+# TASK - Task Add/Edit Screen Foundation
 
 ## Goal
 
-Let the user open a project, create a project, and edit a project using calm local-first flows that match the existing Projects screen.
+Let the user create and edit tasks through calm local-first flows that connect cleanly to the existing Tasks and Projects areas.
 
 ## Source of Truth
 
@@ -18,32 +18,33 @@ Read these files first:
 
 ## Requirements
 
-1. Keep loading the seeded local project list.
+1. Keep loading the local task list from Drift.
 2. Add local repository support to:
-   - load one project by id
-   - load a simple project detail snapshot
-   - create a project
-   - update a project
-3. Build a `Project Detail` screen and route.
-4. Build a shared `Add / Edit Project` screen and route.
-5. Let the user create a project with at least:
-   - name
-   - short description
-   - vision
-   - status
+   - load one task by id
+   - create a task
+   - update a task
+3. Build a shared `Add / Edit Task` screen and route.
+4. Let the user create a task from the Tasks screen.
+5. Let the user edit an existing task from the Tasks list.
+6. Let the task form support at least:
+   - title
+   - description
+   - project
+   - category
    - priority
-   - progress percentage
-   - current milestone
-   - next action
+   - status
+   - energy level
+   - estimated minutes
    - notes
-6. Let the user edit the same fields for an existing project.
-7. Let the user open project detail from the Projects list.
-8. Show related task sections on the detail screen using currently available local task data.
-9. Add focused repository and widget coverage for detail, create, and edit flows.
-10. Keep archive flow, task creation from project detail, and date pickers out of scope for this slice.
+7. Allow opening the task form from a Project Detail flow with the project preselected.
+8. Use calm defaults:
+   - default status `Inbox`
+   - default priority `Medium`
+9. Add focused repository and widget coverage for create, edit, and project-linked task creation.
+10. Keep task delete, archive, due date picker UI, filters, and sort controls out of scope for this slice.
 
 ## Expected Result
 
-The app should let the user move from the Projects list into a real project detail screen, and create or edit project records locally.
+The app should let the user create and edit task records locally, with optional project linking, and see those changes reload correctly in the Tasks view.
 
-Project changes should save locally, reload correctly, and prepare the next slice for archive and deeper project-linked workflows.
+This should prepare the next slice for task filters, task detail polish, and deeper project-to-task workflows.
