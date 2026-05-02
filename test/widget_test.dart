@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/native.dart';
 
 import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
+import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
@@ -120,7 +123,39 @@ void main() {
             ),
           ],
         ),
+        todayPlanProvider.overrideWith(
+          (ref) async => DailyPlan(
+            dailyPlanId: 'daily-plan-2026-05-02',
+            date: DateTime(2026, 5, 2),
+            mainFocus: null,
+            focusReason: null,
+            morningIntention: null,
+            topTask1Id: null,
+            topTask2Id: null,
+            topTask3Id: null,
+            learningFocusId: null,
+            contentFocusId: null,
+            businessFocusId: null,
+            wellbeingCheckinId: null,
+            eveningReview: null,
+            whatMovedForward: null,
+            whatWasCompleted: null,
+            whatWasLearned: null,
+            blockers: null,
+            carryForwardNotes: null,
+            tomorrowFocus: null,
+            createdAt: DateTime(2026, 5, 2),
+            updatedAt: DateTime(2026, 5, 2),
+          ),
+        ),
       ],
+      child: const NewEarthCommandDashboardApp(),
+    );
+  }
+
+  Widget buildDatabaseBackedTestApp(AppDatabase database) {
+    return ProviderScope(
+      overrides: [appDatabaseProvider.overrideWith((ref) => database)],
       child: const NewEarthCommandDashboardApp(),
     );
   }
@@ -210,6 +245,69 @@ void main() {
     expect(find.text('Status: Planned'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);
     expect(find.text('New Earth Website'), findsOneWidget);
+  });
+
+  testWidgets('planner screen shows today plan summary', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Planner').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
+    expect(find.text('Today\'s Plan'), findsOneWidget);
+    expect(find.text('Morning Intention'), findsOneWidget);
+    expect(find.text('Set a calm direction for the day.'), findsOneWidget);
+    expect(find.text('Main Focus'), findsOneWidget);
+    expect(
+      find.text('Choose the one build step that matters most.'),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Top 3 Tasks'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Top 3 Tasks'), findsOneWidget);
+  });
+
+  testWidgets('planner saves main focus and dashboard shows it', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Planner').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('plannerMainFocusField')),
+      'Finish the planner editing slice',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerMainFocusSaveButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('plannerMainFocusSaveButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Main focus saved.'), findsOneWidget);
+
+    await tester.tap(find.text('Dashboard').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Finish the planner editing slice'), findsOneWidget);
   });
 
   testWidgets('voice assistant screen opens from more', (

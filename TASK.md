@@ -1,28 +1,31 @@
-# TASK - Tasks Screen Reads Local Tasks
+# TASK - Planner Edits Morning Intention and Main Focus
 
 ## Goal
 
-Show the local task list on the Tasks screen.
+Let the user edit and save today's Morning Intention and Main Focus from the Planner screen.
 
 ## Source of Truth
 
 Read these files first:
 
 - `docs/fsd/00_master_index.md`
-- `docs/fsd/05_data_model.md`
+- `docs/fsd/04_screen_specification.md`
+- `docs/fsd/06_functional_requirements.md`
 - `docs/fsd/08_technical_architecture.md`
+- `docs/fsd/10_testing_release.md`
 
 ## Requirements
 
-1. Add local task loading for the Tasks screen.
-2. Read tasks from the local database.
-3. Show tasks with title, status, priority, and linked project name when available.
-4. Add focused tests for task loading.
-5. Keep the screen read-only for now.
-6. Do not add task creation or editing yet.
+1. Keep loading today's DailyPlan from the local database.
+2. Add local save support for `Morning Intention`.
+3. Add local save support for `Main Focus`.
+4. Refresh planner data after save.
+5. Make sure saved `Main Focus` appears on the Dashboard.
+6. Add focused repository and widget tests.
+7. Keep all other planner sections read-only for now.
 
 ## Expected Result
 
-The Tasks screen should show local tasks from dashboard data.
+The Planner screen should let the user write and save `Morning Intention` and `Main Focus`.
 
-If no tasks are available, the screen should show a clear empty state.
+Saved values should persist locally and show up again after navigation or restart.
