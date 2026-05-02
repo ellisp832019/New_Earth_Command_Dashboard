@@ -23,3 +23,7 @@ Keep each task small and reviewable. Do not add database logic, AI features, clo
 ## Build Strategy
 
 Use `docs/developer_guide/build_strategy.md` as the short practical map from the full FSD set into build order.
+
+## Development Log
+
+Record completed build slices in `docs/developer_guide/development_log.md` after each meaningful implementation step.

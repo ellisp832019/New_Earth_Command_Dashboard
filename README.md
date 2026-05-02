@@ -11,5 +11,7 @@ V0.1 app shell is in place:
 - Bottom navigation
 - More screen links
 - Placeholder module screens
+- Drift/SQLite database foundation
+- MVP database tables
 
 See [Local Build Guide](docs/developer_guide/local_build.md) for setup, run, analyze, and test commands.

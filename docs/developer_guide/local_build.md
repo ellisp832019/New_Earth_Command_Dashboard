@@ -31,6 +31,12 @@ Run widget tests:
 flutter test
 ```
 
+Regenerate Drift code after changing database tables:
+
+```powershell
+dart run build_runner build
+```
+
 ## Run Locally
 
 List available devices:
@@ -53,7 +59,7 @@ flutter run -d windows
 
 ## Current Build Scope
 
-The current committed build is the first app shell only:
+The current build includes the first app shell and the local database foundation:
 
 - Material 3 New Earth theme
 - `go_router` navigation
@@ -61,8 +67,12 @@ The current committed build is the first app shell only:
 - Placeholder screens for Dashboard, Projects, Tasks, Planner, Journal, Learning, Content, Business, Wellbeing, Inbox, and Settings
 - More screen links to supporting modules
 - Dashboard placeholder cards for the first daily command centre layout
+- Drift/SQLite database setup
+- MVP database tables
+- Riverpod database provider
+- Generated Drift database code
 
-No database, AI features, cloud sync, login, or external integrations are included in this build.
+No seed data, repositories, AI features, cloud sync, login, or external integrations are included in this build.
 
 ## Current Verification Status
 

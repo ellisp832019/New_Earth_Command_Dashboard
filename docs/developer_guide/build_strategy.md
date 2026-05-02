@@ -29,11 +29,13 @@ Completed:
 - Dashboard placeholder cards
 - Widget tests for app-shell navigation
 - Local build documentation
+- Drift/SQLite database foundation
+- MVP table definitions
+- Riverpod database provider
+- Database smoke test
 
 Not started yet:
 
-- Drift database setup
-- SQLite persistence
 - Seed data service
 - Real Projects, Tasks, DailyPlan, Journal, Learning, Content, Business, Wellbeing, Inbox, or Settings data flows
 
@@ -73,30 +75,20 @@ Keep UI separate from data logic. Screens should call providers/controllers, not
 The next task should be:
 
 ```text
-TASK - Add Local Database Foundation with Drift
+TASK - Add Seed Data for Default New Earth Projects
 ```
 
 Scope:
 
-- Add `drift`, `sqlite3_flutter_libs`, `path_provider`, `path`, `drift_dev`, and `build_runner`.
-- Create `lib/core/database/app_database.dart`.
-- Create table files for:
-  - projects
-  - tasks
-  - daily_plans
-  - journal_entries
-  - learning_items
-  - content_items
-  - business_opportunities
-  - wellbeing_checkins
-  - inbox_items
-  - app_settings
-- Create a Riverpod database provider.
-- Open the database on app launch without connecting screens to real data yet.
-- Run build runner.
-- Verify the app shell still launches.
+- Create `SeedDataService`.
+- Insert default New Earth projects once.
+- Insert default app settings once.
+- Prevent duplicate seed data.
+- Add the first Projects repository/provider needed to read seeded projects.
+- Show seeded projects on the Projects screen.
+- Verify projects persist after restart and do not duplicate.
 
-Do not build repositories or seed data in the same task unless `TASK.md` explicitly asks for it.
+Do not build full project create/edit/detail flows in the same task unless `TASK.md` explicitly asks for them.
 
 ## Recommended Next Sprint Order
 

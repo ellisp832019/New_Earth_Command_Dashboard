@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/app.dart';
+import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 
 void main() {
+  Widget buildTestApp() {
+    return ProviderScope(
+      overrides: [databaseReadyProvider.overrideWith((ref) async {})],
+      child: const NewEarthCommandDashboardApp(),
+    );
+  }
+
   testWidgets('app shell opens to dashboard', (WidgetTester tester) async {
-    await tester.pumpWidget(const NewEarthCommandDashboardApp());
+    await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
     expect(find.text('New Earth Command Dashboard'), findsOneWidget);
@@ -20,7 +29,7 @@ void main() {
   testWidgets('more screen links to supporting screens', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const NewEarthCommandDashboardApp());
+    await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('More'));
