@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../application/dashboard_controller.dart';
@@ -17,6 +19,8 @@ class DashboardScreen extends ConsumerWidget {
     final snapshot = ref.watch(dashboardSnapshotProvider);
 
     return CustomScrollView(
+      key: const Key('dashboardScrollView'),
+      cacheExtent: 3000,
       slivers: [
         SliverAppBar(
           pinned: true,
@@ -82,6 +86,11 @@ class _DashboardCardList extends StatelessWidget {
         icon: Icons.filter_3_outlined,
         topTasks: snapshot.topTasks,
       ),
+      const _DashboardCardData(
+        title: 'Evening Review',
+        description: 'Record what moved forward before the day ends.',
+        icon: Icons.nightlight_round,
+      ),
       _DashboardCardData(
         title: 'Active Projects',
         description: '${snapshot.activeProjectCount} projects are available.',
@@ -112,11 +121,6 @@ class _DashboardCardList extends StatelessWidget {
         description: 'Capture a task, idea, note, or content seed.',
         icon: Icons.add_circle_outline,
       ),
-      const _DashboardCardData(
-        title: 'Evening Review',
-        description: 'Record what moved forward before the day ends.',
-        icon: Icons.nightlight_round,
-      ),
     ];
 
     return SliverPadding(
@@ -136,6 +140,10 @@ class _DashboardCardList extends StatelessWidget {
             );
           }
 
+          if (card.title == 'Evening Review') {
+            return const _DashboardEveningReviewCard();
+          }
+
           return _DashboardCard(
             title: card.title,
             description: card.description,
@@ -143,6 +151,50 @@ class _DashboardCardList extends StatelessWidget {
             topTasks: card.topTasks,
           );
         },
+      ),
+    );
+  }
+}
+
+class _DashboardEveningReviewCard extends StatelessWidget {
+  const _DashboardEveningReviewCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.nightlight_round, color: theme.colorScheme.primary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Evening Review', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Record what moved forward before the day ends.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    key: const Key('dashboardStartEveningReviewButton'),
+                    onPressed: () {
+                      context.go('${RouteNames.planner}?section=review');
+                    },
+                    icon: const Icon(Icons.nightlight_round),
+                    label: const Text('Start Evening Review'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

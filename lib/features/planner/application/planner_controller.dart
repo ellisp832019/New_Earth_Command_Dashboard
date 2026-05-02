@@ -63,6 +63,23 @@ class PlannerController {
     _refreshPlannerData();
   }
 
+  Future<void> saveEveningReview({
+    required String movedForward,
+    required String completed,
+    required String learned,
+    required String blockers,
+  }) async {
+    await _ref
+        .read(dailyPlanRepositoryProvider)
+        .updateEveningReview(
+          movedForward: movedForward,
+          completed: completed,
+          learned: learned,
+          blockers: blockers,
+        );
+    _refreshPlannerData();
+  }
+
   Future<void> saveTopThreeTaskIds(List<String> taskIds) async {
     await _ref.read(dailyPlanRepositoryProvider).saveTopThreeTaskIds(taskIds);
     _refreshPlannerData();

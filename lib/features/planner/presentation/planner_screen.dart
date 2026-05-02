@@ -6,7 +6,9 @@ import '../../../core/database/app_database.dart';
 import '../application/planner_controller.dart';
 
 class PlannerScreen extends ConsumerWidget {
-  const PlannerScreen({super.key});
+  const PlannerScreen({super.key, this.initialSection});
+
+  final String? initialSection;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,6 +24,7 @@ class PlannerScreen extends ConsumerWidget {
             key: ValueKey(plan.updatedAt),
             plan: plan,
             taskOptions: tasks,
+            initialSection: initialSection,
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Center(
@@ -56,10 +59,12 @@ class _PlannerView extends ConsumerStatefulWidget {
     super.key,
     required this.plan,
     required this.taskOptions,
+    this.initialSection,
   });
 
   final DailyPlan plan;
   final List<Task> taskOptions;
+  final String? initialSection;
 
   @override
   ConsumerState<_PlannerView> createState() => _PlannerViewState();
@@ -71,12 +76,19 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
   late final TextEditingController _focusReasonController;
   late final TextEditingController _carryForwardController;
   late final TextEditingController _tomorrowFocusController;
+  late final TextEditingController _movedForwardController;
+  late final TextEditingController _completedController;
+  late final TextEditingController _learnedController;
+  late final TextEditingController _blockersController;
+  late final ScrollController _scrollController;
+  final GlobalKey _eveningReviewKey = GlobalKey();
 
   bool _isSavingMorningIntention = false;
   bool _isSavingMainFocus = false;
   bool _isSavingFocusReason = false;
   bool _isSavingCarryForward = false;
   bool _isSavingTomorrowFocus = false;
+  bool _isSavingEveningReview = false;
   bool _isSavingTopThree = false;
   late List<String> _selectedTopTaskIds;
 
@@ -98,7 +110,24 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     _tomorrowFocusController = TextEditingController(
       text: widget.plan.tomorrowFocus ?? '',
     );
+    _movedForwardController = TextEditingController(
+      text: widget.plan.whatMovedForward ?? '',
+    );
+    _completedController = TextEditingController(
+      text: widget.plan.whatWasCompleted ?? '',
+    );
+    _learnedController = TextEditingController(
+      text: widget.plan.whatWasLearned ?? '',
+    );
+    _blockersController = TextEditingController(
+      text: widget.plan.blockers ?? '',
+    );
+    _scrollController = ScrollController();
     _selectedTopTaskIds = _topTaskIdsFromPlan(widget.plan);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToInitialSectionIfNeeded();
+    });
   }
 
   @override
@@ -125,10 +154,32 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       _tomorrowFocusController.text = widget.plan.tomorrowFocus ?? '';
     }
 
+    if (oldWidget.plan.whatMovedForward != widget.plan.whatMovedForward) {
+      _movedForwardController.text = widget.plan.whatMovedForward ?? '';
+    }
+
+    if (oldWidget.plan.whatWasCompleted != widget.plan.whatWasCompleted) {
+      _completedController.text = widget.plan.whatWasCompleted ?? '';
+    }
+
+    if (oldWidget.plan.whatWasLearned != widget.plan.whatWasLearned) {
+      _learnedController.text = widget.plan.whatWasLearned ?? '';
+    }
+
+    if (oldWidget.plan.blockers != widget.plan.blockers) {
+      _blockersController.text = widget.plan.blockers ?? '';
+    }
+
     final previousTopTaskIds = _topTaskIdsFromPlan(oldWidget.plan);
     final currentTopTaskIds = _topTaskIdsFromPlan(widget.plan);
     if (!_sameIds(previousTopTaskIds, currentTopTaskIds)) {
       _selectedTopTaskIds = currentTopTaskIds;
+    }
+
+    if (oldWidget.initialSection != widget.initialSection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToInitialSectionIfNeeded();
+      });
     }
   }
 
@@ -139,6 +190,11 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     _focusReasonController.dispose();
     _carryForwardController.dispose();
     _tomorrowFocusController.dispose();
+    _movedForwardController.dispose();
+    _completedController.dispose();
+    _learnedController.dispose();
+    _blockersController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -149,6 +205,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     final formattedDate = DateFormat('EEEE d MMMM y').format(plan.date);
 
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(20),
       children: [
         Card(
@@ -207,9 +264,17 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           onSave: () => _saveTopThree(context),
         ),
         const SizedBox(height: 12),
-        _PlannerCard(
-          title: 'Evening Review',
-          body: plan.eveningReview ?? 'No evening review recorded yet.',
+        KeyedSubtree(
+          key: _eveningReviewKey,
+          child: _EveningReviewPlannerCard(
+            title: 'Evening Review',
+            movedForwardController: _movedForwardController,
+            completedController: _completedController,
+            learnedController: _learnedController,
+            blockersController: _blockersController,
+            isSaving: _isSavingEveningReview,
+            onSave: () => _saveEveningReview(context),
+          ),
         ),
         const SizedBox(height: 12),
         _EditablePlannerCard(
@@ -327,6 +392,29 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     }
   }
 
+  Future<void> _saveEveningReview(BuildContext context) async {
+    setState(() => _isSavingEveningReview = true);
+
+    try {
+      await ref
+          .read(plannerControllerProvider)
+          .saveEveningReview(
+            movedForward: _movedForwardController.text,
+            completed: _completedController.text,
+            learned: _learnedController.text,
+            blockers: _blockersController.text,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Evening review saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingEveningReview = false);
+      }
+    }
+  }
+
   void _toggleTopTask(String taskId, bool isSelected) {
     if (isSelected) {
       setState(() {
@@ -397,6 +485,24 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
 
     return true;
   }
+
+  void _scrollToInitialSectionIfNeeded() {
+    if (widget.initialSection != 'review') {
+      return;
+    }
+
+    final reviewContext = _eveningReviewKey.currentContext;
+    if (reviewContext == null) {
+      return;
+    }
+
+    Scrollable.ensureVisible(
+      reviewContext,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      alignment: 0.1,
+    );
+  }
 }
 
 class _EditablePlannerCard extends StatelessWidget {
@@ -465,11 +571,24 @@ class _EditablePlannerCard extends StatelessWidget {
   }
 }
 
-class _PlannerCard extends StatelessWidget {
-  const _PlannerCard({required this.title, required this.body});
+class _EveningReviewPlannerCard extends StatelessWidget {
+  const _EveningReviewPlannerCard({
+    required this.title,
+    required this.movedForwardController,
+    required this.completedController,
+    required this.learnedController,
+    required this.blockersController,
+    required this.isSaving,
+    required this.onSave,
+  });
 
   final String title;
-  final String body;
+  final TextEditingController movedForwardController;
+  final TextEditingController completedController;
+  final TextEditingController learnedController;
+  final TextEditingController blockersController;
+  final bool isSaving;
+  final Future<void> Function() onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -482,10 +601,74 @@ class _PlannerCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(body, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            _ReviewField(
+              fieldKey: const Key('plannerMovedForwardField'),
+              controller: movedForwardController,
+              label: 'What moved forward today?',
+            ),
+            const SizedBox(height: 12),
+            _ReviewField(
+              fieldKey: const Key('plannerCompletedField'),
+              controller: completedController,
+              label: 'What did I complete?',
+            ),
+            const SizedBox(height: 12),
+            _ReviewField(
+              fieldKey: const Key('plannerLearnedField'),
+              controller: learnedController,
+              label: 'What did I learn?',
+            ),
+            const SizedBox(height: 12),
+            _ReviewField(
+              fieldKey: const Key('plannerBlockersField'),
+              controller: blockersController,
+              label: 'What blocked me?',
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.icon(
+                key: const Key('plannerEveningReviewSaveButton'),
+                onPressed: isSaving ? null : onSave,
+                icon: isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.nightlight_round),
+                label: const Text('Save Evening Review'),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewField extends StatelessWidget {
+  const _ReviewField({
+    required this.fieldKey,
+    required this.controller,
+    required this.label,
+  });
+
+  final Key fieldKey;
+  final TextEditingController controller;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      key: fieldKey,
+      controller: controller,
+      minLines: 2,
+      maxLines: 4,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
       ),
     );
   }

@@ -62,6 +62,36 @@ class DailyPlanRepository {
     );
   }
 
+  Future<void> updateEveningReview({
+    required String movedForward,
+    required String completed,
+    required String learned,
+    required String blockers,
+  }) async {
+    final normalizedMovedForward = _normalizeText(movedForward);
+    final normalizedCompleted = _normalizeText(completed);
+    final normalizedLearned = _normalizeText(learned);
+    final normalizedBlockers = _normalizeText(blockers);
+
+    await _updateTodayPlan(
+      DailyPlansCompanion(
+        whatMovedForward: Value(normalizedMovedForward),
+        whatWasCompleted: Value(normalizedCompleted),
+        whatWasLearned: Value(normalizedLearned),
+        blockers: Value(normalizedBlockers),
+        eveningReview: Value(
+          _buildEveningReviewSummary(
+            movedForward: normalizedMovedForward,
+            completed: normalizedCompleted,
+            learned: normalizedLearned,
+            blockers: normalizedBlockers,
+          ),
+        ),
+        updatedAt: Value(_now()),
+      ),
+    );
+  }
+
   Future<void> clearFocus() async {
     await _updateTodayPlan(
       DailyPlansCompanion(
@@ -135,6 +165,37 @@ class DailyPlanRepository {
   String? _normalizeText(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  String? _buildEveningReviewSummary({
+    required String? movedForward,
+    required String? completed,
+    required String? learned,
+    required String? blockers,
+  }) {
+    final parts = <String>[];
+
+    if (movedForward != null) {
+      parts.add('Moved forward: $movedForward');
+    }
+
+    if (completed != null) {
+      parts.add('Completed: $completed');
+    }
+
+    if (learned != null) {
+      parts.add('Learned: $learned');
+    }
+
+    if (blockers != null) {
+      parts.add('Blocked by: $blockers');
+    }
+
+    if (parts.isEmpty) {
+      return null;
+    }
+
+    return parts.join('\n\n');
   }
 
   List<String> _normalizeTaskIds(List<String> taskIds) {

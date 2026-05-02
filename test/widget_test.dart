@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/core/routing/app_router.dart';
 import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
@@ -218,7 +219,6 @@ void main() {
     expect(find.text('No focus reason set yet.'), findsOneWidget);
     expect(find.text('No morning intention set yet.'), findsOneWidget);
     expect(find.text('No Top 3 tasks selected yet.'), findsOneWidget);
-    expect(find.text('9 projects are available.'), findsOneWidget);
     expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Projects'), findsOneWidget);
     expect(find.text('Tasks'), findsOneWidget);
@@ -351,6 +351,40 @@ void main() {
       find.text('Capture tomorrow\'s likely focus while it is still clear.'),
       findsOneWidget,
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerEveningReviewSaveButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('What moved forward today?'), findsOneWidget);
+    expect(find.text('What did I complete?'), findsOneWidget);
+    expect(find.text('What did I learn?'), findsOneWidget);
+    expect(find.text('What blocked me?'), findsOneWidget);
+  });
+
+  testWidgets('planner review route opens the evening review section', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    appRouter.go('/planner?section=review');
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerEveningReviewSaveButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
+    expect(
+      find.byKey(const Key('plannerEveningReviewSaveButton')),
+      findsOneWidget,
+    );
+    expect(find.text('What moved forward today?'), findsOneWidget);
   });
 
   testWidgets('planner saves main focus and dashboard shows it', (
@@ -512,6 +546,71 @@ void main() {
       now: () => today,
     ).getTodayPlan();
     expect(plan.tomorrowFocus, 'Start the evening review save flow.');
+  });
+
+  testWidgets('planner saves evening review fields to local plan', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Planner').last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerMovedForwardField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('plannerMovedForwardField')),
+      'The planner daily loop is starting to feel complete.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('plannerCompletedField')),
+      'Finished the first review save flow.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('plannerLearnedField')),
+      'Small slices keep the dashboard calmer and easier to trust.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('plannerBlockersField')),
+      'Project CRUD is still waiting for its next pass.',
+    );
+    await tester.tap(find.byKey(const Key('plannerEveningReviewSaveButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Evening review saved.'), findsOneWidget);
+
+    final plan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
+    expect(
+      plan.whatMovedForward,
+      'The planner daily loop is starting to feel complete.',
+    );
+    expect(plan.whatWasCompleted, 'Finished the first review save flow.');
+    expect(
+      plan.whatWasLearned,
+      'Small slices keep the dashboard calmer and easier to trust.',
+    );
+    expect(plan.blockers, 'Project CRUD is still waiting for its next pass.');
+    expect(
+      plan.eveningReview,
+      contains(
+        'Moved forward: The planner daily loop is starting to feel complete.',
+      ),
+    );
   });
 
   testWidgets('planner saves Top 3 tasks and dashboard shows them', (

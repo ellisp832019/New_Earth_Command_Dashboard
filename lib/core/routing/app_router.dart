@@ -65,7 +65,9 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: RouteNames.planner,
-              builder: (context, state) => const PlannerScreen(),
+              builder: (context, state) => PlannerScreen(
+                initialSection: state.uri.queryParameters['section'],
+              ),
             ),
           ],
         ),
