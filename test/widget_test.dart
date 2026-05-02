@@ -9,7 +9,9 @@ import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dar
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
+import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
+import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
 
@@ -23,7 +25,10 @@ void main() {
             date: DateTime(2026, 5, 2),
             hasTodayPlan: true,
             activeProjectCount: 9,
+            topTasks: const [],
             topTaskTitles: const [],
+            mainFocus: null,
+            morningIntention: null,
           ),
         ),
         voiceAssistantProjectOptionsProvider.overrideWith(
@@ -99,7 +104,7 @@ void main() {
               updatedAt: DateTime(2026, 5, 2, 9),
               completedAt: null,
               notes: null,
-              isTopThree: false,
+              isTopThree: true,
               isArchived: false,
             ),
             Task(
@@ -118,7 +123,49 @@ void main() {
               updatedAt: DateTime(2026, 5, 2, 10),
               completedAt: null,
               notes: null,
-              isTopThree: false,
+              isTopThree: true,
+              isArchived: false,
+            ),
+          ],
+        ),
+        plannerTaskOptionsProvider.overrideWith(
+          (ref) async => [
+            Task(
+              taskId: 'task-1',
+              projectId: 'project-microgrow',
+              title: 'Review MicroGrow diagnostics',
+              description: 'Check the next useful diagnostics step.',
+              category: 'Build',
+              priority: 'High',
+              status: 'Inbox',
+              dueDate: null,
+              energyLevel: 'Medium',
+              estimatedMinutes: null,
+              actualMinutes: null,
+              createdAt: DateTime(2026, 5, 2, 9),
+              updatedAt: DateTime(2026, 5, 2, 9),
+              completedAt: null,
+              notes: null,
+              isTopThree: true,
+              isArchived: false,
+            ),
+            Task(
+              taskId: 'task-2',
+              projectId: 'project-new-earth-website',
+              title: 'Clarify founder journey page',
+              description: 'Tighten the next section structure.',
+              category: 'Content',
+              priority: 'Medium',
+              status: 'Planned',
+              dueDate: null,
+              energyLevel: 'Low',
+              estimatedMinutes: null,
+              actualMinutes: null,
+              createdAt: DateTime(2026, 5, 2, 10),
+              updatedAt: DateTime(2026, 5, 2, 10),
+              completedAt: null,
+              notes: null,
+              isTopThree: true,
               isArchived: false,
             ),
           ],
@@ -130,8 +177,8 @@ void main() {
             mainFocus: null,
             focusReason: null,
             morningIntention: null,
-            topTask1Id: null,
-            topTask2Id: null,
+            topTask1Id: 'task-1',
+            topTask2Id: 'task-2',
             topTask3Id: null,
             learningFocusId: null,
             contentFocusId: null,
@@ -167,6 +214,7 @@ void main() {
     expect(find.text('New Earth Command Dashboard'), findsOneWidget);
     expect(find.text('Today\'s Focus'), findsOneWidget);
     expect(find.text('A blank daily plan is ready for today.'), findsOneWidget);
+    expect(find.text('No morning intention set yet.'), findsOneWidget);
     expect(find.text('No Top 3 tasks selected yet.'), findsOneWidget);
     expect(find.text('9 projects are available.'), findsOneWidget);
     expect(find.text('Dashboard'), findsOneWidget);
@@ -245,6 +293,10 @@ void main() {
     expect(find.text('Status: Planned'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);
     expect(find.text('New Earth Website'), findsOneWidget);
+    expect(
+      find.text('2 of 3 priority tasks selected for today.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('planner screen shows today plan summary', (
@@ -272,6 +324,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Top 3 Tasks'), findsOneWidget);
+    expect(find.text('2 of 3 selected'), findsOneWidget);
+    expect(find.text('Review MicroGrow diagnostics'), findsOneWidget);
   });
 
   testWidgets('planner saves main focus and dashboard shows it', (
@@ -308,6 +362,200 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Finish the planner editing slice'), findsOneWidget);
+  });
+
+  testWidgets('dashboard quick edit saves focus and planner reflects it', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('dashboardFocusEditButton')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('dashboardMainFocusField')),
+      'Stabilise today’s dashboard flow',
+    );
+    await tester.enterText(
+      find.byKey(const Key('dashboardMorningIntentionField')),
+      'Stay calm and finish one useful step.',
+    );
+    await tester.tap(find.byKey(const Key('dashboardFocusSaveButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Today\'s focus saved.'), findsOneWidget);
+    expect(find.text('Stabilise today’s dashboard flow'), findsOneWidget);
+    expect(find.text('Stay calm and finish one useful step.'), findsOneWidget);
+
+    await tester.tap(find.text('Planner').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stabilise today’s dashboard flow'), findsOneWidget);
+    expect(find.text('Stay calm and finish one useful step.'), findsOneWidget);
+  });
+
+  testWidgets('planner saves Top 3 tasks and dashboard shows them', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+    final taskRepository = TaskRepository(database, now: () => today);
+    final first = await taskRepository.createTask(title: 'Choose calm focus');
+    final second = await taskRepository.createTask(
+      title: 'Build dashboard data',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Planner').last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(Key('plannerTopTask-${first.taskId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('plannerTopTask-${first.taskId}')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('plannerTopTask-${second.taskId}')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('plannerTopThreeSaveButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Top 3 tasks saved.'), findsOneWidget);
+
+    await tester.tap(find.text('Dashboard').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose calm focus'), findsOneWidget);
+    expect(find.text('Build dashboard data'), findsOneWidget);
+  });
+
+  testWidgets('dashboard can remove a Top 3 task', (WidgetTester tester) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+    final taskRepository = TaskRepository(database, now: () => today);
+    final first = await taskRepository.createTask(title: 'Choose calm focus');
+    final second = await taskRepository.createTask(
+      title: 'Build dashboard data',
+    );
+    final dailyPlanRepository = DailyPlanRepository(database, now: () => today);
+    await dailyPlanRepository.saveTopThreeTaskIds([
+      first.taskId,
+      second.taskId,
+    ]);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(Key('dashboardTopTaskRemove-${first.taskId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('dashboardTopTaskRemove-${first.taskId}')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose calm focus'), findsNothing);
+    expect(find.text('Build dashboard data'), findsOneWidget);
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('1 of 3 priority tasks selected for today.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tasks screen toggles Top 3 and dashboard reflects it', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+    final taskRepository = TaskRepository(database, now: () => today);
+    final first = await taskRepository.createTask(title: 'Choose calm focus');
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(Key('taskTopThreeButton-${first.taskId}')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('1 of 3 priority tasks selected for today.'),
+      findsOneWidget,
+    );
+    expect(find.text('Remove From Top 3'), findsOneWidget);
+
+    await tester.tap(find.text('Dashboard').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose calm focus'), findsOneWidget);
+  });
+
+  testWidgets('tasks screen blocks a fourth Top 3 task', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+    final taskRepository = TaskRepository(database, now: () => today);
+    final first = await taskRepository.createTask(title: 'First');
+    final second = await taskRepository.createTask(title: 'Second');
+    final third = await taskRepository.createTask(title: 'Third');
+    final fourth = await taskRepository.createTask(title: 'Fourth');
+    final dailyPlanRepository = DailyPlanRepository(database, now: () => today);
+    await dailyPlanRepository.saveTopThreeTaskIds([
+      first.taskId,
+      second.taskId,
+      third.taskId,
+    ]);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(Key('taskTopThreeButton-${fourth.taskId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('taskTopThreeButton-${fourth.taskId}')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'You already have 3 priority tasks for today. Complete, remove, or carry one forward first.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('voice assistant screen opens from more', (

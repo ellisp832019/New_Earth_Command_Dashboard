@@ -2,7 +2,10 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/services/task_selection_service.dart';
+import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 
 void main() {
   test('task repository creates and lists active tasks', () async {
@@ -100,4 +103,51 @@ void main() {
     expect(topTasks, hasLength(1));
     expect(topTasks.single.taskId, second.taskId);
   });
+
+  test(
+    'tasks controller marks a Top 3 task done and removes it from today plan',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day, 11);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => database),
+          databaseReadyProvider.overrideWith((ref) async {}),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final taskRepository = TaskRepository(database, now: () => today);
+      final dailyPlanRepository = DailyPlanRepository(
+        database,
+        now: () => today,
+      );
+      await database
+          .into(database.dailyPlans)
+          .insert(
+            DailyPlansCompanion.insert(
+              dailyPlanId:
+                  'daily-plan-${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
+              date: DateTime(today.year, today.month, today.day),
+              createdAt: today,
+              updatedAt: today,
+            ),
+          );
+
+      final task = await taskRepository.createTask(title: 'Finish foundation');
+      await dailyPlanRepository.saveTopThreeTaskIds([task.taskId]);
+
+      await container.read(tasksControllerProvider).markTaskDone(task.taskId);
+
+      final reloadedTask = await taskRepository.getById(task.taskId);
+      final plan = await dailyPlanRepository.getTodayPlan();
+
+      expect(reloadedTask.status, 'Done');
+      expect(reloadedTask.isTopThree, isFalse);
+      expect(plan.topTask1Id, isNull);
+    },
+  );
 }

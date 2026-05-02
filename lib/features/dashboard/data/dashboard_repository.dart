@@ -7,6 +7,7 @@ class DashboardSnapshot {
     required this.date,
     required this.hasTodayPlan,
     required this.activeProjectCount,
+    required this.topTasks,
     required this.topTaskTitles,
     this.mainFocus,
     this.morningIntention,
@@ -15,9 +16,26 @@ class DashboardSnapshot {
   final DateTime date;
   final bool hasTodayPlan;
   final int activeProjectCount;
+  final List<DashboardTopTask> topTasks;
   final List<String> topTaskTitles;
   final String? mainFocus;
   final String? morningIntention;
+}
+
+class DashboardTopTask {
+  const DashboardTopTask({
+    required this.taskId,
+    required this.title,
+    required this.status,
+    required this.priority,
+    this.projectName,
+  });
+
+  final String taskId;
+  final String title;
+  final String status;
+  final String priority;
+  final String? projectName;
 }
 
 class DashboardRepository {
@@ -33,7 +51,7 @@ class DashboardRepository {
       _database.dailyPlans,
     )..where((table) => table.date.equals(today))).getSingleOrNull();
     final activeProjectCount = await _activeProjectCount();
-    final topTaskTitles = await _topTaskTitles();
+    final topTasks = await _topTasks(todayPlan);
 
     return DashboardSnapshot(
       date: today,
@@ -41,7 +59,8 @@ class DashboardRepository {
       mainFocus: todayPlan?.mainFocus,
       morningIntention: todayPlan?.morningIntention,
       activeProjectCount: activeProjectCount,
-      topTaskTitles: topTaskTitles,
+      topTasks: topTasks,
+      topTaskTitles: topTasks.map((task) => task.title).toList(),
     );
   }
 
@@ -56,7 +75,55 @@ class DashboardRepository {
     return row.read(countExpression) ?? 0;
   }
 
-  Future<List<String>> _topTaskTitles() async {
+  Future<List<DashboardTopTask>> _topTasks(DailyPlan? todayPlan) async {
+    final planTaskIds = todayPlan == null
+        ? const <String>[]
+        : [
+            todayPlan.topTask1Id,
+            todayPlan.topTask2Id,
+            todayPlan.topTask3Id,
+          ].whereType<String>().toList();
+
+    if (planTaskIds.isNotEmpty) {
+      final tasks = await (_database.select(
+        _database.tasks,
+      )..where((table) => table.taskId.isIn(planTaskIds))).get();
+      final tasksById = {for (final task in tasks) task.taskId: task};
+      final projectIds = tasks
+          .map((task) => task.projectId)
+          .whereType<String>()
+          .toSet()
+          .toList();
+      final projects = projectIds.isEmpty
+          ? const <Project>[]
+          : await (_database.select(
+              _database.projects,
+            )..where((table) => table.projectId.isIn(projectIds))).get();
+      final projectNames = {
+        for (final project in projects) project.projectId: project.name,
+      };
+
+      return planTaskIds
+          .map((taskId) {
+            final task = tasksById[taskId];
+            if (task == null) {
+              return null;
+            }
+
+            return DashboardTopTask(
+              taskId: task.taskId,
+              title: task.title,
+              status: task.status,
+              priority: task.priority,
+              projectName: task.projectId == null
+                  ? null
+                  : projectNames[task.projectId],
+            );
+          })
+          .whereType<DashboardTopTask>()
+          .toList();
+    }
+
     final tasks =
         await (_database.select(_database.tasks)
               ..where(
@@ -66,8 +133,33 @@ class DashboardRepository {
               )
               ..orderBy([(table) => OrderingTerm.asc(table.createdAt)]))
             .get();
+    final projectIds = tasks
+        .map((task) => task.projectId)
+        .whereType<String>()
+        .toSet()
+        .toList();
+    final projects = projectIds.isEmpty
+        ? const <Project>[]
+        : await (_database.select(
+            _database.projects,
+          )..where((table) => table.projectId.isIn(projectIds))).get();
+    final projectNames = {
+      for (final project in projects) project.projectId: project.name,
+    };
 
-    return tasks.map((task) => task.title).toList();
+    return tasks
+        .map(
+          (task) => DashboardTopTask(
+            taskId: task.taskId,
+            title: task.title,
+            status: task.status,
+            priority: task.priority,
+            projectName: task.projectId == null
+                ? null
+                : projectNames[task.projectId],
+          ),
+        )
+        .toList();
   }
 
   DateTime _dateOnly(DateTime date) {

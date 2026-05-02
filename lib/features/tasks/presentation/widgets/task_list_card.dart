@@ -7,10 +7,12 @@ class TaskListCard extends StatelessWidget {
     super.key,
     required this.task,
     required this.projectName,
+    required this.onTopThreeToggle,
   });
 
   final Task task;
   final String? projectName;
+  final Future<void> Function() onTopThreeToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,22 @@ class TaskListCard extends StatelessWidget {
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      key: Key('taskTopThreeButton-${task.taskId}'),
+                      onPressed: onTopThreeToggle,
+                      icon: Icon(
+                        task.isTopThree
+                            ? Icons.filter_3
+                            : Icons.filter_3_outlined,
+                      ),
+                      label: Text(
+                        task.isTopThree ? 'Remove From Top 3' : 'Mark As Top 3',
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

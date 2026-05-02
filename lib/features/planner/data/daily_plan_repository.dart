@@ -35,6 +35,57 @@ class DailyPlanRepository {
     );
   }
 
+  Future<void> saveTopThreeTaskIds(List<String> taskIds) async {
+    final normalizedTaskIds = _normalizeTaskIds(taskIds);
+    if (normalizedTaskIds.length > 3) {
+      throw StateError(
+        'You already have 3 priority tasks for today. Complete, remove, or carry one forward first.',
+      );
+    }
+
+    final todayPlan = await getTodayPlan();
+    final previousTopTaskIds = [
+      todayPlan.topTask1Id,
+      todayPlan.topTask2Id,
+      todayPlan.topTask3Id,
+    ].whereType<String>().toList();
+
+    await _database.transaction(() async {
+      if (previousTopTaskIds.isNotEmpty) {
+        await (_database.update(
+          _database.tasks,
+        )..where((table) => table.taskId.isIn(previousTopTaskIds))).write(
+          TasksCompanion(
+            isTopThree: const Value(false),
+            updatedAt: Value(_now()),
+          ),
+        );
+      }
+
+      if (normalizedTaskIds.isNotEmpty) {
+        await (_database.update(
+          _database.tasks,
+        )..where((table) => table.taskId.isIn(normalizedTaskIds))).write(
+          TasksCompanion(
+            isTopThree: const Value(true),
+            updatedAt: Value(_now()),
+          ),
+        );
+      }
+
+      await (_database.update(_database.dailyPlans)
+            ..where((table) => table.dailyPlanId.equals(todayPlan.dailyPlanId)))
+          .write(
+            DailyPlansCompanion(
+              topTask1Id: Value(_taskIdAt(normalizedTaskIds, 0)),
+              topTask2Id: Value(_taskIdAt(normalizedTaskIds, 1)),
+              topTask3Id: Value(_taskIdAt(normalizedTaskIds, 2)),
+              updatedAt: Value(_now()),
+            ),
+          );
+    });
+  }
+
   Future<void> _updateTodayPlan(DailyPlansCompanion companion) async {
     final todayPlan = await getTodayPlan();
 
@@ -46,5 +97,24 @@ class DailyPlanRepository {
   String? _normalizeText(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  List<String> _normalizeTaskIds(List<String> taskIds) {
+    final normalized = <String>[];
+
+    for (final taskId in taskIds) {
+      final trimmed = taskId.trim();
+      if (trimmed.isEmpty || normalized.contains(trimmed)) {
+        continue;
+      }
+
+      normalized.add(trimmed);
+    }
+
+    return normalized;
+  }
+
+  String? _taskIdAt(List<String> taskIds, int index) {
+    return index < taskIds.length ? taskIds[index] : null;
   }
 }
