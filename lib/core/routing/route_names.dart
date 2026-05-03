@@ -15,6 +15,7 @@ abstract final class RouteNames {
   static const business = '/business';
   static const newBusiness = '/business/new';
   static const wellbeing = '/wellbeing';
+  static const newWellbeing = '/wellbeing/new';
   static const inbox = '/inbox';
   static const settings = '/settings';
   static const voiceAssistant = '/voice-assistant';

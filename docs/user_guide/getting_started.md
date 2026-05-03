@@ -32,6 +32,7 @@ The current build now includes:
 - Learning list and add-topic flow
 - Content list and add-idea flow
 - Business list and add-opportunity flow
+- Wellbeing list and check-in flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -162,6 +163,19 @@ From `More`:
 7. Save it back into the local list
 
 Each business item is stored locally and appears in the Business list with its type, project, status, deadline, next step, and follow-up date.
+
+## Wellbeing Flow
+
+From `More`:
+
+1. Open `Wellbeing`
+2. Tap `Add Check-In`
+3. Record energy, mood, sleep quality, and stress
+4. Mark movement, food and water, and reflection if they happened
+5. Add any notes that help explain the day
+6. Save it back into the local list
+
+Each wellbeing check-in is stored locally and appears in the Wellbeing list with its energy, mood, stress, and suggested workload.
 
 ## Visual References
 

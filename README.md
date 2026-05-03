@@ -29,6 +29,7 @@ V0.1 foundation is live:
 - Learning list and add-topic foundation are live
 - Content list and add-idea foundation are live
 - Business list and add-opportunity foundation are live
+- Wellbeing list and check-in foundation are live
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

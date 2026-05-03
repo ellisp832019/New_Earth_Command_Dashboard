@@ -354,6 +354,32 @@ Next recommended slice:
 Add wellbeing foundation
 ```
 
+## 2026-05-03 - Wellbeing Foundation
+
+Added the first real local wellbeing flow:
+
+- Added `WellbeingRepository` for local create and list operations
+- Added Riverpod wellbeing providers and action controller
+- Replaced the Wellbeing placeholder with a real local list screen
+- Added a first `AddWellbeingCheckinScreen` for creating daily check-ins
+- Added energy, mood, sleep quality, stress, movement, food/water, reflection, notes, and suggested workload support
+- Added focused repository and widget coverage for wellbeing create/list behaviour
+- Updated README and getting started docs to reflect the live Wellbeing workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add inbox foundation
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:

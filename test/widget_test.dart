@@ -21,6 +21,7 @@ import 'package:new_earth_command_dashboard/features/projects/data/project_repos
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
+import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
 
 void main() {
   Widget buildTestApp() {
@@ -1936,6 +1937,104 @@ void main() {
     expect(items.first.item.name, 'AI Architect Role');
     expect(items.first.projectName, 'MicroGrow');
     expect(items.first.item.companyOrContact, 'OpenAI');
+  });
+
+  testWidgets('wellbeing screen shows a calm empty state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/wellbeing');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
+    expect(
+      find.text(
+        'No wellbeing check-ins yet. Add a calm check-in so the build stays sustainable.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('wellbeing screen can create a check-in', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/wellbeing');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('addWellbeingCheckinButton')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('wellbeingEnergyField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Low').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wellbeingMoodField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tired').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wellbeingSleepQualityField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Medium').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wellbeingStressField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('High').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wellbeingMovementField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wellbeingFoodWaterField')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wellbeingReflectionField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wellbeingReflectionField')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wellbeingNotesField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('wellbeingNotesField')),
+      'Keep the day lighter and avoid unnecessary context switching.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveWellbeingButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveWellbeingButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
+    expect(find.text('Energy: Low'), findsOneWidget);
+    expect(find.text('Mood: Tired'), findsOneWidget);
+    expect(find.text('Stress: High'), findsOneWidget);
+    expect(find.text('Workload: Light'), findsOneWidget);
+
+    final checkins = await WellbeingRepository(database).getCheckins();
+    expect(checkins, hasLength(1));
+    expect(checkins.first.energyLevel, 'Low');
+    expect(checkins.first.suggestedWorkload, 'Light');
+    expect(checkins.first.movementDone, isTrue);
+    expect(checkins.first.foodWaterOk, isTrue);
+    expect(checkins.first.meditationReflectionDone, isTrue);
   });
 
   testWidgets('journal screen can open and edit an existing entry', (
