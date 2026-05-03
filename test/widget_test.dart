@@ -8,6 +8,7 @@ import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/routing/app_router.dart';
 import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
+import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
 import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
@@ -1836,6 +1837,105 @@ void main() {
     expect(items.first.item.title, 'Building the New Earth Command Dashboard');
     expect(items.first.projectName, 'MicroGrow');
     expect(items.first.item.imageNeeded, isTrue);
+  });
+
+  testWidgets('business screen shows a calm empty state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/business');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Business'), findsAtLeastNWidgets(1));
+    expect(
+      find.text(
+        'No business opportunities yet. Add a job, funding idea, grant, contact, or partnership lead.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('business screen can create a linked opportunity', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/business');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('addBusinessItemButton')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('businessNameField')),
+      'AI Architect Role',
+    );
+    await tester.tap(find.byKey(const Key('businessProjectField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('businessTypeField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Job').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('businessStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Preparing').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('businessCompanyOrContactField')),
+      'OpenAI',
+    );
+    await tester.enterText(
+      find.byKey(const Key('businessNextActionField')),
+      'Finalise CV',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('businessRelatedDocumentLinkField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('businessRelatedDocumentLinkField')),
+      'https://example.com/cv',
+    );
+    await tester.enterText(
+      find.byKey(const Key('businessNotesField')),
+      'Keep the application grounded and sharp.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveBusinessButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveBusinessButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Business'), findsAtLeastNWidgets(1));
+    expect(find.text('AI Architect Role'), findsOneWidget);
+    expect(find.text('Job'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(find.text('Status: Preparing'), findsOneWidget);
+    expect(find.text('Next Step: Finalise CV'), findsOneWidget);
+
+    final items = await BusinessRepository(database).getItems();
+    expect(items, hasLength(1));
+    expect(items.first.item.name, 'AI Architect Role');
+    expect(items.first.projectName, 'MicroGrow');
+    expect(items.first.item.companyOrContact, 'OpenAI');
   });
 
   testWidgets('journal screen can open and edit an existing entry', (

@@ -31,6 +31,7 @@ The current build now includes:
 - Journal list, create-entry, and edit-entry flow
 - Learning list and add-topic flow
 - Content list and add-idea flow
+- Business list and add-opportunity flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -147,6 +148,20 @@ From `More`:
 7. Save it back into the local list
 
 Each content item is stored locally and appears in the Content list with its platform, project, type, status, and image-needed state.
+
+## Business Flow
+
+From `More`:
+
+1. Open `Business`
+2. Tap `Add Opportunity`
+3. Add the opportunity or practical action name
+4. Optionally link it to a project
+5. Choose the type and status
+6. Add company/contact, next step, follow-up details, supporting link, and notes
+7. Save it back into the local list
+
+Each business item is stored locally and appears in the Business list with its type, project, status, deadline, next step, and follow-up date.
 
 ## Visual References
 

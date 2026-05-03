@@ -1,8 +1,8 @@
-# TASK - Business Foundation
+# TASK - Wellbeing Foundation
 
 ## Goal
 
-Build the first real Business flow so opportunities, funding leads, and practical money actions can be tracked locally and linked to projects where useful.
+Build the first real Wellbeing flow so energy, mood, stress, and sustainable pacing can be tracked locally as part of the daily build rhythm.
 
 ## Source of Truth
 
@@ -18,27 +18,27 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current dashboard, projects, tasks, planner, journal, and learning flows working.
-2. Add a local `BusinessRepository` for loading and creating business items.
-3. Build a first real `BusinessScreen` backed by local data instead of placeholder content.
-4. Build a first add/create business screen.
+1. Keep the current dashboard, projects, tasks, planner, journal, learning, content, and business flows working.
+2. Add a local `WellbeingRepository` for loading and creating wellbeing check-ins.
+3. Build a first real `WellbeingScreen` backed by local data instead of placeholder content.
+4. Build a first add/create wellbeing check-in screen.
 5. Support the core MVP-safe fields for this slice:
-   - opportunity name
-   - related project
-   - type
-   - status
-   - company or contact
-   - deadline
-   - next step
-   - follow-up date
-   - related document link
+   - date
+   - energy
+   - mood
+   - stress
+   - sleep quality
    - notes
-6. Add business routes and navigation from `More`.
+   - movement done
+   - food and water ok
+   - meditation or reflection done
+   - suggested workload
+6. Add wellbeing routes and navigation from `More`.
 7. Add focused repository and widget coverage for create and list flows.
-8. Keep edit, archived views, reminders, conversion flows, and dashboard summaries out of scope for this slice.
+8. Keep edit, trends, dashboard wellbeing summaries, and recommendation logic out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open Business from `More`, see locally stored business items, add a new opportunity or practical action, optionally link it to a project, and have it persist locally.
+The user should be able to open Wellbeing from `More`, see locally stored wellbeing check-ins, add a new daily check-in, and have it persist locally.
 
-This should create the first real business-tracking flow for the MVP.
+This should create the first real sustainability-tracking flow for the MVP.

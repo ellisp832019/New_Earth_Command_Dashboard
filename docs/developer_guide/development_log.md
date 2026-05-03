@@ -328,6 +328,32 @@ Next recommended slice:
 Add business foundation
 ```
 
+## 2026-05-03 - Business Foundation
+
+Added the first real local business flow:
+
+- Added `BusinessRepository` for local create and list operations
+- Added Riverpod business providers and action controller
+- Replaced the Business placeholder with a real local list screen
+- Added a first `AddBusinessOpportunityScreen` for creating opportunities and practical actions
+- Added project linking, type, status, company/contact, deadline, next step, follow-up date, related link, and notes support
+- Added focused repository and widget coverage for business create/list behaviour
+- Updated README and getting started docs to reflect the live Business workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add wellbeing foundation
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:

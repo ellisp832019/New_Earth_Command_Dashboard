@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
@@ -165,6 +166,12 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.business,
       builder: (context, state) => const BusinessScreen(),
+      routes: [
+        GoRoute(
+          path: 'new',
+          builder: (context, state) => const AddBusinessOpportunityScreen(),
+        ),
+      ],
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
