@@ -27,6 +27,7 @@ V0.1 foundation is live:
 - Task search by title and notes is live
 - Journal list, create-entry, and edit-entry foundation are live
 - Learning list and add-topic foundation are live
+- Content list and add-idea foundation are live
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

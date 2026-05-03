@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/business/presentation/business_screen.dart';
+import '../../features/content/presentation/add_content_item_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
@@ -153,6 +154,12 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.content,
       builder: (context, state) => const ContentScreen(),
+      routes: [
+        GoRoute(
+          path: 'new',
+          builder: (context, state) => const AddContentItemScreen(),
+        ),
+      ],
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

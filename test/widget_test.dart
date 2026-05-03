@@ -11,6 +11,7 @@ import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
 import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
+import 'package:new_earth_command_dashboard/features/content/data/content_repository.dart';
 import 'package:new_earth_command_dashboard/features/learning/data/learning_repository.dart';
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
@@ -1724,6 +1725,117 @@ void main() {
     expect(items, hasLength(1));
     expect(items.first.item.topic, 'Flutter Drift Database');
     expect(items.first.projectName, 'MicroGrow');
+  });
+
+  testWidgets('content screen shows a calm empty state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/content');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Content'), findsAtLeastNWidgets(1));
+    expect(
+      find.text(
+        'No content ideas yet. Turn a build update into your first post idea.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('content screen can create a linked content item', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/content');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('addContentItemButton')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('contentTitleField')),
+      'Building the New Earth Command Dashboard',
+    );
+    await tester.tap(find.byKey(const Key('contentProjectField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('contentPlatformField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('LinkedIn').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('contentTypeField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Project Update').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('contentStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Drafting').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('contentDraftTextField')),
+      'A grounded build-in-public update for the dashboard.',
+    );
+    await tester.tap(find.byKey(const Key('contentImageNeededField')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('contentImagePromptField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('contentImagePromptField')),
+      'A glowing command dashboard on a night desk.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('contentNotesField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('contentNotesField')),
+      'Keep the first public update practical.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveContentButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveContentButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Content'), findsAtLeastNWidgets(1));
+    expect(
+      find.text('Building the New Earth Command Dashboard'),
+      findsOneWidget,
+    );
+    expect(find.text('LinkedIn'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(find.text('Project Update'), findsOneWidget);
+    expect(find.text('Status: Drafting'), findsOneWidget);
+    expect(find.text('Image Needed: Yes'), findsOneWidget);
+
+    final items = await ContentRepository(database).getItems();
+    expect(items, hasLength(1));
+    expect(items.first.item.title, 'Building the New Earth Command Dashboard');
+    expect(items.first.projectName, 'MicroGrow');
+    expect(items.first.item.imageNeeded, isTrue);
   });
 
   testWidgets('journal screen can open and edit an existing entry', (

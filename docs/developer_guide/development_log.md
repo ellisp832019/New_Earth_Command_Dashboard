@@ -302,6 +302,32 @@ Next recommended slice:
 Add content foundation
 ```
 
+## 2026-05-03 - Content Foundation
+
+Added the first real local content flow:
+
+- Added `ContentRepository` for local create and list operations
+- Added Riverpod content providers and action controller
+- Replaced the Content placeholder with a real local list screen
+- Added a first `AddContentItemScreen` for creating content ideas
+- Added project linking, platform, content type, status, draft text, image-needed, image prompt, and notes support
+- Added focused repository and widget coverage for content create/list behaviour
+- Updated README and getting started docs to reflect the live Content workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add business foundation
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:

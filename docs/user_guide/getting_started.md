@@ -30,6 +30,7 @@ The current build now includes:
 - Task search by title and notes
 - Journal list, create-entry, and edit-entry flow
 - Learning list and add-topic flow
+- Content list and add-idea flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -132,6 +133,20 @@ From `More`:
 6. Save it back into the local list
 
 Each learning item is stored locally and appears in the Learning list with its project, status, confidence, and next step.
+
+## Content Flow
+
+From `More`:
+
+1. Open `Content`
+2. Tap `Add Content Idea`
+3. Add the title for the post, draft, or update
+4. Optionally link it to a project
+5. Choose the platform, content type, and status
+6. Add draft text, image-needed context, and notes
+7. Save it back into the local list
+
+Each content item is stored locally and appears in the Content list with its platform, project, type, status, and image-needed state.
 
 ## Visual References
 

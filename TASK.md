@@ -1,8 +1,8 @@
-# TASK - Content Foundation
+# TASK - Business Foundation
 
 ## Goal
 
-Build the first real Content flow so New Earth communication ideas can be tracked locally and linked to projects.
+Build the first real Business flow so opportunities, funding leads, and practical money actions can be tracked locally and linked to projects where useful.
 
 ## Source of Truth
 
@@ -19,25 +19,26 @@ Read these files first:
 ## Requirements
 
 1. Keep the current dashboard, projects, tasks, planner, journal, and learning flows working.
-2. Add a local `ContentRepository` for loading and creating content items.
-3. Build a first real `ContentScreen` backed by local data instead of placeholder content.
-4. Build a first add/create content screen.
+2. Add a local `BusinessRepository` for loading and creating business items.
+3. Build a first real `BusinessScreen` backed by local data instead of placeholder content.
+4. Build a first add/create business screen.
 5. Support the core MVP-safe fields for this slice:
-   - title
+   - opportunity name
    - related project
-   - platform
-   - content type
+   - type
    - status
-   - draft text
-   - image needed
-   - image prompt
+   - company or contact
+   - deadline
+   - next step
+   - follow-up date
+   - related document link
    - notes
-6. Add content routes and navigation from `More`.
+6. Add business routes and navigation from `More`.
 7. Add focused repository and widget coverage for create and list flows.
-8. Keep edit, publish-date scheduling, published-link flow, journal linking, and dashboard summaries out of scope for this slice.
+8. Keep edit, archived views, reminders, conversion flows, and dashboard summaries out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open Content from `More`, see locally stored content items, add a new idea or draft, optionally link it to a project, and have it persist locally.
+The user should be able to open Business from `More`, see locally stored business items, add a new opportunity or practical action, optionally link it to a project, and have it persist locally.
 
-This should create the first real communication-tracking flow for the MVP.
+This should create the first real business-tracking flow for the MVP.
