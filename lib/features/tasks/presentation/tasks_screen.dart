@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/theme/app_colours.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/tasks_controller.dart';
@@ -34,17 +35,7 @@ class TasksScreen extends ConsumerWidget {
     final searchQuery = ref.watch(taskSearchQueryProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tasks'),
-        actions: [
-          IconButton(
-            key: const Key('addTaskButton'),
-            onPressed: () => context.push(RouteNames.newTask),
-            icon: const Icon(Icons.add_task_outlined),
-            tooltip: 'Add Task',
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       body: tasks.when(
         data: (taskItems) => projects.when(
           data: (projectItems) => todayPlan.when(
@@ -155,101 +146,134 @@ class _TaskListView extends ConsumerWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index == 0) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Current Tasks', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${filteredTasks.length} tasks are visible in the current task view.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${topTaskIds.length} of 3 priority tasks selected for today.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    key: const Key('taskSearchField'),
-                    controller: TextEditingController(text: searchQuery)
-                      ..selection = TextSelection.collapsed(
-                        offset: searchQuery.length,
-                      ),
-                    decoration: InputDecoration(
-                      labelText: 'Search Tasks',
-                      hintText: 'Search title or notes',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: searchQuery.isEmpty
-                          ? null
-                          : IconButton(
-                              key: const Key('clearTaskSearchButton'),
-                              onPressed: () {
-                                ref
-                                    .read(taskSearchQueryProvider.notifier)
-                                    .clear();
-                              },
-                              icon: const Icon(Icons.close),
-                              tooltip: 'Clear Search',
+          return Container(
+            padding: const EdgeInsets.all(22),
+            decoration: _tasksPagePanelDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tasks',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              color: AppColours.darkText,
+                              fontSize: 28,
                             ),
-                    ),
-                    onChanged: (value) {
-                      ref
-                          .read(taskSearchQueryProvider.notifier)
-                          .setQuery(value);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Status', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: TasksScreen.statusFilterOptions.map((option) {
-                      return ChoiceChip(
-                        key: Key('taskStatusFilter-$option'),
-                        label: Text(option),
-                        selected: statusFilter == option,
-                        onSelected: (_) {
-                          ref
-                              .read(selectedTaskStatusFilterProvider.notifier)
-                              .setFilter(option);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String?>(
-                    key: const Key('taskProjectFilterField'),
-                    initialValue: projectFilter,
-                    decoration: const InputDecoration(
-                      labelText: 'Project Filter',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('All Projects'),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Current Tasks',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppColours.darkText,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${filteredTasks.length} tasks are visible in the current task view.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColours.darkMutedText,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${topTaskIds.length} of 3 priority tasks selected for today.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColours.darkMutedText,
+                            ),
+                          ),
+                        ],
                       ),
-                      ...projects.map(
-                        (project) => DropdownMenuItem<String?>(
-                          value: project.projectId,
-                          child: Text(project.name),
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      ref
-                          .read(selectedTaskProjectFilterProvider.notifier)
-                          .setFilter(value);
-                    },
+                    ),
+                    const SizedBox(width: 16),
+                    FilledButton.icon(
+                      key: const Key('addTaskButton'),
+                      onPressed: () => context.push(RouteNames.newTask),
+                      icon: const Icon(Icons.add_task_outlined),
+                      label: const Text('Add Task'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  key: const Key('taskSearchField'),
+                  controller: TextEditingController(text: searchQuery)
+                    ..selection = TextSelection.collapsed(
+                      offset: searchQuery.length,
+                    ),
+                  decoration: InputDecoration(
+                    labelText: 'Search Tasks',
+                    hintText: 'Search title or notes',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: searchQuery.isEmpty
+                        ? null
+                        : IconButton(
+                            key: const Key('clearTaskSearchButton'),
+                            onPressed: () {
+                              ref.read(taskSearchQueryProvider.notifier).clear();
+                            },
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Clear Search',
+                          ),
                   ),
-                ],
-              ),
+                  onChanged: (value) {
+                    ref.read(taskSearchQueryProvider.notifier).setQuery(value);
+                  },
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Status',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: TasksScreen.statusFilterOptions.map((option) {
+                    return ChoiceChip(
+                      key: Key('taskStatusFilter-$option'),
+                      label: Text(option),
+                      selected: statusFilter == option,
+                      onSelected: (_) {
+                        ref
+                            .read(selectedTaskStatusFilterProvider.notifier)
+                            .setFilter(option);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String?>(
+                  key: const Key('taskProjectFilterField'),
+                  initialValue: projectFilter,
+                  decoration: const InputDecoration(
+                    labelText: 'Project Filter',
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('All Projects'),
+                    ),
+                    ...projects.map(
+                      (project) => DropdownMenuItem<String?>(
+                        value: project.projectId,
+                        child: Text(project.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    ref
+                        .read(selectedTaskProjectFilterProvider.notifier)
+                        .setFilter(value);
+                  },
+                ),
+              ],
             ),
           );
         }
@@ -337,4 +361,19 @@ class _TaskListView extends ConsumerWidget {
       context,
     ).showSnackBar(SnackBar(content: Text('${task.title} archived.')));
   }
+}
+
+BoxDecoration _tasksPagePanelDecoration() {
+  return BoxDecoration(
+    color: AppColours.darkSurface.withValues(alpha: 0.94),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.18),
+        blurRadius: 24,
+        offset: const Offset(0, 10),
+      ),
+    ],
+  );
 }

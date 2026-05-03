@@ -119,7 +119,7 @@ class _DashboardHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '$greeting, James',
+                    '$greeting, El',
                     style: theme.textTheme.displaySmall?.copyWith(
                       color: AppColours.darkText,
                       fontSize: 38,

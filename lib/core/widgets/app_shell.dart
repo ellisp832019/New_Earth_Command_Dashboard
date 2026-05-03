@@ -103,8 +103,8 @@ class _Sidebar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 112,
-      padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
+      width: 136,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
       decoration: BoxDecoration(
         color: AppColours.darkBackground.withValues(alpha: 0.76),
         borderRadius: const BorderRadius.only(
@@ -276,7 +276,7 @@ class _ShellDestination extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(
             color: selected
                 ? AppColours.darkSurfaceRaised.withValues(alpha: 0.96)
@@ -293,8 +293,12 @@ class _ShellDestination extends StatelessWidget {
               Text(
                 label,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: color,
+                  fontSize: 11,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
@@ -327,9 +331,12 @@ class _SidebarLink extends StatelessWidget {
         label: Text(label),
         style: TextButton.styleFrom(
           foregroundColor: AppColours.darkMutedText,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          minimumSize: const Size.fromHeight(36),
           alignment: Alignment.centerLeft,
-          textStyle: Theme.of(context).textTheme.bodySmall,
+          textStyle: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontSize: 11, height: 1.15),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/theme/app_colours.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -66,33 +67,135 @@ class MoreScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: ListView.separated(
+      backgroundColor: Colors.transparent,
+      body: ListView(
         padding: const EdgeInsets.all(20),
-        itemCount: _items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final item = _items[index];
-          return Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-              leading: Icon(item.icon, color: theme.colorScheme.primary),
-              title: Text(item.title, style: theme.textTheme.titleMedium),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(item.description),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push(item.route),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: _morePanelDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'More',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontSize: 28,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Supporting modules',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Journal, learning, content, business, wellbeing, inbox, voice, and settings all live here.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+              ],
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth >= 1000
+                  ? 2
+                  : 1;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _items.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: crossAxisCount == 1 ? 3.2 : 2.7,
+                ),
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => context.push(item.route),
+                    child: Ink(
+                      decoration: _morePanelDecoration(),
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: AppColours.darkSurfaceRaised.withValues(
+                                alpha: 0.95,
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              item.icon,
+                              color: AppColours.darkSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.title,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: AppColours.darkText,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  item.description,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: AppColours.darkMutedText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColours.darkMutedText,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
+}
+
+BoxDecoration _morePanelDecoration() {
+  return BoxDecoration(
+    color: AppColours.darkSurface.withValues(alpha: 0.94),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.18),
+        blurRadius: 24,
+        offset: const Offset(0, 10),
+      ),
+    ],
+  );
 }
 
 class _MoreItem {
