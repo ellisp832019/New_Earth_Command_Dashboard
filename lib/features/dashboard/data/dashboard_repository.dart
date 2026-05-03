@@ -7,12 +7,14 @@ class DashboardSnapshot {
     required this.date,
     required this.hasTodayPlan,
     required this.activeProjectCount,
+    required this.activeProjects,
     required this.topTasks,
     required this.topTaskTitles,
     required this.showWellbeingCard,
     required this.showBusinessCard,
     required this.showLearningCard,
     required this.showContentCard,
+    required this.energyLabel,
     this.mainFocus,
     this.focusReason,
     this.morningIntention,
@@ -21,15 +23,33 @@ class DashboardSnapshot {
   final DateTime date;
   final bool hasTodayPlan;
   final int activeProjectCount;
+  final List<DashboardProjectSummary> activeProjects;
   final List<DashboardTopTask> topTasks;
   final List<String> topTaskTitles;
   final bool showWellbeingCard;
   final bool showBusinessCard;
   final bool showLearningCard;
   final bool showContentCard;
+  final String energyLabel;
   final String? mainFocus;
   final String? focusReason;
   final String? morningIntention;
+}
+
+class DashboardProjectSummary {
+  const DashboardProjectSummary({
+    required this.projectId,
+    required this.name,
+    required this.progressPercentage,
+    this.currentMilestone,
+    this.nextAction,
+  });
+
+  final String projectId;
+  final String name;
+  final int progressPercentage;
+  final String? currentMilestone;
+  final String? nextAction;
 }
 
 class DashboardTopTask {
@@ -64,7 +84,9 @@ class DashboardRepository {
       _database.appSettings,
     )..limit(1)).getSingleOrNull();
     final activeProjectCount = await _activeProjectCount();
+    final activeProjects = await _activeProjectSummaries();
     final topTasks = await _topTasks(todayPlan);
+    final energyLabel = await _energyLabel();
 
     return DashboardSnapshot(
       date: today,
@@ -73,12 +95,14 @@ class DashboardRepository {
       focusReason: todayPlan?.focusReason,
       morningIntention: todayPlan?.morningIntention,
       activeProjectCount: activeProjectCount,
+      activeProjects: activeProjects,
       topTasks: topTasks,
       topTaskTitles: topTasks.map((task) => task.title).toList(),
       showWellbeingCard: settings?.showWellbeingCard ?? true,
       showBusinessCard: settings?.showBusinessCard ?? true,
       showLearningCard: settings?.showLearningCard ?? true,
       showContentCard: settings?.showContentCard ?? true,
+      energyLabel: energyLabel,
     );
   }
 
@@ -91,6 +115,40 @@ class DashboardRepository {
             .getSingle();
 
     return row.read(countExpression) ?? 0;
+  }
+
+  Future<List<DashboardProjectSummary>> _activeProjectSummaries() async {
+    final projects =
+        await (_database.select(_database.projects)
+              ..where((table) => table.isArchived.equals(false))
+              ..orderBy([
+                (table) => OrderingTerm.desc(table.priority),
+                (table) => OrderingTerm.desc(table.updatedAt),
+              ])
+              ..limit(4))
+            .get();
+
+    return projects
+        .map(
+          (project) => DashboardProjectSummary(
+            projectId: project.projectId,
+            name: project.name,
+            progressPercentage: project.progressPercentage,
+            currentMilestone: project.currentMilestone,
+            nextAction: project.nextAction,
+          ),
+        )
+        .toList();
+  }
+
+  Future<String> _energyLabel() async {
+    final checkin =
+        await (_database.select(_database.wellbeingCheckins)
+              ..orderBy([(table) => OrderingTerm.desc(table.date)])
+              ..limit(1))
+            .getSingleOrNull();
+
+    return checkin?.energyLevel ?? 'Unrated';
   }
 
   Future<List<DashboardTopTask>> _topTasks(DailyPlan? todayPlan) async {

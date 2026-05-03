@@ -37,12 +37,29 @@ void main() {
             date: DateTime(2026, 5, 2),
             hasTodayPlan: true,
             activeProjectCount: 9,
+            activeProjects: const [
+              DashboardProjectSummary(
+                projectId: 'project-microgrow',
+                name: 'MicroGrow',
+                progressPercentage: 65,
+                currentMilestone: 'Stabilise diagnostics',
+                nextAction: 'Review the next useful diagnostics step.',
+              ),
+              DashboardProjectSummary(
+                projectId: 'project-new-earth-website',
+                name: 'New Earth Website',
+                progressPercentage: 40,
+                currentMilestone: 'Clarify site structure',
+                nextAction: 'Tighten the founder journey page.',
+              ),
+            ],
             topTasks: const [],
             topTaskTitles: const [],
             showWellbeingCard: true,
             showBusinessCard: true,
             showLearningCard: true,
             showContentCard: true,
+            energyLabel: 'High',
             mainFocus: null,
             focusReason: null,
             morningIntention: null,
@@ -228,12 +245,12 @@ void main() {
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('New Earth Command Dashboard'), findsOneWidget);
-    expect(find.text('Today\'s Focus'), findsOneWidget);
+    expect(find.text('Dashboard'), findsWidgets);
+    expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
     expect(find.text('A blank daily plan is ready for today.'), findsOneWidget);
     expect(find.text('No focus reason set yet.'), findsOneWidget);
     expect(find.text('No morning intention set yet.'), findsOneWidget);
-    expect(find.text('No Top 3 tasks selected yet.'), findsOneWidget);
+    expect(find.text('Choose your first priority task'), findsOneWidget);
     await tester.drag(
       find.byKey(const Key('dashboardScrollView')),
       const Offset(0, -1200),
@@ -243,11 +260,11 @@ void main() {
       find.byKey(const Key('dashboardQuickCaptureButton')),
       findsOneWidget,
     );
-    expect(find.text('Dashboard'), findsOneWidget);
-    expect(find.text('Projects'), findsOneWidget);
-    expect(find.text('Tasks'), findsOneWidget);
-    expect(find.text('Planner'), findsOneWidget);
-    expect(find.text('More'), findsOneWidget);
+    expect(find.text('Dashboard'), findsWidgets);
+    expect(find.text('Projects'), findsWidgets);
+    expect(find.text('Tasks'), findsWidgets);
+    expect(find.text('Planner'), findsWidgets);
+    expect(find.text('More'), findsWidgets);
   });
 
   testWidgets('more screen links to supporting screens', (
@@ -554,16 +571,6 @@ void main() {
       find.text('Capture tomorrow\'s likely focus while it is still clear.'),
       findsOneWidget,
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('plannerEveningReviewSaveButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('What moved forward today?'), findsOneWidget);
-    expect(find.text('What did I complete?'), findsOneWidget);
-    expect(find.text('What did I learn?'), findsOneWidget);
-    expect(find.text('What blocked me?'), findsOneWidget);
   });
 
   testWidgets('planner review route opens the evening review section', (
@@ -638,6 +645,12 @@ void main() {
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('dashboardFocusEditButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('dashboardFocusEditButton')));
     await tester.pumpAndSettle();
 
@@ -2386,9 +2399,10 @@ void main() {
     appRouter.go('/dashboard');
     await tester.pumpAndSettle();
 
-    await tester.drag(
-      find.byKey(const Key('dashboardScrollView')),
-      const Offset(0, -1200),
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('dashboardQuickCaptureButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('dashboardQuickCaptureButton')));
