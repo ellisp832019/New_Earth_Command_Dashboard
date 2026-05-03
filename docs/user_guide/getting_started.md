@@ -7,10 +7,11 @@ The current V0.1 flow is:
 1. Open the Dashboard.
 2. Set today's focus.
 3. Choose the Top 3 tasks.
-4. Work from Projects, Tasks, or Planner.
-5. Review the day in the Planner.
-6. Carry forward what still matters.
-7. Capture tomorrow's likely focus before closing the day.
+4. Use Quick Capture when a loose thought appears.
+5. Work from Projects, Tasks, or Planner.
+6. Review the day in the Planner.
+7. Carry forward what still matters.
+8. Capture tomorrow's likely focus before closing the day.
 
 ## Current App State
 
@@ -33,6 +34,7 @@ The current build now includes:
 - Content list and add-idea flow
 - Business list and add-opportunity flow
 - Wellbeing list and check-in flow
+- Inbox list and add-item flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -44,8 +46,8 @@ The current build now includes:
 
 Still intentionally early:
 
-- Supporting modules beyond navigation scaffolds
-- Quick Capture to real Inbox flow
+- Edit and convert flows for the supporting modules
+- Settings screen foundation
 
 ## Main Navigation
 
@@ -78,6 +80,7 @@ Use:
 - `Project Detail` to review a single project, add a linked task, edit it, or archive it when it should leave the active build view
 - `Project Detail` to also see recent linked journal history and reopen project notes from the build trail
 - `Tasks` to create tasks, edit them, search them, move them into Today, mark them Done, park them, archive older work, and manage Top 3 status
+- `Quick Capture` on the Dashboard to save a fast thought straight into Inbox without losing your place
 - `Dashboard` to stay anchored on today's focus
 
 ### End of Day
@@ -107,11 +110,11 @@ The More screen keeps the app calm by holding secondary areas:
 - Voice Assistant
 - Settings
 
-Some of these are still scaffolded for later MVP slices, but Learning now has its first real local flow.
+Some of these are still evolving, but the supporting modules now have real local-first foundations.
 
 ## Journal Flow
 
-From `More`:
+From `More` or the Dashboard Quick Capture button:
 
 1. Open `Journal`
 2. Tap `Add Entry`
@@ -176,6 +179,19 @@ From `More`:
 6. Save it back into the local list
 
 Each wellbeing check-in is stored locally and appears in the Wellbeing list with its energy, mood, stress, and suggested workload.
+
+## Inbox Flow
+
+From `More`:
+
+1. Open `Inbox`
+2. Tap `Add Inbox Item`
+3. Add a title or body
+4. Optionally choose a type and related project
+5. Leave it as `New` or mark it `Parked`
+6. Save it back into the local list
+
+Each inbox item is stored locally and appears in the Inbox list with its type, project, and status.
 
 ## Visual References
 

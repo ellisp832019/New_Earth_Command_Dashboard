@@ -30,6 +30,8 @@ V0.1 foundation is live:
 - Content list and add-idea foundation are live
 - Business list and add-opportunity foundation are live
 - Wellbeing list and check-in foundation are live
+- Inbox list and add-item foundation are live
+- Dashboard Quick Capture saves directly into Inbox
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

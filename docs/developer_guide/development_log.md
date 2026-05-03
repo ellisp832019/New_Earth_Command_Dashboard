@@ -380,6 +380,83 @@ Next recommended slice:
 Add inbox foundation
 ```
 
+## 2026-05-03 - Inbox Foundation
+
+Added the first real local inbox flow:
+
+- Added `InboxRepository` for local create and list operations
+- Added Riverpod inbox providers and action controller
+- Replaced the Inbox placeholder with a real local list screen
+- Added a first `AddInboxItemScreen` for creating captured items
+- Added title, body, type, project link, and status support
+- Added focused repository and widget coverage for inbox create/list behaviour
+- Updated README and getting started docs to reflect the live Inbox workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add dashboard quick capture to inbox
+```
+
+## 2026-05-03 - Dashboard Quick Capture Foundation
+
+Connected the Dashboard to the new Inbox flow:
+
+- Replaced the Dashboard Quick Capture placeholder with a real action
+- Added a simple quick capture dialog for title, body, and type
+- Reused the existing local inbox repository and controller
+- Saved quick captures directly into Inbox with default status `New`
+- Added focused widget coverage for dashboard-to-inbox capture
+- Updated README and getting started docs to reflect the live fast-capture flow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add settings foundation
+```
+
+## 2026-05-03 - Inbox Foundation
+
+Added the first real local inbox flow:
+
+- Added `InboxRepository` for local create and list operations
+- Added Riverpod inbox providers and action controller
+- Replaced the Inbox placeholder with a real local list screen
+- Added a first `AddInboxItemScreen` for creating captured items
+- Added title, body, type, project link, and status support
+- Added focused repository and widget coverage for inbox create/list behaviour
+- Updated README and getting started docs to reflect the live Inbox workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add dashboard quick capture to inbox
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:

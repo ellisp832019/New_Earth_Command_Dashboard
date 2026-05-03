@@ -11,6 +11,7 @@ import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart
 import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
+import 'package:new_earth_command_dashboard/features/inbox/data/inbox_repository.dart';
 import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
 import 'package:new_earth_command_dashboard/features/content/data/content_repository.dart';
 import 'package:new_earth_command_dashboard/features/learning/data/learning_repository.dart';
@@ -226,6 +227,15 @@ void main() {
     expect(find.text('No focus reason set yet.'), findsOneWidget);
     expect(find.text('No morning intention set yet.'), findsOneWidget);
     expect(find.text('No Top 3 tasks selected yet.'), findsOneWidget);
+    await tester.drag(
+      find.byKey(const Key('dashboardScrollView')),
+      const Offset(0, -1200),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('dashboardQuickCaptureButton')),
+      findsOneWidget,
+    );
     expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Projects'), findsOneWidget);
     expect(find.text('Tasks'), findsOneWidget);
@@ -2035,6 +2045,148 @@ void main() {
     expect(checkins.first.movementDone, isTrue);
     expect(checkins.first.foodWaterOk, isTrue);
     expect(checkins.first.meditationReflectionDone, isTrue);
+  });
+
+  testWidgets('inbox screen shows a calm empty state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/inbox');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inbox'), findsAtLeastNWidgets(1));
+    expect(
+      find.text(
+        'No inbox items yet. Capture a thought here so it does not get lost.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('inbox screen can create a linked item', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/inbox');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('addInboxItemButton')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('inboxTitleField')),
+      'Check Flutter navigation package',
+    );
+    await tester.enterText(
+      find.byKey(const Key('inboxBodyField')),
+      'Might help the next polish pass.',
+    );
+    await tester.tap(find.byKey(const Key('inboxTypeField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Learning Note').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('inboxProjectField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('inboxStatusField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('inboxStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveInboxButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveInboxButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inbox'), findsAtLeastNWidgets(1));
+    expect(
+      find.text('Check Flutter navigation package'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.text('Learning Note'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(find.text('Status: New'), findsOneWidget);
+
+    final items = await InboxRepository(database).getItems();
+    expect(items, hasLength(1));
+    expect(items.first.item.title, 'Check Flutter navigation package');
+    expect(items.first.projectName, 'MicroGrow');
+  });
+
+  testWidgets('dashboard quick capture saves a new inbox item', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/dashboard');
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.byKey(const Key('dashboardScrollView')),
+      const Offset(0, -1200),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('dashboardQuickCaptureButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quick Capture'), findsAtLeastNWidgets(1));
+    await tester.enterText(
+      find.byKey(const Key('dashboardQuickCaptureTitleField')),
+      'MicroGrow field note',
+    );
+    await tester.enterText(
+      find.byKey(const Key('dashboardQuickCaptureBodyField')),
+      'Check the sensor diagnostics wording later.',
+    );
+    await tester.tap(find.byKey(const Key('dashboardQuickCaptureTypeField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Idea').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('dashboardQuickCaptureSaveButton')));
+    await tester.pumpAndSettle();
+
+    final items = await InboxRepository(database).getItems();
+    expect(items, hasLength(1));
+    expect(items.first.item.title, 'MicroGrow field note');
+    expect(
+      items.first.item.body,
+      'Check the sensor diagnostics wording later.',
+    );
+    expect(items.first.item.type, 'Idea');
+    expect(items.first.item.status, 'New');
+
+    appRouter.go('/inbox');
+    await tester.pumpAndSettle();
+
+    expect(find.text('MicroGrow field note'), findsAtLeastNWidgets(1));
+    expect(find.text('Idea'), findsOneWidget);
+    expect(find.text('Status: New'), findsOneWidget);
   });
 
   testWidgets('journal screen can open and edit an existing entry', (

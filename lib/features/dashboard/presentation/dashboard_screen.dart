@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../inbox/application/inbox_controller.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../application/dashboard_controller.dart';
@@ -144,6 +145,10 @@ class _DashboardCardList extends StatelessWidget {
             return const _DashboardEveningReviewCard();
           }
 
+          if (card.title == 'Quick Capture') {
+            return const _DashboardQuickCaptureCard();
+          }
+
           return _DashboardCard(
             title: card.title,
             description: card.description,
@@ -218,6 +223,239 @@ class _DashboardCardData {
   final String? mainFocus;
   final String? focusReason;
   final String? morningIntention;
+}
+
+class _DashboardQuickCaptureCard extends ConsumerStatefulWidget {
+  const _DashboardQuickCaptureCard();
+
+  @override
+  ConsumerState<_DashboardQuickCaptureCard> createState() =>
+      _DashboardQuickCaptureCardState();
+}
+
+class _DashboardQuickCaptureCardState
+    extends ConsumerState<_DashboardQuickCaptureCard> {
+  bool _isSaving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.add_circle_outline, color: theme.colorScheme.primary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Quick Capture', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Capture a task, idea, note, or content seed.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    key: const Key('dashboardQuickCaptureButton'),
+                    onPressed: _isSaving ? null : () => _openQuickCapture(),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Quick Capture'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openQuickCapture() async {
+    final result = await showDialog<_QuickCaptureDraft>(
+      context: context,
+      builder: (dialogContext) => const _QuickCaptureDialog(),
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final item = await ref
+          .read(inboxActionsControllerProvider)
+          .createItem(
+            title: result.title,
+            body: result.body,
+            type: result.type,
+            status: 'New',
+          );
+
+      if (!mounted) {
+        return;
+      }
+
+      final label = item.title ?? item.body ?? 'Inbox item saved.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$label saved to Inbox.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+}
+
+class _QuickCaptureDraft {
+  const _QuickCaptureDraft({this.title, this.body, this.type});
+
+  final String? title;
+  final String? body;
+  final String? type;
+}
+
+class _QuickCaptureDialog extends StatefulWidget {
+  const _QuickCaptureDialog();
+
+  @override
+  State<_QuickCaptureDialog> createState() => _QuickCaptureDialogState();
+}
+
+class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _bodyController;
+  String? _type;
+
+  static const _typeOptions = [
+    'Task',
+    'Idea',
+    'Journal Note',
+    'Content Idea',
+    'Learning Note',
+    'Business Opportunity',
+    'Future Idea',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _bodyController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Quick Capture'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                key: const Key('dashboardQuickCaptureTitleField'),
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('dashboardQuickCaptureBodyField'),
+                controller: _bodyController,
+                decoration: const InputDecoration(
+                  labelText: 'Body',
+                  border: OutlineInputBorder(),
+                ),
+                minLines: 3,
+                maxLines: 5,
+                validator: (value) {
+                  final title = _titleController.text.trim();
+                  final body = value?.trim() ?? '';
+                  if (title.isEmpty && body.isEmpty) {
+                    return 'Please enter a title or body.';
+                  }
+
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String?>(
+                key: const Key('dashboardQuickCaptureTypeField'),
+                initialValue: _type,
+                decoration: const InputDecoration(
+                  labelText: 'Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('No type selected'),
+                  ),
+                  ..._typeOptions.map(
+                    (type) => DropdownMenuItem<String?>(
+                      value: type,
+                      child: Text(type),
+                    ),
+                  ),
+                ],
+                onChanged: (value) => setState(() => _type = value),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: const Key('dashboardQuickCaptureSaveButton'),
+          onPressed: () {
+            if (!_formKey.currentState!.validate()) {
+              return;
+            }
+
+            Navigator.of(context).pop(
+              _QuickCaptureDraft(
+                title: _optionalText(_titleController.text),
+                body: _optionalText(_bodyController.text),
+                type: _type,
+              ),
+            );
+          },
+          child: const Text('Save to Inbox'),
+        ),
+      ],
+    );
+  }
+
+  String? _optionalText(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    return trimmed;
+  }
 }
 
 class _DashboardFocusCard extends ConsumerStatefulWidget {

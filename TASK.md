@@ -1,8 +1,8 @@
-# TASK - Inbox Foundation
+# TASK - Settings Foundation
 
 ## Goal
 
-Build the first real Inbox flow so quick captured items can be stored locally before being sorted into the wider New Earth system.
+Build the first real Settings flow so core local app preferences can be viewed and adjusted safely.
 
 ## Source of Truth
 
@@ -18,22 +18,19 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current dashboard, projects, tasks, planner, journal, learning, content, business, and wellbeing flows working.
-2. Add a local `InboxRepository` for loading and creating inbox items.
-3. Build a first real `InboxScreen` backed by local data instead of placeholder content.
-4. Build a first add/create inbox item screen.
+1. Keep the current dashboard, projects, tasks, planner, journal, learning, content, business, wellbeing, inbox, and dashboard quick capture flows working.
+2. Add a local `SettingsRepository` or reuse the existing app settings data source cleanly.
+3. Build a first real `SettingsScreen` backed by local data instead of placeholder content.
+4. Expose the current MVP-safe settings already present in local storage where practical.
 5. Support the core MVP-safe fields for this slice:
-   - title
-   - body
-   - type
-   - related project
-   - status
-6. Add inbox routes and navigation from `More`.
-7. Add focused repository and widget coverage for create and list flows.
-8. Keep edit, convert flows, archive flows, and dashboard quick-capture entry points out of scope for this slice.
+   - top 3 task limit view
+   - dashboard card visibility toggles that already exist in settings storage where practical
+   - app version display if already available
+6. Add focused widget and repository coverage for settings load/save where practical.
+7. Keep theme switching, destructive reset flows, and advanced configuration out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open Inbox from `More`, see locally stored inbox items, add a new captured item, and have it persist locally.
+The user should be able to open Settings, see real locally stored settings information, adjust safe MVP settings, and have those choices persist locally.
 
-This should create the first real quick-capture holding flow for the MVP.
+This should create the first real configuration surface for the MVP.
