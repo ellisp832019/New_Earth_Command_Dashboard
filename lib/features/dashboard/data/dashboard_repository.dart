@@ -9,6 +9,10 @@ class DashboardSnapshot {
     required this.activeProjectCount,
     required this.topTasks,
     required this.topTaskTitles,
+    required this.showWellbeingCard,
+    required this.showBusinessCard,
+    required this.showLearningCard,
+    required this.showContentCard,
     this.mainFocus,
     this.focusReason,
     this.morningIntention,
@@ -19,6 +23,10 @@ class DashboardSnapshot {
   final int activeProjectCount;
   final List<DashboardTopTask> topTasks;
   final List<String> topTaskTitles;
+  final bool showWellbeingCard;
+  final bool showBusinessCard;
+  final bool showLearningCard;
+  final bool showContentCard;
   final String? mainFocus;
   final String? focusReason;
   final String? morningIntention;
@@ -52,6 +60,9 @@ class DashboardRepository {
     final todayPlan = await (_database.select(
       _database.dailyPlans,
     )..where((table) => table.date.equals(today))).getSingleOrNull();
+    final settings = await (_database.select(
+      _database.appSettings,
+    )..limit(1)).getSingleOrNull();
     final activeProjectCount = await _activeProjectCount();
     final topTasks = await _topTasks(todayPlan);
 
@@ -64,6 +75,10 @@ class DashboardRepository {
       activeProjectCount: activeProjectCount,
       topTasks: topTasks,
       topTaskTitles: topTasks.map((task) => task.title).toList(),
+      showWellbeingCard: settings?.showWellbeingCard ?? true,
+      showBusinessCard: settings?.showBusinessCard ?? true,
+      showLearningCard: settings?.showLearningCard ?? true,
+      showContentCard: settings?.showContentCard ?? true,
     );
   }
 

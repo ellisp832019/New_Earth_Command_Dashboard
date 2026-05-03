@@ -26,12 +26,13 @@ V0.1 foundation is live:
 - Task status actions, filters, and archive foundation are live
 - Task search by title and notes is live
 - Journal list, create-entry, and edit-entry foundation are live
-- Learning list and add-topic foundation are live
+- Learning list, add-topic, and edit-topic foundation are live
 - Content list and add-idea foundation are live
 - Business list and add-opportunity foundation are live
 - Wellbeing list and check-in foundation are live
 - Inbox list and add-item foundation are live
 - Dashboard Quick Capture saves directly into Inbox
+- Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

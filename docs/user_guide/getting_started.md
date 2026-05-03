@@ -30,11 +30,12 @@ The current build now includes:
 - Task status and project filters
 - Task search by title and notes
 - Journal list, create-entry, and edit-entry flow
-- Learning list and add-topic flow
+- Learning list, add-topic, and edit-topic flow
 - Content list and add-idea flow
 - Business list and add-opportunity flow
 - Wellbeing list and check-in flow
 - Inbox list and add-item flow
+- Settings screen with local card visibility controls and app version display
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -47,7 +48,6 @@ The current build now includes:
 Still intentionally early:
 
 - Edit and convert flows for the supporting modules
-- Settings screen foundation
 
 ## Main Navigation
 
@@ -112,6 +112,21 @@ The More screen keeps the app calm by holding secondary areas:
 
 Some of these are still evolving, but the supporting modules now have real local-first foundations.
 
+## Settings Flow
+
+From `More`:
+
+1. Open `Settings`
+2. Review the fixed Top 3 task limit for the current MVP
+3. Show or hide the Dashboard support cards for:
+   - Wellbeing
+   - Business
+   - Learning
+   - Content
+4. Check the current app version at the bottom of the screen
+
+These preferences are stored locally and the Dashboard updates to match them.
+
 ## Journal Flow
 
 From `More` or the Dashboard Quick Capture button:
@@ -138,6 +153,13 @@ From `More`:
 6. Save it back into the local list
 
 Each learning item is stored locally and appears in the Learning list with its project, status, confidence, and next step.
+
+To refine an existing topic later:
+
+1. Open `Learning`
+2. Tap an existing learning card
+3. Update the topic, project link, status, reason, confidence, notes, or next step
+4. Save it back into the local list
 
 ## Content Flow
 

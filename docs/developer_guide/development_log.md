@@ -431,6 +431,59 @@ Next recommended slice:
 Add settings foundation
 ```
 
+## 2026-05-03 - Settings Foundation
+
+Added the first real local settings flow:
+
+- Added `SettingsRepository` for local settings read and card-visibility updates
+- Added Riverpod settings providers and action controller
+- Replaced the Settings placeholder with a real local settings screen
+- Exposed the current Top 3 task limit as a stable read-only MVP rule
+- Added Dashboard card visibility toggles for Wellbeing, Business, Learning, and Content
+- Added app version display for the current local build
+- Wired the Dashboard to respect saved card visibility settings
+- Added focused repository and widget coverage for settings load/save behaviour
+- Updated README and getting started docs to reflect the live Settings workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add learning edit foundation
+```
+
+## 2026-05-03 - Learning Edit Foundation
+
+Added the first safe edit flow for Learning:
+
+- Added repository support to load and update an existing learning item
+- Added `learningItemProvider` and learning controller update actions
+- Extended `AddLearningItemScreen` to support both create and edit modes
+- Made learning list cards open the edit screen
+- Added focused repository and widget coverage for reopening and editing learning topics
+- Updated README and getting started docs to reflect the live editable Learning workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add content edit foundation
+```
+
 ## 2026-05-03 - Inbox Foundation
 
 Added the first real local inbox flow:

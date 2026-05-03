@@ -95,6 +95,36 @@ class LearningRepository {
     return getById(learningItemId);
   }
 
+  Future<LearningItem> updateItem({
+    required String learningItemId,
+    required String topic,
+    String? projectId,
+    String? reasonForLearning,
+    String? resourceLink,
+    String status = 'To Learn',
+    String? notes,
+    String? nextStep,
+    String? skillConfidence,
+  }) async {
+    await (_database.update(
+      _database.learningItems,
+    )..where((table) => table.learningItemId.equals(learningItemId))).write(
+      LearningItemsCompanion(
+        topic: Value(topic.trim()),
+        projectId: Value(projectId),
+        reasonForLearning: Value(_normalizeText(reasonForLearning)),
+        resourceLink: Value(_normalizeText(resourceLink)),
+        status: Value(status),
+        notes: Value(_normalizeText(notes)),
+        nextStep: Value(_normalizeText(nextStep)),
+        skillConfidence: Value(_normalizeText(skillConfidence)),
+        updatedAt: Value(_now()),
+      ),
+    );
+
+    return getById(learningItemId);
+  }
+
   Future<LearningItem> getById(String learningItemId) {
     return (_database.select(_database.learningItems)
           ..where((table) => table.learningItemId.equals(learningItemId)))

@@ -38,4 +38,48 @@ void main() {
     expect(items.first.projectName, 'Learning Project');
     expect(items.first.item.nextStep, 'Build the first repository methods.');
   });
+
+  test(
+    'learning repository updates an existing learning item locally',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final projectRepository = ProjectRepository(database);
+      final learningRepository = LearningRepository(database);
+      final project = await projectRepository.createProject(
+        name: 'Edited Learning Project',
+      );
+
+      final createdItem = await learningRepository.createItem(
+        topic: 'Original topic',
+        projectId: project.projectId,
+        status: 'To Learn',
+        nextStep: 'Original next step.',
+      );
+
+      final updatedItem = await learningRepository.updateItem(
+        learningItemId: createdItem.learningItemId,
+        topic: 'Edited topic',
+        projectId: project.projectId,
+        reasonForLearning: 'This skill now supports a real build step.',
+        resourceLink: 'https://example.com/edited-resource',
+        status: 'Applied',
+        notes: 'The topic has moved from study into use.',
+        nextStep: 'Use the pattern in the app.',
+        skillConfidence: 'High',
+      );
+
+      expect(updatedItem.topic, 'Edited topic');
+      expect(
+        updatedItem.reasonForLearning,
+        'This skill now supports a real build step.',
+      );
+      expect(updatedItem.resourceLink, 'https://example.com/edited-resource');
+      expect(updatedItem.status, 'Applied');
+      expect(updatedItem.notes, 'The topic has moved from study into use.');
+      expect(updatedItem.nextStep, 'Use the pattern in the app.');
+      expect(updatedItem.skillConfidence, 'High');
+    },
+  );
 }

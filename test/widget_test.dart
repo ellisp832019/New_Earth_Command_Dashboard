@@ -19,6 +19,7 @@ import 'package:new_earth_command_dashboard/features/planner/application/planner
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
 import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
+import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
@@ -36,6 +37,10 @@ void main() {
             activeProjectCount: 9,
             topTasks: const [],
             topTaskTitles: const [],
+            showWellbeingCard: true,
+            showBusinessCard: true,
+            showLearningCard: true,
+            showContentCard: true,
             mainFocus: null,
             focusReason: null,
             morningIntention: null,
@@ -268,6 +273,52 @@ void main() {
     expect(find.text('Inbox'), findsOneWidget);
     expect(find.text('Voice Assistant'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
+  });
+
+  testWidgets('settings screen loads stored values and persists card toggles', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/settings');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dashboard Preferences'), findsOneWidget);
+    expect(find.byKey(const Key('settingsTopTaskLimitValue')), findsOneWidget);
+    expect(find.text('3 priority tasks per day'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('settingsAppVersionValue')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('settingsAppVersionValue')), findsOneWidget);
+    expect(find.text('1.0.0+1'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('settingsShowWellbeingCardToggle')));
+    await tester.pumpAndSettle();
+
+    final snapshot = await SettingsRepository(database).getSettings();
+    expect(snapshot.settings.showWellbeingCard, isFalse);
+
+    appRouter.go('/dashboard');
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('dashboardScrollView')),
+      const Offset(0, -1200),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wellbeing'), findsNothing);
+    expect(find.text('Business Reminder'), findsOneWidget);
   });
 
   testWidgets('projects screen shows seeded project cards', (
@@ -1737,6 +1788,88 @@ void main() {
     expect(items, hasLength(1));
     expect(items.first.item.topic, 'Flutter Drift Database');
     expect(items.first.projectName, 'MicroGrow');
+  });
+
+  testWidgets('learning screen can open and edit an existing topic', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final learningRepository = LearningRepository(database);
+    final createdItem = await learningRepository.createItem(
+      topic: 'Original learning topic',
+      status: 'To Learn',
+      nextStep: 'Original next step.',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/learning');
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(Key('learningItemCard-${createdItem.learningItemId}')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Learning Topic'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('learningTopicField')),
+      'Edited learning topic',
+    );
+    await tester.tap(find.byKey(const Key('learningStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Applied').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('learningConfidenceField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('High').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('learningReasonField')),
+      'This now supports a real feature slice.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('learningNextStepField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('learningNextStepField')),
+      'Reuse the edit pattern elsewhere.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveLearningButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveLearningButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edited learning topic'), findsOneWidget);
+    expect(find.text('Status: Applied'), findsOneWidget);
+    expect(find.text('Confidence: High'), findsOneWidget);
+    expect(
+      find.text('Next Step: Reuse the edit pattern elsewhere.'),
+      findsOneWidget,
+    );
+
+    final updatedItem = await learningRepository.getById(
+      createdItem.learningItemId,
+    );
+    expect(updatedItem.topic, 'Edited learning topic');
+    expect(updatedItem.status, 'Applied');
+    expect(updatedItem.skillConfidence, 'High');
+    expect(
+      updatedItem.reasonForLearning,
+      'This now supports a real feature slice.',
+    );
+    expect(updatedItem.nextStep, 'Reuse the edit pattern elsewhere.');
   });
 
   testWidgets('content screen shows a calm empty state', (

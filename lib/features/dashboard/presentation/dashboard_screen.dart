@@ -70,7 +70,7 @@ class _DashboardCardList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = [
+    final cards = <_DashboardCardData>[
       _DashboardCardData(
         title: 'Today\'s Focus',
         description: null,
@@ -97,32 +97,55 @@ class _DashboardCardList extends StatelessWidget {
         description: '${snapshot.activeProjectCount} projects are available.',
         icon: Icons.folder_copy_outlined,
       ),
-      const _DashboardCardData(
-        title: 'Learning Focus',
-        description: 'Track the skill that supports today\'s build.',
-        icon: Icons.school_outlined,
-      ),
-      const _DashboardCardData(
-        title: 'Content Focus',
-        description: 'Turn progress into public awareness.',
-        icon: Icons.campaign_outlined,
-      ),
-      const _DashboardCardData(
-        title: 'Business Reminder',
-        description: 'Keep funding and opportunity actions visible.',
-        icon: Icons.handshake_outlined,
-      ),
-      const _DashboardCardData(
-        title: 'Wellbeing',
-        description: 'Build New Earth without burning out.',
-        icon: Icons.self_improvement_outlined,
-      ),
+    ];
+
+    if (snapshot.showLearningCard) {
+      cards.add(
+        const _DashboardCardData(
+          title: 'Learning Focus',
+          description: 'Track the skill that supports today\'s build.',
+          icon: Icons.school_outlined,
+        ),
+      );
+    }
+
+    if (snapshot.showContentCard) {
+      cards.add(
+        const _DashboardCardData(
+          title: 'Content Focus',
+          description: 'Turn progress into public awareness.',
+          icon: Icons.campaign_outlined,
+        ),
+      );
+    }
+
+    if (snapshot.showBusinessCard) {
+      cards.add(
+        const _DashboardCardData(
+          title: 'Business Reminder',
+          description: 'Keep funding and opportunity actions visible.',
+          icon: Icons.handshake_outlined,
+        ),
+      );
+    }
+
+    if (snapshot.showWellbeingCard) {
+      cards.add(
+        const _DashboardCardData(
+          title: 'Wellbeing',
+          description: 'Build New Earth without burning out.',
+          icon: Icons.self_improvement_outlined,
+        ),
+      );
+    }
+
+    cards.add(
       const _DashboardCardData(
         title: 'Quick Capture',
         description: 'Capture a task, idea, note, or content seed.',
         icon: Icons.add_circle_outline,
       ),
-    ];
+    );
 
     return SliverPadding(
       padding: const EdgeInsets.all(20),

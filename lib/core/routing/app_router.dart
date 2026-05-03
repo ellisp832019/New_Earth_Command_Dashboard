@@ -6,6 +6,7 @@ import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/inbox/presentation/add_inbox_item_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
 import '../../features/journal/presentation/add_edit_journal_entry_screen.dart';
 import '../../features/journal/presentation/journal_screen.dart';
@@ -150,6 +151,12 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => const AddLearningItemScreen(),
         ),
+        GoRoute(
+          path: ':learningItemId/edit',
+          builder: (context, state) => AddLearningItemScreen(
+            learningItemId: state.pathParameters['learningItemId']!,
+          ),
+        ),
       ],
     ),
     GoRoute(
@@ -189,6 +196,12 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.inbox,
       builder: (context, state) => const InboxScreen(),
+      routes: [
+        GoRoute(
+          path: 'new',
+          builder: (context, state) => const AddInboxItemScreen(),
+        ),
+      ],
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

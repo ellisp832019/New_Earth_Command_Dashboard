@@ -1,8 +1,8 @@
-# TASK - Settings Foundation
+# TASK - Content Edit Foundation
 
 ## Goal
 
-Build the first real Settings flow so core local app preferences can be viewed and adjusted safely.
+Build the first real edit flow for Content so saved ideas can be reopened and refined locally.
 
 ## Source of Truth
 
@@ -18,19 +18,15 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current dashboard, projects, tasks, planner, journal, learning, content, business, wellbeing, inbox, and dashboard quick capture flows working.
-2. Add a local `SettingsRepository` or reuse the existing app settings data source cleanly.
-3. Build a first real `SettingsScreen` backed by local data instead of placeholder content.
-4. Expose the current MVP-safe settings already present in local storage where practical.
-5. Support the core MVP-safe fields for this slice:
-   - top 3 task limit view
-   - dashboard card visibility toggles that already exist in settings storage where practical
-   - app version display if already available
-6. Add focused widget and repository coverage for settings load/save where practical.
-7. Keep theme switching, destructive reset flows, and advanced configuration out of scope for this slice.
+1. Keep the current dashboard, projects, tasks, planner, journal, learning, content, business, wellbeing, inbox, quick capture, and settings flows working.
+2. Add the first safe edit path for an existing Content item.
+3. Allow a Content list item to open an edit screen.
+4. Reuse the existing add-content form cleanly if practical instead of creating a second form pattern.
+5. Support updating the current MVP-safe Content fields already present in local storage.
+6. Persist updates locally and refresh the Content list after save.
+7. Add focused widget and repository coverage for reopening and editing a Content item.
+8. Keep archive, delete, publish scheduling, and advanced automation out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open Settings, see real locally stored settings information, adjust safe MVP settings, and have those choices persist locally.
-
-This should create the first real configuration surface for the MVP.
+The user should be able to open a saved Content item, edit its current fields safely, save it locally, and see the updated version reflected in the live Content list.

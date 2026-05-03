@@ -98,33 +98,38 @@ class _LearningItemCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      key: Key('learningItemCard-${item.item.learningItemId}'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(item.item.topic, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (item.projectName != null)
-                  _LearningInfoChip(label: item.projectName!),
-                _LearningInfoChip(label: 'Status: ${item.item.status}'),
-                _LearningInfoChip(
-                  label:
-                      'Confidence: ${item.item.skillConfidence ?? 'Not set yet'}',
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Next Step: ${item.item.nextStep ?? 'Choose the next learning action.'}',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
+      child: InkWell(
+        key: Key('learningItemCard-${item.item.learningItemId}'),
+        borderRadius: BorderRadius.circular(12),
+        onTap: () =>
+            context.push(RouteNames.editLearning(item.item.learningItemId)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.item.topic, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (item.projectName != null)
+                    _LearningInfoChip(label: item.projectName!),
+                  _LearningInfoChip(label: 'Status: ${item.item.status}'),
+                  _LearningInfoChip(
+                    label:
+                        'Confidence: ${item.item.skillConfidence ?? 'Not set yet'}',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Next Step: ${item.item.nextStep ?? 'Choose the next learning action.'}',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+          ),
         ),
       ),
     );

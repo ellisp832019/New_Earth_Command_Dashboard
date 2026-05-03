@@ -17,6 +17,7 @@ abstract final class RouteNames {
   static const wellbeing = '/wellbeing';
   static const newWellbeing = '/wellbeing/new';
   static const inbox = '/inbox';
+  static const newInbox = '/inbox/new';
   static const settings = '/settings';
   static const voiceAssistant = '/voice-assistant';
 
@@ -28,6 +29,10 @@ abstract final class RouteNames {
 
   static String editJournal(String journalEntryId) {
     return '/journal/$journalEntryId/edit';
+  }
+
+  static String editLearning(String learningItemId) {
+    return '/learning/$learningItemId/edit';
   }
 
   static String newTaskForProject(String projectId) {

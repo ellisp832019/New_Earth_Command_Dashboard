@@ -16,6 +16,14 @@ final learningItemsProvider = FutureProvider<List<LearningListItem>>((
   return ref.watch(learningRepositoryProvider).getItems();
 });
 
+final learningItemProvider = FutureProvider.family<LearningItem, String>((
+  ref,
+  learningItemId,
+) async {
+  await ref.watch(databaseReadyProvider.future);
+  return ref.watch(learningRepositoryProvider).getById(learningItemId);
+});
+
 final learningActionsControllerProvider = Provider<LearningActionsController>((
   ref,
 ) {
@@ -54,6 +62,45 @@ class LearningActionsController {
     if (projectId != null) {
       _ref.invalidate(projectDetailProvider(projectId));
     }
+    return item;
+  }
+
+  Future<LearningItem> updateItem({
+    required String learningItemId,
+    required String topic,
+    String? projectId,
+    String? reasonForLearning,
+    String? resourceLink,
+    String status = 'To Learn',
+    String? notes,
+    String? nextStep,
+    String? skillConfidence,
+  }) async {
+    final existing = await _ref
+        .read(learningRepositoryProvider)
+        .getById(learningItemId);
+    final item = await _ref
+        .read(learningRepositoryProvider)
+        .updateItem(
+          learningItemId: learningItemId,
+          topic: topic,
+          projectId: projectId,
+          reasonForLearning: reasonForLearning,
+          resourceLink: resourceLink,
+          status: status,
+          notes: notes,
+          nextStep: nextStep,
+          skillConfidence: skillConfidence,
+        );
+
+    _ref.invalidate(learningItemsProvider);
+    _ref.invalidate(learningItemProvider(learningItemId));
+
+    final projectIds = {existing.projectId, projectId}.whereType<String>();
+    for (final linkedProjectId in projectIds) {
+      _ref.invalidate(projectDetailProvider(linkedProjectId));
+    }
+
     return item;
   }
 }
