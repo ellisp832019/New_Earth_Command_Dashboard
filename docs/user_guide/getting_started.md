@@ -23,12 +23,13 @@ The current build now includes:
 - Automatic blank DailyPlan creation for today
 - Live Dashboard cards for focus, Top 3 tasks, active projects, and evening review entry
 - Live Projects and Tasks screens
-- Project detail, add/edit, and archive flows
+- Project detail, add/edit, archive, and linked journal surfacing
 - Task create/edit flows
 - Task status actions for Move To Today, Mark Done, Park, and Archive
 - Task status and project filters
 - Task search by title and notes
 - Journal list, create-entry, and edit-entry flow
+- Learning list and add-topic flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -72,6 +73,7 @@ Use:
 
 - `Projects` to stay oriented around the wider mission
 - `Project Detail` to review a single project, add a linked task, edit it, or archive it when it should leave the active build view
+- `Project Detail` to also see recent linked journal history and reopen project notes from the build trail
 - `Tasks` to create tasks, edit them, search them, move them into Today, mark them Done, park them, archive older work, and manage Top 3 status
 - `Dashboard` to stay anchored on today's focus
 
@@ -102,7 +104,7 @@ The More screen keeps the app calm by holding secondary areas:
 - Voice Assistant
 - Settings
 
-Some of these are still scaffolded for later MVP slices.
+Some of these are still scaffolded for later MVP slices, but Learning now has its first real local flow.
 
 ## Journal Flow
 
@@ -117,6 +119,19 @@ From `More`:
 7. Reopen any saved entry from the list to update it later
 
 Each entry is stored locally, appears in the Journal list after saving, and can be reopened for editing.
+
+## Learning Flow
+
+From `More`:
+
+1. Open `Learning`
+2. Tap `Add Learning Topic`
+3. Add the topic you want to build skill in
+4. Optionally link it to a related project
+5. Add why it matters, a resource link, notes, confidence, and the next step
+6. Save it back into the local list
+
+Each learning item is stored locally and appears in the Learning list with its project, status, confidence, and next step.
 
 ## Visual References
 

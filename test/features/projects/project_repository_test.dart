@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
+import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 
@@ -77,6 +78,7 @@ void main() {
 
     final projectRepository = ProjectRepository(database);
     final taskRepository = TaskRepository(database);
+    final journalRepository = JournalRepository(database);
 
     final project = await projectRepository.createProject(
       name: 'MicroGrow Diagnostics',
@@ -96,14 +98,27 @@ void main() {
       status: 'Blocked',
       priority: 'Medium',
     );
+    await journalRepository.createEntry(
+      date: DateTime(2026, 5, 2, 10),
+      title: 'Diagnostics progress log',
+      projectId: project.projectId,
+      category: 'Build Log',
+      whatIWorkedOn: 'Tracked the first diagnostics improvements.',
+    );
 
     final detail = await projectRepository.getProjectDetail(project.projectId);
 
     expect(detail.project.projectId, project.projectId);
     expect(detail.activeTasks, hasLength(1));
     expect(detail.blockedTasks, hasLength(1));
+    expect(detail.recentJournalEntries, hasLength(1));
     expect(detail.activeTasks.first.title, 'Check diagnostics status card');
     expect(detail.blockedTasks.first.title, 'Wait for missing sensor board');
+    expect(detail.recentJournalEntries.first.title, 'Diagnostics progress log');
+    expect(
+      detail.recentJournalEntries.first.preview,
+      'Tracked the first diagnostics improvements.',
+    );
   });
 
   test(

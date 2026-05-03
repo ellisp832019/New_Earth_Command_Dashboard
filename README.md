@@ -20,11 +20,13 @@ V0.1 foundation is live:
 - Projects screen reads seeded projects
 - Project detail and add/edit flows are live
 - Project archive from Project Detail is live
+- Project detail now surfaces linked journal history
 - Tasks screen reads local tasks
 - Task create/edit flows are live
 - Task status actions, filters, and archive foundation are live
 - Task search by title and notes is live
 - Journal list, create-entry, and edit-entry foundation are live
+- Learning list and add-topic foundation are live
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

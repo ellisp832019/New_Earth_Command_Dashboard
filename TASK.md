@@ -1,8 +1,8 @@
-# TASK - Project Journal Surfacing
+# TASK - Content Foundation
 
 ## Goal
 
-Show linked journal history on Project Detail so project pages start to feel like real build homes, not just metadata cards.
+Build the first real Content flow so New Earth communication ideas can be tracked locally and linked to projects.
 
 ## Source of Truth
 
@@ -18,20 +18,26 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current project detail, journal list, and journal create/edit flows working.
-2. Extend the project detail repository snapshot so it loads recent linked journal entries, not just a count.
-3. Show a calm read-only journal section on Project Detail with:
-   - date
+1. Keep the current dashboard, projects, tasks, planner, journal, and learning flows working.
+2. Add a local `ContentRepository` for loading and creating content items.
+3. Build a first real `ContentScreen` backed by local data instead of placeholder content.
+4. Build a first add/create content screen.
+5. Support the core MVP-safe fields for this slice:
    - title
-   - category
-   - short preview
-4. Keep the existing journal count signal if it still helps, but do not duplicate the exact same information noisily.
-5. Make journal items in Project Detail open the existing journal edit screen.
-6. Add focused repository and widget coverage for linked journal surfacing.
-7. Keep project-linked learning/content detail lists, project activity timelines, and cross-module conversions out of scope for this slice.
+   - related project
+   - platform
+   - content type
+   - status
+   - draft text
+   - image needed
+   - image prompt
+   - notes
+6. Add content routes and navigation from `More`.
+7. Add focused repository and widget coverage for create and list flows.
+8. Keep edit, publish-date scheduling, published-link flow, journal linking, and dashboard summaries out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open a project and immediately see its recent linked journal history, then open one of those entries for fuller editing if needed.
+The user should be able to open Content from `More`, see locally stored content items, add a new idea or draft, optionally link it to a project, and have it persist locally.
 
-This should make Project Detail feel more like the real build record for each New Earth project.
+This should create the first real communication-tracking flow for the MVP.

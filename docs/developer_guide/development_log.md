@@ -251,6 +251,57 @@ Next recommended slice:
 Show linked journal entries on Project Detail
 ```
 
+## 2026-05-03 - Project Journal Surfacing
+
+Made Project Detail feel more like a real build home:
+
+- Extended the project detail snapshot to load recent linked journal entries
+- Added a calm read-only `Recent Journal Entries` section on Project Detail
+- Kept journal counts while avoiding a heavy timeline-style view
+- Made project-linked journal items open the existing journal edit screen
+- Added focused repository and widget coverage for linked journal surfacing
+- Updated README and getting started docs to reflect the richer Project Detail flow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add learning foundation
+```
+
+## 2026-05-03 - Learning Foundation
+
+Added the first real local learning flow:
+
+- Added `LearningRepository` for local create and list operations
+- Added Riverpod learning providers and action controller
+- Replaced the Learning placeholder with a real local list screen
+- Added a first `AddLearningItemScreen` for creating learning topics
+- Added project linking, status, notes, confidence, resource link, and next-step support
+- Added focused repository and widget coverage for learning create/list behaviour
+- Updated README and getting started docs to reflect the live Learning workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add content foundation
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:

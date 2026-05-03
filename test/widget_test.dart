@@ -11,6 +11,7 @@ import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
 import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
+import 'package:new_earth_command_dashboard/features/learning/data/learning_repository.dart';
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
@@ -934,6 +935,57 @@ void main() {
     expect(createdTask.projectId, project.projectId);
   });
 
+  testWidgets('project detail shows linked journal entries and opens edit', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final journalRepository = JournalRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Project Journal Home',
+      status: 'Active',
+      priority: 'High',
+      progressPercentage: 20,
+    );
+    final entry = await journalRepository.createEntry(
+      date: DateTime(2026, 5, 3),
+      title: 'Project journal reflection',
+      projectId: project.projectId,
+      category: 'Project Update',
+      whatIWorkedOn: 'Captured the latest project build note.',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/projects/${project.projectId}');
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Recent Journal Entries'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recent Journal Entries'), findsOneWidget);
+    expect(find.text('Project journal reflection'), findsOneWidget);
+    expect(
+      find.text('Captured the latest project build note.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(Key('projectJournalEntry-${entry.journalEntryId}')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Journal Entry'), findsOneWidget);
+    expect(find.text('Project journal reflection'), findsOneWidget);
+  });
+
   testWidgets('project detail can archive a project after confirmation', (
     WidgetTester tester,
   ) async {
@@ -1571,6 +1623,107 @@ void main() {
     expect(entries.first.entry.title, 'Daily build reflection');
     expect(entries.first.projectName, 'MicroGrow');
     expect(entries.first.taskTitle, 'MicroGrow journal task');
+  });
+
+  testWidgets('learning screen shows a calm empty state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/learning');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learning'), findsAtLeastNWidgets(1));
+    expect(
+      find.text(
+        'No learning topics yet. Add a skill that will help you build New Earth.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('learning screen can create a linked learning item', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/learning');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('addLearningItemButton')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('learningTopicField')),
+      'Flutter Drift Database',
+    );
+    await tester.tap(find.byKey(const Key('learningProjectField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('learningReasonField')),
+      'The dashboard needs calm and reliable local data.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('learningResourceLinkField')),
+      'https://drift.simonbinder.eu',
+    );
+    await tester.tap(find.byKey(const Key('learningStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Learning').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('learningConfidenceField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Medium').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('learningNotesField')),
+      'Start with the repository and list flow.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('learningNextStepField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('learningNextStepField')),
+      'Wire the screen to local data.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveLearningButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveLearningButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learning'), findsAtLeastNWidgets(1));
+    expect(find.text('Flutter Drift Database'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(find.text('Status: Learning'), findsOneWidget);
+    expect(find.text('Confidence: Medium'), findsOneWidget);
+    expect(
+      find.text('Next Step: Wire the screen to local data.'),
+      findsOneWidget,
+    );
+
+    final items = await LearningRepository(database).getItems();
+    expect(items, hasLength(1));
+    expect(items.first.item.topic, 'Flutter Drift Database');
+    expect(items.first.projectName, 'MicroGrow');
   });
 
   testWidgets('journal screen can open and edit an existing entry', (

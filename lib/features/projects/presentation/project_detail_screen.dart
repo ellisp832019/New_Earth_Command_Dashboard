@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../application/projects_controller.dart';
+import '../data/project_repository.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -141,6 +142,13 @@ class ProjectDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
+                title: 'Recent Journal Entries',
+                child: _LinkedJournalSection(
+                  entries: detail.recentJournalEntries,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _ProjectSectionCard(
                 title: 'Notes',
                 body: project.notes ?? 'No project notes have been added yet.',
               ),
@@ -203,6 +211,80 @@ class ProjectDetailScreen extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('${project.name} archived.')));
+  }
+}
+
+class _LinkedJournalSection extends StatelessWidget {
+  const _LinkedJournalSection({required this.entries});
+
+  final List<ProjectLinkedJournalEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (entries.isEmpty) {
+      return Text(
+        'No journal entries are linked to this project yet.',
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
+    return Column(
+      children: entries.map((entry) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: InkWell(
+            key: Key('projectJournalEntry-${entry.journalEntryId}'),
+            onTap: () =>
+                context.push(RouteNames.editJournal(entry.journalEntryId)),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.menu_book_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(entry.title, style: theme.textTheme.bodyMedium),
+                        const SizedBox(height: 2),
+                        Text(
+                          _entryMeta(entry),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (entry.preview?.isNotEmpty == true) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            entry.preview!,
+                            style: theme.textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  String _entryMeta(ProjectLinkedJournalEntry entry) {
+    final dateLabel =
+        '${entry.date.day.toString().padLeft(2, '0')}/${entry.date.month.toString().padLeft(2, '0')}/${entry.date.year}';
+    if (entry.category?.isNotEmpty == true) {
+      return '$dateLabel   ${entry.category}';
+    }
+
+    return dateLabel;
   }
 }
 

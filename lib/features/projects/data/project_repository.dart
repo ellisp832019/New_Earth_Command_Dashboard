@@ -8,6 +8,7 @@ class ProjectDetailSnapshot {
     required this.project,
     required this.activeTasks,
     required this.blockedTasks,
+    required this.recentJournalEntries,
     required this.journalEntryCount,
     required this.learningItemCount,
     required this.contentItemCount,
@@ -16,9 +17,26 @@ class ProjectDetailSnapshot {
   final Project project;
   final List<Task> activeTasks;
   final List<Task> blockedTasks;
+  final List<ProjectLinkedJournalEntry> recentJournalEntries;
   final int journalEntryCount;
   final int learningItemCount;
   final int contentItemCount;
+}
+
+class ProjectLinkedJournalEntry {
+  const ProjectLinkedJournalEntry({
+    required this.journalEntryId,
+    required this.date,
+    required this.title,
+    this.category,
+    this.preview,
+  });
+
+  final String journalEntryId;
+  final DateTime date;
+  final String title;
+  final String? category;
+  final String? preview;
 }
 
 class ProjectRepository {
@@ -81,14 +99,31 @@ class ProjectRepository {
         .where((task) => task.status == 'Blocked')
         .toList();
 
-    final journalEntryCount =
-        (await (_database.select(_database.journalEntries)..where(
-                  (table) =>
-                      table.projectId.equals(projectId) &
-                      table.isArchived.equals(false),
-                ))
-                .get())
-            .length;
+    final journalEntries =
+        await (_database.select(_database.journalEntries)
+              ..where(
+                (table) =>
+                    table.projectId.equals(projectId) &
+                    table.isArchived.equals(false),
+              )
+              ..orderBy([
+                (table) => OrderingTerm.desc(table.date),
+                (table) => OrderingTerm.desc(table.createdAt),
+              ]))
+            .get();
+    final recentJournalEntries = journalEntries
+        .take(3)
+        .map(
+          (entry) => ProjectLinkedJournalEntry(
+            journalEntryId: entry.journalEntryId,
+            date: entry.date,
+            title: entry.title,
+            category: entry.category,
+            preview: _journalPreview(entry),
+          ),
+        )
+        .toList();
+    final journalEntryCount = journalEntries.length;
     final learningItemCount =
         (await (_database.select(_database.learningItems)..where(
                   (table) =>
@@ -110,6 +145,7 @@ class ProjectRepository {
       project: project,
       activeTasks: activeTasks,
       blockedTasks: blockedTasks,
+      recentJournalEntries: recentJournalEntries,
       journalEntryCount: journalEntryCount,
       learningItemCount: learningItemCount,
       contentItemCount: contentItemCount,
@@ -233,5 +269,22 @@ class ProjectRepository {
       return 100;
     }
     return value;
+  }
+
+  String? _journalPreview(JournalEntry entry) {
+    final candidates = [
+      entry.whatIWorkedOn,
+      entry.whatILearned,
+      entry.nextActions,
+    ];
+
+    for (final candidate in candidates) {
+      final trimmed = candidate?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) {
+        return trimmed;
+      }
+    }
+
+    return null;
   }
 }
