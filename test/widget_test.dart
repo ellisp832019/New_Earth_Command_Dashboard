@@ -19,6 +19,7 @@ import 'package:new_earth_command_dashboard/features/planner/application/planner
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
 import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
+import 'package:new_earth_command_dashboard/features/settings/application/settings_controller.dart';
 import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
@@ -30,6 +31,7 @@ void main() {
     return ProviderScope(
       overrides: [
         databaseReadyProvider.overrideWith((ref) async {}),
+        appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
         dashboardSnapshotProvider.overrideWith(
           (ref) async => DashboardSnapshot(
             date: DateTime(2026, 5, 2),
@@ -292,6 +294,17 @@ void main() {
     expect(find.text('Dashboard Preferences'), findsOneWidget);
     expect(find.byKey(const Key('settingsTopTaskLimitValue')), findsOneWidget);
     expect(find.text('3 priority tasks per day'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('settingsThemeModeOptionDark')));
+    await tester.pumpAndSettle();
+
+    final updatedThemeSnapshot = await SettingsRepository(
+      database,
+    ).getSettings();
+    expect(updatedThemeSnapshot.settings.themeMode, 'Dark');
+
+    final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.themeMode, ThemeMode.dark);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('settingsAppVersionValue')),
@@ -1981,6 +1994,99 @@ void main() {
     expect(items.first.item.title, 'Building the New Earth Command Dashboard');
     expect(items.first.projectName, 'MicroGrow');
     expect(items.first.item.imageNeeded, isTrue);
+  });
+
+  testWidgets('content screen can open and edit an existing content item', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final contentRepository = ContentRepository(database);
+    final createdItem = await contentRepository.createItem(
+      title: 'Original content idea',
+      status: 'Idea',
+      imageNeeded: false,
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/content');
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(Key('contentItemCard-${createdItem.contentItemId}')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Content Idea'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('contentTitleField')),
+      'Edited content idea',
+    );
+    await tester.tap(find.byKey(const Key('contentPlatformField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Website').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('contentTypeField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Technical Update').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('contentStatusField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ready').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('contentDraftTextField')),
+      'Edited draft text for the next publishing step.',
+    );
+    await tester.tap(find.byKey(const Key('contentImageNeededField')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('contentImagePromptField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('contentImagePromptField')),
+      'A crisp product dashboard mockup.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('contentNotesField')),
+      'Keep the framing practical and grounded.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveContentButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveContentButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edited content idea'), findsOneWidget);
+    expect(find.text('Website'), findsOneWidget);
+    expect(find.text('Technical Update'), findsOneWidget);
+    expect(find.text('Status: Ready'), findsOneWidget);
+    expect(find.text('Image Needed: Yes'), findsOneWidget);
+
+    final updatedItem = await contentRepository.getById(
+      createdItem.contentItemId,
+    );
+    expect(updatedItem.title, 'Edited content idea');
+    expect(updatedItem.platform, 'Website');
+    expect(updatedItem.contentType, 'Technical Update');
+    expect(updatedItem.status, 'Ready');
+    expect(
+      updatedItem.draftText,
+      'Edited draft text for the next publishing step.',
+    );
+    expect(updatedItem.imageNeeded, isTrue);
+    expect(updatedItem.imagePrompt, 'A crisp product dashboard mockup.');
+    expect(updatedItem.notes, 'Keep the framing practical and grounded.');
   });
 
   testWidgets('business screen shows a calm empty state', (

@@ -33,4 +33,16 @@ void main() {
       expect(updated.showContentCard, isFalse);
     },
   );
+
+  test('settings repository updates theme mode', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+    final repository = SettingsRepository(database);
+
+    final updated = await repository.updateThemeMode('Dark');
+
+    expect(updated.themeMode, 'Dark');
+  });
 }

@@ -6,6 +6,8 @@ import '../application/settings_controller.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  static const _themeOptions = ['Light', 'Dark', 'System'];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -34,6 +36,45 @@ class SettingsScreen extends ConsumerWidget {
                       Text(
                         'Adjust a few calm defaults without widening the system too early.',
                         style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Theme Mode', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Switch between a calm light workspace and a darker branded command view.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      SegmentedButton<String>(
+                        key: const Key('settingsThemeModeSegmentedButton'),
+                        segments: _themeOptions
+                            .map(
+                              (option) => ButtonSegment<String>(
+                                value: option,
+                                label: Text(
+                                  option,
+                                  key: Key('settingsThemeModeOption$option'),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        selected: {appSettings.themeMode},
+                        onSelectionChanged: (selection) {
+                          final value = selection.first;
+                          ref
+                              .read(settingsControllerProvider)
+                              .setThemeMode(value);
+                        },
                       ),
                     ],
                   ),

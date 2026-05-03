@@ -40,4 +40,44 @@ void main() {
     expect(items.first.item.imageNeeded, isTrue);
     expect(items.first.projectName, 'Content Project');
   });
+
+  test('content repository updates an existing content item locally', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final contentRepository = ContentRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Edited Content Project',
+    );
+
+    final createdItem = await contentRepository.createItem(
+      title: 'Original content title',
+      projectId: project.projectId,
+      status: 'Idea',
+      imageNeeded: false,
+    );
+
+    final updatedItem = await contentRepository.updateItem(
+      contentItemId: createdItem.contentItemId,
+      title: 'Edited content title',
+      projectId: project.projectId,
+      platform: 'Website',
+      contentType: 'Technical Update',
+      status: 'Ready',
+      draftText: 'Edited draft text.',
+      imageNeeded: true,
+      imagePrompt: 'A focused product update visual.',
+      notes: 'This content item is ready for the next pass.',
+    );
+
+    expect(updatedItem.title, 'Edited content title');
+    expect(updatedItem.platform, 'Website');
+    expect(updatedItem.contentType, 'Technical Update');
+    expect(updatedItem.status, 'Ready');
+    expect(updatedItem.draftText, 'Edited draft text.');
+    expect(updatedItem.imageNeeded, isTrue);
+    expect(updatedItem.imagePrompt, 'A focused product update visual.');
+    expect(updatedItem.notes, 'This content item is ready for the next pass.');
+  });
 }

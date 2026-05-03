@@ -14,6 +14,14 @@ final contentItemsProvider = FutureProvider<List<ContentListItem>>((ref) async {
   return ref.watch(contentRepositoryProvider).getItems();
 });
 
+final contentItemProvider = FutureProvider.family<ContentItem, String>((
+  ref,
+  contentItemId,
+) async {
+  await ref.watch(databaseReadyProvider.future);
+  return ref.watch(contentRepositoryProvider).getById(contentItemId);
+});
+
 final contentActionsControllerProvider = Provider<ContentActionsController>((
   ref,
 ) {
@@ -54,6 +62,47 @@ class ContentActionsController {
     if (projectId != null) {
       _ref.invalidate(projectDetailProvider(projectId));
     }
+    return item;
+  }
+
+  Future<ContentItem> updateItem({
+    required String contentItemId,
+    required String title,
+    String? projectId,
+    String? platform,
+    String? contentType,
+    String status = 'Idea',
+    String? draftText,
+    bool imageNeeded = false,
+    String? imagePrompt,
+    String? notes,
+  }) async {
+    final existing = await _ref
+        .read(contentRepositoryProvider)
+        .getById(contentItemId);
+    final item = await _ref
+        .read(contentRepositoryProvider)
+        .updateItem(
+          contentItemId: contentItemId,
+          title: title,
+          projectId: projectId,
+          platform: platform,
+          contentType: contentType,
+          status: status,
+          draftText: draftText,
+          imageNeeded: imageNeeded,
+          imagePrompt: imagePrompt,
+          notes: notes,
+        );
+
+    _ref.invalidate(contentItemsProvider);
+    _ref.invalidate(contentItemProvider(contentItemId));
+
+    final projectIds = {existing.projectId, projectId}.whereType<String>();
+    for (final linkedProjectId in projectIds) {
+      _ref.invalidate(projectDetailProvider(linkedProjectId));
+    }
+
     return item;
   }
 }

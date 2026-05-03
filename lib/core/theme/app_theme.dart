@@ -13,6 +13,7 @@ abstract final class AppTheme {
           primary: AppColours.primary,
           secondary: AppColours.secondary,
           onSurface: AppColours.charcoal,
+          outline: AppColours.outline,
         );
 
     return ThemeData(
@@ -23,7 +24,7 @@ abstract final class AppTheme {
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: AppColours.background,
+        backgroundColor: AppColours.surface,
         foregroundColor: AppColours.charcoal,
       ),
       cardTheme: CardThemeData(
@@ -35,10 +36,28 @@ abstract final class AppTheme {
           side: const BorderSide(color: AppColours.outline),
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColours.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColours.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColours.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColours.primary, width: 1.4),
+        ),
+      ),
+      dividerColor: AppColours.outline,
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColours.surface,
         indicatorColor: AppColours.primary.withValues(alpha: 0.16),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        height: 72,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -46,6 +65,18 @@ abstract final class AppTheme {
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColours.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColours.charcoal,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       textTheme: const TextTheme(
         headlineSmall: TextStyle(
@@ -62,6 +93,105 @@ abstract final class AppTheme {
         ),
         bodyMedium: TextStyle(color: AppColours.charcoal, height: 1.35),
         bodySmall: TextStyle(color: AppColours.mutedText, height: 1.35),
+      ),
+    );
+  }
+
+  static ThemeData get dark {
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColours.darkPrimary,
+          brightness: Brightness.dark,
+          surface: AppColours.darkSurface,
+        ).copyWith(
+          primary: AppColours.darkPrimary,
+          secondary: AppColours.darkSecondary,
+          tertiary: AppColours.darkAccent,
+          onPrimary: AppColours.darkBackground,
+          onSurface: AppColours.darkText,
+          outline: AppColours.darkOutline,
+        );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: AppColours.darkBackground,
+      appBarTheme: const AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColours.darkSurface,
+        foregroundColor: AppColours.darkText,
+      ),
+      cardTheme: CardThemeData(
+        color: AppColours.darkSurface,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: AppColours.darkOutline),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColours.darkSurfaceAlt,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColours.darkOutline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColours.darkOutline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            color: AppColours.darkPrimary,
+            width: 1.4,
+          ),
+        ),
+      ),
+      dividerColor: AppColours.darkOutline,
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColours.darkSurface,
+        indicatorColor: AppColours.darkPrimary.withValues(alpha: 0.18),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        height: 72,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColours.darkPrimary,
+          foregroundColor: AppColours.darkBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColours.darkPrimary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColours.darkSurfaceAlt,
+        contentTextStyle: const TextStyle(color: AppColours.darkText),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      textTheme: const TextTheme(
+        headlineSmall: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: AppColours.darkText,
+        ),
+        titleLarge: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: AppColours.darkText,
+        ),
+        titleMedium: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: AppColours.darkText,
+        ),
+        bodyMedium: TextStyle(color: AppColours.darkText, height: 1.35),
+        bodySmall: TextStyle(color: AppColours.darkMutedText, height: 1.35),
       ),
     );
   }

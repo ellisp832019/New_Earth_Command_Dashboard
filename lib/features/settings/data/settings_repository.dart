@@ -54,6 +54,22 @@ class SettingsRepository {
     return _getOrCreateSettings();
   }
 
+  Future<AppSetting> updateThemeMode(String themeMode) async {
+    final settings = await _getOrCreateSettings();
+    final timestamp = DateTime.now();
+
+    await (_database.update(
+      _database.appSettings,
+    )..where((table) => table.settingsId.equals(settings.settingsId))).write(
+      AppSettingsCompanion(
+        themeMode: Value(themeMode),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return _getOrCreateSettings();
+  }
+
   Future<AppSetting> _getOrCreateSettings() async {
     final existing = await (_database.select(
       _database.appSettings,

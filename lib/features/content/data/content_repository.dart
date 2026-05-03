@@ -97,6 +97,38 @@ class ContentRepository {
     return getById(contentItemId);
   }
 
+  Future<ContentItem> updateItem({
+    required String contentItemId,
+    required String title,
+    String? projectId,
+    String? platform,
+    String? contentType,
+    String status = 'Idea',
+    String? draftText,
+    bool imageNeeded = false,
+    String? imagePrompt,
+    String? notes,
+  }) async {
+    await (_database.update(
+      _database.contentItems,
+    )..where((table) => table.contentItemId.equals(contentItemId))).write(
+      ContentItemsCompanion(
+        title: Value(title.trim()),
+        projectId: Value(projectId),
+        platform: Value(_normalizeText(platform)),
+        contentType: Value(_normalizeText(contentType)),
+        status: Value(status),
+        draftText: Value(_normalizeText(draftText)),
+        imageNeeded: Value(imageNeeded),
+        imagePrompt: Value(_normalizeText(imagePrompt)),
+        notes: Value(_normalizeText(notes)),
+        updatedAt: Value(_now()),
+      ),
+    );
+
+    return getById(contentItemId);
+  }
+
   Future<ContentItem> getById(String contentItemId) {
     return (_database.select(
       _database.contentItems,

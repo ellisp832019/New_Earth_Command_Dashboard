@@ -484,6 +484,31 @@ Next recommended slice:
 Add content edit foundation
 ```
 
+## 2026-05-03 - Content Edit Foundation
+
+Added the first safe edit flow for Content:
+
+- Added repository support to load and update an existing content item
+- Added `contentItemProvider` and content controller update actions
+- Extended `AddContentItemScreen` to support both create and edit modes
+- Made content list cards open the edit screen
+- Added focused repository and widget coverage for reopening and editing content ideas
+- Updated README and getting started docs to reflect the live editable Content workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add business edit foundation
+```
+
 ## 2026-05-03 - Inbox Foundation
 
 Added the first real local inbox flow:

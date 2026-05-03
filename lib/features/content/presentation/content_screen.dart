@@ -103,34 +103,39 @@ class _ContentItemCard extends StatelessWidget {
     final imageNeededLabel = item.item.imageNeeded ? 'Yes' : 'No';
 
     return Card(
-      key: Key('contentItemCard-${item.item.contentItemId}'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(item.item.title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (item.item.platform?.isNotEmpty == true)
-                  _ContentInfoChip(label: item.item.platform!),
-                if (item.projectName != null)
-                  _ContentInfoChip(label: item.projectName!),
-                if (item.item.contentType?.isNotEmpty == true)
-                  _ContentInfoChip(label: item.item.contentType!),
-                _ContentInfoChip(label: 'Status: ${item.item.status}'),
-                _ContentInfoChip(label: 'Image Needed: $imageNeededLabel'),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Publish Date: $publishDate',
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
+      child: InkWell(
+        key: Key('contentItemCard-${item.item.contentItemId}'),
+        borderRadius: BorderRadius.circular(12),
+        onTap: () =>
+            context.push(RouteNames.editContent(item.item.contentItemId)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.item.title, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (item.item.platform?.isNotEmpty == true)
+                    _ContentInfoChip(label: item.item.platform!),
+                  if (item.projectName != null)
+                    _ContentInfoChip(label: item.projectName!),
+                  if (item.item.contentType?.isNotEmpty == true)
+                    _ContentInfoChip(label: item.item.contentType!),
+                  _ContentInfoChip(label: 'Status: ${item.item.status}'),
+                  _ContentInfoChip(label: 'Image Needed: $imageNeededLabel'),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Publish Date: $publishDate',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
       ),
     );

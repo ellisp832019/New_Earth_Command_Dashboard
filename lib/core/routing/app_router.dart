@@ -168,6 +168,12 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => const AddContentItemScreen(),
         ),
+        GoRoute(
+          path: ':contentItemId/edit',
+          builder: (context, state) => AddContentItemScreen(
+            contentItemId: state.pathParameters['contentItemId']!,
+          ),
+        ),
       ],
     ),
     GoRoute(

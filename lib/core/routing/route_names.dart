@@ -35,6 +35,10 @@ abstract final class RouteNames {
     return '/learning/$learningItemId/edit';
   }
 
+  static String editContent(String contentItemId) {
+    return '/content/$contentItemId/edit';
+  }
+
   static String newTaskForProject(String projectId) {
     return Uri(
       path: newTask,

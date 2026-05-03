@@ -27,7 +27,7 @@ V0.1 foundation is live:
 - Task search by title and notes is live
 - Journal list, create-entry, and edit-entry foundation are live
 - Learning list, add-topic, and edit-topic foundation are live
-- Content list and add-idea foundation are live
+- Content list, add-idea, and edit-idea foundation are live
 - Business list and add-opportunity foundation are live
 - Wellbeing list and check-in foundation are live
 - Inbox list and add-item foundation are live
@@ -44,6 +44,44 @@ V0.1 foundation is live:
 - [Visual Direction](docs/design/visual_direction.md)
 - [Asset Index](docs/assets/asset_index.md)
 - [Local Build Guide](docs/developer_guide/local_build.md)
+
+## How To Use The App
+
+This app is now far enough along to support a real daily workflow.
+
+Best simple rhythm:
+
+1. Open `Dashboard`
+2. Set `Main Focus`, `Why It Matters`, and `Morning Intention`
+3. Choose your `Top 3`
+4. Work from `Projects` and `Tasks`
+5. Use `Quick Capture` for loose thoughts
+6. Close the day with `Start Evening Review`
+
+If you want the full operating guide, use:
+
+- [Detailed User Guide](docs/user_guide/getting_started.md)
+
+## Best Visual Assets
+
+These are the most useful documentation visuals right now:
+
+- README banner: `assets/repo/01_repo_banner_new_earth_command_dashboard.png`
+- GitHub overview: `assets/repo/33_github_readme_visual_overview.png`
+- MVP checklist: `assets/repo/42_v01_mvp_feature_checklist.png`
+- Dashboard user manual: `assets/user_guide/36_dashboard_user_manual_page.png`
+- Projects and Tasks manual: `assets/user_guide/37_projects_tasks_user_manual_page.png`
+- Journal and Planner manual: `assets/user_guide/38_journal_planner_user_manual_page.png`
+- Quick start guide: `assets/user_guide/35_getting_started_quick_start.png`
+- Mobile overview: `assets/screenshots/27_mobile_app_screens_overview.png`
+- Daily planning flow: `assets/screenshots/28_daily_planning_flow.png`
+- Project detail explainer: `assets/screenshots/29_project_detail_screen_explained.png`
+
+## Visual References
+
+![GitHub Visual Overview](assets/repo/33_github_readme_visual_overview.png)
+
+![MVP Feature Checklist](assets/repo/42_v01_mvp_feature_checklist.png)
 
 ## Visual System
 

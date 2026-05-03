@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
@@ -12,6 +13,15 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 final settingsSnapshotProvider = FutureProvider<SettingsSnapshot>((ref) async {
   await ref.watch(databaseReadyProvider.future);
   return ref.watch(settingsRepositoryProvider).getSettings();
+});
+
+final appThemeModeProvider = Provider<ThemeMode>((ref) {
+  final settings = ref.watch(settingsSnapshotProvider);
+
+  return settings.maybeWhen(
+    data: (snapshot) => themeModeFromLabel(snapshot.settings.themeMode),
+    orElse: () => ThemeMode.system,
+  );
 });
 
 final settingsControllerProvider = Provider<SettingsController>((ref) {
@@ -51,8 +61,25 @@ class SettingsController {
     _invalidate();
   }
 
+  Future<void> setThemeMode(String value) async {
+    await _ref.read(settingsRepositoryProvider).updateThemeMode(value);
+    _invalidate();
+  }
+
   void _invalidate() {
     _ref.invalidate(settingsSnapshotProvider);
     _ref.invalidate(dashboardSnapshotProvider);
+  }
+}
+
+ThemeMode themeModeFromLabel(String value) {
+  switch (value) {
+    case 'Light':
+      return ThemeMode.light;
+    case 'Dark':
+      return ThemeMode.dark;
+    case 'System':
+    default:
+      return ThemeMode.system;
   }
 }
