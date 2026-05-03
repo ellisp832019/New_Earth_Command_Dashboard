@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/theme/app_colours.dart';
 
 class TaskListCard extends StatelessWidget {
   const TaskListCard({
@@ -29,12 +30,13 @@ class TaskListCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      color: AppColours.darkSurface.withValues(alpha: 0.94),
       child: InkWell(
         key: Key('taskCard-${task.taskId}'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -44,7 +46,7 @@ class TaskListCard extends StatelessWidget {
                   task.status == 'Done'
                       ? Icons.check_circle_outline
                       : Icons.radio_button_unchecked,
-                  color: theme.colorScheme.primary,
+                  color: AppColours.darkSecondary,
                 ),
               ),
               const SizedBox(width: 14),
@@ -52,7 +54,12 @@ class TaskListCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(task.title, style: theme.textTheme.titleMedium),
+                    Text(
+                      task.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: AppColours.darkText,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -68,7 +75,9 @@ class TaskListCard extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         task.description!,
-                        style: theme.textTheme.bodyMedium,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
                       ),
                     ],
                     if (task.energyLevel != null || task.category != null) ...[
@@ -80,7 +89,9 @@ class TaskListCard extends StatelessWidget {
                           if (task.energyLevel != null)
                             'Energy: ${task.energyLevel}',
                         ].join('   '),
-                        style: theme.textTheme.bodySmall,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 12),
@@ -157,13 +168,19 @@ class _TaskBadge extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColours.darkOutline),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(label, style: theme.textTheme.bodySmall),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        child: Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

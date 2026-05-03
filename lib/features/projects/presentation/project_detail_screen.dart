@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/theme/app_colours.dart';
 import '../application/projects_controller.dart';
 import '../data/project_repository.dart';
 
@@ -18,66 +19,136 @@ class ProjectDetailScreen extends ConsumerWidget {
     final projectDetail = ref.watch(projectDetailProvider(projectId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Project Detail'),
-        actions: [
-          IconButton(
-            key: const Key('archiveProjectButton'),
-            onPressed: projectDetail.hasValue
-                ? () => _confirmArchive(
-                    context,
-                    ref,
-                    projectDetail.requireValue.project,
-                  )
-                : null,
-            icon: const Icon(Icons.archive_outlined),
-            tooltip: 'Archive Project',
-          ),
-          IconButton(
-            key: const Key('addProjectTaskButton'),
-            onPressed: () =>
-                context.push(RouteNames.newTaskForProject(projectId)),
-            icon: const Icon(Icons.add_task_outlined),
-            tooltip: 'Add Task',
-          ),
-          IconButton(
-            key: const Key('editProjectButton'),
-            onPressed: () => context.push(RouteNames.editProject(projectId)),
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit Project',
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(title: const Text('Project Detail')),
       body: projectDetail.when(
         data: (detail) {
           final project = detail.project;
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              _ProjectSectionCard(
-                title: project.name,
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: _projectPanelDecoration(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (project.shortDescription?.isNotEmpty == true)
-                      Text(
-                        project.shortDescription!,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Project',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppColours.darkSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                project.name,
+                                style: theme.textTheme.displaySmall?.copyWith(
+                                  color: AppColours.darkText,
+                                  fontSize: 30,
+                                ),
+                              ),
+                              if (project.shortDescription?.isNotEmpty ==
+                                  true) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  project.shortDescription!,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: AppColours.darkMutedText,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              key: const Key('archiveProjectButton'),
+                              onPressed: () => _confirmArchive(
+                                context,
+                                ref,
+                                project,
+                              ),
+                              icon: const Icon(Icons.archive_outlined),
+                              label: const Text('Archive'),
+                            ),
+                            FilledButton.icon(
+                              key: const Key('addProjectTaskButton'),
+                              onPressed: () => context.push(
+                                RouteNames.newTaskForProject(projectId),
+                              ),
+                              icon: const Icon(Icons.add_task_outlined),
+                              label: const Text('Add Task'),
+                            ),
+                            OutlinedButton.icon(
+                              key: const Key('editProjectButton'),
+                              onPressed: () => context.push(
+                                RouteNames.editProject(projectId),
+                              ),
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Edit'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
                         _ProjectInfoChip(label: 'Status: ${project.status}'),
-                        _ProjectInfoChip(
-                          label: 'Priority: ${project.priority}',
-                        ),
+                        _ProjectInfoChip(label: 'Priority: ${project.priority}'),
                         _ProjectInfoChip(
                           label: 'Progress: ${project.progressPercentage}%',
                         ),
                       ],
                     ),
+                    if (project.nextAction?.isNotEmpty == true) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Next action',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        project.nextAction!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                      ),
+                    ],
+                    if (project.currentMilestone?.isNotEmpty == true) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Current milestone',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        project.currentMilestone!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -125,17 +196,23 @@ class ProjectDetailScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Journal Entries: ${detail.journalEntryCount}',
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Learning Items: ${detail.learningItemCount}',
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Content Ideas: ${detail.contentItemCount}',
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                      ),
                     ),
                   ],
                 ),
@@ -300,17 +377,28 @@ class _ProjectSectionCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      color: AppColours.darkSurface.withValues(alpha: 0.94),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: theme.textTheme.titleMedium),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppColours.darkText,
+              ),
+            ),
             const SizedBox(height: 10),
             if (child != null)
               child!
             else
-              Text(body ?? '', style: theme.textTheme.bodyMedium),
+              Text(
+                body ?? '',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
           ],
         ),
       ),
@@ -329,13 +417,19 @@ class _ProjectInfoChip extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColours.darkOutline),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(label, style: theme.textTheme.bodySmall),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        child: Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -352,7 +446,12 @@ class _TaskListSection extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (tasks.isEmpty) {
-      return Text(emptyText, style: theme.textTheme.bodyMedium);
+      return Text(
+        emptyText,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: AppColours.darkMutedText,
+        ),
+      );
     }
 
     return Column(
@@ -362,17 +461,28 @@ class _TaskListSection extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.checklist_outlined, size: 18),
+              const Icon(
+                Icons.checklist_outlined,
+                size: 18,
+                color: AppColours.darkSecondary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(task.title, style: theme.textTheme.bodyMedium),
+                    Text(
+                      task.title,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       'Status: ${task.status}   Priority: ${task.priority}',
-                      style: theme.textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
                     ),
                   ],
                 ),
@@ -383,4 +493,19 @@ class _TaskListSection extends StatelessWidget {
       }).toList(),
     );
   }
+}
+
+BoxDecoration _projectPanelDecoration() {
+  return BoxDecoration(
+    color: AppColours.darkSurface.withValues(alpha: 0.94),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.18),
+        blurRadius: 24,
+        offset: const Offset(0, 10),
+      ),
+    ],
+  );
 }

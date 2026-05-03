@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/theme/app_colours.dart';
 import '../application/planner_controller.dart';
 
 class PlannerScreen extends ConsumerWidget {
@@ -17,6 +18,7 @@ class PlannerScreen extends ConsumerWidget {
     final taskOptions = ref.watch(plannerTaskOptionsProvider);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Daily Planner')),
       body: todayPlan.when(
         data: (plan) => taskOptions.when(
@@ -208,17 +210,34 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       controller: _scrollController,
       padding: const EdgeInsets.all(20),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Today\'s Plan', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 6),
-                Text(formattedDate, style: theme.textTheme.bodySmall),
-              ],
-            ),
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: _plannerPanelDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Daily Planner',
+                style: theme.textTheme.displaySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontSize: 28,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Today\'s Plan',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                formattedDate,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -530,42 +549,43 @@ class _EditablePlannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: fieldKey,
-              controller: controller,
-              minLines: 2,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: hintText,
-                border: const OutlineInputBorder(),
-              ),
+    return Container(
+      decoration: _plannerPanelDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
             ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.icon(
-                key: buttonKey,
-                onPressed: isSaving ? null : onSave,
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(buttonLabel),
-              ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            key: fieldKey,
+            controller: controller,
+            minLines: 2,
+            maxLines: 4,
+            decoration: InputDecoration(hintText: hintText),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              key: buttonKey,
+              onPressed: isSaving ? null : onSave,
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(buttonLabel),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -594,55 +614,59 @@ class _EveningReviewPlannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            _ReviewField(
-              fieldKey: const Key('plannerMovedForwardField'),
-              controller: movedForwardController,
-              label: 'What moved forward today?',
+    return Container(
+      decoration: _plannerPanelDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
             ),
-            const SizedBox(height: 12),
-            _ReviewField(
-              fieldKey: const Key('plannerCompletedField'),
-              controller: completedController,
-              label: 'What did I complete?',
+          ),
+          const SizedBox(height: 12),
+          _ReviewField(
+            fieldKey: const Key('plannerMovedForwardField'),
+            controller: movedForwardController,
+            label: 'What moved forward today?',
+          ),
+          const SizedBox(height: 12),
+          _ReviewField(
+            fieldKey: const Key('plannerCompletedField'),
+            controller: completedController,
+            label: 'What did I complete?',
+          ),
+          const SizedBox(height: 12),
+          _ReviewField(
+            fieldKey: const Key('plannerLearnedField'),
+            controller: learnedController,
+            label: 'What did I learn?',
+          ),
+          const SizedBox(height: 12),
+          _ReviewField(
+            fieldKey: const Key('plannerBlockersField'),
+            controller: blockersController,
+            label: 'What blocked me?',
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              key: const Key('plannerEveningReviewSaveButton'),
+              onPressed: isSaving ? null : onSave,
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.nightlight_round),
+              label: const Text('Save Evening Review'),
             ),
-            const SizedBox(height: 12),
-            _ReviewField(
-              fieldKey: const Key('plannerLearnedField'),
-              controller: learnedController,
-              label: 'What did I learn?',
-            ),
-            const SizedBox(height: 12),
-            _ReviewField(
-              fieldKey: const Key('plannerBlockersField'),
-              controller: blockersController,
-              label: 'What blocked me?',
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.icon(
-                key: const Key('plannerEveningReviewSaveButton'),
-                onPressed: isSaving ? null : onSave,
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.nightlight_round),
-                label: const Text('Save Evening Review'),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -695,56 +719,89 @@ class _TopThreePlannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 6),
+    return Container(
+      decoration: _plannerPanelDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${selectedTaskIds.length} of 3 selected',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (tasks.isEmpty)
             Text(
-              '${selectedTaskIds.length} of 3 selected',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            if (tasks.isEmpty)
-              Text(
-                'No open tasks are ready for today\'s priorities yet.',
-                style: theme.textTheme.bodyMedium,
-              )
-            else
-              ...tasks.map((task) {
-                final isSelected = selectedTaskIds.contains(task.taskId);
-                return CheckboxListTile(
-                  key: Key('plannerTopTask-${task.taskId}'),
-                  value: isSelected,
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(task.title),
-                  subtitle: Text(task.status),
-                  onChanged: (_) => onTaskToggled(task.taskId, isSelected),
-                );
-              }),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.icon(
-                key: const Key('plannerTopThreeSaveButton'),
-                onPressed: isSaving ? null : onSave,
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.filter_3_outlined),
-                label: const Text('Save Top 3 Tasks'),
+              'No open tasks are ready for today\'s priorities yet.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
               ),
+            )
+          else
+            ...tasks.map((task) {
+              final isSelected = selectedTaskIds.contains(task.taskId);
+              return CheckboxListTile(
+                key: Key('plannerTopTask-${task.taskId}'),
+                value: isSelected,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  task.title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                  ),
+                ),
+                subtitle: Text(
+                  task.status,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+                onChanged: (_) => onTaskToggled(task.taskId, isSelected),
+              );
+            }),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              key: const Key('plannerTopThreeSaveButton'),
+              onPressed: isSaving ? null : onSave,
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.filter_3_outlined),
+              label: const Text('Save Top 3 Tasks'),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
+
+BoxDecoration _plannerPanelDecoration() {
+  return BoxDecoration(
+    color: AppColours.darkSurface.withValues(alpha: 0.94),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.18),
+        blurRadius: 24,
+        offset: const Offset(0, 10),
+      ),
+    ],
+  );
 }

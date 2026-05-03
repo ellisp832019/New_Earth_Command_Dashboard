@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/theme/app_colours.dart';
 
 class ProjectCard extends StatelessWidget {
   const ProjectCard({super.key, required this.project, this.onTap});
@@ -13,12 +14,13 @@ class ProjectCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      color: AppColours.darkSurface.withValues(alpha: 0.94),
       child: InkWell(
         key: Key('projectCard-${project.projectId}'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -29,12 +31,19 @@ class ProjectCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(project.name, style: theme.textTheme.titleMedium),
+                        Text(
+                          project.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: AppColours.darkText,
+                          ),
+                        ),
                         if (project.shortDescription != null) ...[
                           const SizedBox(height: 6),
                           Text(
                             project.shortDescription!,
-                            style: theme.textTheme.bodyMedium,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColours.darkMutedText,
+                            ),
                           ),
                         ],
                       ],
@@ -57,18 +66,37 @@ class ProjectCard extends StatelessWidget {
               ),
               if (project.currentMilestone != null) ...[
                 const SizedBox(height: 14),
-                Text('Current Milestone', style: theme.textTheme.bodySmall),
+                Text(
+                  'Current Milestone',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   project.currentMilestone!,
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                  ),
                 ),
               ],
               if (project.nextAction != null) ...[
                 const SizedBox(height: 14),
-                Text('Next Action', style: theme.textTheme.bodySmall),
+                Text(
+                  'Next Action',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(project.nextAction!, style: theme.textTheme.bodyMedium),
+                Text(
+                  project.nextAction!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
               ],
             ],
           ),
@@ -89,13 +117,19 @@ class _ProjectBadge extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColours.darkOutline),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(label, style: theme.textTheme.bodySmall),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        child: Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

@@ -294,6 +294,72 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
   });
 
+  testWidgets('supporting screens show a back button when opened from the app', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/journal');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('Dashboard'), findsWidgets);
+
+    appRouter.push('/learning');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/content');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/business');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/wellbeing');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/inbox');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/settings');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    appRouter.push('/voice-assistant');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back'), findsOneWidget);
+  });
+
   testWidgets('settings screen loads stored values and persists card toggles', (
     WidgetTester tester,
   ) async {

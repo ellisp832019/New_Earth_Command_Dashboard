@@ -326,7 +326,7 @@ class _SidebarLink extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: TextButton.icon(
-        onPressed: () => context.go(route),
+        onPressed: () => context.push(route),
         icon: Icon(icon, size: 16),
         label: Text(label),
         style: TextButton.styleFrom(

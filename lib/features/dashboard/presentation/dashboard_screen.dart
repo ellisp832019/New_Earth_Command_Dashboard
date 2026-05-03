@@ -1067,7 +1067,7 @@ class _ProjectProgressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.go(RouteNames.projectDetail(project.projectId)),
+      onTap: () => context.push(RouteNames.projectDetail(project.projectId)),
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
