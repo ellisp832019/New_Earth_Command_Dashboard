@@ -5,6 +5,7 @@ import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
+import '../../features/journal/presentation/add_edit_journal_entry_screen.dart';
 import '../../features/journal/presentation/journal_screen.dart';
 import '../../features/learning/presentation/learning_screen.dart';
 import '../../features/more/presentation/more_screen.dart';
@@ -123,6 +124,12 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.journal,
       builder: (context, state) => const JournalScreen(),
+      routes: [
+        GoRoute(
+          path: 'new',
+          builder: (context, state) => const AddEditJournalEntryScreen(),
+        ),
+      ],
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

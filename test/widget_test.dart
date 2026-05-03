@@ -10,6 +10,7 @@ import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dar
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
+import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
@@ -1469,5 +1470,106 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Related Project'), findsOneWidget);
     expect(find.text('No project selected'), findsOneWidget);
+  });
+
+  testWidgets('journal screen shows a calm empty state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/journal');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Journal'), findsAtLeastNWidgets(1));
+    expect(
+      find.text(
+        'No journal entries yet. Capture today\'s progress so the journey is not lost.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('journal screen can create a linked entry', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+    final projectRepository = ProjectRepository(database);
+    final taskRepository = TaskRepository(database);
+    final projects = await projectRepository.getProjects();
+    final microGrow = projects.firstWhere(
+      (project) => project.name == 'MicroGrow',
+    );
+    await taskRepository.createTask(
+      title: 'MicroGrow journal task',
+      projectId: microGrow.projectId,
+      status: 'Today',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/journal/new');
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('journalTitleField')),
+      'Daily build reflection',
+    );
+    await tester.tap(find.byKey(const Key('journalProjectField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('journalTaskField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MicroGrow journal task').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('journalCategoryField')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Build Log').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('journalWorkedOnField')),
+      'Stitched the first local journal flow into the app.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('journalLearnedField')),
+      'The journal can reuse the existing project and task foundations.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('journalNextActionsField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('journalNextActionsField')),
+      'Add edit support in a later slice.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveJournalButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveJournalButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Journal'), findsAtLeastNWidgets(1));
+    expect(find.text('Daily build reflection'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(find.text('Build Log'), findsOneWidget);
+
+    final entries = await JournalRepository(database).getEntries();
+    expect(entries, hasLength(1));
+    expect(entries.first.entry.title, 'Daily build reflection');
+    expect(entries.first.projectName, 'MicroGrow');
+    expect(entries.first.taskTitle, 'MicroGrow journal task');
   });
 }

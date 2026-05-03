@@ -28,6 +28,7 @@ The current build now includes:
 - Task status actions for Move To Today, Mark Done, Park, and Archive
 - Task status and project filters
 - Task search by title and notes
+- Journal list and create-entry flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -39,7 +40,7 @@ The current build now includes:
 
 Still intentionally early:
 
-- Journal data flow
+- Journal edit flow
 - Supporting modules beyond navigation scaffolds
 - Quick Capture to real Inbox flow
 
@@ -103,6 +104,19 @@ The More screen keeps the app calm by holding secondary areas:
 - Settings
 
 Some of these are still scaffolded for later MVP slices.
+
+## Journal Flow
+
+From `More`:
+
+1. Open `Journal`
+2. Tap `Add Entry`
+3. Add a title
+4. Optionally link a related project and task
+5. Choose a category
+6. Capture what you worked on, learned, and what should happen next
+
+The entry is stored locally and appears in the Journal list after saving.
 
 ## Visual References
 

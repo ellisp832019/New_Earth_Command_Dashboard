@@ -1,8 +1,8 @@
-# TASK - Journal Foundation
+# TASK - Journal Edit Foundation
 
 ## Goal
 
-Build the first real Journal flow so progress can be captured locally as part of the New Earth daily loop.
+Let the user reopen and update existing journal entries so the build history can stay accurate as thoughts settle.
 
 ## Source of Truth
 
@@ -18,11 +18,11 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current dashboard, planner, projects, and tasks flows working.
-2. Add a local `JournalRepository` for loading and creating journal entries.
-3. Build a first read-only `JournalScreen` backed by local data instead of placeholder content.
-4. Build a first `AddEditJournalEntryScreen` for creating a journal entry.
-5. Support the core MVP fields only for this slice:
+1. Keep the current journal list and create-entry flow working.
+2. Add repository support to load and update an existing journal entry.
+3. Extend `AddEditJournalEntryScreen` so it supports both create and edit modes.
+4. Make each journal list item open the edit screen.
+5. Preserve the current MVP-safe field set:
    - title
    - date
    - related project
@@ -31,12 +31,11 @@ Read these files first:
    - what I worked on
    - what I learned
    - next actions
-6. Add journal routes and navigation from `More`.
-7. Add focused repository and widget coverage for create and list flows.
-8. Keep edit, filters, tags, LinkedIn/website flags, and journal-to-content conversion out of scope for this slice.
+6. Add focused repository and widget coverage for editing and reloading saved changes.
+7. Keep filters, tags, LinkedIn/website flags, journal-to-content conversion, and create-task-from-entry out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open Journal from `More`, see locally stored entries, add a new journal entry, link it to a project or task if needed, and have it persist locally.
+The user should be able to open an existing journal entry, update its details, save it, and see the edited version persist in the Journal list and local database.
 
-This should create the first real build-history capture flow for the MVP.
+This should make the Journal usable as a real living build log instead of a write-once capture flow.

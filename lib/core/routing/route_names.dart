@@ -7,6 +7,7 @@ abstract final class RouteNames {
   static const planner = '/planner';
   static const more = '/more';
   static const journal = '/journal';
+  static const newJournal = '/journal/new';
   static const learning = '/learning';
   static const content = '/content';
   static const business = '/business';

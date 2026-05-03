@@ -200,6 +200,32 @@ Next recommended slice:
 Add project archive foundation
 ```
 
+## 2026-05-02 - Journal Foundation
+
+Added the first real journal flow:
+
+- Added `JournalRepository` for local create and list operations
+- Added Riverpod journal providers and action controller
+- Replaced the Journal placeholder with a real local list screen
+- Added a first `AddEditJournalEntryScreen` for creating entries
+- Added project and task linking support for new journal entries
+- Added focused repository and widget coverage for journal create/list behaviour
+- Updated README and getting started docs to reflect the live journal workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Add journal edit foundation
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:
