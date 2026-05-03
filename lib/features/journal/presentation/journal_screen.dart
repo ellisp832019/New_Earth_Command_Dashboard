@@ -70,7 +70,12 @@ class JournalScreen extends ConsumerWidget {
               }
 
               final item = items[index - 1];
-              return _JournalEntryCard(item: item);
+              return _JournalEntryCard(
+                item: item,
+                onTap: () => context.push(
+                  RouteNames.editJournal(item.entry.journalEntryId),
+                ),
+              );
             },
           );
         },
@@ -91,9 +96,10 @@ class JournalScreen extends ConsumerWidget {
 }
 
 class _JournalEntryCard extends StatelessWidget {
-  const _JournalEntryCard({required this.item});
+  const _JournalEntryCard({required this.item, required this.onTap});
 
   final JournalListEntry item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -101,32 +107,37 @@ class _JournalEntryCard extends StatelessWidget {
     final dateLabel = DateFormat('d MMM yyyy').format(item.entry.date);
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(dateLabel, style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Text(item.entry.title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (item.projectName != null)
-                  _JournalInfoChip(label: item.projectName!),
-                if (item.entry.category?.isNotEmpty == true)
-                  _JournalInfoChip(label: item.entry.category!),
-                if (item.taskTitle != null)
-                  _JournalInfoChip(label: item.taskTitle!),
+      child: InkWell(
+        key: Key('journalEntryCard-${item.entry.journalEntryId}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(dateLabel, style: theme.textTheme.labelLarge),
+              const SizedBox(height: 8),
+              Text(item.entry.title, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (item.projectName != null)
+                    _JournalInfoChip(label: item.projectName!),
+                  if (item.entry.category?.isNotEmpty == true)
+                    _JournalInfoChip(label: item.entry.category!),
+                  if (item.taskTitle != null)
+                    _JournalInfoChip(label: item.taskTitle!),
+                ],
+              ),
+              if (item.preview != null) ...[
+                const SizedBox(height: 10),
+                Text(item.preview!, style: theme.textTheme.bodyMedium),
               ],
-            ),
-            if (item.preview != null) ...[
-              const SizedBox(height: 10),
-              Text(item.preview!, style: theme.textTheme.bodyMedium),
             ],
-          ],
+          ),
         ),
       ),
     );

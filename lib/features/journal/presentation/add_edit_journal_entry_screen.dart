@@ -10,7 +10,11 @@ import '../../tasks/application/tasks_controller.dart';
 import '../application/journal_controller.dart';
 
 class AddEditJournalEntryScreen extends ConsumerStatefulWidget {
-  const AddEditJournalEntryScreen({super.key});
+  const AddEditJournalEntryScreen({super.key, this.journalEntryId});
+
+  final String? journalEntryId;
+
+  bool get isEditing => journalEntryId != null;
 
   @override
   ConsumerState<AddEditJournalEntryScreen> createState() =>
@@ -30,6 +34,7 @@ class _AddEditJournalEntryScreenState
   String? _projectId;
   String? _taskId;
   String? _category;
+  bool _didLoadInitialData = false;
   bool _isSaving = false;
 
   static const _categoryOptions = [
@@ -69,11 +74,43 @@ class _AddEditJournalEntryScreenState
 
     return projects.when(
       data: (projectItems) => tasks.when(
-        data: (taskItems) => _buildScaffold(context, projectItems, taskItems),
+        data: (taskItems) {
+          if (!widget.isEditing) {
+            return _buildScaffold(context, projectItems, taskItems);
+          }
+
+          final entry = ref.watch(journalEntryProvider(widget.journalEntryId!));
+          return entry.when(
+            data: (item) {
+              _loadInitialValues(item);
+              return _buildScaffold(context, projectItems, taskItems);
+            },
+            loading: () => const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stackTrace) => Scaffold(
+              appBar: AppBar(title: const Text('Edit Journal Entry')),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Journal entry data could not be loaded for editing.',
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
         loading: () =>
             const Scaffold(body: Center(child: CircularProgressIndicator())),
         error: (error, stackTrace) => Scaffold(
-          appBar: AppBar(title: const Text('New Journal Entry')),
+          appBar: AppBar(
+            title: Text(
+              widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+            ),
+          ),
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -89,7 +126,11 @@ class _AddEditJournalEntryScreenState
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(title: const Text('New Journal Entry')),
+        appBar: AppBar(
+          title: Text(
+            widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+          ),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -119,7 +160,11 @@ class _AddEditJournalEntryScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Journal Entry')),
+      appBar: AppBar(
+        title: Text(
+          widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+        ),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -270,12 +315,28 @@ class _AddEditJournalEntryScreenState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_outlined),
-              label: const Text('Create Entry'),
+              label: Text(widget.isEditing ? 'Save Entry' : 'Create Entry'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _loadInitialValues(JournalEntry entry) {
+    if (_didLoadInitialData) {
+      return;
+    }
+
+    _selectedDate = entry.date;
+    _titleController.text = entry.title;
+    _whatIWorkedOnController.text = entry.whatIWorkedOn ?? '';
+    _whatILearnedController.text = entry.whatILearned ?? '';
+    _nextActionsController.text = entry.nextActions ?? '';
+    _projectId = entry.projectId;
+    _taskId = entry.taskId;
+    _category = entry.category;
+    _didLoadInitialData = true;
   }
 
   Future<void> _pickDate(BuildContext context) async {
@@ -301,27 +362,49 @@ class _AddEditJournalEntryScreenState
     setState(() => _isSaving = true);
 
     try {
-      final entry = await ref
-          .read(journalActionsControllerProvider)
-          .createEntry(
-            date: _selectedDate,
-            title: _titleController.text.trim(),
-            projectId: _projectId,
-            taskId: _taskId,
-            category: _category,
-            whatIWorkedOn: _optionalText(_whatIWorkedOnController.text),
-            whatILearned: _optionalText(_whatILearnedController.text),
-            nextActions: _optionalText(_nextActionsController.text),
-          );
+      final controller = ref.read(journalActionsControllerProvider);
+      final title = _titleController.text.trim();
+      final whatIWorkedOn = _optionalText(_whatIWorkedOnController.text);
+      final whatILearned = _optionalText(_whatILearnedController.text);
+      final nextActions = _optionalText(_nextActionsController.text);
+
+      final entry = widget.isEditing
+          ? await controller.updateEntry(
+              journalEntryId: widget.journalEntryId!,
+              date: _selectedDate,
+              title: title,
+              projectId: _projectId,
+              taskId: _taskId,
+              category: _category,
+              whatIWorkedOn: whatIWorkedOn,
+              whatILearned: whatILearned,
+              nextActions: nextActions,
+            )
+          : await controller.createEntry(
+              date: _selectedDate,
+              title: title,
+              projectId: _projectId,
+              taskId: _taskId,
+              category: _category,
+              whatIWorkedOn: whatIWorkedOn,
+              whatILearned: whatILearned,
+              nextActions: nextActions,
+            );
 
       if (!context.mounted) {
         return;
       }
 
       context.go(RouteNames.journal);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${entry.title} created.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.isEditing
+                ? '${entry.title} saved.'
+                : '${entry.title} created.',
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

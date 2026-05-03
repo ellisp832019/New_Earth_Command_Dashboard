@@ -28,7 +28,7 @@ The current build now includes:
 - Task status actions for Move To Today, Mark Done, Park, and Archive
 - Task status and project filters
 - Task search by title and notes
-- Journal list and create-entry flow
+- Journal list, create-entry, and edit-entry flow
 - Planner editing for:
   - Morning Intention
   - Main Focus
@@ -40,7 +40,6 @@ The current build now includes:
 
 Still intentionally early:
 
-- Journal edit flow
 - Supporting modules beyond navigation scaffolds
 - Quick Capture to real Inbox flow
 
@@ -115,8 +114,9 @@ From `More`:
 4. Optionally link a related project and task
 5. Choose a category
 6. Capture what you worked on, learned, and what should happen next
+7. Reopen any saved entry from the list to update it later
 
-The entry is stored locally and appears in the Journal list after saving.
+Each entry is stored locally, appears in the Journal list after saving, and can be reopened for editing.
 
 ## Visual References
 

@@ -129,6 +129,36 @@ class JournalRepository {
     return getById(journalEntryId);
   }
 
+  Future<JournalEntry> updateEntry({
+    required String journalEntryId,
+    required DateTime date,
+    required String title,
+    String? projectId,
+    String? taskId,
+    String? category,
+    String? whatIWorkedOn,
+    String? whatILearned,
+    String? nextActions,
+  }) async {
+    await (_database.update(
+      _database.journalEntries,
+    )..where((table) => table.journalEntryId.equals(journalEntryId))).write(
+      JournalEntriesCompanion(
+        date: Value(_dateOnly(date)),
+        title: Value(title.trim()),
+        projectId: Value(projectId),
+        taskId: Value(taskId),
+        category: Value(_normalizeText(category)),
+        whatIWorkedOn: Value(_normalizeText(whatIWorkedOn)),
+        whatILearned: Value(_normalizeText(whatILearned)),
+        nextActions: Value(_normalizeText(nextActions)),
+        updatedAt: Value(_now()),
+      ),
+    );
+
+    return getById(journalEntryId);
+  }
+
   Future<JournalEntry> getById(String journalEntryId) {
     return (_database.select(_database.journalEntries)
           ..where((table) => table.journalEntryId.equals(journalEntryId)))

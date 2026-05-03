@@ -1572,4 +1572,78 @@ void main() {
     expect(entries.first.projectName, 'MicroGrow');
     expect(entries.first.taskTitle, 'MicroGrow journal task');
   });
+
+  testWidgets('journal screen can open and edit an existing entry', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final journalRepository = JournalRepository(database);
+    final createdEntry = await journalRepository.createEntry(
+      date: DateTime(2026, 5, 2),
+      title: 'Original journal entry',
+      category: 'Build Log',
+      whatIWorkedOn: 'Original progress note.',
+      nextActions: 'Original next step.',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/journal');
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(Key('journalEntryCard-${createdEntry.journalEntryId}')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Journal Entry'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('journalTitleField')),
+      'Edited journal entry',
+    );
+    await tester.enterText(
+      find.byKey(const Key('journalWorkedOnField')),
+      'Edited progress note.',
+    );
+    await tester.enterText(
+      find.byKey(const Key('journalLearnedField')),
+      'Editing journal entries keeps the build history useful.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('journalNextActionsField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('journalNextActionsField')),
+      'Use the edit flow again later.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('saveJournalButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveJournalButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edited journal entry'), findsOneWidget);
+    expect(find.text('Edited progress note.'), findsOneWidget);
+
+    final updatedEntry = await journalRepository.getById(
+      createdEntry.journalEntryId,
+    );
+    expect(updatedEntry.title, 'Edited journal entry');
+    expect(updatedEntry.whatIWorkedOn, 'Edited progress note.');
+    expect(
+      updatedEntry.whatILearned,
+      'Editing journal entries keeps the build history useful.',
+    );
+    expect(updatedEntry.nextActions, 'Use the edit flow again later.');
+  });
 }

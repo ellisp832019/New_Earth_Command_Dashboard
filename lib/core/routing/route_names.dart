@@ -22,6 +22,10 @@ abstract final class RouteNames {
 
   static String editTask(String taskId) => '/tasks/$taskId/edit';
 
+  static String editJournal(String journalEntryId) {
+    return '/journal/$journalEntryId/edit';
+  }
+
   static String newTaskForProject(String projectId) {
     return Uri(
       path: newTask,

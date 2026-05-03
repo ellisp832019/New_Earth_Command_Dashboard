@@ -1,8 +1,8 @@
-# TASK - Journal Edit Foundation
+# TASK - Project Journal Surfacing
 
 ## Goal
 
-Let the user reopen and update existing journal entries so the build history can stay accurate as thoughts settle.
+Show linked journal history on Project Detail so project pages start to feel like real build homes, not just metadata cards.
 
 ## Source of Truth
 
@@ -18,24 +18,20 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current journal list and create-entry flow working.
-2. Add repository support to load and update an existing journal entry.
-3. Extend `AddEditJournalEntryScreen` so it supports both create and edit modes.
-4. Make each journal list item open the edit screen.
-5. Preserve the current MVP-safe field set:
-   - title
+1. Keep the current project detail, journal list, and journal create/edit flows working.
+2. Extend the project detail repository snapshot so it loads recent linked journal entries, not just a count.
+3. Show a calm read-only journal section on Project Detail with:
    - date
-   - related project
-   - related task
+   - title
    - category
-   - what I worked on
-   - what I learned
-   - next actions
-6. Add focused repository and widget coverage for editing and reloading saved changes.
-7. Keep filters, tags, LinkedIn/website flags, journal-to-content conversion, and create-task-from-entry out of scope for this slice.
+   - short preview
+4. Keep the existing journal count signal if it still helps, but do not duplicate the exact same information noisily.
+5. Make journal items in Project Detail open the existing journal edit screen.
+6. Add focused repository and widget coverage for linked journal surfacing.
+7. Keep project-linked learning/content detail lists, project activity timelines, and cross-module conversions out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open an existing journal entry, update its details, save it, and see the edited version persist in the Journal list and local database.
+The user should be able to open a project and immediately see its recent linked journal history, then open one of those entries for fuller editing if needed.
 
-This should make the Journal usable as a real living build log instead of a write-once capture flow.
+This should make Project Detail feel more like the real build record for each New Earth project.

@@ -49,4 +49,34 @@ void main() {
       expect(entries.first.entry.date, DateTime(2026, 5, 2));
     },
   );
+
+  test('journal repository updates an existing entry locally', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final journalRepository = JournalRepository(database);
+    final createdEntry = await journalRepository.createEntry(
+      date: DateTime(2026, 5, 2),
+      title: 'Original journal title',
+      category: 'Build Log',
+      whatIWorkedOn: 'Original worked on text.',
+    );
+
+    final updatedEntry = await journalRepository.updateEntry(
+      journalEntryId: createdEntry.journalEntryId,
+      date: DateTime(2026, 5, 3),
+      title: 'Updated journal title',
+      category: 'Reflection',
+      whatIWorkedOn: 'Updated worked on text.',
+      whatILearned: 'A calmer edit flow matters.',
+      nextActions: 'Keep the journal alive.',
+    );
+
+    expect(updatedEntry.title, 'Updated journal title');
+    expect(updatedEntry.category, 'Reflection');
+    expect(updatedEntry.whatIWorkedOn, 'Updated worked on text.');
+    expect(updatedEntry.whatILearned, 'A calmer edit flow matters.');
+    expect(updatedEntry.nextActions, 'Keep the journal alive.');
+    expect(updatedEntry.date, DateTime(2026, 5, 3));
+  });
 }

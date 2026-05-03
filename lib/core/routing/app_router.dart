@@ -129,6 +129,12 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => const AddEditJournalEntryScreen(),
         ),
+        GoRoute(
+          path: ':journalEntryId/edit',
+          builder: (context, state) => AddEditJournalEntryScreen(
+            journalEntryId: state.pathParameters['journalEntryId']!,
+          ),
+        ),
       ],
     ),
     GoRoute(

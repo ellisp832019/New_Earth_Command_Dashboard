@@ -24,7 +24,7 @@ V0.1 foundation is live:
 - Task create/edit flows are live
 - Task status actions, filters, and archive foundation are live
 - Task search by title and notes is live
-- Journal list and create-entry foundation are live
+- Journal list, create-entry, and edit-entry foundation are live
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 
 ## Documentation

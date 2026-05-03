@@ -226,6 +226,31 @@ Next recommended slice:
 Add journal edit foundation
 ```
 
+## 2026-05-03 - Journal Edit Foundation
+
+Made the Journal a living editable flow:
+
+- Added repository support to load and update an existing journal entry
+- Added `journalEntryProvider` and journal controller update actions
+- Extended `AddEditJournalEntryScreen` to support both create and edit modes
+- Made journal list cards open the edit screen
+- Added focused repository and widget coverage for reopening and editing entries
+- Updated README and getting started docs to reflect the live editable journal workflow
+
+Verification:
+
+```powershell
+flutter test
+flutter analyze
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Show linked journal entries on Project Detail
+```
+
 ## 2026-05-02 - Project Archive Foundation
 
 Added the first safe archive flow for projects:
