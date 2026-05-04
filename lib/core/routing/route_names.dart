@@ -14,6 +14,7 @@ abstract final class RouteNames {
   static const newContent = '/content/new';
   static const business = '/business';
   static const newBusiness = '/business/new';
+  static String editBusiness(String businessId) => '/business/$businessId/edit';
   static const wellbeing = '/wellbeing';
   static const newWellbeing = '/wellbeing/new';
   static const inbox = '/inbox';

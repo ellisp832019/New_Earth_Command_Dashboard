@@ -122,4 +122,41 @@ class BusinessRepository {
 
     return DateTime(value.year, value.month, value.day);
   }
+
+  Future<BusinessOpportunity> updateItem({
+    required String businessOpportunityId,
+    required String name,
+    String? projectId,
+    String? type,
+    String status = 'Researching',
+    String? companyOrContact,
+    DateTime? deadline,
+    String? nextAction,
+    DateTime? followUpDate,
+    String? relatedDocumentLink,
+    String? notes,
+  }) async {
+    final existing = await getById(businessOpportunityId);
+    final timestamp = _now();
+
+    await (_database.update(_database.businessOpportunities)
+          ..where((table) => table.businessOpportunityId.equals(businessOpportunityId)))
+        .write(
+      BusinessOpportunitiesCompanion(
+        name: Value(name.trim()),
+        projectId: Value(projectId),
+        type: Value(_normalizeText(type)),
+        status: Value(status),
+        companyOrContact: Value(_normalizeText(companyOrContact)),
+        deadline: Value(_dateOnlyOrNull(deadline)),
+        nextAction: Value(_normalizeText(nextAction)),
+        followUpDate: Value(_dateOnlyOrNull(followUpDate)),
+        relatedDocumentLink: Value(_normalizeText(relatedDocumentLink)),
+        notes: Value(_normalizeText(notes)),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return getById(businessOpportunityId);
+  }
 }

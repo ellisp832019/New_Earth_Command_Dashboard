@@ -185,6 +185,12 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => const AddBusinessOpportunityScreen(),
         ),
+                GoRoute(
+                  path: ':businessId/edit',
+                  builder: (context, state) => AddBusinessOpportunityScreen(
+                    businessId: state.pathParameters['businessId']!,
+                  ),
+                ),
       ],
     ),
     GoRoute(
