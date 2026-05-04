@@ -106,9 +106,12 @@ class _BusinessItemCard extends StatelessWidget {
 
     return Card(
       key: Key('businessItemCard-${item.item.businessOpportunityId}'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      child: InkWell(
+        onTap: () => GoRouter.of(context)
+            .push(RouteNames.editBusiness(item.item.businessOpportunityId)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(item.item.name, style: theme.textTheme.titleMedium),
