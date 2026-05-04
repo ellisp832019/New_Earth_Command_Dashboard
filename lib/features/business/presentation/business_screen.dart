@@ -18,6 +18,11 @@ class BusinessScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Business'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(RouteNames.dashboard),
+          tooltip: 'Back to Dashboard',
+        ),
         actions: [
           IconButton(
             key: const Key('addBusinessItemButton'),
@@ -97,46 +102,50 @@ class _BusinessItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final name = item.item.name;
     final deadline = item.item.deadline == null
         ? 'Not set'
         : DateFormat('d MMM yyyy').format(item.item.deadline!);
     final followUpDate = item.item.followUpDate == null
         ? 'Not set'
         : DateFormat('d MMM yyyy').format(item.item.followUpDate!);
+    final statusLabel = 'Status: ${item.item.status}';
+    final typeLabel = item.item.type;
+    final projectLabel = item.projectName;
 
     return Card(
       key: Key('businessItemCard-${item.item.businessOpportunityId}'),
       child: InkWell(
-        onTap: () => GoRouter.of(context)
-            .push(RouteNames.editBusiness(item.item.businessOpportunityId)),
+        onTap: () =>
+            GoRouter.of(context).push(RouteNames.editBusiness(item.item.businessOpportunityId)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(item.item.name, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (item.item.type?.isNotEmpty == true)
-                  _BusinessInfoChip(label: item.item.type!),
-                if (item.projectName != null)
-                  _BusinessInfoChip(label: item.projectName!),
-                _BusinessInfoChip(label: 'Status: ${item.item.status}'),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text('Deadline: $deadline', style: theme.textTheme.bodySmall),
-            const SizedBox(height: 4),
-            Text(
-              'Next Step: ${item.item.nextAction ?? 'Choose the next practical move.'}',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 4),
-            Text('Follow-Up: $followUpDate', style: theme.textTheme.bodySmall),
-          ],
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (typeLabel != null && typeLabel.isNotEmpty)
+                    _BusinessInfoChip(label: typeLabel),
+                  if (projectLabel != null) _BusinessInfoChip(label: projectLabel),
+                  _BusinessInfoChip(label: statusLabel),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text('Deadline: $deadline', style: theme.textTheme.bodySmall),
+              const SizedBox(height: 4),
+              Text(
+                "Next Step: ${item.item.nextAction ?? 'Choose the next practical move.'}",
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 4),
+              Text('Follow-Up: $followUpDate', style: theme.textTheme.bodySmall),
+            ],
+          ),
         ),
       ),
     );

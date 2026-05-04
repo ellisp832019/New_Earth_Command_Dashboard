@@ -136,7 +136,6 @@ class BusinessRepository {
     String? relatedDocumentLink,
     String? notes,
   }) async {
-    final existing = await getById(businessOpportunityId);
     final timestamp = _now();
 
     await (_database.update(_database.businessOpportunities)

@@ -1,8 +1,8 @@
-# TASK - Business Edit Foundation
+# TASK - Tasks Module Foundation
 
 ## Goal
 
-Build the first real edit flow for Business so saved opportunities can be reopened and refined locally.
+Build the core task tracking system to allow users to create, manage, and track tasks linked to projects.
 
 ## Source of Truth
 
@@ -18,15 +18,16 @@ Read these files first:
 
 ## Requirements
 
-1. Keep the current dashboard, projects, tasks, planner, journal, learning, content, business, wellbeing, inbox, quick capture, and settings flows working.
-2. Add the first safe edit path for an existing Business item.
-3. Allow a Business list item to open an edit screen.
-4. Reuse the existing add-business form cleanly if practical instead of creating a second form pattern.
-5. Support updating the current MVP-safe Business fields already present in local storage.
-6. Persist updates locally and refresh the Business list after save.
-7. Add focused widget and repository coverage for reopening and editing a Business item.
-8. Keep archive, delete, conversion, and advanced automation out of scope for this slice.
+1. Keep existing functionality working (dashboard, projects, business).
+2. Create Task model and database table.
+3. Implement TaskRepository with CRUD operations.
+4. Build Tasks screen with task cards showing title, status, project link.
+5. Create add/edit task form with fields: title, description, project selection, status, priority, due date.
+6. Support task status updates (todo, in progress, done, parked).
+7. Allow filtering tasks by status and project.
+8. Add basic widget tests for task creation and editing.
+9. Keep advanced features (top 3 selection, daily planning) out of scope for this slice.
 
 ## Expected Result
 
-The user should be able to open a saved Business item, edit its current fields safely, save it locally, and see the updated version reflected in the live Business list.
+Users can view all tasks, create new tasks linked to projects, edit existing tasks, update status, and filter by project/status. The task system integrates with the existing project system.
