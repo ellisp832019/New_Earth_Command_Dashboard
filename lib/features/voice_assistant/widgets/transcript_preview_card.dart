@@ -4,10 +4,14 @@ class TranscriptPreviewCard extends StatelessWidget {
   const TranscriptPreviewCard({
     super.key,
     required this.controller,
+    this.focusNode,
+    this.onChanged,
     required this.helperText,
   });
 
   final TextEditingController controller;
+  final FocusNode? focusNode;
+  final ValueChanged<String>? onChanged;
   final String helperText;
 
   @override
@@ -25,7 +29,10 @@ class TranscriptPreviewCard extends StatelessWidget {
             Text(helperText, style: theme.textTheme.bodySmall),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('voiceTranscriptField'),
               controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
               minLines: 5,
               maxLines: 8,
               decoration: const InputDecoration(

@@ -63,6 +63,7 @@ The app is a calm command dashboard for daily work and projects.
 - Confirm the dashboard opens successfully.
 - Verify the top cards display the current plan, focus, energy, and available categories.
 - Tap through to the linked project, tasks, planner, or More screen.
+- Use `Voice Capture` from Quick Capture and confirm the Voice Assistant opens.
 
 ### Projects
 
@@ -120,6 +121,24 @@ This page is especially important for the current app state.
 - Confirm the edit flow loads the existing opportunity data and saves updates.
 - This path is covered by focused widget tests in `test/features/business/business_edit_widget_test.dart`.
 
+### Voice Assistant
+
+1. Open Voice Assistant from the Dashboard or More screen.
+2. Press `Start Listening`, allow microphone permission if prompted, speak a short test phrase, then press `Stop`.
+3. Confirm the transcript appears in the preview field and can be edited.
+4. On Windows, press `Start Listening` and confirm native Windows voice typing opens with the transcript field focused.
+5. If the app is fullscreen on Windows, confirm `Start Listening` does not force it back to windowed mode.
+6. If Windows voice typing is unavailable on the device, use mock transcript or paste transcript as fallback.
+7. Confirm the screen suggests a type, title, and project when the transcript clearly indicates them.
+8. Confirm structured hints appear when useful, such as content platform/type or business status/contact.
+9. Edit the extracted fields, then save and confirm the edited values are what land in the local records.
+10. Save as Task and confirm a local Inbox task is created.
+11. Save as Journal Entry and confirm a reflection entry is created.
+12. Save as Idea and confirm an Inbox Future Idea is created.
+13. Save as Content Idea and confirm a content item is created.
+14. Save as Business Opportunity and confirm a business item is created.
+15. Prepare a Codex Prompt and confirm it is shown for review rather than executed.
+
 ### Wellbeing, Inbox, Journal, Learning, Content, Voice Assistant, Settings
 
 - Open each screen.
@@ -132,6 +151,7 @@ This page is especially important for the current app state.
 - `flutter analyze`
 - `flutter test`
 - `flutter test test/features/business/business_edit_widget_test.dart`
+- `flutter test test/features/voice_assistant/voice_command_action_service_test.dart`
 - `flutter run -d windows`
 
 ## Acceptance Criteria
@@ -140,6 +160,7 @@ This page is especially important for the current app state.
 - Navigation works for the bottom bar and More menu.
 - Projects, Tasks, and Business screens load and show their lists.
 - Business add/edit flows work and persist data.
+- Voice capture saves reviewed transcripts into local dashboard data.
 - No analyzer issues remain.
 - Focused widget tests for business edit flow pass.
 

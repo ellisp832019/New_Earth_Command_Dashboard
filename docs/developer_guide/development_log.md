@@ -1,5 +1,67 @@
 # Development Log
 
+## 2026-05-06 - Live Voice Capture
+
+Added explicit microphone transcription to the Voice Assistant:
+
+- Added `speech_to_text` for press-to-listen speech recognition
+- Added Start Listening, Stop, and Cancel controls
+- Recognized speech now fills the transcript preview for review/editing
+- Kept Paste Transcript and mock transcript fallbacks
+- Added Android microphone/speech-service configuration
+- Added iOS/macOS microphone and speech-recognition usage descriptions
+- Added macOS audio-input entitlement
+- Vendored the beta Windows recognizer as a safe no-op because its native startup path broke `flutter run` debug attachment
+- Added a Windows runner channel so `Start Listening` opens native Windows voice typing in the transcript field
+- Kept Windows Paste Transcript and mock capture as stable fallbacks
+- Added local voice parsing so transcripts can suggest a destination type, a cleaner title, and a related project before saving
+- Structured voice saves now reuse the suggested title when it improves the saved record
+- Starting Windows voice typing now preserves fullscreen instead of restoring the window
+- Added structured field extraction for task category/priority, journal sections, content platform/type, and business contact/status hints
+- Added editable review fields so extracted voice details can be corrected before saving
+
+Verification:
+
+```powershell
+flutter analyze
+flutter test
+flutter build windows
+```
+
+## 2026-05-06 - Business Status Alignment
+
+Aligned Business Hub dropdown language with the FSD:
+
+- Replaced older business type labels with the FSD opportunity type set
+- Replaced older business status labels with the FSD business status set
+- Updated user-facing docs and the current task file to match
+
+Verification:
+
+```powershell
+flutter analyze
+flutter test
+```
+
+## 2026-05-06 - Voice Capture Integration
+
+Integrated the safe Voice Assistant scaffold into the live local dashboard flow:
+
+- Added a Dashboard Voice Capture entry point
+- Added paste/dictation-friendly transcript capture
+- Expanded voice destinations to Task, Journal Entry, Inbox Idea, Content Idea, Business Opportunity, and Codex Prompt
+- Kept Codex prompts manual-review only
+- Refreshed related providers after voice saves so lists update cleanly
+- Added focused tests for voice-created content and business records
+- Updated the current task and testing/user docs for the voice slice
+
+Verification:
+
+```powershell
+flutter analyze
+flutter test
+```
+
 ## 2026-05-02 - App Shell
 
 Added the initial V0.1 app shell:

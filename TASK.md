@@ -1,8 +1,8 @@
-# TASK - Tasks Module Foundation
+# TASK - Live Voice Capture
 
 ## Goal
 
-Build the core task tracking system to allow users to create, manage, and track tasks linked to projects.
+Make Voice Capture more powerful by adding press-to-listen microphone transcription inside the app while keeping review-before-save.
 
 ## Source of Truth
 
@@ -13,21 +13,21 @@ Read these files first:
 - `docs/fsd/05_data_model.md`
 - `docs/fsd/06_functional_requirements.md`
 - `docs/fsd/08_technical_architecture.md`
-- `docs/fsd/09_mvp_roadmap.md`
-- `docs/fsd/10_testing_release.md`
+- `docs/tasks/VOICE_BRIDGE_TASK.md`
 
 ## Requirements
 
-1. Keep existing functionality working (dashboard, projects, business).
-2. Create Task model and database table.
-3. Implement TaskRepository with CRUD operations.
-4. Build Tasks screen with task cards showing title, status, project link.
-5. Create add/edit task form with fields: title, description, project selection, status, priority, due date.
-6. Support task status updates (todo, in progress, done, parked).
-7. Allow filtering tasks by status and project.
-8. Add basic widget tests for task creation and editing.
-9. Keep advanced features (top 3 selection, daily planning) out of scope for this slice.
+1. Keep existing dashboard, projects, tasks, planner, journal, inbox, business, and voice save flows working.
+2. Add live microphone capture to the Voice Assistant screen where the platform recognizer is stable.
+3. Listening must be explicit: start, stop, or cancel. Do not add always-listening behaviour.
+4. Put recognized speech into the transcript preview field so it can be edited before saving.
+5. Keep paste transcript and mock transcript fallbacks.
+6. Save reviewed transcripts into the existing local destinations only after user action.
+7. Keep Codex prompts manual-review only.
+8. Add required platform permission text/configuration.
+9. Keep Windows app launch/debug stable by using native Windows voice typing from inside the app instead of the unstable beta recognizer.
+10. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
 
 ## Expected Result
 
-Users can view all tasks, create new tasks linked to projects, edit existing tasks, update status, and filter by project/status. The task system integrates with the existing project system.
+The user can open Voice Capture, capture speech or dictated text into the transcript box, review/edit the captured transcript, and save it as a task, journal entry, inbox idea, content idea, or business opportunity.

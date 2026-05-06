@@ -24,6 +24,7 @@ import 'package:new_earth_command_dashboard/features/settings/data/settings_repo
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
 import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
 
 void main() {
@@ -294,71 +295,72 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
   });
 
-  testWidgets('supporting screens show a back button when opened from the app', (
-    WidgetTester tester,
-  ) async {
-    final database = AppDatabase(NativeDatabase.memory());
-    addTearDown(database.close);
+  testWidgets(
+    'supporting screens show a back button when opened from the app',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
 
-    await SeedDataService(database).ensureSeedData();
+      await SeedDataService(database).ensureSeedData();
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/journal');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/journal');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
-    expect(find.text('Dashboard'), findsWidgets);
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Dashboard'), findsWidgets);
 
-    appRouter.push('/learning');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/learning');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/content');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/content');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/business');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/business');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/wellbeing');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/wellbeing');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/inbox');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/inbox');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/settings');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
+      appRouter.push('/settings');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
 
-    appRouter.push('/voice-assistant');
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Back'), findsOneWidget);
-  });
+      appRouter.push('/voice-assistant');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back'), findsOneWidget);
+    },
+  );
 
   testWidgets('settings screen loads stored values and persists card toggles', (
     WidgetTester tester,
@@ -1678,6 +1680,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Related Project'), findsOneWidget);
     expect(find.text('No project selected'), findsOneWidget);
+  });
+
+  testWidgets('voice assistant can save a reviewed transcript as a task', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/voice-assistant');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceSaveCommandButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
+    await tester.pumpAndSettle();
+
+    final tasks = await database.select(database.tasks).get();
+
+    expect(tasks, hasLength(1));
+    expect(tasks.single.status, 'Inbox');
+    expect(tasks.single.description, contains('voice bridge scaffold'));
+    expect(tasks.single.notes, 'Captured from the Voice Assistant.');
   });
 
   testWidgets('journal screen shows a calm empty state', (

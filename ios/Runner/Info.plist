@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Voice Capture uses the microphone only while you start a reviewed transcript.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Voice Capture turns your speech into reviewed local dashboard text.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

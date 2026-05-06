@@ -21,7 +21,7 @@ class BusinessScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(RouteNames.dashboard),
-          tooltip: 'Back to Dashboard',
+          tooltip: 'Back',
         ),
         actions: [
           IconButton(

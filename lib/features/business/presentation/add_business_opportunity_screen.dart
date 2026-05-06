@@ -37,19 +37,28 @@ class _AddBusinessOpportunityScreenState
   bool _isSaving = false;
 
   static const _typeOptions = [
-    'Lead',
     'Job',
+    'Contract',
+    'Grant',
     'Partnership',
-    'Sale',
-    'Other',
+    'Client',
+    'Funding',
+    'Mentor',
+    'Investor',
+    'Collaboration',
+    'Business Idea',
   ];
 
   static const _statusOptions = [
     'Researching',
-    'Contacted',
-    'Negotiating',
-    'Won',
-    'Lost',
+    'Preparing',
+    'Applied',
+    'Waiting',
+    'Follow-up Needed',
+    'Accepted',
+    'Rejected',
+    'Paused',
+    'Archived',
   ];
 
   @override
@@ -116,7 +125,7 @@ class _AddBusinessOpportunityScreenState
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-              child: Text(
+            child: Text(
               'Business options could not be loaded right now.',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
@@ -190,10 +199,8 @@ class _AddBusinessOpportunityScreenState
                   child: Text('No type selected'),
                 ),
                 ..._typeOptions.map(
-                  (type) => DropdownMenuItem<String?>(
-                    value: type,
-                    child: Text(type),
-                  ),
+                  (type) =>
+                      DropdownMenuItem<String?>(value: type, child: Text(type)),
                 ),
               ],
               onChanged: (value) => setState(() => _type = value),
@@ -239,7 +246,9 @@ class _AddBusinessOpportunityScreenState
                 ),
                 title: const Text('Deadline'),
                 subtitle: Text(
-                  _deadline == null ? 'No deadline selected' : _dateFormat.format(_deadline!),
+                  _deadline == null
+                      ? 'No deadline selected'
+                      : _dateFormat.format(_deadline!),
                 ),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: () => _pickDate(
@@ -271,7 +280,9 @@ class _AddBusinessOpportunityScreenState
                 ),
                 title: const Text('Follow-Up Date'),
                 subtitle: Text(
-                  _followUpDate == null ? 'No follow-up date selected' : _dateFormat.format(_followUpDate!),
+                  _followUpDate == null
+                      ? 'No follow-up date selected'
+                      : _dateFormat.format(_followUpDate!),
                 ),
                 trailing: const Icon(Icons.event_repeat_outlined),
                 onTap: () => _pickDate(
@@ -373,14 +384,17 @@ class _AddBusinessOpportunityScreenState
           deadline: _deadline,
           nextAction: _optionalText(_nextActionController.text),
           followUpDate: _followUpDate,
-          relatedDocumentLink: _optionalText(_relatedDocumentLinkController.text),
+          relatedDocumentLink: _optionalText(
+            _relatedDocumentLinkController.text,
+          ),
           notes: _optionalText(_notesController.text),
         );
 
         if (!context.mounted) return;
         context.go(RouteNames.business);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('${item.name} created.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${item.name} created.')));
       } else {
         final updated = await controller.updateItem(
           businessOpportunityId: widget.businessId!,
@@ -392,14 +406,17 @@ class _AddBusinessOpportunityScreenState
           deadline: _deadline,
           nextAction: _optionalText(_nextActionController.text),
           followUpDate: _followUpDate,
-          relatedDocumentLink: _optionalText(_relatedDocumentLinkController.text),
+          relatedDocumentLink: _optionalText(
+            _relatedDocumentLinkController.text,
+          ),
           notes: _optionalText(_notesController.text),
         );
 
         if (!context.mounted) return;
         context.go(RouteNames.business);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('${updated.name} saved.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${updated.name} saved.')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

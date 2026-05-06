@@ -43,10 +43,18 @@ Completed foundation:
 - Dashboard Top 3 actions
 - Dashboard quick-edit focus flow
 - Focus reason and clear focus flow
+- Project create/edit/archive flows
+- Task create/edit/status/filter/search/archive flows
+- Journal, Learning, Content, Business, Wellbeing, Inbox, and Settings foundations
+- Dashboard Quick Capture saving to Inbox
+- Voice Capture saving reviewed transcripts into local Tasks, Journal, Inbox, Content, and Business data
+- Business opportunity type/status labels aligned with the FSD
+- Live press-to-listen microphone capture in the Voice Assistant
 
 Still parked on purpose:
 
 - Voice assistant expansion
+- Always-listening voice mode
 - External integrations
 - AI features
 - Cloud sync
@@ -55,37 +63,27 @@ Still parked on purpose:
 
 We should stick to this route until the app supports a real daily loop:
 
-1. Finish the Daily Planner loop
-2. Finish core Project CRUD
-3. Finish core Task CRUD
-4. Add Journal foundation
-5. Add Quick Capture and Inbox
-6. Add the supporting modules in light MVP form
-7. Run persistence, manual workflow, and polish passes
+1. Run a V0.1 release-readiness pass
+2. Tighten manual persistence testing
+3. Align stale docs with the current app
+4. Add Inbox processing only after the current local capture loop is stable
 
 ## Immediate Slice Queue
 
 These are the next slices to tackle in order unless a blocker appears:
 
-1. `Tomorrow Focus + Carry Forward Notes`
-2. `Evening Review Fields`
-3. `Dashboard Start Evening Review Action`
-4. `Project Detail Screen Foundation`
-5. `Add / Edit Project Screen`
-6. `Task Add / Edit Screen`
-7. `Task Filters: Status and Project`
-8. `Journal List Foundation`
-9. `Journal Entry Form Foundation`
-10. `Quick Capture Placeholder to Real Inbox Save`
+1. `V0.1 Manual Release Pass`
+2. `Inbox Processing Foundation`
+3. `Project Detail Linked Module Surfacing`
 
 ## Why This Order
 
 This order follows the FSD priority and gets the system usable as fast as possible:
 
-- The planner loop is already close, so finishing it gives a complete morning-to-evening flow.
-- Projects and Tasks still need creation and editing, which are core MVP requirements.
-- Journal is part of the V0.1 core loop and should land before the wider support modules.
-- Quick Capture matters for real usage, but only after the core loop can hold the captured work.
+- The core local capture loop is now present, so the next work should harden what exists.
+- Voice Capture gives quick entry without adding cloud transcription or automation risk.
+- Business status alignment keeps the app consistent with the FSD before broader release testing.
+- Inbox processing is useful, but should come after capture, tasks, and review paths are stable.
 
 ## Remaining Core MVP Milestones
 

@@ -25,17 +25,18 @@ Do not build dangerous automation. Do not directly control MicroGrow hardware. D
 
 ---
 
-## Main Objective
+## Current Objective
 
-Create the first v0.1 scaffolding for the Voice Assistant feature.
+Integrate the v0.1 Voice Assistant scaffold into the live local dashboard data flow.
 
-This should include:
+This now includes:
 
-1. A Flutter feature folder for the Voice Assistant.
-2. A placeholder Voice Assistant screen.
-3. Simple models/services for voice command handling.
-4. A local Python bridge scaffold under `tools/voice_bridge`.
-5. Basic documentation updates if needed.
+1. Dashboard access to Voice Capture.
+2. Reviewed transcript entry with live microphone, paste, and mock transcript support.
+3. Project linking.
+4. Local save actions for tasks, journal entries, inbox ideas, content ideas, and business opportunities.
+5. Manual-review Codex prompt generation.
+6. Focused tests for local persistence.
 
 ---
 
@@ -71,21 +72,21 @@ Create a `VoiceAssistantScreen` that includes:
 
 - Page title: `Voice Assistant`
 - Subtitle: `Speak, review, and turn your words into dashboard actions.`
-- A large placeholder microphone button.
+- A large local capture area.
+- Press-to-listen microphone controls: Start Listening, Stop, Cancel.
+- A paste transcript action.
 - A transcript preview text area.
 - A command type selector with:
   - Task
   - Journal Entry
+  - Content Idea
+  - Business Opportunity
   - Codex Prompt
   - Idea
-- Action buttons:
-  - Save as Task
-  - Save as Journal Entry
-  - Send to Codex
-  - Save as Idea
+- One save/prepare action that follows the selected command type.
 - Command history section.
 
-The first version can use mock data and local in-memory state.
+Live microphone capture must be explicit and review-first. Do not add always-listening recording.
 
 Do not connect real microphone access yet unless the project already has a safe audio package installed.
 
@@ -110,6 +111,8 @@ Create an enum:
 enum VoiceCommandType {
   task,
   journalEntry,
+  contentIdea,
+  businessOpportunity,
   codexPrompt,
   idea,
 }
@@ -124,6 +127,7 @@ Create a simple service that can:
 - store commands in memory
 - return command history
 - create a Codex-safe prompt wrapper
+- save reviewed commands into existing local dashboard repositories/data
 
 The Codex-safe prompt wrapper should include:
 
@@ -179,6 +183,7 @@ Create `tools/voice_bridge/README.md` explaining:
 - Do not add hardware control.
 - Do not add always-listening background audio.
 - Keep the feature local-first.
+- Review before saving or preparing prompts.
 
 ---
 
@@ -186,14 +191,16 @@ Create `tools/voice_bridge/README.md` explaining:
 
 This task is complete when:
 
-- `VoiceAssistantScreen` exists.
-- Voice command model exists.
-- Voice command service exists.
-- Widgets are split into reasonable small files.
-- Python bridge scaffold exists.
-- README exists.
-- The code compiles or is as close as possible based on the current repo structure.
-- Any required manual integration steps are listed at the end of the Codex response.
+- Voice Capture opens from Dashboard and More.
+- Voice Capture supports explicit live microphone transcription.
+- A reviewed transcript can save as a Task.
+- A reviewed transcript can save as a Journal Entry.
+- A reviewed transcript can save as an Inbox Idea.
+- A reviewed transcript can save as a Content Idea.
+- A reviewed transcript can save as a Business Opportunity.
+- Codex prompts are generated for manual review only.
+- `flutter analyze` passes.
+- `flutter test` passes.
 
 ---
 

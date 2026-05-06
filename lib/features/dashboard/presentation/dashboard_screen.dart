@@ -20,12 +20,10 @@ class DashboardScreen extends ConsumerWidget {
 
     return snapshot.when(
       data: (data) => _DashboardContent(snapshot: data),
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stackTrace) => Scaffold(
-        body: _DashboardError(error: error),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) =>
+          Scaffold(body: _DashboardError(error: error)),
     );
   }
 }
@@ -156,11 +154,7 @@ class _DashboardHero extends StatelessWidget {
           if (!useWideLayout) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...brandAndCopy,
-                const SizedBox(height: 18),
-                chips,
-              ],
+              children: [...brandAndCopy, const SizedBox(height: 18), chips],
             );
           }
 
@@ -242,9 +236,9 @@ class _TopTaskShowcase extends StatelessWidget {
           padding: const EdgeInsets.only(left: 2, bottom: 12),
           child: Text(
             'Today\'s Focus',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
           ),
         ),
         LayoutBuilder(
@@ -256,7 +250,9 @@ class _TopTaskShowcase extends StatelessWidget {
                   for (var index = 0; index < cards.length; index++) ...[
                     Expanded(
                       child: _ShowcaseTaskCard(
-                        snapshotTask: index < tasks.length ? tasks[index] : null,
+                        snapshotTask: index < tasks.length
+                            ? tasks[index]
+                            : null,
                         state: cards[index],
                       ),
                     ),
@@ -395,7 +391,8 @@ class _DashboardFocusCard extends ConsumerStatefulWidget {
   final DashboardSnapshot snapshot;
 
   @override
-  ConsumerState<_DashboardFocusCard> createState() => _DashboardFocusCardState();
+  ConsumerState<_DashboardFocusCard> createState() =>
+      _DashboardFocusCardState();
 }
 
 class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
@@ -457,43 +454,62 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const _PanelTitle(title: 'Today\'s Focus', icon: Icons.flag_outlined),
-              const Spacer(),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final actions = [
+                TextButton.icon(
+                  key: const Key('dashboardFocusEditButton'),
+                  onPressed: _isSaving
+                      ? null
+                      : () {
+                          setState(() {
+                            _isEditing = !_isEditing;
+                            if (!_isEditing) {
+                              _mainFocusController.text =
+                                  widget.snapshot.mainFocus ?? '';
+                              _focusReasonController.text =
+                                  widget.snapshot.focusReason ?? '';
+                              _morningIntentionController.text =
+                                  widget.snapshot.morningIntention ?? '';
+                            }
+                          });
+                        },
+                  icon: Icon(_isEditing ? Icons.close : Icons.edit_outlined),
+                  label: Text(_isEditing ? 'Close' : 'Quick Edit'),
+                ),
+                TextButton.icon(
+                  key: const Key('dashboardFocusClearButton'),
+                  onPressed: _isSaving ? null : () => _clearFocus(context),
+                  icon: const Icon(Icons.clear_outlined),
+                  label: const Text('Clear Focus'),
+                ),
+              ];
+
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _PanelTitle(
+                      title: 'Today\'s Focus',
+                      icon: Icons.flag_outlined,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(spacing: 8, runSpacing: 8, children: actions),
+                  ],
+                );
+              }
+
+              return Row(
                 children: [
-                  TextButton.icon(
-                    key: const Key('dashboardFocusEditButton'),
-                    onPressed: _isSaving
-                        ? null
-                        : () {
-                            setState(() {
-                              _isEditing = !_isEditing;
-                              if (!_isEditing) {
-                                _mainFocusController.text =
-                                    widget.snapshot.mainFocus ?? '';
-                                _focusReasonController.text =
-                                    widget.snapshot.focusReason ?? '';
-                                _morningIntentionController.text =
-                                    widget.snapshot.morningIntention ?? '';
-                              }
-                            });
-                          },
-                    icon: Icon(_isEditing ? Icons.close : Icons.edit_outlined),
-                    label: Text(_isEditing ? 'Close' : 'Quick Edit'),
+                  const _PanelTitle(
+                    title: 'Today\'s Focus',
+                    icon: Icons.flag_outlined,
                   ),
-                  TextButton.icon(
-                    key: const Key('dashboardFocusClearButton'),
-                    onPressed: _isSaving ? null : () => _clearFocus(context),
-                    icon: const Icon(Icons.clear_outlined),
-                    label: const Text('Clear Focus'),
-                  ),
+                  const Spacer(),
+                  Wrap(spacing: 8, runSpacing: 8, children: actions),
                 ],
-              ),
-            ],
+              );
+            },
           ),
           const SizedBox(height: 18),
           if (_isEditing) ...[
@@ -638,9 +654,9 @@ class _ActiveProjectsPanel extends StatelessWidget {
           if (projects.isEmpty)
             Text(
               '${snapshot.activeProjectCount} projects are available.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -676,9 +692,9 @@ class _DashboardEveningReviewCard extends StatelessWidget {
               children: [
                 Text(
                   'Evening Review',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColours.darkText,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -730,9 +746,9 @@ class _DashboardQuickCaptureCardState
           const SizedBox(height: 12),
           Text(
             'Capture a task, idea, note, or content seed.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 16),
           Container(
@@ -745,9 +761,9 @@ class _DashboardQuickCaptureCardState
             ),
             child: Text(
               'Capture an idea, task or note...',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ),
           const SizedBox(height: 14),
@@ -767,6 +783,13 @@ class _DashboardQuickCaptureCardState
             onPressed: _isSaving ? null : () => _openQuickCapture(),
             icon: const Icon(Icons.auto_awesome),
             label: const Text('Capture'),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.tonalIcon(
+            key: const Key('dashboardVoiceCaptureButton'),
+            onPressed: () => context.push(RouteNames.voiceAssistant),
+            icon: const Icon(Icons.mic_none_rounded),
+            label: const Text('Voice Capture'),
           ),
         ],
       ),
@@ -948,10 +971,7 @@ class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
 }
 
 class _ShowcaseTaskCard extends ConsumerWidget {
-  const _ShowcaseTaskCard({
-    required this.snapshotTask,
-    required this.state,
-  });
+  const _ShowcaseTaskCard({required this.snapshotTask, required this.state});
 
   final DashboardTopTask? snapshotTask;
   final _ShowcaseTaskState state;
@@ -1025,24 +1045,21 @@ class _ShowcaseTaskCard extends ConsumerWidget {
           const SizedBox(height: 18),
           Text(
             state.title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 8),
           Text(
             state.subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 14),
           Row(
             children: [
-              _InlineTag(
-                label: state.label,
-                accent: state.accent,
-              ),
+              _InlineTag(label: state.label, accent: state.accent),
               if (hasTask && snapshotTask!.projectName != null) ...[
                 const SizedBox(width: 8),
                 _InlineTag(
@@ -1138,16 +1155,16 @@ class _MiniModuleCard extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             state.title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 8),
           Text(
             state.description,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -1169,7 +1186,9 @@ class _DashboardFooter extends StatelessWidget {
             ? AppColours.darkSurface.withValues(alpha: 0.94)
             : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.8),
+        ),
       ),
       child: Row(
         children: [
@@ -1178,9 +1197,9 @@ class _DashboardFooter extends StatelessWidget {
           Expanded(
             child: Text(
               'Small consistent actions create extraordinary results over time.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ),
         ],
@@ -1204,9 +1223,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColours.darkText,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -1356,9 +1375,9 @@ class _FocusDetailRow extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColours.darkMutedText,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
         ),
       ],
     );
@@ -1507,7 +1526,10 @@ class _DashboardError extends StatelessWidget {
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurface.withValues(alpha: 0.96)

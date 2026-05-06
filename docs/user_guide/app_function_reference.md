@@ -341,7 +341,8 @@ The `Business` area is for opportunities, partnerships, leads, and commercial wo
 ### Current important behavior
 
 - The add/edit business screen shares the same form for create and edit.
-- Business types include values such as `Lead`, `Job`, `Partnership`, `Sale`, and `Other`.
+- Business types follow the FSD set: `Job`, `Contract`, `Grant`, `Partnership`, `Client`, `Funding`, `Mentor`, `Investor`, `Collaboration`, and `Business Idea`.
+- Business statuses follow the FSD set: `Researching`, `Preparing`, `Applied`, `Waiting`, `Follow-up Needed`, `Accepted`, `Rejected`, `Paused`, and `Archived`.
 - The screen is strong for tracking follow-up action and deadlines.
 
 ---
@@ -388,13 +389,36 @@ Inbox is the capture area for ideas, thoughts, and unprocessed items.
 
 ### Purpose
 
-The voice assistant screen is designed to support voice-driven capture and actions.
+The voice assistant screen supports reviewed voice capture for local dashboard actions.
 
 ### How to use it
 
 1. Open `Voice Assistant`.
-2. Use any available voice capture or command options.
-3. Return to the app when ready.
+2. Press `Start Listening`, speak, then press `Stop` when finished.
+3. Review the suggested type, title, and project if the transcript clearly points to one.
+4. Choose the destination: Task, Journal Entry, Content Idea, Business Opportunity, Idea, or Codex Prompt.
+5. Optionally adjust the project link.
+6. Save it into the local dashboard data, or prepare a Codex prompt for manual review.
+
+### Current behavior
+
+- Voice Capture can be opened from `Dashboard` Quick Capture or from `More`.
+- Microphone capture is press-to-listen only; there is no always-listening background mode.
+- Paste Transcript and mock transcript remain available as fallbacks.
+- The screen suggests a command type, cleaned title, and related project using local parsing rules.
+- The screen also extracts structured details where it can, such as task category/priority, content platform/type, journal next actions, and business contact/status hints.
+- Those extracted details are editable before save, so you can correct the parser when the wording is close but not perfect.
+- Task transcripts save as Inbox tasks.
+- Journal transcripts save as Reflection entries.
+- Idea transcripts save into Inbox as Future Ideas.
+- Content transcripts save as Content Ideas.
+- Business transcripts save as Business Ideas.
+- Codex prompts are copied/reviewed manually and are not executed by the app.
+- Speech recognition uses the device/platform speech service provided through the app's speech-to-text package where stable; saved dashboard data remains local.
+- On Windows, `Start Listening` opens native Windows voice typing inside the transcript field so the app can stay stable without the beta recognizer.
+- Starting voice typing on Windows now preserves the current window mode instead of forcing the app out of fullscreen.
+- The structured review panel stays editable before you save the capture.
+- `Paste Transcript` and mock capture still remain available there as fallbacks.
 
 ---
 

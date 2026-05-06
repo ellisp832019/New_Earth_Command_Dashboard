@@ -259,6 +259,10 @@ HWND Win32Window::GetHandle() {
   return window_handle_;
 }
 
+HWND Win32Window::GetChildContentHandle() const {
+  return child_content_;
+}
+
 void Win32Window::SetQuitOnClose(bool quit_on_close) {
   quit_on_close_ = quit_on_close;
 }

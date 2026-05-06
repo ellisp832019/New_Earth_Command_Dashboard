@@ -14,20 +14,16 @@ class CommandTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<VoiceCommandType>(
-      multiSelectionEnabled: false,
-      emptySelectionAllowed: false,
-      showSelectedIcon: false,
-      segments: VoiceCommandType.values.map((type) {
-        return ButtonSegment<VoiceCommandType>(
-          value: type,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: VoiceCommandType.values.map((type) {
+        return ChoiceChip(
           label: Text(type.label),
+          selected: selectedType == type,
+          onSelected: (_) => onChanged(type),
         );
       }).toList(),
-      selected: {selectedType},
-      onSelectionChanged: (selection) {
-        onChanged(selection.first);
-      },
     );
   }
 }

@@ -37,4 +37,60 @@ void main() {
     expect(prompt, contains('- Do not delete existing work.'));
     expect(prompt, contains('- Ask for approval before major rewrites.'));
   });
+
+  test('voice command service suggests type, title, and project', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript:
+          'Business: Follow up with the MicroGrow partner about the next pilot.',
+      projectOptions: const [
+        VoiceAssistantProjectOption(id: 'project-microgrow', name: 'MicroGrow'),
+      ],
+    );
+
+    expect(suggestion.suggestedType, VoiceCommandType.businessOpportunity);
+    expect(
+      suggestion.transcript,
+      'Follow up with the MicroGrow partner about the next pilot.',
+    );
+    expect(
+      suggestion.suggestedTitle,
+      'Follow up with the MicroGrow partner about the next pilot',
+    );
+    expect(suggestion.suggestedProjectId, 'project-microgrow');
+    expect(suggestion.usedExplicitType, isTrue);
+    expect(suggestion.extractedBusinessType, 'Partnership');
+    expect(suggestion.extractedBusinessStatus, 'Follow-up Needed');
+    expect(suggestion.extractedBusinessContact, isNull);
+  });
+
+  test('voice command service infers journal entry from reflective wording', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript:
+          'Today I fixed the Windows voice typing flow and learned why focus matters.',
+    );
+
+    expect(suggestion.suggestedType, VoiceCommandType.journalEntry);
+    expect(
+      suggestion.suggestedTitle,
+      'Today I fixed the Windows voice typing flow and learned why focus mat...',
+    );
+    expect(
+      suggestion.extractedJournalWorkedOn,
+      'fixed the Windows voice typing flow and learned why focus matters.',
+    );
+  });
+
+  test('voice command service extracts content platform and type', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript:
+          'Content: Draft a LinkedIn update about the new dashboard voice workflow.',
+    );
+
+    expect(suggestion.suggestedType, VoiceCommandType.contentIdea);
+    expect(suggestion.extractedContentPlatform, 'LinkedIn');
+    expect(suggestion.extractedContentType, 'LinkedIn Post');
+  });
 }
