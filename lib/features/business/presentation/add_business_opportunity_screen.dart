@@ -66,6 +66,54 @@ class _AddBusinessOpportunityScreenState
     'Archived',
   ];
 
+  List<DropdownMenuItem<String?>> _buildNullableItems(
+    List<String> options,
+    String? legacyValue, {
+    required String noSelectionLabel,
+  }) {
+    final items = <DropdownMenuItem<String?>>[
+      DropdownMenuItem<String?>(value: null, child: Text(noSelectionLabel)),
+      ...options.map(
+        (value) => DropdownMenuItem<String?>(value: value, child: Text(value)),
+      ),
+    ];
+
+    if (legacyValue != null &&
+        legacyValue.isNotEmpty &&
+        !options.contains(legacyValue)) {
+      items.add(
+        DropdownMenuItem<String?>(
+          value: legacyValue,
+          child: Text('$legacyValue (legacy)'),
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  List<DropdownMenuItem<String>> _buildRequiredItems(
+    List<String> options,
+    String legacyValue,
+  ) {
+    final items = <DropdownMenuItem<String>>[
+      ...options.map(
+        (value) => DropdownMenuItem<String>(value: value, child: Text(value)),
+      ),
+    ];
+
+    if (!options.contains(legacyValue) && legacyValue.isNotEmpty) {
+      items.add(
+        DropdownMenuItem<String>(
+          value: legacyValue,
+          child: Text('$legacyValue (legacy)'),
+        ),
+      );
+    }
+
+    return items;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -199,16 +247,11 @@ class _AddBusinessOpportunityScreenState
                 labelText: 'Type',
                 border: OutlineInputBorder(),
               ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('No type selected'),
-                ),
-                ..._typeOptions.map(
-                  (type) =>
-                      DropdownMenuItem<String?>(value: type, child: Text(type)),
-                ),
-              ],
+              items: _buildNullableItems(
+                _typeOptions,
+                _type,
+                noSelectionLabel: 'No type selected',
+              ),
               onChanged: (value) => setState(() => _type = value),
             ),
             const SizedBox(height: 12),
@@ -219,14 +262,7 @@ class _AddBusinessOpportunityScreenState
                 labelText: 'Status',
                 border: OutlineInputBorder(),
               ),
-              items: _statusOptions
-                  .map(
-                    (status) => DropdownMenuItem<String>(
-                      value: status,
-                      child: Text(status),
-                    ),
-                  )
-                  .toList(),
+              items: _buildRequiredItems(_statusOptions, _status),
               onChanged: (value) {
                 if (value == null) return;
                 setState(() => _status = value);
