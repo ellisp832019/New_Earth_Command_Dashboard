@@ -24,6 +24,7 @@ class ProjectDetailScreen extends ConsumerWidget {
       body: projectDetail.when(
         data: (detail) {
           final project = detail.project;
+
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -33,44 +34,45 @@ class ProjectDetailScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compactHeader = constraints.maxWidth < 760;
+
+                        final titleSection = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Project',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColours.darkSecondary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              project.name,
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                color: AppColours.darkText,
+                                fontSize: 30,
+                              ),
+                            ),
+                            if (project.shortDescription?.isNotEmpty ==
+                                true) ...[
+                              const SizedBox(height: 10),
                               Text(
-                                'Project',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: AppColours.darkSecondary,
-                                  fontWeight: FontWeight.w700,
+                                project.shortDescription!,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: AppColours.darkMutedText,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                project.name,
-                                style: theme.textTheme.displaySmall?.copyWith(
-                                  color: AppColours.darkText,
-                                  fontSize: 30,
-                                ),
-                              ),
-                              if (project.shortDescription?.isNotEmpty ==
-                                  true) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  project.shortDescription!,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColours.darkMutedText,
-                                  ),
-                                ),
-                              ],
                             ],
+                          ],
+                        );
+
+                        final actions = ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: compactHeader ? double.infinity : 330,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 330),
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -133,8 +135,28 @@ class ProjectDetailScreen extends ConsumerWidget {
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        );
+
+                        if (compactHeader) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              titleSection,
+                              const SizedBox(height: 16),
+                              actions,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: titleSection),
+                            const SizedBox(width: 16),
+                            actions,
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 14),
                     Wrap(
