@@ -19,6 +19,17 @@ class BusinessRepository {
   final Uuid _uuid;
   final DateTime Function() _now;
 
+  static const Map<String, String> _legacyTypeAliases = {
+    'Other': 'Business Idea',
+  };
+
+  static const Map<String, String> _legacyStatusAliases = {
+    'Contacted': 'Follow-up Needed',
+    'Negotiating': 'Waiting',
+    'Won': 'Accepted',
+    'Lost': 'Rejected',
+  };
+
   Future<List<BusinessListItem>> getItems() async {
     final items =
         await (_database.select(_database.businessOpportunities)
@@ -33,7 +44,12 @@ class BusinessRepository {
       return const [];
     }
 
-    final projectIds = items
+    final normalizedItems = <BusinessOpportunity>[];
+    for (final item in items) {
+      normalizedItems.add(await _normalizeStoredItem(item));
+    }
+
+    final projectIds = normalizedItems
         .map((item) => item.projectId)
         .whereType<String>()
         .toSet()
@@ -49,7 +65,7 @@ class BusinessRepository {
       for (final project in projects) project.projectId: project.name,
     };
 
-    return items
+    return normalizedItems
         .map(
           (item) => BusinessListItem(
             item: item,
@@ -75,6 +91,7 @@ class BusinessRepository {
   }) async {
     final timestamp = _now();
     final businessOpportunityId = 'business-${_uuid.v4()}';
+    final normalizedStatus = _normalizeStatus(status);
 
     await _database
         .into(_database.businessOpportunities)
@@ -84,7 +101,7 @@ class BusinessRepository {
             name: name.trim(),
             projectId: Value(projectId),
             type: Value(_normalizeText(type)),
-            status: Value(status),
+            status: Value(normalizedStatus),
             companyOrContact: Value(_normalizeText(companyOrContact)),
             deadline: Value(_dateOnlyOrNull(deadline)),
             nextAction: Value(_normalizeText(nextAction)),
@@ -103,7 +120,8 @@ class BusinessRepository {
     return (_database.select(_database.businessOpportunities)..where(
           (table) => table.businessOpportunityId.equals(businessOpportunityId),
         ))
-        .getSingle();
+        .getSingle()
+        .then(_normalizeStoredItem);
   }
 
   String? _normalizeText(String? value) {
@@ -137,25 +155,71 @@ class BusinessRepository {
     String? notes,
   }) async {
     final timestamp = _now();
+    final normalizedType = _normalizeType(type);
+    final normalizedStatus = _normalizeStatus(status);
 
-    await (_database.update(_database.businessOpportunities)
-          ..where((table) => table.businessOpportunityId.equals(businessOpportunityId)))
+    await (_database.update(_database.businessOpportunities)..where(
+          (table) => table.businessOpportunityId.equals(businessOpportunityId),
+        ))
         .write(
-      BusinessOpportunitiesCompanion(
-        name: Value(name.trim()),
-        projectId: Value(projectId),
-        type: Value(_normalizeText(type)),
-        status: Value(status),
-        companyOrContact: Value(_normalizeText(companyOrContact)),
-        deadline: Value(_dateOnlyOrNull(deadline)),
-        nextAction: Value(_normalizeText(nextAction)),
-        followUpDate: Value(_dateOnlyOrNull(followUpDate)),
-        relatedDocumentLink: Value(_normalizeText(relatedDocumentLink)),
-        notes: Value(_normalizeText(notes)),
-        updatedAt: Value(timestamp),
-      ),
-    );
+          BusinessOpportunitiesCompanion(
+            name: Value(name.trim()),
+            projectId: Value(projectId),
+            type: Value(normalizedType),
+            status: Value(normalizedStatus),
+            companyOrContact: Value(_normalizeText(companyOrContact)),
+            deadline: Value(_dateOnlyOrNull(deadline)),
+            nextAction: Value(_normalizeText(nextAction)),
+            followUpDate: Value(_dateOnlyOrNull(followUpDate)),
+            relatedDocumentLink: Value(_normalizeText(relatedDocumentLink)),
+            notes: Value(_normalizeText(notes)),
+            updatedAt: Value(timestamp),
+          ),
+        );
 
     return getById(businessOpportunityId);
+  }
+
+  Future<BusinessOpportunity> _normalizeStoredItem(
+    BusinessOpportunity item,
+  ) async {
+    final normalizedType = _normalizeType(item.type);
+    final normalizedStatus = _normalizeStatus(item.status);
+
+    if (normalizedType == item.type && normalizedStatus == item.status) {
+      return item;
+    }
+
+    await (_database.update(_database.businessOpportunities)..where(
+          (table) =>
+              table.businessOpportunityId.equals(item.businessOpportunityId),
+        ))
+        .write(
+          BusinessOpportunitiesCompanion(
+            type: Value(normalizedType),
+            status: Value(normalizedStatus),
+            updatedAt: Value(_now()),
+          ),
+        );
+
+    return (_database.select(_database.businessOpportunities)..where(
+          (table) =>
+              table.businessOpportunityId.equals(item.businessOpportunityId),
+        ))
+        .getSingle();
+  }
+
+  String? _normalizeType(String? value) {
+    final trimmed = _normalizeText(value);
+    if (trimmed == null) {
+      return null;
+    }
+
+    return _legacyTypeAliases[trimmed] ?? trimmed;
+  }
+
+  String _normalizeStatus(String value) {
+    final trimmed = value.trim();
+    return _legacyStatusAliases[trimmed] ?? trimmed;
   }
 }

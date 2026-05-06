@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
@@ -42,4 +43,45 @@ void main() {
     expect(items.first.item.followUpDate, DateTime(2026, 5, 12));
     expect(items.first.projectName, 'Business Project');
   });
+
+  test(
+    'business repository normalizes legacy opportunity values on load',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final projectRepository = ProjectRepository(database);
+      final businessRepository = BusinessRepository(database);
+      final project = await projectRepository.createProject(
+        name: 'Legacy Project',
+        status: 'Active',
+        priority: 'High',
+        progressPercentage: 8,
+      );
+
+      await database
+          .into(database.businessOpportunities)
+          .insert(
+            BusinessOpportunitiesCompanion.insert(
+              businessOpportunityId: 'business-legacy-1',
+              name: 'Legacy Opportunity',
+              projectId: Value(project.projectId),
+              type: const Value('Other'),
+              status: const Value('Won'),
+              companyOrContact: const Value('Legacy Contact'),
+              createdAt: DateTime(2026, 5, 1),
+              updatedAt: DateTime(2026, 5, 1),
+            ),
+          );
+
+      final item = await businessRepository.getById('business-legacy-1');
+
+      expect(item.type, 'Business Idea');
+      expect(item.status, 'Accepted');
+
+      final items = await businessRepository.getItems();
+      expect(items.single.item.type, 'Business Idea');
+      expect(items.single.item.status, 'Accepted');
+    },
+  );
 }
