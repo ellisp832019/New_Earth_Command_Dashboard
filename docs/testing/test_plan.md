@@ -139,6 +139,15 @@ This page is especially important for the current app state.
 14. Save as Business Opportunity and confirm a business item is created.
 15. Prepare a Codex Prompt and confirm it is shown for review rather than executed.
 
+### Inbox Processing
+
+1. Open Inbox from the app shell or More screen.
+2. Confirm only unprocessed items are shown.
+3. Park an item and confirm it stays in Inbox with Parked status.
+4. Convert a task-like item and confirm a local Task is created.
+5. Confirm the converted Inbox item disappears from the list.
+6. Confirm the Inbox record stores processed metadata.
+
 ### Wellbeing, Inbox, Journal, Learning, Content, Voice Assistant, Settings
 
 - Open each screen.

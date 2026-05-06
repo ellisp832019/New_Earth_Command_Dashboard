@@ -1,8 +1,8 @@
-# TASK - Live Voice Capture
+# TASK - Inbox Processing Foundation
 
 ## Goal
 
-Make Voice Capture more powerful by adding press-to-listen microphone transcription inside the app while keeping review-before-save.
+Turn Inbox into the triage layer of the app so captured items can be converted into Tasks, Journal Entries, Content Ideas, Learning Items, and Business Opportunities.
 
 ## Source of Truth
 
@@ -13,21 +13,26 @@ Read these files first:
 - `docs/fsd/05_data_model.md`
 - `docs/fsd/06_functional_requirements.md`
 - `docs/fsd/08_technical_architecture.md`
-- `docs/tasks/VOICE_BRIDGE_TASK.md`
+- `docs/fsd/10_testing_release.md`
+- `docs/roadmap/mvp_execution_plan.md`
 
 ## Requirements
 
-1. Keep existing dashboard, projects, tasks, planner, journal, inbox, business, and voice save flows working.
-2. Add live microphone capture to the Voice Assistant screen where the platform recognizer is stable.
-3. Listening must be explicit: start, stop, or cancel. Do not add always-listening behaviour.
-4. Put recognized speech into the transcript preview field so it can be edited before saving.
-5. Keep paste transcript and mock transcript fallbacks.
-6. Save reviewed transcripts into the existing local destinations only after user action.
-7. Keep Codex prompts manual-review only.
-8. Add required platform permission text/configuration.
-9. Keep Windows app launch/debug stable by using native Windows voice typing from inside the app instead of the unstable beta recognizer.
-10. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
+1. Keep existing dashboard, projects, tasks, planner, journal, business, wellbeing, and voice flows working.
+2. Show unprocessed Inbox items only.
+3. Add explicit item actions for Park and Convert.
+4. Convert Inbox items into:
+   - Task
+   - Journal Entry
+   - Content Idea
+   - Learning Item
+   - Business Opportunity
+5. Preserve the original capture text by mapping it into the most useful target fields.
+6. Mark converted Inbox items as processed and store the converted record metadata.
+7. Keep Dashboard quick capture saving into Inbox.
+8. Keep the flow local-first and review-first.
+9. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
 
 ## Expected Result
 
-The user can open Voice Capture, capture speech or dictated text into the transcript box, review/edit the captured transcript, and save it as a task, journal entry, inbox idea, content idea, or business opportunity.
+The user can open Inbox, see the items that still need processing, convert them into the right module, or park them for later without losing the original capture.

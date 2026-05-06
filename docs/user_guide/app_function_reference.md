@@ -376,12 +376,15 @@ Inbox is the capture area for ideas, thoughts, and unprocessed items.
 
 - Lists inbox items
 - Allows adding a new inbox item
+- Lets you park items for later
+- Lets you convert items into Tasks, Journal Entries, Content Ideas, Learning Items, or Business Opportunities
 
 ### How to use it
 
 1. Open `Inbox`.
 2. Add a new item quickly.
-3. Use Inbox as the staging ground for later processing.
+3. Park or convert items when you are ready to process them.
+4. Use Inbox as the staging ground for later processing.
 
 ---
 

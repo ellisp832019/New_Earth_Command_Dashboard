@@ -85,14 +85,22 @@ class InboxScreen extends ConsumerWidget {
   }
 }
 
-class _InboxItemCard extends StatelessWidget {
+class _InboxItemCard extends ConsumerStatefulWidget {
   const _InboxItemCard({required this.item});
 
   final InboxListItem item;
 
   @override
+  ConsumerState<_InboxItemCard> createState() => _InboxItemCardState();
+}
+
+class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
+  bool _isProcessing = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final item = widget.item;
 
     return Card(
       key: Key('inboxItemCard-${item.item.inboxItemId}'),
@@ -121,10 +129,161 @@ class _InboxItemCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(item.item.body!, style: theme.textTheme.bodyMedium),
             ],
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  key: Key('convertInboxItemButton-${item.item.inboxItemId}'),
+                  onPressed: _isProcessing ? null : _showConvertOptions,
+                  icon: _isProcessing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.play_arrow_outlined),
+                  label: Text(_isProcessing ? 'Processing...' : 'Convert'),
+                ),
+                OutlinedButton.icon(
+                  key: Key('parkInboxItemButton-${item.item.inboxItemId}'),
+                  onPressed: _isProcessing ? null : _parkItem,
+                  icon: const Icon(Icons.push_pin_outlined),
+                  label: const Text('Park'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _parkItem() async {
+    await _performAction(
+      () => ref
+          .read(inboxActionsControllerProvider)
+          .parkItem(widget.item.item.inboxItemId),
+      'Inbox item parked.',
+    );
+  }
+
+  Future<void> _showConvertOptions() async {
+    final target = await showModalBottomSheet<_InboxConversionTarget>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Convert Inbox Item'),
+              subtitle: const Text('Choose where this capture should go.'),
+            ),
+            const Divider(height: 1),
+            _ConversionChoiceTile(
+              icon: Icons.task_alt_outlined,
+              label: 'Task',
+              onTap: () =>
+                  Navigator.of(context).pop(_InboxConversionTarget.task),
+            ),
+            _ConversionChoiceTile(
+              icon: Icons.book_outlined,
+              label: 'Journal Entry',
+              onTap: () =>
+                  Navigator.of(context).pop(_InboxConversionTarget.journal),
+            ),
+            _ConversionChoiceTile(
+              icon: Icons.article_outlined,
+              label: 'Content Idea',
+              onTap: () =>
+                  Navigator.of(context).pop(_InboxConversionTarget.content),
+            ),
+            _ConversionChoiceTile(
+              icon: Icons.school_outlined,
+              label: 'Learning Item',
+              onTap: () =>
+                  Navigator.of(context).pop(_InboxConversionTarget.learning),
+            ),
+            _ConversionChoiceTile(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'Business Opportunity',
+              onTap: () =>
+                  Navigator.of(context).pop(_InboxConversionTarget.business),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (target == null) {
+      return;
+    }
+
+    switch (target) {
+      case _InboxConversionTarget.task:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .convertToTask(widget.item.item.inboxItemId),
+          'Inbox item converted to Task.',
+        );
+        break;
+      case _InboxConversionTarget.journal:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .convertToJournalEntry(widget.item.item.inboxItemId),
+          'Inbox item converted to Journal Entry.',
+        );
+        break;
+      case _InboxConversionTarget.content:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .convertToContentItem(widget.item.item.inboxItemId),
+          'Inbox item converted to Content Idea.',
+        );
+        break;
+      case _InboxConversionTarget.learning:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .convertToLearningItem(widget.item.item.inboxItemId),
+          'Inbox item converted to Learning Item.',
+        );
+        break;
+      case _InboxConversionTarget.business:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .convertToBusinessOpportunity(widget.item.item.inboxItemId),
+          'Inbox item converted to Business Opportunity.',
+        );
+        break;
+    }
+  }
+
+  Future<void> _performAction(
+    Future<void> Function() action,
+    String message,
+  ) async {
+    setState(() => _isProcessing = true);
+    try {
+      await action();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
   }
 }
 
@@ -150,3 +309,22 @@ class _InboxInfoChip extends StatelessWidget {
     );
   }
 }
+
+class _ConversionChoiceTile extends StatelessWidget {
+  const _ConversionChoiceTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(leading: Icon(icon), title: Text(label), onTap: onTap);
+  }
+}
+
+enum _InboxConversionTarget { task, journal, content, learning, business }

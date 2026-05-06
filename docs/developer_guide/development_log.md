@@ -18,6 +18,17 @@ Added explicit microphone transcription to the Voice Assistant:
 - Structured voice saves now reuse the suggested title when it improves the saved record
 - Starting Windows voice typing now preserves fullscreen instead of restoring the window
 - Added structured field extraction for task category/priority, journal sections, content platform/type, and business contact/status hints
+
+## 2026-05-06 - Inbox Processing Foundation
+
+Added the first triage pass for Inbox items:
+
+- Inbox now shows only unprocessed items
+- Inbox cards now include Park and Convert actions
+- Added conversion paths from Inbox into Task, Journal Entry, Content Idea, Learning Item, and Business Opportunity
+- Converted items are marked Processed and store converted target metadata
+- Parked items stay visible in Inbox for later review
+- Added focused controller tests for processed and parked Inbox flows
 - Added editable review fields so extracted voice details can be corrected before saving
 
 Verification:

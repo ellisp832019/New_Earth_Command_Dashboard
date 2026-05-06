@@ -22,7 +22,11 @@ class InboxRepository {
   Future<List<InboxListItem>> getItems() async {
     final items =
         await (_database.select(_database.inboxItems)
-              ..where((table) => table.isArchived.equals(false))
+              ..where(
+                (table) =>
+                    table.isArchived.equals(false) &
+                    table.status.isIn(const ['New', 'Parked']),
+              )
               ..orderBy([(table) => OrderingTerm.desc(table.createdAt)]))
             .get();
 
@@ -89,6 +93,65 @@ class InboxRepository {
     return (_database.select(
       _database.inboxItems,
     )..where((table) => table.inboxItemId.equals(inboxItemId))).getSingle();
+  }
+
+  Future<InboxItem> updateItem({
+    required String inboxItemId,
+    String? title,
+    String? body,
+    String? type,
+    String? projectId,
+    String? status,
+    DateTime? processedAt,
+    String? convertedToType,
+    String? convertedToId,
+    bool? isArchived,
+  }) async {
+    await (_database.update(
+      _database.inboxItems,
+    )..where((table) => table.inboxItemId.equals(inboxItemId))).write(
+      InboxItemsCompanion(
+        title: title == null
+            ? const Value.absent()
+            : Value(_normalizeText(title)),
+        body: body == null ? const Value.absent() : Value(_normalizeText(body)),
+        type: type == null ? const Value.absent() : Value(_normalizeText(type)),
+        projectId: projectId == null ? const Value.absent() : Value(projectId),
+        status: status == null ? const Value.absent() : Value(status),
+        processedAt: processedAt == null
+            ? const Value.absent()
+            : Value(processedAt),
+        convertedToType: convertedToType == null
+            ? const Value.absent()
+            : Value(_normalizeText(convertedToType)),
+        convertedToId: convertedToId == null
+            ? const Value.absent()
+            : Value(convertedToId),
+        isArchived: isArchived == null
+            ? const Value.absent()
+            : Value(isArchived),
+      ),
+    );
+
+    return getById(inboxItemId);
+  }
+
+  Future<InboxItem> markProcessed({
+    required String inboxItemId,
+    required String convertedToType,
+    required String convertedToId,
+  }) {
+    return updateItem(
+      inboxItemId: inboxItemId,
+      status: 'Processed',
+      processedAt: _now(),
+      convertedToType: convertedToType,
+      convertedToId: convertedToId,
+    );
+  }
+
+  Future<InboxItem> parkItem(String inboxItemId) {
+    return updateItem(inboxItemId: inboxItemId, status: 'Parked');
   }
 
   String? _normalizeText(String? value) {
