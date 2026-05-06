@@ -8,9 +8,10 @@ import '../../projects/application/projects_controller.dart';
 import '../application/content_controller.dart';
 
 class AddContentItemScreen extends ConsumerStatefulWidget {
-  const AddContentItemScreen({super.key, this.contentItemId});
+  const AddContentItemScreen({super.key, this.contentItemId, this.projectId});
 
   final String? contentItemId;
+  final String? projectId;
 
   bool get isEditing => contentItemId != null;
 
@@ -64,6 +65,7 @@ class _AddContentItemScreenState extends ConsumerState<AddContentItemScreen> {
     _draftTextController = TextEditingController();
     _imagePromptController = TextEditingController();
     _notesController = TextEditingController();
+    _projectId = widget.projectId;
   }
 
   @override

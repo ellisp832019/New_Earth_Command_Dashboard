@@ -69,37 +69,70 @@ class ProjectDetailScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            OutlinedButton.icon(
-                              key: const Key('archiveProjectButton'),
-                              onPressed: () => _confirmArchive(
-                                context,
-                                ref,
-                                project,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 330),
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.start,
+                            children: [
+                              OutlinedButton.icon(
+                                key: const Key('archiveProjectButton'),
+                                onPressed: () =>
+                                    _confirmArchive(context, ref, project),
+                                icon: const Icon(Icons.archive_outlined),
+                                label: const Text('Archive'),
                               ),
-                              icon: const Icon(Icons.archive_outlined),
-                              label: const Text('Archive'),
-                            ),
-                            FilledButton.icon(
-                              key: const Key('addProjectTaskButton'),
-                              onPressed: () => context.push(
-                                RouteNames.newTaskForProject(projectId),
+                              FilledButton.icon(
+                                key: const Key('addProjectTaskButton'),
+                                onPressed: () => context.push(
+                                  RouteNames.newTaskForProject(projectId),
+                                ),
+                                icon: const Icon(Icons.add_task_outlined),
+                                label: const Text('Add Task'),
                               ),
-                              icon: const Icon(Icons.add_task_outlined),
-                              label: const Text('Add Task'),
-                            ),
-                            OutlinedButton.icon(
-                              key: const Key('editProjectButton'),
-                              onPressed: () => context.push(
-                                RouteNames.editProject(projectId),
+                              OutlinedButton.icon(
+                                key: const Key('addProjectJournalButton'),
+                                onPressed: () => context.push(
+                                  RouteNames.newJournalForProject(projectId),
+                                ),
+                                icon: const Icon(Icons.menu_book_outlined),
+                                label: const Text('Add Journal'),
                               ),
-                              icon: const Icon(Icons.edit_outlined),
-                              label: const Text('Edit'),
-                            ),
-                          ],
+                              OutlinedButton.icon(
+                                key: const Key('addProjectLearningButton'),
+                                onPressed: () => context.push(
+                                  RouteNames.newLearningForProject(projectId),
+                                ),
+                                icon: const Icon(Icons.school_outlined),
+                                label: const Text('Add Learning'),
+                              ),
+                              OutlinedButton.icon(
+                                key: const Key('addProjectContentButton'),
+                                onPressed: () => context.push(
+                                  RouteNames.newContentForProject(projectId),
+                                ),
+                                icon: const Icon(Icons.article_outlined),
+                                label: const Text('Add Content'),
+                              ),
+                              OutlinedButton.icon(
+                                key: const Key('addProjectBusinessButton'),
+                                onPressed: () => context.push(
+                                  RouteNames.newBusinessForProject(projectId),
+                                ),
+                                icon: const Icon(Icons.work_outline),
+                                label: const Text('Add Business'),
+                              ),
+                              OutlinedButton.icon(
+                                key: const Key('editProjectButton'),
+                                onPressed: () => context.push(
+                                  RouteNames.editProject(projectId),
+                                ),
+                                icon: const Icon(Icons.edit_outlined),
+                                label: const Text('Edit'),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -109,9 +142,39 @@ class ProjectDetailScreen extends ConsumerWidget {
                       runSpacing: 8,
                       children: [
                         _ProjectInfoChip(label: 'Status: ${project.status}'),
-                        _ProjectInfoChip(label: 'Priority: ${project.priority}'),
+                        _ProjectInfoChip(
+                          label: 'Priority: ${project.priority}',
+                        ),
                         _ProjectInfoChip(
                           label: 'Progress: ${project.progressPercentage}%',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Linked modules',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ProjectInfoChip(
+                          label: 'Journal Entries: ${detail.journalEntryCount}',
+                        ),
+                        _ProjectInfoChip(
+                          label: 'Learning Items: ${detail.learningItemCount}',
+                        ),
+                        _ProjectInfoChip(
+                          label: 'Content Ideas: ${detail.contentItemCount}',
+                        ),
+                        _ProjectInfoChip(
+                          label:
+                              'Business Opportunities: ${detail.businessOpportunityCount}',
                         ),
                       ],
                     ),
@@ -190,38 +253,28 @@ class ProjectDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
-                title: 'Linked Notes and Build Trail',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Journal Entries: ${detail.journalEntryCount}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColours.darkText,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Learning Items: ${detail.learningItemCount}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColours.darkText,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Content Ideas: ${detail.contentItemCount}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColours.darkText,
-                      ),
-                    ),
-                  ],
+                title: 'Recent Journal Entries',
+                child: _LinkedJournalSection(
+                  entries: detail.recentJournalEntries,
                 ),
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
-                title: 'Recent Journal Entries',
-                child: _LinkedJournalSection(
-                  entries: detail.recentJournalEntries,
+                title: 'Recent Learning Items',
+                child: _LinkedLearningSection(
+                  items: detail.recentLearningItems,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _ProjectSectionCard(
+                title: 'Recent Content Ideas',
+                child: _LinkedContentSection(items: detail.recentContentItems),
+              ),
+              const SizedBox(height: 12),
+              _ProjectSectionCard(
+                title: 'Recent Business Opportunities',
+                child: _LinkedBusinessSection(
+                  items: detail.recentBusinessOpportunities,
                 ),
               ),
               const SizedBox(height: 12),
@@ -362,6 +415,206 @@ class _LinkedJournalSection extends StatelessWidget {
     }
 
     return dateLabel;
+  }
+}
+
+class _LinkedLearningSection extends StatelessWidget {
+  const _LinkedLearningSection({required this.items});
+
+  final List<ProjectLinkedLearningItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (items.isEmpty) {
+      return Text(
+        'No learning items are linked to this project yet.',
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
+    return Column(
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: InkWell(
+            key: Key('projectLearningItem-${item.learningItemId}'),
+            onTap: () =>
+                context.push(RouteNames.editLearning(item.learningItemId)),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.school_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.topic, style: theme.textTheme.bodyMedium),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Status: ${item.status}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (item.nextStep?.isNotEmpty == true) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            item.nextStep!,
+                            style: theme.textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _LinkedContentSection extends StatelessWidget {
+  const _LinkedContentSection({required this.items});
+
+  final List<ProjectLinkedContentItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (items.isEmpty) {
+      return Text(
+        'No content ideas are linked to this project yet.',
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
+    return Column(
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: InkWell(
+            key: Key('projectContentItem-${item.contentItemId}'),
+            onTap: () =>
+                context.push(RouteNames.editContent(item.contentItemId)),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.article_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.title, style: theme.textTheme.bodyMedium),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (item.platform?.isNotEmpty == true)
+                              item.platform,
+                            'Status: ${item.status}',
+                          ].join('   '),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (item.preview?.isNotEmpty == true) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            item.preview!,
+                            style: theme.textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _LinkedBusinessSection extends StatelessWidget {
+  const _LinkedBusinessSection({required this.items});
+
+  final List<ProjectLinkedBusinessOpportunity> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (items.isEmpty) {
+      return Text(
+        'No business opportunities are linked to this project yet.',
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
+    return Column(
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: InkWell(
+            key: Key('projectBusinessItem-${item.businessOpportunityId}'),
+            onTap: () => context.push(
+              RouteNames.editBusiness(item.businessOpportunityId),
+            ),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.work_outline, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.name, style: theme.textTheme.bodyMedium),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (item.type?.isNotEmpty == true) item.type,
+                            'Status: ${item.status}',
+                          ].join('   '),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (item.nextAction?.isNotEmpty == true) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            item.nextAction!,
+                            style: theme.textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
 

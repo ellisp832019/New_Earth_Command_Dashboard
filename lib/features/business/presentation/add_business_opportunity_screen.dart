@@ -9,9 +9,14 @@ import '../../projects/application/projects_controller.dart';
 import '../application/business_controller.dart';
 
 class AddBusinessOpportunityScreen extends ConsumerStatefulWidget {
-  const AddBusinessOpportunityScreen({super.key, this.businessId});
+  const AddBusinessOpportunityScreen({
+    super.key,
+    this.businessId,
+    this.projectId,
+  });
 
   final String? businessId;
+  final String? projectId;
 
   @override
   ConsumerState<AddBusinessOpportunityScreen> createState() =>
@@ -69,6 +74,7 @@ class _AddBusinessOpportunityScreenState
     _nextActionController = TextEditingController();
     _relatedDocumentLinkController = TextEditingController();
     _notesController = TextEditingController();
+    _projectId = widget.projectId;
   }
 
   @override

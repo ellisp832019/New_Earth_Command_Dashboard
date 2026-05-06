@@ -46,4 +46,32 @@ abstract final class RouteNames {
       queryParameters: {'projectId': projectId},
     ).toString();
   }
+
+  static String newJournalForProject(String projectId) {
+    return Uri(
+      path: newJournal,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newLearningForProject(String projectId) {
+    return Uri(
+      path: newLearning,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newContentForProject(String projectId) {
+    return Uri(
+      path: newContent,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newBusinessForProject(String projectId) {
+    return Uri(
+      path: newBusiness,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
 }

@@ -132,7 +132,9 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'new',
-          builder: (context, state) => const AddEditJournalEntryScreen(),
+          builder: (context, state) => AddEditJournalEntryScreen(
+            projectId: state.uri.queryParameters['projectId'],
+          ),
         ),
         GoRoute(
           path: ':journalEntryId/edit',
@@ -149,7 +151,9 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'new',
-          builder: (context, state) => const AddLearningItemScreen(),
+          builder: (context, state) => AddLearningItemScreen(
+            projectId: state.uri.queryParameters['projectId'],
+          ),
         ),
         GoRoute(
           path: ':learningItemId/edit',
@@ -166,7 +170,9 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'new',
-          builder: (context, state) => const AddContentItemScreen(),
+          builder: (context, state) => AddContentItemScreen(
+            projectId: state.uri.queryParameters['projectId'],
+          ),
         ),
         GoRoute(
           path: ':contentItemId/edit',
@@ -183,14 +189,16 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'new',
-          builder: (context, state) => const AddBusinessOpportunityScreen(),
+          builder: (context, state) => AddBusinessOpportunityScreen(
+            projectId: state.uri.queryParameters['projectId'],
+          ),
         ),
-                GoRoute(
-                  path: ':businessId/edit',
-                  builder: (context, state) => AddBusinessOpportunityScreen(
-                    businessId: state.pathParameters['businessId']!,
-                  ),
-                ),
+        GoRoute(
+          path: ':businessId/edit',
+          builder: (context, state) => AddBusinessOpportunityScreen(
+            businessId: state.pathParameters['businessId']!,
+          ),
+        ),
       ],
     ),
     GoRoute(

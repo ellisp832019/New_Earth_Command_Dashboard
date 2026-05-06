@@ -1,8 +1,8 @@
-# TASK - Inbox Processing Foundation
+# TASK - Project Detail Linked Module Surfacing
 
 ## Goal
 
-Turn Inbox into the triage layer of the app so captured items can be converted into Tasks, Journal Entries, Content Ideas, Learning Items, and Business Opportunities.
+Make Project Detail feel like the home for a project by surfacing linked Journal, Learning, Content, and Business records, while keeping quick-create actions project-aware.
 
 ## Source of Truth
 
@@ -14,25 +14,17 @@ Read these files first:
 - `docs/fsd/06_functional_requirements.md`
 - `docs/fsd/08_technical_architecture.md`
 - `docs/fsd/10_testing_release.md`
-- `docs/roadmap/mvp_execution_plan.md`
 
 ## Requirements
 
-1. Keep existing dashboard, projects, tasks, planner, journal, business, wellbeing, and voice flows working.
-2. Show unprocessed Inbox items only.
-3. Add explicit item actions for Park and Convert.
-4. Convert Inbox items into:
-   - Task
-   - Journal Entry
-   - Content Idea
-   - Learning Item
-   - Business Opportunity
-5. Preserve the original capture text by mapping it into the most useful target fields.
-6. Mark converted Inbox items as processed and store the converted record metadata.
-7. Keep Dashboard quick capture saving into Inbox.
-8. Keep the flow local-first and review-first.
-9. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
+1. Keep projects, tasks, planner, voice, and inbox flows working.
+2. Show active and blocked tasks as before.
+3. Surface recent linked Journal entries, Learning items, Content ideas, and Business opportunities on Project Detail.
+4. Add project-aware create shortcuts for Journal, Learning, Content, and Business from Project Detail.
+5. Keep the layout calm and readable.
+6. Preserve project detail archive/edit/task flows.
+7. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
 
 ## Expected Result
 
-The user can open Inbox, see the items that still need processing, convert them into the right module, or park them for later without losing the original capture.
+The user can open a project and quickly see the related work trail, then jump straight into adding the next linked item without hunting through the app.

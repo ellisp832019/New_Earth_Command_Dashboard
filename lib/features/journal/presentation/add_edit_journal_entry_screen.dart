@@ -10,9 +10,14 @@ import '../../tasks/application/tasks_controller.dart';
 import '../application/journal_controller.dart';
 
 class AddEditJournalEntryScreen extends ConsumerStatefulWidget {
-  const AddEditJournalEntryScreen({super.key, this.journalEntryId});
+  const AddEditJournalEntryScreen({
+    super.key,
+    this.journalEntryId,
+    this.projectId,
+  });
 
   final String? journalEntryId;
+  final String? projectId;
 
   bool get isEditing => journalEntryId != null;
 
@@ -55,6 +60,7 @@ class _AddEditJournalEntryScreenState
     _whatIWorkedOnController = TextEditingController();
     _whatILearnedController = TextEditingController();
     _nextActionsController = TextEditingController();
+    _projectId = widget.projectId;
   }
 
   @override

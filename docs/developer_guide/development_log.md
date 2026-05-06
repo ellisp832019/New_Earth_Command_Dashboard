@@ -29,6 +29,16 @@ Added the first triage pass for Inbox items:
 - Converted items are marked Processed and store converted target metadata
 - Parked items stay visible in Inbox for later review
 - Added focused controller tests for processed and parked Inbox flows
+
+## 2026-05-06 - Project Detail Linked Module Surfacing
+
+Made Project Detail feel more like the home for a project:
+
+- Added project-aware create shortcuts for Journal, Learning, Content, and Business
+- Extended the project detail snapshot to load recent linked learning, content, and business records
+- Added calm recent-item sections for linked learning items, content ideas, and business opportunities
+- Kept journal entries and active tasks in the same project home view
+- Added focused widget coverage for the richer Project Detail flow
 - Added editable review fields so extracted voice details can be corrected before saving
 
 Verification:

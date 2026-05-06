@@ -70,6 +70,8 @@ The app is a calm command dashboard for daily work and projects.
 - Open the Projects screen.
 - Create a new project if the flow is available.
 - Verify project details display correctly.
+- Confirm linked journal entries, learning items, content ideas, and business opportunities appear on Project Detail when they exist.
+- Confirm the project-aware add shortcuts open the right create flow with the project preselected.
 - Archive or update a project if those controls exist.
 
 ### Tasks

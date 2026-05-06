@@ -1144,6 +1144,96 @@ void main() {
     expect(find.text('Project journal reflection'), findsOneWidget);
   });
 
+  testWidgets(
+    'project detail surfaces linked modules and opens project-aware create screens',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final projectRepository = ProjectRepository(database);
+      final journalRepository = JournalRepository(database);
+      final learningRepository = LearningRepository(database);
+      final contentRepository = ContentRepository(database);
+      final businessRepository = BusinessRepository(database);
+      final project = await projectRepository.createProject(
+        name: 'Project Module Home',
+        status: 'Active',
+        priority: 'High',
+        progressPercentage: 20,
+      );
+      await journalRepository.createEntry(
+        date: DateTime(2026, 5, 3),
+        title: 'Project journal reflection',
+        projectId: project.projectId,
+        category: 'Project Update',
+        whatIWorkedOn: 'Captured the latest project build note.',
+      );
+      await learningRepository.createItem(
+        topic: 'Project navigation flow',
+        projectId: project.projectId,
+        status: 'Learning',
+        nextStep: 'Use the detail page to link the next action.',
+      );
+      await contentRepository.createItem(
+        title: 'Project build note',
+        projectId: project.projectId,
+        status: 'Drafting',
+        platform: 'LinkedIn',
+        contentType: 'Project Update',
+        draftText: 'A short update about the latest project change.',
+      );
+      await businessRepository.createItem(
+        name: 'Project partner lead',
+        projectId: project.projectId,
+        status: 'Preparing',
+        type: 'Partnership',
+        nextAction: 'Draft a short follow-up note.',
+      );
+
+      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+      await tester.pumpAndSettle();
+
+      appRouter.go('/projects/${project.projectId}');
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Recent Journal Entries'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Recent Journal Entries'), findsOneWidget);
+      expect(find.text('Project journal reflection'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Recent Learning Items'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Recent Learning Items'), findsOneWidget);
+      expect(find.text('Project navigation flow'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Recent Content Ideas'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Recent Content Ideas'), findsOneWidget);
+      expect(find.text('Project build note'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Recent Business Opportunities'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Recent Business Opportunities'), findsOneWidget);
+      expect(find.text('Project partner lead'), findsOneWidget);
+    },
+  );
+
   testWidgets('project detail can archive a project after confirmation', (
     WidgetTester tester,
   ) async {

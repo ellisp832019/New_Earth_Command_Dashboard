@@ -9,18 +9,26 @@ class ProjectDetailSnapshot {
     required this.activeTasks,
     required this.blockedTasks,
     required this.recentJournalEntries,
+    required this.recentLearningItems,
+    required this.recentContentItems,
+    required this.recentBusinessOpportunities,
     required this.journalEntryCount,
     required this.learningItemCount,
     required this.contentItemCount,
+    required this.businessOpportunityCount,
   });
 
   final Project project;
   final List<Task> activeTasks;
   final List<Task> blockedTasks;
   final List<ProjectLinkedJournalEntry> recentJournalEntries;
+  final List<ProjectLinkedLearningItem> recentLearningItems;
+  final List<ProjectLinkedContentItem> recentContentItems;
+  final List<ProjectLinkedBusinessOpportunity> recentBusinessOpportunities;
   final int journalEntryCount;
   final int learningItemCount;
   final int contentItemCount;
+  final int businessOpportunityCount;
 }
 
 class ProjectLinkedJournalEntry {
@@ -37,6 +45,52 @@ class ProjectLinkedJournalEntry {
   final String title;
   final String? category;
   final String? preview;
+}
+
+class ProjectLinkedLearningItem {
+  const ProjectLinkedLearningItem({
+    required this.learningItemId,
+    required this.topic,
+    required this.status,
+    this.nextStep,
+  });
+
+  final String learningItemId;
+  final String topic;
+  final String status;
+  final String? nextStep;
+}
+
+class ProjectLinkedContentItem {
+  const ProjectLinkedContentItem({
+    required this.contentItemId,
+    required this.title,
+    required this.status,
+    this.platform,
+    this.preview,
+  });
+
+  final String contentItemId;
+  final String title;
+  final String status;
+  final String? platform;
+  final String? preview;
+}
+
+class ProjectLinkedBusinessOpportunity {
+  const ProjectLinkedBusinessOpportunity({
+    required this.businessOpportunityId,
+    required this.name,
+    required this.status,
+    this.type,
+    this.nextAction,
+  });
+
+  final String businessOpportunityId;
+  final String name;
+  final String status;
+  final String? type;
+  final String? nextAction;
 }
 
 class ProjectRepository {
@@ -124,31 +178,87 @@ class ProjectRepository {
         )
         .toList();
     final journalEntryCount = journalEntries.length;
-    final learningItemCount =
-        (await (_database.select(_database.learningItems)..where(
-                  (table) =>
-                      table.projectId.equals(projectId) &
-                      table.isArchived.equals(false),
-                ))
-                .get())
-            .length;
-    final contentItemCount =
-        (await (_database.select(_database.contentItems)..where(
-                  (table) =>
-                      table.projectId.equals(projectId) &
-                      table.isArchived.equals(false),
-                ))
-                .get())
-            .length;
+    final learningItems =
+        await (_database.select(_database.learningItems)
+              ..where(
+                (table) =>
+                    table.projectId.equals(projectId) &
+                    table.isArchived.equals(false),
+              )
+              ..orderBy([
+                (table) => OrderingTerm.desc(table.updatedAt),
+                (table) => OrderingTerm.desc(table.createdAt),
+              ]))
+            .get();
+    final contentItems =
+        await (_database.select(_database.contentItems)
+              ..where(
+                (table) =>
+                    table.projectId.equals(projectId) &
+                    table.isArchived.equals(false),
+              )
+              ..orderBy([
+                (table) => OrderingTerm.desc(table.updatedAt),
+                (table) => OrderingTerm.desc(table.createdAt),
+              ]))
+            .get();
+    final businessOpportunities =
+        await (_database.select(_database.businessOpportunities)
+              ..where(
+                (table) =>
+                    table.projectId.equals(projectId) &
+                    table.isArchived.equals(false),
+              )
+              ..orderBy([
+                (table) => OrderingTerm.desc(table.updatedAt),
+                (table) => OrderingTerm.desc(table.createdAt),
+              ]))
+            .get();
 
     return ProjectDetailSnapshot(
       project: project,
       activeTasks: activeTasks,
       blockedTasks: blockedTasks,
       recentJournalEntries: recentJournalEntries,
+      recentLearningItems: learningItems
+          .take(3)
+          .map(
+            (item) => ProjectLinkedLearningItem(
+              learningItemId: item.learningItemId,
+              topic: item.topic,
+              status: item.status,
+              nextStep: item.nextStep,
+            ),
+          )
+          .toList(),
+      recentContentItems: contentItems
+          .take(3)
+          .map(
+            (item) => ProjectLinkedContentItem(
+              contentItemId: item.contentItemId,
+              title: item.title,
+              status: item.status,
+              platform: item.platform,
+              preview: _contentPreview(item),
+            ),
+          )
+          .toList(),
+      recentBusinessOpportunities: businessOpportunities
+          .take(3)
+          .map(
+            (item) => ProjectLinkedBusinessOpportunity(
+              businessOpportunityId: item.businessOpportunityId,
+              name: item.name,
+              status: item.status,
+              type: item.type,
+              nextAction: item.nextAction,
+            ),
+          )
+          .toList(),
       journalEntryCount: journalEntryCount,
-      learningItemCount: learningItemCount,
-      contentItemCount: contentItemCount,
+      learningItemCount: learningItems.length,
+      contentItemCount: contentItems.length,
+      businessOpportunityCount: businessOpportunities.length,
     );
   }
 
@@ -278,6 +388,18 @@ class ProjectRepository {
       entry.nextActions,
     ];
 
+    for (final candidate in candidates) {
+      final trimmed = candidate?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) {
+        return trimmed;
+      }
+    }
+
+    return null;
+  }
+
+  String? _contentPreview(ContentItem item) {
+    final candidates = [item.draftText, item.notes, item.imagePrompt];
     for (final candidate in candidates) {
       final trimmed = candidate?.trim();
       if (trimmed != null && trimmed.isNotEmpty) {

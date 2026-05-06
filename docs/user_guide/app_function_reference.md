@@ -120,6 +120,11 @@ The project detail screen provides:
 - project purpose and current status
 - progress or goal details
 - linked tasks
+- linked journal entries
+- linked learning items
+- linked content ideas
+- linked business opportunities
+- project-aware shortcuts for adding new linked items
 - quick navigation back to the dashboard
 
 ---
