@@ -127,159 +127,174 @@ class _TaskListView extends ConsumerWidget {
       return matchesStatus && matchesProject && matchesSearch;
     }).toList();
 
-    if (tasks.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'No tasks yet. Add your first task to start moving New Earth forward.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
+    final headerPanel = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: _tasksPagePanelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compactHeader = constraints.maxWidth < 700;
+
+              final titleBlock = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tasks',
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: AppColours.darkText,
+                      fontSize: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Current Tasks',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${filteredTasks.length} tasks are visible in the current task view.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${topTaskIds.length} of 3 priority tasks selected for today.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+                ],
+              );
+
+              final addButton = FilledButton.icon(
+                key: const Key('addTaskButton'),
+                onPressed: () => context.push(RouteNames.newTask),
+                icon: const Icon(Icons.add_task_outlined),
+                label: const Text('Add Task'),
+              );
+
+              if (compactHeader) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [titleBlock, const SizedBox(height: 16), addButton],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: titleBlock),
+                  const SizedBox(width: 16),
+                  addButton,
+                ],
+              );
+            },
           ),
-        ),
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('taskSearchField'),
+            controller: TextEditingController(text: searchQuery)
+              ..selection = TextSelection.collapsed(offset: searchQuery.length),
+            decoration: InputDecoration(
+              labelText: 'Search Tasks',
+              hintText: 'Search title or notes',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      key: const Key('clearTaskSearchButton'),
+                      onPressed: () {
+                        ref.read(taskSearchQueryProvider.notifier).clear();
+                      },
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Clear Search',
+                    ),
+            ),
+            onChanged: (value) {
+              ref.read(taskSearchQueryProvider.notifier).setQuery(value);
+            },
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Status',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: TasksScreen.statusFilterOptions.map((option) {
+              return ChoiceChip(
+                key: Key('taskStatusFilter-$option'),
+                label: Text(option),
+                selected: statusFilter == option,
+                onSelected: (_) {
+                  ref
+                      .read(selectedTaskStatusFilterProvider.notifier)
+                      .setFilter(option);
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String?>(
+            key: const Key('taskProjectFilterField'),
+            initialValue: projectFilter,
+            decoration: const InputDecoration(labelText: 'Project Filter'),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('All Projects'),
+              ),
+              ...projects.map(
+                (project) => DropdownMenuItem<String?>(
+                  value: project.projectId,
+                  child: Text(project.name),
+                ),
+              ),
+            ],
+            onChanged: (value) {
+              ref
+                  .read(selectedTaskProjectFilterProvider.notifier)
+                  .setFilter(value);
+            },
+          ),
+        ],
+      ),
+    );
+
+    if (tasks.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          headerPanel,
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'No tasks yet. Add your first task to start moving New Earth forward.',
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: (filteredTasks.isEmpty ? 1 : filteredTasks.length) + 1,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Container(
-            padding: const EdgeInsets.all(22),
-            decoration: _tasksPagePanelDecoration(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tasks',
-                            style: theme.textTheme.displaySmall?.copyWith(
-                              color: AppColours.darkText,
-                              fontSize: 28,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Current Tasks',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: AppColours.darkText,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${filteredTasks.length} tasks are visible in the current task view.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColours.darkMutedText,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${topTaskIds.length} of 3 priority tasks selected for today.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColours.darkMutedText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    FilledButton.icon(
-                      key: const Key('addTaskButton'),
-                      onPressed: () => context.push(RouteNames.newTask),
-                      icon: const Icon(Icons.add_task_outlined),
-                      label: const Text('Add Task'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  key: const Key('taskSearchField'),
-                  controller: TextEditingController(text: searchQuery)
-                    ..selection = TextSelection.collapsed(
-                      offset: searchQuery.length,
-                    ),
-                  decoration: InputDecoration(
-                    labelText: 'Search Tasks',
-                    hintText: 'Search title or notes',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: searchQuery.isEmpty
-                        ? null
-                        : IconButton(
-                            key: const Key('clearTaskSearchButton'),
-                            onPressed: () {
-                              ref.read(taskSearchQueryProvider.notifier).clear();
-                            },
-                            icon: const Icon(Icons.close),
-                            tooltip: 'Clear Search',
-                          ),
-                  ),
-                  onChanged: (value) {
-                    ref.read(taskSearchQueryProvider.notifier).setQuery(value);
-                  },
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Status',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: AppColours.darkText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: TasksScreen.statusFilterOptions.map((option) {
-                    return ChoiceChip(
-                      key: Key('taskStatusFilter-$option'),
-                      label: Text(option),
-                      selected: statusFilter == option,
-                      onSelected: (_) {
-                        ref
-                            .read(selectedTaskStatusFilterProvider.notifier)
-                            .setFilter(option);
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String?>(
-                  key: const Key('taskProjectFilterField'),
-                  initialValue: projectFilter,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Filter',
-                  ),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text('All Projects'),
-                    ),
-                    ...projects.map(
-                      (project) => DropdownMenuItem<String?>(
-                        value: project.projectId,
-                        child: Text(project.name),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    ref
-                        .read(selectedTaskProjectFilterProvider.notifier)
-                        .setFilter(value);
-                  },
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (filteredTasks.isEmpty) {
-          return Card(
+    if (filteredTasks.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          headerPanel,
+          const SizedBox(height: 12),
+          Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
@@ -289,7 +304,18 @@ class _TaskListView extends ConsumerWidget {
                 style: theme.textTheme.bodyMedium,
               ),
             ),
-          );
+          ),
+        ],
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(20),
+      itemCount: filteredTasks.length + 1,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return headerPanel;
         }
 
         final task = filteredTasks[index - 1];

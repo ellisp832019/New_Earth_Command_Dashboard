@@ -475,6 +475,83 @@ void main() {
     expect(find.text('New Earth Website'), findsOneWidget);
   });
 
+  testWidgets('tasks screen shows add button in empty state', (
+    WidgetTester tester,
+  ) async {
+    Widget buildEmptyTasksApp() {
+      return ProviderScope(
+        overrides: [
+          databaseReadyProvider.overrideWith((ref) async {}),
+          appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
+          dashboardSnapshotProvider.overrideWith(
+            (ref) async => DashboardSnapshot(
+              date: DateTime(2026, 5, 2),
+              hasTodayPlan: true,
+              activeProjectCount: 0,
+              activeProjects: const [],
+              topTasks: const [],
+              topTaskTitles: const [],
+              showWellbeingCard: true,
+              showBusinessCard: true,
+              showLearningCard: true,
+              showContentCard: true,
+              energyLabel: 'High',
+              mainFocus: null,
+              focusReason: null,
+              morningIntention: null,
+            ),
+          ),
+          voiceAssistantProjectOptionsProvider.overrideWith(
+            (ref) async => const [],
+          ),
+          projectsProvider.overrideWith((ref) async => const []),
+          tasksProvider.overrideWith((ref) async => const []),
+          plannerTaskOptionsProvider.overrideWith((ref) async => const []),
+          todayPlanProvider.overrideWith(
+            (ref) async => DailyPlan(
+              dailyPlanId: 'daily-plan-2026-05-02',
+              date: DateTime(2026, 5, 2),
+              mainFocus: null,
+              focusReason: null,
+              morningIntention: null,
+              topTask1Id: null,
+              topTask2Id: null,
+              topTask3Id: null,
+              learningFocusId: null,
+              contentFocusId: null,
+              businessFocusId: null,
+              wellbeingCheckinId: null,
+              eveningReview: null,
+              whatMovedForward: null,
+              whatWasCompleted: null,
+              whatWasLearned: null,
+              blockers: null,
+              carryForwardNotes: null,
+              tomorrowFocus: null,
+              createdAt: DateTime(2026, 5, 2),
+              updatedAt: DateTime(2026, 5, 2),
+            ),
+          ),
+        ],
+        child: const NewEarthCommandDashboardApp(),
+      );
+    }
+
+    await tester.pumpWidget(buildEmptyTasksApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('addTaskButton')), findsOneWidget);
+    expect(
+      find.text(
+        'No tasks yet. Add your first task to start moving New Earth forward.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('tasks screen can create a task', (WidgetTester tester) async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
