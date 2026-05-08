@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -541,6 +542,44 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
   }
 
+  void _applyTemplate(VoiceCommandTemplate template) {
+    setState(() {
+      _selectedType = template.type;
+      _transcriptController.text = template.transcript;
+      _transcriptController.selection = TextSelection.collapsed(
+        offset: template.transcript.length,
+      );
+      _speechStatus = 'Template loaded. Review before saving.';
+    });
+    _transcriptFocusNode.requestFocus();
+  }
+
+  void _restoreCommandFromHistory(VoiceCommand command) {
+    setState(() {
+      _selectedType = command.type;
+      _transcriptController.text = command.transcript;
+      _transcriptController.selection = TextSelection.collapsed(
+        offset: command.transcript.length,
+      );
+      _speechStatus = 'History item loaded. Review before saving.';
+    });
+    _transcriptFocusNode.requestFocus();
+  }
+
+  void _handleQuickAction(VoiceCommandQuickAction action) {
+    if (action.route != null) {
+      context.go(action.route!);
+      return;
+    }
+
+    if (action.templateId != null) {
+      final template = _service.getTemplates().firstWhere(
+            (item) => item.id == action.templateId,
+          );
+      _applyTemplate(template);
+    }
+  }
+
   VoiceCommandSuggestion? _buildEditableSuggestion() {
     final suggestion = _suggestion;
     if (suggestion == null) {
@@ -586,6 +625,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final projectOptions = ref.watch(voiceAssistantProjectOptionsProvider);
+    final templates = _service.getTemplates();
+    final quickActions = _service.suggestQuickActions(
+      transcript: _transcriptController.text,
+      suggestion: _suggestion,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Voice Assistant')),
@@ -708,6 +752,79 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             onChanged: (_) => _handleTranscriptChanged(),
             helperText:
                 'Live microphone capture fills this field. Edit the words first, then save to the right local module.',
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Voice Starter Deck',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'One tap loads a ready-made command to edit, speak, or turn into a prompt.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: templates
+                        .map(
+                          (template) => Tooltip(
+                            message: template.description,
+                            child: FilledButton.tonalIcon(
+                              key: Key('voiceTemplateButton-${template.id}'),
+                              onPressed: () => _applyTemplate(template),
+                              icon: Icon(_templateIcon(template.id)),
+                              label: Text(template.label),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Command Router', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Based on the current command, here are the next likely moves.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: quickActions
+                        .map(
+                          (action) => Tooltip(
+                            message: action.description,
+                            child: OutlinedButton.icon(
+                              key: Key('voiceQuickActionButton-${action.id}'),
+                              onPressed: () => _handleQuickAction(action),
+                              icon: Icon(_quickActionIcon(action.id)),
+                              label: Text(action.label),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
           ),
           if (_suggestion != null) ...[
             const SizedBox(height: 16),
@@ -861,10 +978,57 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             ),
           ],
           const SizedBox(height: 32),
-          CommandHistoryList(commands: _history),
+          CommandHistoryList(
+            commands: _history,
+            onCommandSelected: _restoreCommandFromHistory,
+          ),
         ],
       ),
     );
+  }
+
+  IconData _templateIcon(String id) {
+    switch (id) {
+      case 'build-day':
+        return Icons.calendar_view_day_outlined;
+      case 'task':
+        return Icons.task_alt_outlined;
+      case 'journal':
+        return Icons.menu_book_outlined;
+      case 'content':
+        return Icons.article_outlined;
+      case 'business':
+        return Icons.work_outline;
+      case 'codex':
+        return Icons.code_outlined;
+      case 'idea':
+        return Icons.lightbulb_outline;
+      default:
+        return Icons.auto_awesome_outlined;
+    }
+  }
+
+  IconData _quickActionIcon(String id) {
+    switch (id) {
+      case 'open-dashboard':
+        return Icons.dashboard_outlined;
+      case 'open-planner':
+        return Icons.event_note_outlined;
+      case 'open-tasks':
+        return Icons.task_alt_outlined;
+      case 'open-journal':
+        return Icons.menu_book_outlined;
+      case 'open-content':
+        return Icons.article_outlined;
+      case 'open-business':
+        return Icons.work_outline;
+      case 'open-projects':
+        return Icons.folder_open_outlined;
+      case 'open-inbox':
+        return Icons.inbox_outlined;
+      default:
+        return Icons.arrow_forward_outlined;
+    }
   }
 
   List<Widget> _buildStructuredSuggestionLines(

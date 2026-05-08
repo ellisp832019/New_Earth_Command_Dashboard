@@ -242,6 +242,16 @@ void main() {
     );
   }
 
+  Widget buildUnseededDatabaseBackedTestApp(AppDatabase database) {
+    return ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => database),
+        databaseReadyProvider.overrideWith((ref) async {}),
+      ],
+      child: const NewEarthCommandDashboardApp(),
+    );
+  }
+
   testWidgets('app shell opens to dashboard', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
@@ -274,7 +284,7 @@ void main() {
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('More').last);
+    await tester.tap(find.text('More').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Journal'), findsOneWidget);
@@ -472,14 +482,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Clarify founder journey page'), findsOneWidget);
-    expect(
-      find.text('Status: Inbox', skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Status: Planned', skipOffstage: false),
-      findsOneWidget,
-    );
+    expect(find.text('Status: Inbox', skipOffstage: false), findsOneWidget);
+    expect(find.text('Status: Planned', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('tasks screen shows add button in empty state', (
@@ -1389,10 +1393,21 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('plannerTopTask-${second.taskId}')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerTopThreeSaveButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('plannerTopThreeSaveButton')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Top 3 tasks saved.'), findsOneWidget);
+    final updatedPlan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
+    expect(updatedPlan.topTask1Id, first.taskId);
+    expect(updatedPlan.topTask2Id, second.taskId);
 
     await tester.tap(find.text('Dashboard').last);
     await tester.pumpAndSettle();
@@ -1418,13 +1433,13 @@ void main() {
       second.taskId,
     ]);
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpWidget(buildUnseededDatabaseBackedTestApp(database));
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
       find.byKey(Key('dashboardTopTaskRemove-${first.taskId}')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('dashboardTopTaskRemove-${first.taskId}')));
@@ -1455,7 +1470,7 @@ void main() {
     final taskRepository = TaskRepository(database, now: () => today);
     final first = await taskRepository.createTask(title: 'Choose calm focus');
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpWidget(buildUnseededDatabaseBackedTestApp(database));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Tasks').last);
@@ -1503,7 +1518,7 @@ void main() {
       third.taskId,
     ]);
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpWidget(buildUnseededDatabaseBackedTestApp(database));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Tasks').last);
@@ -1658,6 +1673,12 @@ void main() {
     await tester.tap(find.byKey(const Key('clearTaskSearchButton')));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('First task'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('First task'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Second task'),
@@ -1735,12 +1756,16 @@ void main() {
     await tester.tap(find.text('Tasks').last);
     await tester.pumpAndSettle();
 
+    await tester.enterText(find.byKey(const Key('taskSearchField')), 'Shift me');
+    await tester.pumpAndSettle();
+
     await tester.scrollUntilVisible(
       find.byKey(Key('taskMoveToTodayButton-${task.taskId}')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(Key('taskMoveToTodayButton-${task.taskId}')));
     await tester.pumpAndSettle();
 
@@ -1778,10 +1803,7 @@ void main() {
       await tester.tap(find.byKey(Key('taskParkButton-${task.taskId}')));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Status: Parked', skipOffstage: false),
-        findsOneWidget,
-      );
+      expect(find.text('Status: Parked', skipOffstage: false), findsOneWidget);
       final refreshedPlan = await DailyPlanRepository(
         database,
         now: () => today,
@@ -1835,7 +1857,7 @@ void main() {
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('More').last);
+    await tester.tap(find.text('More').first);
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
@@ -1845,7 +1867,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Voice Assistant'));
+    await tester.tap(find.text('Voice Assistant').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Voice Assistant'), findsAtLeastNWidgets(1));
@@ -1862,6 +1884,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Related Project'), findsOneWidget);
     expect(find.text('No project selected'), findsOneWidget);
+  });
+
+  testWidgets('voice assistant starter deck loads a smart command', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    appRouter.go('/voice-assistant');
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceTemplateButton-codex')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
+    await tester.pumpAndSettle();
+
+    final transcriptField = tester.widget<TextField>(
+      find.byKey(const Key('voiceTranscriptField')),
+    );
+    expect(
+      transcriptField.controller?.text,
+      'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
+    );
+    expect(find.text('Command Router'), findsOneWidget);
+    expect(
+      find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('voice assistant can save a reviewed transcript as a task', (
@@ -1889,12 +1944,30 @@ void main() {
     await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
     await tester.pumpAndSettle();
 
-    final tasks = await database.select(database.tasks).get();
+    await tester.tap(
+      find
+          .text(
+            'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.',
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
 
-    expect(tasks, hasLength(1));
-    expect(tasks.single.status, 'Inbox');
-    expect(tasks.single.description, contains('voice bridge scaffold'));
-    expect(tasks.single.notes, 'Captured from the Voice Assistant.');
+    expect(find.byKey(const Key('voiceSuggestedTitleField')), findsOneWidget);
+
+    final tasks = await database.select(database.tasks).get();
+    final voiceTasks = tasks
+        .where(
+          (task) =>
+              task.notes == 'Captured from the Voice Assistant.' ||
+              task.description?.contains('voice bridge scaffold') == true,
+        )
+        .toList();
+
+    expect(voiceTasks, hasLength(1));
+    expect(voiceTasks.single.status, 'Inbox');
+    expect(voiceTasks.single.description, contains('voice bridge scaffold'));
+    expect(voiceTasks.single.notes, 'Captured from the Voice Assistant.');
   });
 
   testWidgets('journal screen shows a calm empty state', (

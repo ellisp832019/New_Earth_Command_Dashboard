@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../voice_command_model.dart';
 
 class CommandHistoryList extends StatelessWidget {
-  const CommandHistoryList({super.key, required this.commands});
+  const CommandHistoryList({
+    super.key,
+    required this.commands,
+    this.onCommandSelected,
+  });
 
   final List<VoiceCommand> commands;
+  final ValueChanged<VoiceCommand>? onCommandSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +43,9 @@ class CommandHistoryList extends StatelessWidget {
         ...commands.map(
           (command) => Card(
             child: ListTile(
+              onTap: onCommandSelected == null
+                  ? null
+                  : () => onCommandSelected!(command),
               title: Text(command.transcript),
               subtitle: Text(command.type.label),
               trailing: Text(

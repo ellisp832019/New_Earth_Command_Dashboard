@@ -1,0 +1,455 @@
+# Voice Assistant Guide
+
+The Voice Assistant is the app's local-first voice capture and command surface.
+It is designed to help you speak something once, review it calmly, and then turn it into the right kind of action without losing the thread.
+
+This guide is a living page. It will grow as the voice layer gets smarter.
+
+---
+
+## What This Is For
+
+Voice capture is most useful when you already know the thought is worth keeping, but you do not want to stop and type it out.
+
+Use the Voice Assistant when you want to:
+
+- capture a task without losing momentum
+- turn a passing idea into something useful later
+- draft a journal entry while the thought is still fresh
+- create a content seed or business lead quickly
+- prepare a Codex prompt for review
+- jump into the right part of the app from one spoken phrase
+
+The tone is intentionally calm:
+
+- speak
+- review
+- adjust
+- save
+
+That review step matters. It keeps the system trustworthy and easy to use.
+
+---
+
+## What It Does Today
+
+The current Voice Assistant can:
+
+- capture speech with explicit press-to-listen controls
+- fall back to pasted text or mock transcripts when needed
+- suggest a command type from the transcript
+- extract useful details like project, task category, priority, and business hints
+- preload ready-made voice templates
+- show a command router with the next likely moves
+- save reviewed captures into local dashboard data
+- prepare Codex prompts for manual review only
+- recall past voice commands from history
+
+It does not:
+
+- run automatically in the background
+- auto-execute Codex changes
+- replace your judgment
+- write to cloud services
+
+---
+
+## Where To Open It
+
+You can open `Voice Assistant` from:
+
+- `Dashboard` quick capture
+- `More`
+
+Use whichever path is closer to the work you are already doing.
+
+---
+
+## First-Time Flow
+
+If you have not used it before, this is the simplest way to start:
+
+1. Open `Voice Assistant`
+2. Choose a starting point:
+   - speak into the microphone
+   - paste a transcript
+   - use a mock transcript
+   - tap a starter template
+   - reuse something from command history
+3. Review the transcript
+4. Let the assistant suggest a type, title, and project
+5. Check the `Command Router` for the next likely move
+6. Edit the fields if needed
+7. Save it into the right local module
+
+The rule is simple: capture first, review second, save last.
+
+---
+
+## Screen Layout
+
+The current screen has four main parts:
+
+1. The capture controls
+2. The transcript preview
+3. The starter deck and command router
+4. The command history
+
+Think of it as a small intake desk:
+
+- the controls gather the raw thought
+- the transcript shows you what the app heard
+- the router helps you decide what to do next
+- history lets you reuse good phrasing later
+
+---
+
+## Capture Controls
+
+The capture controls support a few different ways of getting words into the app.
+
+### Start Listening
+
+Use this when you want to speak live.
+
+On Windows, the app opens native Windows voice typing inside the transcript field so the app stays stable while you speak.
+
+### Stop
+
+Use this when you are done speaking and want to review the words.
+
+### Cancel
+
+Use this when you want to stop the current attempt and discard the capture flow.
+
+### Paste Transcript
+
+Use this when:
+
+- Windows voice typing is not available
+- you already have text copied somewhere else
+- you want to move quickly without speaking
+
+### Use Mock Transcript
+
+Use this for testing or when you want to see the review flow without speaking.
+
+---
+
+## Transcript Review
+
+The transcript preview is the part that turns raw input into something safe to save.
+
+You can:
+
+- edit the text
+- shorten it
+- add missing detail
+- correct a wrong word
+- leave it alone if it already looks right
+
+This is where the assistant earns your trust.
+
+If the transcript is close but not quite right, fix it here before saving.
+
+---
+
+## Voice Starter Deck
+
+The `Voice Starter Deck` gives you one-tap commands that are already shaped for common work.
+
+Current presets:
+
+- `Build Day`
+- `Task`
+- `Journal`
+- `Content`
+- `Business`
+- `Codex`
+- `Idea`
+
+Use them when you want to move fast without inventing the structure from scratch.
+
+### Good Uses
+
+- `Build Day`: start the day with a calm planning prompt
+- `Task`: capture a concrete action
+- `Journal`: log what moved forward
+- `Content`: turn progress into a publishable idea
+- `Business`: capture a follow-up or opportunity
+- `Codex`: prepare a safe prompt for later review
+- `Idea`: park a future thought without letting it take over today
+
+### When To Use The Starter Deck
+
+Use a starter when:
+
+- you know the general shape of the command
+- you want a faster entry point than speaking from scratch
+- you keep using the same kind of capture over and over
+- you want the app to guide you toward a stronger structure
+
+---
+
+## Command Router
+
+The `Command Router` is the assistant's "next moves" layer.
+
+It helps answer:
+
+- What is this probably for?
+- Where should I take it next?
+- Do I need to open a screen before I save it?
+
+Typical router actions include:
+
+- Open Dashboard
+- Open Tasks
+- Open Planner
+- Open Journal
+- Open Content
+- Open Business
+- Open Inbox
+- Open Projects
+- Load a matching voice template
+
+### How To Use It
+
+Tap a router button when you want the assistant to take you to the right place or load a better command shape.
+
+Use it as guidance, not as autopilot.
+
+### What It Feels Like In Practice
+
+If you say something like:
+
+- `Start my build day`
+- `Review my tasks`
+- `Draft a journal entry`
+- `Prepare a business follow-up`
+- `Open the project for MicroGrow`
+
+the router will try to surface the most likely next move instead of leaving you to guess where the command belongs.
+
+---
+
+## Command History
+
+Every reviewed command is stored in memory during the session.
+
+You can tap a previous history item to bring it back into the transcript field.
+
+This is useful when:
+
+- you repeat the same kind of command often
+- you want to reuse a good phrasing
+- you want to edit a previously captured idea instead of starting over
+
+History is meant to save time, not create clutter.
+
+### Good Habit
+
+If a command was almost right, reuse it and refine it instead of starting again from a blank screen.
+
+That keeps the app feeling responsive and human.
+
+---
+
+## Command Types
+
+### Task
+
+Use this when the voice capture is a concrete action.
+
+Examples:
+
+- review the dashboard cards
+- fix the task flow
+- move today's work into Top 3
+
+### Journal Entry
+
+Use this when the capture is reflective.
+
+Examples:
+
+- today I improved the voice assistant
+- I learned why review-first capture matters
+
+### Content Idea
+
+Use this when the voice capture could become a post, draft, or note for the public-facing story.
+
+Examples:
+
+- draft a LinkedIn update about the voice workflow
+- write a website journal about the build
+
+### Business Opportunity
+
+Use this when the voice capture is about jobs, partnerships, funding, or practical leads.
+
+Examples:
+
+- follow up with a contact
+- track a grant idea
+- note a partnership next step
+
+### Idea
+
+Use this when the thought is useful, but not for today.
+
+Examples:
+
+- build a morning voice flow
+- add a better command summary later
+
+### Codex Prompt
+
+Use this when you want a review-first prompt for future code work.
+
+The prompt is prepared locally and copied for your approval.
+
+---
+
+## What The Assistant Tries To Infer
+
+When the transcript gives enough signal, the assistant can suggest:
+
+- task category
+- task priority
+- project link
+- journal "worked on"
+- journal "learned"
+- journal next actions
+- content platform
+- content type
+- business type
+- business status
+- business contact
+- business next action
+
+These fields are still editable before save.
+
+---
+
+## Example Sessions
+
+### Example 1: Start a build day
+
+1. Open `Voice Assistant`
+2. Tap `Build Day`
+3. Say what you want the day to be about
+4. Review the router suggestions
+5. Open `Tasks` or `Planner`
+6. Save the useful parts
+
+### Example 2: Capture a task quickly
+
+1. Tap `Task`
+2. Say the action
+3. Check the suggested category and project
+4. Fix the transcript if needed
+5. Save it as a task
+
+### Example 3: Turn a thought into a journal note
+
+1. Tap `Journal`
+2. Speak the reflection
+3. Review the parsed title and details
+4. Save it as a journal entry
+
+### Example 4: Prepare a Codex prompt
+
+1. Tap `Codex`
+2. Speak the request
+3. Review the prompt carefully
+4. Copy it when it reads well
+
+---
+
+## Best Way To Use It Right Now
+
+If you want a simple daily flow:
+
+1. Open `Voice Assistant`
+2. Tap `Build Day`
+3. Speak your plan
+4. Let the router guide you to Tasks, Planner, or Dashboard
+5. Save the useful parts
+6. Reuse the history item later if needed
+
+If you want a capture flow:
+
+1. Tap `Task`, `Journal`, `Content`, `Business`, or `Idea`
+2. Speak the thought
+3. Review the transcript
+4. Save it to the right place
+
+If you want a code flow:
+
+1. Tap `Codex`
+2. Review the prompt carefully
+3. Copy it when it is ready
+4. Use it only after you are happy with the wording
+
+---
+
+## Windows Notes
+
+On Windows, `Start Listening` opens native Windows voice typing in the transcript field.
+
+That means:
+
+- the app stays stable
+- fullscreen mode is preserved
+- you can still review the text before saving
+
+If the voice path is unavailable on a machine, use:
+
+- `Paste Transcript`
+- `Use Mock Transcript`
+
+---
+
+## Safety Notes
+
+- The app does not run voice commands automatically.
+- Codex prompts are prepared for review, not executed on their own.
+- The voice layer stays local-first.
+- Hardware control is not part of this flow.
+- If the transcript feels close but not quite right, edit it before saving.
+
+---
+
+## Troubleshooting
+
+### I spoke, but the text looks wrong
+
+Edit the transcript manually before saving. The assistant is meant to help, not to decide for you.
+
+### The command router suggested the wrong thing
+
+Use the suggested route as a shortcut, not a rule. Save the capture where it belongs.
+
+### I just want to type
+
+Use `Paste Transcript` and continue the same review flow.
+
+### I want to reuse a good command
+
+Tap it from history and adjust it instead of starting over.
+
+---
+
+## What Is Coming Next
+
+The next steps for this guide are likely to include:
+
+- voice replies or assistant-style confirmations
+- stronger command routing from natural phrases
+- quicker project-aware voice actions
+- better summary prompts for the end of the day
+- command reuse across tasks, planner, and inbox
+
+As the voice layer grows, this guide will grow with it.

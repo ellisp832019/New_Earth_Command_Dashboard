@@ -138,3 +138,35 @@ class VoiceCommandSuggestion {
 
   bool get hasProjectSuggestion => suggestedProjectId != null;
 }
+
+class VoiceCommandTemplate {
+  const VoiceCommandTemplate({
+    required this.id,
+    required this.label,
+    required this.description,
+    required this.transcript,
+    required this.type,
+  });
+
+  final String id;
+  final String label;
+  final String description;
+  final String transcript;
+  final VoiceCommandType type;
+}
+
+class VoiceCommandQuickAction {
+  const VoiceCommandQuickAction({
+    required this.id,
+    required this.label,
+    required this.description,
+    this.route,
+    this.templateId,
+  });
+
+  final String id;
+  final String label;
+  final String description;
+  final String? route;
+  final String? templateId;
+}

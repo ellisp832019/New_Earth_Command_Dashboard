@@ -11,6 +11,7 @@ class SeedDataService {
   Future<void> ensureSeedData() async {
     await _database.transaction(() async {
       await _seedProjects();
+      await _seedTasks();
       await _seedSettings();
     });
   }
@@ -41,6 +42,37 @@ class SeedDataService {
             priority: Value(project.priority),
             currentMilestone: Value(project.currentMilestone),
             nextAction: Value(project.nextAction),
+            createdAt: now,
+            updatedAt: now,
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Future<void> _seedTasks() async {
+    final existingTasks = await _database.select(_database.tasks).get();
+    final existingTaskIds = existingTasks.map((task) => task.taskId).toSet();
+    final missingTasks = DefaultSeedData.futureTasks
+        .where((task) => !existingTaskIds.contains(task.id))
+        .toList();
+    if (missingTasks.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now();
+    await _database.batch((batch) {
+      batch.insertAll(
+        _database.tasks,
+        missingTasks.map((task) {
+          return TasksCompanion.insert(
+            taskId: task.id,
+            projectId: Value(task.projectId),
+            title: task.title,
+            description: Value(task.description),
+            category: Value(task.category),
+            priority: Value(task.priority),
+            status: Value(task.status),
             createdAt: now,
             updatedAt: now,
           );

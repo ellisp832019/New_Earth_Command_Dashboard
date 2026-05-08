@@ -59,6 +59,30 @@ void main() {
     expect(settings.single.dailyTopTaskLimit, 3);
   });
 
+  test('seed data creates future tasks once', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final seedDataService = SeedDataService(database);
+
+    await seedDataService.ensureSeedData();
+    await seedDataService.ensureSeedData();
+
+    final tasks = await database.select(database.tasks).get();
+
+    expect(tasks, hasLength(DefaultSeedData.futureTasks.length));
+    expect(
+      tasks.map((task) => task.title),
+      containsAll(DefaultSeedData.futureTasks.map((task) => task.title)),
+    );
+    expect(
+      tasks.every((task) => task.projectId == 'project-future-ideas'),
+      isTrue,
+    );
+    expect(tasks.every((task) => task.category == 'Planning'), isTrue);
+    expect(tasks.every((task) => task.status == 'Planned'), isTrue);
+  });
+
   test('seed data keeps existing projects and adds missing defaults', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

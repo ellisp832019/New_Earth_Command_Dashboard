@@ -25,6 +25,39 @@ void main() {
     expect(history.last.transcript, 'Save this as a task');
   });
 
+  test('voice command service exposes starter templates', () {
+    final service = VoiceCommandService();
+    final templates = service.getTemplates();
+
+    expect(templates, hasLength(7));
+    expect(templates.first.id, 'build-day');
+    expect(templates.first.type, VoiceCommandType.task);
+    expect(templates.any((template) => template.id == 'codex'), isTrue);
+  });
+
+  test('voice command service suggests quick actions for build day', () {
+    final service = VoiceCommandService();
+    final actions = service.suggestQuickActions(
+      transcript: 'Start my build day and review the plan.',
+    );
+
+    expect(actions.first.label, 'Open Dashboard');
+    expect(actions.map((action) => action.id), contains('load-build-day'));
+    expect(actions.map((action) => action.route), contains('/planner'));
+  });
+
+  test('voice command service suggests quick actions for tasks', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(transcript: 'Task: fix the task flow');
+    final actions = service.suggestQuickActions(
+      transcript: suggestion.transcript,
+      suggestion: suggestion,
+    );
+
+    expect(actions.first.label, 'Open Tasks');
+    expect(actions.map((action) => action.templateId), contains('task'));
+  });
+
   test('voice command service creates the Codex-safe prompt wrapper', () {
     final service = VoiceCommandService();
     final prompt = service.createCodexPrompt('  Update the dashboard cards  ');

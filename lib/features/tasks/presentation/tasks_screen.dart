@@ -272,6 +272,7 @@ class _TaskListView extends ConsumerWidget {
 
     if (tasks.isEmpty) {
       return ListView(
+        key: const Key('tasksScrollView'),
         padding: const EdgeInsets.all(20),
         children: [
           headerPanel,
@@ -290,6 +291,7 @@ class _TaskListView extends ConsumerWidget {
 
     if (filteredTasks.isEmpty) {
       return ListView(
+        key: const Key('tasksScrollView'),
         padding: const EdgeInsets.all(20),
         children: [
           headerPanel,
@@ -310,6 +312,7 @@ class _TaskListView extends ConsumerWidget {
     }
 
     return ListView.separated(
+      key: const Key('tasksScrollView'),
       padding: const EdgeInsets.all(20),
       itemCount: filteredTasks.length + 1,
       separatorBuilder: (context, index) => const SizedBox(height: 12),

@@ -27,16 +27,18 @@ Do not build dangerous automation. Do not directly control MicroGrow hardware. D
 
 ## Current Objective
 
-Integrate the v0.1 Voice Assistant scaffold into the live local dashboard data flow.
+Make the Voice Assistant feel smarter and faster to start from by adding reusable voice starters and tap-to-reuse command history.
 
 This now includes:
 
 1. Dashboard access to Voice Capture.
 2. Reviewed transcript entry with live microphone, paste, and mock transcript support.
-3. Project linking.
-4. Local save actions for tasks, journal entries, inbox ideas, content ideas, and business opportunities.
-5. Manual-review Codex prompt generation.
-6. Focused tests for local persistence.
+3. Smart voice starter templates for common capture flows.
+4. Tap-to-reuse saved command history.
+5. Project linking.
+6. Local save actions for tasks, journal entries, inbox ideas, content ideas, and business opportunities.
+7. Manual-review Codex prompt generation.
+8. Focused tests for local persistence.
 
 ---
 
@@ -76,6 +78,7 @@ Create a `VoiceAssistantScreen` that includes:
 - Press-to-listen microphone controls: Start Listening, Stop, Cancel.
 - A paste transcript action.
 - A transcript preview text area.
+- Smart starter commands that can preload common voice workflows.
 - A command type selector with:
   - Task
   - Journal Entry
@@ -85,6 +88,7 @@ Create a `VoiceAssistantScreen` that includes:
   - Idea
 - One save/prepare action that follows the selected command type.
 - Command history section.
+- Command history items that can be tapped to restore a previous capture.
 
 Live microphone capture must be explicit and review-first. Do not add always-listening recording.
 
@@ -193,12 +197,14 @@ This task is complete when:
 
 - Voice Capture opens from Dashboard and More.
 - Voice Capture supports explicit live microphone transcription.
+- Voice Capture includes reusable smart starter commands.
 - A reviewed transcript can save as a Task.
 - A reviewed transcript can save as a Journal Entry.
 - A reviewed transcript can save as an Inbox Idea.
 - A reviewed transcript can save as a Content Idea.
 - A reviewed transcript can save as a Business Opportunity.
 - Codex prompts are generated for manual review only.
+- Saved voice history can be reused from the Voice Assistant screen.
 - `flutter analyze` passes.
 - `flutter test` passes.
 

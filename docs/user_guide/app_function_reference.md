@@ -399,6 +399,8 @@ Inbox is the capture area for ideas, thoughts, and unprocessed items.
 
 The voice assistant screen supports reviewed voice capture for local dashboard actions.
 
+For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guide.md).
+
 ### How to use it
 
 1. Open `Voice Assistant`.
@@ -413,6 +415,8 @@ The voice assistant screen supports reviewed voice capture for local dashboard a
 - Voice Capture can be opened from `Dashboard` Quick Capture or from `More`.
 - Microphone capture is press-to-listen only; there is no always-listening background mode.
 - Paste Transcript and mock transcript remain available as fallbacks.
+- The `Voice Starter Deck` gives you quick paths for Build Day, Task, Journal, Content, Business, Codex, and Idea captures.
+- The `Command Router` surfaces the next likely move, such as opening Tasks, Planner, Dashboard, Projects, Inbox, Journal, Content, or Business.
 - The screen suggests a command type, cleaned title, and related project using local parsing rules.
 - The screen also extracts structured details where it can, such as task category/priority, content platform/type, journal next actions, and business contact/status hints.
 - Those extracted details are editable before save, so you can correct the parser when the wording is close but not perfect.

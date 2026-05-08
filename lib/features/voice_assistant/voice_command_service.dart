@@ -5,9 +5,278 @@ class VoiceCommandService {
 
   final DateTime Function() _now;
   final List<VoiceCommand> _commands = [];
+  static const List<VoiceCommandTemplate> _templates = [
+    VoiceCommandTemplate(
+      id: 'build-day',
+      label: 'Build Day',
+      description: 'Kick off a calm build-day planning flow.',
+      transcript:
+          'Start my build day. Review today\'s focus, top 3 tasks, blockers, and the next practical step.',
+      type: VoiceCommandType.task,
+    ),
+    VoiceCommandTemplate(
+      id: 'task',
+      label: 'Task',
+      description: 'Capture one clear action.',
+      transcript:
+          'Task: Review the dashboard cards and tighten the wording before the next pass.',
+      type: VoiceCommandType.task,
+    ),
+    VoiceCommandTemplate(
+      id: 'journal',
+      label: 'Journal',
+      description: 'Log what moved forward today.',
+      transcript:
+          'Journal: Today I improved the voice assistant review flow and learned how to keep it calm.',
+      type: VoiceCommandType.journalEntry,
+    ),
+    VoiceCommandTemplate(
+      id: 'content',
+      label: 'Content',
+      description: 'Turn progress into something publishable.',
+      transcript:
+          'Content: Draft a LinkedIn update about the new voice workflow and why review-first capture matters.',
+      type: VoiceCommandType.contentIdea,
+    ),
+    VoiceCommandTemplate(
+      id: 'business',
+      label: 'Business',
+      description: 'Capture a follow-up or opportunity.',
+      transcript:
+          'Business: Follow up with OpenAI about the partnership and next pilot steps.',
+      type: VoiceCommandType.businessOpportunity,
+    ),
+    VoiceCommandTemplate(
+      id: 'codex',
+      label: 'Codex',
+      description: 'Prepare a review-first prompt for Codex.',
+      transcript:
+          'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
+      type: VoiceCommandType.codexPrompt,
+    ),
+    VoiceCommandTemplate(
+      id: 'idea',
+      label: 'Idea',
+      description: 'Park a future thought safely.',
+      transcript:
+          'Idea: Let the dashboard suggest the best next action from the day\'s open loops.',
+      type: VoiceCommandType.idea,
+    ),
+  ];
 
   List<VoiceCommand> getHistory() {
     return List.unmodifiable(_commands.reversed);
+  }
+
+  List<VoiceCommandTemplate> getTemplates() {
+    return List.unmodifiable(_templates);
+  }
+
+  List<VoiceCommandQuickAction> suggestQuickActions({
+    required String transcript,
+    VoiceCommandSuggestion? suggestion,
+  }) {
+    final normalizedTranscript = transcript.toLowerCase();
+    final suggestedType = suggestion?.suggestedType;
+    final hasProjectSuggestion = suggestion?.suggestedProjectId != null;
+    final projectId = suggestion?.suggestedProjectId;
+
+    final actions = <VoiceCommandQuickAction>[];
+
+    if (normalizedTranscript.contains('build day') ||
+        normalizedTranscript.contains('start my build day') ||
+        normalizedTranscript.contains('morning planning')) {
+      actions.add(
+        const VoiceCommandQuickAction(
+          id: 'open-dashboard',
+          label: 'Open Dashboard',
+          description: 'Jump back to the daily command surface.',
+          route: '/dashboard',
+        ),
+      );
+      actions.add(
+        const VoiceCommandQuickAction(
+          id: 'open-planner',
+          label: 'Open Planner',
+          description: 'Review today\'s plan and evening review notes.',
+          route: '/planner',
+        ),
+      );
+      actions.add(
+        const VoiceCommandQuickAction(
+          id: 'load-build-day',
+          label: 'Load Build Day',
+          description: 'Prefill a build-day planning command.',
+          templateId: 'build-day',
+        ),
+      );
+      return actions;
+    }
+
+    switch (suggestedType) {
+      case VoiceCommandType.task:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'open-tasks',
+            label: 'Open Tasks',
+            description: 'Triage or refine the task in the task list.',
+            route: '/tasks',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'load-task',
+            label: 'Load Task',
+            description: 'Prefill the standard task capture shape.',
+            templateId: 'task',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-planner',
+            label: 'Open Planner',
+            description: 'Check whether it belongs in today\'s Top 3.',
+            route: '/planner',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.journalEntry:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'open-journal',
+            label: 'Open Journal',
+            description: 'Move from capture to reflection.',
+            route: '/journal',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'load-journal',
+            label: 'Load Journal',
+            description: 'Prefill the reflection template.',
+            templateId: 'journal',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-dashboard',
+            label: 'Open Dashboard',
+            description: 'Return to the daily overview.',
+            route: '/dashboard',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.contentIdea:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'open-content',
+            label: 'Open Content',
+            description: 'Move into the content planning space.',
+            route: '/content',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'load-content',
+            label: 'Load Content',
+            description: 'Prefill a content drafting template.',
+            templateId: 'content',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-projects',
+            label: 'Open Projects',
+            description: 'Find the project the content belongs to.',
+            route: '/projects',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.businessOpportunity:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'open-business',
+            label: 'Open Business',
+            description: 'Review the opportunity in Business Hub.',
+            route: '/business',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'load-business',
+            label: 'Load Business',
+            description: 'Prefill the business capture shape.',
+            templateId: 'business',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-projects',
+            label: 'Open Projects',
+            description: 'Check the project context around this lead.',
+            route: '/projects',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.codexPrompt:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'prepare-codex',
+            label: 'Prepare Codex Prompt',
+            description: 'Keep the prompt review-first.',
+            templateId: 'codex',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-dashboard',
+            label: 'Open Dashboard',
+            description: 'Return to the main control surface.',
+            route: '/dashboard',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.idea:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'open-inbox',
+            label: 'Open Inbox',
+            description: 'Park the idea before it becomes scope.',
+            route: '/inbox',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'load-idea',
+            label: 'Load Idea',
+            description: 'Prefill the future idea template.',
+            templateId: 'idea',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-dashboard',
+            label: 'Open Dashboard',
+            description: 'Keep the focus on today.',
+            route: '/dashboard',
+          ),
+        ]);
+        break;
+      case null:
+        actions.addAll([
+          const VoiceCommandQuickAction(
+            id: 'load-build-day',
+            label: 'Start Build Day',
+            description: 'Use a ready-made planning prompt.',
+            templateId: 'build-day',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'open-tasks',
+            label: 'Open Tasks',
+            description: 'Start with the task list.',
+            route: '/tasks',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'prepare-codex',
+            label: 'Prepare Codex Prompt',
+            description: 'Turn a thought into a safe prompt.',
+            templateId: 'codex',
+          ),
+        ]);
+        break;
+    }
+
+    if (hasProjectSuggestion && projectId != null) {
+      actions.insert(
+        0,
+        VoiceCommandQuickAction(
+          id: 'open-project-$projectId',
+          label: 'Open Project',
+          description: 'Jump into the matched project context.',
+          route: '/projects/$projectId',
+        ),
+      );
+    }
+
+    return actions;
   }
 
   VoiceCommand addCommand({
