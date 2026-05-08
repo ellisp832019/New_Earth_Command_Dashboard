@@ -636,6 +636,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             transcript: _transcriptController.text,
             suggestion: _suggestion,
           );
+    final briefing = _transcriptController.text.trim().isEmpty
+        ? null
+        : _service.buildBriefing(
+            transcript: _transcriptController.text,
+            suggestion: _suggestion,
+          );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Voice Assistant')),
@@ -787,6 +793,65 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       Text(
                         'Project context: ${assistantResponse.projectContext}',
                         style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (briefing != null) ...[
+            Card(
+              key: const Key('voiceBriefingCard'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Voice Briefing', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      briefing.summary,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      briefing.nextStep,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    if (briefing.projectContext != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Project context: ${briefing.projectContext}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                    if (briefing.actions.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Suggested sequence',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: briefing.actions.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final action = entry.value;
+                          return Tooltip(
+                            message: action.description,
+                            child: OutlinedButton.icon(
+                              key: Key(
+                                'voiceBriefingActionButton-${action.id}',
+                              ),
+                              onPressed: () => _handleQuickAction(action),
+                              icon: Icon(_quickActionIcon(action.id)),
+                              label: Text('${index + 1}. ${action.label}'),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ],

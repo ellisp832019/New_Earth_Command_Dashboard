@@ -182,3 +182,17 @@ class VoiceCommandAssistantResponse {
   final String nextStep;
   final String? projectContext;
 }
+
+class VoiceCommandBriefing {
+  const VoiceCommandBriefing({
+    required this.summary,
+    required this.nextStep,
+    required this.actions,
+    this.projectContext,
+  });
+
+  final String summary;
+  final String nextStep;
+  final String? projectContext;
+  final List<VoiceCommandQuickAction> actions;
+}

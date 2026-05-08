@@ -1,8 +1,8 @@
-# TASK - Voice Bridge Smart Capture
+# TASK - Voice Bridge Briefing Layer
 
 ## Goal
 
-Make the Voice Assistant feel more like a smart, guided command surface by adding reusable voice starters, faster review, and richer command recall.
+Make the Voice Assistant feel more like a smart, guided command surface by adding a voice briefing layer, reusable starters, faster review, and richer command recall.
 
 ## Source of Truth
 
@@ -21,10 +21,11 @@ Read these files first:
 1. Keep capture review-first and local-first.
 2. Add smart voice starter commands that preload common voice workflows.
 3. Let saved voice history be reused quickly from the Voice Assistant screen.
-4. Keep transcript editing, Codex prompts, and local saves working.
-5. Preserve the existing dashboard and quick capture flows.
-6. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
+4. Add a voice briefing card that summarizes the command and suggests the next sequence of actions.
+5. Keep transcript editing, Codex prompts, and local saves working.
+6. Preserve the existing dashboard and quick capture flows.
+7. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
 
 ## Expected Result
 
-The user can open Voice Assistant, start from a smart template or a previous command, edit the transcript, review the suggested structure, and save the result into the right local dashboard module with minimal friction.
+The user can open Voice Assistant, start from a smart template or a previous command, review a briefing that explains the command and its next steps, and save the result into the right local dashboard module with minimal friction.

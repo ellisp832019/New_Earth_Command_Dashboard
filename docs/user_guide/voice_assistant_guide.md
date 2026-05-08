@@ -257,6 +257,33 @@ When it helps most:
 
 ---
 
+## Voice Briefing
+
+The `Voice Briefing` card takes the reply one step further.
+
+It turns the current command into a small guided sequence so you can move through the next likely actions in order.
+
+The briefing usually includes:
+
+- a short summary of the command
+- the next practical step
+- project context if one is detected
+- a numbered suggested sequence of actions
+
+This is the closest thing the current app has to a day-level spoken briefing.
+
+Use it when you want the assistant to help you move from capture to action without making you think through the entire structure yourself.
+
+Common examples:
+
+- build day commands may guide you toward Planner, Tasks, and the build-day template
+- task commands may guide you toward Tasks, Planner, and the task template
+- journal commands may guide you toward Journal and the reflection template
+- business commands may guide you toward Business and the opportunity template
+- idea commands may guide you toward Inbox and a future-idea shape
+
+---
+
 ## Command History
 
 Every reviewed command is stored in memory during the session.

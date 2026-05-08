@@ -73,6 +73,22 @@ void main() {
     expect(response.projectContext, isNull);
   });
 
+  test('voice command service builds a briefing with an ordered sequence', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript: 'Start my build day and review what matters most.',
+    );
+    final briefing = service.buildBriefing(
+      transcript: suggestion.transcript,
+      suggestion: suggestion,
+    );
+
+    expect(briefing.summary, contains('build-day command'));
+    expect(briefing.nextStep, contains('Planner'));
+    expect(briefing.actions, isNotEmpty);
+    expect(briefing.actions.first.label, contains('Dashboard'));
+  });
+
   test('voice command service creates the Codex-safe prompt wrapper', () {
     final service = VoiceCommandService();
     final prompt = service.createCodexPrompt('  Update the dashboard cards  ');

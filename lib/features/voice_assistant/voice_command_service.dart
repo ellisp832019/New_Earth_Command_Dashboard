@@ -290,7 +290,7 @@ class VoiceCommandService {
         summary:
             'I heard a build-day command. I can help you open the day view, check the planner, or preload the build-day template.',
         nextStep:
-            'Use the router or template deck to shape the day before you save anything.',
+            'Use the router or template deck to open Planner and shape the day before you save anything.',
         projectContext: projectContext,
       );
     }
@@ -353,6 +353,27 @@ class VoiceCommandService {
           projectContext: projectContext,
         );
     }
+  }
+
+  VoiceCommandBriefing buildBriefing({
+    required String transcript,
+    VoiceCommandSuggestion? suggestion,
+  }) {
+    final assistantResponse = buildAssistantResponse(
+      transcript: transcript,
+      suggestion: suggestion,
+    );
+    final actions = suggestQuickActions(
+      transcript: transcript,
+      suggestion: suggestion,
+    );
+
+    return VoiceCommandBriefing(
+      summary: assistantResponse.summary,
+      nextStep: assistantResponse.nextStep,
+      projectContext: assistantResponse.projectContext,
+      actions: actions.take(3).toList(),
+    );
   }
 
   VoiceCommand addCommand({

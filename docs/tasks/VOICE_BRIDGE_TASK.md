@@ -27,7 +27,7 @@ Do not build dangerous automation. Do not directly control MicroGrow hardware. D
 
 ## Current Objective
 
-Make the Voice Assistant feel smarter and faster to start from by adding reusable voice starters and tap-to-reuse command history.
+Make the Voice Assistant feel smarter and faster to start from by adding a voice briefing layer, reusable voice starters, and tap-to-reuse command history.
 
 This now includes:
 
@@ -35,10 +35,11 @@ This now includes:
 2. Reviewed transcript entry with live microphone, paste, and mock transcript support.
 3. Smart voice starter templates for common capture flows.
 4. Tap-to-reuse saved command history.
-5. Project linking.
-6. Local save actions for tasks, journal entries, inbox ideas, content ideas, and business opportunities.
-7. Manual-review Codex prompt generation.
-8. Focused tests for local persistence.
+5. A voice briefing card that explains the command and suggests the next sequence of actions.
+6. Project linking.
+7. Local save actions for tasks, journal entries, inbox ideas, content ideas, and business opportunities.
+8. Manual-review Codex prompt generation.
+9. Focused tests for local persistence.
 
 ---
 
@@ -79,6 +80,7 @@ Create a `VoiceAssistantScreen` that includes:
 - A paste transcript action.
 - A transcript preview text area.
 - Smart starter commands that can preload common voice workflows.
+- A voice briefing card that turns the current command into a numbered suggested sequence.
 - A command type selector with:
   - Task
   - Journal Entry
@@ -198,6 +200,7 @@ This task is complete when:
 - Voice Capture opens from Dashboard and More.
 - Voice Capture supports explicit live microphone transcription.
 - Voice Capture includes reusable smart starter commands.
+- Voice Capture includes a voice briefing card with a suggested sequence of actions.
 - A reviewed transcript can save as a Task.
 - A reviewed transcript can save as a Journal Entry.
 - A reviewed transcript can save as an Inbox Idea.

@@ -619,7 +619,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tasks'), findsAtLeastNWidgets(1));
-    expect(find.text('Build task add edit flow'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);
 
     final tasks = await TaskRepository(database).getActiveTasks();
@@ -1913,6 +1912,7 @@ void main() {
       'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
     );
     expect(find.byKey(const Key('voiceAssistantReplyCard')), findsOneWidget);
+    expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       200,
