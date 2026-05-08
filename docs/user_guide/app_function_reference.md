@@ -418,6 +418,7 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 - The `Voice Starter Deck` gives you quick paths for Build Day, Task, Journal, Content, Business, Codex, and Idea captures.
 - The `Assistant Reply` card gives a short plain-language read on what the app thinks you said before you save it.
 - The `Voice Briefing` card turns the current command into a numbered suggested sequence of next steps.
+- `Wizard Mode` turns the assistant into a step-by-step conversation that assembles the draft from one answer at a time.
 - The `Command Router` surfaces the next likely move, such as opening Tasks, Planner, Dashboard, Projects, Inbox, Journal, Content, or Business.
 - The screen suggests a command type, cleaned title, and related project using local parsing rules.
 - The screen also extracts structured details where it can, such as task category/priority, content platform/type, journal next actions, and business contact/status hints.

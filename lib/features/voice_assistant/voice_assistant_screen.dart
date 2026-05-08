@@ -76,6 +76,22 @@ const _businessStatusOptions = [
   'Archived',
 ];
 
+enum _VoiceInteractionMode { quick, wizard }
+
+class _VoiceWizardTurn {
+  const _VoiceWizardTurn({
+    required this.step,
+    required this.prompt,
+    required this.answer,
+    required this.fragment,
+  });
+
+  final VoiceWizardStep step;
+  final String prompt;
+  final String answer;
+  final String fragment;
+}
+
 class VoiceAssistantScreen extends ConsumerStatefulWidget {
   const VoiceAssistantScreen({super.key});
 
@@ -99,8 +115,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       TextEditingController();
   final TextEditingController _businessNextActionController =
       TextEditingController();
+  final TextEditingController _wizardAnswerController =
+      TextEditingController();
   final FocusNode _transcriptFocusNode = FocusNode();
+  final FocusNode _wizardAnswerFocusNode = FocusNode();
 
+  _VoiceInteractionMode _mode = _VoiceInteractionMode.quick;
+  VoiceWizardStep _wizardStep = VoiceWizardStep.type;
+  final List<_VoiceWizardTurn> _wizardTurns = [];
   VoiceCommandType _selectedType = VoiceCommandType.task;
   String? _selectedProjectId;
   List<VoiceCommand> _history = [];
@@ -137,7 +159,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _journalNextActionsController.dispose();
     _businessContactController.dispose();
     _businessNextActionController.dispose();
+    _wizardAnswerController.dispose();
     _transcriptFocusNode.dispose();
+    _wizardAnswerFocusNode.dispose();
     super.dispose();
   }
 
@@ -166,6 +190,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _businessContactController.clear();
         _businessNextActionController.clear();
       });
+      if (_mode == _VoiceInteractionMode.wizard) {
+        _resetWizardDraft(keepMode: true);
+      }
       return;
     }
 
@@ -206,7 +233,149 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
   }
 
+  TextEditingController get _activeSpeechController {
+    return _mode == _VoiceInteractionMode.wizard
+        ? _wizardAnswerController
+        : _transcriptController;
+  }
+
+  FocusNode get _activeSpeechFocusNode {
+    return _mode == _VoiceInteractionMode.wizard
+        ? _wizardAnswerFocusNode
+        : _transcriptFocusNode;
+  }
+
+  String _wizardPrompt() {
+    final projectName = _suggestion?.suggestedProjectName;
+    return _service.buildWizardPrompt(
+      step: _wizardStep,
+      selectedType: _selectedType,
+      projectName: projectName,
+    );
+  }
+
+  void _setVoiceMode(_VoiceInteractionMode mode) {
+    if (_mode == mode) {
+      return;
+    }
+
+    setState(() {
+      _mode = mode;
+      if (mode == _VoiceInteractionMode.wizard) {
+        _resetWizardDraft(keepMode: true);
+      }
+    });
+  }
+
+  void _resetWizardDraft({required bool keepMode}) {
+    _wizardTurns.clear();
+    _wizardStep = VoiceWizardStep.type;
+    _selectedType = VoiceCommandType.task;
+    _selectedProjectId = null;
+    _suggestion = null;
+    _transcriptController.clear();
+    _wizardAnswerController.clear();
+    _speechStatus = 'Wizard reset. Ready for a new guided exchange.';
+    if (!keepMode) {
+      _mode = _VoiceInteractionMode.quick;
+    }
+  }
+
+  String _buildWizardDraftTranscript() {
+    return _wizardTurns.map((turn) => turn.fragment).join(' ');
+  }
+
+  VoiceCommandType _inferWizardTypeFromAnswer(String answer) {
+    final suggestion = _service.suggestCommand(transcript: answer);
+    return suggestion.suggestedType;
+  }
+
+  String _wizardConversationSummary() {
+    if (_wizardTurns.isEmpty) {
+      return 'We will build the entry one answer at a time.';
+    }
+
+    return _wizardTurns
+        .map((turn) => '${turn.prompt} ${turn.answer}')
+        .join(' ');
+  }
+
+  Future<void> _submitWizardAnswer() async {
+    final answer = _wizardAnswerController.text.trim();
+    if (answer.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add an answer first.')),
+      );
+      return;
+    }
+
+    final prompt = _wizardPrompt();
+    final resolvedType = _wizardStep == VoiceWizardStep.type
+        ? _inferWizardTypeFromAnswer(answer)
+        : _selectedType;
+    final fragment = _service.buildWizardTranscriptPiece(
+      step: _wizardStep,
+      answer: answer,
+      selectedType: resolvedType,
+    );
+
+    setState(() {
+      if (_wizardStep == VoiceWizardStep.type) {
+        _selectedType = resolvedType;
+      }
+
+      _wizardTurns.add(
+        _VoiceWizardTurn(
+          step: _wizardStep,
+          prompt: prompt,
+          answer: answer,
+          fragment: fragment,
+        ),
+      );
+      _wizardAnswerController.clear();
+      _wizardStep = switch (_wizardStep) {
+        VoiceWizardStep.type => VoiceWizardStep.title,
+        VoiceWizardStep.title => VoiceWizardStep.project,
+        VoiceWizardStep.project => VoiceWizardStep.details,
+        VoiceWizardStep.details => VoiceWizardStep.review,
+        VoiceWizardStep.review => VoiceWizardStep.review,
+      };
+      _transcriptController.text = _buildWizardDraftTranscript();
+      _transcriptController.selection = TextSelection.collapsed(
+        offset: _transcriptController.text.length,
+      );
+      _speechStatus = _wizardStep == VoiceWizardStep.review
+          ? 'Wizard draft ready. Review the assembled transcript before saving.'
+          : 'Wizard answer saved. Keep going with the next question.';
+    });
+
+    if (_wizardStep != VoiceWizardStep.review) {
+      _wizardAnswerFocusNode.requestFocus();
+    }
+  }
+
+  void _wizardBack() {
+    if (_wizardTurns.isEmpty) {
+      return;
+    }
+
+    final removedTurn = _wizardTurns.removeLast();
+    setState(() {
+      _wizardStep = removedTurn.step;
+      _wizardAnswerController.clear();
+      _transcriptController.text = _buildWizardDraftTranscript();
+      _transcriptController.selection = TextSelection.collapsed(
+        offset: _transcriptController.text.length,
+      );
+      _speechStatus = 'Wizard stepped back. Answer the previous question again.';
+    });
+
+    _wizardAnswerFocusNode.requestFocus();
+  }
+
   Future<void> _startListening() async {
+    _activeSpeechFocusNode.requestFocus();
+
     if (WindowsVoiceTypingService.isSupported) {
       await _startWindowsVoiceTyping();
       return;
@@ -264,7 +433,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   Future<void> _startWindowsVoiceTyping() async {
-    _transcriptFocusNode.requestFocus();
+    _activeSpeechFocusNode.requestFocus();
 
     setState(() {
       _speechError = null;
@@ -293,7 +462,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
   Future<void> _stopListening() async {
     if (WindowsVoiceTypingService.isSupported) {
-      _transcriptFocusNode.requestFocus();
+      _activeSpeechFocusNode.requestFocus();
       if (!mounted) {
         return;
       }
@@ -319,7 +488,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
   Future<void> _cancelListening() async {
     if (WindowsVoiceTypingService.isSupported) {
-      _transcriptFocusNode.requestFocus();
+      _activeSpeechFocusNode.requestFocus();
       if (!mounted) {
         return;
       }
@@ -349,13 +518,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     setState(() {
-      _transcriptController.text = result.recognizedWords;
-      _transcriptController.selection = TextSelection.collapsed(
-        offset: _transcriptController.text.length,
+      _activeSpeechController.text = result.recognizedWords;
+      _activeSpeechController.selection = TextSelection.collapsed(
+        offset: _activeSpeechController.text.length,
       );
       if (result.finalResult) {
         _isListening = false;
-        _speechStatus = 'Transcript captured. Review before saving.';
+        _speechStatus = _mode == _VoiceInteractionMode.wizard
+            ? 'Wizard answer captured. Use the answer to continue.'
+            : 'Transcript captured. Review before saving.';
       }
     });
   }
@@ -395,6 +566,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Add a transcript first.')));
+      return;
+    }
+
+    if (_mode == _VoiceInteractionMode.wizard &&
+        _wizardStep != VoiceWizardStep.review) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Finish the wizard before saving.')),
+      );
       return;
     }
 
@@ -470,11 +649,13 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     setState(() {
-      _transcriptController.text = text;
-      _transcriptController.selection = TextSelection.collapsed(
+      _activeSpeechController.text = text;
+      _activeSpeechController.selection = TextSelection.collapsed(
         offset: text.length,
       );
-      _speechStatus = 'Transcript pasted. Review before saving.';
+      _speechStatus = _mode == _VoiceInteractionMode.wizard
+          ? 'Wizard answer pasted. Submit it to continue.'
+          : 'Transcript pasted. Review before saving.';
     });
   }
 
@@ -536,9 +717,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
   void _mockRecordCommand() {
     setState(() {
-      _transcriptController.text =
+      _activeSpeechController.text =
           'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.';
-      _speechStatus = 'Mock transcript loaded. Review before saving.';
+      _activeSpeechController.selection = TextSelection.collapsed(
+        offset: _activeSpeechController.text.length,
+      );
+      _speechStatus = _mode == _VoiceInteractionMode.wizard
+          ? 'Mock wizard answer loaded. Submit it to continue.'
+          : 'Mock transcript loaded. Review before saving.';
     });
   }
 
@@ -642,6 +828,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             transcript: _transcriptController.text,
             suggestion: _suggestion,
           );
+    final wizardPrompt = _mode == _VoiceInteractionMode.wizard
+        ? _wizardPrompt()
+        : null;
+    final wizardSummary = _mode == _VoiceInteractionMode.wizard
+        ? _wizardConversationSummary()
+        : null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Voice Assistant')),
@@ -654,10 +846,31 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
+            _mode == _VoiceInteractionMode.wizard
+                ? 'Answer one question at a time and let the wizard assemble the draft for review.'
+                : 'Press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 24),
+          SegmentedButton<_VoiceInteractionMode>(
+            segments: const [
+              ButtonSegment(
+                value: _VoiceInteractionMode.quick,
+                label: Text('Quick Capture'),
+                icon: Icon(Icons.flash_on_outlined),
+              ),
+              ButtonSegment(
+                value: _VoiceInteractionMode.wizard,
+                label: Text('Wizard'),
+                icon: Icon(Icons.auto_fix_high_outlined),
+              ),
+            ],
+            selected: {_mode},
+            onSelectionChanged: (selection) {
+              _setVoiceMode(selection.first);
+            },
+          ),
+          const SizedBox(height: 20),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -757,13 +970,81 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               ),
             ),
           ),
+          if (_mode == _VoiceInteractionMode.wizard) ...[
+            const SizedBox(height: 16),
+            Card(
+              key: const Key('voiceWizardCard'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Voice Wizard', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      wizardPrompt ?? 'Let us build this one answer at a time.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('voiceWizardAnswerField'),
+                      controller: _wizardAnswerController,
+                      focusNode: _wizardAnswerFocusNode,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Wizard answer',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => _submitWizardAnswer(),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          key: const Key('voiceWizardNextButton'),
+                          onPressed: _submitWizardAnswer,
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Use Answer'),
+                        ),
+                        TextButton.icon(
+                          key: const Key('voiceWizardBackButton'),
+                          onPressed: _wizardTurns.isEmpty ? null : _wizardBack,
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Back'),
+                        ),
+                        TextButton.icon(
+                          key: const Key('voiceWizardResetButton'),
+                          onPressed: () => _resetWizardDraft(keepMode: true),
+                          icon: const Icon(Icons.restart_alt),
+                          label: const Text('Reset'),
+                        ),
+                      ],
+                    ),
+                    if (wizardSummary != null) ...[
+                      const SizedBox(height: 12),
+                      Text('Conversation', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      Text(
+                        wizardSummary,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           TranscriptPreviewCard(
             controller: _transcriptController,
             focusNode: _transcriptFocusNode,
             onChanged: (_) => _handleTranscriptChanged(),
-            helperText:
-                'Live microphone capture fills this field. Edit the words first, then save to the right local module.',
+            helperText: _mode == _VoiceInteractionMode.wizard
+                ? 'The wizard assembles the draft here from each answered step. Review the full command before saving.'
+                : 'Live microphone capture fills this field. Edit the words first, then save to the right local module.',
           ),
           const SizedBox(height: 16),
           if (assistantResponse != null) ...[

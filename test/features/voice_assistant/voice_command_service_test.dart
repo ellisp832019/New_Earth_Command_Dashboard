@@ -89,6 +89,26 @@ void main() {
     expect(briefing.actions.first.label, contains('Dashboard'));
   });
 
+  test('voice command service builds wizard prompts and transcript pieces', () {
+    final service = VoiceCommandService();
+
+    final typePrompt = service.buildWizardPrompt(
+      step: VoiceWizardStep.type,
+    );
+    final detailPrompt = service.buildWizardPrompt(
+      step: VoiceWizardStep.details,
+      selectedType: VoiceCommandType.businessOpportunity,
+    );
+    final projectPiece = service.buildWizardTranscriptPiece(
+      step: VoiceWizardStep.project,
+      answer: 'MicroGrow',
+    );
+
+    expect(typePrompt, contains('What kind of entry'));
+    expect(detailPrompt, contains('next action'));
+    expect(projectPiece, 'Project: MicroGrow.');
+  });
+
   test('voice command service creates the Codex-safe prompt wrapper', () {
     final service = VoiceCommandService();
     final prompt = service.createCodexPrompt('  Update the dashboard cards  ');

@@ -622,6 +622,7 @@ void main() {
     expect(find.text('MicroGrow'), findsOneWidget);
 
     final tasks = await TaskRepository(database).getActiveTasks();
+    expect(tasks, isNotEmpty);
     expect(
       tasks.any((task) => task.title == 'Build task add edit flow'),
       isTrue,
@@ -1923,6 +1924,43 @@ void main() {
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('voice assistant wizard mode asks one question at a time', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    appRouter.go('/voice-assistant');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Wizard').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('voiceWizardCard')), findsOneWidget);
+    expect(
+      find.textContaining('What kind of entry do you want to create?'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('voiceWizardAnswerField')),
+      'Task',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceWizardNextButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('voiceWizardNextButton')));
+    await tester.pumpAndSettle();
+
+    final transcriptField = tester.widget<TextField>(
+      find.byKey(const Key('voiceTranscriptField')),
+    );
+    expect(transcriptField.controller?.text, contains('Type: Task.'));
   });
 
   testWidgets('voice assistant can save a reviewed transcript as a task', (

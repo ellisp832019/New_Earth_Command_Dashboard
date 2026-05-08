@@ -26,6 +26,31 @@ extension VoiceCommandTypeLabel on VoiceCommandType {
   }
 }
 
+enum VoiceWizardStep {
+  type,
+  title,
+  project,
+  details,
+  review,
+}
+
+extension VoiceWizardStepLabel on VoiceWizardStep {
+  String get label {
+    switch (this) {
+      case VoiceWizardStep.type:
+        return 'Type';
+      case VoiceWizardStep.title:
+        return 'Title';
+      case VoiceWizardStep.project:
+        return 'Project';
+      case VoiceWizardStep.details:
+        return 'Details';
+      case VoiceWizardStep.review:
+        return 'Review';
+    }
+  }
+}
+
 class VoiceCommand {
   VoiceCommand({
     required this.id,

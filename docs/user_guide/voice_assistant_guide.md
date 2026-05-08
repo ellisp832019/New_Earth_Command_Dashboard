@@ -284,6 +284,35 @@ Common examples:
 
 ---
 
+## Wizard Mode
+
+`Wizard Mode` turns the assistant into a step-by-step conversation.
+
+Instead of filling the whole transcript at once, the app asks one question at a time and builds the draft from each answer.
+
+Typical flow:
+
+1. Choose `Wizard`
+2. Answer what kind of entry you want
+3. Answer the title
+4. Answer the project
+5. Answer the details
+6. Review the assembled draft
+7. Save only when it reads right
+
+This mode is useful when you want the app to slow the pace down and help you think through the entry as you go.
+
+It is especially helpful for:
+
+- business opportunities with several moving parts
+- journal entries where you want a better reflection shape
+- content ideas that need a title and a destination
+- tasks that need more than one quick fact
+
+You can still switch back to `Quick Capture` whenever you want the faster path.
+
+---
+
 ## Command History
 
 Every reviewed command is stored in memory during the session.

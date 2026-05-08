@@ -376,6 +376,79 @@ class VoiceCommandService {
     );
   }
 
+  String buildWizardPrompt({
+    required VoiceWizardStep step,
+    VoiceCommandType? selectedType,
+    String? projectName,
+  }) {
+    switch (step) {
+      case VoiceWizardStep.type:
+        return 'What kind of entry do you want to create? Say task, journal, content, business, idea, or Codex.';
+      case VoiceWizardStep.title:
+        return 'What title should I use?';
+      case VoiceWizardStep.project:
+        return projectName == null
+            ? 'Which project should this belong to?'
+            : 'Which project should this belong to? I can see $projectName as a possible match.';
+      case VoiceWizardStep.details:
+        switch (selectedType) {
+          case VoiceCommandType.task:
+            return 'Any category or priority you want me to remember?';
+          case VoiceCommandType.journalEntry:
+            return 'What did you work on, what did you learn, and what should happen next?';
+          case VoiceCommandType.contentIdea:
+            return 'Which platform and content type fit this best?';
+          case VoiceCommandType.businessOpportunity:
+            return 'Who is this with, and what is the next action?';
+          case VoiceCommandType.codexPrompt:
+            return 'What should Codex change or review?';
+          case VoiceCommandType.idea:
+            return 'What should I remember about this idea?';
+          case null:
+            return 'Tell me a little more detail.';
+        }
+      case VoiceWizardStep.review:
+        return 'I have the draft. Review it, then save or start again.';
+    }
+  }
+
+  String buildWizardTranscriptPiece({
+    required VoiceWizardStep step,
+    required String answer,
+    VoiceCommandType? selectedType,
+  }) {
+    final trimmedAnswer = answer.trim();
+
+    switch (step) {
+      case VoiceWizardStep.type:
+        final typeLabel = selectedType?.label ?? trimmedAnswer;
+        return 'Type: $typeLabel.';
+      case VoiceWizardStep.title:
+        return 'Title: $trimmedAnswer.';
+      case VoiceWizardStep.project:
+        return 'Project: $trimmedAnswer.';
+      case VoiceWizardStep.details:
+        switch (selectedType) {
+          case VoiceCommandType.task:
+            return 'Details: $trimmedAnswer.';
+          case VoiceCommandType.journalEntry:
+            return 'Journal Notes: $trimmedAnswer.';
+          case VoiceCommandType.contentIdea:
+            return 'Content Notes: $trimmedAnswer.';
+          case VoiceCommandType.businessOpportunity:
+            return 'Business Notes: $trimmedAnswer.';
+          case VoiceCommandType.codexPrompt:
+            return 'Codex Request: $trimmedAnswer.';
+          case VoiceCommandType.idea:
+            return 'Idea Notes: $trimmedAnswer.';
+          case null:
+            return 'Details: $trimmedAnswer.';
+        }
+      case VoiceWizardStep.review:
+        return 'Review: $trimmedAnswer.';
+    }
+  }
+
   VoiceCommand addCommand({
     required String transcript,
     required VoiceCommandType type,
