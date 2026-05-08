@@ -58,6 +58,21 @@ void main() {
     expect(actions.map((action) => action.templateId), contains('task'));
   });
 
+  test('voice command service builds an assistant reply', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript: 'Business: follow up with Sahil Kumar about the next step',
+    );
+    final response = service.buildAssistantResponse(
+      transcript: suggestion.transcript,
+      suggestion: suggestion,
+    );
+
+    expect(response.summary, contains('business lead'));
+    expect(response.nextStep, contains('contact'));
+    expect(response.projectContext, isNull);
+  });
+
   test('voice command service creates the Codex-safe prompt wrapper', () {
     final service = VoiceCommandService();
     final prompt = service.createCodexPrompt('  Update the dashboard cards  ');

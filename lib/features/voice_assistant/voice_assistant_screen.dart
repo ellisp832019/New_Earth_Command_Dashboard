@@ -630,6 +630,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       transcript: _transcriptController.text,
       suggestion: _suggestion,
     );
+    final assistantResponse = _transcriptController.text.trim().isEmpty
+        ? null
+        : _service.buildAssistantResponse(
+            transcript: _transcriptController.text,
+            suggestion: _suggestion,
+          );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Voice Assistant')),
@@ -754,6 +760,41 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 'Live microphone capture fills this field. Edit the words first, then save to the right local module.',
           ),
           const SizedBox(height: 16),
+          if (assistantResponse != null) ...[
+            Card(
+              key: const Key('voiceAssistantReplyCard'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assistant Reply',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      assistantResponse.summary,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      assistantResponse.nextStep,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    if (assistantResponse.projectContext != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Project context: ${assistantResponse.projectContext}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

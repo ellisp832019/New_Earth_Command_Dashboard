@@ -279,6 +279,82 @@ class VoiceCommandService {
     return actions;
   }
 
+  VoiceCommandAssistantResponse buildAssistantResponse({
+    required String transcript,
+    VoiceCommandSuggestion? suggestion,
+  }) {
+    final projectContext = suggestion?.suggestedProjectName;
+
+    if (transcript.toLowerCase().contains('build day')) {
+      return VoiceCommandAssistantResponse(
+        summary:
+            'I heard a build-day command. I can help you open the day view, check the planner, or preload the build-day template.',
+        nextStep:
+            'Use the router or template deck to shape the day before you save anything.',
+        projectContext: projectContext,
+      );
+    }
+
+    switch (suggestion?.suggestedType) {
+      case VoiceCommandType.task:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'This reads like a task. I can open Tasks, preload the task template, or send it toward Planner if it belongs in today.',
+          nextStep:
+              'Review the title, category, and priority before you save it.',
+          projectContext: projectContext,
+        );
+      case VoiceCommandType.journalEntry:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'This sounds like a journal entry. I can open Journal or reload the reflection template for a cleaner note.',
+          nextStep:
+              'Tighten the worked-on, learned, and next-actions fields before saving.',
+          projectContext: projectContext,
+        );
+      case VoiceCommandType.contentIdea:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'This looks like a content idea. I can open Content, preload the draft template, or jump to Projects for context.',
+          nextStep:
+              'Check the platform and content type before you keep it.',
+          projectContext: projectContext,
+        );
+      case VoiceCommandType.businessOpportunity:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'This sounds like a business lead. I can open Business, preload the opportunity template, or move into Projects for context.',
+          nextStep:
+              'Confirm the contact, status, and next action before saving.',
+          projectContext: projectContext,
+        );
+      case VoiceCommandType.codexPrompt:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'I can shape this into a safe Codex prompt for review. The prompt will stay local until you copy it.',
+          nextStep:
+              'Read the prompt once more before you hand it off.',
+          projectContext: projectContext,
+        );
+      case VoiceCommandType.idea:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'This reads like a future idea. I can park it in Inbox or keep it attached to the day for later review.',
+          nextStep:
+              'If it does not belong to today, let Inbox hold it for you.',
+          projectContext: projectContext,
+        );
+      case null:
+        return VoiceCommandAssistantResponse(
+          summary:
+              'I do not have a strong type yet. I can still help by opening the right area, loading a starter, or turning this into a safe prompt.',
+          nextStep:
+              'Pick a starter deck option or let the router guide the next move.',
+          projectContext: projectContext,
+        );
+    }
+  }
+
   VoiceCommand addCommand({
     required String transcript,
     required VoiceCommandType type,

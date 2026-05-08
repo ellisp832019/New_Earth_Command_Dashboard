@@ -170,3 +170,15 @@ class VoiceCommandQuickAction {
   final String? route;
   final String? templateId;
 }
+
+class VoiceCommandAssistantResponse {
+  const VoiceCommandAssistantResponse({
+    required this.summary,
+    required this.nextStep,
+    this.projectContext,
+  });
+
+  final String summary;
+  final String nextStep;
+  final String? projectContext;
+}

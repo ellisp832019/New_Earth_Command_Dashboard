@@ -1830,7 +1830,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(Key('taskArchiveButton-${task.taskId}')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('taskArchiveButton-${task.taskId}')));
@@ -1912,7 +1912,13 @@ void main() {
       transcriptField.controller?.text,
       'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
     );
-    expect(find.text('Command Router'), findsOneWidget);
+    expect(find.byKey(const Key('voiceAssistantReplyCard')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       findsOneWidget,

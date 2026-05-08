@@ -92,13 +92,14 @@ The current screen has four main parts:
 
 1. The capture controls
 2. The transcript preview
-3. The starter deck and command router
+3. The assistant reply, starter deck, and command router
 4. The command history
 
 Think of it as a small intake desk:
 
 - the controls gather the raw thought
 - the transcript shows you what the app heard
+- the assistant reply gives you a plain-language read on what the command seems to be
 - the router helps you decide what to do next
 - history lets you reuse good phrasing later
 
@@ -230,6 +231,29 @@ If you say something like:
 - `Open the project for MicroGrow`
 
 the router will try to surface the most likely next move instead of leaving you to guess where the command belongs.
+
+---
+
+## Assistant Reply
+
+The `Assistant Reply` card gives you a short plain-language read on what the app thinks you said.
+
+It is not trying to sound clever for its own sake. It is there to make the flow feel clearer.
+
+The reply usually includes:
+
+- what kind of command it thinks this is
+- what the app can do next
+- what to check before saving
+- project context when the transcript points to one
+
+Use it as a quick sanity check before you commit the capture.
+
+When it helps most:
+
+- you want a fast explanation before you choose a route
+- the transcript is close but not completely obvious
+- you want the app to feel more like a live assistant than a blank form
 
 ---
 
