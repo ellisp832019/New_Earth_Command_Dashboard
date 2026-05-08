@@ -328,10 +328,19 @@ class _TaskListView extends ConsumerWidget {
               ? null
               : projectNames[task.projectId],
           onTap: () => context.push(RouteNames.editTask(task.taskId)),
+          onOpenProject: task.projectId == null
+              ? null
+              : () => context.push(RouteNames.projectDetail(task.projectId!)),
+          onMoveToInbox: () =>
+              ref.read(tasksControllerProvider).moveTaskToInbox(task.taskId),
+          onMoveToPlanned: () =>
+              ref.read(tasksControllerProvider).moveTaskToPlanned(task.taskId),
           onMoveToToday: () =>
               ref.read(tasksControllerProvider).moveTaskToToday(task.taskId),
           onMarkDone: () =>
               ref.read(tasksControllerProvider).markTaskDone(task.taskId),
+          onBlock: () =>
+              ref.read(tasksControllerProvider).markTaskBlocked(task.taskId),
           onPark: () => ref.read(tasksControllerProvider).parkTask(task.taskId),
           onArchive: () => _confirmArchiveTask(context, ref, task),
           onTopThreeToggle: () async {

@@ -272,6 +272,9 @@ Rules:
       category = 'Design';
     } else if (lowerTranscript.contains('research')) {
       category = 'Research';
+    } else if (lowerTranscript.contains('plan') ||
+        lowerTranscript.contains('planning')) {
+      category = 'Planning';
     } else if (lowerTranscript.contains('business')) {
       category = 'Business';
     } else if (lowerTranscript.contains('learn')) {

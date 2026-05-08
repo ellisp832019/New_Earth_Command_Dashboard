@@ -2,193 +2,255 @@
 
 ## Purpose
 
-This document describes how to test the current New Earth Command Dashboard app and how to use it in its current state.
+This document is a practical guide for testing the New Earth Command Dashboard thoroughly.
 
-It is intended for manual testers, developers doing exploratory validation, and anyone who wants a quick walkthrough of the app's core flows.
+Use it when you want to verify the current build by hand, not just trust automated tests. The goal is to catch real app feel issues, broken flows, missing refreshes, and navigation problems before they become habits.
 
-## Setup
+## Before You Start
 
-1. Open the project in VS Code.
-2. Run `flutter pub get` if dependencies are not already installed.
-3. Use the following commands to validate the codebase:
+1. Open the project in VS Code or your editor of choice.
+2. Run `flutter pub get` if dependencies are not installed yet.
+3. Make sure the current branch is the one you want to validate.
+4. Run the baseline checks:
    - `flutter analyze`
    - `flutter test`
-4. To run the app locally in debug mode:
+5. Start the app locally:
    - `flutter run -d windows`
-   - or use an emulator/device of your choice.
+   - or run on another supported device if you are checking a different platform.
 
-## General Testing Approach
+## Testing Mindset
 
-Focus on the core local-first workflow first. The app is built around capturing work, planning daily progress, and tracking projects and business opportunities.
+Test in this order:
 
-Test the following levels:
+1. App launches and navigation.
+2. Core data creation and editing.
+3. Refresh and persistence after leaving a screen.
+4. Voice capture and inbox processing.
+5. Edge cases, fallback states, and awkward layouts.
 
-- **Static validation**: `flutter analyze`
-- **Automated unit/widget tests**: `flutter test`
-- **Manual flows**: navigation, create/update items, persistence, and UI responses.
+When something feels off, note:
 
-## How to Use the App
+- which screen you were on
+- what you clicked
+- what you expected
+- what actually happened
+- whether it was a visual issue, a data issue, or a navigation issue
 
-The app is a calm command dashboard for daily work and projects.
+## Quick Smoke Pass
 
-### Core workflow
+Do this first every time you test a new build.
 
-1. Open the app and land on the **Dashboard**.
-2. Review the day’s top focus and quick status cards.
-3. Use the **Projects** screen to capture or inspect active projects.
-4. Use the **Tasks** screen to manage immediate work and top tasks.
-5. Use the **More** menu to access supporting areas:
-   - Journal
-   - Learning
-   - Content
-   - Business
-   - Wellbeing
-   - Inbox
-   - Voice Assistant
-   - Settings
-6. The **Business** screen is currently a key workflow for capturing opportunities, partnerships, and leads.
+- [ ] App launches without errors.
+- [ ] Dashboard opens as the landing screen.
+- [ ] Bottom navigation works.
+- [ ] More screen opens and closes normally.
+- [ ] Projects screen opens.
+- [ ] Tasks screen opens.
+- [ ] Planner screen opens.
+- [ ] Each supporting screen under More loads cleanly.
+- [ ] Back buttons return you to the previous screen.
 
-### Core app behavior
+If any of those fail, stop and fix the issue before doing a deeper pass.
 
-- The app should start on the dashboard.
-- Navigation should work from the bottom bar and the More screen.
-- New items should be saved locally and appear in the relevant list.
-- Edit screens should prefill existing data and update items correctly.
-- The app should remain responsive during loading and error states.
-
-## Recommended Manual Test Flows
+## Full Manual Checklist
 
 ### Dashboard
 
-- Confirm the dashboard opens successfully.
-- Verify the top cards display the current plan, focus, energy, and available categories.
-- Tap through to the linked project, tasks, planner, or More screen.
-- Use `Voice Capture` from Quick Capture and confirm the Voice Assistant opens.
+- [ ] Dashboard shows the current day, top focus, and summary cards.
+- [ ] Top 3 tasks are visible when present.
+- [ ] Quick capture buttons open the right flow.
+- [ ] Voice Capture opens the Voice Assistant.
+- [ ] Dashboard links to projects, tasks, planner, and More work.
+- [ ] Remove or update a Top 3 task from the dashboard if the control is available.
+- [ ] Dashboard layout stays calm and readable at normal window size.
+- [ ] Dashboard still looks usable after resizing the window narrower.
 
 ### Projects
 
-- Open the Projects screen.
-- Create a new project if the flow is available.
-- Verify project details display correctly.
-- Confirm linked journal entries, learning items, content ideas, and business opportunities appear on Project Detail when they exist.
-- Confirm the project-aware add shortcuts open the right create flow with the project preselected.
-- Archive or update a project if those controls exist.
+- [ ] Projects list loads.
+- [ ] A project card can be opened.
+- [ ] Add project works if the screen exposes it.
+- [ ] Edit project loads existing values.
+- [ ] Project detail shows purpose, status, progress, next action, and notes.
+- [ ] Project detail shows active and blocked tasks.
+- [ ] Project detail now surfaces recent linked Journal entries, Learning items, Content ideas, and Business opportunities.
+- [ ] Project-aware create shortcuts open the correct create screen with the project preselected.
+- [ ] Archive flow prompts for confirmation and behaves correctly.
+- [ ] Returning to Projects after an edit or archive keeps the list in sync.
 
 ### Tasks
 
-- Open the Tasks screen.
-- Add a new task and verify it appears in the list.
-- Edit a task and save changes.
-- Mark a task complete if available.
+- [ ] Tasks list loads local items.
+- [ ] Add task creates a new task.
+- [ ] Edit task loads the saved values.
+- [ ] Save updates are reflected after returning to the list.
+- [ ] Status changes persist.
+- [ ] Project assignment persists.
+- [ ] Top 3 task controls work.
+- [ ] A fourth Top 3 task is blocked if that rule is enforced.
+- [ ] Move to Today works.
+- [ ] Parked and Done states work.
+- [ ] Archive flow prompts for confirmation.
+- [ ] Search works.
+- [ ] Search combines correctly with filters.
+- [ ] Status filter works.
+- [ ] Project filter works.
 
 ### Planner
 
-- Open the Planner screen.
-- Inspect the daily plan details.
-- Confirm the plan shows the correct date and any seeded tasks or focus.
+- [ ] Planner loads the daily plan.
+- [ ] Today's focus and planning fields display correctly.
+- [ ] Top 3 tasks are shown in the planner where expected.
+- [ ] Save actions update the dashboard.
+- [ ] Evening review fields save correctly.
+- [ ] Carry forward notes persist.
+- [ ] Tomorrow focus persists.
 
-### More menu
+### More Menu
 
-- Open the More screen.
-- Navigate to each supporting area and confirm the screen loads.
-- Use the back button to return from each screen.
+- [ ] More screen opens.
+- [ ] Each supporting area is reachable.
+- [ ] Each screen title is correct.
+- [ ] Each screen has a sensible empty state if there is no data.
+- [ ] Back navigation returns to More or the previous screen.
+
+### Journal
+
+- [ ] Journal list opens.
+- [ ] A new journal entry can be created.
+- [ ] A linked journal entry can be created from Project Detail.
+- [ ] Editing an existing journal entry loads the current values.
+- [ ] Saving updates the list.
+- [ ] Journal entries keep their project link after save.
+
+### Learning
+
+- [ ] Learning list opens.
+- [ ] A new learning item can be created.
+- [ ] A linked learning item can be created from Project Detail.
+- [ ] Editing an existing learning item works.
+- [ ] Save updates the list.
+- [ ] Project link persists.
+
+### Content
+
+- [ ] Content list opens.
+- [ ] A new content item can be created.
+- [ ] A linked content item can be created from Project Detail.
+- [ ] Editing an existing content item works.
+- [ ] Save updates the list.
+- [ ] Project link persists.
 
 ### Business
 
-This page is especially important for the current app state.
+- [ ] Business list opens.
+- [ ] Add business opportunity works.
+- [ ] Edit opportunity loads current values.
+- [ ] The current business types and statuses match the app spec.
+- [ ] Project link persists.
+- [ ] Save updates are reflected in the list.
+- [ ] Archive or blocked states behave as expected if available.
 
-#### Add new opportunity
+### Inbox
 
-1. Open the Business screen.
-2. Tap the add button.
-3. Fill in an opportunity name.
-4. Select a related project if available.
-5. Choose a type and status.
-6. Enter optional fields such as company/contact, next step, deadline, follow-up date, document link, and notes.
-7. Save the opportunity.
-8. Confirm the item appears in the business list.
-
-#### Edit existing opportunity
-
-1. Tap a business opportunity card.
-2. Verify the edit screen title reads `Edit Opportunity`.
-3. Confirm the form fields are prefilled.
-4. Change the opportunity name or status.
-5. Save the change.
-6. Confirm the updated name appears in the list.
-
-### Business add/edit coverage
-
-- Confirm the add flow can create a new opportunity and return to the Business list.
-- Confirm the edit flow loads the existing opportunity data and saves updates.
-- This path is covered by focused widget tests in `test/features/business/business_edit_widget_test.dart`.
+- [ ] Inbox opens.
+- [ ] Only unprocessed items are shown.
+- [ ] Parked items remain visible with parked status.
+- [ ] Convert a task-like item into a Task.
+- [ ] Convert a note into Journal, Content, Learning, or Business where appropriate.
+- [ ] Converted items disappear from Inbox.
+- [ ] Inbox records keep processed metadata.
 
 ### Voice Assistant
 
-1. Open Voice Assistant from the Dashboard or More screen.
-2. Press `Start Listening`, allow microphone permission if prompted, speak a short test phrase, then press `Stop`.
-3. Confirm the transcript appears in the preview field and can be edited.
-4. On Windows, press `Start Listening` and confirm native Windows voice typing opens with the transcript field focused.
-5. If the app is fullscreen on Windows, confirm `Start Listening` does not force it back to windowed mode.
-6. If Windows voice typing is unavailable on the device, use mock transcript or paste transcript as fallback.
-7. Confirm the screen suggests a type, title, and project when the transcript clearly indicates them.
-8. Confirm structured hints appear when useful, such as content platform/type or business status/contact.
-9. Edit the extracted fields, then save and confirm the edited values are what land in the local records.
-10. Save as Task and confirm a local Inbox task is created.
-11. Save as Journal Entry and confirm a reflection entry is created.
-12. Save as Idea and confirm an Inbox Future Idea is created.
-13. Save as Content Idea and confirm a content item is created.
-14. Save as Business Opportunity and confirm a business item is created.
-15. Prepare a Codex Prompt and confirm it is shown for review rather than executed.
+- [ ] Voice Assistant opens from Dashboard or More.
+- [ ] Windows voice typing opens without forcing the app out of fullscreen.
+- [ ] Transcript preview can be edited with the keyboard.
+- [ ] Backspace works normally inside the transcript field.
+- [ ] Start, Stop, and Cancel behave sensibly.
+- [ ] Mock transcript and paste transcript fallback work.
+- [ ] The assistant suggests a type when the transcript clearly implies one.
+- [ ] The assistant suggests a title when the transcript has a clear headline.
+- [ ] The assistant suggests a project when the transcript names one.
+- [ ] Structured fields can be edited before save.
+- [ ] Saving as Task creates the correct local record.
+- [ ] Saving as Journal creates the correct local record.
+- [ ] Saving as Content creates the correct local record.
+- [ ] Saving as Business creates the correct local record.
+- [ ] Saving as Inbox Idea stores the item correctly.
+- [ ] Codex Prompt remains a review-only action.
 
-### Inbox Processing
+### Settings
 
-1. Open Inbox from the app shell or More screen.
-2. Confirm only unprocessed items are shown.
-3. Park an item and confirm it stays in Inbox with Parked status.
-4. Convert a task-like item and confirm a local Task is created.
-5. Confirm the converted Inbox item disappears from the list.
-6. Confirm the Inbox record stores processed metadata.
+- [ ] Settings screen opens.
+- [ ] Any toggles or stored values load correctly.
+- [ ] Settings changes persist after leaving and returning.
 
-### Wellbeing, Inbox, Journal, Learning, Content, Voice Assistant, Settings
+## Deep Validation Pass
 
-- Open each screen.
-- Ensure the screen title and content are visible.
-- If any input or add flow exists, exercise it briefly.
-- If there are menu or settings toggles, verify they update the app state.
+After the smoke pass, do this longer walk-through:
 
-## Test Commands
+1. Create a project.
+2. Add a task to that project.
+3. Open Project Detail and confirm the task appears in the linked area.
+4. Add a journal entry from Project Detail.
+5. Add a learning item from Project Detail.
+6. Add a content item from Project Detail.
+7. Add a business opportunity from Project Detail.
+8. Open Inbox and convert one item into a Task.
+9. Use Voice Assistant to create one Task and one Journal entry.
+10. Close the app.
+11. Reopen the app.
+12. Confirm the saved data is still there.
+
+This pass catches the most important thing for a local-first app: the flows need to connect, and the data needs to survive restart.
+
+## Edge Cases Worth Checking
+
+- [ ] Resize the window narrower and wider while on Project Detail.
+- [ ] Resize the window while on Voice Assistant.
+- [ ] Try empty fields in add/edit forms.
+- [ ] Try very long project names and task titles.
+- [ ] Try a voice transcript with no obvious type.
+- [ ] Try a voice transcript with multiple likely destinations.
+- [ ] Try saving and then immediately reopening the same item.
+- [ ] Try backing out of a dialog without confirming.
+- [ ] Try repeated navigation into the same screen from different entry points.
+
+## Recommended Command List
+
+Run these during or after manual testing:
 
 - `flutter analyze`
 - `flutter test`
-- `flutter test test/features/business/business_edit_widget_test.dart`
-- `flutter test test/features/voice_assistant/voice_command_action_service_test.dart`
+- `flutter test test/widget_test.dart -r expanded`
+- `flutter build windows`
 - `flutter run -d windows`
+
+## What to Record
+
+When you find a problem, record:
+
+- screen name
+- exact action
+- exact text if relevant
+- whether it happened once or every time
+- whether it was a UI issue, a data issue, or a route issue
+- whether it still happens after restarting the app
 
 ## Acceptance Criteria
 
-- The app launches and renders the dashboard without errors.
-- Navigation works for the bottom bar and More menu.
-- Projects, Tasks, and Business screens load and show their lists.
-- Business add/edit flows work and persist data.
-- Voice capture saves reviewed transcripts into local dashboard data.
-- No analyzer issues remain.
-- Focused widget tests for business edit flow pass.
+The build is in good shape when:
 
-## Notes for Testers
+- the app launches cleanly
+- navigation feels stable
+- create/edit flows save correctly
+- project-linked items appear where expected
+- inbox conversion works
+- voice capture works on the supported path
+- the app survives close and reopen with data intact
+- automated tests and analyzer checks pass
 
-- The app is local-first, so all saved data is kept in the device/emulator storage.
-- Use the current date and flows as the baseline for daily planning.
-- Prioritize the core dashboard, project tracking, and business opportunity flows.
-- Document any broken flows, missing buttons, or unexpected navigation behavior.
+## Final Note
 
-## Current Priority Areas
-
-- Dashboard usability and navigation
-- Business opportunity add/edit flow
-- Data persistence and list refreshing
-- Basic project and task creation flows
-
----
-
-This test plan reflects the current state of the app and is a practical guide for validating the whole experience. If you want, I can also add a second doc with a concise quick-start guide for new users.
+This guide is meant to be used with the app open beside it. Keep the checklist close, go screen by screen, and mark anything that feels rough enough to slow down a real person.

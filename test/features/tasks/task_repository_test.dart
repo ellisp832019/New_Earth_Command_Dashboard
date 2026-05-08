@@ -332,4 +332,88 @@ void main() {
       expect(plan.topTask1Id, isNull);
     },
   );
+
+  test('tasks controller moves tasks into inbox and planned states', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day, 11);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => database),
+        databaseReadyProvider.overrideWith((ref) async {}),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final taskRepository = TaskRepository(database, now: () => today);
+    final task = await taskRepository.createTask(
+      title: 'Smart move me',
+      status: 'Today',
+    );
+
+    await container.read(tasksControllerProvider).moveTaskToInbox(task.taskId);
+    final inboxTask = await taskRepository.getById(task.taskId);
+    expect(inboxTask.status, 'Inbox');
+
+    await container
+        .read(tasksControllerProvider)
+        .moveTaskToPlanned(task.taskId);
+    final plannedTask = await taskRepository.getById(task.taskId);
+    expect(plannedTask.status, 'Planned');
+  });
+
+  test(
+    'tasks controller marks top tasks as blocked and removes them from Top 3',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day, 11);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => database),
+          databaseReadyProvider.overrideWith((ref) async {}),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final taskRepository = TaskRepository(database, now: () => today);
+      final dailyPlanRepository = DailyPlanRepository(
+        database,
+        now: () => today,
+      );
+      await database
+          .into(database.dailyPlans)
+          .insert(
+            DailyPlansCompanion.insert(
+              dailyPlanId:
+                  'daily-plan-${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
+              date: DateTime(today.year, today.month, today.day),
+              createdAt: today,
+              updatedAt: today,
+            ),
+          );
+      final task = await taskRepository.createTask(
+        title: 'Smart block me',
+        status: 'Today',
+      );
+      await dailyPlanRepository.saveTopThreeTaskIds([task.taskId]);
+
+      await container
+          .read(tasksControllerProvider)
+          .markTaskBlocked(task.taskId);
+
+      final blockedTask = await taskRepository.getById(task.taskId);
+      expect(blockedTask.status, 'Blocked');
+      expect(blockedTask.isTopThree, isFalse);
+
+      final plan = await dailyPlanRepository.getTodayPlan();
+      expect(plan.topTask1Id, isNull);
+      expect(plan.topTask2Id, isNull);
+      expect(plan.topTask3Id, isNull);
+    },
+  );
 }

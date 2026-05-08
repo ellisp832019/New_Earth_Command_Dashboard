@@ -1,8 +1,8 @@
-# TASK - Project Detail Linked Module Surfacing
+# TASK - Smart Task Productivity Actions
 
 ## Goal
 
-Make Project Detail feel like the home for a project by surfacing linked Journal, Learning, Content, and Business records, while keeping quick-create actions project-aware.
+Make Tasks faster to triage and easier to act on by adding smarter quick actions, richer productivity states, and context-aware suggestions.
 
 ## Source of Truth
 
@@ -17,14 +17,13 @@ Read these files first:
 
 ## Requirements
 
-1. Keep projects, tasks, planner, voice, and inbox flows working.
-2. Show active and blocked tasks as before.
-3. Surface recent linked Journal entries, Learning items, Content ideas, and Business opportunities on Project Detail.
-4. Add project-aware create shortcuts for Journal, Learning, Content, and Business from Project Detail.
-5. Keep the layout calm and readable.
-6. Preserve project detail archive/edit/task flows.
-7. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
+1. Keep tasks, planner, voice, inbox, and project flows working.
+2. Add clearer task triage actions for Inbox, Planned, Today, Blocked, Parked, and Done tasks.
+3. Add a smart guidance strip that suggests the next best task move.
+4. Keep task actions calm, visible, and easy to scan.
+5. Preserve Top 3, archive, and project-link behaviour.
+6. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
 
 ## Expected Result
 
-The user can open a project and quickly see the related work trail, then jump straight into adding the next linked item without hunting through the app.
+The user can open Tasks and quickly decide what to do next, with obvious action buttons and a helpful suggestion card that nudges the next best move.

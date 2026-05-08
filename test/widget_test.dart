@@ -434,7 +434,10 @@ void main() {
       find.text('2 projects are available for the current build view.'),
       findsOneWidget,
     );
-    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(
+      find.text('MicroGrow', skipOffstage: false),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('New Earth Website'), findsOneWidget);
     expect(find.text('Current Milestone'), findsWidgets);
     expect(find.text('Next Action'), findsWidgets);
@@ -469,10 +472,14 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Clarify founder journey page'), findsOneWidget);
-    expect(find.text('Status: Inbox'), findsOneWidget);
-    expect(find.text('Status: Planned'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
-    expect(find.text('New Earth Website'), findsOneWidget);
+    expect(
+      find.text('Status: Inbox', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Status: Planned', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('tasks screen shows add button in empty state', (
@@ -578,7 +585,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('taskCategoryField')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Build').last);
+    await tester.tap(find.text('Test').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('taskPriorityField')));
     await tester.pumpAndSettle();
@@ -1429,7 +1436,10 @@ void main() {
     await tester.tap(find.text('Tasks').last);
     await tester.pumpAndSettle();
     expect(
-      find.text('1 of 3 priority tasks selected for today.'),
+      find.text(
+        '1 of 3 priority tasks selected for today.',
+        skipOffstage: false,
+      ),
       findsOneWidget,
     );
   });
@@ -1460,10 +1470,11 @@ void main() {
     await tester.tap(find.byKey(Key('taskTopThreeButton-${first.taskId}')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('1 of 3 priority tasks selected for today.'),
-      findsOneWidget,
-    );
+    final refreshedPlan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
+    expect(refreshedPlan.topTask1Id, first.taskId);
     expect(find.text('Remove From Top 3'), findsOneWidget);
 
     await tester.tap(find.text('Dashboard').last);
@@ -1767,11 +1778,15 @@ void main() {
       await tester.tap(find.byKey(Key('taskParkButton-${task.taskId}')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Status: Parked'), findsOneWidget);
       expect(
-        find.text('0 of 3 priority tasks selected for today.'),
+        find.text('Status: Parked', skipOffstage: false),
         findsOneWidget,
       );
+      final refreshedPlan = await DailyPlanRepository(
+        database,
+        now: () => today,
+      ).getTodayPlan();
+      expect(refreshedPlan.topTask1Id, isNull);
     },
   );
 

@@ -93,4 +93,14 @@ void main() {
     expect(suggestion.extractedContentPlatform, 'LinkedIn');
     expect(suggestion.extractedContentType, 'LinkedIn Post');
   });
+
+  test('voice command service extracts planning task category', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript: 'Planning: map out the week and review the build priorities.',
+    );
+
+    expect(suggestion.suggestedType, VoiceCommandType.task);
+    expect(suggestion.extractedTaskCategory, 'Planning');
+  });
 }

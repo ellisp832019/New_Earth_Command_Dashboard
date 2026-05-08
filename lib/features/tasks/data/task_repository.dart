@@ -74,6 +74,7 @@ class TaskRepository {
     final timestamp = _now();
     final isCompleted = status == 'Done';
     final isParked = status == 'Parked';
+    final isBlocked = status == 'Blocked';
 
     await (_database.update(
       _database.tasks,
@@ -92,7 +93,7 @@ class TaskRepository {
           isCompleted ? (existing.completedAt ?? timestamp) : null,
         ),
         isTopThree: Value(
-          isCompleted || isParked ? false : existing.isTopThree,
+          isCompleted || isParked || isBlocked ? false : existing.isTopThree,
         ),
         updatedAt: Value(timestamp),
       ),
