@@ -11,6 +11,7 @@ import '../dashboard/application/dashboard_controller.dart';
 import '../inbox/application/inbox_controller.dart';
 import '../journal/application/journal_controller.dart';
 import '../projects/application/projects_controller.dart';
+import '../projects/data/project_repository.dart';
 import '../tasks/data/task_repository.dart';
 import '../tasks/application/tasks_controller.dart';
 import 'voice_command_model.dart';
@@ -19,11 +20,14 @@ class VoiceCommandActionService {
   VoiceCommandActionService(
     this._database, {
     TaskRepository? taskRepository,
+    ProjectRepository? projectRepository,
     ContentRepository? contentRepository,
     BusinessRepository? businessRepository,
     Uuid? uuid,
     DateTime Function()? now,
   }) : _taskRepository = taskRepository ?? TaskRepository(_database, now: now),
+       _projectRepository =
+           projectRepository ?? ProjectRepository(_database, now: now),
        _contentRepository =
            contentRepository ?? ContentRepository(_database, now: now),
        _businessRepository =
@@ -33,6 +37,7 @@ class VoiceCommandActionService {
 
   final AppDatabase _database;
   final TaskRepository _taskRepository;
+  final ProjectRepository _projectRepository;
   final ContentRepository _contentRepository;
   final BusinessRepository _businessRepository;
   final Uuid _uuid;
@@ -50,6 +55,12 @@ class VoiceCommandActionService {
         await _saveAsTask(
           transcript,
           projectId: projectId,
+          titleOverride: titleOverride,
+          suggestion: suggestion,
+        );
+      case VoiceCommandType.project:
+        await _saveAsProject(
+          transcript,
           titleOverride: titleOverride,
           suggestion: suggestion,
         );
@@ -105,6 +116,32 @@ class VoiceCommandActionService {
       priority: suggestion?.extractedTaskPriority ?? 'Medium',
       status: 'Inbox',
       notes: 'Captured from the Voice Assistant.',
+    );
+  }
+
+  Future<void> _saveAsProject(
+    String transcript, {
+    String? titleOverride,
+    VoiceCommandSuggestion? suggestion,
+  }) async {
+    final cleanTranscript = transcript.trim();
+    await _projectRepository.createProject(
+      name: _resolvedTitle(
+        titleOverride,
+        fallback: _prefixedTitle(
+          prefix: 'Voice project',
+          transcript: cleanTranscript,
+        ),
+      ),
+      shortDescription: cleanTranscript,
+      longDescription: cleanTranscript,
+      vision: suggestion?.extractedProjectVision,
+      status: suggestion?.extractedProjectStatus ?? 'Idea',
+      priority: suggestion?.extractedProjectPriority ?? 'Medium',
+      progressPercentage: 0,
+      currentMilestone: null,
+      nextAction: suggestion?.extractedProjectNextAction ?? cleanTranscript,
+      notes: suggestion?.extractedProjectNotes ?? 'Captured from the Voice Assistant.',
     );
   }
 
@@ -300,6 +337,9 @@ class VoiceCommandActionsController {
     switch (type) {
       case VoiceCommandType.task:
         _ref.invalidate(tasksProvider);
+        _ref.invalidate(dashboardSnapshotProvider);
+      case VoiceCommandType.project:
+        _ref.invalidate(projectsProvider);
         _ref.invalidate(dashboardSnapshotProvider);
       case VoiceCommandType.journalEntry:
         _ref.invalidate(journalEntriesProvider);

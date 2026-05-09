@@ -231,7 +231,12 @@ final appRouter = GoRouter(
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceAssistant,
-      builder: (context, state) => const VoiceAssistantScreen(),
+      builder: (context, state) => VoiceAssistantScreen(
+        initialTranscript: state.uri.queryParameters['transcript'],
+        initialType: state.uri.queryParameters['type'],
+        wakeTriggered: state.uri.queryParameters['wake'] == '1',
+        handsfreeTriggered: state.uri.queryParameters['handsfree'] == '1',
+      ),
     ),
   ],
 );

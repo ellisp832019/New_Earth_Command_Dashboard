@@ -39,7 +39,25 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (migrator) async {
+          await migrator.createAll();
+        },
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            await migrator.addColumn(appSettings, appSettings.voiceRepliesEnabled);
+            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceName);
+            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceLocale);
+            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceGender);
+            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceIdentifier);
+            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceRate);
+            await migrator.addColumn(appSettings, appSettings.preferredTtsVoicePitch);
+          }
+        },
+      );
 }
 
 LazyDatabase _openConnection() {

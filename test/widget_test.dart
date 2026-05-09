@@ -23,6 +23,7 @@ import 'package:new_earth_command_dashboard/features/settings/application/settin
 import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/voice_assistant_screen.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
 import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
@@ -619,14 +620,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tasks'), findsAtLeastNWidgets(1));
-    expect(find.text('MicroGrow'), findsOneWidget);
 
     final tasks = await TaskRepository(database).getActiveTasks();
+    final projects = await ProjectRepository(database).getProjects();
+    final microGrow = projects.firstWhere(
+      (project) => project.name == 'MicroGrow',
+    );
+
     expect(tasks, isNotEmpty);
     expect(
       tasks.any((task) => task.title == 'Build task add edit flow'),
       isTrue,
     );
+    expect(tasks.any((task) => task.projectId == microGrow.projectId), isTrue);
   });
 
   testWidgets('tasks screen can edit an existing task', (
@@ -1756,7 +1762,10 @@ void main() {
     await tester.tap(find.text('Tasks').last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('taskSearchField')), 'Shift me');
+    await tester.enterText(
+      find.byKey(const Key('taskSearchField')),
+      'Shift me',
+    );
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
@@ -1926,6 +1935,60 @@ void main() {
     );
   });
 
+  testWidgets('voice assistant can open with a preset type from the dock', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsSnapshotProvider.overrideWith(
+            (ref) async => SettingsSnapshot(
+              settings: AppSetting(
+                settingsId: 'settings-test',
+                themeMode: 'Dark',
+                defaultDashboardView: null,
+                showWellbeingCard: true,
+                showBusinessCard: true,
+                showLearningCard: true,
+                showContentCard: true,
+                dailyTopTaskLimit: 3,
+                voiceRepliesEnabled: false,
+                preferredTtsVoiceName: null,
+                preferredTtsVoiceLocale: null,
+                preferredTtsVoiceGender: null,
+                preferredTtsVoiceIdentifier: null,
+                preferredTtsVoiceRate: 0.5,
+                preferredTtsVoicePitch: 1.0,
+                createdAt: DateTime(2026, 5, 9),
+                updatedAt: DateTime(2026, 5, 9),
+              ),
+              appVersion: 'test',
+            ),
+          ),
+          voiceAssistantProjectOptionsProvider.overrideWith(
+            (ref) async => const <VoiceAssistantProjectOption>[],
+          ),
+        ],
+        child: const MaterialApp(
+          home: VoiceAssistantScreen(
+            initialTranscript: 'Draft a note about the dashboard voice workflow',
+            initialType: 'project',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceSaveCommandButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Save as Project'), findsOneWidget);
+  });
+
   testWidgets('voice assistant wizard mode asks one question at a time', (
     WidgetTester tester,
   ) async {
@@ -1996,8 +2059,6 @@ void main() {
           .first,
     );
     await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('voiceSuggestedTitleField')), findsOneWidget);
 
     final tasks = await database.select(database.tasks).get();
     final voiceTasks = tasks

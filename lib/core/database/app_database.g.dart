@@ -8541,6 +8541,88 @@ class $AppSettingsTable extends AppSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(3),
   );
+  static const VerificationMeta _voiceRepliesEnabledMeta =
+      const VerificationMeta('voiceRepliesEnabled');
+  @override
+  late final GeneratedColumn<bool> voiceRepliesEnabled = GeneratedColumn<bool>(
+    'voice_replies_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("voice_replies_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _preferredTtsVoiceNameMeta =
+      const VerificationMeta('preferredTtsVoiceName');
+  @override
+  late final GeneratedColumn<String> preferredTtsVoiceName =
+      GeneratedColumn<String>(
+        'preferred_tts_voice_name',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _preferredTtsVoiceLocaleMeta =
+      const VerificationMeta('preferredTtsVoiceLocale');
+  @override
+  late final GeneratedColumn<String> preferredTtsVoiceLocale =
+      GeneratedColumn<String>(
+        'preferred_tts_voice_locale',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _preferredTtsVoiceGenderMeta =
+      const VerificationMeta('preferredTtsVoiceGender');
+  @override
+  late final GeneratedColumn<String> preferredTtsVoiceGender =
+      GeneratedColumn<String>(
+        'preferred_tts_voice_gender',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _preferredTtsVoiceIdentifierMeta =
+      const VerificationMeta('preferredTtsVoiceIdentifier');
+  @override
+  late final GeneratedColumn<String> preferredTtsVoiceIdentifier =
+      GeneratedColumn<String>(
+        'preferred_tts_voice_identifier',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _preferredTtsVoiceRateMeta =
+      const VerificationMeta('preferredTtsVoiceRate');
+  @override
+  late final GeneratedColumn<double> preferredTtsVoiceRate =
+      GeneratedColumn<double>(
+        'preferred_tts_voice_rate',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.5),
+      );
+  static const VerificationMeta _preferredTtsVoicePitchMeta =
+      const VerificationMeta('preferredTtsVoicePitch');
+  @override
+  late final GeneratedColumn<double> preferredTtsVoicePitch =
+      GeneratedColumn<double>(
+        'preferred_tts_voice_pitch',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(1.0),
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8573,6 +8655,13 @@ class $AppSettingsTable extends AppSettings
     showLearningCard,
     showContentCard,
     dailyTopTaskLimit,
+    voiceRepliesEnabled,
+    preferredTtsVoiceName,
+    preferredTtsVoiceLocale,
+    preferredTtsVoiceGender,
+    preferredTtsVoiceIdentifier,
+    preferredTtsVoiceRate,
+    preferredTtsVoicePitch,
     createdAt,
     updatedAt,
   ];
@@ -8656,6 +8745,69 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
+    if (data.containsKey('voice_replies_enabled')) {
+      context.handle(
+        _voiceRepliesEnabledMeta,
+        voiceRepliesEnabled.isAcceptableOrUnknown(
+          data['voice_replies_enabled']!,
+          _voiceRepliesEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_tts_voice_name')) {
+      context.handle(
+        _preferredTtsVoiceNameMeta,
+        preferredTtsVoiceName.isAcceptableOrUnknown(
+          data['preferred_tts_voice_name']!,
+          _preferredTtsVoiceNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_tts_voice_locale')) {
+      context.handle(
+        _preferredTtsVoiceLocaleMeta,
+        preferredTtsVoiceLocale.isAcceptableOrUnknown(
+          data['preferred_tts_voice_locale']!,
+          _preferredTtsVoiceLocaleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_tts_voice_gender')) {
+      context.handle(
+        _preferredTtsVoiceGenderMeta,
+        preferredTtsVoiceGender.isAcceptableOrUnknown(
+          data['preferred_tts_voice_gender']!,
+          _preferredTtsVoiceGenderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_tts_voice_identifier')) {
+      context.handle(
+        _preferredTtsVoiceIdentifierMeta,
+        preferredTtsVoiceIdentifier.isAcceptableOrUnknown(
+          data['preferred_tts_voice_identifier']!,
+          _preferredTtsVoiceIdentifierMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_tts_voice_rate')) {
+      context.handle(
+        _preferredTtsVoiceRateMeta,
+        preferredTtsVoiceRate.isAcceptableOrUnknown(
+          data['preferred_tts_voice_rate']!,
+          _preferredTtsVoiceRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_tts_voice_pitch')) {
+      context.handle(
+        _preferredTtsVoicePitchMeta,
+        preferredTtsVoicePitch.isAcceptableOrUnknown(
+          data['preferred_tts_voice_pitch']!,
+          _preferredTtsVoicePitchMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -8713,6 +8865,34 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.int,
         data['${effectivePrefix}daily_top_task_limit'],
       )!,
+      voiceRepliesEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}voice_replies_enabled'],
+      )!,
+      preferredTtsVoiceName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_tts_voice_name'],
+      ),
+      preferredTtsVoiceLocale: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_tts_voice_locale'],
+      ),
+      preferredTtsVoiceGender: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_tts_voice_gender'],
+      ),
+      preferredTtsVoiceIdentifier: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_tts_voice_identifier'],
+      ),
+      preferredTtsVoiceRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}preferred_tts_voice_rate'],
+      )!,
+      preferredTtsVoicePitch: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}preferred_tts_voice_pitch'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -8739,6 +8919,13 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showLearningCard;
   final bool showContentCard;
   final int dailyTopTaskLimit;
+  final bool voiceRepliesEnabled;
+  final String? preferredTtsVoiceName;
+  final String? preferredTtsVoiceLocale;
+  final String? preferredTtsVoiceGender;
+  final String? preferredTtsVoiceIdentifier;
+  final double preferredTtsVoiceRate;
+  final double preferredTtsVoicePitch;
   final DateTime createdAt;
   final DateTime updatedAt;
   const AppSetting({
@@ -8750,6 +8937,13 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showLearningCard,
     required this.showContentCard,
     required this.dailyTopTaskLimit,
+    required this.voiceRepliesEnabled,
+    this.preferredTtsVoiceName,
+    this.preferredTtsVoiceLocale,
+    this.preferredTtsVoiceGender,
+    this.preferredTtsVoiceIdentifier,
+    required this.preferredTtsVoiceRate,
+    required this.preferredTtsVoicePitch,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -8766,6 +8960,27 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['show_learning_card'] = Variable<bool>(showLearningCard);
     map['show_content_card'] = Variable<bool>(showContentCard);
     map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit);
+    map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled);
+    if (!nullToAbsent || preferredTtsVoiceName != null) {
+      map['preferred_tts_voice_name'] = Variable<String>(preferredTtsVoiceName);
+    }
+    if (!nullToAbsent || preferredTtsVoiceLocale != null) {
+      map['preferred_tts_voice_locale'] = Variable<String>(
+        preferredTtsVoiceLocale,
+      );
+    }
+    if (!nullToAbsent || preferredTtsVoiceGender != null) {
+      map['preferred_tts_voice_gender'] = Variable<String>(
+        preferredTtsVoiceGender,
+      );
+    }
+    if (!nullToAbsent || preferredTtsVoiceIdentifier != null) {
+      map['preferred_tts_voice_identifier'] = Variable<String>(
+        preferredTtsVoiceIdentifier,
+      );
+    }
+    map['preferred_tts_voice_rate'] = Variable<double>(preferredTtsVoiceRate);
+    map['preferred_tts_voice_pitch'] = Variable<double>(preferredTtsVoicePitch);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -8783,6 +8998,22 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showLearningCard: Value(showLearningCard),
       showContentCard: Value(showContentCard),
       dailyTopTaskLimit: Value(dailyTopTaskLimit),
+      voiceRepliesEnabled: Value(voiceRepliesEnabled),
+      preferredTtsVoiceName: preferredTtsVoiceName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferredTtsVoiceName),
+      preferredTtsVoiceLocale: preferredTtsVoiceLocale == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferredTtsVoiceLocale),
+      preferredTtsVoiceGender: preferredTtsVoiceGender == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferredTtsVoiceGender),
+      preferredTtsVoiceIdentifier:
+          preferredTtsVoiceIdentifier == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferredTtsVoiceIdentifier),
+      preferredTtsVoiceRate: Value(preferredTtsVoiceRate),
+      preferredTtsVoicePitch: Value(preferredTtsVoicePitch),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -8804,6 +9035,27 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showLearningCard: serializer.fromJson<bool>(json['showLearningCard']),
       showContentCard: serializer.fromJson<bool>(json['showContentCard']),
       dailyTopTaskLimit: serializer.fromJson<int>(json['dailyTopTaskLimit']),
+      voiceRepliesEnabled: serializer.fromJson<bool>(
+        json['voiceRepliesEnabled'],
+      ),
+      preferredTtsVoiceName: serializer.fromJson<String?>(
+        json['preferredTtsVoiceName'],
+      ),
+      preferredTtsVoiceLocale: serializer.fromJson<String?>(
+        json['preferredTtsVoiceLocale'],
+      ),
+      preferredTtsVoiceGender: serializer.fromJson<String?>(
+        json['preferredTtsVoiceGender'],
+      ),
+      preferredTtsVoiceIdentifier: serializer.fromJson<String?>(
+        json['preferredTtsVoiceIdentifier'],
+      ),
+      preferredTtsVoiceRate: serializer.fromJson<double>(
+        json['preferredTtsVoiceRate'],
+      ),
+      preferredTtsVoicePitch: serializer.fromJson<double>(
+        json['preferredTtsVoicePitch'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -8820,6 +9072,23 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'showLearningCard': serializer.toJson<bool>(showLearningCard),
       'showContentCard': serializer.toJson<bool>(showContentCard),
       'dailyTopTaskLimit': serializer.toJson<int>(dailyTopTaskLimit),
+      'voiceRepliesEnabled': serializer.toJson<bool>(voiceRepliesEnabled),
+      'preferredTtsVoiceName': serializer.toJson<String?>(
+        preferredTtsVoiceName,
+      ),
+      'preferredTtsVoiceLocale': serializer.toJson<String?>(
+        preferredTtsVoiceLocale,
+      ),
+      'preferredTtsVoiceGender': serializer.toJson<String?>(
+        preferredTtsVoiceGender,
+      ),
+      'preferredTtsVoiceIdentifier': serializer.toJson<String?>(
+        preferredTtsVoiceIdentifier,
+      ),
+      'preferredTtsVoiceRate': serializer.toJson<double>(preferredTtsVoiceRate),
+      'preferredTtsVoicePitch': serializer.toJson<double>(
+        preferredTtsVoicePitch,
+      ),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -8834,6 +9103,13 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showLearningCard,
     bool? showContentCard,
     int? dailyTopTaskLimit,
+    bool? voiceRepliesEnabled,
+    Value<String?> preferredTtsVoiceName = const Value.absent(),
+    Value<String?> preferredTtsVoiceLocale = const Value.absent(),
+    Value<String?> preferredTtsVoiceGender = const Value.absent(),
+    Value<String?> preferredTtsVoiceIdentifier = const Value.absent(),
+    double? preferredTtsVoiceRate,
+    double? preferredTtsVoicePitch,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => AppSetting(
@@ -8847,6 +9123,22 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showLearningCard: showLearningCard ?? this.showLearningCard,
     showContentCard: showContentCard ?? this.showContentCard,
     dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
+    voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
+    preferredTtsVoiceName: preferredTtsVoiceName.present
+        ? preferredTtsVoiceName.value
+        : this.preferredTtsVoiceName,
+    preferredTtsVoiceLocale: preferredTtsVoiceLocale.present
+        ? preferredTtsVoiceLocale.value
+        : this.preferredTtsVoiceLocale,
+    preferredTtsVoiceGender: preferredTtsVoiceGender.present
+        ? preferredTtsVoiceGender.value
+        : this.preferredTtsVoiceGender,
+    preferredTtsVoiceIdentifier: preferredTtsVoiceIdentifier.present
+        ? preferredTtsVoiceIdentifier.value
+        : this.preferredTtsVoiceIdentifier,
+    preferredTtsVoiceRate: preferredTtsVoiceRate ?? this.preferredTtsVoiceRate,
+    preferredTtsVoicePitch:
+        preferredTtsVoicePitch ?? this.preferredTtsVoicePitch,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -8874,6 +9166,27 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       dailyTopTaskLimit: data.dailyTopTaskLimit.present
           ? data.dailyTopTaskLimit.value
           : this.dailyTopTaskLimit,
+      voiceRepliesEnabled: data.voiceRepliesEnabled.present
+          ? data.voiceRepliesEnabled.value
+          : this.voiceRepliesEnabled,
+      preferredTtsVoiceName: data.preferredTtsVoiceName.present
+          ? data.preferredTtsVoiceName.value
+          : this.preferredTtsVoiceName,
+      preferredTtsVoiceLocale: data.preferredTtsVoiceLocale.present
+          ? data.preferredTtsVoiceLocale.value
+          : this.preferredTtsVoiceLocale,
+      preferredTtsVoiceGender: data.preferredTtsVoiceGender.present
+          ? data.preferredTtsVoiceGender.value
+          : this.preferredTtsVoiceGender,
+      preferredTtsVoiceIdentifier: data.preferredTtsVoiceIdentifier.present
+          ? data.preferredTtsVoiceIdentifier.value
+          : this.preferredTtsVoiceIdentifier,
+      preferredTtsVoiceRate: data.preferredTtsVoiceRate.present
+          ? data.preferredTtsVoiceRate.value
+          : this.preferredTtsVoiceRate,
+      preferredTtsVoicePitch: data.preferredTtsVoicePitch.present
+          ? data.preferredTtsVoicePitch.value
+          : this.preferredTtsVoicePitch,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -8890,6 +9203,13 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('showLearningCard: $showLearningCard, ')
           ..write('showContentCard: $showContentCard, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
+          ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
+          ..write('preferredTtsVoiceName: $preferredTtsVoiceName, ')
+          ..write('preferredTtsVoiceLocale: $preferredTtsVoiceLocale, ')
+          ..write('preferredTtsVoiceGender: $preferredTtsVoiceGender, ')
+          ..write('preferredTtsVoiceIdentifier: $preferredTtsVoiceIdentifier, ')
+          ..write('preferredTtsVoiceRate: $preferredTtsVoiceRate, ')
+          ..write('preferredTtsVoicePitch: $preferredTtsVoicePitch, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -8906,6 +9226,13 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showLearningCard,
     showContentCard,
     dailyTopTaskLimit,
+    voiceRepliesEnabled,
+    preferredTtsVoiceName,
+    preferredTtsVoiceLocale,
+    preferredTtsVoiceGender,
+    preferredTtsVoiceIdentifier,
+    preferredTtsVoiceRate,
+    preferredTtsVoicePitch,
     createdAt,
     updatedAt,
   );
@@ -8921,6 +9248,14 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showLearningCard == this.showLearningCard &&
           other.showContentCard == this.showContentCard &&
           other.dailyTopTaskLimit == this.dailyTopTaskLimit &&
+          other.voiceRepliesEnabled == this.voiceRepliesEnabled &&
+          other.preferredTtsVoiceName == this.preferredTtsVoiceName &&
+          other.preferredTtsVoiceLocale == this.preferredTtsVoiceLocale &&
+          other.preferredTtsVoiceGender == this.preferredTtsVoiceGender &&
+          other.preferredTtsVoiceIdentifier ==
+              this.preferredTtsVoiceIdentifier &&
+          other.preferredTtsVoiceRate == this.preferredTtsVoiceRate &&
+          other.preferredTtsVoicePitch == this.preferredTtsVoicePitch &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -8934,6 +9269,13 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showLearningCard;
   final Value<bool> showContentCard;
   final Value<int> dailyTopTaskLimit;
+  final Value<bool> voiceRepliesEnabled;
+  final Value<String?> preferredTtsVoiceName;
+  final Value<String?> preferredTtsVoiceLocale;
+  final Value<String?> preferredTtsVoiceGender;
+  final Value<String?> preferredTtsVoiceIdentifier;
+  final Value<double> preferredTtsVoiceRate;
+  final Value<double> preferredTtsVoicePitch;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -8946,6 +9288,13 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showLearningCard = const Value.absent(),
     this.showContentCard = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
+    this.voiceRepliesEnabled = const Value.absent(),
+    this.preferredTtsVoiceName = const Value.absent(),
+    this.preferredTtsVoiceLocale = const Value.absent(),
+    this.preferredTtsVoiceGender = const Value.absent(),
+    this.preferredTtsVoiceIdentifier = const Value.absent(),
+    this.preferredTtsVoiceRate = const Value.absent(),
+    this.preferredTtsVoicePitch = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8959,6 +9308,13 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showLearningCard = const Value.absent(),
     this.showContentCard = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
+    this.voiceRepliesEnabled = const Value.absent(),
+    this.preferredTtsVoiceName = const Value.absent(),
+    this.preferredTtsVoiceLocale = const Value.absent(),
+    this.preferredTtsVoiceGender = const Value.absent(),
+    this.preferredTtsVoiceIdentifier = const Value.absent(),
+    this.preferredTtsVoiceRate = const Value.absent(),
+    this.preferredTtsVoicePitch = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -8974,6 +9330,13 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showLearningCard,
     Expression<bool>? showContentCard,
     Expression<int>? dailyTopTaskLimit,
+    Expression<bool>? voiceRepliesEnabled,
+    Expression<String>? preferredTtsVoiceName,
+    Expression<String>? preferredTtsVoiceLocale,
+    Expression<String>? preferredTtsVoiceGender,
+    Expression<String>? preferredTtsVoiceIdentifier,
+    Expression<double>? preferredTtsVoiceRate,
+    Expression<double>? preferredTtsVoicePitch,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -8988,6 +9351,20 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (showLearningCard != null) 'show_learning_card': showLearningCard,
       if (showContentCard != null) 'show_content_card': showContentCard,
       if (dailyTopTaskLimit != null) 'daily_top_task_limit': dailyTopTaskLimit,
+      if (voiceRepliesEnabled != null)
+        'voice_replies_enabled': voiceRepliesEnabled,
+      if (preferredTtsVoiceName != null)
+        'preferred_tts_voice_name': preferredTtsVoiceName,
+      if (preferredTtsVoiceLocale != null)
+        'preferred_tts_voice_locale': preferredTtsVoiceLocale,
+      if (preferredTtsVoiceGender != null)
+        'preferred_tts_voice_gender': preferredTtsVoiceGender,
+      if (preferredTtsVoiceIdentifier != null)
+        'preferred_tts_voice_identifier': preferredTtsVoiceIdentifier,
+      if (preferredTtsVoiceRate != null)
+        'preferred_tts_voice_rate': preferredTtsVoiceRate,
+      if (preferredTtsVoicePitch != null)
+        'preferred_tts_voice_pitch': preferredTtsVoicePitch,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9003,6 +9380,13 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showLearningCard,
     Value<bool>? showContentCard,
     Value<int>? dailyTopTaskLimit,
+    Value<bool>? voiceRepliesEnabled,
+    Value<String?>? preferredTtsVoiceName,
+    Value<String?>? preferredTtsVoiceLocale,
+    Value<String?>? preferredTtsVoiceGender,
+    Value<String?>? preferredTtsVoiceIdentifier,
+    Value<double>? preferredTtsVoiceRate,
+    Value<double>? preferredTtsVoicePitch,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -9016,6 +9400,19 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       showLearningCard: showLearningCard ?? this.showLearningCard,
       showContentCard: showContentCard ?? this.showContentCard,
       dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
+      voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
+      preferredTtsVoiceName:
+          preferredTtsVoiceName ?? this.preferredTtsVoiceName,
+      preferredTtsVoiceLocale:
+          preferredTtsVoiceLocale ?? this.preferredTtsVoiceLocale,
+      preferredTtsVoiceGender:
+          preferredTtsVoiceGender ?? this.preferredTtsVoiceGender,
+      preferredTtsVoiceIdentifier:
+          preferredTtsVoiceIdentifier ?? this.preferredTtsVoiceIdentifier,
+      preferredTtsVoiceRate:
+          preferredTtsVoiceRate ?? this.preferredTtsVoiceRate,
+      preferredTtsVoicePitch:
+          preferredTtsVoicePitch ?? this.preferredTtsVoicePitch,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -9051,6 +9448,39 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (dailyTopTaskLimit.present) {
       map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit.value);
     }
+    if (voiceRepliesEnabled.present) {
+      map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled.value);
+    }
+    if (preferredTtsVoiceName.present) {
+      map['preferred_tts_voice_name'] = Variable<String>(
+        preferredTtsVoiceName.value,
+      );
+    }
+    if (preferredTtsVoiceLocale.present) {
+      map['preferred_tts_voice_locale'] = Variable<String>(
+        preferredTtsVoiceLocale.value,
+      );
+    }
+    if (preferredTtsVoiceGender.present) {
+      map['preferred_tts_voice_gender'] = Variable<String>(
+        preferredTtsVoiceGender.value,
+      );
+    }
+    if (preferredTtsVoiceIdentifier.present) {
+      map['preferred_tts_voice_identifier'] = Variable<String>(
+        preferredTtsVoiceIdentifier.value,
+      );
+    }
+    if (preferredTtsVoiceRate.present) {
+      map['preferred_tts_voice_rate'] = Variable<double>(
+        preferredTtsVoiceRate.value,
+      );
+    }
+    if (preferredTtsVoicePitch.present) {
+      map['preferred_tts_voice_pitch'] = Variable<double>(
+        preferredTtsVoicePitch.value,
+      );
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -9074,6 +9504,13 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('showLearningCard: $showLearningCard, ')
           ..write('showContentCard: $showContentCard, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
+          ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
+          ..write('preferredTtsVoiceName: $preferredTtsVoiceName, ')
+          ..write('preferredTtsVoiceLocale: $preferredTtsVoiceLocale, ')
+          ..write('preferredTtsVoiceGender: $preferredTtsVoiceGender, ')
+          ..write('preferredTtsVoiceIdentifier: $preferredTtsVoiceIdentifier, ')
+          ..write('preferredTtsVoiceRate: $preferredTtsVoiceRate, ')
+          ..write('preferredTtsVoicePitch: $preferredTtsVoicePitch, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -12914,6 +13351,13 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showLearningCard,
       Value<bool> showContentCard,
       Value<int> dailyTopTaskLimit,
+      Value<bool> voiceRepliesEnabled,
+      Value<String?> preferredTtsVoiceName,
+      Value<String?> preferredTtsVoiceLocale,
+      Value<String?> preferredTtsVoiceGender,
+      Value<String?> preferredTtsVoiceIdentifier,
+      Value<double> preferredTtsVoiceRate,
+      Value<double> preferredTtsVoicePitch,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -12928,6 +13372,13 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showLearningCard,
       Value<bool> showContentCard,
       Value<int> dailyTopTaskLimit,
+      Value<bool> voiceRepliesEnabled,
+      Value<String?> preferredTtsVoiceName,
+      Value<String?> preferredTtsVoiceLocale,
+      Value<String?> preferredTtsVoiceGender,
+      Value<String?> preferredTtsVoiceIdentifier,
+      Value<double> preferredTtsVoiceRate,
+      Value<double> preferredTtsVoicePitch,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -12979,6 +13430,41 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get voiceRepliesEnabled => $composableBuilder(
+    column: $table.voiceRepliesEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredTtsVoiceName => $composableBuilder(
+    column: $table.preferredTtsVoiceName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredTtsVoiceLocale => $composableBuilder(
+    column: $table.preferredTtsVoiceLocale,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredTtsVoiceGender => $composableBuilder(
+    column: $table.preferredTtsVoiceGender,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredTtsVoiceIdentifier => $composableBuilder(
+    column: $table.preferredTtsVoiceIdentifier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get preferredTtsVoiceRate => $composableBuilder(
+    column: $table.preferredTtsVoiceRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get preferredTtsVoicePitch => $composableBuilder(
+    column: $table.preferredTtsVoicePitch,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13042,6 +13528,41 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get voiceRepliesEnabled => $composableBuilder(
+    column: $table.voiceRepliesEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferredTtsVoiceName => $composableBuilder(
+    column: $table.preferredTtsVoiceName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferredTtsVoiceLocale => $composableBuilder(
+    column: $table.preferredTtsVoiceLocale,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferredTtsVoiceGender => $composableBuilder(
+    column: $table.preferredTtsVoiceGender,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferredTtsVoiceIdentifier => $composableBuilder(
+    column: $table.preferredTtsVoiceIdentifier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get preferredTtsVoiceRate => $composableBuilder(
+    column: $table.preferredTtsVoiceRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get preferredTtsVoicePitch => $composableBuilder(
+    column: $table.preferredTtsVoicePitch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -13100,6 +13621,41 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get voiceRepliesEnabled => $composableBuilder(
+    column: $table.voiceRepliesEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredTtsVoiceName => $composableBuilder(
+    column: $table.preferredTtsVoiceName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredTtsVoiceLocale => $composableBuilder(
+    column: $table.preferredTtsVoiceLocale,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredTtsVoiceGender => $composableBuilder(
+    column: $table.preferredTtsVoiceGender,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredTtsVoiceIdentifier => $composableBuilder(
+    column: $table.preferredTtsVoiceIdentifier,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get preferredTtsVoiceRate => $composableBuilder(
+    column: $table.preferredTtsVoiceRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get preferredTtsVoicePitch => $composableBuilder(
+    column: $table.preferredTtsVoicePitch,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -13146,6 +13702,14 @@ class $$AppSettingsTableTableManager
                 Value<bool> showLearningCard = const Value.absent(),
                 Value<bool> showContentCard = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
+                Value<bool> voiceRepliesEnabled = const Value.absent(),
+                Value<String?> preferredTtsVoiceName = const Value.absent(),
+                Value<String?> preferredTtsVoiceLocale = const Value.absent(),
+                Value<String?> preferredTtsVoiceGender = const Value.absent(),
+                Value<String?> preferredTtsVoiceIdentifier =
+                    const Value.absent(),
+                Value<double> preferredTtsVoiceRate = const Value.absent(),
+                Value<double> preferredTtsVoicePitch = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13158,6 +13722,13 @@ class $$AppSettingsTableTableManager
                 showLearningCard: showLearningCard,
                 showContentCard: showContentCard,
                 dailyTopTaskLimit: dailyTopTaskLimit,
+                voiceRepliesEnabled: voiceRepliesEnabled,
+                preferredTtsVoiceName: preferredTtsVoiceName,
+                preferredTtsVoiceLocale: preferredTtsVoiceLocale,
+                preferredTtsVoiceGender: preferredTtsVoiceGender,
+                preferredTtsVoiceIdentifier: preferredTtsVoiceIdentifier,
+                preferredTtsVoiceRate: preferredTtsVoiceRate,
+                preferredTtsVoicePitch: preferredTtsVoicePitch,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -13172,6 +13743,14 @@ class $$AppSettingsTableTableManager
                 Value<bool> showLearningCard = const Value.absent(),
                 Value<bool> showContentCard = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
+                Value<bool> voiceRepliesEnabled = const Value.absent(),
+                Value<String?> preferredTtsVoiceName = const Value.absent(),
+                Value<String?> preferredTtsVoiceLocale = const Value.absent(),
+                Value<String?> preferredTtsVoiceGender = const Value.absent(),
+                Value<String?> preferredTtsVoiceIdentifier =
+                    const Value.absent(),
+                Value<double> preferredTtsVoiceRate = const Value.absent(),
+                Value<double> preferredTtsVoicePitch = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -13184,6 +13763,13 @@ class $$AppSettingsTableTableManager
                 showLearningCard: showLearningCard,
                 showContentCard: showContentCard,
                 dailyTopTaskLimit: dailyTopTaskLimit,
+                voiceRepliesEnabled: voiceRepliesEnabled,
+                preferredTtsVoiceName: preferredTtsVoiceName,
+                preferredTtsVoiceLocale: preferredTtsVoiceLocale,
+                preferredTtsVoiceGender: preferredTtsVoiceGender,
+                preferredTtsVoiceIdentifier: preferredTtsVoiceIdentifier,
+                preferredTtsVoiceRate: preferredTtsVoiceRate,
+                preferredTtsVoicePitch: preferredTtsVoicePitch,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

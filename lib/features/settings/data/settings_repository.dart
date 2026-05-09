@@ -70,6 +70,42 @@ class SettingsRepository {
     return _getOrCreateSettings();
   }
 
+  Future<AppSetting> updateVoicePreferences({
+    bool? voiceRepliesEnabled,
+    String? preferredTtsVoiceName,
+    String? preferredTtsVoiceLocale,
+    String? preferredTtsVoiceGender,
+    String? preferredTtsVoiceIdentifier,
+    double? preferredTtsVoiceRate,
+    double? preferredTtsVoicePitch,
+  }) async {
+    final settings = await _getOrCreateSettings();
+    final timestamp = DateTime.now();
+
+    await (_database.update(
+      _database.appSettings,
+    )..where((table) => table.settingsId.equals(settings.settingsId))).write(
+      AppSettingsCompanion(
+        voiceRepliesEnabled: voiceRepliesEnabled == null
+            ? const Value.absent()
+            : Value(voiceRepliesEnabled),
+        preferredTtsVoiceName: Value(preferredTtsVoiceName),
+        preferredTtsVoiceLocale: Value(preferredTtsVoiceLocale),
+        preferredTtsVoiceGender: Value(preferredTtsVoiceGender),
+        preferredTtsVoiceIdentifier: Value(preferredTtsVoiceIdentifier),
+        preferredTtsVoiceRate: preferredTtsVoiceRate == null
+            ? const Value.absent()
+            : Value(preferredTtsVoiceRate),
+        preferredTtsVoicePitch: preferredTtsVoicePitch == null
+            ? const Value.absent()
+            : Value(preferredTtsVoicePitch),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return _getOrCreateSettings();
+  }
+
   Future<AppSetting> _getOrCreateSettings() async {
     final existing = await (_database.select(
       _database.appSettings,
@@ -92,6 +128,13 @@ class SettingsRepository {
             showLearningCard: const Value(true),
             showContentCard: const Value(true),
             dailyTopTaskLimit: const Value(3),
+            voiceRepliesEnabled: const Value(true),
+            preferredTtsVoiceName: const Value(null),
+            preferredTtsVoiceLocale: const Value(null),
+            preferredTtsVoiceGender: const Value(null),
+            preferredTtsVoiceIdentifier: const Value(null),
+            preferredTtsVoiceRate: const Value(0.5),
+            preferredTtsVoicePitch: const Value(1.0),
             createdAt: timestamp,
             updatedAt: timestamp,
           ),

@@ -27,7 +27,7 @@ Do not build dangerous automation. Do not directly control MicroGrow hardware. D
 
 ## Current Objective
 
-Make the Voice Assistant feel smarter and faster to start from by adding a voice wizard mode, a voice briefing layer, reusable voice starters, and tap-to-reuse command history.
+Make the Voice Assistant feel smarter and faster to start from by adding a voice wizard mode, a voice briefing layer, reusable voice starters, tap-to-reuse command history, and thread memory that keeps a conversation going across entries.
 
 This now includes:
 
@@ -37,10 +37,17 @@ This now includes:
 4. Tap-to-reuse saved command history.
 5. A voice briefing card that explains the command and suggests the next sequence of actions.
 6. A wizard mode that asks one question at a time and assembles the draft from answers.
-7. Project linking.
-8. Local save actions for tasks, journal entries, inbox ideas, content ideas, and business opportunities.
-9. Manual-review Codex prompt generation.
-10. Focused tests for local persistence.
+7. A current thread card that keeps remembered voice context visible.
+8. A continue-thread action that resumes the current voice conversation in Wizard mode.
+9. Project linking.
+10. Local save actions for projects, tasks, journal entries, inbox ideas, content ideas, and business opportunities.
+11. Wake phrase detection and smart command macros for review, planning, and next-step prompts.
+12. Manual-review Codex prompt generation.
+13. Spoken assistant replies and briefings on Windows with selectable local voices.
+14. Windows startup gating that waits for a connected headset or headset microphone before the app fully opens.
+15. Focused tests for local persistence.
+16. Stronger Windows desktop speech capture that can use a local Whisper bridge before falling back to system dictation.
+17. A route-independent conversation dock that can surface the wake response on the dashboard when the assistant screen is still settling.
 
 ---
 
@@ -96,7 +103,9 @@ Create a `VoiceAssistantScreen` that includes:
 
 Live microphone capture must be explicit and review-first. Do not add always-listening recording.
 
-Do not connect real microphone access yet unless the project already has a safe audio package installed.
+Do not connect cloud microphone transcription.
+
+If the project adds a local desktop speech bridge, it must still stay review-first and local-first.
 
 ---
 
@@ -168,6 +177,7 @@ For v0.1 this can be a placeholder command-line program that:
 5. Saves it to a local `logs/voice_commands.log` file.
 
 Do not require live microphone recording in v0.1.
+If the stronger desktop bridge is added, it should still degrade safely when dependencies are missing.
 
 ---
 
@@ -177,8 +187,8 @@ Create `tools/voice_bridge/README.md` explaining:
 
 - what the bridge is
 - how to run it
-- that v0.1 is text-input only
-- future plan for microphone transcription
+- that v0.1 was text-input only
+- that the bridge can now use local desktop speech capture when dependencies are installed
 - safety note that Codex prompts should be reviewed before execution
 
 ---
@@ -204,6 +214,7 @@ This task is complete when:
 - Voice Capture includes reusable smart starter commands.
 - Voice Capture includes a voice briefing card with a suggested sequence of actions.
 - Voice Capture includes a wizard mode that assembles the draft from guided answers.
+- Voice Capture includes remembered thread context and a continue-thread action.
 - A reviewed transcript can save as a Task.
 - A reviewed transcript can save as a Journal Entry.
 - A reviewed transcript can save as an Inbox Idea.
@@ -211,8 +222,10 @@ This task is complete when:
 - A reviewed transcript can save as a Business Opportunity.
 - Codex prompts are generated for manual review only.
 - Saved voice history can be reused from the Voice Assistant screen.
+- Gaia can surface a visible conversation dock on the dashboard when wake capture lands there before the full route opens, that dock can speak the captured reply through the configured voice output, and it can offer quick follow-up chips that reopen the assistant with a preselected intent.
 - `flutter analyze` passes.
 - `flutter test` passes.
+- Windows startup blocks until a headset or headset microphone is connected.
 
 ---
 

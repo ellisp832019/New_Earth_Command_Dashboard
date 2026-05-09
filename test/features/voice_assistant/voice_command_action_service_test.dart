@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
@@ -89,6 +90,41 @@ void main() {
 
     expect(tasks.single.category, 'Build');
     expect(tasks.single.priority, 'High');
+  });
+
+  test('save as project creates a local project record', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final commandService = VoiceCommandService();
+    final suggestion = commandService.suggestCommand(
+      transcript:
+          'Project: Launch the dashboard voice workflow. Vision: make capture feel guided. Next action: define the first milestone.',
+    );
+    final service = VoiceCommandActionService(
+      database,
+      projectRepository: ProjectRepository(
+        database,
+        now: () => DateTime(2026, 5, 2),
+      ),
+      uuid: const Uuid(),
+      now: () => DateTime(2026, 5, 2, 9, 50),
+    );
+
+    await service.saveCommand(
+      transcript: suggestion.transcript,
+      type: suggestion.suggestedType,
+      titleOverride: suggestion.suggestedTitle,
+      suggestion: suggestion,
+    );
+
+    final projects = await database.select(database.projects).get();
+
+    expect(projects, hasLength(1));
+    expect(projects.single.status, 'Active');
+    expect(projects.single.priority, 'Medium');
+    expect(projects.single.vision, contains('make capture feel guided'));
+    expect(projects.single.nextAction, contains('first milestone'));
   });
 
   test('save as journal entry creates a reflection entry', () async {

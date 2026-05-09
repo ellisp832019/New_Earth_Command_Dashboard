@@ -29,9 +29,15 @@ void main() {
     final service = VoiceCommandService();
     final templates = service.getTemplates();
 
-    expect(templates, hasLength(7));
+    expect(templates, hasLength(10));
     expect(templates.first.id, 'build-day');
     expect(templates.first.type, VoiceCommandType.task);
+    expect(
+      templates.any((template) => template.id == 'summarize-today'),
+      isTrue,
+    );
+    expect(templates.any((template) => template.id == 'whats-next'), isTrue);
+    expect(templates.any((template) => template.id == 'project'), isTrue);
     expect(templates.any((template) => template.id == 'codex'), isTrue);
   });
 
@@ -48,7 +54,9 @@ void main() {
 
   test('voice command service suggests quick actions for tasks', () {
     final service = VoiceCommandService();
-    final suggestion = service.suggestCommand(transcript: 'Task: fix the task flow');
+    final suggestion = service.suggestCommand(
+      transcript: 'Task: fix the task flow',
+    );
     final actions = service.suggestQuickActions(
       transcript: suggestion.transcript,
       suggestion: suggestion,
@@ -92,9 +100,7 @@ void main() {
   test('voice command service builds wizard prompts and transcript pieces', () {
     final service = VoiceCommandService();
 
-    final typePrompt = service.buildWizardPrompt(
-      step: VoiceWizardStep.type,
-    );
+    final typePrompt = service.buildWizardPrompt(step: VoiceWizardStep.type);
     final detailPrompt = service.buildWizardPrompt(
       step: VoiceWizardStep.details,
       selectedType: VoiceCommandType.businessOpportunity,
@@ -146,6 +152,151 @@ void main() {
     expect(suggestion.extractedBusinessType, 'Partnership');
     expect(suggestion.extractedBusinessStatus, 'Follow-up Needed');
     expect(suggestion.extractedBusinessContact, isNull);
+  });
+
+  test('voice command service suggests project fields from project capture', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript:
+          'Project: Launch the voice assistant project. Vision: make the dashboard feel guided. Next action: define the first milestone.',
+    );
+
+    expect(suggestion.suggestedType, VoiceCommandType.project);
+    expect(suggestion.extractedProjectStatus, 'Active');
+    expect(suggestion.extractedProjectPriority, 'Medium');
+    expect(suggestion.extractedProjectVision, 'make the dashboard feel guided');
+    expect(
+      suggestion.extractedProjectNextAction,
+      'define the first milestone.',
+    );
+  });
+
+  test('voice command service builds a project briefing and wizard prompt', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript: 'Project: create a project for the dashboard voice workflow.',
+    );
+    final briefing = service.buildBriefing(
+      transcript: suggestion.transcript,
+      suggestion: suggestion,
+    );
+    final prompt = service.buildWizardPrompt(
+      step: VoiceWizardStep.details,
+      selectedType: VoiceCommandType.project,
+    );
+
+    expect(briefing.summary, contains('project'));
+    expect(briefing.nextStep, contains('first next action'));
+    expect(prompt, contains('status, priority, vision, or next action'));
+  });
+
+  test('voice command service strips the wake phrase and marks it', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(
+      transcript: 'Hey New Earth, task: review the build-day plan.',
+    );
+
+    expect(suggestion.usedWakePhrase, isTrue);
+    expect(suggestion.wakePhrase, isNotNull);
+    expect(suggestion.transcript, 'review the build-day plan.');
+    expect(suggestion.suggestedType, VoiceCommandType.task);
+    expect(suggestion.isWakeOnly, isFalse);
+  });
+
+  test('voice command service treats a wake-only phrase as a wake trigger', () {
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(transcript: 'Hey Gaia');
+
+    expect(suggestion.usedWakePhrase, isTrue);
+    expect(suggestion.wakePhrase, isNotNull);
+    expect(suggestion.transcript, isEmpty);
+    expect(suggestion.isWakeOnly, isTrue);
+  });
+
+  test('voice command service suggests summary and next-step macros', () {
+    final service = VoiceCommandService();
+    final summaryActions = service.suggestQuickActions(
+      transcript: 'Summarize today and what is next for the dashboard?',
+    );
+    final nextActions = service.suggestQuickActions(
+      transcript: 'What should I do next for the voice project?',
+    );
+
+    expect(
+      summaryActions.map((action) => action.id),
+      contains('summarize-today'),
+    );
+    expect(summaryActions.map((action) => action.route), contains('/planner'));
+    expect(nextActions.map((action) => action.id), contains('open-tasks-next'));
+    expect(
+      nextActions.map((action) => action.id),
+      contains('open-projects-next'),
+    );
+  });
+
+  test('voice command service responds to help-style questions', () {
+    final service = VoiceCommandService();
+    final response = service.buildAssistantResponse(
+      transcript: 'What can you do for me?',
+    );
+
+    expect(response.summary, contains('help you create tasks'));
+    expect(response.nextStep, contains('create a task'));
+  });
+
+  test(
+    'voice command service responds to a wake phrase with a real request',
+    () {
+      final service = VoiceCommandService();
+      final suggestion = service.suggestCommand(
+        transcript: 'Hey Gaia how are you doing',
+      );
+      final response = service.buildAssistantResponse(
+        transcript: suggestion.transcript,
+        suggestion: suggestion,
+      );
+
+      expect(suggestion.usedWakePhrase, isTrue);
+      expect(suggestion.isWakeOnly, isFalse);
+      expect(response.summary, contains('doing well'));
+      expect(response.summary, isNot(contains('Wake phrase heard')));
+    },
+  );
+
+  test('voice command service remembers a conversation thread', () {
+    final service = VoiceCommandService();
+    final firstThread = service.buildConversationContext(
+      transcript: 'Follow up with Sahil Kumar about the next pilot.',
+      type: VoiceCommandType.businessOpportunity,
+      title: 'Follow up with Sahil Kumar',
+      projectName: 'MicroGrow',
+    );
+    final continuedThread = service.buildConversationContext(
+      transcript: 'Draft the next follow-up note for Sahil Kumar.',
+      type: VoiceCommandType.businessOpportunity,
+      title: 'Draft the next follow-up note for Sahil Kumar',
+      projectName: 'MicroGrow',
+      previous: firstThread,
+    );
+    final prompt = service.buildWizardPrompt(
+      step: VoiceWizardStep.title,
+      conversationContext: firstThread,
+    );
+    final actions = service.suggestQuickActions(
+      transcript: 'Draft the next follow-up note for Sahil Kumar.',
+      conversationContext: firstThread,
+    );
+
+    expect(
+      firstThread.label,
+      'MicroGrow · Business Opportunity · Follow up with Sahil Kumar',
+    );
+    expect(firstThread.entryCount, 1);
+    expect(continuedThread.entryCount, 2);
+    expect(firstThread.summary, contains('Starting a new thread around'));
+    expect(continuedThread.summary, contains('Continuing the MicroGrow'));
+    expect(prompt, contains('Starting a new thread around'));
+    expect(actions.map((action) => action.id), contains('continue-thread'));
   });
 
   test('voice command service infers journal entry from reflective wording', () {

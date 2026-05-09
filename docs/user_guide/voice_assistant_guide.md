@@ -14,6 +14,7 @@ Voice capture is most useful when you already know the thought is worth keeping,
 Use the Voice Assistant when you want to:
 
 - capture a task without losing momentum
+- create a project with a clear first shape
 - turn a passing idea into something useful later
 - draft a journal entry while the thought is still fresh
 - create a content seed or business lead quickly
@@ -36,18 +37,27 @@ That review step matters. It keeps the system trustworthy and easy to use.
 The current Voice Assistant can:
 
 - capture speech with explicit press-to-listen controls
+- keep a lightweight handsfree wake listener armed while Gaia is open on Windows
+- use a stronger local desktop speech bridge on Windows when available so the app can capture audio through Whisper instead of relying only on the system dictation path
 - fall back to pasted text or mock transcripts when needed
 - suggest a command type from the transcript
 - extract useful details like project, task category, priority, and business hints
+- create a project with guided status, priority, vision, and next-action fields
 - preload ready-made voice templates
 - show a command router with the next likely moves
+- recognize wake phrases like `Hey Gaia` and strip them before parsing the command
+- surface smart review macros such as `Summarize Today` and `What\'s Next`
 - save reviewed captures into local dashboard data
 - prepare Codex prompts for manual review only
 - recall past voice commands from history
+- speak short assistant replies and voice briefings on Windows using the locally installed system voices
+- greet once at startup on Windows when voice replies are enabled, so you know Gaia is ready before you speak
+- speak the captured wake response back through the headset when the dashboard conversation dock appears
+- surface quick follow-up chips in the dashboard dock so you can continue the conversation into a task, project, journal entry, or another assistant step without leaving the dashboard
 
 It does not:
 
-- run automatically in the background
+- run automatically in the background when Gaia is closed
 - auto-execute Codex changes
 - replace your judgment
 - write to cloud services
@@ -62,6 +72,8 @@ You can open `Voice Assistant` from:
 - `More`
 
 Use whichever path is closer to the work you are already doing.
+
+If Gaia hears the wake phrase while you are on the dashboard, the conversation dock can appear in the bottom-right corner with the summary, next step, and captured transcript, and Gaia can speak that captured response back through the configured voice output. The dock also offers quick follow-up chips so you can keep the conversation moving into a task, project, journal entry, or another next step. Use `Open Assistant` if you want to jump into the full Voice Assistant screen from there.
 
 ---
 
@@ -102,6 +114,7 @@ Think of it as a small intake desk:
 - the assistant reply gives you a plain-language read on what the command seems to be
 - the router helps you decide what to do next
 - history lets you reuse good phrasing later
+- a small dashboard conversation dock can surface the wake response on the dashboard if the route handoff is still settling
 
 ---
 
@@ -113,7 +126,7 @@ The capture controls support a few different ways of getting words into the app.
 
 Use this when you want to speak live.
 
-On Windows, the app opens native Windows voice typing inside the transcript field so the app stays stable while you speak.
+On Windows, Gaia first tries the local desktop speech bridge so it can record and transcribe your voice locally. If the bridge is not available, it falls back to native Windows voice typing inside the transcript field.
 
 ### Stop
 
@@ -134,6 +147,30 @@ Use this when:
 ### Use Mock Transcript
 
 Use this for testing or when you want to see the review flow without speaking.
+
+---
+
+## Voice Output
+
+Voice Assistant can read short replies aloud on Windows using the system voices installed on your device.
+
+You can tune voice output in `Settings`:
+
+- turn assistant speech on or off
+- choose a system voice
+- preview the selected voice
+- adjust speech rate
+- keep the pitch preference saved for later tuning
+
+The assistant uses voice output in a few places:
+
+- `Speak Reply` for the short assistant response
+- `Speak Briefing` for the numbered voice summary
+- `Continue Thread` when a remembered thread is resumed
+- the dashboard conversation dock can also speak the captured wake response when it appears on the dashboard
+- the dashboard conversation dock can also offer quick follow-up chips that reopen the assistant with a preselected intent
+
+If you do not want the app speaking back, turn off `Speak Assistant Replies` in `Settings`.
 
 ---
 
@@ -174,6 +211,8 @@ Use them when you want to move fast without inventing the structure from scratch
 ### Good Uses
 
 - `Build Day`: start the day with a calm planning prompt
+- `Summarize Today`: turn the day into a review or journal shape
+- `What\'s Next`: surface the next practical move
 - `Task`: capture a concrete action
 - `Journal`: log what moved forward
 - `Content`: turn progress into a publishable idea
@@ -220,6 +259,8 @@ Tap a router button when you want the assistant to take you to the right place o
 
 Use it as guidance, not as autopilot.
 
+If you start with a wake phrase, the router can also give you a fast starting point for the next command instead of treating the wake phrase as the whole task.
+
 ### What It Feels Like In Practice
 
 If you say something like:
@@ -246,6 +287,7 @@ The reply usually includes:
 - what the app can do next
 - what to check before saving
 - project context when the transcript points to one
+- thread context when you are continuing a voice conversation
 
 Use it as a quick sanity check before you commit the capture.
 
@@ -281,6 +323,7 @@ Common examples:
 - journal commands may guide you toward Journal and the reflection template
 - business commands may guide you toward Business and the opportunity template
 - idea commands may guide you toward Inbox and a future-idea shape
+- if the assistant has thread memory, the briefing will also point back to the current thread so you can continue it quickly
 
 ---
 
@@ -311,6 +354,25 @@ It is especially helpful for:
 
 You can still switch back to `Quick Capture` whenever you want the faster path.
 
+### Current Thread
+
+When Voice Assistant has a remembered thread, it shows a `Current Thread` card above the wizard and capture area.
+
+That card is there to help you keep the conversation going instead of starting from scratch.
+
+It shows:
+
+- the current thread summary
+- the thread label
+- how many entries have been captured in that thread
+
+From there, you can:
+
+- `Continue Thread` to pick up the current voice thread in Wizard mode
+- `New Thread` to clear the memory and start fresh
+
+This makes the voice layer more useful for ongoing work like a project follow-up, a long task, or a sequence of related notes.
+
 ---
 
 ## Command History
@@ -324,6 +386,7 @@ This is useful when:
 - you repeat the same kind of command often
 - you want to reuse a good phrasing
 - you want to edit a previously captured idea instead of starting over
+- you want to reopen a thread and keep building on it
 
 History is meant to save time, not create clutter.
 
@@ -346,6 +409,16 @@ Examples:
 - review the dashboard cards
 - fix the task flow
 - move today's work into Top 3
+
+### Project
+
+Use this when the voice capture is a larger piece of work that needs a container of its own.
+
+Examples:
+
+- launch the voice workflow project
+- set the first milestone for the dashboard assistant
+- define the vision and next action for MicroGrow
 
 ### Journal Entry
 
@@ -399,6 +472,10 @@ When the transcript gives enough signal, the assistant can suggest:
 - task category
 - task priority
 - project link
+- project status
+- project priority
+- project vision
+- project next action
 - journal "worked on"
 - journal "learned"
 - journal next actions
@@ -484,6 +561,9 @@ That means:
 - the app stays stable
 - fullscreen mode is preserved
 - you can still review the text before saving
+- Gaia waits for a connected headset or headset microphone before the app fully opens on Windows
+
+Gaia also keeps a small wake listener armed while the app is open, so saying `Hey Gaia` can bring the Voice Assistant forward without first pressing a button. The wake listener stays local, review-first, and only active while Gaia is running.
 
 If the voice path is unavailable on a machine, use:
 

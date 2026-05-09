@@ -66,6 +66,27 @@ class SettingsController {
     _invalidate();
   }
 
+  Future<void> setVoicePreferences({
+    bool? voiceRepliesEnabled,
+    String? preferredTtsVoiceName,
+    String? preferredTtsVoiceLocale,
+    String? preferredTtsVoiceGender,
+    String? preferredTtsVoiceIdentifier,
+    double? preferredTtsVoiceRate,
+    double? preferredTtsVoicePitch,
+  }) async {
+    await _ref.read(settingsRepositoryProvider).updateVoicePreferences(
+      voiceRepliesEnabled: voiceRepliesEnabled,
+      preferredTtsVoiceName: preferredTtsVoiceName,
+      preferredTtsVoiceLocale: preferredTtsVoiceLocale,
+      preferredTtsVoiceGender: preferredTtsVoiceGender,
+      preferredTtsVoiceIdentifier: preferredTtsVoiceIdentifier,
+      preferredTtsVoiceRate: preferredTtsVoiceRate,
+      preferredTtsVoicePitch: preferredTtsVoicePitch,
+    );
+    _invalidate();
+  }
+
   void _invalidate() {
     _ref.invalidate(settingsSnapshotProvider);
     _ref.invalidate(dashboardSnapshotProvider);

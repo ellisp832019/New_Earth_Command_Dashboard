@@ -110,7 +110,7 @@ class _DashboardHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Dashboard',
+                    'Gaia',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: AppColours.darkText,
                     ),

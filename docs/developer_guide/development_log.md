@@ -1,5 +1,86 @@
 # Development Log
 
+# 2026-05-09 - Dashboard Conversation Dock
+
+Added a route-independent conversation dock so Gaia can still show a visible wake response on the dashboard when the assistant screen handoff is still settling:
+
+- Surfaced the wake summary, next step, and captured transcript in a small dashboard dock
+- Made the dock speak the captured wake response through the configured headset voice so the reply is heard as well as seen
+- Added quick follow-up chips to the dock so Gaia can reopen the assistant with a preselected intent for task, project, journal, or other next-step moves
+- Kept the dedicated Voice Assistant route intact for the full conversation flow
+- Hid the dock automatically once the full assistant screen opens so the fallback stays out of the way when routing succeeds
+- Added a dock widget test to keep the dashboard fallback stable
+
+## 2026-05-09 - Desktop Speech Bridge
+
+Added a stronger local desktop speech capture layer for Windows:
+
+- Added a Python voice bridge path that can record one microphone utterance and transcribe it locally with Whisper when the optional dependencies are installed
+- Wired Voice Assistant start-listening flow to try the desktop bridge first on Windows before falling back to the existing system dictation path
+- Wired the root handsfree wake listener to use the same stronger capture path on Windows when available
+- Kept the capture flow review-first and local-first
+- Updated the voice guide, app function reference, voice bridge README, and voice bridge task notes to match the stronger desktop capture path
+
+## 2026-05-09 - Windows Headset Startup Gate
+
+Added a startup gate so Gaia waits for a connected headset or headset microphone on Windows before the main dashboard loads:
+
+- Enumerated active Windows capture devices at startup
+- Blocked the app behind a simple retry gate when no headset-like input was detected
+- Kept the check local-first and review-friendly
+- Added unit coverage for headset-like device detection and blocked/ready startup states
+- Updated the app shell, guide, README, and voice bridge task docs to match the new startup behavior
+
+## 2026-05-09 - Handsfree Wake Listener
+
+Added a root wake listener so Gaia can respond to `Hey Gaia` while the app is open:
+
+- Armed a lightweight listener at the app root so wake phrases can open Voice Assistant without pressing Start Listening first
+- Routed captured wake phrases into the Voice Assistant screen with the transcript preloaded for review
+- Kept the capture flow review-first and local-first
+- Updated the voice guide, app function reference, and current task notes to describe the handsfree wake behavior
+
+## 2026-05-08 - Wake Phrase and Smart Voice Macros
+
+Made the voice layer feel more assistant-like without adding risky always-on behavior:
+
+- Added wake phrase detection so captured speech can start with phrases like `Hey Gaia`
+- Added smarter macro routing for review-style commands such as `Summarize Today` and `What\'s Next`
+- Added new starter templates for quick daily review and next-step prompts
+- Kept the parser review-first and local-first while still stripping wake phrases before intent parsing
+- Added tests for wake phrase stripping, review macros, and the expanded starter deck
+- Updated the voice guide, app reference, and voice bridge task docs to describe the new behavior
+
+## 2026-05-08 - Voice Project Capture
+
+Expanded the voice bridge so it can shape projects, not just smaller captures:
+
+- Added `Project` as a first-class voice target in the starter deck, command router, wizard flow, and suggestion parser
+- Added editable project status, priority, vision, next action, and notes fields to the Voice Assistant review card
+- Wired voice project saves into the local project repository and refreshed project-related provider invalidation
+- Added project-specific parser coverage and project save tests
+- Updated the voice guide, app function reference, and voice bridge task docs to describe the project flow
+
+## 2026-05-08 - Voice Output and Selection
+
+Added native voice output for the Windows build and wired the selection controls into Settings:
+
+- Added a voice output settings card with assistant speech toggle, voice selector, rate slider, pitch slider, and preview action
+- Added native Windows speech synthesis through a runner channel so the app no longer depends on the Windows TTS plugin
+- Kept Voice Assistant reply and briefing speech tied to the local voice settings
+- Preserved the review-first capture flow and kept the Windows voice typing path stable
+- Updated the voice guide and app function reference to describe the new spoken reply behavior
+
+## 2026-05-08 - Voice Thread Memory
+
+Extended the Voice Assistant so it can carry a remembered thread across entries:
+
+- Added a current thread card to keep the active voice conversation visible
+- Added a continue-thread action that resumes the current thread in Wizard mode
+- Kept the voice briefing and assistant reply aware of remembered thread context
+- Updated the voice guide, function reference, and voice bridge task docs to match the new thread flow
+- Added tests for conversation-thread memory and kept the existing voice capture suite green
+
 ## 2026-05-06 - Live Voice Capture
 
 Added explicit microphone transcription to the Voice Assistant:

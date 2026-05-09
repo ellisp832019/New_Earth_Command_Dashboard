@@ -3,6 +3,8 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "windows_audio_gate_channel.h"
+#include "windows_voice_speech_channel.h"
 #include "windows_voice_typing_channel.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
@@ -26,6 +28,8 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  RegisterWindowsAudioGateChannel(flutter_controller_->engine());
+  RegisterWindowsVoiceSpeechChannel(flutter_controller_->engine());
   RegisterWindowsVoiceTypingChannel(flutter_controller_->engine(), this);
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 

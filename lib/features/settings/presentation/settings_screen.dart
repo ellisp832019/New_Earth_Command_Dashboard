@@ -1,23 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/database/app_database.dart';
 import '../application/settings_controller.dart';
+import '../../voice_assistant/voice_speech_service.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   static const _themeOptions = ['Light', 'Dark', 'System'];
 
+  bool? _voiceRepliesEnabled;
+  double? _voiceRate;
+  double? _voicePitch;
+  VoiceTtsVoiceOption? _selectedVoice;
+  bool _voiceStateInitialized = false;
+
+  void _syncVoiceState({
+    required bool voiceRepliesEnabled,
+    required double voiceRate,
+    required double voicePitch,
+    VoiceTtsVoiceOption? selectedVoice,
+  }) {
+    if (_voiceStateInitialized) {
+      return;
+    }
+
+    _voiceRepliesEnabled = voiceRepliesEnabled;
+    _voiceRate = voiceRate;
+    _voicePitch = voicePitch;
+    _selectedVoice = selectedVoice;
+    _voiceStateInitialized = true;
+  }
+
+  VoiceTtsVoiceOption? _matchSelectedVoice(
+    List<VoiceTtsVoiceOption> voices,
+    AppSetting appSettings,
+  ) {
+    for (final voice in voices) {
+      if (voice.name == appSettings.preferredTtsVoiceName &&
+          voice.locale == appSettings.preferredTtsVoiceLocale &&
+          voice.gender == appSettings.preferredTtsVoiceGender &&
+          voice.identifier == appSettings.preferredTtsVoiceIdentifier) {
+        return voice;
+      }
+    }
+
+    return null;
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final theme = Theme.of(context);
     final settings = ref.watch(settingsSnapshotProvider);
+    final voices = ref.watch(voiceAssistantVoicesProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: settings.when(
         data: (snapshot) {
           final appSettings = snapshot.settings;
+          final selectedVoice = voices.maybeWhen(
+            data: (voiceOptions) =>
+                _matchSelectedVoice(voiceOptions, appSettings),
+            orElse: () => null,
+          );
+          _syncVoiceState(
+            voiceRepliesEnabled: appSettings.voiceRepliesEnabled,
+            voiceRate: appSettings.preferredTtsVoiceRate,
+            voicePitch: appSettings.preferredTtsVoicePitch,
+            selectedVoice: selectedVoice,
+          );
+          final voiceRepliesEnabled =
+              _voiceRepliesEnabled ?? appSettings.voiceRepliesEnabled;
+          final voiceRate = _voiceRate ?? appSettings.preferredTtsVoiceRate;
+          final voicePitch = _voicePitch ?? appSettings.preferredTtsVoicePitch;
+          final selectedVoiceOption = _selectedVoice ?? selectedVoice;
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -101,6 +165,168 @@ class SettingsScreen extends ConsumerWidget {
                       Text(
                         'This stays fixed for the current MVP so the daily rule remains stable.',
                         style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Voice Output', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Choose which system voice speaks the assistant replies and briefings.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      SwitchListTile(
+                        key: const Key('settingsVoiceRepliesToggle'),
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Speak Assistant Replies'),
+                        subtitle: const Text(
+                          'Let Voice Assistant read brief replies and confirmations aloud.',
+                        ),
+                        value: voiceRepliesEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _voiceRepliesEnabled = value;
+                          });
+                          ref
+                              .read(settingsControllerProvider)
+                              .setVoicePreferences(
+                                voiceRepliesEnabled: value,
+                              );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      voices.when(
+                        data: (voiceOptions) {
+                          if (voiceOptions.isEmpty) {
+                            return Text(
+                              'No system voices were returned on this device yet.',
+                              style: theme.textTheme.bodySmall,
+                            );
+                          }
+
+                          return DropdownButtonFormField<VoiceTtsVoiceOption>(
+                            key: const Key('settingsVoiceDropdown'),
+                            initialValue: selectedVoiceOption,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Voice',
+                            ),
+                            items: voiceOptions
+                                .map(
+                                  (voice) => DropdownMenuItem<VoiceTtsVoiceOption>(
+                                    value: voice,
+                                    child: Text(voice.label),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                              });
+                              ref
+                                  .read(settingsControllerProvider)
+                                  .setVoicePreferences(
+                                    preferredTtsVoiceName: value?.name,
+                                    preferredTtsVoiceLocale: value?.locale,
+                                    preferredTtsVoiceGender: value?.gender,
+                                    preferredTtsVoiceIdentifier: value?.identifier,
+                                  );
+                            },
+                          );
+                        },
+                        loading: () => const LinearProgressIndicator(),
+                        error: (error, stackTrace) => Text(
+                          'Voice list could not be loaded right now.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Speech Rate',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      Slider(
+                        key: const Key('settingsVoiceRateSlider'),
+                        min: 0.0,
+                        max: 1.0,
+                        divisions: 10,
+                        value: voiceRate.clamp(0.0, 1.0),
+                        label: voiceRate.toStringAsFixed(1),
+                        onChanged: (value) {
+                          setState(() {
+                            _voiceRate = value;
+                          });
+                          ref
+                              .read(settingsControllerProvider)
+                              .setVoicePreferences(
+                                preferredTtsVoiceRate: value,
+                              );
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pitch',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      Slider(
+                        key: const Key('settingsVoicePitchSlider'),
+                        min: 0.5,
+                        max: 2.0,
+                        divisions: 15,
+                        value: voicePitch.clamp(0.5, 2.0),
+                        label: voicePitch.toStringAsFixed(1),
+                        onChanged: (value) {
+                          setState(() {
+                            _voicePitch = value;
+                          });
+                          ref
+                              .read(settingsControllerProvider)
+                              .setVoicePreferences(
+                                preferredTtsVoicePitch: value,
+                              );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          FilledButton.tonalIcon(
+                            key: const Key('settingsPreviewVoiceButton'),
+                            onPressed: () async {
+                              final previewText =
+                                  'This is your chosen voice for New Earth command replies.';
+                              await ref
+                                  .read(
+                                    voiceAssistantSpeechServiceProvider,
+                                  )
+                                  .speak(
+                                    previewText,
+                                    enabled: voiceRepliesEnabled,
+                                    rate: voiceRate,
+                                    pitch: voicePitch,
+                                    voice: selectedVoiceOption,
+                                  );
+                            },
+                            icon: const Icon(Icons.volume_up_outlined),
+                            label: const Text('Preview Voice'),
+                          ),
+                          Text(
+                            selectedVoiceOption == null
+                                ? 'Pick a voice to hear the assistant reply.'
+                                : 'Selected: ${selectedVoiceOption.label}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
                       ),
                     ],
                   ),

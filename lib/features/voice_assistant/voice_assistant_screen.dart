@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,12 +8,19 @@ import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../../core/database/app_database.dart';
+import 'application/voice_presence_controller.dart';
+import 'application/voice_conversation_dock_controller.dart';
 import 'voice_command_action_service.dart';
+import 'desktop_speech_bridge_service.dart';
 import 'voice_command_model.dart';
 import 'voice_command_service.dart';
+import 'voice_speech_service.dart';
 import 'windows_voice_typing_service.dart';
+import '../settings/application/settings_controller.dart';
 import 'widgets/command_history_list.dart';
 import 'widgets/command_type_selector.dart';
+import 'widgets/voice_presence_chip.dart';
 import 'widgets/transcript_preview_card.dart';
 
 const _taskCategoryOptions = [
@@ -50,6 +59,17 @@ const _contentTypeOptions = [
   'Technical Update',
   'Awareness Post',
 ];
+
+const _projectStatusOptions = [
+  'Idea',
+  'Active',
+  'Paused',
+  'Blocked',
+  'Completed',
+  'Archived',
+];
+
+const _projectPriorityOptions = ['High', 'Medium', 'Low', 'Someday'];
 
 const _businessTypeOptions = [
   'Job',
@@ -93,7 +113,18 @@ class _VoiceWizardTurn {
 }
 
 class VoiceAssistantScreen extends ConsumerStatefulWidget {
-  const VoiceAssistantScreen({super.key});
+  const VoiceAssistantScreen({
+    super.key,
+    this.initialTranscript,
+    this.initialType,
+    this.wakeTriggered = false,
+    this.handsfreeTriggered = false,
+  });
+
+  final String? initialTranscript;
+  final String? initialType;
+  final bool wakeTriggered;
+  final bool handsfreeTriggered;
 
   @override
   ConsumerState<VoiceAssistantScreen> createState() =>
@@ -102,9 +133,16 @@ class VoiceAssistantScreen extends ConsumerStatefulWidget {
 
 class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   final VoiceCommandService _service = VoiceCommandService();
+  final DesktopSpeechBridgeService _desktopSpeechBridgeService =
+      DesktopSpeechBridgeService();
   final SpeechToText _speech = SpeechToText();
   final TextEditingController _transcriptController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _projectVisionController =
+      TextEditingController();
+  final TextEditingController _projectNextActionController =
+      TextEditingController();
+  final TextEditingController _projectNotesController = TextEditingController();
   final TextEditingController _journalWorkedOnController =
       TextEditingController();
   final TextEditingController _journalLearnedController =
@@ -115,14 +153,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       TextEditingController();
   final TextEditingController _businessNextActionController =
       TextEditingController();
-  final TextEditingController _wizardAnswerController =
-      TextEditingController();
+  final TextEditingController _wizardAnswerController = TextEditingController();
   final FocusNode _transcriptFocusNode = FocusNode();
   final FocusNode _wizardAnswerFocusNode = FocusNode();
 
   _VoiceInteractionMode _mode = _VoiceInteractionMode.quick;
   VoiceWizardStep _wizardStep = VoiceWizardStep.type;
   final List<_VoiceWizardTurn> _wizardTurns = [];
+  VoiceConversationContext? _conversationContext;
+  VoiceCommandType? _presetType;
   VoiceCommandType _selectedType = VoiceCommandType.task;
   String? _selectedProjectId;
   List<VoiceCommand> _history = [];
@@ -130,6 +169,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   VoiceCommandSuggestion? _suggestion;
   String? _taskCategoryValue;
   String? _taskPriorityValue;
+  String? _projectStatusValue;
+  String? _projectPriorityValue;
   String? _contentPlatformValue;
   String? _contentTypeValue;
   String? _businessTypeValue;
@@ -140,12 +181,90 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   bool _speechAvailable = false;
   bool _isInitializingSpeech = false;
   bool _isListening = false;
+  bool _wakeAcknowledgeQueued = false;
+  bool _wakeAcknowledgePending = false;
+  bool _wakeAcknowledgeSpoken = false;
+  bool _wakeAutoListenQueued = false;
+  bool _handsfreeSessionActive = false;
 
   @override
   void initState() {
     super.initState();
     _history = _service.getHistory();
     _transcriptController.addListener(_handleTranscriptChanged);
+    _applyInitialTranscript(widget.initialTranscript);
+    final initialType = parseVoiceCommandType(widget.initialType);
+    if (initialType != null) {
+      _presetType = initialType;
+      _selectedType = initialType;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _selectedType = initialType;
+        });
+      });
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      ref.read(voiceConversationDockProvider.notifier).hide();
+    });
+    if (widget.wakeTriggered || widget.handsfreeTriggered) {
+      _speechStatus = widget.wakeTriggered
+          ? 'Wake phrase heard. Tell me what to create, open, summarize, or continue.'
+          : 'Handsfree capture heard. Tell me what to create, open, summarize, or continue.';
+      _wakeAcknowledgePending = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        _transcriptFocusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant VoiceAssistantScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTranscript != oldWidget.initialTranscript) {
+      _applyInitialTranscript(widget.initialTranscript);
+    }
+    if (widget.initialType != oldWidget.initialType) {
+      final initialType = parseVoiceCommandType(widget.initialType);
+      if (initialType != null) {
+        _presetType = initialType;
+        _selectedType = initialType;
+      } else {
+        _presetType = null;
+      }
+    }
+    if ((widget.wakeTriggered || widget.handsfreeTriggered) &&
+        !(oldWidget.wakeTriggered || oldWidget.handsfreeTriggered)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        ref.read(voiceConversationDockProvider.notifier).hide();
+      });
+      _speechStatus = widget.wakeTriggered
+          ? 'Wake phrase heard. Tell me what to create, open, summarize, or continue.'
+          : 'Handsfree capture heard. Tell me what to create, open, summarize, or continue.';
+      _wakeAcknowledgePending = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        _transcriptFocusNode.requestFocus();
+      });
+    }
   }
 
   @override
@@ -154,6 +273,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _transcriptController.removeListener(_handleTranscriptChanged);
     _transcriptController.dispose();
     _titleController.dispose();
+    _projectVisionController.dispose();
+    _projectNextActionController.dispose();
+    _projectNotesController.dispose();
     _journalWorkedOnController.dispose();
     _journalLearnedController.dispose();
     _journalNextActionsController.dispose();
@@ -165,6 +287,58 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     super.dispose();
   }
 
+  void _applyInitialTranscript(String? transcript) {
+    final cleanedTranscript = transcript?.trim() ?? '';
+    if (cleanedTranscript.isEmpty) {
+      return;
+    }
+
+    _transcriptController.text = cleanedTranscript;
+    _transcriptController.selection = TextSelection.collapsed(
+      offset: _transcriptController.text.length,
+    );
+    _speechStatus = 'Handsfree capture loaded. Review before saving.';
+  }
+
+  void _queueWakeAcknowledge() {
+    if (_wakeAcknowledgeQueued || _wakeAcknowledgeSpoken) {
+      return;
+    }
+
+    _wakeAcknowledgeQueued = true;
+    unawaited(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (!mounted || (!widget.wakeTriggered && !widget.handsfreeTriggered)) {
+        return;
+      }
+
+      _wakeAcknowledgeSpoken = true;
+      await _speakWakeAcknowledge();
+    }());
+  }
+
+  Future<void> _speakWakeAcknowledge() async {
+    await _speakWithCurrentVoice(
+      "I'm here. You can ask me what I can do, or say create a task, create a project, summarize today, or continue the thread.",
+    );
+
+    if (!mounted ||
+        (!(widget.wakeTriggered || widget.handsfreeTriggered)) ||
+        _wakeAutoListenQueued) {
+      return;
+    }
+
+    _wakeAutoListenQueued = true;
+    unawaited(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 750));
+      if (!mounted || (!widget.wakeTriggered && !widget.handsfreeTriggered)) {
+        return;
+      }
+
+      await _startHandsfreeConversationSession();
+    }());
+  }
+
   void _handleTranscriptChanged() {
     final transcript = _transcriptController.text.trim();
 
@@ -174,16 +348,22 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       }
 
       setState(() {
+        _presetType = null;
         _suggestion = null;
         _selectedType = VoiceCommandType.task;
         _selectedProjectId = null;
         _taskCategoryValue = null;
         _taskPriorityValue = null;
+        _projectStatusValue = null;
+        _projectPriorityValue = null;
         _contentPlatformValue = null;
         _contentTypeValue = null;
         _businessTypeValue = null;
         _businessStatusValue = null;
         _titleController.clear();
+        _projectVisionController.clear();
+        _projectNextActionController.clear();
+        _projectNotesController.clear();
         _journalWorkedOnController.clear();
         _journalLearnedController.clear();
         _journalNextActionsController.clear();
@@ -212,11 +392,17 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _suggestion = suggestion;
-      _selectedType = suggestion.suggestedType;
+      _selectedType = _presetType ?? suggestion.suggestedType;
       _selectedProjectId = suggestion.suggestedProjectId;
       _titleController.text = suggestion.suggestedTitle;
       _taskCategoryValue = suggestion.extractedTaskCategory;
       _taskPriorityValue = suggestion.extractedTaskPriority;
+      _projectStatusValue = suggestion.extractedProjectStatus;
+      _projectPriorityValue = suggestion.extractedProjectPriority;
+      _projectVisionController.text = suggestion.extractedProjectVision ?? '';
+      _projectNextActionController.text =
+          suggestion.extractedProjectNextAction ?? '';
+      _projectNotesController.text = suggestion.extractedProjectNotes ?? '';
       _journalWorkedOnController.text =
           suggestion.extractedJournalWorkedOn ?? '';
       _journalLearnedController.text = suggestion.extractedJournalLearned ?? '';
@@ -233,11 +419,58 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
   }
 
+  VoiceCommandAssistantResponse? _buildWakeAssistantResponse() {
+    if (!(widget.wakeTriggered || widget.handsfreeTriggered)) {
+      return null;
+    }
+
+    return VoiceCommandAssistantResponse(
+      summary: widget.wakeTriggered
+          ? 'I am here and ready to help. You can ask me what I can do, create a task, create a project, summarize today, or continue the thread.'
+          : 'I heard you and I am here to help. You can ask me what I can do, create a task, create a project, summarize today, or continue the thread.',
+      nextStep:
+          'Speak your next command and I will shape it into the right local action.',
+      threadContext: _conversationContext == null
+          ? null
+          : 'You have a remembered thread ready to continue.',
+    );
+  }
+
+  VoiceCommandBriefing? _buildWakeBriefing(
+    VoiceCommandAssistantResponse? wakeResponse,
+  ) {
+    if (wakeResponse == null) {
+      return null;
+    }
+
+    return VoiceCommandBriefing(
+      summary: wakeResponse.summary,
+      nextStep: wakeResponse.nextStep,
+      threadContext: wakeResponse.threadContext,
+      projectContext: wakeResponse.projectContext,
+      actions: _service
+          .suggestQuickActions(
+            transcript: 'hey gaia',
+            suggestion: VoiceCommandSuggestion(
+              transcript: 'hey gaia',
+              suggestedType: VoiceCommandType.task,
+              suggestedTitle: 'Hey Gaia',
+              usedWakePhrase: true,
+            ),
+            conversationContext: _conversationContext,
+          )
+          .take(3)
+          .toList(),
+    );
+  }
+
   TextEditingController get _activeSpeechController {
     return _mode == _VoiceInteractionMode.wizard
         ? _wizardAnswerController
         : _transcriptController;
   }
+
+  VoiceCommandType get _currentType => _presetType ?? _selectedType;
 
   FocusNode get _activeSpeechFocusNode {
     return _mode == _VoiceInteractionMode.wizard
@@ -251,6 +484,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       step: _wizardStep,
       selectedType: _selectedType,
       projectName: projectName,
+      conversationContext: _conversationContext,
     );
   }
 
@@ -267,15 +501,30 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
   }
 
-  void _resetWizardDraft({required bool keepMode}) {
+  void _resetWizardDraft({required bool keepMode, bool preserveThread = true}) {
     _wizardTurns.clear();
-    _wizardStep = VoiceWizardStep.type;
-    _selectedType = VoiceCommandType.task;
-    _selectedProjectId = null;
+    if (!preserveThread) {
+      _conversationContext = null;
+    }
+    final hasThreadMemory =
+        preserveThread &&
+        _conversationContext != null &&
+        _conversationContext!.hasMemory;
+    _wizardStep = hasThreadMemory && _conversationContext!.type != null
+        ? VoiceWizardStep.title
+        : VoiceWizardStep.type;
+    _selectedType = hasThreadMemory && _conversationContext!.type != null
+        ? _conversationContext!.type!
+        : VoiceCommandType.task;
+    _selectedProjectId = hasThreadMemory
+        ? _conversationContext?.projectId
+        : null;
     _suggestion = null;
     _transcriptController.clear();
     _wizardAnswerController.clear();
-    _speechStatus = 'Wizard reset. Ready for a new guided exchange.';
+    _speechStatus = hasThreadMemory
+        ? 'Wizard reset. Continuing the current thread.'
+        : 'Wizard reset. Ready for a new guided exchange.';
     if (!keepMode) {
       _mode = _VoiceInteractionMode.quick;
     }
@@ -291,21 +540,29 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   String _wizardConversationSummary() {
-    if (_wizardTurns.isEmpty) {
+    final threadSummary = _conversationContext?.summary;
+    final threadSummaryParts = threadSummary == null
+        ? null
+        : <String>[threadSummary];
+
+    if (_wizardTurns.isEmpty && threadSummary == null) {
       return 'We will build the entry one answer at a time.';
     }
 
-    return _wizardTurns
-        .map((turn) => '${turn.prompt} ${turn.answer}')
-        .join(' ');
+    final parts = <String>[
+      ...?threadSummaryParts,
+      ..._wizardTurns.map((turn) => '${turn.prompt} ${turn.answer}'),
+    ];
+
+    return parts.join(' ');
   }
 
   Future<void> _submitWizardAnswer() async {
     final answer = _wizardAnswerController.text.trim();
     if (answer.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add an answer first.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Add an answer first.')));
       return;
     }
 
@@ -367,17 +624,26 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _transcriptController.selection = TextSelection.collapsed(
         offset: _transcriptController.text.length,
       );
-      _speechStatus = 'Wizard stepped back. Answer the previous question again.';
+      _speechStatus =
+          'Wizard stepped back. Answer the previous question again.';
     });
 
     _wizardAnswerFocusNode.requestFocus();
   }
 
-  Future<void> _startListening() async {
+  Future<void> _startListening({bool preferDesktopBridge = true}) async {
     _activeSpeechFocusNode.requestFocus();
+    _setVoicePresence(
+      label: 'Gaia listening',
+      detail: 'Preparing microphone',
+      isActive: true,
+      opacity: 0.72,
+    );
 
     if (WindowsVoiceTypingService.isSupported) {
-      await _startWindowsVoiceTyping();
+      await _startWindowsDesktopCapture(
+        preferDesktopBridge: preferDesktopBridge,
+      );
       return;
     }
 
@@ -407,6 +673,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _speechError =
             'Check microphone permission, speech services, or use Paste Transcript.';
       });
+      _setVoicePresence(
+        label: 'Gaia idle',
+        detail: 'Microphone unavailable',
+        isActive: false,
+        opacity: 0.28,
+      );
       return;
     }
 
@@ -430,37 +702,167 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _isListening = true;
       _speechStatus = 'Listening...';
     });
+    _setVoicePresence(
+      label: 'Gaia listening',
+      detail: 'Speak your next command',
+      isActive: true,
+      opacity: 0.84,
+    );
   }
 
-  Future<void> _startWindowsVoiceTyping() async {
+  Future<void> _startWindowsDesktopCapture({
+    required bool preferDesktopBridge,
+  }) async {
     _activeSpeechFocusNode.requestFocus();
 
     setState(() {
       _speechError = null;
       _isInitializingSpeech = true;
-      _speechStatus = 'Opening Windows voice typing...';
+      _speechStatus = preferDesktopBridge
+          ? 'Listening with Gaia. Speak your next command...'
+          : 'Arming microphone for conversation...';
+      _speechAvailable = true;
+      _isListening = true;
     });
 
-    final available = await WindowsVoiceTypingService.startVoiceTyping();
+    Future<bool> startWindowsTyping() async {
+      final available = await WindowsVoiceTypingService.startVoiceTyping();
+
+      if (!mounted) {
+        return false;
+      }
+
+      setState(() {
+        _speechAvailable = available;
+        _isInitializingSpeech = false;
+        _isListening = available;
+        _speechStatus = available
+            ? 'Microphone armed. Speak your next command.'
+            : 'Desktop speech bridge could not capture a transcript right now.';
+        _speechError = available
+            ? null
+            : 'Try Win + H, or use Paste Transcript if Windows dictation is unavailable.';
+      });
+      _setVoicePresence(
+        label: available ? 'Gaia listening' : 'Gaia idle',
+        detail: available ? 'Speak your next command' : 'Mic not available',
+        isActive: available,
+        opacity: available ? 0.82 : 0.28,
+      );
+
+      return available;
+    }
+
+    if (!preferDesktopBridge) {
+      final available = await startWindowsTyping();
+      if (available) {
+        return;
+      }
+    }
+
+    final capture = await _desktopSpeechBridgeService.captureOnce();
 
     if (!mounted) {
       return;
     }
 
+    if (capture != null && capture.transcript.trim().isNotEmpty) {
+      setState(() {
+        _speechAvailable = true;
+        _isInitializingSpeech = false;
+        _isListening = false;
+        _activeSpeechController.text = capture.transcript.trim();
+        _activeSpeechController.selection = TextSelection.collapsed(
+          offset: _activeSpeechController.text.length,
+        );
+        _speechStatus =
+            'I heard you. Review the transcript or ask for the next step.';
+        _speechError = null;
+      });
+      _setVoicePresence(
+        label: 'Gaia captured',
+        detail: 'Review transcript',
+        isActive: true,
+        opacity: 0.82,
+      );
+      return;
+    }
+
+    await startWindowsTyping();
+  }
+
+  Future<void> _startHandsfreeConversationSession() async {
+    if (_handsfreeSessionActive || !mounted) {
+      return;
+    }
+
+    _handsfreeSessionActive = true;
+    _wakeAutoListenQueued = true;
+    await ref.read(voiceAssistantSpeechServiceProvider).stop();
     setState(() {
-      _speechAvailable = available;
-      _isInitializingSpeech = false;
-      _isListening = available;
-      _speechStatus = available
-          ? 'Windows voice typing is open. Speak now, then review the text here.'
-          : 'Windows voice typing could not be opened right now.';
-      _speechError = available
-          ? null
-          : 'Try Win + H, or use Paste Transcript if Windows dictation is unavailable.';
+      _speechStatus = 'Handsfree mode is listening. Speak naturally.';
     });
+    _setVoicePresence(
+      label: 'Gaia listening',
+      detail: 'Handsfree conversation',
+      isActive: true,
+      opacity: 0.84,
+    );
+
+    while (mounted &&
+        _handsfreeSessionActive &&
+        (widget.wakeTriggered || widget.handsfreeTriggered)) {
+      final capture = await _desktopSpeechBridgeService.captureOnce(
+        timeout: const Duration(seconds: 30),
+        durationSeconds: 8,
+      );
+
+      if (!mounted || !_handsfreeSessionActive) {
+        break;
+      }
+
+      final transcript = capture?.transcript.trim() ?? '';
+      if (transcript.isEmpty) {
+        _setVoicePresence(
+          label: 'Gaia listening',
+          detail: 'Waiting for speech',
+          isActive: true,
+          opacity: 0.72,
+        );
+        continue;
+      }
+
+      setState(() {
+        _activeSpeechController.text = transcript;
+        _activeSpeechController.selection = TextSelection.collapsed(
+          offset: _activeSpeechController.text.length,
+        );
+        _speechAvailable = true;
+        _isInitializingSpeech = false;
+        _isListening = false;
+        _speechStatus =
+            'I heard you. Review the transcript or keep the conversation going.';
+        _speechError = null;
+      });
+      _setVoicePresence(
+        label: 'Gaia captured',
+        detail: 'Conversation transcript',
+        isActive: true,
+        opacity: 0.84,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    _handsfreeSessionActive = false;
   }
 
   Future<void> _stopListening() async {
+    _handsfreeSessionActive = false;
     if (WindowsVoiceTypingService.isSupported) {
       _activeSpeechFocusNode.requestFocus();
       if (!mounted) {
@@ -472,6 +874,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _speechStatus =
             'Dictation ready to review. If Windows voice typing is still open, press Win + H to close it.';
       });
+      _setVoicePresence(
+        label: 'Gaia idle',
+        detail: 'Reviewing dictation',
+        isActive: false,
+        opacity: 0.28,
+      );
       return;
     }
 
@@ -484,9 +892,16 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _isListening = false;
       _speechStatus = 'Stopped. Review the transcript before saving.';
     });
+    _setVoicePresence(
+      label: 'Gaia idle',
+      detail: 'Stopped listening',
+      isActive: false,
+      opacity: 0.28,
+    );
   }
 
   Future<void> _cancelListening() async {
+    _handsfreeSessionActive = false;
     if (WindowsVoiceTypingService.isSupported) {
       _activeSpeechFocusNode.requestFocus();
       if (!mounted) {
@@ -498,6 +913,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _speechStatus =
             'Dictation cancelled in the app. If Windows voice typing is still open, press Win + H to close it.';
       });
+      _setVoicePresence(
+        label: 'Gaia idle',
+        detail: 'Listening cancelled',
+        isActive: false,
+        opacity: 0.28,
+      );
       return;
     }
 
@@ -510,6 +931,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _isListening = false;
       _speechStatus = 'Capture cancelled.';
     });
+    _setVoicePresence(
+      label: 'Gaia idle',
+      detail: 'Capture cancelled',
+      isActive: false,
+      opacity: 0.28,
+    );
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
@@ -529,6 +956,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             : 'Transcript captured. Review before saving.';
       }
     });
+    if (result.finalResult) {
+      _setVoicePresence(
+        label: 'Gaia captured',
+        detail: 'Review transcript',
+        isActive: true,
+        opacity: 0.82,
+      );
+    }
   }
 
   void _onSpeechError(SpeechRecognitionError error) {
@@ -544,6 +979,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ? 'Speech capture needs attention before it can run.'
           : 'Speech capture paused. You can try again.';
     });
+    _setVoicePresence(
+      label: 'Gaia idle',
+      detail: 'Speech paused',
+      isActive: false,
+      opacity: 0.28,
+    );
   }
 
   void _onSpeechStatus(String status) {
@@ -587,32 +1028,61 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           .read(voiceCommandActionsControllerProvider)
           .saveCommand(
             transcript: editableSuggestion?.transcript ?? transcript,
-            type: _selectedType,
+            type: _currentType,
             projectId: _selectedProjectId,
             titleOverride: _titleController.text.trim(),
             suggestion: editableSuggestion,
           );
-      _service.addCommand(transcript: transcript, type: _selectedType);
+      _service.addCommand(transcript: transcript, type: _currentType);
+      _rememberConversationThread(
+        transcript: editableSuggestion?.transcript ?? transcript,
+        type: _currentType,
+        title: _titleController.text.trim().isEmpty
+            ? _service.suggestCommand(transcript: transcript).suggestedTitle
+            : _titleController.text.trim(),
+        projectId: _selectedProjectId,
+        projectName: editableSuggestion?.suggestedProjectName,
+        continueExistingThread: true,
+      );
 
       setState(() {
         _history = _service.getHistory();
         _lastCodexPrompt = null;
         _suggestion = null;
+        _presetType = null;
         _taskCategoryValue = null;
         _taskPriorityValue = null;
+        _projectStatusValue = null;
+        _projectPriorityValue = null;
         _contentPlatformValue = null;
         _contentTypeValue = null;
         _businessTypeValue = null;
         _businessStatusValue = null;
         _titleController.clear();
+        _projectVisionController.clear();
+        _projectNextActionController.clear();
+        _projectNotesController.clear();
         _journalWorkedOnController.clear();
         _journalLearnedController.clear();
         _journalNextActionsController.clear();
         _businessContactController.clear();
         _businessNextActionController.clear();
         _transcriptController.clear();
-        _speechStatus = 'Saved. Ready for another capture.';
+        _speechStatus =
+            'Saved. Ready for another capture. The current thread is still available.';
       });
+      _setVoicePresence(
+        label: 'Gaia ready',
+        detail: 'Saved and ready',
+        isActive: false,
+        opacity: 0.32,
+      );
+
+      unawaited(
+        _speakWithCurrentVoice(
+          'Saved as ${_currentType.label}. Ready for another capture.',
+        ),
+      );
 
       if (!mounted) {
         return;
@@ -621,7 +1091,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Saved as ${_selectedType.label} in the local dashboard data.',
+            'Saved as ${_currentType.label} in the local dashboard data.',
           ),
         ),
       );
@@ -657,6 +1127,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ? 'Wizard answer pasted. Submit it to continue.'
           : 'Transcript pasted. Review before saving.';
     });
+    _setVoicePresence(
+      label: 'Gaia ready',
+      detail: 'Transcript pasted',
+      isActive: false,
+      opacity: 0.32,
+    );
   }
 
   void _showCodexPrompt() {
@@ -680,6 +1156,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _history = _service.getHistory();
       _speechStatus = 'Codex prompt prepared for review.';
     });
+    _setVoicePresence(
+      label: 'Gaia ready',
+      detail: 'Codex prompt prepared',
+      isActive: false,
+      opacity: 0.32,
+    );
 
     showDialog<void>(
       context: context,
@@ -729,26 +1211,56 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   void _applyTemplate(VoiceCommandTemplate template) {
+    final suggestion = _service.suggestCommand(transcript: template.transcript);
     setState(() {
       _selectedType = template.type;
       _transcriptController.text = template.transcript;
       _transcriptController.selection = TextSelection.collapsed(
         offset: template.transcript.length,
       );
+      _selectedProjectId = suggestion.suggestedProjectId;
+      _rememberConversationThread(
+        transcript: template.transcript,
+        type: template.type,
+        title: suggestion.suggestedTitle,
+        projectId: suggestion.suggestedProjectId,
+        projectName: suggestion.suggestedProjectName,
+      );
       _speechStatus = 'Template loaded. Review before saving.';
     });
+    _setVoicePresence(
+      label: 'Gaia ready',
+      detail: 'Template loaded',
+      isActive: false,
+      opacity: 0.32,
+    );
     _transcriptFocusNode.requestFocus();
   }
 
   void _restoreCommandFromHistory(VoiceCommand command) {
+    final suggestion = _service.suggestCommand(transcript: command.transcript);
     setState(() {
       _selectedType = command.type;
       _transcriptController.text = command.transcript;
       _transcriptController.selection = TextSelection.collapsed(
         offset: command.transcript.length,
       );
+      _selectedProjectId = suggestion.suggestedProjectId;
+      _rememberConversationThread(
+        transcript: command.transcript,
+        type: command.type,
+        title: suggestion.suggestedTitle,
+        projectId: suggestion.suggestedProjectId,
+        projectName: suggestion.suggestedProjectName,
+      );
       _speechStatus = 'History item loaded. Review before saving.';
     });
+    _setVoicePresence(
+      label: 'Gaia ready',
+      detail: 'History item loaded',
+      isActive: false,
+      opacity: 0.32,
+    );
     _transcriptFocusNode.requestFocus();
   }
 
@@ -760,14 +1272,151 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     if (action.templateId != null) {
       final template = _service.getTemplates().firstWhere(
-            (item) => item.id == action.templateId,
-          );
+        (item) => item.id == action.templateId,
+      );
       _applyTemplate(template);
+      return;
+    }
+
+    if (action.id == 'continue-thread') {
+      _continueCurrentThread();
     }
   }
 
+  void _rememberConversationThread({
+    required String transcript,
+    required VoiceCommandType type,
+    String? title,
+    String? projectId,
+    String? projectName,
+    bool continueExistingThread = false,
+  }) {
+    _conversationContext = _service.buildConversationContext(
+      transcript: transcript,
+      type: type,
+      title: title,
+      projectId: projectId,
+      projectName: projectName,
+      previous: continueExistingThread ? _conversationContext : null,
+    );
+  }
+
+  void _continueCurrentThread() {
+    final conversationContext = _conversationContext;
+    if (conversationContext == null) {
+      return;
+    }
+
+    setState(() {
+      _mode = _VoiceInteractionMode.wizard;
+      _selectedType = conversationContext.type ?? _selectedType;
+      _selectedProjectId = conversationContext.projectId;
+      _wizardTurns.clear();
+      _wizardAnswerController.clear();
+      _wizardStep = conversationContext.type == null
+          ? VoiceWizardStep.type
+          : VoiceWizardStep.title;
+      _speechStatus =
+          'Continuing the current voice thread. Start the next step here.';
+    });
+    _setVoicePresence(
+      label: 'Gaia thread',
+      detail: 'Continuing voice conversation',
+      isActive: true,
+      opacity: 0.74,
+    );
+    _wizardAnswerFocusNode.requestFocus();
+    unawaited(
+      _speakWithCurrentVoice(
+        'Continuing the current thread. ${conversationContext.summary}',
+      ),
+    );
+  }
+
+  void _startNewThread() {
+    setState(() {
+      _conversationContext = null;
+      _resetWizardDraft(keepMode: true, preserveThread: false);
+      _speechStatus = 'Started a fresh voice thread.';
+    });
+    _setVoicePresence(
+      label: 'Gaia ready',
+      detail: 'Started a fresh thread',
+      isActive: false,
+      opacity: 0.32,
+    );
+    _wizardAnswerFocusNode.requestFocus();
+  }
+
+  VoiceTtsVoiceOption? _resolveSelectedVoice(
+    List<VoiceTtsVoiceOption> voices,
+    AppSetting settings,
+  ) {
+    for (final voice in voices) {
+      if (voice.name == settings.preferredTtsVoiceName &&
+          voice.locale == settings.preferredTtsVoiceLocale &&
+          voice.gender == settings.preferredTtsVoiceGender &&
+          voice.identifier == settings.preferredTtsVoiceIdentifier) {
+        return voice;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _speakWithCurrentVoice(String text) async {
+    final settingsSnapshot = ref
+        .read(settingsSnapshotProvider)
+        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    if (settingsSnapshot == null) {
+      return;
+    }
+
+    try {
+      final voices = await ref.read(voiceAssistantVoicesProvider.future);
+      final selectedVoice = _resolveSelectedVoice(
+        voices,
+        settingsSnapshot.settings,
+      );
+      await ref
+          .read(voiceAssistantSpeechServiceProvider)
+          .speak(
+            text,
+            enabled: settingsSnapshot.settings.voiceRepliesEnabled,
+            rate: settingsSnapshot.settings.preferredTtsVoiceRate,
+            pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
+            voice: selectedVoice,
+          );
+    } catch (_) {
+      // Voice output is best-effort. The transcript flow still works if TTS fails.
+    }
+  }
+
+  void _setVoicePresence({
+    required String label,
+    required String detail,
+    required bool isActive,
+    required double opacity,
+  }) {
+    ref
+        .read(voicePresenceProvider.notifier)
+        .setPresence(
+          VoicePresenceState(
+            label: label,
+            detail: detail,
+            isActive: isActive,
+            opacity: opacity,
+          ),
+        );
+  }
+
+  Future<void> _stopSpeaking() async {
+    await ref.read(voiceAssistantSpeechServiceProvider).stop();
+  }
+
   VoiceCommandSuggestion? _buildEditableSuggestion() {
-    final suggestion = _suggestion;
+    final suggestion = _presetType != null
+        ? _buildPresetSuggestion()
+        : _suggestion ?? _buildPresetSuggestion();
     if (suggestion == null) {
       return null;
     }
@@ -775,15 +1424,25 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final journalWorkedOn = _journalWorkedOnController.text.trim();
     final journalLearned = _journalLearnedController.text.trim();
     final journalNextActions = _journalNextActionsController.text.trim();
+    final projectVision = _projectVisionController.text.trim();
+    final projectNextAction = _projectNextActionController.text.trim();
+    final projectNotes = _projectNotesController.text.trim();
     final businessContact = _businessContactController.text.trim();
     final businessNextAction = _businessNextActionController.text.trim();
 
     return VoiceCommandSuggestion(
       transcript: suggestion.transcript,
-      suggestedType: _selectedType,
+      suggestedType: _presetType ?? _selectedType,
       suggestedTitle: _titleController.text.trim(),
       extractedTaskCategory: _taskCategoryValue,
       extractedTaskPriority: _taskPriorityValue,
+      extractedProjectStatus: _projectStatusValue,
+      extractedProjectPriority: _projectPriorityValue,
+      extractedProjectVision: projectVision.isEmpty ? null : projectVision,
+      extractedProjectNextAction: projectNextAction.isEmpty
+          ? null
+          : projectNextAction,
+      extractedProjectNotes: projectNotes.isEmpty ? null : projectNotes,
       extractedJournalWorkedOn: journalWorkedOn.isEmpty
           ? null
           : journalWorkedOn,
@@ -807,26 +1466,74 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     );
   }
 
+  VoiceCommandSuggestion? _buildPresetSuggestion() {
+    final initialType = parseVoiceCommandType(widget.initialType);
+    if (initialType == null) {
+      return null;
+    }
+
+    final transcript = _transcriptController.text.trim();
+    return VoiceCommandSuggestion(
+      transcript: transcript,
+      suggestedType: initialType,
+      suggestedTitle: transcript.isEmpty
+          ? '${initialType.label} capture'
+          : transcript,
+      usedExplicitType: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final projectOptions = ref.watch(voiceAssistantProjectOptionsProvider);
+    final settingsSnapshotAsync = ref.watch(settingsSnapshotProvider);
+    final settingsSnapshot = settingsSnapshotAsync.maybeWhen(
+      data: (snapshot) => snapshot,
+      orElse: () => null,
+    );
+
+    if ((widget.wakeTriggered || widget.handsfreeTriggered) &&
+        _wakeAcknowledgePending &&
+        settingsSnapshot != null &&
+        !_wakeAcknowledgeQueued &&
+        !_wakeAcknowledgeSpoken) {
+      _wakeAcknowledgePending = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || (!widget.wakeTriggered && !widget.handsfreeTriggered)) {
+          return;
+        }
+
+        _queueWakeAcknowledge();
+      });
+    }
+
     final templates = _service.getTemplates();
+    final conversationContext = _conversationContext;
+    final presetSuggestion = _buildPresetSuggestion();
+    final activeSuggestion = _presetType != null
+        ? presetSuggestion
+        : _suggestion ?? presetSuggestion;
     final quickActions = _service.suggestQuickActions(
       transcript: _transcriptController.text,
-      suggestion: _suggestion,
+      suggestion: activeSuggestion,
+      conversationContext: conversationContext,
     );
-    final assistantResponse = _transcriptController.text.trim().isEmpty
-        ? null
+    final assistantResponse =
+        _transcriptController.text.trim().isEmpty && activeSuggestion == null
+        ? _buildWakeAssistantResponse()
         : _service.buildAssistantResponse(
             transcript: _transcriptController.text,
-            suggestion: _suggestion,
+            suggestion: activeSuggestion,
+            conversationContext: conversationContext,
           );
-    final briefing = _transcriptController.text.trim().isEmpty
-        ? null
+    final briefing =
+        _transcriptController.text.trim().isEmpty && activeSuggestion == null
+        ? _buildWakeBriefing(_buildWakeAssistantResponse())
         : _service.buildBriefing(
             transcript: _transcriptController.text,
-            suggestion: _suggestion,
+            suggestion: activeSuggestion,
+            conversationContext: conversationContext,
           );
     final wizardPrompt = _mode == _VoiceInteractionMode.wizard
         ? _wizardPrompt()
@@ -836,7 +1543,17 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Voice Assistant')),
+      appBar: AppBar(
+        title: const Text('Voice Assistant'),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Center(
+              child: IgnorePointer(child: VoicePresenceChip(compact: true)),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -848,7 +1565,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           Text(
             _mode == _VoiceInteractionMode.wizard
                 ? 'Answer one question at a time and let the wizard assemble the draft for review.'
-                : 'Press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
+                : 'Speak naturally or press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 24),
@@ -871,6 +1588,55 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             },
           ),
           const SizedBox(height: 20),
+          if (conversationContext != null) ...[
+            Card(
+              key: const Key('voiceConversationThreadCard'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Current Thread', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      conversationContext.summary,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Thread: ${conversationContext.label}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Entries captured: ${conversationContext.entryCount}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          key: const Key('voiceContinueThreadButton'),
+                          onPressed: _continueCurrentThread,
+                          icon: const Icon(Icons.play_arrow_outlined),
+                          label: const Text('Continue Thread'),
+                        ),
+                        TextButton.icon(
+                          key: const Key('voiceNewThreadButton'),
+                          onPressed: _startNewThread,
+                          icon: const Icon(Icons.fiber_new_outlined),
+                          label: const Text('New Thread'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Card(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -1027,10 +1793,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       const SizedBox(height: 12),
                       Text('Conversation', style: theme.textTheme.titleSmall),
                       const SizedBox(height: 8),
-                      Text(
-                        wizardSummary,
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      Text(wizardSummary, style: theme.textTheme.bodySmall),
                     ],
                   ],
                 ),
@@ -1055,10 +1818,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Assistant Reply',
-                      style: theme.textTheme.titleMedium,
-                    ),
+                    Text('Assistant Reply', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Text(
                       assistantResponse.summary,
@@ -1076,6 +1836,34 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
+                    if (assistantResponse.threadContext != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Thread context: ${assistantResponse.threadContext}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          key: const Key('voiceSpeakReplyButton'),
+                          onPressed: () => _speakWithCurrentVoice(
+                            '${assistantResponse.summary} ${assistantResponse.nextStep}',
+                          ),
+                          icon: const Icon(Icons.volume_up_outlined),
+                          label: const Text('Speak Reply'),
+                        ),
+                        TextButton.icon(
+                          key: const Key('voiceStopSpeakingButton'),
+                          onPressed: _stopSpeaking,
+                          icon: const Icon(Icons.stop_circle_outlined),
+                          label: const Text('Stop Voice'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1092,19 +1880,20 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                   children: [
                     Text('Voice Briefing', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    Text(
-                      briefing.summary,
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Text(briefing.summary, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 8),
-                    Text(
-                      briefing.nextStep,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    Text(briefing.nextStep, style: theme.textTheme.bodySmall),
                     if (briefing.projectContext != null) ...[
                       const SizedBox(height: 8),
                       Text(
                         'Project context: ${briefing.projectContext}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                    if (briefing.threadContext != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Thread context: ${briefing.threadContext}',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -1135,6 +1924,27 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         }).toList(),
                       ),
                     ],
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          key: const Key('voiceSpeakBriefingButton'),
+                          onPressed: () => _speakWithCurrentVoice(
+                            '${briefing.summary} ${briefing.nextStep}',
+                          ),
+                          icon: const Icon(Icons.campaign_outlined),
+                          label: const Text('Speak Briefing'),
+                        ),
+                        TextButton.icon(
+                          key: const Key('voiceStopBriefingButton'),
+                          onPressed: _stopSpeaking,
+                          icon: const Icon(Icons.stop_circle_outlined),
+                          label: const Text('Stop Voice'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1213,7 +2023,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               ),
             ),
           ),
-          if (_suggestion != null) ...[
+          if (activeSuggestion != null) ...[
             const SizedBox(height: 16),
             Card(
               key: const Key('voiceSuggestionCard'),
@@ -1228,7 +2038,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Type: ${_suggestion!.suggestedType.label}',
+                      'Type: ${activeSuggestion.suggestedType.label}',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 4),
@@ -1240,18 +2050,25 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    if (_suggestion!.suggestedProjectName != null) ...[
+                    if (activeSuggestion.suggestedProjectName != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Project: ${_suggestion!.suggestedProjectName}',
+                        'Project: ${activeSuggestion.suggestedProjectName}',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
-                    ..._buildStructuredSuggestionLines(theme, _suggestion!),
-                    if (_suggestion!.usedExplicitType) ...[
+                    ..._buildStructuredSuggestionLines(theme, activeSuggestion),
+                    if (activeSuggestion.usedExplicitType) ...[
                       const SizedBox(height: 6),
                       Text(
                         'An explicit command prefix was detected in the transcript.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                    if (activeSuggestion.usedWakePhrase) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Wake phrase detected: ${activeSuggestion.wakePhrase ?? 'Gaia'}',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -1266,9 +2083,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           Text('Command Type', style: theme.textTheme.titleMedium),
           const SizedBox(height: 12),
           CommandTypeSelector(
-            selectedType: _selectedType,
+            selectedType: _currentType,
             onChanged: (value) {
               setState(() {
+                _presetType = null;
                 _selectedType = value;
               });
             },
@@ -1322,18 +2140,18 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 key: const Key('voiceSaveCommandButton'),
                 onPressed: _isSaving
                     ? null
-                    : _selectedType == VoiceCommandType.codexPrompt
+                    : _currentType == VoiceCommandType.codexPrompt
                     ? _showCodexPrompt
                     : _saveSelectedCommand,
                 icon: Icon(
-                  _selectedType == VoiceCommandType.codexPrompt
+                  _currentType == VoiceCommandType.codexPrompt
                       ? Icons.code_outlined
                       : Icons.save_outlined,
                 ),
                 label: Text(
-                  _selectedType == VoiceCommandType.codexPrompt
+                  _currentType == VoiceCommandType.codexPrompt
                       ? 'Prepare Codex Prompt'
-                      : 'Save as ${_selectedType.label}',
+                      : 'Save as ${_currentType.label}',
                 ),
               ),
             ],
@@ -1378,6 +2196,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     switch (id) {
       case 'build-day':
         return Icons.calendar_view_day_outlined;
+      case 'summarize-today':
+        return Icons.summarize_outlined;
+      case 'whats-next':
+        return Icons.alt_route_outlined;
+      case 'project':
+        return Icons.folder_open_outlined;
       case 'task':
         return Icons.task_alt_outlined;
       case 'journal':
@@ -1401,6 +2225,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         return Icons.dashboard_outlined;
       case 'open-planner':
         return Icons.event_note_outlined;
+      case 'open-planner-summary':
+        return Icons.summarize_outlined;
+      case 'open-tasks-next':
+        return Icons.task_alt_outlined;
+      case 'open-projects-next':
+        return Icons.folder_open_outlined;
       case 'open-tasks':
         return Icons.task_alt_outlined;
       case 'open-journal':
@@ -1430,6 +2260,19 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       }
       if (suggestion.extractedTaskPriority != null) {
         lines.add('Priority: ${suggestion.extractedTaskPriority}');
+      }
+    } else if (suggestion.suggestedType == VoiceCommandType.project) {
+      if (suggestion.extractedProjectStatus != null) {
+        lines.add('Status: ${suggestion.extractedProjectStatus}');
+      }
+      if (suggestion.extractedProjectPriority != null) {
+        lines.add('Priority: ${suggestion.extractedProjectPriority}');
+      }
+      if (suggestion.extractedProjectVision != null) {
+        lines.add('Vision: ${suggestion.extractedProjectVision}');
+      }
+      if (suggestion.extractedProjectNextAction != null) {
+        lines.add('Next: ${suggestion.extractedProjectNextAction}');
       }
     } else if (suggestion.suggestedType == VoiceCommandType.journalEntry) {
       if (suggestion.extractedJournalLearned != null) {
@@ -1469,7 +2312,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   Widget _buildEditableFields(ThemeData theme) {
-    if (_selectedType == VoiceCommandType.task) {
+    if (_currentType == VoiceCommandType.task) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1494,7 +2337,50 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
         ],
       );
-    } else if (_selectedType == VoiceCommandType.journalEntry) {
+    } else if (_currentType == VoiceCommandType.project) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Project Details', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 12),
+          _buildDropdownField(
+            fieldName: 'voiceProjectStatusField',
+            resetToken: _suggestion?.transcript ?? 'empty',
+            label: 'Status',
+            value: _projectStatusValue,
+            options: _projectStatusOptions,
+            onChanged: (value) => setState(() => _projectStatusValue = value),
+          ),
+          const SizedBox(height: 12),
+          _buildDropdownField(
+            fieldName: 'voiceProjectPriorityField',
+            resetToken: _suggestion?.transcript ?? 'empty',
+            label: 'Priority',
+            value: _projectPriorityValue,
+            options: _projectPriorityOptions,
+            onChanged: (value) => setState(() => _projectPriorityValue = value),
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            key: const Key('voiceProjectVisionField'),
+            label: 'Vision',
+            controller: _projectVisionController,
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            key: const Key('voiceProjectNextActionField'),
+            label: 'Next Action',
+            controller: _projectNextActionController,
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            key: const Key('voiceProjectNotesField'),
+            label: 'Notes',
+            controller: _projectNotesController,
+          ),
+        ],
+      );
+    } else if (_currentType == VoiceCommandType.journalEntry) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1519,7 +2405,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
         ],
       );
-    } else if (_selectedType == VoiceCommandType.contentIdea) {
+    } else if (_currentType == VoiceCommandType.contentIdea) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1544,7 +2430,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
         ],
       );
-    } else if (_selectedType == VoiceCommandType.businessOpportunity) {
+    } else if (_currentType == VoiceCommandType.businessOpportunity) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

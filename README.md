@@ -1,6 +1,6 @@
-# New Earth Command Dashboard
+# Gaia
 
-![New Earth Command Dashboard](assets/repo/01_repo_banner_new_earth_command_dashboard.png)
+![Gaia](assets/repo/01_repo_banner_new_earth_command_dashboard.png)
 
 Local-first Flutter app for managing New Earth projects, tasks, daily focus, learning, content, business, wellbeing and build progress.
 
@@ -34,6 +34,7 @@ V0.1 foundation is live:
 - Dashboard Quick Capture saves directly into Inbox
 - Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
+- On Windows, Gaia now waits for a connected headset or headset microphone before the main dashboard loads
 
 ## Documentation
 

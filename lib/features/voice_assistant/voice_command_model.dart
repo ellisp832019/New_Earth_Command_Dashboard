@@ -1,5 +1,6 @@
 enum VoiceCommandType {
   task,
+  project,
   journalEntry,
   contentIdea,
   businessOpportunity,
@@ -7,11 +8,34 @@ enum VoiceCommandType {
   codexPrompt,
 }
 
+VoiceCommandType? parseVoiceCommandType(String? value) {
+  switch (value) {
+    case 'task':
+      return VoiceCommandType.task;
+    case 'project':
+      return VoiceCommandType.project;
+    case 'journalEntry':
+      return VoiceCommandType.journalEntry;
+    case 'contentIdea':
+      return VoiceCommandType.contentIdea;
+    case 'businessOpportunity':
+      return VoiceCommandType.businessOpportunity;
+    case 'idea':
+      return VoiceCommandType.idea;
+    case 'codexPrompt':
+      return VoiceCommandType.codexPrompt;
+    default:
+      return null;
+  }
+}
+
 extension VoiceCommandTypeLabel on VoiceCommandType {
   String get label {
     switch (this) {
       case VoiceCommandType.task:
         return 'Task';
+      case VoiceCommandType.project:
+        return 'Project';
       case VoiceCommandType.journalEntry:
         return 'Journal Entry';
       case VoiceCommandType.contentIdea:
@@ -26,13 +50,7 @@ extension VoiceCommandTypeLabel on VoiceCommandType {
   }
 }
 
-enum VoiceWizardStep {
-  type,
-  title,
-  project,
-  details,
-  review,
-}
+enum VoiceWizardStep { type, title, project, details, review }
 
 extension VoiceWizardStepLabel on VoiceWizardStep {
   String get label {
@@ -77,8 +95,16 @@ class VoiceCommandSuggestion {
     required this.transcript,
     required this.suggestedType,
     required this.suggestedTitle,
+    this.usedWakePhrase = false,
+    this.isWakeOnly = false,
+    this.wakePhrase,
     this.extractedTaskCategory,
     this.extractedTaskPriority,
+    this.extractedProjectStatus,
+    this.extractedProjectPriority,
+    this.extractedProjectVision,
+    this.extractedProjectNextAction,
+    this.extractedProjectNotes,
     this.extractedJournalWorkedOn,
     this.extractedJournalLearned,
     this.extractedJournalNextActions,
@@ -97,8 +123,16 @@ class VoiceCommandSuggestion {
     String? transcript,
     VoiceCommandType? suggestedType,
     String? suggestedTitle,
+    bool? usedWakePhrase,
+    bool? isWakeOnly,
+    String? wakePhrase,
     String? extractedTaskCategory,
     String? extractedTaskPriority,
+    String? extractedProjectStatus,
+    String? extractedProjectPriority,
+    String? extractedProjectVision,
+    String? extractedProjectNextAction,
+    String? extractedProjectNotes,
     String? extractedJournalWorkedOn,
     String? extractedJournalLearned,
     String? extractedJournalNextActions,
@@ -116,10 +150,23 @@ class VoiceCommandSuggestion {
       transcript: transcript ?? this.transcript,
       suggestedType: suggestedType ?? this.suggestedType,
       suggestedTitle: suggestedTitle ?? this.suggestedTitle,
+      usedWakePhrase: usedWakePhrase ?? this.usedWakePhrase,
+      isWakeOnly: isWakeOnly ?? this.isWakeOnly,
+      wakePhrase: wakePhrase ?? this.wakePhrase,
       extractedTaskCategory:
           extractedTaskCategory ?? this.extractedTaskCategory,
       extractedTaskPriority:
           extractedTaskPriority ?? this.extractedTaskPriority,
+      extractedProjectStatus:
+          extractedProjectStatus ?? this.extractedProjectStatus,
+      extractedProjectPriority:
+          extractedProjectPriority ?? this.extractedProjectPriority,
+      extractedProjectVision:
+          extractedProjectVision ?? this.extractedProjectVision,
+      extractedProjectNextAction:
+          extractedProjectNextAction ?? this.extractedProjectNextAction,
+      extractedProjectNotes:
+          extractedProjectNotes ?? this.extractedProjectNotes,
       extractedJournalWorkedOn:
           extractedJournalWorkedOn ?? this.extractedJournalWorkedOn,
       extractedJournalLearned:
@@ -146,8 +193,16 @@ class VoiceCommandSuggestion {
   final String transcript;
   final VoiceCommandType suggestedType;
   final String suggestedTitle;
+  final bool usedWakePhrase;
+  final bool isWakeOnly;
+  final String? wakePhrase;
   final String? extractedTaskCategory;
   final String? extractedTaskPriority;
+  final String? extractedProjectStatus;
+  final String? extractedProjectPriority;
+  final String? extractedProjectVision;
+  final String? extractedProjectNextAction;
+  final String? extractedProjectNotes;
   final String? extractedJournalWorkedOn;
   final String? extractedJournalLearned;
   final String? extractedJournalNextActions;
@@ -201,11 +256,13 @@ class VoiceCommandAssistantResponse {
     required this.summary,
     required this.nextStep,
     this.projectContext,
+    this.threadContext,
   });
 
   final String summary;
   final String nextStep;
   final String? projectContext;
+  final String? threadContext;
 }
 
 class VoiceCommandBriefing {
@@ -214,10 +271,59 @@ class VoiceCommandBriefing {
     required this.nextStep,
     required this.actions,
     this.projectContext,
+    this.threadContext,
   });
 
   final String summary;
   final String nextStep;
   final String? projectContext;
+  final String? threadContext;
   final List<VoiceCommandQuickAction> actions;
+}
+
+class VoiceConversationContext {
+  const VoiceConversationContext({
+    required this.label,
+    required this.summary,
+    this.type,
+    this.projectId,
+    this.projectName,
+    this.title,
+    this.transcript,
+    this.entryCount = 0,
+  });
+
+  VoiceConversationContext copyWith({
+    String? label,
+    String? summary,
+    VoiceCommandType? type,
+    String? projectId,
+    String? projectName,
+    String? title,
+    String? transcript,
+    int? entryCount,
+  }) {
+    return VoiceConversationContext(
+      label: label ?? this.label,
+      summary: summary ?? this.summary,
+      type: type ?? this.type,
+      projectId: projectId ?? this.projectId,
+      projectName: projectName ?? this.projectName,
+      title: title ?? this.title,
+      transcript: transcript ?? this.transcript,
+      entryCount: entryCount ?? this.entryCount,
+    );
+  }
+
+  final String label;
+  final String summary;
+  final VoiceCommandType? type;
+  final String? projectId;
+  final String? projectName;
+  final String? title;
+  final String? transcript;
+  final int entryCount;
+
+  bool get hasMemory =>
+      type != null || projectId != null || projectName != null || title != null;
 }

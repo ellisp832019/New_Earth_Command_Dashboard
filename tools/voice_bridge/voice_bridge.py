@@ -1,16 +1,20 @@
 """
-New Earth Dashboard Voice Bridge v0.1
+New Earth Dashboard Voice Bridge
 
-This first version is deliberately safe:
-- No live microphone access yet.
-- No automatic Codex execution.
-- User types or pastes a transcript.
-- The bridge formats it into a Codex-safe prompt.
-- The result is saved to logs/voice_commands.log.
+This version can capture one desktop microphone utterance and transcribe it
+locally when the optional speech dependencies are installed.
 """
 
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 PROMPT_TEMPLATE = """You are working inside the New Earth Dashboard repo.
@@ -27,6 +31,14 @@ Rules:
 """
 
 
+@dataclass
+class CaptureResult:
+    transcript: str
+    model: str
+    duration_seconds: int
+    sampled_seconds: float
+
+
 def format_codex_prompt(transcript: str) -> str:
     return PROMPT_TEMPLATE.format(transcript=transcript.strip())
 
@@ -39,47 +51,142 @@ def save_log(transcript: str, output_text: str) -> Path:
     timestamp = datetime.now().isoformat(timespec="seconds")
 
     with log_path.open("a", encoding="utf-8") as file:
-      file.write("\n" + "=" * 70 + "\n")
-      file.write(f"Timestamp: {timestamp}\n")
-      file.write("Transcript:\n")
-      file.write(transcript.strip() + "\n\n")
-      file.write("Output:\n")
-      file.write(output_text.strip() + "\n")
+        file.write("\n" + "=" * 70 + "\n")
+        file.write(f"Timestamp: {timestamp}\n")
+        file.write("Transcript:\n")
+        file.write(transcript.strip() + "\n\n")
+        file.write("Output:\n")
+        file.write(output_text.strip() + "\n")
 
     return log_path
 
 
-def main() -> None:
-    print("New Earth Dashboard Voice Bridge v0.1")
-    print("Text-input safety prototype")
-    print("-" * 50)
+def _load_transcription_stack() -> tuple[Any, Any, Any]:
+    try:
+        import numpy as np  # type: ignore
+        import sounddevice as sd  # type: ignore
+        from faster_whisper import WhisperModel  # type: ignore
+    except Exception as exc:  # pragma: no cover - runtime dependency loading
+        raise RuntimeError(
+            "Missing desktop speech dependencies. Install the packages in "
+            "tools/voice_bridge/requirements.txt."
+        ) from exc
 
-    transcript = input("Paste or type your voice transcript: ").strip()
+    return np, sd, WhisperModel
 
-    if not transcript:
-        print("No transcript entered. Exiting.")
-        return
 
-    print("\nTranscript preview:")
-    print(transcript)
+def _record_audio(duration_seconds: int, samplerate: int = 16000):
+    np, sd, _ = _load_transcription_stack()
+    frames = int(duration_seconds * samplerate)
+    audio = sd.rec(
+        frames,
+        samplerate=samplerate,
+        channels=1,
+        dtype="float32",
+    )
+    sd.wait()
+    return np.squeeze(audio)
 
-    choice = input("\nFormat this as a Codex prompt? (y/n): ").strip().lower()
 
-    if choice == "y":
+def transcribe_once(
+    *,
+    duration_seconds: int = 8,
+    model_name: str | None = None,
+    language: str = "en",
+) -> CaptureResult:
+    np, _, WhisperModel = _load_transcription_stack()
+    audio = _record_audio(duration_seconds)
+    if audio is None or getattr(audio, "size", 0) == 0:
+        return CaptureResult("", model_name or "unknown", duration_seconds, 0.0)
+
+    normalized_audio = np.asarray(audio, dtype="float32")
+    model_label = model_name or os.environ.get("VOICE_BRIDGE_MODEL", "base.en")
+    model = WhisperModel(
+        model_label,
+        device=os.environ.get("VOICE_BRIDGE_DEVICE", "cpu"),
+        compute_type=os.environ.get("VOICE_BRIDGE_COMPUTE_TYPE", "int8"),
+    )
+    segments, _info = model.transcribe(
+        normalized_audio,
+        language=language,
+        vad_filter=True,
+        beam_size=5,
+    )
+
+    transcript_parts = [segment.text.strip() for segment in segments if segment.text.strip()]
+    transcript = " ".join(transcript_parts).strip()
+    return CaptureResult(
+        transcript=transcript,
+        model=model_label,
+        duration_seconds=duration_seconds,
+        sampled_seconds=float(normalized_audio.shape[0]) / 16000.0,
+    )
+
+
+def _print_json(payload: dict[str, Any]) -> None:
+    print(json.dumps(payload, ensure_ascii=False))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="New Earth Dashboard Voice Bridge")
+    subparsers = parser.add_subparsers(dest="command")
+
+    listen_parser = subparsers.add_parser("listen-once", help="Record and transcribe one utterance")
+    listen_parser.add_argument("--duration", type=int, default=8, help="Maximum capture length in seconds")
+    listen_parser.add_argument("--model", type=str, default=None, help="Whisper model name")
+    listen_parser.add_argument("--language", type=str, default="en", help="Language code")
+    listen_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+
+    prompt_parser = subparsers.add_parser("prompt", help="Format a transcript as a Codex prompt")
+    prompt_parser.add_argument("transcript", nargs="?", default="", help="Transcript text")
+
+    args = parser.parse_args()
+
+    if args.command == "listen-once":
+        try:
+            capture = transcribe_once(
+                duration_seconds=args.duration,
+                model_name=args.model,
+                language=args.language,
+            )
+        except Exception as exc:
+            if args.json:
+                _print_json({
+                    "ok": False,
+                    "error": str(exc),
+                })
+            else:
+                print(f"Voice capture failed: {exc}", file=sys.stderr)
+            return 1
+
+        payload = {
+            "ok": True,
+            "transcript": capture.transcript,
+            "model": capture.model,
+            "duration_seconds": capture.duration_seconds,
+            "sampled_seconds": round(capture.sampled_seconds, 2),
+        }
+        if args.json:
+            _print_json(payload)
+        else:
+            print(capture.transcript)
+        return 0
+
+    if args.command == "prompt":
+        transcript = args.transcript.strip()
+        if not transcript:
+            print("No transcript entered. Exiting.")
+            return 0
+
         output_text = format_codex_prompt(transcript)
-        print("\nCodex-safe prompt:")
-    else:
-        output_text = transcript
-        print("\nPlain transcript:")
+        print(output_text)
+        save_log(transcript, output_text)
+        return 0
 
-    print("-" * 50)
-    print(output_text)
-    print("-" * 50)
-
-    log_path = save_log(transcript, output_text)
-    print(f"\nSaved to: {log_path}")
-    print("\nReview this output before using it in Codex.")
+    print("New Earth Dashboard Voice Bridge")
+    print("Try: python tools/voice_bridge/voice_bridge.py listen-once --json")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -105,6 +105,7 @@ The `Projects` screen holds work at a larger scale.
 - View project: tap a project card
 - Edit project: from the project detail page
 - Create a task for a project: from the project detail page, use the task creation flow
+- Create a project from Voice Assistant: review the project suggestion, edit the project status/priority/vision fields, then save locally
 
 ### How to use it
 
@@ -413,14 +414,26 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 ### Current behavior
 
 - Voice Capture can be opened from `Dashboard` Quick Capture or from `More`.
+- On Windows, Gaia waits for a connected headset or headset microphone before the app fully opens.
+- On Windows, Gaia gives a short startup greeting once voice replies are ready, so you know the assistant is alive before you speak.
 - Microphone capture is press-to-listen only; there is no always-listening background mode.
+- On Windows, `Start Listening` first tries the local desktop speech bridge for one-shot Whisper transcription before falling back to the system dictation path.
 - Paste Transcript and mock transcript remain available as fallbacks.
 - The `Voice Starter Deck` gives you quick paths for Build Day, Task, Journal, Content, Business, Codex, and Idea captures.
+- The `Voice Starter Deck` now includes a `Project` starter for shaping a new project record before you save it.
+- The `Voice Starter Deck` also includes `Summarize Today` and `What's Next` macros for review-first planning.
 - The `Assistant Reply` card gives a short plain-language read on what the app thinks you said before you save it.
 - The `Voice Briefing` card turns the current command into a numbered suggested sequence of next steps.
+- The `Current Thread` card keeps a running voice conversation in view so you can continue it or start fresh.
 - `Wizard Mode` turns the assistant into a step-by-step conversation that assembles the draft from one answer at a time.
-- The `Command Router` surfaces the next likely move, such as opening Tasks, Planner, Dashboard, Projects, Inbox, Journal, Content, or Business.
+- Gaia now keeps a handsfree wake listener armed while the app is open on Windows, so saying `Hey Gaia` can bring up the Voice Assistant without pressing Start Listening first.
+- If the wake route is still settling, Gaia can also surface a small conversation dock on the dashboard with the captured transcript and next step, speak that captured reply through the configured voice output, and offer quick follow-up chips that reopen the assistant with a preselected intent.
+- `Settings` now includes voice output controls for assistant speech, voice selection, speech rate, and preview.
+- The `Command Router` surfaces the next likely move, such as opening Tasks, Planner, Dashboard, Projects, Inbox, Journal, Content, or Business, and can offer `Continue Thread` when there is remembered voice context.
 - The screen suggests a command type, cleaned title, and related project using local parsing rules.
+- The screen can also suggest a new project capture and expose editable project status, priority, vision, and next action fields before save.
+- The screen can recognize wake phrases such as `Hey Gaia` before the command and strip them out so the rest of the sentence is parsed normally.
+- The command router can surface summary and next-step macros to make the assistant feel more conversational.
 - The screen also extracts structured details where it can, such as task category/priority, content platform/type, journal next actions, and business contact/status hints.
 - Those extracted details are editable before save, so you can correct the parser when the wording is close but not perfect.
 - Task transcripts save as Inbox tasks.
@@ -431,6 +444,8 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 - Codex prompts are copied/reviewed manually and are not executed by the app.
 - Speech recognition uses the device/platform speech service provided through the app's speech-to-text package where stable; saved dashboard data remains local.
 - On Windows, `Start Listening` opens native Windows voice typing inside the transcript field so the app can stay stable without the beta recognizer.
+- On Windows, the app also keeps a lightweight handsfree wake listener armed while Gaia is open so `Hey Gaia` can open the Voice Assistant without a button press.
+- On Windows, assistant replies and briefings can speak back through the locally installed system voices selected in `Settings`.
 - Starting voice typing on Windows now preserves the current window mode instead of forcing the app out of fullscreen.
 - The structured review panel stays editable before you save the capture.
 - `Paste Transcript` and mock capture still remain available there as fallbacks.
