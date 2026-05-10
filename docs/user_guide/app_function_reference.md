@@ -422,6 +422,7 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 - The `Voice Starter Deck` gives you quick paths for Build Day, Task, Journal, Content, Business, Codex, and Idea captures.
 - The `Voice Starter Deck` now includes a `Project` starter for shaping a new project record before you save it.
 - The `Voice Starter Deck` also includes `Summarize Today` and `What's Next` macros for review-first planning.
+- The `Action Macros` card gives you instant moves like `Start Build Day`, `Plan Day`, `Recall Memory`, `Summarize Today`, `What's Next`, and `Continue Thread`.
 - The `Assistant Reply` card gives a short plain-language read on what the app thinks you said before you save it.
 - The `Voice Briefing` card turns the current command into a numbered suggested sequence of next steps.
 - The `Current Thread` card keeps a running voice conversation in view so you can continue it or start fresh.

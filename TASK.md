@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make the Voice Assistant feel like a fast-moving AI command surface by adding a voice wizard mode, briefing layer, reusable starters, quick review, wake phrase detection, smarter command macros, project capture, thread memory, and a handsfree wake listener that can bring the assistant forward when Gaia is open.
+Make the Voice Assistant feel like a fast-moving AI command surface by adding a voice wizard mode, briefing layer, reusable starters, quick review, wake phrase detection, smarter command macros, project capture, thread memory, a handsfree wake listener that can bring the assistant forward when Gaia is open, and a direct in-dock follow-up loop.
 
 ## Source of Truth
 

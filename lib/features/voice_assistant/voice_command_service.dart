@@ -31,6 +31,22 @@ class VoiceCommandService {
       type: VoiceCommandType.task,
     ),
     VoiceCommandTemplate(
+      id: 'recall-thread',
+      label: 'Recall Memory',
+      description: 'Ask Gaia what she remembers about the current thread.',
+      transcript:
+          'What do you remember about this thread? Tell me the thread, recent captures, and the next useful move.',
+      type: VoiceCommandType.journalEntry,
+    ),
+    VoiceCommandTemplate(
+      id: 'plan-day',
+      label: 'Plan Day',
+      description: 'Turn the current thread into a short action plan.',
+      transcript:
+          'Plan my day around this thread. Give me a short action plan, the next move, and the best place to save it.',
+      type: VoiceCommandType.task,
+    ),
+    VoiceCommandTemplate(
       id: 'project',
       label: 'Project',
       description: 'Shape a new project from the voice thread.',
@@ -106,6 +122,295 @@ class VoiceCommandService {
     return null;
   }
 
+  List<VoiceCommandQuickAction> buildMacroActions({
+    VoiceConversationContext? conversationContext,
+  }) {
+    final macros = <VoiceCommandQuickAction>[
+      const VoiceCommandQuickAction(
+        id: 'start-build-day',
+        label: 'Start Build Day',
+        description: 'Open the build-day planning flow.',
+        templateId: 'build-day',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'plan-day',
+        label: 'Plan Day',
+        description: 'Turn the current thread into a short action plan.',
+        templateId: 'plan-day',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'summarize-today',
+        label: 'Summarize Today',
+        description: 'Open the reflective day-review prompt.',
+        templateId: 'summarize-today',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'recall-memory',
+        label: 'Recall Memory',
+        description: 'Ask Gaia what she remembers about the thread.',
+        templateId: 'recall-thread',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'whats-next',
+        label: "What's Next",
+        description: 'Open the next-step prompt for the current thread.',
+        templateId: 'whats-next',
+      ),
+    ];
+
+    if (conversationContext != null && conversationContext.hasMemory) {
+      macros.add(
+        const VoiceCommandQuickAction(
+          id: 'continue-thread',
+          label: 'Continue Thread',
+          description: 'Pick up the remembered conversation where it left off.',
+        ),
+      );
+    }
+
+    final dedupedMacros = <String, VoiceCommandQuickAction>{};
+    for (final macro in macros) {
+      dedupedMacros.putIfAbsent(macro.id, () => macro);
+    }
+
+    return dedupedMacros.values.toList();
+  }
+
+  VoiceCommandQuickAction? resolveFollowUpAction({
+    required String transcript,
+    VoiceConversationContext? conversationContext,
+  }) {
+    final normalizedTranscript = transcript.toLowerCase();
+    final macros = buildMacroActions(conversationContext: conversationContext);
+
+    VoiceCommandQuickAction? findAction(String id) {
+      for (final action in macros) {
+        if (action.id == id) {
+          return action;
+        }
+      }
+      return null;
+    }
+
+    VoiceCommandQuickAction? findMacroByPhrases(
+      String id,
+      List<String> phrases,
+    ) {
+      for (final phrase in phrases) {
+        if (normalizedTranscript.contains(phrase)) {
+          return findAction(id);
+        }
+      }
+      return null;
+    }
+
+    final macroMatch =
+        findMacroByPhrases('continue-thread', [
+          'continue thread',
+          'keep going',
+          'resume thread',
+          'pick up the thread',
+        ]) ??
+        findMacroByPhrases('start-build-day', [
+          'start build day',
+          'build day',
+          'morning planning',
+        ]) ??
+        findMacroByPhrases('plan-day', [
+          'plan my day',
+          'plan day',
+          'make a plan',
+          'action plan',
+        ]) ??
+        findMacroByPhrases('summarize-today', [
+          'summarize today',
+          'summarise today',
+          'today summary',
+          'summarize the day',
+          'summarise the day',
+          'review today',
+        ]) ??
+        findMacroByPhrases('recall-memory', [
+          'recall memory',
+          'what do you remember',
+          'remember this thread',
+          'what you remember',
+        ]) ??
+        findMacroByPhrases('whats-next', [
+          "what's next",
+          'what is next',
+          'what next',
+          'next step',
+        ]);
+
+    if (macroMatch != null) {
+      return macroMatch;
+    }
+
+    final routeAndTemplateActions = <VoiceCommandQuickAction>[
+      const VoiceCommandQuickAction(
+        id: 'open-dashboard',
+        label: 'Open Dashboard',
+        description: 'Return to the main command surface.',
+        route: '/dashboard',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-planner',
+        label: 'Open Planner',
+        description: 'Review the current day plan.',
+        route: '/planner',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-tasks',
+        label: 'Open Tasks',
+        description: 'Jump into the task list.',
+        route: '/tasks',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-projects',
+        label: 'Open Projects',
+        description: 'Jump into the project list.',
+        route: '/projects',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-journal',
+        label: 'Open Journal',
+        description: 'Jump into the journal list.',
+        route: '/journal',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-content',
+        label: 'Open Content',
+        description: 'Jump into the content list.',
+        route: '/content',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-business',
+        label: 'Open Business',
+        description: 'Jump into the business list.',
+        route: '/business',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'open-inbox',
+        label: 'Open Inbox',
+        description: 'Jump into the inbox list.',
+        route: '/inbox',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'load-project',
+        label: 'Create Project',
+        description: 'Prefill a new project capture.',
+        templateId: 'project',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'load-task',
+        label: 'Create Task',
+        description: 'Prefill a new task capture.',
+        templateId: 'task',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'load-journal',
+        label: 'Create Journal',
+        description: 'Prefill a journal capture.',
+        templateId: 'journal',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'load-content',
+        label: 'Create Content',
+        description: 'Prefill a content capture.',
+        templateId: 'content',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'load-business',
+        label: 'Create Business',
+        description: 'Prefill a business capture.',
+        templateId: 'business',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'load-idea',
+        label: 'Create Idea',
+        description: 'Prefill an inbox idea capture.',
+        templateId: 'idea',
+      ),
+      const VoiceCommandQuickAction(
+        id: 'prepare-codex',
+        label: 'Prepare Codex',
+        description: 'Prefill a Codex review prompt.',
+        templateId: 'codex',
+      ),
+    ];
+
+    VoiceCommandQuickAction? findRouteAction(String id, List<String> phrases) {
+      for (final phrase in phrases) {
+        if (normalizedTranscript.contains(phrase)) {
+          for (final action in routeAndTemplateActions) {
+            if (action.id == id) {
+              return action;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    return findRouteAction('open-dashboard', ['open dashboard']) ??
+        findRouteAction('open-planner', ['open planner']) ??
+        findRouteAction('open-tasks', ['open tasks', 'show tasks']) ??
+        findRouteAction('open-projects', ['open projects', 'show projects']) ??
+        findRouteAction('open-journal', ['open journal', 'show journal']) ??
+        findRouteAction('open-content', ['open content', 'show content']) ??
+        findRouteAction('open-business', ['open business', 'show business']) ??
+        findRouteAction('open-inbox', ['open inbox', 'show inbox']) ??
+        findRouteAction('load-project', [
+          'create a project',
+          'create project',
+          'add a project',
+          'new project',
+          'make a project',
+          'start project',
+          'start a project',
+          'project capture',
+        ]) ??
+        findRouteAction('load-task', [
+          'create a task',
+          'create task',
+          'add a task',
+          'new task',
+          'add task',
+          'task capture',
+        ]) ??
+        findRouteAction('load-journal', [
+          'create a journal',
+          'create journal',
+          'journal entry',
+          'journal note',
+        ]) ??
+        findRouteAction('load-content', [
+          'create content',
+          'create a content idea',
+          'content idea',
+          'draft content',
+        ]) ??
+        findRouteAction('load-business', [
+          'create a business',
+          'create business',
+          'create a business opportunity',
+          'business lead',
+          'business opportunity',
+        ]) ??
+        findRouteAction('load-idea', [
+          'create an idea',
+          'create idea',
+          'new idea',
+          'idea capture',
+        ]) ??
+        findRouteAction('prepare-codex', [
+          'prepare codex',
+          'codex prompt',
+          'code review',
+        ]);
+  }
+
   List<VoiceCommandQuickAction> suggestQuickActions({
     required String transcript,
     VoiceCommandSuggestion? suggestion,
@@ -118,6 +423,8 @@ class VoiceCommandService {
     final isWakeOnly = suggestion?.isWakeOnly ?? false;
     final summaryRequest = _isSummaryRequest(normalizedTranscript);
     final nextStepRequest = _isNextStepRequest(normalizedTranscript);
+    final memoryRequest = _isMemoryRequest(normalizedTranscript);
+    final planningRequest = _isPlanningRequest(normalizedTranscript);
 
     final actions = <VoiceCommandQuickAction>[];
 
@@ -157,6 +464,40 @@ class VoiceCommandService {
           label: 'Summarize Today',
           description: 'Prefill the review prompt for the day.',
           templateId: 'summarize-today',
+        ),
+      ]);
+    }
+
+    if (memoryRequest || (conversationContext?.hasMemory ?? false)) {
+      actions.addAll([
+        const VoiceCommandQuickAction(
+          id: 'recall-memory',
+          label: 'Recall Memory',
+          description: 'Ask Gaia what she remembers from the thread.',
+          templateId: 'recall-thread',
+        ),
+        const VoiceCommandQuickAction(
+          id: 'plan-day',
+          label: 'Plan Day',
+          description: 'Turn the remembered thread into a short action plan.',
+          templateId: 'plan-day',
+        ),
+      ]);
+    }
+
+    if (planningRequest) {
+      actions.addAll([
+        const VoiceCommandQuickAction(
+          id: 'plan-day',
+          label: 'Plan Day',
+          description: 'Turn the current thread into a short action plan.',
+          templateId: 'plan-day',
+        ),
+        const VoiceCommandQuickAction(
+          id: 'open-planner',
+          label: 'Open Planner',
+          description: 'Review the plan alongside today\'s focus.',
+          route: '/planner',
         ),
       ]);
     }
@@ -416,7 +757,12 @@ class VoiceCommandService {
       );
     }
 
-    return actions;
+    final dedupedActions = <String, VoiceCommandQuickAction>{};
+    for (final action in actions) {
+      dedupedActions.putIfAbsent(action.id, () => action);
+    }
+
+    return dedupedActions.values.toList();
   }
 
   VoiceCommandAssistantResponse buildAssistantResponse({
@@ -479,6 +825,29 @@ class VoiceCommandService {
             'This sounds like a next-step request. I can surface Tasks, Projects, or the current thread to keep momentum moving.',
         nextStep:
             'Open the place that matches the next move, then save the capture if it belongs there.',
+        projectContext: projectContext,
+        threadContext: threadContext,
+      );
+    }
+
+    if (_isMemoryRequest(lowerTranscript)) {
+      return VoiceCommandAssistantResponse(
+        summary: _buildMemorySummary(conversationContext),
+        nextStep:
+            'Ask me to recall the last thread, open the related project, or turn the memory into a task or plan.',
+        projectContext: projectContext,
+        threadContext: threadContext,
+      );
+    }
+
+    if (_isPlanningRequest(lowerTranscript)) {
+      return VoiceCommandAssistantResponse(
+        summary: _buildPlannerSummary(
+          suggestion: suggestion,
+          conversationContext: conversationContext,
+        ),
+        nextStep:
+            'Use the suggested action plan, then save the result in the right local module.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -582,6 +951,7 @@ class VoiceCommandService {
     final actions = suggestQuickActions(
       transcript: cleanedTranscript,
       suggestion: suggestion,
+      conversationContext: conversationContext,
     );
 
     return VoiceCommandBriefing(
@@ -590,6 +960,17 @@ class VoiceCommandService {
       projectContext: assistantResponse.projectContext,
       threadContext: assistantResponse.threadContext,
       actions: actions.take(3).toList(),
+      memorySummary: _buildMemorySummary(conversationContext),
+      memoryHighlights: _buildMemoryHighlights(conversationContext),
+      plannerSummary: _buildPlannerSummary(
+        suggestion: suggestion,
+        conversationContext: conversationContext,
+      ),
+      plannerSteps: _buildPlannerSteps(
+        suggestion: suggestion,
+        conversationContext: conversationContext,
+        actions: actions,
+      ),
     );
   }
 
@@ -1031,6 +1412,143 @@ Rules:
     return parts.join(' · ');
   }
 
+  String _buildMemorySummary(VoiceConversationContext? conversationContext) {
+    final history = getHistory();
+
+    if (conversationContext != null && conversationContext.hasMemory) {
+      final memoryBits = <String>[
+        if (conversationContext.projectName != null &&
+            conversationContext.projectName!.isNotEmpty)
+          'project ${conversationContext.projectName}',
+        'thread ${conversationContext.label}',
+        if (conversationContext.entryCount > 0)
+          '${conversationContext.entryCount} entry${conversationContext.entryCount == 1 ? '' : 's'}',
+      ];
+
+      if (history.isNotEmpty) {
+        return 'Gaia remembers ${memoryBits.join(', ')}. Recent captures are ready to reuse as well.';
+      }
+
+      return 'Gaia remembers ${memoryBits.join(', ')}.';
+    }
+
+    if (history.isNotEmpty) {
+      return 'Gaia remembers ${history.length} recent voice capture${history.length == 1 ? '' : 's'} and can keep the next move connected.';
+    }
+
+    return 'Gaia will build memory from the first saved command in this thread.';
+  }
+
+  List<String> _buildMemoryHighlights(
+    VoiceConversationContext? conversationContext,
+  ) {
+    final highlights = <String>[];
+
+    if (conversationContext != null && conversationContext.hasMemory) {
+      highlights.add('Thread: ${conversationContext.label}');
+      if (conversationContext.projectName != null &&
+          conversationContext.projectName!.isNotEmpty) {
+        highlights.add('Project: ${conversationContext.projectName}');
+      }
+      if (conversationContext.entryCount > 0) {
+        highlights.add('Entries: ${conversationContext.entryCount}');
+      }
+    }
+
+    for (final command in getHistory().take(3)) {
+      final highlight =
+          '${command.type.label}: ${_titleFromTranscript(command.transcript)}';
+      if (!highlights.contains(highlight)) {
+        highlights.add(highlight);
+      }
+    }
+
+    return highlights.take(4).toList();
+  }
+
+  String _buildPlannerSummary({
+    VoiceCommandSuggestion? suggestion,
+    VoiceConversationContext? conversationContext,
+  }) {
+    final plannerType = suggestion?.suggestedType ?? conversationContext?.type;
+
+    switch (plannerType) {
+      case VoiceCommandType.task:
+        return 'Gaia sees a task and the plan is to tighten the title, category, and priority before saving it.';
+      case VoiceCommandType.project:
+        return 'Gaia sees a project and the plan is to confirm the status, vision, and first action before saving it.';
+      case VoiceCommandType.journalEntry:
+        return 'Gaia sees a journal note and the plan is to capture what moved forward, what was learned, and what comes next.';
+      case VoiceCommandType.contentIdea:
+        return 'Gaia sees a content idea and the plan is to confirm the platform, format, and draft angle before saving it.';
+      case VoiceCommandType.businessOpportunity:
+        return 'Gaia sees a business lead and the plan is to confirm the contact, status, and next action before saving it.';
+      case VoiceCommandType.codexPrompt:
+        return 'Gaia sees a Codex prompt and the plan is to keep it review-first before any code moves.';
+      case VoiceCommandType.idea:
+        return 'Gaia sees a future idea and the plan is to keep it light, remembered, and easy to revisit.';
+      case null:
+        if (conversationContext != null && conversationContext.hasMemory) {
+          return 'Gaia can use the remembered thread to suggest the next practical move.';
+        }
+        return 'Gaia is ready to turn the current capture into a practical plan.';
+    }
+  }
+
+  List<String> _buildPlannerSteps({
+    VoiceCommandSuggestion? suggestion,
+    VoiceConversationContext? conversationContext,
+    List<VoiceCommandQuickAction> actions = const [],
+  }) {
+    final plannerType = suggestion?.suggestedType ?? conversationContext?.type;
+
+    final steps = switch (plannerType) {
+      VoiceCommandType.task => <String>[
+        'Open Tasks',
+        'Review category and priority',
+        'Save as Task',
+      ],
+      VoiceCommandType.project => <String>[
+        'Open Projects',
+        'Review status, vision, and first action',
+        'Save as Project',
+      ],
+      VoiceCommandType.journalEntry => <String>[
+        'Open Journal',
+        'Review what moved forward and what was learned',
+        'Save as Journal Entry',
+      ],
+      VoiceCommandType.contentIdea => <String>[
+        'Open Content',
+        'Review platform and content type',
+        'Save as Content Idea',
+      ],
+      VoiceCommandType.businessOpportunity => <String>[
+        'Open Business',
+        'Review contact, status, and next action',
+        'Save as Business Opportunity',
+      ],
+      VoiceCommandType.codexPrompt => <String>[
+        'Review the prompt',
+        'Keep the change request manual-review only',
+        'Ask for approval before code changes',
+      ],
+      VoiceCommandType.idea => <String>[
+        'Open Inbox',
+        'Keep the idea lightweight',
+        'Save it for later review',
+      ],
+      null => <String>[
+        if (conversationContext != null && conversationContext.hasMemory)
+          'Reuse the remembered thread',
+        if (actions.isNotEmpty) actions.first.label,
+        if (actions.length > 1) actions[1].label,
+      ],
+    };
+
+    return steps.where((step) => step.trim().isNotEmpty).take(3).toList();
+  }
+
   _StructuredVoiceFields _extractStructuredFields({
     required String transcript,
     required VoiceCommandType type,
@@ -1300,6 +1818,26 @@ Rules:
         transcript.contains('next step for') ||
         transcript.contains('next steps for') ||
         transcript.contains('what should i do next');
+  }
+
+  bool _isMemoryRequest(String transcript) {
+    return transcript.contains('what do you remember') ||
+        transcript.contains('what did you remember') ||
+        transcript.contains('recall memory') ||
+        transcript.contains('recall thread') ||
+        transcript.contains('remember this thread') ||
+        transcript.contains('last thread') ||
+        transcript.contains('memory') ||
+        transcript.contains('what did we talk about');
+  }
+
+  bool _isPlanningRequest(String transcript) {
+    return transcript.contains('plan my day') ||
+        transcript.contains('make a plan') ||
+        transcript.contains('action plan') ||
+        transcript.contains('help me plan') ||
+        transcript.contains('plan this') ||
+        transcript.contains('plan around this');
   }
 
   bool _isHelpRequest(String transcript) {

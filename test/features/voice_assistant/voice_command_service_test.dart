@@ -29,7 +29,7 @@ void main() {
     final service = VoiceCommandService();
     final templates = service.getTemplates();
 
-    expect(templates, hasLength(10));
+    expect(templates, hasLength(12));
     expect(templates.first.id, 'build-day');
     expect(templates.first.type, VoiceCommandType.task);
     expect(
@@ -37,9 +37,66 @@ void main() {
       isTrue,
     );
     expect(templates.any((template) => template.id == 'whats-next'), isTrue);
+    expect(templates.any((template) => template.id == 'recall-thread'), isTrue);
+    expect(templates.any((template) => template.id == 'plan-day'), isTrue);
     expect(templates.any((template) => template.id == 'project'), isTrue);
     expect(templates.any((template) => template.id == 'codex'), isTrue);
   });
+
+  test('voice command service exposes action macros', () {
+    final service = VoiceCommandService();
+    final macros = service.buildMacroActions();
+    final macroIds = macros.map((action) => action.id).toList();
+
+    expect(macroIds, contains('start-build-day'));
+    expect(macroIds, contains('plan-day'));
+    expect(macroIds, contains('summarize-today'));
+    expect(macroIds, contains('recall-memory'));
+    expect(macroIds, contains('whats-next'));
+    expect(macroIds, isNot(contains('continue-thread')));
+  });
+
+  test('voice command service resolves spoken macro follow-ups', () {
+    final service = VoiceCommandService();
+
+    final planAction = service.resolveFollowUpAction(
+      transcript: 'Plan my day around this thread.',
+    );
+    final createProjectAction = service.resolveFollowUpAction(
+      transcript: 'Create a project for the dashboard voice workflow.',
+    );
+    final recallAction = service.resolveFollowUpAction(
+      transcript: 'What do you remember about this thread?',
+    );
+
+    expect(planAction?.id, 'plan-day');
+    expect(createProjectAction?.id, 'load-project');
+    expect(recallAction?.id, 'recall-memory');
+  });
+
+  test(
+    'voice command service keeps the continue thread macro available when memory exists',
+    () {
+      final service = VoiceCommandService();
+      final conversationContext = service.buildConversationContext(
+        transcript: 'Create a project for the dashboard voice workflow.',
+        type: VoiceCommandType.project,
+        title: 'Dashboard voice workflow',
+        projectName: 'MicroGrow',
+      );
+
+      final macros = service.buildMacroActions(
+        conversationContext: conversationContext,
+      );
+      final followUpAction = service.resolveFollowUpAction(
+        transcript: 'Continue thread',
+        conversationContext: conversationContext,
+      );
+
+      expect(macros.map((action) => action.id), contains('continue-thread'));
+      expect(followUpAction?.id, 'continue-thread');
+    },
+  );
 
   test('voice command service suggests quick actions for build day', () {
     final service = VoiceCommandService();
@@ -95,6 +152,63 @@ void main() {
     expect(briefing.nextStep, contains('Planner'));
     expect(briefing.actions, isNotEmpty);
     expect(briefing.actions.first.label, contains('Dashboard'));
+  });
+
+  test('voice command service builds memory and action planning guidance', () {
+    final service = VoiceCommandService(now: () => DateTime(2026, 5, 10, 9, 0));
+
+    service.addCommand(
+      transcript: 'Review the dashboard cards',
+      type: VoiceCommandType.task,
+    );
+    service.addCommand(
+      transcript: 'Create a project for the dashboard voice workflow',
+      type: VoiceCommandType.project,
+    );
+
+    final suggestion = service.suggestCommand(
+      transcript:
+          'Project: What do you remember about this thread and how should I plan it?',
+    );
+    final briefing = service.buildBriefing(
+      transcript: suggestion.transcript,
+      suggestion: suggestion,
+      conversationContext: const VoiceConversationContext(
+        label: 'Project · Dashboard voice workflow',
+        summary: 'Continuing the dashboard voice workflow thread.',
+        type: VoiceCommandType.project,
+        projectName: 'MicroGrow',
+        title: 'Dashboard voice workflow',
+        transcript:
+            'Project: Create a project for the dashboard voice workflow.',
+        entryCount: 2,
+      ),
+    );
+    final response = service.buildAssistantResponse(
+      transcript: suggestion.transcript,
+      suggestion: suggestion,
+      conversationContext: const VoiceConversationContext(
+        label: 'Project · Dashboard voice workflow',
+        summary: 'Continuing the dashboard voice workflow thread.',
+        type: VoiceCommandType.project,
+        projectName: 'MicroGrow',
+        title: 'Dashboard voice workflow',
+        transcript:
+            'Project: Create a project for the dashboard voice workflow.',
+        entryCount: 2,
+      ),
+    );
+
+    expect(briefing.memorySummary, contains('MicroGrow'));
+    expect(
+      briefing.memoryHighlights.any(
+        (highlight) => highlight.startsWith('Thread:'),
+      ),
+      isTrue,
+    );
+    expect(briefing.plannerSummary, contains('project'));
+    expect(briefing.plannerSteps, contains('Open Projects'));
+    expect(response.summary, contains('remember'));
   });
 
   test('voice command service builds wizard prompts and transcript pieces', () {

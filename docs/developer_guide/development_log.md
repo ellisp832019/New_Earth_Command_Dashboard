@@ -1,6 +1,26 @@
 # Development Log
 
-# 2026-05-09 - Dashboard Conversation Dock
+# 2026-05-10 - Voice Action Macros
+
+Added a first-class action macro deck to the Voice Assistant so Gaia can run common assistant moves instantly instead of only suggesting them:
+
+- Added `Action Macros` to the Voice Assistant screen for `Start Build Day`, `Plan Day`, `Summarize Today`, `Recall Memory`, `What's Next`, and `Continue Thread`
+- Kept the macros review-first by routing them through the existing starter/template flow and thread memory
+- Added a shared service method so the macro list can be reused by the assistant screen, the conversation dock, and future voice surfaces
+- Added tests to cover the macro deck and memory-aware continue-thread macro
+- Updated the voice guide and app reference so the new macro layer is documented while the feature is still being shaped
+
+# 2026-05-09 - Dashboard Conversation Dock Inline Follow-Up
+
+Extended the dashboard conversation dock so Gaia can take a short follow-up directly without forcing a full route jump:
+
+- Added a quick-reply field and send action to the dock so a short question or continuation can be answered in place
+- Kept the wake response visible on the dashboard when the assistant route is still settling
+- Preserved the spoken reply path so the dock can answer aloud when voice output is enabled
+- Carried structured thread context into the dock so the follow-up stays attached to the current conversation
+- Kept the quick follow-up chips and full Voice Assistant route available as the broader conversation paths
+
+## 2026-05-09 - Dashboard Conversation Dock
 
 Added a route-independent conversation dock so Gaia can still show a visible wake response on the dashboard when the assistant screen handoff is still settling:
 

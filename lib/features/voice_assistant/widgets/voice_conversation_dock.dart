@@ -1,18 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../settings/application/settings_controller.dart';
 import '../application/voice_conversation_dock_controller.dart';
+import '../desktop_speech_bridge_service.dart';
 import '../voice_command_model.dart';
 import '../voice_command_service.dart';
+import '../voice_speech_service.dart';
 
-class VoiceConversationDock extends ConsumerWidget {
+class VoiceConversationDock extends ConsumerStatefulWidget {
   const VoiceConversationDock({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VoiceConversationDock> createState() =>
+      _VoiceConversationDockState();
+}
+
+class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
+  final DesktopSpeechBridgeService _desktopSpeechBridgeService =
+      DesktopSpeechBridgeService();
+  final TextEditingController _followUpController = TextEditingController();
+  final FocusNode _followUpFocusNode = FocusNode();
+  bool _isCapturingFollowUp = false;
+  String _followUpStatus = 'Speak a short follow-up or type it here.';
+
+  @override
+  void dispose() {
+    _followUpController.dispose();
+    _followUpFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final dock = ref.watch(voiceConversationDockProvider);
     if (!dock.visible) {
       return const SizedBox.shrink();
@@ -31,9 +56,14 @@ class VoiceConversationDock extends ConsumerWidget {
               )
               .take(4)
               .toList();
+    final macroActions = voiceService
+        .buildMacroActions(conversationContext: dock.conversationContext)
+        .where((action) => action.id != 'continue-thread')
+        .take(5)
+        .toList();
     final followUpActions = <VoiceCommandQuickAction>[
       ...quickActions,
-      if (dock.threadContext != null)
+      if (dock.conversationContext != null)
         const VoiceCommandQuickAction(
           id: 'continue-thread',
           label: 'Continue Thread',
@@ -205,6 +235,77 @@ class VoiceConversationDock extends ConsumerWidget {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 14),
+                    Text(
+                      'Quick reply',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColours.darkSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      key: const Key('voiceConversationFollowUpField'),
+                      controller: _followUpController,
+                      focusNode: _followUpFocusNode,
+                      minLines: 1,
+                      maxLines: 2,
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        hintText: dock.transcript.isEmpty
+                            ? 'Ask Gaia what she can do...'
+                            : 'Ask a short follow-up about this thread...',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          key: const Key('voiceConversationFollowUpSendButton'),
+                          onPressed: () => _submitFollowUp(),
+                          icon: const Icon(Icons.send_outlined),
+                        ),
+                      ),
+                      onSubmitted: (_) => _submitFollowUp(),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          key: const Key(
+                            'voiceConversationSpeakFollowUpButton',
+                          ),
+                          onPressed: _isCapturingFollowUp
+                              ? null
+                              : () => _captureFollowUp(),
+                          icon: _isCapturingFollowUp
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.mic_rounded),
+                          label: Text(
+                            _isCapturingFollowUp
+                                ? 'Listening'
+                                : 'Speak Follow-up',
+                          ),
+                        ),
+                        TextButton.icon(
+                          key: const Key('voiceConversationSendReplyButton'),
+                          onPressed: _submitFollowUp,
+                          icon: const Icon(Icons.send_outlined),
+                          label: const Text('Send Reply'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _followUpStatus,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
                     if (followUpActions.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Text(
@@ -239,6 +340,40 @@ class VoiceConversationDock extends ConsumerWidget {
                             .toList(),
                       ),
                     ],
+                    if (macroActions.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Action macros',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: macroActions
+                            .map(
+                              (action) => ActionChip(
+                                avatar: Icon(
+                                  _dockActionIcon(action),
+                                  size: 18,
+                                  color: AppColours.darkText,
+                                ),
+                                label: Text(action.label),
+                                onPressed: () => _handleDockAction(
+                                  context,
+                                  action,
+                                  dock,
+                                  voiceService,
+                                  suggestion,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 8,
@@ -250,9 +385,11 @@ class VoiceConversationDock extends ConsumerWidget {
                               : () {
                                   _openVoiceAssistant(
                                     context,
-                                    dock.transcript,
+                                    dock.conversationContext?.transcript ??
+                                        dock.transcript,
                                     dock.isWake,
-                                    suggestion?.suggestedType,
+                                    dock.conversationContext?.type ??
+                                        suggestion?.suggestedType,
                                   );
                                 },
                           icon: const Icon(Icons.open_in_new_rounded),
@@ -305,10 +442,137 @@ class VoiceConversationDock extends ConsumerWidget {
     if (action.id == 'continue-thread') {
       _openVoiceAssistant(
         context,
-        dock.transcript,
+        dock.conversationContext?.transcript ?? dock.transcript,
         dock.isWake,
-        suggestion?.suggestedType,
+        dock.conversationContext?.type ?? suggestion?.suggestedType,
       );
+    }
+  }
+
+  Future<void> _submitFollowUp() async {
+    final reply = _followUpController.text.trim();
+    if (reply.isEmpty) {
+      return;
+    }
+
+    final dock = ref.read(voiceConversationDockProvider);
+    final service = VoiceCommandService();
+    final suggestion = service.suggestCommand(transcript: reply);
+    final response = ref
+        .read(voiceConversationDockProvider.notifier)
+        .respondToFollowUp(reply);
+    if (response == null) {
+      return;
+    }
+
+    final action = service.resolveFollowUpAction(
+      transcript: reply,
+      conversationContext: dock.conversationContext,
+    );
+
+    _followUpController.clear();
+    _followUpFocusNode.requestFocus();
+    await _speakResponse(response);
+
+    if (!mounted) {
+      return;
+    }
+
+    if (action != null) {
+      if (mounted) {
+        setState(() {
+          _followUpStatus = 'Gaia is acting on that follow-up.';
+        });
+      }
+      _handleDockAction(context, action, dock, service, suggestion);
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _followUpStatus =
+            'Follow-up captured. Ask another question or use a macro.';
+      });
+    }
+  }
+
+  Future<void> _captureFollowUp() async {
+    if (_isCapturingFollowUp) {
+      return;
+    }
+
+    setState(() {
+      _isCapturingFollowUp = true;
+      _followUpStatus = 'Listening for a follow-up...';
+    });
+
+    try {
+      await ref.read(voiceAssistantSpeechServiceProvider).stop();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      final capture = await _desktopSpeechBridgeService.captureOnce(
+        durationSeconds: 6,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      final transcript = capture?.transcript.trim() ?? '';
+      if (transcript.isEmpty) {
+        setState(() {
+          _followUpStatus = 'No follow-up heard. Try again or type it.';
+        });
+        return;
+      }
+
+      _followUpController.text = transcript;
+      _followUpController.selection = TextSelection.collapsed(
+        offset: transcript.length,
+      );
+      setState(() {
+        _followUpStatus = 'Follow-up captured. Processing it now.';
+      });
+      await _submitFollowUp();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCapturingFollowUp = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _speakResponse(VoiceCommandAssistantResponse response) async {
+    final settingsSnapshot = ref
+        .read(settingsSnapshotProvider)
+        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    if (settingsSnapshot == null ||
+        !settingsSnapshot.settings.voiceRepliesEnabled) {
+      return;
+    }
+
+    try {
+      final voices = await ref.read(voiceAssistantVoicesProvider.future);
+      final selectedVoice = resolveConfiguredVoiceOption(
+        voices: voices,
+        preferredName: settingsSnapshot.settings.preferredTtsVoiceName,
+        preferredLocale: settingsSnapshot.settings.preferredTtsVoiceLocale,
+        preferredGender: settingsSnapshot.settings.preferredTtsVoiceGender,
+        preferredIdentifier:
+            settingsSnapshot.settings.preferredTtsVoiceIdentifier,
+      );
+      await ref.read(voiceAssistantSpeechServiceProvider).stop();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      await ref
+          .read(voiceAssistantSpeechServiceProvider)
+          .speak(
+            '${response.summary} ${response.nextStep}',
+            enabled: true,
+            rate: settingsSnapshot.settings.preferredTtsVoiceRate,
+            pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
+            voice: selectedVoice,
+          );
+    } catch (_) {
+      // Best-effort only. The dock should still update even if speech fails.
     }
   }
 
@@ -345,6 +609,8 @@ class VoiceConversationDock extends ConsumerWidget {
       case 'load-build-day':
       case 'start-build-day':
         return Icons.event_note_outlined;
+      case 'whats-next':
+        return Icons.alt_route_outlined;
       case 'summarize-today':
       case 'load-summarize-today':
         return Icons.summarize_outlined;

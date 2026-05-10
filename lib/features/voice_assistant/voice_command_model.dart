@@ -272,6 +272,10 @@ class VoiceCommandBriefing {
     required this.actions,
     this.projectContext,
     this.threadContext,
+    this.memorySummary,
+    this.memoryHighlights = const [],
+    this.plannerSummary,
+    this.plannerSteps = const [],
   });
 
   final String summary;
@@ -279,6 +283,10 @@ class VoiceCommandBriefing {
   final String? projectContext;
   final String? threadContext;
   final List<VoiceCommandQuickAction> actions;
+  final String? memorySummary;
+  final List<String> memoryHighlights;
+  final String? plannerSummary;
+  final List<String> plannerSteps;
 }
 
 class VoiceConversationContext {

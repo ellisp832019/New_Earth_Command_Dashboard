@@ -222,7 +222,7 @@ This task is complete when:
 - A reviewed transcript can save as a Business Opportunity.
 - Codex prompts are generated for manual review only.
 - Saved voice history can be reused from the Voice Assistant screen.
-- Gaia can surface a visible conversation dock on the dashboard when wake capture lands there before the full route opens, that dock can speak the captured reply through the configured voice output, and it can offer quick follow-up chips that reopen the assistant with a preselected intent.
+- Gaia can surface a visible conversation dock on the dashboard when wake capture lands there before the full route opens, that dock can speak the captured reply through the configured voice output, it can offer quick follow-up chips that reopen the assistant with a preselected intent, and it can accept a short follow-up directly in the dock so the thread keeps moving without a full route hop.
 - `flutter analyze` passes.
 - `flutter test` passes.
 - Windows startup blocks until a headset or headset microphone is connected.

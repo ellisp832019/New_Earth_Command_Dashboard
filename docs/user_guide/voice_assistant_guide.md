@@ -54,6 +54,7 @@ The current Voice Assistant can:
 - greet once at startup on Windows when voice replies are enabled, so you know Gaia is ready before you speak
 - speak the captured wake response back through the headset when the dashboard conversation dock appears
 - surface quick follow-up chips in the dashboard dock so you can continue the conversation into a task, project, journal entry, or another assistant step without leaving the dashboard
+- run action macros such as `Start Build Day`, `Plan Day`, `Summarize Today`, `Recall Memory`, `What's Next`, and `Continue Thread`
 
 It does not:
 
@@ -231,6 +232,43 @@ Use a starter when:
 
 ---
 
+## Action Macros
+
+The `Action Macros` card is the quick-execution layer.
+
+It gives you one-tap ways to run the most common assistant moves without rebuilding the prompt from scratch.
+
+Current macros:
+
+- `Start Build Day`
+- `Plan Day`
+- `Summarize Today`
+- `Recall Memory`
+- `What's Next`
+- `Continue Thread` when a remembered thread is available
+
+Use macros when you already know the move and want Gaia to preload the right assistant shape immediately.
+
+### Good Uses
+
+- `Start Build Day`: open a calm build-day planning flow
+- `Plan Day`: turn the current thread into a short action plan
+- `Summarize Today`: open the reflective day-review prompt
+- `Recall Memory`: ask Gaia what she remembers about the current thread
+- `What's Next`: open the next-step prompt for the current thread
+- `Continue Thread`: keep the remembered conversation moving
+
+### When To Use Action Macros
+
+Use a macro when:
+
+- you know the direction already
+- you want the assistant to act immediately
+- you keep returning to the same high-level moves
+- you want a stronger shortcut than typing the full command again
+
+---
+
 ## Command Router
 
 The `Command Router` is the assistant's "next moves" layer.
@@ -252,6 +290,7 @@ Typical router actions include:
 - Open Inbox
 - Open Projects
 - Load a matching voice template
+- Run the common action macros when the current thread already points to one
 
 ### How To Use It
 

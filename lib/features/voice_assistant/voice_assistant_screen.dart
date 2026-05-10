@@ -1535,6 +1535,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             suggestion: activeSuggestion,
             conversationContext: conversationContext,
           );
+    final macroActions = _service.buildMacroActions(
+      conversationContext: conversationContext,
+    );
     final wizardPrompt = _mode == _VoiceInteractionMode.wizard
         ? _wizardPrompt()
         : null;
@@ -1897,6 +1900,52 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
+                    if (briefing.memorySummary != null ||
+                        briefing.memoryHighlights.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text('Memory', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      Text(
+                        briefing.memorySummary ??
+                            'Gaia is building memory from the current thread.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      if (briefing.memoryHighlights.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: briefing.memoryHighlights
+                              .map((highlight) => Chip(label: Text(highlight)))
+                              .toList(),
+                        ),
+                      ],
+                    ],
+                    if (briefing.plannerSummary != null ||
+                        briefing.plannerSteps.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text('Action Plan', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      Text(
+                        briefing.plannerSummary ??
+                            'Gaia is ready to suggest the next useful move.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      if (briefing.plannerSteps.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: briefing.plannerSteps.asMap().entries.map((
+                            entry,
+                          ) {
+                            final index = entry.key;
+                            final step = entry.value;
+                            return Chip(label: Text('${index + 1}. $step'));
+                          }).toList(),
+                        ),
+                      ],
+                    ],
                     if (briefing.actions.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Text(
@@ -1951,6 +2000,42 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             ),
             const SizedBox(height: 16),
           ],
+          Card(
+            key: const Key('voiceMacroCard'),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Action Macros', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap a macro to run a common assistant move instantly.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: macroActions
+                        .map(
+                          (action) => Tooltip(
+                            message: action.description,
+                            child: FilledButton.tonalIcon(
+                              key: Key('voiceMacroButton-${action.id}'),
+                              onPressed: () => _handleQuickAction(action),
+                              icon: Icon(_quickActionIcon(action.id)),
+                              label: Text(action.label),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -2200,6 +2285,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         return Icons.summarize_outlined;
       case 'whats-next':
         return Icons.alt_route_outlined;
+      case 'recall-thread':
+        return Icons.history_rounded;
+      case 'plan-day':
+        return Icons.calendar_month_outlined;
       case 'project':
         return Icons.folder_open_outlined;
       case 'task':
@@ -2221,18 +2310,29 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
   IconData _quickActionIcon(String id) {
     switch (id) {
+      case 'start-build-day':
+        return Icons.calendar_view_day_outlined;
       case 'open-dashboard':
         return Icons.dashboard_outlined;
       case 'open-planner':
         return Icons.event_note_outlined;
       case 'open-planner-summary':
         return Icons.summarize_outlined;
+      case 'summarize-today':
+        return Icons.summarize_outlined;
+      case 'plan-day':
+        return Icons.calendar_month_outlined;
+      case 'whats-next':
+        return Icons.alt_route_outlined;
       case 'open-tasks-next':
         return Icons.task_alt_outlined;
       case 'open-projects-next':
         return Icons.folder_open_outlined;
       case 'open-tasks':
         return Icons.task_alt_outlined;
+      case 'recall-memory':
+      case 'recall-thread':
+        return Icons.history_rounded;
       case 'open-journal':
         return Icons.menu_book_outlined;
       case 'open-content':

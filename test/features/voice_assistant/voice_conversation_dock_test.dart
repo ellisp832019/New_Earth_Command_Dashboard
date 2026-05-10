@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/features/settings/application/settings_controller.dart';
+import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_conversation_dock_controller.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/widgets/voice_conversation_dock.dart';
 
 void main() {
@@ -30,6 +34,15 @@ void main() {
           isWake: true,
           projectContext: 'MicroGrow',
           threadContext: 'MicroGrow · Project · Dashboard voice workflow',
+          conversationContext: const VoiceConversationContext(
+            label: 'Project',
+            summary: 'Dashboard voice workflow',
+            type: VoiceCommandType.project,
+            projectName: 'MicroGrow',
+            title: 'Dashboard voice workflow',
+            transcript: 'Hey Gaia create a project for the dashboard',
+            entryCount: 2,
+          ),
         );
     await tester.pumpAndSettle();
 
@@ -74,6 +87,16 @@ void main() {
           isWake: true,
           projectContext: 'Dashboard voice workflow',
           threadContext: 'Dashboard voice workflow · Project · Draft',
+          conversationContext: const VoiceConversationContext(
+            label: 'Project',
+            summary: 'Dashboard voice workflow',
+            type: VoiceCommandType.project,
+            projectName: 'Dashboard voice workflow',
+            title: 'Draft',
+            transcript:
+                'Project: Create a project for the dashboard voice workflow',
+            entryCount: 1,
+          ),
         );
     await tester.pumpAndSettle();
 
@@ -82,5 +105,81 @@ void main() {
     expect(find.text('Open Projects'), findsOneWidget);
     expect(find.text('Continue Thread'), findsOneWidget);
     expect(find.text('Open Assistant'), findsOneWidget);
+  });
+
+  testWidgets('voice conversation dock accepts a short follow-up reply', (
+    WidgetTester tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        settingsSnapshotProvider.overrideWith(
+          (ref) async => SettingsSnapshot(
+            settings: AppSetting(
+              settingsId: 'settings-test',
+              themeMode: 'Dark',
+              defaultDashboardView: null,
+              showWellbeingCard: true,
+              showBusinessCard: true,
+              showLearningCard: true,
+              showContentCard: true,
+              dailyTopTaskLimit: 3,
+              voiceRepliesEnabled: false,
+              preferredTtsVoiceName: null,
+              preferredTtsVoiceLocale: null,
+              preferredTtsVoiceGender: null,
+              preferredTtsVoiceIdentifier: null,
+              preferredTtsVoiceRate: 0.5,
+              preferredTtsVoicePitch: 1.0,
+              createdAt: DateTime(2026, 5, 9),
+              updatedAt: DateTime(2026, 5, 9),
+            ),
+            appVersion: 'test',
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: Scaffold(body: VoiceConversationDock())),
+      ),
+    );
+
+    container
+        .read(voiceConversationDockProvider.notifier)
+        .show(
+          title: 'Gaia',
+          summary: 'I am here and ready to help.',
+          nextStep:
+              'Ask a short follow-up right here without opening the full screen.',
+          transcript: 'Hey Gaia',
+          isWake: true,
+          projectContext: 'Dashboard voice workflow',
+          threadContext: 'Dashboard voice workflow · Wake · Greeting',
+        );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('voiceConversationFollowUpField')),
+      'What can you do?',
+    );
+    await tester.tap(find.byKey(const Key('voiceConversationFollowUpSendButton')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'I can help you create tasks, projects, journal entries, content ideas, business opportunities, inbox items, and more.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Try saying create a task, create a project, summarize today, continue the thread, or ask for the next move.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('What can you do?'), findsOneWidget);
   });
 }

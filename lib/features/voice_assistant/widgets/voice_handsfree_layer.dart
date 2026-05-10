@@ -266,12 +266,25 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           : transcriptToOpen,
       suggestion: suggestion,
     );
+    final previousConversationContext =
+        ref.read(voiceConversationDockProvider).conversationContext;
+    final conversationContext = _service.buildConversationContext(
+      transcript: transcriptToOpen.isEmpty
+          ? (suggestion.wakePhrase ?? transcript.trim())
+          : transcriptToOpen,
+      type: suggestion.suggestedType,
+      title: suggestion.suggestedTitle,
+      projectId: suggestion.suggestedProjectId,
+      projectName: suggestion.suggestedProjectName,
+      previous: previousConversationContext,
+    );
     _showConversationDock(
       transcript: transcriptToOpen.isEmpty
           ? (suggestion.wakePhrase ?? transcript.trim())
           : transcriptToOpen,
       response: response,
       isWake: suggestion.usedWakePhrase || isWakeOnly,
+      conversationContext: conversationContext,
     );
     if (isWakeOnly) {
       if (_wakeOnlyRouteConsumed) {
@@ -380,6 +393,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     required String transcript,
     required VoiceCommandAssistantResponse response,
     required bool isWake,
+    required VoiceConversationContext conversationContext,
   }) {
     ref
         .read(voiceConversationDockProvider.notifier)
@@ -391,6 +405,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           isWake: isWake,
           projectContext: response.projectContext,
           threadContext: response.threadContext,
+          conversationContext: conversationContext,
         );
   }
 
