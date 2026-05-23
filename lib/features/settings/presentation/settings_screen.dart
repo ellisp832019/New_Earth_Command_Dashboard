@@ -16,6 +16,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   static const _themeOptions = ['Light', 'Dark', 'System'];
 
   bool? _voiceRepliesEnabled;
+  bool? _voiceAssistantEnabled;
   double? _voiceRate;
   double? _voicePitch;
   VoiceTtsVoiceOption? _selectedVoice;
@@ -23,6 +24,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _syncVoiceState({
     required bool voiceRepliesEnabled,
+    required bool voiceAssistantEnabled,
     required double voiceRate,
     required double voicePitch,
     VoiceTtsVoiceOption? selectedVoice,
@@ -32,6 +34,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
 
     _voiceRepliesEnabled = voiceRepliesEnabled;
+    _voiceAssistantEnabled = voiceAssistantEnabled;
     _voiceRate = voiceRate;
     _voicePitch = voicePitch;
     _selectedVoice = selectedVoice;
@@ -73,12 +76,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           );
           _syncVoiceState(
             voiceRepliesEnabled: appSettings.voiceRepliesEnabled,
+            voiceAssistantEnabled: appSettings.voiceAssistantEnabled,
             voiceRate: appSettings.preferredTtsVoiceRate,
             voicePitch: appSettings.preferredTtsVoicePitch,
             selectedVoice: selectedVoice,
           );
           final voiceRepliesEnabled =
               _voiceRepliesEnabled ?? appSettings.voiceRepliesEnabled;
+          final voiceAssistantEnabled =
+              _voiceAssistantEnabled ?? appSettings.voiceAssistantEnabled;
           final voiceRate = _voiceRate ?? appSettings.preferredTtsVoiceRate;
           final voicePitch = _voicePitch ?? appSettings.preferredTtsVoicePitch;
           final selectedVoiceOption = _selectedVoice ?? selectedVoice;
@@ -184,6 +190,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 12),
+                      SwitchListTile(
+                        key: const Key('settingsVoiceAssistantToggle'),
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Enable Voice Assistant'),
+                        subtitle: const Text(
+                          'Allow headset capture and voice assistant commands after startup.',
+                        ),
+                        value: voiceAssistantEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _voiceAssistantEnabled = value;
+                          });
+                          ref
+                              .read(settingsControllerProvider)
+                              .setVoicePreferences(
+                                voiceAssistantEnabled: value,
+                              );
+                        },
+                      ),
                       SwitchListTile(
                         key: const Key('settingsVoiceRepliesToggle'),
                         contentPadding: EdgeInsets.zero,

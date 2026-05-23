@@ -19,6 +19,9 @@ class AppSettings extends Table {
       integer().named('daily_top_task_limit').withDefault(const Constant(3))();
   BoolColumn get voiceRepliesEnabled =>
       boolean().named('voice_replies_enabled').withDefault(const Constant(true))();
+  BoolColumn get voiceAssistantEnabled => boolean()
+      .named('voice_assistant_enabled')
+      .withDefault(const Constant(true))();
   TextColumn get preferredTtsVoiceName =>
       text().named('preferred_tts_voice_name').nullable()();
   TextColumn get preferredTtsVoiceLocale =>

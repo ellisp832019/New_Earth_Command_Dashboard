@@ -72,6 +72,7 @@ class SettingsRepository {
 
   Future<AppSetting> updateVoicePreferences({
     bool? voiceRepliesEnabled,
+    bool? voiceAssistantEnabled,
     String? preferredTtsVoiceName,
     String? preferredTtsVoiceLocale,
     String? preferredTtsVoiceGender,
@@ -89,6 +90,9 @@ class SettingsRepository {
         voiceRepliesEnabled: voiceRepliesEnabled == null
             ? const Value.absent()
             : Value(voiceRepliesEnabled),
+        voiceAssistantEnabled: voiceAssistantEnabled == null
+            ? const Value.absent()
+            : Value(voiceAssistantEnabled),
         preferredTtsVoiceName: Value(preferredTtsVoiceName),
         preferredTtsVoiceLocale: Value(preferredTtsVoiceLocale),
         preferredTtsVoiceGender: Value(preferredTtsVoiceGender),
@@ -129,6 +133,7 @@ class SettingsRepository {
             showContentCard: const Value(true),
             dailyTopTaskLimit: const Value(3),
             voiceRepliesEnabled: const Value(true),
+            voiceAssistantEnabled: const Value(true),
             preferredTtsVoiceName: const Value(null),
             preferredTtsVoiceLocale: const Value(null),
             preferredTtsVoiceGender: const Value(null),

@@ -124,6 +124,7 @@ void main() {
               showContentCard: true,
               dailyTopTaskLimit: 3,
               voiceRepliesEnabled: false,
+              voiceAssistantEnabled: true,
               preferredTtsVoiceName: null,
               preferredTtsVoiceLocale: null,
               preferredTtsVoiceGender: null,

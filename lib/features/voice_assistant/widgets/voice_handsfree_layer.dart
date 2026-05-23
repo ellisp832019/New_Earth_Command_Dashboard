@@ -9,7 +9,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../application/voice_conversation_dock_controller.dart';
-import '../application/voice_presence_controller.dart';
+import '../application/voice_session_controller.dart';
 import '../../settings/application/settings_controller.dart';
 import '../desktop_speech_bridge_service.dart';
 import '../voice_command_model.dart';
@@ -76,13 +76,19 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       return;
     }
 
-    _isStarted = true;
-    _setVoicePresence(
+    final session = ref.read(voiceSessionProvider.notifier);
+    if (!session.beginListening(
+      owner: VoiceSessionOwner.handsfree,
       label: 'Gaia listening',
       detail: 'Arming voice input',
-      isActive: true,
       opacity: 0.72,
-    );
+    )) {
+      _isStarted = false;
+      _scheduleRearm();
+      return;
+    }
+
+    _isStarted = true;
 
     if (WindowsVoiceTypingService.isSupported) {
       _captureFocusNode.requestFocus();
@@ -92,10 +98,10 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       }
 
       if (capture != null && capture.transcript.trim().isNotEmpty) {
-        _setVoicePresence(
+        session.beginProcessing(
+          owner: VoiceSessionOwner.handsfree,
           label: 'Gaia captured',
           detail: 'Reviewing transcript',
-          isActive: true,
           opacity: 0.84,
         );
         _captureController.text = capture.transcript.trim();
@@ -113,12 +119,13 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       }
 
       if (!available) {
-        _setVoicePresence(
-          label: 'Gaia idle',
-          detail: 'Mic not available',
-          isActive: false,
-          opacity: 0.28,
-        );
+        ref
+            .read(voiceSessionProvider.notifier)
+            .release(
+              owner: VoiceSessionOwner.handsfree,
+              label: 'Gaia idle',
+              detail: 'Mic not available',
+            );
         _scheduleRearm();
       }
       return;
@@ -134,12 +141,13 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     }
 
     if (!available) {
-      _setVoicePresence(
-        label: 'Gaia idle',
-        detail: 'Mic not available',
-        isActive: false,
-        opacity: 0.28,
-      );
+      ref
+          .read(voiceSessionProvider.notifier)
+          .release(
+            owner: VoiceSessionOwner.handsfree,
+            label: 'Gaia idle',
+            detail: 'Mic not available',
+          );
       return;
     }
 
@@ -161,6 +169,13 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
   }
 
   void _scheduleRearm() {
+    final settingsSnapshot = ref
+        .read(settingsSnapshotProvider)
+        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    if (settingsSnapshot?.settings.voiceAssistantEnabled != true) {
+      return;
+    }
+
     _debounceTimer?.cancel();
     _debounceTimer = Timer(
       WindowsVoiceTypingService.isSupported
@@ -171,13 +186,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           return;
         }
 
+        final session = ref.read(voiceSessionProvider);
+        if (!session.canBeClaimed) {
+          _isStarted = false;
+          _scheduleRearm();
+          return;
+        }
+
         _isStarted = false;
-        _setVoicePresence(
-          label: 'Gaia listening',
-          detail: 'Arming voice input',
-          isActive: true,
-          opacity: 0.72,
-        );
         unawaited(_startHandsfreeListener());
       },
     );
@@ -194,14 +210,20 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         .read(settingsSnapshotProvider)
         .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
 
+    if (settingsSnapshot?.settings.voiceAssistantEnabled != true) {
+      return;
+    }
+
     if (settingsSnapshot?.settings.voiceRepliesEnabled ?? false) {
       try {
-        _setVoicePresence(
-          label: 'Gaia greeting',
-          detail: 'Getting ready to listen',
-          isActive: true,
-          opacity: 0.64,
-        );
+        ref
+            .read(voiceSessionProvider.notifier)
+            .beginSpeaking(
+              owner: VoiceSessionOwner.handsfree,
+              label: 'Gaia greeting',
+              detail: 'Getting ready to listen',
+              opacity: 0.64,
+            );
         await ref
             .read(voiceAssistantSpeechServiceProvider)
             .speak(
@@ -266,8 +288,9 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           : transcriptToOpen,
       suggestion: suggestion,
     );
-    final previousConversationContext =
-        ref.read(voiceConversationDockProvider).conversationContext;
+    final previousConversationContext = ref
+        .read(voiceConversationDockProvider)
+        .conversationContext;
     final conversationContext = _service.buildConversationContext(
       transcript: transcriptToOpen.isEmpty
           ? (suggestion.wakePhrase ?? transcript.trim())
@@ -291,12 +314,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         return;
       }
       _wakeOnlyRouteConsumed = true;
-      _setVoicePresence(
-        label: 'Gaia wake',
-        detail: 'Opening Voice Assistant',
-        isActive: true,
-        opacity: 0.82,
-      );
+      ref
+          .read(voiceSessionProvider.notifier)
+          .beginAwaitingFollowUp(
+            owner: VoiceSessionOwner.assistant,
+            label: 'Gaia wake',
+            detail: 'Opening Voice Assistant',
+            opacity: 0.82,
+          );
       context.go(
         Uri(
           path: RouteNames.voiceAssistant,
@@ -315,12 +340,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
 
     _wakeOnlyRouteConsumed = false;
     _lastDispatchedTranscript = transcriptToOpen;
-    _setVoicePresence(
-      label: 'Gaia captured',
-      detail: 'Conversation dock visible',
-      isActive: true,
-      opacity: 0.82,
-    );
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginAwaitingFollowUp(
+          owner: VoiceSessionOwner.assistant,
+          label: 'Gaia captured',
+          detail: 'Conversation dock visible',
+          opacity: 0.82,
+        );
     final route = Uri(
       path: RouteNames.voiceAssistant,
       queryParameters: {'transcript': transcriptToOpen},
@@ -342,12 +369,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     );
 
     if (result.finalResult) {
-      _setVoicePresence(
-        label: 'Gaia captured',
-        detail: 'Reviewing transcript',
-        isActive: true,
-        opacity: 0.84,
-      );
+      ref
+          .read(voiceSessionProvider.notifier)
+          .beginProcessing(
+            owner: VoiceSessionOwner.handsfree,
+            label: 'Gaia captured',
+            detail: 'Reviewing transcript',
+            opacity: 0.84,
+          );
       unawaited(_dispatchWakeTranscript(result.recognizedWords));
       _scheduleRearm();
     }
@@ -358,6 +387,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       return;
     }
 
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginAwaitingFollowUp(
+          owner: VoiceSessionOwner.handsfree,
+          label: 'Gaia listening',
+          detail: 'Speak your next command',
+          opacity: 0.84,
+        );
     _scheduleRearm();
   }
 
@@ -369,24 +406,6 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     if (status == 'done') {
       _scheduleRearm();
     }
-  }
-
-  void _setVoicePresence({
-    required String label,
-    required String detail,
-    required bool isActive,
-    required double opacity,
-  }) {
-    ref
-        .read(voicePresenceProvider.notifier)
-        .setPresence(
-          VoicePresenceState(
-            label: label,
-            detail: detail,
-            isActive: isActive,
-            opacity: opacity,
-          ),
-        );
   }
 
   void _showConversationDock({
@@ -421,6 +440,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     }
 
     try {
+      ref
+          .read(voiceSessionProvider.notifier)
+          .beginSpeaking(
+            owner: VoiceSessionOwner.handsfree,
+            label: 'Gaia speaking',
+            detail: 'Reading back the response',
+            opacity: 0.72,
+          );
       final voices = await ref.read(voiceAssistantVoicesProvider.future);
       final selectedVoice = resolveConfiguredVoiceOption(
         voices: voices,
@@ -451,6 +478,16 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     final settingsSnapshot = ref
         .watch(settingsSnapshotProvider)
         .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    final voiceAssistantEnabled =
+        settingsSnapshot?.settings.voiceAssistantEnabled ?? true;
+
+    if (!voiceAssistantEnabled) {
+      if (_isStarted) {
+        _speech.cancel();
+        _isStarted = false;
+      }
+      return widget.child;
+    }
 
     if (settingsSnapshot != null &&
         !_startupGreetingQueued &&

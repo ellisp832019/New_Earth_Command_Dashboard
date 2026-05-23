@@ -19,82 +19,128 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(databaseReadyProvider);
     final themeMode = ref.watch(appThemeModeProvider);
-    final startupGate = ref.watch(voiceStartupGateProvider);
+    final settingsSnapshot = ref.watch(settingsSnapshotProvider);
 
-    return startupGate.when(
-      loading: () => MaterialApp(
+    Widget buildAppRouter() {
+      return MaterialApp.router(
         title: 'Gaia',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: themeMode,
-        home: const VoiceStartupGateScreen(
-          result: VoiceStartupGateResult(
-            isReady: false,
-            message: 'Checking for a connected headset...',
-            devices: <VoiceInputDevice>[],
-          ),
-        ),
-      ),
-      error: (error, stackTrace) => MaterialApp(
-        title: 'Gaia',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: themeMode,
-        home: VoiceStartupGateScreen(
-          result: const VoiceStartupGateResult(
-            isReady: false,
-            message:
-                'Gaia could not check the headset connection right now. Retry once the device is connected.',
-            devices: <VoiceInputDevice>[],
-          ),
-        ),
-      ),
-      data: (VoiceStartupGateResult result) {
-        if (!result.isReady) {
-          return MaterialApp(
-            title: 'Gaia',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
-            themeMode: themeMode,
-            home: VoiceStartupGateScreen(result: result),
+        routerConfig: appRouter,
+        builder: (context, child) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              VoiceHandsfreeLayer(
+                child: child ?? const SizedBox.shrink(),
+              ),
+              const Positioned(
+                top: 16,
+                right: 16,
+                child: SafeArea(
+                  child: IgnorePointer(
+                    child: VoicePresenceChip(),
+                  ),
+                ),
+              ),
+              const Positioned(
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  child: VoiceConversationDock(),
+                ),
+              ),
+            ],
           );
+        },
+      );
+    }
+
+    Widget buildGateScreen(VoiceStartupGateResult result) {
+      return MaterialApp(
+        title: 'Gaia',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
+        home: VoiceStartupGateScreen(result: result),
+      );
+    }
+
+    Widget buildDefaultGate() {
+      return buildGateScreen(
+        const VoiceStartupGateResult(
+          isReady: false,
+          message: 'Checking for a connected headset...',
+          devices: <VoiceInputDevice>[],
+        ),
+      );
+    }
+
+    return settingsSnapshot.when(
+      loading: () {
+        final startupGate = ref.watch(voiceStartupGateProvider);
+        return startupGate.when(
+          loading: buildDefaultGate,
+          error: (error, stackTrace) => buildGateScreen(
+            const VoiceStartupGateResult(
+              isReady: false,
+              message:
+                  'Gaia could not check the headset connection right now. Retry once the device is connected.',
+              devices: <VoiceInputDevice>[],
+            ),
+          ),
+          data: (VoiceStartupGateResult result) {
+            if (!result.isReady) {
+              return buildGateScreen(result);
+            }
+            return buildAppRouter();
+          },
+        );
+      },
+      error: (error, stackTrace) {
+        final startupGate = ref.watch(voiceStartupGateProvider);
+        return startupGate.when(
+          loading: buildDefaultGate,
+          error: (error, stackTrace) => buildGateScreen(
+            const VoiceStartupGateResult(
+              isReady: false,
+              message:
+                  'Gaia could not check the headset connection right now. Retry once the device is connected.',
+              devices: <VoiceInputDevice>[],
+            ),
+          ),
+          data: (VoiceStartupGateResult result) {
+            if (!result.isReady) {
+              return buildGateScreen(result);
+            }
+            return buildAppRouter();
+          },
+        );
+      },
+      data: (snapshot) {
+        if (!snapshot.settings.voiceAssistantEnabled) {
+          return buildAppRouter();
         }
 
-        return MaterialApp.router(
-          title: 'Gaia',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          routerConfig: appRouter,
-          builder: (context, child) {
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                VoiceHandsfreeLayer(
-                  child: child ?? const SizedBox.shrink(),
-                ),
-                const Positioned(
-                  top: 16,
-                  right: 16,
-                  child: SafeArea(
-                    child: IgnorePointer(
-                      child: VoicePresenceChip(),
-                    ),
-                  ),
-                ),
-                const Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: SafeArea(
-                    child: VoiceConversationDock(),
-                  ),
-                ),
-              ],
-            );
+        final startupGate = ref.watch(voiceStartupGateProvider);
+        return startupGate.when(
+          loading: buildDefaultGate,
+          error: (error, stackTrace) => buildGateScreen(
+            const VoiceStartupGateResult(
+              isReady: false,
+              message:
+                  'Gaia could not check the headset connection right now. Retry once the device is connected.',
+              devices: <VoiceInputDevice>[],
+            ),
+          ),
+          data: (VoiceStartupGateResult result) {
+            if (!result.isReady) {
+              return buildGateScreen(result);
+            }
+            return buildAppRouter();
           },
         );
       },

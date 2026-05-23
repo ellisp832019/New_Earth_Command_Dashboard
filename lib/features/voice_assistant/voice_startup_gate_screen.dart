@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../settings/application/settings_controller.dart';
 import 'application/voice_startup_gate_controller.dart';
 import 'voice_startup_gate_service.dart';
 
@@ -78,11 +79,27 @@ class VoiceStartupGateScreen extends ConsumerWidget {
                         icon: const Icon(Icons.headset_outlined),
                         label: const Text('Check again'),
                       ),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          ref
+                              .read(settingsControllerProvider)
+                              .setVoicePreferences(
+                                voiceAssistantEnabled: false,
+                              );
+                        },
+                        icon: const Icon(Icons.volume_off_outlined),
+                        label: const Text('Continue without Voice'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Gaia will continue only after it sees a connected headset or headset microphone.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'If you prefer, disable the voice assistant now and re-enable it later in Settings.',
                     style: theme.textTheme.bodySmall,
                   ),
                 ],

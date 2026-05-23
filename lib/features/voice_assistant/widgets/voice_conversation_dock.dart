@@ -8,6 +8,7 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../settings/application/settings_controller.dart';
 import '../application/voice_conversation_dock_controller.dart';
+import '../application/voice_session_controller.dart';
 import '../desktop_speech_bridge_service.dart';
 import '../voice_command_model.dart';
 import '../voice_command_service.dart';
@@ -458,6 +459,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
     final dock = ref.read(voiceConversationDockProvider);
     final service = VoiceCommandService();
     final suggestion = service.suggestCommand(transcript: reply);
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginProcessing(
+          owner: VoiceSessionOwner.dock,
+          label: 'Gaia processing',
+          detail: 'Shaping the follow-up',
+          opacity: 0.72,
+        );
     final response = ref
         .read(voiceConversationDockProvider.notifier)
         .respondToFollowUp(reply);
@@ -472,6 +481,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
 
     _followUpController.clear();
     _followUpFocusNode.requestFocus();
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginSpeaking(
+          owner: VoiceSessionOwner.dock,
+          label: 'Gaia speaking',
+          detail: 'Answering the follow-up',
+          opacity: 0.72,
+        );
     await _speakResponse(response);
 
     if (!mounted) {
@@ -494,6 +511,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
             'Follow-up captured. Ask another question or use a macro.';
       });
     }
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginAwaitingFollowUp(
+          owner: VoiceSessionOwner.dock,
+          label: 'Gaia ready',
+          detail: 'Ask another follow-up',
+          opacity: 0.64,
+        );
   }
 
   Future<void> _captureFollowUp() async {
@@ -507,6 +532,20 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
     });
 
     try {
+      final session = ref.read(voiceSessionProvider.notifier);
+      if (!session.beginListening(
+        owner: VoiceSessionOwner.dock,
+        label: 'Gaia listening',
+        detail: 'Listening for a follow-up',
+        opacity: 0.72,
+      )) {
+        if (mounted) {
+          setState(() {
+            _followUpStatus = 'Another voice session is already active.';
+          });
+        }
+        return;
+      }
       await ref.read(voiceAssistantSpeechServiceProvider).stop();
       await Future<void>.delayed(const Duration(milliseconds: 120));
       final capture = await _desktopSpeechBridgeService.captureOnce(
@@ -521,6 +560,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         setState(() {
           _followUpStatus = 'No follow-up heard. Try again or type it.';
         });
+        ref
+            .read(voiceSessionProvider.notifier)
+            .beginAwaitingFollowUp(
+              owner: VoiceSessionOwner.dock,
+              label: 'Gaia ready',
+              detail: 'Ask another follow-up',
+              opacity: 0.64,
+            );
         return;
       }
 
@@ -531,6 +578,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
       setState(() {
         _followUpStatus = 'Follow-up captured. Processing it now.';
       });
+      ref
+          .read(voiceSessionProvider.notifier)
+          .beginProcessing(
+            owner: VoiceSessionOwner.dock,
+            label: 'Gaia captured',
+            detail: 'Processing the follow-up',
+            opacity: 0.84,
+          );
       await _submitFollowUp();
     } finally {
       if (mounted) {

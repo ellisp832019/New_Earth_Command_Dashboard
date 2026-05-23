@@ -1,0 +1,94 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_presence_controller.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_session_controller.dart';
+
+void main() {
+  test('voice session controller claims and releases a single owner', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final session = container.read(voiceSessionProvider.notifier);
+
+    expect(
+      session.beginListening(
+        owner: VoiceSessionOwner.handsfree,
+        label: 'Gaia listening',
+        detail: 'Arming voice input',
+      ),
+      isTrue,
+    );
+
+    expect(
+      container.read(voiceSessionProvider).owner,
+      VoiceSessionOwner.handsfree,
+    );
+    expect(container.read(voicePresenceProvider).label, 'Gaia listening');
+
+    expect(
+      session.beginListening(
+        owner: VoiceSessionOwner.dock,
+        label: 'Gaia listening',
+        detail: 'Listening for a follow-up',
+      ),
+      isFalse,
+    );
+
+    session.release(
+      owner: VoiceSessionOwner.handsfree,
+      label: 'Gaia idle',
+      detail: 'Ready when you are',
+    );
+
+    expect(container.read(voiceSessionProvider).owner, VoiceSessionOwner.none);
+    expect(container.read(voicePresenceProvider).label, 'Gaia idle');
+
+    session.beginAwaitingFollowUp(
+      owner: VoiceSessionOwner.assistant,
+      label: 'Gaia ready',
+      detail: 'Ask another follow-up',
+    );
+    expect(
+      container.read(voiceSessionProvider).owner,
+      VoiceSessionOwner.assistant,
+    );
+    expect(
+      container.read(voiceSessionProvider).phase,
+      VoiceSessionPhase.awaitingFollowUp,
+    );
+  });
+
+  test('voice session controller allows a handoff after release', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final session = container.read(voiceSessionProvider.notifier);
+
+    session.beginProcessing(
+      owner: VoiceSessionOwner.dock,
+      label: 'Gaia captured',
+      detail: 'Processing the follow-up',
+    );
+
+    session.release(
+      owner: VoiceSessionOwner.dock,
+      label: 'Gaia idle',
+      detail: 'Ready when you are',
+    );
+
+    session.beginAwaitingFollowUp(
+      owner: VoiceSessionOwner.assistant,
+      label: 'Gaia ready',
+      detail: 'Ask another follow-up',
+    );
+    expect(
+      container.read(voiceSessionProvider).owner,
+      VoiceSessionOwner.assistant,
+    );
+    expect(
+      container.read(voiceSessionProvider).phase,
+      VoiceSessionPhase.awaitingFollowUp,
+    );
+  });
+}

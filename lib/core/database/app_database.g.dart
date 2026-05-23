@@ -8555,6 +8555,21 @@ class $AppSettingsTable extends AppSettings
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _voiceAssistantEnabledMeta =
+      const VerificationMeta('voiceAssistantEnabled');
+  @override
+  late final GeneratedColumn<bool> voiceAssistantEnabled =
+      GeneratedColumn<bool>(
+        'voice_assistant_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("voice_assistant_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
   static const VerificationMeta _preferredTtsVoiceNameMeta =
       const VerificationMeta('preferredTtsVoiceName');
   @override
@@ -8656,6 +8671,7 @@ class $AppSettingsTable extends AppSettings
     showContentCard,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
+    voiceAssistantEnabled,
     preferredTtsVoiceName,
     preferredTtsVoiceLocale,
     preferredTtsVoiceGender,
@@ -8751,6 +8767,15 @@ class $AppSettingsTable extends AppSettings
         voiceRepliesEnabled.isAcceptableOrUnknown(
           data['voice_replies_enabled']!,
           _voiceRepliesEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('voice_assistant_enabled')) {
+      context.handle(
+        _voiceAssistantEnabledMeta,
+        voiceAssistantEnabled.isAcceptableOrUnknown(
+          data['voice_assistant_enabled']!,
+          _voiceAssistantEnabledMeta,
         ),
       );
     }
@@ -8869,6 +8894,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}voice_replies_enabled'],
       )!,
+      voiceAssistantEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}voice_assistant_enabled'],
+      )!,
       preferredTtsVoiceName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}preferred_tts_voice_name'],
@@ -8920,6 +8949,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showContentCard;
   final int dailyTopTaskLimit;
   final bool voiceRepliesEnabled;
+  final bool voiceAssistantEnabled;
   final String? preferredTtsVoiceName;
   final String? preferredTtsVoiceLocale;
   final String? preferredTtsVoiceGender;
@@ -8938,6 +8968,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showContentCard,
     required this.dailyTopTaskLimit,
     required this.voiceRepliesEnabled,
+    required this.voiceAssistantEnabled,
     this.preferredTtsVoiceName,
     this.preferredTtsVoiceLocale,
     this.preferredTtsVoiceGender,
@@ -8961,6 +8992,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['show_content_card'] = Variable<bool>(showContentCard);
     map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit);
     map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled);
+    map['voice_assistant_enabled'] = Variable<bool>(voiceAssistantEnabled);
     if (!nullToAbsent || preferredTtsVoiceName != null) {
       map['preferred_tts_voice_name'] = Variable<String>(preferredTtsVoiceName);
     }
@@ -8999,6 +9031,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showContentCard: Value(showContentCard),
       dailyTopTaskLimit: Value(dailyTopTaskLimit),
       voiceRepliesEnabled: Value(voiceRepliesEnabled),
+      voiceAssistantEnabled: Value(voiceAssistantEnabled),
       preferredTtsVoiceName: preferredTtsVoiceName == null && nullToAbsent
           ? const Value.absent()
           : Value(preferredTtsVoiceName),
@@ -9038,6 +9071,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       voiceRepliesEnabled: serializer.fromJson<bool>(
         json['voiceRepliesEnabled'],
       ),
+      voiceAssistantEnabled: serializer.fromJson<bool>(
+        json['voiceAssistantEnabled'],
+      ),
       preferredTtsVoiceName: serializer.fromJson<String?>(
         json['preferredTtsVoiceName'],
       ),
@@ -9073,6 +9109,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'showContentCard': serializer.toJson<bool>(showContentCard),
       'dailyTopTaskLimit': serializer.toJson<int>(dailyTopTaskLimit),
       'voiceRepliesEnabled': serializer.toJson<bool>(voiceRepliesEnabled),
+      'voiceAssistantEnabled': serializer.toJson<bool>(voiceAssistantEnabled),
       'preferredTtsVoiceName': serializer.toJson<String?>(
         preferredTtsVoiceName,
       ),
@@ -9104,6 +9141,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showContentCard,
     int? dailyTopTaskLimit,
     bool? voiceRepliesEnabled,
+    bool? voiceAssistantEnabled,
     Value<String?> preferredTtsVoiceName = const Value.absent(),
     Value<String?> preferredTtsVoiceLocale = const Value.absent(),
     Value<String?> preferredTtsVoiceGender = const Value.absent(),
@@ -9124,6 +9162,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showContentCard: showContentCard ?? this.showContentCard,
     dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
     voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
+    voiceAssistantEnabled: voiceAssistantEnabled ?? this.voiceAssistantEnabled,
     preferredTtsVoiceName: preferredTtsVoiceName.present
         ? preferredTtsVoiceName.value
         : this.preferredTtsVoiceName,
@@ -9169,6 +9208,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       voiceRepliesEnabled: data.voiceRepliesEnabled.present
           ? data.voiceRepliesEnabled.value
           : this.voiceRepliesEnabled,
+      voiceAssistantEnabled: data.voiceAssistantEnabled.present
+          ? data.voiceAssistantEnabled.value
+          : this.voiceAssistantEnabled,
       preferredTtsVoiceName: data.preferredTtsVoiceName.present
           ? data.preferredTtsVoiceName.value
           : this.preferredTtsVoiceName,
@@ -9204,6 +9246,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('showContentCard: $showContentCard, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
+          ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
           ..write('preferredTtsVoiceName: $preferredTtsVoiceName, ')
           ..write('preferredTtsVoiceLocale: $preferredTtsVoiceLocale, ')
           ..write('preferredTtsVoiceGender: $preferredTtsVoiceGender, ')
@@ -9227,6 +9270,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showContentCard,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
+    voiceAssistantEnabled,
     preferredTtsVoiceName,
     preferredTtsVoiceLocale,
     preferredTtsVoiceGender,
@@ -9249,6 +9293,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showContentCard == this.showContentCard &&
           other.dailyTopTaskLimit == this.dailyTopTaskLimit &&
           other.voiceRepliesEnabled == this.voiceRepliesEnabled &&
+          other.voiceAssistantEnabled == this.voiceAssistantEnabled &&
           other.preferredTtsVoiceName == this.preferredTtsVoiceName &&
           other.preferredTtsVoiceLocale == this.preferredTtsVoiceLocale &&
           other.preferredTtsVoiceGender == this.preferredTtsVoiceGender &&
@@ -9270,6 +9315,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showContentCard;
   final Value<int> dailyTopTaskLimit;
   final Value<bool> voiceRepliesEnabled;
+  final Value<bool> voiceAssistantEnabled;
   final Value<String?> preferredTtsVoiceName;
   final Value<String?> preferredTtsVoiceLocale;
   final Value<String?> preferredTtsVoiceGender;
@@ -9289,6 +9335,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showContentCard = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
+    this.voiceAssistantEnabled = const Value.absent(),
     this.preferredTtsVoiceName = const Value.absent(),
     this.preferredTtsVoiceLocale = const Value.absent(),
     this.preferredTtsVoiceGender = const Value.absent(),
@@ -9309,6 +9356,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showContentCard = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
+    this.voiceAssistantEnabled = const Value.absent(),
     this.preferredTtsVoiceName = const Value.absent(),
     this.preferredTtsVoiceLocale = const Value.absent(),
     this.preferredTtsVoiceGender = const Value.absent(),
@@ -9331,6 +9379,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showContentCard,
     Expression<int>? dailyTopTaskLimit,
     Expression<bool>? voiceRepliesEnabled,
+    Expression<bool>? voiceAssistantEnabled,
     Expression<String>? preferredTtsVoiceName,
     Expression<String>? preferredTtsVoiceLocale,
     Expression<String>? preferredTtsVoiceGender,
@@ -9353,6 +9402,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (dailyTopTaskLimit != null) 'daily_top_task_limit': dailyTopTaskLimit,
       if (voiceRepliesEnabled != null)
         'voice_replies_enabled': voiceRepliesEnabled,
+      if (voiceAssistantEnabled != null)
+        'voice_assistant_enabled': voiceAssistantEnabled,
       if (preferredTtsVoiceName != null)
         'preferred_tts_voice_name': preferredTtsVoiceName,
       if (preferredTtsVoiceLocale != null)
@@ -9381,6 +9432,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showContentCard,
     Value<int>? dailyTopTaskLimit,
     Value<bool>? voiceRepliesEnabled,
+    Value<bool>? voiceAssistantEnabled,
     Value<String?>? preferredTtsVoiceName,
     Value<String?>? preferredTtsVoiceLocale,
     Value<String?>? preferredTtsVoiceGender,
@@ -9401,6 +9453,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       showContentCard: showContentCard ?? this.showContentCard,
       dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
       voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
+      voiceAssistantEnabled:
+          voiceAssistantEnabled ?? this.voiceAssistantEnabled,
       preferredTtsVoiceName:
           preferredTtsVoiceName ?? this.preferredTtsVoiceName,
       preferredTtsVoiceLocale:
@@ -9450,6 +9504,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     }
     if (voiceRepliesEnabled.present) {
       map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled.value);
+    }
+    if (voiceAssistantEnabled.present) {
+      map['voice_assistant_enabled'] = Variable<bool>(
+        voiceAssistantEnabled.value,
+      );
     }
     if (preferredTtsVoiceName.present) {
       map['preferred_tts_voice_name'] = Variable<String>(
@@ -9505,6 +9564,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('showContentCard: $showContentCard, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
+          ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
           ..write('preferredTtsVoiceName: $preferredTtsVoiceName, ')
           ..write('preferredTtsVoiceLocale: $preferredTtsVoiceLocale, ')
           ..write('preferredTtsVoiceGender: $preferredTtsVoiceGender, ')
@@ -13352,6 +13412,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showContentCard,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
+      Value<bool> voiceAssistantEnabled,
       Value<String?> preferredTtsVoiceName,
       Value<String?> preferredTtsVoiceLocale,
       Value<String?> preferredTtsVoiceGender,
@@ -13373,6 +13434,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showContentCard,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
+      Value<bool> voiceAssistantEnabled,
       Value<String?> preferredTtsVoiceName,
       Value<String?> preferredTtsVoiceLocale,
       Value<String?> preferredTtsVoiceGender,
@@ -13435,6 +13497,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get voiceRepliesEnabled => $composableBuilder(
     column: $table.voiceRepliesEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get voiceAssistantEnabled => $composableBuilder(
+    column: $table.voiceAssistantEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13533,6 +13600,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get voiceAssistantEnabled => $composableBuilder(
+    column: $table.voiceAssistantEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get preferredTtsVoiceName => $composableBuilder(
     column: $table.preferredTtsVoiceName,
     builder: (column) => ColumnOrderings(column),
@@ -13626,6 +13698,11 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get voiceAssistantEnabled => $composableBuilder(
+    column: $table.voiceAssistantEnabled,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get preferredTtsVoiceName => $composableBuilder(
     column: $table.preferredTtsVoiceName,
     builder: (column) => column,
@@ -13703,6 +13780,7 @@ class $$AppSettingsTableTableManager
                 Value<bool> showContentCard = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
+                Value<bool> voiceAssistantEnabled = const Value.absent(),
                 Value<String?> preferredTtsVoiceName = const Value.absent(),
                 Value<String?> preferredTtsVoiceLocale = const Value.absent(),
                 Value<String?> preferredTtsVoiceGender = const Value.absent(),
@@ -13723,6 +13801,7 @@ class $$AppSettingsTableTableManager
                 showContentCard: showContentCard,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
+                voiceAssistantEnabled: voiceAssistantEnabled,
                 preferredTtsVoiceName: preferredTtsVoiceName,
                 preferredTtsVoiceLocale: preferredTtsVoiceLocale,
                 preferredTtsVoiceGender: preferredTtsVoiceGender,
@@ -13744,6 +13823,7 @@ class $$AppSettingsTableTableManager
                 Value<bool> showContentCard = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
+                Value<bool> voiceAssistantEnabled = const Value.absent(),
                 Value<String?> preferredTtsVoiceName = const Value.absent(),
                 Value<String?> preferredTtsVoiceLocale = const Value.absent(),
                 Value<String?> preferredTtsVoiceGender = const Value.absent(),
@@ -13764,6 +13844,7 @@ class $$AppSettingsTableTableManager
                 showContentCard: showContentCard,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
+                voiceAssistantEnabled: voiceAssistantEnabled,
                 preferredTtsVoiceName: preferredTtsVoiceName,
                 preferredTtsVoiceLocale: preferredTtsVoiceLocale,
                 preferredTtsVoiceGender: preferredTtsVoiceGender,

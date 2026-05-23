@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../voice_command_model.dart';
 import '../voice_command_service.dart';
+import 'voice_session_controller.dart';
 
 class VoiceConversationDockState {
   const VoiceConversationDockState({
@@ -93,6 +94,13 @@ class VoiceConversationDockNotifier
 
   void hide() {
     state = const VoiceConversationDockState.hidden();
+    ref
+        .read(voiceSessionProvider.notifier)
+        .release(
+          owner: VoiceSessionOwner.dock,
+          label: 'Gaia idle',
+          detail: 'Ready when you are',
+        );
   }
 
   VoiceCommandAssistantResponse? respondToFollowUp(String transcript) {
@@ -102,6 +110,14 @@ class VoiceConversationDockNotifier
     }
 
     final service = VoiceCommandService();
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginProcessing(
+          owner: VoiceSessionOwner.dock,
+          label: 'Gaia processing',
+          detail: 'Shaping the follow-up',
+          opacity: 0.72,
+        );
     final suggestion = service.suggestCommand(transcript: cleanedTranscript);
     final nextConversationContext = service.buildConversationContext(
       transcript: suggestion.transcript,
@@ -124,10 +140,19 @@ class VoiceConversationDockNotifier
       nextStep: response.nextStep,
       transcript: suggestion.transcript,
       isWake: suggestion.usedWakePhrase || suggestion.isWakeOnly,
-      projectContext: response.projectContext ?? suggestion.suggestedProjectName,
+      projectContext:
+          response.projectContext ?? suggestion.suggestedProjectName,
       threadContext: response.threadContext,
       conversationContext: nextConversationContext,
     );
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginAwaitingFollowUp(
+          owner: VoiceSessionOwner.dock,
+          label: 'Gaia ready',
+          detail: 'Ask another follow-up',
+          opacity: 0.64,
+        );
     return response;
   }
 }
