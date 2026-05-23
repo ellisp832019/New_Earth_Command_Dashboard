@@ -59,6 +59,8 @@ class _DashboardContent extends StatelessWidget {
                   children: [
                     _DashboardHero(snapshot: snapshot),
                     const SizedBox(height: 22),
+                    _DashboardGuidanceCard(snapshot: snapshot),
+                    const SizedBox(height: 22),
                     _TopTaskShowcase(snapshot: snapshot),
                     const SizedBox(height: 22),
                     _SecondaryPanelGrid(snapshot: snapshot),
@@ -272,6 +274,66 @@ class _TopTaskShowcase extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _DashboardGuidanceCard extends StatelessWidget {
+  const _DashboardGuidanceCard({required this.snapshot});
+
+  final DashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.auto_awesome_outlined, color: AppColours.darkSuccess),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gentle guidance',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  snapshot.nextStepTitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  snapshot.nextStepSummary,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Why this: ${snapshot.nextStepReason}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

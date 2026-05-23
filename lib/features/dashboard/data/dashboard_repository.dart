@@ -10,6 +10,9 @@ class DashboardSnapshot {
     required this.activeProjects,
     required this.topTasks,
     required this.topTaskTitles,
+    required this.nextStepTitle,
+    required this.nextStepSummary,
+    required this.nextStepReason,
     required this.showWellbeingCard,
     required this.showBusinessCard,
     required this.showLearningCard,
@@ -31,6 +34,9 @@ class DashboardSnapshot {
   final bool showLearningCard;
   final bool showContentCard;
   final String energyLabel;
+  final String nextStepTitle;
+  final String nextStepSummary;
+  final String nextStepReason;
   final String? mainFocus;
   final String? focusReason;
   final String? morningIntention;
@@ -87,6 +93,12 @@ class DashboardRepository {
     final activeProjects = await _activeProjectSummaries();
     final topTasks = await _topTasks(todayPlan);
     final energyLabel = await _energyLabel();
+    final guidance = _nextStepGuidance(
+      todayPlan: todayPlan,
+      topTasks: topTasks,
+      activeProjects: activeProjects,
+      energyLabel: energyLabel,
+    );
 
     return DashboardSnapshot(
       date: today,
@@ -98,6 +110,9 @@ class DashboardRepository {
       activeProjects: activeProjects,
       topTasks: topTasks,
       topTaskTitles: topTasks.map((task) => task.title).toList(),
+      nextStepTitle: guidance.title,
+      nextStepSummary: guidance.summary,
+      nextStepReason: guidance.reason,
       showWellbeingCard: settings?.showWellbeingCard ?? true,
       showBusinessCard: settings?.showBusinessCard ?? true,
       showLearningCard: settings?.showLearningCard ?? true,
@@ -149,6 +164,66 @@ class DashboardRepository {
             .getSingleOrNull();
 
     return checkin?.energyLevel ?? 'Unrated';
+  }
+
+  _DashboardGuidance _nextStepGuidance({
+    required DailyPlan? todayPlan,
+    required List<DashboardTopTask> topTasks,
+    required List<DashboardProjectSummary> activeProjects,
+    required String energyLabel,
+  }) {
+    final mainFocus = todayPlan?.mainFocus?.trim();
+    final firstTask = topTasks.isNotEmpty ? topTasks.first : null;
+    final firstProject =
+        activeProjects.isNotEmpty ? activeProjects.first : null;
+    final isLowEnergy = energyLabel.toLowerCase().contains('low');
+
+    if (mainFocus != null && mainFocus.isNotEmpty && firstTask != null) {
+      return _DashboardGuidance(
+        title: 'Stay with today\'s focus',
+        summary: 'Start with $mainFocus, then move into ${firstTask.title}.',
+        reason:
+            'It follows the plan you already set and keeps the day anchored.',
+      );
+    }
+
+    if (mainFocus != null && mainFocus.isNotEmpty) {
+      return _DashboardGuidance(
+        title: 'Stay with today\'s focus',
+        summary: 'Start with $mainFocus.',
+        reason:
+            'It gives the day one clear anchor before anything else competes for attention.',
+      );
+    }
+
+    if (firstTask != null) {
+      return _DashboardGuidance(
+        title: isLowEnergy ? 'Keep today light' : 'Next useful move',
+        summary: 'Start with ${firstTask.title}.',
+        reason: isLowEnergy
+            ? 'Energy looks low, so one clear step is enough to keep momentum.'
+            : 'It is already in the Top 3, so it is the clearest local move.',
+      );
+    }
+
+    if (firstProject != null) {
+      final projectLine = firstProject.nextAction ??
+          firstProject.currentMilestone ??
+          'one small step';
+      return _DashboardGuidance(
+        title: 'Next useful move',
+        summary: 'Continue ${firstProject.name} with $projectLine.',
+        reason:
+            'It uses the strongest project context available right now.',
+      );
+    }
+
+    return _DashboardGuidance(
+      title: 'Choose one gentle move',
+      summary: 'Open Planner and pick one small focus for today.',
+      reason:
+          'No plan or Top 3 task is set yet, so one simple choice will keep the day calm.',
+    );
   }
 
   Future<List<DashboardTopTask>> _topTasks(DailyPlan? todayPlan) async {
@@ -241,4 +316,16 @@ class DashboardRepository {
   DateTime _dateOnly(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
+}
+
+class _DashboardGuidance {
+  const _DashboardGuidance({
+    required this.title,
+    required this.summary,
+    required this.reason,
+  });
+
+  final String title;
+  final String summary;
+  final String reason;
 }

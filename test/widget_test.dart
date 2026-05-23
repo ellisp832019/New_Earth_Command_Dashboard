@@ -62,6 +62,11 @@ void main() {
             showLearningCard: true,
             showContentCard: true,
             energyLabel: 'High',
+            nextStepTitle: 'Next useful move',
+            nextStepSummary:
+                'Continue MicroGrow with Review the next useful diagnostics step.',
+            nextStepReason:
+                'It uses the strongest project context available right now.',
             mainFocus: null,
             focusReason: null,
             morningIntention: null,
@@ -259,6 +264,13 @@ void main() {
 
     expect(find.text('Dashboard'), findsWidgets);
     expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
+    expect(find.text('Next useful move'), findsOneWidget);
+    expect(
+      find.text(
+        'Continue MicroGrow with Review the next useful diagnostics step.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('A blank daily plan is ready for today.'), findsOneWidget);
     expect(find.text('No focus reason set yet.'), findsOneWidget);
     expect(find.text('No morning intention set yet.'), findsOneWidget);
@@ -508,6 +520,11 @@ void main() {
               showLearningCard: true,
               showContentCard: true,
               energyLabel: 'High',
+              nextStepTitle: 'Choose one gentle move',
+              nextStepSummary:
+                  'Open Planner and pick one small focus for today.',
+              nextStepReason:
+                  'No plan or Top 3 task is set yet, so one simple choice will keep the day calm.',
               mainFocus: null,
               focusReason: null,
               morningIntention: null,

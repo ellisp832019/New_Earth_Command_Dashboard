@@ -28,6 +28,9 @@ void main() {
       expect(snapshot.activeProjectCount, 9);
       expect(snapshot.topTaskTitles, isEmpty);
       expect(snapshot.topTasks, isEmpty);
+      expect(snapshot.nextStepTitle, 'Next useful move');
+      expect(snapshot.nextStepSummary, startsWith('Continue '));
+      expect(snapshot.nextStepReason, contains('project context'));
     },
   );
 
@@ -70,6 +73,12 @@ void main() {
       expect(snapshot.topTasks, hasLength(2));
       expect(snapshot.topTasks.first.taskId, first.taskId);
       expect(snapshot.topTasks.first.status, 'Inbox');
+      expect(snapshot.nextStepTitle, 'Next useful move');
+      expect(snapshot.nextStepSummary, 'Start with Choose calm focus.');
+      expect(
+        snapshot.nextStepReason,
+        'It is already in the Top 3, so it is the clearest local move.',
+      );
     },
   );
 }
