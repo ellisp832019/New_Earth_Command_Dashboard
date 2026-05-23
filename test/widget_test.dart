@@ -1954,7 +1954,14 @@ void main() {
       'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
     );
     expect(find.byKey(const Key('voiceAssistantReplyCard')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceBriefingCard')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
+    expect(find.text('Voice Briefing'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       200,

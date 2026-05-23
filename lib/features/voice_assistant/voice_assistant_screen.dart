@@ -18,6 +18,7 @@ import 'voice_command_service.dart';
 import 'voice_speech_service.dart';
 import 'windows_voice_typing_service.dart';
 import '../settings/application/settings_controller.dart';
+import '../../widgets/calm_guidance_card.dart';
 import 'widgets/command_history_list.dart';
 import 'widgets/command_type_selector.dart';
 import 'widgets/voice_presence_chip.dart';
@@ -1980,6 +1981,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             const SizedBox(height: 16),
           ],
           if (briefing != null) ...[
+            CalmGuidanceCard(
+              sectionLabel: 'Voice Briefing',
+              title: briefing.summary,
+              summary: briefing.nextStep,
+              reason: briefing.projectContext ??
+                  briefing.threadContext ??
+                  'It keeps the thread moving without adding noise.',
+            ),
+            const SizedBox(height: 16),
             Card(
               key: const Key('voiceBriefingCard'),
               child: Padding(
