@@ -1946,9 +1946,9 @@ void main() {
     await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
     await tester.pumpAndSettle();
 
-    final transcriptField = tester.widget<TextField>(
-      find.byKey(const Key('voiceTranscriptField')),
-    );
+    final transcriptField = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .first;
     expect(
       transcriptField.controller?.text,
       'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
@@ -2060,9 +2060,9 @@ void main() {
     await tester.tap(find.byKey(const Key('voiceWizardNextButton')));
     await tester.pumpAndSettle();
 
-    final transcriptField = tester.widget<TextField>(
-      find.byKey(const Key('voiceTranscriptField')),
-    );
+    final transcriptField = tester
+        .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
+        .first;
     expect(transcriptField.controller?.text, contains('Type: Task.'));
   });
 
@@ -2080,6 +2080,10 @@ void main() {
 
     await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
     await tester.pumpAndSettle();
+
+    final transcriptField = tester
+        .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
+        .first;
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),
@@ -2113,6 +2117,50 @@ void main() {
     expect(voiceTasks.single.status, 'Inbox');
     expect(voiceTasks.single.description, contains('voice bridge scaffold'));
     expect(voiceTasks.single.notes, 'Captured from the Voice Assistant.');
+  });
+
+  testWidgets('voice assistant history item restores a saved transcript', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await tester.pumpAndSettle();
+
+    appRouter.go('/voice-assistant');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
+    await tester.pumpAndSettle();
+
+    final transcriptField = tester
+        .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
+        .first;
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceSaveCommandButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceHistoryItem-0')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('voiceHistoryItem-0')));
+    await tester.pumpAndSettle();
+    expect(
+      transcriptField.controller?.text,
+      'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.',
+    );
   });
 
   testWidgets('journal screen shows a calm empty state', (

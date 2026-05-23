@@ -26,7 +26,7 @@ class CommandHistoryList extends StatelessWidget {
               Text('Command History', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
-                'No voice commands saved yet. Try a mock transcript and choose where it belongs.',
+                'No voice commands saved yet. Save one reviewed capture, then tap it here to reuse it.',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -39,20 +39,35 @@ class CommandHistoryList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Command History', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 4),
+        Text(
+          'Tap any saved command to restore it into the editor.',
+          style: theme.textTheme.bodySmall,
+        ),
         const SizedBox(height: 12),
-        ...commands.map(
-          (command) => Card(
-            child: ListTile(
-              onTap: onCommandSelected == null
-                  ? null
-                  : () => onCommandSelected!(command),
-              title: Text(command.transcript),
-              subtitle: Text(command.type.label),
-              trailing: Text(
-                '${command.createdAt.hour.toString().padLeft(2, '0')}:${command.createdAt.minute.toString().padLeft(2, '0')}',
+        ...commands.asMap().entries.map(
+          (entry) {
+            final index = entry.key;
+            final command = entry.value;
+
+            return Card(
+              key: Key('voiceHistoryItem-$index'),
+              child: ListTile(
+                onTap: onCommandSelected == null
+                    ? null
+                    : () => onCommandSelected!(command),
+                leading: const Icon(Icons.history_rounded),
+                title: Text(command.transcript),
+                subtitle: Text(
+                  '${command.type.label} • ${command.createdAt.hour.toString().padLeft(2, '0')}:${command.createdAt.minute.toString().padLeft(2, '0')}',
+                ),
+                trailing: Icon(
+                  Icons.restore_outlined,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );
