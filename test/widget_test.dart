@@ -714,11 +714,17 @@ void main() {
       find.text('A calm place to set the day and review it gently.'),
       findsOneWidget,
     );
+    expect(find.text('Gentle guidance'), findsOneWidget);
+    expect(find.text('Pick one clear start'), findsOneWidget);
+    expect(
+      find.text('Begin with Review MicroGrow diagnostics.'),
+      findsOneWidget,
+    );
     expect(find.text('Morning Intention'), findsOneWidget);
     expect(find.text('Set a simple direction for today.'), findsOneWidget);
-    expect(find.text('Main Focus'), findsOneWidget);
+    expect(find.text('Main Focus', skipOffstage: false), findsOneWidget);
     expect(
-      find.text('Choose one useful step for today.'),
+      find.text('Choose one useful step for today.', skipOffstage: false),
       findsOneWidget,
     );
     await tester.scrollUntilVisible(
@@ -794,6 +800,12 @@ void main() {
     await tester.tap(find.text('Planner').last);
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerMainFocusField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('plannerMainFocusField')),
       'Finish the planner editing slice',

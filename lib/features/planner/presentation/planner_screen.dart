@@ -241,6 +241,12 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           ),
         ),
         const SizedBox(height: 12),
+        _PlannerGuidanceCard(
+          plan: plan,
+          taskOptions: widget.taskOptions,
+          selectedTopTaskIds: _selectedTopTaskIds,
+        ),
+        const SizedBox(height: 12),
         _EditablePlannerCard(
           title: 'Morning Intention',
           fieldKey: const Key('plannerMorningIntentionField'),
@@ -522,6 +528,139 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       alignment: 0.1,
     );
   }
+}
+
+class _PlannerGuidanceCard extends StatelessWidget {
+  const _PlannerGuidanceCard({
+    required this.plan,
+    required this.taskOptions,
+    required this.selectedTopTaskIds,
+  });
+
+  final DailyPlan plan;
+  final List<Task> taskOptions;
+  final List<String> selectedTopTaskIds;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final guidance = _buildGuidance();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _plannerPanelDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.auto_awesome_outlined, color: AppColours.darkSuccess),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gentle guidance',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  guidance.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  guidance.summary,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Why this: ${guidance.reason}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _PlannerGuidance _buildGuidance() {
+    final selectedTasks = taskOptions
+        .where((task) => selectedTopTaskIds.contains(task.taskId))
+        .toList();
+    final firstTask = selectedTasks.isNotEmpty ? selectedTasks.first : null;
+    final mainFocus = plan.mainFocus?.trim();
+    final hasMainFocus = mainFocus != null && mainFocus.isNotEmpty;
+    final hasCarryForward = plan.carryForwardNotes?.trim().isNotEmpty == true;
+    final hasTomorrowFocus = plan.tomorrowFocus?.trim().isNotEmpty == true;
+
+    if (hasMainFocus && firstTask != null) {
+      return _PlannerGuidance(
+        title: 'Stay with today\'s focus',
+        summary: 'Start with $mainFocus, then move into ${firstTask.title}.',
+        reason:
+            'The day already has a clear anchor and the Top 3 is ready to support it.',
+      );
+    }
+
+    if (hasMainFocus) {
+      return _PlannerGuidance(
+        title: 'Stay with today\'s focus',
+        summary: 'Start with $mainFocus.',
+        reason:
+            'It gives the planner one clear anchor before anything else needs attention.',
+      );
+    }
+
+    if (firstTask != null) {
+      return _PlannerGuidance(
+        title: 'Pick one clear start',
+        summary: 'Begin with ${firstTask.title}.',
+        reason:
+            'The Top 3 is already set, so one task can lead the rest of the day calmly.',
+      );
+    }
+
+    if (hasCarryForward || hasTomorrowFocus) {
+      return _PlannerGuidance(
+        title: 'Close the loop gently',
+        summary: 'Review what can wait, then note the next small step.',
+        reason:
+            'You already have loose threads to carry forward, so the planner can help tidy them without adding pressure.',
+      );
+    }
+
+    return _PlannerGuidance(
+      title: 'Set one small anchor',
+      summary: 'Choose a main focus before adding more detail.',
+      reason:
+          'A single clear focus keeps the planner calm and easier to use.',
+    );
+  }
+}
+
+class _PlannerGuidance {
+  const _PlannerGuidance({
+    required this.title,
+    required this.summary,
+    required this.reason,
+  });
+
+  final String title;
+  final String summary;
+  final String reason;
 }
 
 class _EditablePlannerCard extends StatelessWidget {
