@@ -225,9 +225,9 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Today\'s Plan',
+                'A calm place to set the day and review it gently.',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
+                  color: AppColours.darkMutedText,
                 ),
               ),
               const SizedBox(height: 6),
@@ -246,8 +246,8 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           fieldKey: const Key('plannerMorningIntentionField'),
           buttonKey: const Key('plannerMorningIntentionSaveButton'),
           controller: _morningIntentionController,
-          hintText: 'Set a calm direction for the day.',
-          buttonLabel: 'Save Morning Intention',
+          hintText: 'Set a simple direction for today.',
+          buttonLabel: 'Save Intention',
           isSaving: _isSavingMorningIntention,
           onSave: () => _saveMorningIntention(context),
         ),
@@ -257,8 +257,8 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           fieldKey: const Key('plannerMainFocusField'),
           buttonKey: const Key('plannerMainFocusSaveButton'),
           controller: _mainFocusController,
-          hintText: 'Choose the one build step that matters most.',
-          buttonLabel: 'Save Main Focus',
+          hintText: 'Choose one useful step for today.',
+          buttonLabel: 'Save Focus',
           isSaving: _isSavingMainFocus,
           onSave: () => _saveMainFocus(context),
         ),
@@ -268,8 +268,8 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           fieldKey: const Key('plannerFocusReasonField'),
           buttonKey: const Key('plannerFocusReasonSaveButton'),
           controller: _focusReasonController,
-          hintText: 'Name why this focus matters today.',
-          buttonLabel: 'Save Focus Reason',
+          hintText: 'Keep the reason short and clear.',
+          buttonLabel: 'Save Reason',
           isSaving: _isSavingFocusReason,
           onSave: () => _saveFocusReason(context),
         ),
@@ -301,7 +301,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           fieldKey: const Key('plannerCarryForwardField'),
           buttonKey: const Key('plannerCarryForwardSaveButton'),
           controller: _carryForwardController,
-          hintText: 'Note what should move into tomorrow or be parked calmly.',
+          hintText: 'Park what can wait until later.',
           buttonLabel: 'Save Carry Forward',
           isSaving: _isSavingCarryForward,
           onSave: () => _saveCarryForward(context),
@@ -312,8 +312,8 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           fieldKey: const Key('plannerTomorrowFocusField'),
           buttonKey: const Key('plannerTomorrowFocusSaveButton'),
           controller: _tomorrowFocusController,
-          hintText: 'Capture tomorrow\'s likely focus while it is still clear.',
-          buttonLabel: 'Save Tomorrow\'s Focus',
+          hintText: 'Note the likely first move for tomorrow.',
+          buttonLabel: 'Save Tomorrow',
           isSaving: _isSavingTomorrowFocus,
           onSave: () => _saveTomorrowFocus(context),
         ),
@@ -331,7 +331,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Morning intention saved.')));
+      ).showSnackBar(const SnackBar(content: Text('Intention saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSavingMorningIntention = false);
@@ -349,7 +349,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Main focus saved.')));
+      ).showSnackBar(const SnackBar(content: Text('Focus saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSavingMainFocus = false);
@@ -367,7 +367,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Focus reason saved.')));
+      ).showSnackBar(const SnackBar(content: Text('Reason saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSavingFocusReason = false);
@@ -403,7 +403,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Tomorrow\'s focus saved.')));
+      ).showSnackBar(const SnackBar(content: Text('Tomorrow saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSavingTomorrowFocus = false);
@@ -426,7 +426,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Evening review saved.')));
+      ).showSnackBar(const SnackBar(content: Text('Review saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSavingEveningReview = false);
@@ -448,7 +448,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'You already have 3 priority tasks for today. Complete, remove, or carry one forward first.',
+            'You already have 3 priority tasks. Complete, remove, or carry one forward first.',
           ),
         ),
       );
@@ -470,7 +470,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Top 3 tasks saved.')));
+      ).showSnackBar(const SnackBar(content: Text('Top 3 saved.')));
     } on StateError catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -663,7 +663,7 @@ class _EveningReviewPlannerCard extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.nightlight_round),
-              label: const Text('Save Evening Review'),
+              label: const Text('Save Review'),
             ),
           ),
         ],
@@ -782,7 +782,7 @@ class _TopThreePlannerCard extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.filter_3_outlined),
-              label: const Text('Save Top 3 Tasks'),
+              label: const Text('Save Top 3'),
             ),
           ),
         ],

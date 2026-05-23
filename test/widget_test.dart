@@ -693,12 +693,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
-    expect(find.text('Today\'s Plan'), findsOneWidget);
+    expect(
+      find.text('A calm place to set the day and review it gently.'),
+      findsOneWidget,
+    );
     expect(find.text('Morning Intention'), findsOneWidget);
-    expect(find.text('Set a calm direction for the day.'), findsOneWidget);
+    expect(find.text('Set a simple direction for today.'), findsOneWidget);
     expect(find.text('Main Focus'), findsOneWidget);
     expect(
-      find.text('Choose the one build step that matters most.'),
+      find.text('Choose one useful step for today.'),
       findsOneWidget,
     );
     await tester.scrollUntilVisible(
@@ -725,12 +728,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Carry Forward'), findsOneWidget);
     expect(
-      find.text('Note what should move into tomorrow or be parked calmly.'),
+      find.text('Park what can wait until later.'),
       findsOneWidget,
     );
     expect(find.text('Tomorrow\'s Focus'), findsOneWidget);
     expect(
-      find.text('Capture tomorrow\'s likely focus while it is still clear.'),
+      find.text('Note the likely first move for tomorrow.'),
       findsOneWidget,
     );
   });
@@ -787,7 +790,7 @@ void main() {
     await tester.tap(find.byKey(const Key('plannerMainFocusSaveButton')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Main focus saved.'), findsOneWidget);
+    expect(find.text('Focus saved.'), findsOneWidget);
 
     await tester.tap(find.text('Dashboard').last);
     await tester.pumpAndSettle();
@@ -917,7 +920,7 @@ void main() {
     await tester.tap(find.byKey(const Key('plannerTomorrowFocusSaveButton')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Tomorrow\'s focus saved.'), findsOneWidget);
+    expect(find.text('Tomorrow saved.'), findsOneWidget);
 
     final plan = await DailyPlanRepository(
       database,
@@ -967,7 +970,7 @@ void main() {
     await tester.tap(find.byKey(const Key('plannerEveningReviewSaveButton')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Evening review saved.'), findsOneWidget);
+    expect(find.text('Review saved.'), findsOneWidget);
 
     final plan = await DailyPlanRepository(
       database,
