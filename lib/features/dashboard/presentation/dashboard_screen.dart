@@ -887,13 +887,19 @@ class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
               TextFormField(
                 key: const Key('dashboardQuickCaptureTitleField'),
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: const InputDecoration(
+                  labelText: 'What is it?',
+                  hintText: 'Task title, idea, or note',
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 key: const Key('dashboardQuickCaptureBodyField'),
                 controller: _bodyController,
-                decoration: const InputDecoration(labelText: 'Body'),
+                decoration: const InputDecoration(
+                  labelText: 'Add a note',
+                  hintText: 'A short detail is enough',
+                ),
                 minLines: 3,
                 maxLines: 5,
                 validator: (value) {
@@ -910,7 +916,9 @@ class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
               DropdownButtonFormField<String?>(
                 key: const Key('dashboardQuickCaptureTypeField'),
                 initialValue: _type,
-                decoration: const InputDecoration(labelText: 'Type'),
+                decoration: const InputDecoration(
+                  labelText: 'Capture type',
+                ),
                 items: [
                   const DropdownMenuItem<String?>(
                     value: null,
@@ -949,7 +957,7 @@ class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
               ),
             );
           },
-          child: const Text('Save to Inbox'),
+          child: const Text('Save'),
         ),
       ],
     );
