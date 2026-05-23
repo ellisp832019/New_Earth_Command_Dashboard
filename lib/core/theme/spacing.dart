@@ -1,5 +1,3 @@
-import 'package:flutter/widgets.dart';
-
 /// Small set of spacing tokens to keep UI calm and consistent.
 abstract final class AppSpacing {
   static const double xs = 6.0;

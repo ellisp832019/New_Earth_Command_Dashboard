@@ -21,6 +21,7 @@ abstract final class RouteNames {
   static const newInbox = '/inbox/new';
   static const settings = '/settings';
   static const voiceAssistant = '/voice-assistant';
+  static const calmUiDemo = '/dashboard/calm-ui-demo';
 
   static String projectDetail(String projectId) => '/projects/$projectId';
 

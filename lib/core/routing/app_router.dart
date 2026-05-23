@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
+import '../../features/dashboard/presentation/calm_ui_demo_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/inbox/presentation/add_inbox_item_screen.dart';
@@ -237,6 +238,11 @@ final appRouter = GoRouter(
         wakeTriggered: state.uri.queryParameters['wake'] == '1',
         handsfreeTriggered: state.uri.queryParameters['handsfree'] == '1',
       ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.calmUiDemo,
+      builder: (context, state) => const CalmUiDemoScreen(),
     ),
   ],
 );
