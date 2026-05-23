@@ -743,3 +743,27 @@ Next recommended slice:
 ```text
 Add journal foundation
 ```
+
+## 2026-05-10 - Shared Voice Session Spine
+
+Hardened the voice stack so the wake listener, dashboard dock, and full Voice Assistant all share one session state machine:
+
+- Added a shared `VoiceSessionNotifier` to coordinate who owns listening, speaking, processing, or follow-up
+- Wired the handsfree wake layer, assistant screen, and dashboard dock through the shared session state
+- Removed lifecycle collisions that were causing Riverpod teardown errors in the widget suite
+- Kept the dashboard conversation dock, wake greeting, and spoken follow-up flow intact
+- Updated the voice guide, app function reference, and task docs to reflect the shared-session behavior
+
+Verification:
+
+```powershell
+flutter analyze
+flutter test
+flutter build windows
+```
+
+Next recommended slice:
+
+```text
+Expand spoken follow-ups in the dashboard dock
+```

@@ -55,6 +55,7 @@ The current Voice Assistant can:
 - speak the captured wake response back through the headset when the dashboard conversation dock appears
 - surface quick follow-up chips in the dashboard dock so you can continue the conversation into a task, project, journal entry, or another assistant step without leaving the dashboard
 - run action macros such as `Start Build Day`, `Plan Day`, `Summarize Today`, `Recall Memory`, `What's Next`, and `Continue Thread`
+- keep the wake layer, dashboard dock, and full assistant aligned through one shared voice session so only one path owns speaking or listening at a time
 
 It does not:
 

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make the Voice Assistant feel like a fast-moving AI command surface by adding a voice wizard mode, briefing layer, reusable starters, quick review, wake phrase detection, smarter command macros, project capture, thread memory, a handsfree wake listener that can bring the assistant forward when Gaia is open, and a direct in-dock follow-up loop.
+Make the Voice Assistant feel like a fast-moving AI command surface by adding a voice wizard mode, briefing layer, reusable starters, quick review, wake phrase detection, smarter command macros, project capture, thread memory, a handsfree wake listener that can bring the assistant forward when Gaia is open, a shared voice session controller that keeps the wake layer, dock, and assistant in one turn-taking flow, and a direct in-dock follow-up loop.
 
 ## Source of Truth
 
@@ -33,8 +33,9 @@ Read these files first:
 13. Make the wake-triggered assistant speak back immediately so it feels conversational and responsive.
 14. Add a stronger local desktop speech bridge on Windows so one-shot microphone capture can use local Whisper transcription before falling back to system dictation.
 15. Surface a dashboard conversation dock when wake capture lands there so the assistant has a visible fallback if the route handoff is delayed, let that dock speak the captured reply through the configured voice output, and offer quick follow-up chips that reopen the assistant with a preselected intent.
-16. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
+16. Keep the wake layer, dashboard dock, and full assistant routed through one shared voice session state machine so only one voice path owns listening or speaking at a time.
+17. Run `flutter analyze`, `flutter test`, and a Windows build if possible.
 
 ## Expected Result
 
-The user can open Voice Assistant, start from a smart template or a previous command, review a briefing that explains the command and its next steps, continue a remembered thread across entries, or step through a wizard that builds the draft one answer at a time, then save the result into the right local dashboard module with minimal friction.
+The user can open Voice Assistant, start from a smart template or a previous command, review a briefing that explains the command and its next steps, continue a remembered thread across entries, or step through a wizard that builds the draft one answer at a time, then save the result into the right local dashboard module with minimal friction. The wake layer, conversation dock, and full assistant should behave like one shared voice session instead of three competing ones.

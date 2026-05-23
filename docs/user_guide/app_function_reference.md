@@ -429,6 +429,7 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 - `Wizard Mode` turns the assistant into a step-by-step conversation that assembles the draft from one answer at a time.
 - Gaia now keeps a handsfree wake listener armed while the app is open on Windows, so saying `Hey Gaia` can bring up the Voice Assistant without pressing Start Listening first.
 - If the wake route is still settling, Gaia can also surface a small conversation dock on the dashboard with the captured transcript and next step, speak that captured reply through the configured voice output, and offer quick follow-up chips that reopen the assistant with a preselected intent.
+- The wake layer, dashboard dock, and full Voice Assistant share one session state machine so only one voice path owns listening or speaking at a time.
 - `Settings` now includes voice output controls for assistant speech, voice selection, speech rate, and preview.
 - The `Command Router` surfaces the next likely move, such as opening Tasks, Planner, Dashboard, Projects, Inbox, Journal, Content, or Business, and can offer `Continue Thread` when there is remembered voice context.
 - The screen suggests a command type, cleaned title, and related project using local parsing rules.

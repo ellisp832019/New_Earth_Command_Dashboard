@@ -29,6 +29,8 @@ Do not build dangerous automation. Do not directly control MicroGrow hardware. D
 
 Make the Voice Assistant feel smarter and faster to start from by adding a voice wizard mode, a voice briefing layer, reusable voice starters, tap-to-reuse command history, and thread memory that keeps a conversation going across entries.
 
+The wake layer, dashboard dock, and full assistant should all share one voice session state machine so the app feels like a single assistant instead of separate voice surfaces.
+
 This now includes:
 
 1. Dashboard access to Voice Capture.
@@ -48,6 +50,7 @@ This now includes:
 15. Focused tests for local persistence.
 16. Stronger Windows desktop speech capture that can use a local Whisper bridge before falling back to system dictation.
 17. A route-independent conversation dock that can surface the wake response on the dashboard when the assistant screen is still settling.
+18. Keep the wake layer, dashboard dock, and full assistant aligned through one shared voice session state machine so only one voice path owns listening or speaking at a time.
 
 ---
 
