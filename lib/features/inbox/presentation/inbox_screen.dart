@@ -104,19 +104,28 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
 
     return Card(
       key: Key('inboxItemCard-${item.item.inboxItemId}'),
+      elevation: 0,
+      color: theme.colorScheme.surface.withValues(alpha: 0.92),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.88),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               item.item.title ?? 'Untitled Capture',
-              style: theme.textTheme.titleMedium,
+              style: theme.textTheme.titleMedium?.copyWith(height: 1.15),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 if (item.item.type?.isNotEmpty == true)
                   _InboxInfoChip(label: item.item.type!),
@@ -126,13 +135,16 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
               ],
             ),
             if (item.item.body?.isNotEmpty == true) ...[
-              const SizedBox(height: 10),
-              Text(item.item.body!, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              Text(
+                item.item.body!,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+              ),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 FilledButton.icon(
                   key: Key('convertInboxItemButton-${item.item.inboxItemId}'),
@@ -298,13 +310,18 @@ class _InboxInfoChip extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
+        color: theme.colorScheme.primary.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.9),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(label, style: theme.textTheme.bodySmall),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        child: Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(height: 1.1),
+        ),
       ),
     );
   }
