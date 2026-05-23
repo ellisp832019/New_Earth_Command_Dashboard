@@ -1922,36 +1922,35 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             Card(
               key: const Key('voiceAssistantReplyCard'),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Assistant Reply', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    Text('Assistant Reply', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 6),
                     Text(
                       assistantResponse.summary,
                       style: theme.textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       assistantResponse.nextStep,
                       style: theme.textTheme.bodySmall,
                     ),
-                    if (assistantResponse.projectContext != null) ...[
+                    if (assistantResponse.projectContext != null ||
+                        assistantResponse.threadContext != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Project context: ${assistantResponse.projectContext}',
+                        [
+                          if (assistantResponse.projectContext != null)
+                            assistantResponse.projectContext,
+                          if (assistantResponse.threadContext != null)
+                            assistantResponse.threadContext,
+                        ].join(' • '),
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
-                    if (assistantResponse.threadContext != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Thread context: ${assistantResponse.threadContext}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
