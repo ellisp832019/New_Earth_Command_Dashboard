@@ -87,48 +87,55 @@ class _DashboardHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final greeting = _greeting();
     final weekday = DateFormat('EEEE').format(snapshot.date);
     final shortDate = DateFormat('d MMM y').format(snapshot.date);
-    final focusChip = snapshot.mainFocus?.isNotEmpty == true
-        ? 'Deep Work'
-        : 'Set Focus';
+    final hasFocus = snapshot.mainFocus?.isNotEmpty == true;
+    final headline = hasFocus
+        ? 'Your focus is set for today'
+        : 'Choose one clear move for today';
+    final supportingCopy = hasFocus
+        ? 'Keep the rest parked until the next useful step is complete.'
+        : 'Keep the day light and let the Top 3 guide the work.';
+    final focusChip = hasFocus ? 'Ready' : 'Set Focus';
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: _panelDecoration(context, highlighted: true),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final useWideLayout = constraints.maxWidth >= 980;
 
           final brandAndCopy = [
-            const _DashboardBrandBlock(),
-            const SizedBox(height: 18),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
+              constraints: const BoxConstraints(maxWidth: 560),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Gaia',
+                    'Today',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: AppColours.darkText,
+                      color: AppColours.darkSecondary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '$greeting, El',
-                    style: theme.textTheme.displaySmall?.copyWith(
+                    headline,
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       color: AppColours.darkText,
-                      fontSize: 38,
-                      height: 1.05,
+                      height: 1.08,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'Focus on what matters most today.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: AppColours.darkMutedText,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Text(
+                      supportingCopy,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
                     ),
                   ),
                 ],
@@ -179,17 +186,6 @@ class _DashboardHero extends StatelessWidget {
     );
   }
 
-  String _greeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return 'Good morning';
-    }
-    if (hour < 18) {
-      return 'Good afternoon';
-    }
-
-    return 'Good evening';
-  }
 }
 
 class _TopTaskShowcase extends StatelessWidget {
@@ -745,7 +741,7 @@ class _DashboardQuickCaptureCardState
           ),
           const SizedBox(height: 12),
           Text(
-            'Capture a task, idea, note, or content seed.',
+            'Capture one thought quickly, then return to the day.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
@@ -760,7 +756,7 @@ class _DashboardQuickCaptureCardState
               border: Border.all(color: AppColours.darkOutline),
             ),
             child: Text(
-              'Capture an idea, task or note...',
+              'Add a task, note, or idea...',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
@@ -774,7 +770,6 @@ class _DashboardQuickCaptureCardState
               _CaptureTypeChip(label: 'Task'),
               _CaptureTypeChip(label: 'Note'),
               _CaptureTypeChip(label: 'Idea', selected: true),
-              _CaptureTypeChip(label: 'Journal'),
             ],
           ),
           const SizedBox(height: 16),
@@ -782,14 +777,14 @@ class _DashboardQuickCaptureCardState
             key: const Key('dashboardQuickCaptureButton'),
             onPressed: _isSaving ? null : () => _openQuickCapture(),
             icon: const Icon(Icons.auto_awesome),
-            label: const Text('Capture'),
+            label: const Text('Open Capture'),
           ),
           const SizedBox(height: 10),
           FilledButton.tonalIcon(
             key: const Key('dashboardVoiceCaptureButton'),
             onPressed: () => context.push(RouteNames.voiceAssistant),
             icon: const Icon(Icons.mic_none_rounded),
-            label: const Text('Voice Capture'),
+            label: const Text('Use Voice'),
           ),
         ],
       ),
@@ -1196,7 +1191,7 @@ class _DashboardFooter extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Small consistent actions create extraordinary results over time.',
+              'Small steps move the mission forward without adding pressure.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
@@ -1228,82 +1223,6 @@ class _PanelTitle extends StatelessWidget {
           ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
-    );
-  }
-}
-
-class _DashboardBrandBlock extends StatelessWidget {
-  const _DashboardBrandBlock();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const _BrandSeal(),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'NEW EARTH',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: Colors.white,
-                fontSize: 28,
-                letterSpacing: 1.5,
-              ),
-            ),
-            Text(
-              'COMMAND DASHBOARD',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkSecondary,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _BrandSeal extends StatelessWidget {
-  const _BrandSeal();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF102C47), Color(0xFF08141A)],
-        ),
-        border: Border.all(color: AppColours.darkSecondary, width: 2),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            bottom: 14,
-            left: 14,
-            right: 14,
-            child: Container(
-              height: 14,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.elliptical(100, 30)),
-                gradient: LinearGradient(
-                  colors: [Color(0xFF4C8EFF), Color(0xFF97E7FF)],
-                ),
-              ),
-            ),
-          ),
-          const Icon(Icons.spa_rounded, size: 34, color: Colors.white),
-        ],
-      ),
     );
   }
 }
