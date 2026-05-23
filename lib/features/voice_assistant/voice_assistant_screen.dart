@@ -1298,6 +1298,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   void _applyTemplate(VoiceCommandTemplate template) {
     final suggestion = _service.suggestCommand(transcript: template.transcript);
     setState(() {
+      _suggestion = suggestion;
       _selectedType = template.type;
       _transcriptController.text = template.transcript;
       _transcriptController.selection = TextSelection.collapsed(
@@ -2450,24 +2451,52 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       key: groupKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: templates
-              .map(
-                (template) => Tooltip(
-                  message: template.description,
-                  child: FilledButton.tonalIcon(
-                    key: Key('voiceTemplateButton-${template.id}'),
-                    onPressed: () => _applyTemplate(template),
-                    icon: Icon(_templateIcon(template.id)),
-                    label: Text(template.label),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-              )
-              .toList(),
+                  const SizedBox(width: 8),
+                  Text(title, style: theme.textTheme.titleSmall),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: templates
+                    .map(
+                      (template) => Tooltip(
+                        message: template.description,
+                        child: FilledButton.tonalIcon(
+                          key: Key('voiceTemplateButton-${template.id}'),
+                          onPressed: () => _applyTemplate(template),
+                          icon: Icon(_templateIcon(template.id)),
+                          label: Text(template.label),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
         ),
       ],
     );

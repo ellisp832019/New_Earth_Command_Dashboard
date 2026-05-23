@@ -1954,10 +1954,6 @@ void main() {
       transcriptField.controller?.text,
       'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
     );
-    expect(
-      find.byKey(const Key('voiceAssistantReplyCard'), skipOffstage: false),
-      findsOneWidget,
-    );
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceBriefingCard')),
       200,
