@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../widgets/calm_guidance_card.dart';
 import '../../inbox/application/inbox_controller.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
@@ -285,55 +286,10 @@ class _DashboardGuidanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: _panelDecoration(context),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.auto_awesome_outlined, color: AppColours.darkSuccess),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Gentle guidance',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  snapshot.nextStepTitle,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: AppColours.darkText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  snapshot.nextStepSummary,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Why this: ${snapshot.nextStepReason}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return CalmGuidanceCard(
+      title: snapshot.nextStepTitle,
+      summary: snapshot.nextStepSummary,
+      reason: snapshot.nextStepReason,
     );
   }
 }

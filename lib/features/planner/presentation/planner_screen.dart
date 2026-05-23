@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../widgets/calm_guidance_card.dart';
 import '../application/planner_controller.dart';
 
 class PlannerScreen extends ConsumerWidget {
@@ -543,56 +544,12 @@ class _PlannerGuidanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final guidance = _buildGuidance();
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: _plannerPanelDecoration(),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.auto_awesome_outlined, color: AppColours.darkSuccess),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Gentle guidance',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  guidance.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: AppColours.darkText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  guidance.summary,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Why this: ${guidance.reason}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return CalmGuidanceCard(
+      title: guidance.title,
+      summary: guidance.summary,
+      reason: guidance.reason,
     );
   }
 
