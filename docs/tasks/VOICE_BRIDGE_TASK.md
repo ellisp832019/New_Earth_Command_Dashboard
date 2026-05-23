@@ -1,5 +1,9 @@
 # Codex Task — Build New Earth Dashboard Voice Bridge v0.1
 
+## Status
+
+Complete. The Voice Bridge v0.1 work has been implemented, verified with `flutter analyze`, `flutter test`, and a Windows build, and kept review-first and local-first.
+
 ## Task Title
 
 Build the first safe version of the New Earth Dashboard Voice Bridge.

@@ -1,5 +1,9 @@
 # TASK - Voice Bridge Wizard Mode
 
+## Status
+
+Complete. Feature work, analysis, tests, and Windows build verification are finished. Keep this file as the historical task record for the Voice Bridge slice.
+
 ## Goal
 
 Make the Voice Assistant feel like a fast-moving AI command surface by adding a voice wizard mode, briefing layer, reusable starters, quick review, wake phrase detection, smarter command macros, project capture, thread memory, a handsfree wake listener that can bring the assistant forward when Gaia is open, a shared voice session controller that keeps the wake layer, dock, and assistant in one turn-taking flow, and a direct in-dock follow-up loop.
