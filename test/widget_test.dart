@@ -1936,6 +1936,10 @@ void main() {
     appRouter.go('/voice-assistant');
     await tester.pumpAndSettle();
 
+    final transcriptField = tester.widget<TextField>(
+      find.byKey(const Key('voiceTranscriptField')),
+    );
+
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceTemplateButton-codex')),
       200,
@@ -1946,14 +1950,14 @@ void main() {
     await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
     await tester.pumpAndSettle();
 
-    final transcriptField = tester
-        .widgetList<TextField>(find.byType(TextField))
-        .first;
     expect(
       transcriptField.controller?.text,
       'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
     );
-    expect(find.byKey(const Key('voiceAssistantReplyCard')), findsOneWidget);
+    expect(
+      find.byKey(const Key('voiceAssistantReplyCard'), skipOffstage: false),
+      findsOneWidget,
+    );
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceBriefingCard')),
       200,
@@ -2080,10 +2084,6 @@ void main() {
 
     await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
     await tester.pumpAndSettle();
-
-    final transcriptField = tester
-        .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
-        .first;
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),

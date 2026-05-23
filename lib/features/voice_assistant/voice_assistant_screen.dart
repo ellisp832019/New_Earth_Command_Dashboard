@@ -1616,6 +1616,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     final templates = _service.getTemplates();
+    final templateById = {
+      for (final template in templates) template.id: template,
+    };
     final conversationContext = _conversationContext;
     final presetSuggestion = _buildPresetSuggestion();
     final activeSuggestion = _presetType != null
@@ -2164,26 +2167,45 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'One tap loads a ready-made command to edit, speak, or turn into a prompt.',
+                    'Pick a starting point, then edit the details before you save.',
                     style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: templates
-                        .map(
-                          (template) => Tooltip(
-                            message: template.description,
-                            child: FilledButton.tonalIcon(
-                              key: Key('voiceTemplateButton-${template.id}'),
-                              onPressed: () => _applyTemplate(template),
-                              icon: Icon(_templateIcon(template.id)),
-                              label: Text(template.label),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                  _buildStarterDeckGroup(
+                    theme: theme,
+                    groupKey: const Key('voiceStarterDeckPlanGroup'),
+                    title: 'Plan',
+                    templateIds: const [
+                      'build-day',
+                      'summarize-today',
+                      'whats-next',
+                      'recall-thread',
+                      'plan-day',
+                    ],
+                    templateById: templateById,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStarterDeckGroup(
+                    theme: theme,
+                    groupKey: const Key('voiceStarterDeckCaptureGroup'),
+                    title: 'Capture',
+                    templateIds: const [
+                      'project',
+                      'task',
+                      'journal',
+                      'content',
+                      'business',
+                      'idea',
+                    ],
+                    templateById: templateById,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStarterDeckGroup(
+                    theme: theme,
+                    groupKey: const Key('voiceStarterDeckCodexGroup'),
+                    title: 'Review',
+                    templateIds: const ['codex'],
+                    templateById: templateById,
                   ),
                 ],
               ),
@@ -2422,6 +2444,49 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       default:
         return Icons.auto_awesome_outlined;
     }
+  }
+
+  Widget _buildStarterDeckGroup({
+    required ThemeData theme,
+    required Key groupKey,
+    required String title,
+    required List<String> templateIds,
+    required Map<String, VoiceCommandTemplate> templateById,
+  }) {
+    final templates = templateIds
+        .map((templateId) => templateById[templateId])
+        .whereType<VoiceCommandTemplate>()
+        .toList();
+
+    if (templates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      key: groupKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: templates
+              .map(
+                (template) => Tooltip(
+                  message: template.description,
+                  child: FilledButton.tonalIcon(
+                    key: Key('voiceTemplateButton-${template.id}'),
+                    onPressed: () => _applyTemplate(template),
+                    icon: Icon(_templateIcon(template.id)),
+                    label: Text(template.label),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
   }
 
   IconData _quickActionIcon(String id) {
