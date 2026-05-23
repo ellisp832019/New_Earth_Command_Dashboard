@@ -2050,6 +2050,7 @@ void main() {
       find.textContaining('What kind of entry do you want to create?'),
       findsOneWidget,
     );
+    expect(find.text('Current Thread'), findsNothing);
 
     await tester.enterText(
       find.byKey(const Key('voiceWizardAnswerField')),
