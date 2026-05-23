@@ -1996,44 +1996,41 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             Card(
               key: const Key('voiceBriefingCard'),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Voice Briefing', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    Text('Voice Briefing', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 6),
                     Text(briefing.summary, style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(briefing.nextStep, style: theme.textTheme.bodySmall),
-                    if (briefing.projectContext != null) ...[
+                    if (briefing.projectContext != null ||
+                        briefing.threadContext != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Project context: ${briefing.projectContext}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                    if (briefing.threadContext != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Thread context: ${briefing.threadContext}',
+                        [
+                          if (briefing.projectContext != null)
+                            briefing.projectContext,
+                          if (briefing.threadContext != null)
+                            briefing.threadContext,
+                        ].join(' • '),
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
                     if (briefing.memorySummary != null ||
                         briefing.memoryHighlights.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text('Memory', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Text(
                         briefing.memorySummary ??
                             'Gaia is building memory from the current thread.',
                         style: theme.textTheme.bodySmall,
                       ),
                       if (briefing.memoryHighlights.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 6,
+                          runSpacing: 6,
                           children: briefing.memoryHighlights
                               .map((highlight) => Chip(label: Text(highlight)))
                               .toList(),
@@ -2042,19 +2039,17 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     ],
                     if (briefing.plannerSummary != null ||
                         briefing.plannerSteps.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text('Action Plan', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Text(
                         briefing.plannerSummary ??
                             'Gaia is ready to suggest the next useful move.',
                         style: theme.textTheme.bodySmall,
                       ),
                       if (briefing.plannerSteps.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 6,
+                          runSpacing: 6,
                           children: briefing.plannerSteps.asMap().entries.map((
                             entry,
                           ) {
@@ -2066,15 +2061,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       ],
                     ],
                     if (briefing.actions.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Suggested sequence',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: 6,
+                        runSpacing: 6,
                         children: briefing.actions.asMap().entries.map((entry) {
                           final index = entry.key;
                           final action = entry.value;
@@ -2092,7 +2082,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         }).toList(),
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
