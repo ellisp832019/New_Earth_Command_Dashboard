@@ -1002,11 +1002,11 @@ class _ShowcaseTaskCard extends ConsumerWidget {
     final hasTask = snapshotTask != null;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: state.accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: state.accent.withValues(alpha: 0.34)),
+        color: state.accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: state.accent.withValues(alpha: 0.26)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1014,11 +1014,11 @@ class _ShowcaseTaskCard extends ConsumerWidget {
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 26,
+                height: 26,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: state.accent.withValues(alpha: 0.9),
+                  color: state.accent.withValues(alpha: 0.86),
                   shape: BoxShape.circle,
                 ),
                 child: Text(
@@ -1026,6 +1026,7 @@ class _ShowcaseTaskCard extends ConsumerWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColours.darkBackground,
                     fontWeight: FontWeight.w700,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1063,26 +1064,33 @@ class _ShowcaseTaskCard extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             state.title,
             style: Theme.of(
               context,
-            ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
+            ).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              height: 1.15,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             state.subtitle,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _InlineTag(label: state.label, accent: state.accent),
               if (hasTask && snapshotTask!.projectName != null) ...[
-                const SizedBox(width: 8),
                 _InlineTag(
                   label: snapshotTask!.projectName!,
                   accent: AppColours.darkSurfaceRaised,
@@ -1343,17 +1351,18 @@ class _InlineTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.16),
+        color: accent.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: foreground ?? accent,
           fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
         ),
       ),
     );
