@@ -33,7 +33,7 @@ class LearningScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No learning topics yet. Add a skill that will help you build New Earth.',
+                  'Nothing is in Learning yet. Add a skill when it feels useful.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -43,32 +43,18 @@ class LearningScreen extends ConsumerWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: learningItems.length + 1,
+            itemCount: learningItems.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Learning and Skills',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${learningItems.length} learning topics are available in the current view.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _LearningOverviewCard(itemCount: learningItems.length);
               }
 
-              return _LearningItemCard(item: learningItems[index - 1]);
+              if (index == 1) {
+                return _LearningHintCard();
+              }
+
+              return _LearningItemCard(item: learningItems[index - 2]);
             },
           );
         },
@@ -82,6 +68,67 @@ class LearningScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LearningOverviewCard extends StatelessWidget {
+  const _LearningOverviewCard({required this.itemCount});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Learning overview', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              '$itemCount learning topic${itemCount == 1 ? '' : 's'} are ready to review.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This is the quiet shelf for skills, references, and the next practical step.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LearningHintCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _LearningHintChip(
+              icon: Icons.school_outlined,
+              label: 'Track one useful skill',
+            ),
+            _LearningHintChip(
+              icon: Icons.arrow_forward_outlined,
+              label: 'Keep the next step small',
+            ),
+          ],
         ),
       ),
     );
@@ -154,6 +201,37 @@ class _LearningInfoChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(label, style: theme.textTheme.bodySmall),
+      ),
+    );
+  }
+}
+
+class _LearningHintChip extends StatelessWidget {
+  const _LearningHintChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+          ],
+        ),
       ),
     );
   }

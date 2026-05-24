@@ -2319,7 +2319,7 @@ void main() {
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'No learning topics yet. Add a skill that will help you build New Earth.',
+        'Nothing is in Learning yet. Add a skill when it feels useful.',
       ),
       findsOneWidget,
     );
@@ -2338,9 +2338,11 @@ void main() {
 
     appRouter.go('/learning');
     await tester.pumpAndSettle();
-
     await tester.tap(find.byKey(const Key('addLearningItemButton')));
     await tester.pumpAndSettle();
+    final formScrollable = find.byWidgetPredicate(
+      (widget) => widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    ).last;
 
     await tester.enterText(
       find.byKey(const Key('learningTopicField')),
@@ -2373,7 +2375,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('learningNextStepField')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: formScrollable,
     );
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -2383,7 +2385,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('saveLearningButton')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: formScrollable,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('saveLearningButton')));
