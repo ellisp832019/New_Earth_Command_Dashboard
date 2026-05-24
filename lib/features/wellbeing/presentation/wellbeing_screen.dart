@@ -34,7 +34,7 @@ class WellbeingScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No wellbeing check-ins yet. Add a calm check-in so the build stays sustainable.',
+                  'Nothing is in Wellbeing yet. Add a calm check-in when you need one.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -44,32 +44,18 @@ class WellbeingScreen extends ConsumerWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: items.length + 1,
+            itemCount: items.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Wellbeing Check-Ins',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${items.length} check-ins are available in the current view.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _WellbeingOverviewCard(itemCount: items.length);
               }
 
-              return _WellbeingCheckinCard(checkin: items[index - 1]);
+              if (index == 1) {
+                return _WellbeingHintCard();
+              }
+
+              return _WellbeingCheckinCard(checkin: items[index - 2]);
             },
           );
         },
@@ -83,6 +69,67 @@ class WellbeingScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WellbeingOverviewCard extends StatelessWidget {
+  const _WellbeingOverviewCard({required this.itemCount});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Wellbeing overview', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              '$itemCount check-in${itemCount == 1 ? '' : 's'} are ready to review.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Use this page to keep an honest sense of energy, mood, and pace.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WellbeingHintCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _WellbeingHintChip(
+              icon: Icons.self_improvement_outlined,
+              label: 'Check in honestly',
+            ),
+            _WellbeingHintChip(
+              icon: Icons.nights_stay_outlined,
+              label: 'Keep the day sustainable',
+            ),
+          ],
         ),
       ),
     );
@@ -164,6 +211,37 @@ class _WellbeingInfoChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(label, style: theme.textTheme.bodySmall),
+      ),
+    );
+  }
+}
+
+class _WellbeingHintChip extends StatelessWidget {
+  const _WellbeingHintChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+          ],
+        ),
       ),
     );
   }

@@ -39,7 +39,7 @@ class BusinessScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No business opportunities yet. Add a job, funding idea, grant, contact, or partnership lead.',
+                  'Nothing is in Business yet. Capture a lead when it feels useful.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -49,32 +49,18 @@ class BusinessScreen extends ConsumerWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: businessItems.length + 1,
+            itemCount: businessItems.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Business Hub',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${businessItems.length} opportunities are available in the current view.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _BusinessOverviewCard(itemCount: businessItems.length);
               }
 
-              return _BusinessItemCard(item: businessItems[index - 1]);
+              if (index == 1) {
+                return _BusinessHintCard();
+              }
+
+              return _BusinessItemCard(item: businessItems[index - 2]);
             },
           );
         },
@@ -88,6 +74,69 @@ class BusinessScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BusinessOverviewCard extends StatelessWidget {
+  const _BusinessOverviewCard({required this.itemCount});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Business overview', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              itemCount == 1
+                  ? '1 opportunity is ready to review.'
+                  : '$itemCount opportunities are ready to review.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Keep the next move small, practical, and easy to follow up on.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BusinessHintCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _BusinessHintChip(
+              icon: Icons.work_outline,
+              label: 'Capture one lead',
+            ),
+            _BusinessHintChip(
+              icon: Icons.follow_the_signs_outlined,
+              label: 'Keep the next action visible',
+            ),
+          ],
         ),
       ),
     );
@@ -170,6 +219,37 @@ class _BusinessInfoChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(label, style: theme.textTheme.bodySmall),
+      ),
+    );
+  }
+}
+
+class _BusinessHintChip extends StatelessWidget {
+  const _BusinessHintChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+          ],
+        ),
       ),
     );
   }

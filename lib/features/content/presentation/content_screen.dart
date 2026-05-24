@@ -34,7 +34,7 @@ class ContentScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No content ideas yet. Turn a build update into your first post idea.',
+                  'Nothing is in Content yet. Turn a build update into a gentle post idea.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -44,32 +44,18 @@ class ContentScreen extends ConsumerWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: contentItems.length + 1,
+            itemCount: contentItems.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Content Planner',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${contentItems.length} content ideas are available in the current view.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _ContentOverviewCard(itemCount: contentItems.length);
               }
 
-              return _ContentItemCard(item: contentItems[index - 1]);
+              if (index == 1) {
+                return _ContentHintCard();
+              }
+
+              return _ContentItemCard(item: contentItems[index - 2]);
             },
           );
         },
@@ -83,6 +69,67 @@ class ContentScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContentOverviewCard extends StatelessWidget {
+  const _ContentOverviewCard({required this.itemCount});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Content overview', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              '$itemCount content idea${itemCount == 1 ? '' : 's'} are ready to review.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Keep the next post practical, grounded, and easy to return to later.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContentHintCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _ContentHintChip(
+              icon: Icons.article_outlined,
+              label: 'Capture one post idea',
+            ),
+            _ContentHintChip(
+              icon: Icons.image_outlined,
+              label: 'Note if an image will help',
+            ),
+          ],
         ),
       ),
     );
@@ -160,6 +207,37 @@ class _ContentInfoChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(label, style: theme.textTheme.bodySmall),
+      ),
+    );
+  }
+}
+
+class _ContentHintChip extends StatelessWidget {
+  const _ContentHintChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+          ],
+        ),
       ),
     );
   }

@@ -2504,7 +2504,7 @@ void main() {
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'No content ideas yet. Turn a build update into your first post idea.',
+        'Nothing is in Content yet. Turn a build update into a gentle post idea.',
       ),
       findsOneWidget,
     );
@@ -2583,6 +2583,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Content'), findsAtLeastNWidgets(1));
+    expect(find.text('Content overview'), findsOneWidget);
+    expect(find.text('Capture one post idea'), findsOneWidget);
+    expect(find.text('Note if an image will help'), findsOneWidget);
     expect(
       find.text('Building the New Earth Command Dashboard'),
       findsOneWidget,
@@ -2708,7 +2711,7 @@ void main() {
     expect(find.text('Business'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'No business opportunities yet. Add a job, funding idea, grant, contact, or partnership lead.',
+        'Nothing is in Business yet. Capture a lead when it feels useful.',
       ),
       findsOneWidget,
     );
@@ -2779,6 +2782,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Business'), findsAtLeastNWidgets(1));
+    expect(find.text('Business overview'), findsOneWidget);
+    expect(find.text('Capture one lead'), findsOneWidget);
+    expect(find.text('Keep the next action visible'), findsOneWidget);
     expect(find.text('AI Architect Role'), findsOneWidget);
     expect(find.text('Job'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);
@@ -2807,7 +2813,7 @@ void main() {
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'No wellbeing check-ins yet. Add a calm check-in so the build stays sustainable.',
+        'Nothing is in Wellbeing yet. Add a calm check-in when you need one.',
       ),
       findsOneWidget,
     );
@@ -2876,6 +2882,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
+    expect(find.text('Wellbeing overview'), findsOneWidget);
+    expect(find.text('Check in honestly'), findsOneWidget);
+    expect(find.text('Keep the day sustainable'), findsOneWidget);
     expect(find.text('Energy: Low'), findsOneWidget);
     expect(find.text('Mood: Tired'), findsOneWidget);
     expect(find.text('Stress: High'), findsOneWidget);
