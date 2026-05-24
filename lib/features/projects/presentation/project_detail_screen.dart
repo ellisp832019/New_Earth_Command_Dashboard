@@ -239,6 +239,12 @@ class ProjectDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
+                title: 'Project home base',
+                body:
+                    'This page keeps the project, its notes, and its linked work in one calm place.',
+              ),
+              const SizedBox(height: 12),
+              _ProjectSectionCard(
                 title: 'Vision / Purpose',
                 body: project.vision ?? 'No project vision has been added yet.',
               ),

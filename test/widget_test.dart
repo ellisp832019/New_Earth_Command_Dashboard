@@ -1333,6 +1333,14 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
+        find.text('Project home base'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Project home base'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
         find.text('Recent Journal Entries'),
         200,
         scrollable: find.byType(Scrollable).first,
