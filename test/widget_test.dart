@@ -2208,7 +2208,7 @@ void main() {
     expect(find.text('Journal'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'No journal entries yet. Capture today\'s progress so the journey is not lost.',
+        'Nothing is in the journal yet. Capture today\'s progress when you are ready.',
       ),
       findsOneWidget,
     );
@@ -2282,6 +2282,16 @@ void main() {
     await tester.tap(find.byKey(const Key('saveJournalButton')));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Journal overview'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Journal overview'), findsOneWidget);
+    expect(find.text('Capture what moved today'), findsOneWidget);
+    expect(find.text('Link to project or task'), findsOneWidget);
     expect(find.text('Journal'), findsAtLeastNWidgets(1));
     expect(find.text('Daily build reflection'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);

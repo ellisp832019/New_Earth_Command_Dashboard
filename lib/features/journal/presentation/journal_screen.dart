@@ -34,7 +34,7 @@ class JournalScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No journal entries yet. Capture today\'s progress so the journey is not lost.',
+                  'Nothing is in the journal yet. Capture today\'s progress when you are ready.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -44,32 +44,18 @@ class JournalScreen extends ConsumerWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: items.length + 1,
+            itemCount: items.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Build Journal',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${items.length} entries are available in the current journal view.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _JournalOverviewCard(entryCount: items.length);
               }
 
-              final item = items[index - 1];
+              if (index == 1) {
+                return _JournalHintCard();
+              }
+
+              final item = items[index - 2];
               return _JournalEntryCard(
                 item: item,
                 onTap: () => context.push(
@@ -89,6 +75,67 @@ class JournalScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JournalOverviewCard extends StatelessWidget {
+  const _JournalOverviewCard({required this.entryCount});
+
+  final int entryCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Journal overview', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              '$entryCount journal entr${entryCount == 1 ? 'y' : 'ies'} are ready to review.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This is the calm record of what moved, what was learned, and what can continue next.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JournalHintCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _JournalHintChip(
+              icon: Icons.book_outlined,
+              label: 'Capture what moved today',
+            ),
+            _JournalHintChip(
+              icon: Icons.link_outlined,
+              label: 'Link to project or task',
+            ),
+          ],
         ),
       ),
     );
@@ -162,6 +209,37 @@ class _JournalInfoChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(label, style: theme.textTheme.bodySmall),
+      ),
+    );
+  }
+}
+
+class _JournalHintChip extends StatelessWidget {
+  const _JournalHintChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+          ],
+        ),
       ),
     );
   }
