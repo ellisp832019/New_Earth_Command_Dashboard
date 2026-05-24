@@ -1357,6 +1357,21 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Recent Business Opportunities'), findsOneWidget);
       expect(find.text('Project partner lead'), findsOneWidget);
+
+      await tester.drag(
+        find.byType(Scrollable).first,
+        const Offset(0, 3000),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('addProjectBusinessButton')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add Opportunity'), findsOneWidget);
+      expect(find.text(project.name), findsOneWidget);
+
+      appRouter.go('/dashboard');
+      await tester.pumpAndSettle();
     },
   );
 
