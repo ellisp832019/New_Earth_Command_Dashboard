@@ -246,21 +246,21 @@ class ProjectDetailScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _ProjectSectionCard(
                 title: 'Vision / Purpose',
-                body: project.vision ?? 'No project vision has been added yet.',
+                body: project.vision ?? 'Project vision has not been added yet.',
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
                 title: 'Current Milestone',
                 body:
                     project.currentMilestone ??
-                    'No current milestone has been set yet.',
+                    'Current milestone has not been set yet.',
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
                 title: 'Next Action',
                 body:
                     project.nextAction ??
-                    'No next action has been recorded yet.',
+                    'Next action has not been recorded yet.',
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(
@@ -308,7 +308,7 @@ class ProjectDetailScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _ProjectSectionCard(
                 title: 'Notes',
-                body: project.notes ?? 'No project notes have been added yet.',
+                body: project.notes ?? 'Project notes have not been added yet.',
               ),
             ],
           );
@@ -318,7 +318,7 @@ class ProjectDetailScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Project detail could not be loaded. Please try again.',
+              'Project detail could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

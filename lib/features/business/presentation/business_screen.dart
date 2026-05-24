@@ -39,7 +39,7 @@ class BusinessScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Nothing is in Business yet. Capture a lead when it feels useful.',
+                  'No business items yet. Capture a lead when it feels useful.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -69,7 +69,7 @@ class BusinessScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Business opportunities could not be loaded. Please try again.',
+              'Business opportunities could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

@@ -56,7 +56,7 @@ class TasksScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Tasks could not be loaded. Please try again.',
+                  'Tasks could not be loaded. Try again in a moment.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -68,7 +68,7 @@ class TasksScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Tasks could not be loaded. Please try again.',
+                'Tasks could not be loaded. Try again in a moment.',
                 style: theme.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -80,7 +80,7 @@ class TasksScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Tasks could not be loaded. Please try again.',
+              'Tasks could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -280,7 +280,7 @@ class _TaskListView extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'No tasks yet. Add your first task to start moving New Earth forward.',
+              'No tasks yet. Add your first task when you\'re ready.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -301,7 +301,7 @@ class _TaskListView extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Text(
                 normalizedQuery.isEmpty
-                    ? 'No tasks match the current filters. Try a different status or project view.'
+                    ? 'No tasks match the current filters yet. Try a different status or project view.'
                     : 'No tasks match the current search and filters yet. Try a different word or clear the search.',
                 style: theme.textTheme.bodyMedium,
               ),

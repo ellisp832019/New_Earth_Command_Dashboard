@@ -1471,7 +1471,7 @@ class _DashboardError extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Center(
         child: Text(
-          'Dashboard could not be loaded. Please try again.',
+          'Dashboard could not be loaded. Try again in a moment.',
           style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),

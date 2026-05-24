@@ -34,7 +34,7 @@ class PlannerScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Planner tasks could not be loaded. Please try again.',
+                'Planner tasks could not be loaded. Try again in a moment.',
                 style: theme.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -46,7 +46,7 @@ class PlannerScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Today\'s plan could not be loaded. Please try again.',
+              'Today\'s plan could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

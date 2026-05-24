@@ -33,7 +33,7 @@ class LearningScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Nothing is in Learning yet. Add a skill when it feels useful.',
+                  'No learning items yet. Add a skill when it feels useful.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -63,7 +63,7 @@ class LearningScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Learning topics could not be loaded. Please try again.',
+              'Learning topics could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

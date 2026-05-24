@@ -486,7 +486,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Settings could not be loaded right now. Please try again.',
+              'Settings could not be loaded right now. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

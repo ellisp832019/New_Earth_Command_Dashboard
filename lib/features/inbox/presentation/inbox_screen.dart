@@ -63,7 +63,7 @@ class InboxScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Inbox items could not be loaded. Please try again.',
+              'Inbox items could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

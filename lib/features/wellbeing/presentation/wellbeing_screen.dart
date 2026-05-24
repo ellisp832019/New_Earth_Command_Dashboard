@@ -34,7 +34,7 @@ class WellbeingScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Nothing is in Wellbeing yet. Add a calm check-in when you need one.',
+                  'No wellbeing entries yet. Add a calm check-in when you need one.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -64,7 +64,7 @@ class WellbeingScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Wellbeing check-ins could not be loaded. Please try again.',
+              'Wellbeing check-ins could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

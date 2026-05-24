@@ -584,9 +584,7 @@ void main() {
 
     expect(find.byKey(const Key('addTaskButton')), findsOneWidget);
     expect(
-      find.text(
-        'No tasks yet. Add your first task to start moving New Earth forward.',
-      ),
+      find.text('No tasks yet. Add your first task when you\'re ready.'),
       findsOneWidget,
     );
   });
@@ -2208,7 +2206,7 @@ void main() {
     expect(find.text('Journal'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'Nothing is in the journal yet. Capture today\'s progress when you are ready.',
+        'No journal entries yet. Capture today\'s progress when you are ready.',
       ),
       findsOneWidget,
     );
@@ -2319,7 +2317,7 @@ void main() {
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'Nothing is in Learning yet. Add a skill when it feels useful.',
+        'No learning items yet. Add a skill when it feels useful.',
       ),
       findsOneWidget,
     );
@@ -2504,7 +2502,7 @@ void main() {
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'Nothing is in Content yet. Turn a build update into a gentle post idea.',
+        'No content yet. Turn a build update into a gentle post idea.',
       ),
       findsOneWidget,
     );
@@ -2711,7 +2709,7 @@ void main() {
     expect(find.text('Business'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'Nothing is in Business yet. Capture a lead when it feels useful.',
+        'No business items yet. Capture a lead when it feels useful.',
       ),
       findsOneWidget,
     );
@@ -2813,7 +2811,7 @@ void main() {
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'Nothing is in Wellbeing yet. Add a calm check-in when you need one.',
+        'No wellbeing entries yet. Add a calm check-in when you need one.',
       ),
       findsOneWidget,
     );

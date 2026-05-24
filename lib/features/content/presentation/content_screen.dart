@@ -34,7 +34,7 @@ class ContentScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Nothing is in Content yet. Turn a build update into a gentle post idea.',
+                  'No content yet. Turn a build update into a gentle post idea.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -64,7 +64,7 @@ class ContentScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Content ideas could not be loaded. Please try again.',
+              'Content ideas could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

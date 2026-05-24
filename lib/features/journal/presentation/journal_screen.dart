@@ -34,7 +34,7 @@ class JournalScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Nothing is in the journal yet. Capture today\'s progress when you are ready.',
+                  'No journal entries yet. Capture today\'s progress when you are ready.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -70,7 +70,7 @@ class JournalScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Journal entries could not be loaded. Please try again.',
+              'Journal entries could not be loaded. Try again in a moment.',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
