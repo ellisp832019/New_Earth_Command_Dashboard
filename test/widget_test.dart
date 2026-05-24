@@ -399,6 +399,7 @@ void main() {
     appRouter.go('/settings');
     await tester.pumpAndSettle();
 
+    expect(find.text('What these settings change'), findsOneWidget);
     expect(find.text('Dashboard Preferences'), findsOneWidget);
     expect(find.byKey(const Key('settingsTopTaskLimitValue')), findsOneWidget);
     expect(find.text('3 priority tasks per day'), findsOneWidget);

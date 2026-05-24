@@ -99,12 +99,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        'What these settings change',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'These controls stay local to this device and only shape the parts that help the day feel calmer.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      const _SettingsNote(
+                        icon: Icons.check_circle_outline,
+                        text: 'The Top 3 rule stays fixed at 3 for now.',
+                      ),
+                      const SizedBox(height: 6),
+                      const _SettingsNote(
+                        icon: Icons.volume_up_outlined,
+                        text:
+                            'Voice replies and Voice Assistant can be turned on separately.',
+                      ),
+                      const SizedBox(height: 6),
+                      const _SettingsNote(
+                        icon: Icons.view_quilt_outlined,
+                        text:
+                            'Dashboard cards can be hidden if they add noise rather than clarity.',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         'Dashboard Preferences',
                         style: theme.textTheme.titleMedium,
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Adjust a few calm defaults without widening the system too early.',
+                        'Keep the page focused on the few choices that matter right now.',
                         style: theme.textTheme.bodyMedium,
                       ),
                     ],
@@ -121,7 +158,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Text('Theme Mode', style: theme.textTheme.titleMedium),
                       const SizedBox(height: 6),
                       Text(
-                        'Switch between a calm light workspace and a darker branded command view.',
+                        'Pick the look that is easiest to live with each day.',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 12),
@@ -169,7 +206,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'This stays fixed for the current MVP so the daily rule remains stable.',
+                        'This stays fixed at three for the current MVP so the dashboard stays calm.',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -186,7 +223,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Text('Voice Output', style: theme.textTheme.titleMedium),
                       const SizedBox(height: 6),
                       Text(
-                        'Choose which system voice speaks the assistant replies and briefings.',
+                        'Use this only if you want Gaia to speak replies and briefings on this device.',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 12),
@@ -195,7 +232,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Enable Voice Assistant'),
                         subtitle: const Text(
-                          'Allow headset capture and voice assistant commands after startup.',
+                          'Keep the assistant available for local headset capture and spoken commands.',
                         ),
                         value: voiceAssistantEnabled,
                         onChanged: (value) {
@@ -214,7 +251,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Speak Assistant Replies'),
                         subtitle: const Text(
-                          'Let Voice Assistant read brief replies and confirmations aloud.',
+                          'Read short replies and confirmations aloud when that helps.',
                         ),
                         value: voiceRepliesEnabled,
                         onChanged: (value) {
@@ -233,7 +270,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         data: (voiceOptions) {
                           if (voiceOptions.isEmpty) {
                             return Text(
-                              'No system voices were returned on this device yet.',
+                              'No system voices are available on this device yet.',
                               style: theme.textTheme.bodySmall,
                             );
                           }
@@ -347,7 +384,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           Text(
                             selectedVoiceOption == null
-                                ? 'Pick a voice to hear the assistant reply.'
+                                ? 'Pick a voice if you want Gaia to speak.'
                                 : 'Selected: ${selectedVoiceOption.label}',
                             style: theme.textTheme.bodySmall,
                           ),
@@ -370,7 +407,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Choose which supporting cards stay visible on the Dashboard.',
+                        'Hide anything that adds noise instead of helping the day.',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 12),
@@ -379,7 +416,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Show Wellbeing Card'),
                         subtitle: const Text(
-                          'Keep energy and sustainability visible on the Dashboard.',
+                          'Keep energy and sustainability visible when they are useful.',
                         ),
                         value: appSettings.showWellbeingCard,
                         onChanged: (value) => ref
@@ -391,7 +428,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Show Business Card'),
                         subtitle: const Text(
-                          'Keep funding and opportunity reminders in view.',
+                          'Keep funding and opportunity reminders in view if they matter today.',
                         ),
                         value: appSettings.showBusinessCard,
                         onChanged: (value) => ref
@@ -403,7 +440,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Show Learning Card'),
                         subtitle: const Text(
-                          'Keep current learning effort visible on the Dashboard.',
+                          'Keep current learning effort visible when you are actively using it.',
                         ),
                         value: appSettings.showLearningCard,
                         onChanged: (value) => ref
@@ -415,7 +452,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Show Content Card'),
                         subtitle: const Text(
-                          'Keep public-awareness and publishing work visible.',
+                          'Keep public-awareness and publishing work visible if it is in play.',
                         ),
                         value: appSettings.showContentCard,
                         onChanged: (value) => ref
@@ -456,6 +493,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SettingsNote extends StatelessWidget {
+  const _SettingsNote({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+      ],
     );
   }
 }
