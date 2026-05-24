@@ -222,7 +222,7 @@ class DashboardRepository {
       title: 'Choose one gentle move',
       summary: 'Open Planner and pick one small focus for today.',
       reason:
-          'No plan or Top 3 task is set yet, so one simple choice will keep the day calm.',
+          'Nothing is pinned yet, so one simple choice will keep the day steady.',
     );
   }
 

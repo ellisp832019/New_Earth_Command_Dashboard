@@ -271,9 +271,18 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('A blank daily plan is ready for today.'), findsOneWidget);
-    expect(find.text('No focus reason set yet.'), findsOneWidget);
-    expect(find.text('No morning intention set yet.'), findsOneWidget);
+    expect(
+      find.text('A blank daily plan is ready. One calm choice will start the day.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Add one short reason to keep the day grounded.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('A short intention can make the morning feel steadier.'),
+      findsOneWidget,
+    );
     expect(find.text('Choose your first priority task'), findsOneWidget);
     await tester.drag(
       find.byKey(const Key('dashboardScrollView')),
@@ -525,7 +534,7 @@ void main() {
               nextStepSummary:
                   'Open Planner and pick one small focus for today.',
               nextStepReason:
-                  'No plan or Top 3 task is set yet, so one simple choice will keep the day calm.',
+                  'Nothing is pinned yet, so one simple choice will keep the day steady.',
               mainFocus: null,
               focusReason: null,
               morningIntention: null,

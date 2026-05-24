@@ -567,7 +567,7 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
             Text(
               hasFocus
                   ? widget.snapshot.mainFocus!
-                  : 'A blank daily plan is ready for today.',
+                  : 'A blank daily plan is ready. One calm choice will start the day.',
               style: theme.textTheme.titleMedium?.copyWith(
                 color: AppColours.darkText,
               ),
@@ -577,14 +577,14 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
               label: 'Why It Matters',
               value: hasReason
                   ? widget.snapshot.focusReason!
-                  : 'No focus reason set yet.',
+                  : 'Add one short reason to keep the day grounded.',
             ),
             const SizedBox(height: 12),
             _FocusDetailRow(
               label: 'Morning Intention',
               value: hasIntention
                   ? widget.snapshot.morningIntention!
-                  : 'No morning intention set yet.',
+                  : 'A short intention can make the morning feel steadier.',
             ),
           ],
         ],
