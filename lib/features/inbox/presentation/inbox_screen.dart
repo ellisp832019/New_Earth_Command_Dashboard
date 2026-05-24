@@ -33,7 +33,7 @@ class InboxScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No inbox items yet. Capture a thought here so it does not get lost.',
+                  'Nothing needs triage yet. Capture a thought here, then review it when you are ready.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -43,29 +43,18 @@ class InboxScreen extends ConsumerWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: inboxItems.length + 1,
+            itemCount: inboxItems.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Inbox', style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${inboxItems.length} captured items are available in the current view.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _InboxOverviewCard(itemCount: inboxItems.length);
               }
 
-              return _InboxItemCard(item: inboxItems[index - 1]);
+              if (index == 1) {
+                return _InboxTriageHintCard();
+              }
+
+              return _InboxItemCard(item: inboxItems[index - 2]);
             },
           );
         },
@@ -142,6 +131,11 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
               ),
             ],
             const SizedBox(height: 12),
+            Text(
+              'Park it for later, or convert it into the next right place.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -156,13 +150,13 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.play_arrow_outlined),
-                  label: Text(_isProcessing ? 'Processing...' : 'Convert'),
+                  label: Text(_isProcessing ? 'Processing...' : 'Review & Convert'),
                 ),
                 OutlinedButton.icon(
                   key: Key('parkInboxItemButton-${item.item.inboxItemId}'),
                   onPressed: _isProcessing ? null : _parkItem,
                   icon: const Icon(Icons.push_pin_outlined),
-                  label: const Text('Park'),
+                  label: const Text('Park for Later'),
                 ),
               ],
             ),
@@ -190,8 +184,8 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('Convert Inbox Item'),
-              subtitle: const Text('Choose where this capture should go.'),
+              title: const Text('Review and Move'),
+              subtitle: const Text('Choose the calmest next home for this capture.'),
             ),
             const Divider(height: 1),
             _ConversionChoiceTile(
@@ -327,6 +321,82 @@ class _InboxInfoChip extends StatelessWidget {
   }
 }
 
+class _InboxOverviewCard extends StatelessWidget {
+  const _InboxOverviewCard({required this.itemCount});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surface.withValues(alpha: 0.94),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.88),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Inbox triage', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              '$itemCount unprocessed item${itemCount == 1 ? '' : 's'} are ready for review.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'New and parked items stay here. Processed items leave the list when they have been moved on.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InboxTriageHintCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.38),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.72),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _InboxHintChip(
+              icon: Icons.push_pin_outlined,
+              label: 'Park to keep for later',
+            ),
+            _InboxHintChip(
+              icon: Icons.play_arrow_outlined,
+              label: 'Convert to move it on',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ConversionChoiceTile extends StatelessWidget {
   const _ConversionChoiceTile({
     required this.icon,
@@ -341,6 +411,39 @@ class _ConversionChoiceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(leading: Icon(icon), title: Text(label), onTap: onTap);
+  }
+}
+
+class _InboxHintChip extends StatelessWidget {
+  const _InboxHintChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.72),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+    );
   }
 }
 

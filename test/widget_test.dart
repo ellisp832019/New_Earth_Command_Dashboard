@@ -2885,7 +2885,7 @@ void main() {
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'No inbox items yet. Capture a thought here so it does not get lost.',
+        'Nothing needs triage yet. Capture a thought here, then review it when you are ready.',
       ),
       findsOneWidget,
     );
@@ -2944,6 +2944,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
+    expect(find.text('Inbox triage'), findsOneWidget);
     expect(
       find.text('Check Flutter navigation package'),
       findsAtLeastNWidgets(1),
@@ -2951,6 +2952,7 @@ void main() {
     expect(find.text('Learning Note'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);
     expect(find.text('Status: New'), findsOneWidget);
+    expect(find.text('Park to keep for later'), findsOneWidget);
 
     final items = await InboxRepository(database).getItems();
     expect(items, hasLength(1));
