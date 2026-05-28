@@ -291,6 +291,20 @@ class AssetRegisterRepository {
     }).toList(growable: false);
   }
 
+  List<Map<String, String>> filterBrokenRepairEquipment(
+    List<Map<String, String>> rows,
+  ) {
+    return rows.where((row) {
+      final status = _normalizedStatus(row['status']);
+      if (status == 'broken' || status == 'repairing') {
+        return true;
+      }
+
+      final condition = _normalizedStatus(row['condition']);
+      return condition == 'broken' || condition == 'repairing';
+    }).toList(growable: false);
+  }
+
   int estimateReorderSpend(List<Map<String, String>> rows) {
     var total = 0;
     for (final row in filterReorderNeededParts(rows)) {

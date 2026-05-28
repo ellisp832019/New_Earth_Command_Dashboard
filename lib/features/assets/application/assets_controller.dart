@@ -49,3 +49,10 @@ final assetLowStockPartsProvider =
   final repository = ref.watch(assetRegisterRepositoryProvider);
   return repository.filterLowStockParts(table.rows);
 });
+
+final assetBrokenRepairEquipmentProvider =
+    FutureProvider<List<Map<String, String>>>((ref) async {
+  final table = await ref.watch(assetEquipmentRegisterProvider.future);
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.filterBrokenRepairEquipment(table.rows);
+});

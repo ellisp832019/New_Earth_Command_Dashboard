@@ -5,6 +5,7 @@ import '../../features/assets/presentation/assets_screen.dart';
 import '../../features/assets/presentation/equipment_register_screen.dart';
 import '../../features/assets/presentation/low_stock_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
+import '../../features/assets/presentation/repair_summary_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
@@ -79,6 +80,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'low-stock',
                   builder: (context, state) => const LowStockScreen(),
+                ),
+                GoRoute(
+                  path: 'repair-summary',
+                  builder: (context, state) => const RepairSummaryScreen(),
                 ),
               ],
             ),
