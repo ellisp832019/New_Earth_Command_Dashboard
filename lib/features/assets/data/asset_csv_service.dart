@@ -67,7 +67,7 @@ class AssetCsvService {
 
     final headers = _mergeHeaders(table.headers, table.rows);
     final lines = <String>[
-      headers.map(_csvCell).join(','),
+      headers.join(','),
       ...table.rows.map((row) => _encodeRow(headers, row)),
     ];
 

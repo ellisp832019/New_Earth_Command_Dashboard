@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/assets/presentation/assets_screen.dart';
+import '../../features/assets/presentation/equipment_register_screen.dart';
+import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
@@ -63,6 +65,17 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.assets,
               builder: (context, state) => const AssetsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'equipment',
+                  builder: (context, state) =>
+                      const EquipmentRegisterScreen(),
+                ),
+                GoRoute(
+                  path: 'parts',
+                  builder: (context, state) => const PartsInventoryScreen(),
+                ),
+              ],
             ),
           ],
         ),

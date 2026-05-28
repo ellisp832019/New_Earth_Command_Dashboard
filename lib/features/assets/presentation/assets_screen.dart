@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 import '../data/assets_folder_service.dart';
@@ -119,6 +121,12 @@ class _AssetsContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 22),
                     _AssetSummaryGrid(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    _AssetRegisterLaunchCard(
+                      onOpenEquipment: () =>
+                          context.push(RouteNames.assetEquipment),
+                      onOpenParts: () => context.push(RouteNames.assetParts),
+                    ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
                     const SizedBox(height: 20),
@@ -547,6 +555,60 @@ class _AssetFolderCheckCard extends StatelessWidget {
               ),
             ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AssetRegisterLaunchCard extends StatelessWidget {
+  const _AssetRegisterLaunchCard({
+    required this.onOpenEquipment,
+    required this.onOpenParts,
+  });
+
+  final VoidCallback onOpenEquipment;
+  final VoidCallback onOpenParts;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PanelTitle(
+            title: 'Registers',
+            icon: Icons.view_list_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Open the working registers for equipment and parts. These views stay calm and focused on the next useful action.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenEquipment,
+                icon: const Icon(Icons.precision_manufacturing_outlined),
+                label: const Text('Equipment Register'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onOpenParts,
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Parts Inventory'),
+              ),
+            ],
+          ),
         ],
       ),
     );
