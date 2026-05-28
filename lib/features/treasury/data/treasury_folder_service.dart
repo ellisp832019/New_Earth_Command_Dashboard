@@ -63,6 +63,12 @@ class TreasuryWeeklyReviewSaveResult {
   final String dashboardStatePath;
 }
 
+class TreasuryReceiptSaveResult {
+  const TreasuryReceiptSaveResult({required this.receiptIndexPath});
+
+  final String receiptIndexPath;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -507,7 +513,7 @@ class TreasuryFolderService {
       case '04_PROJECT_SPEND_TRACKERS/project_spend_tracker.csv':
         return 'date,project,item,supplier,amount,category,receipt_saved,status,notes\n';
       case '05_RECEIPTS_AND_INVOICES/receipt_index.csv':
-        return 'date,item,supplier,amount,type,project,file_location,status,notes\n';
+        return 'Date,Item,Supplier,Amount,PersonalOrNewEarth,Project,FileLocation,Notes\n';
       case '06_SUBSCRIPTIONS_AND_RECURRING_COSTS/subscription_tracker.csv':
         return 'service,purpose,cost,renewal_date,payment_source,status,keep_cancel_review,notes\n';
       case '10_FINANCE_MEETING_NOTES/decisions_register.csv':
@@ -550,6 +556,51 @@ class TreasuryFolderService {
     ].join('\n');
   }
 
+  Future<TreasuryReceiptSaveResult> saveReceiptRecord({
+    required String financeRootPath,
+    required String item,
+    required String supplier,
+    required String amount,
+    required String personalOrNewEarth,
+    required String project,
+    required String fileLocation,
+    required String notes,
+    required DateTime recordedAt,
+  }) async {
+    final receiptIndexFile = File(
+      path.join(
+        financeRootPath,
+        '05_RECEIPTS_AND_INVOICES',
+        'receipt_index.csv',
+      ),
+    );
+    await receiptIndexFile.parent.create(recursive: true);
+
+    final existingLines = await receiptIndexFile.exists()
+        ? await receiptIndexFile.readAsLines()
+        : <String>[];
+    final header =
+        'Date,Item,Supplier,Amount,PersonalOrNewEarth,Project,FileLocation,Notes';
+    final rows = <String>[
+      if (existingLines.isEmpty) header,
+      if (existingLines.isNotEmpty) ...existingLines,
+      _csvJoin([
+        _dateStamp(recordedAt),
+        item,
+        supplier,
+        amount,
+        personalOrNewEarth,
+        project,
+        fileLocation,
+        notes,
+      ]),
+    ];
+
+    await writeTextFileWithBackup(receiptIndexFile, '${rows.join('\n')}\n');
+
+    return TreasuryReceiptSaveResult(receiptIndexPath: receiptIndexFile.path);
+  }
+
   List<String> _markdownBullets(List<String> items) {
     if (items.isEmpty) {
       return const ['- '];
@@ -567,5 +618,15 @@ class TreasuryFolderService {
     final month = local.month.toString().padLeft(2, '0');
     final day = local.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+
+  String _csvJoin(List<String> values) {
+    return values.map(_csvCell).join(',');
+  }
+
+  String _csvCell(String value) {
+    final trimmed = value.trim();
+    final escaped = trimmed.replaceAll('"', '""');
+    return '"$escaped"';
   }
 }

@@ -167,11 +167,12 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
                               FilledButton.icon(
                                 onPressed: () => _finish(context),
                                 icon: const Icon(Icons.save_outlined),
-                                label: Text(
-                                  _flow == TreasuryWizardFlow.weeklyRitual
-                                      ? 'Save review'
-                                      : 'Save draft',
-                                ),
+                                label: Text(switch (_flow) {
+                                  TreasuryWizardFlow.weeklyRitual =>
+                                    'Save review',
+                                  TreasuryWizardFlow.receipts => 'Save receipt',
+                                  _ => 'Save draft',
+                                }),
                               ),
                             TextButton.icon(
                               onPressed: () => context.pop(),
@@ -222,6 +223,54 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
 
   Future<void> _finish(BuildContext context) async {
     if (_flow != TreasuryWizardFlow.weeklyRitual) {
+      if (_flow == TreasuryWizardFlow.receipts) {
+        final service = ref.read(treasuryFolderServiceProvider);
+        final snapshot = await service.loadWorkspace();
+        if (!context.mounted) {
+          return;
+        }
+
+        final financeRootPath = snapshot.financeRootPath;
+        if (financeRootPath == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Treasury needs the finance folder linked first.'),
+            ),
+          );
+          return;
+        }
+
+        final result = await service.saveReceiptRecord(
+          financeRootPath: financeRootPath,
+          item: _controllerText(0),
+          supplier: _controllerText(1),
+          amount: _controllerText(2),
+          personalOrNewEarth: _controllers.length > 3
+              ? _controllers[3].text
+              : '',
+          project: _controllerText(4),
+          fileLocation: _controllerText(5),
+          notes: _controllerText(6),
+          recordedAt: DateTime.now(),
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
+        ref.invalidate(treasuryWorkspaceProvider);
+
+        final savedName = result.receiptIndexPath
+            .split(Platform.pathSeparator)
+            .last;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Receipt saved to $savedName')));
+        context.pop();
+        return;
+      }
+
       ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Draft saved locally in Treasury.')),
@@ -294,6 +343,14 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
         .toList();
   }
 
+  String _controllerText(int index) {
+    if (index >= _controllers.length) {
+      return '';
+    }
+
+    return _controllers[index].text;
+  }
+
   List<_WizardStepDefinition> _stepsFor(TreasuryWizardFlow flow) {
     switch (flow) {
       case TreasuryWizardFlow.weeklyRitual:
@@ -344,6 +401,21 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
             label: 'Amount',
             prompt: 'What amount should be recorded?',
             hint: 'Enter the value as it appeared on the receipt.',
+          ),
+          _WizardStepDefinition(
+            label: 'Type',
+            prompt: 'Is this Personal or New Earth?',
+            hint: 'Choose the calm category that fits the purchase.',
+          ),
+          _WizardStepDefinition(
+            label: 'Project',
+            prompt: 'Which project should this link to?',
+            hint: 'Use the project name if there is one, or leave it simple.',
+          ),
+          _WizardStepDefinition(
+            label: 'File location',
+            prompt: 'Where is the file stored?',
+            hint: 'Add the folder or filename if it is already sorted.',
           ),
           _WizardStepDefinition(
             label: 'Note',
