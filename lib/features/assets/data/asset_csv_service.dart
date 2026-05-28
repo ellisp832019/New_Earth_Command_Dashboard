@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'asset_change_journal.dart';
+
 class AssetCsvTable {
   const AssetCsvTable({
     required this.headers,
@@ -110,6 +112,27 @@ class AssetCsvService {
     );
     await writeTable(file, table);
     return table;
+  }
+
+  Future<AssetCsvTable> appendJournalEntry(
+    File file,
+    AssetChangeJournalEntry entry,
+  ) {
+    return appendRow(
+      file,
+      entry.toCsvRow(),
+      expectedHeaders: AssetChangeJournalEntry.headers,
+    );
+  }
+
+  Future<List<AssetChangeJournalEntry>> readJournalEntries(File file) async {
+    final table = await readTable(
+      file,
+      expectedHeaders: AssetChangeJournalEntry.headers,
+    );
+    return table.rows
+        .map(AssetChangeJournalEntry.fromCsvRow)
+        .toList(growable: false);
   }
 
   List<String> _mergeHeaders(

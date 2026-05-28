@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import 'asset_change_journal.dart';
 import 'asset_csv_service.dart';
 
 class AssetRegisterRepository {
@@ -372,6 +373,23 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> readChangeJournal(String assetsRootPath) {
+    return _csvService.readTable(
+      _changeJournalFile(assetsRootPath),
+      expectedHeaders: AssetChangeJournalEntry.headers,
+    );
+  }
+
+  Future<AssetCsvTable> appendChangeJournalEntry(
+    String assetsRootPath,
+    AssetChangeJournalEntry entry,
+  ) {
+    return _csvService.appendJournalEntry(
+      _changeJournalFile(assetsRootPath),
+      entry,
+    );
+  }
+
   List<Map<String, String>> filterLowStockParts(
     List<Map<String, String>> rows,
   ) {
@@ -516,6 +534,16 @@ class AssetRegisterRepository {
         _normalizedRootPath(assetsRootPath),
         '12_PHOTOS_QR_LABELS_AND_BINS',
         'qr_label_register.csv',
+      ),
+    );
+  }
+
+  File _changeJournalFile(String assetsRootPath) {
+    return File(
+      path.join(
+        _normalizedRootPath(assetsRootPath),
+        'changes',
+        'asset_change_journal.csv',
       ),
     );
   }
