@@ -72,6 +72,14 @@ class AssetRegisterRepository {
     'notes',
   ];
 
+  static const locationHeaders = <String>[
+    'asset_id',
+    'location_name',
+    'description',
+    'photo_link',
+    'notes',
+  ];
+
   static const reorderHeaders = <String>[
     'date',
     'item',
@@ -127,6 +135,13 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> readLocationRegister(String assetsRootPath) {
+    return _csvService.readTable(
+      _locationFile(assetsRootPath),
+      expectedHeaders: locationHeaders,
+    );
+  }
+
   Future<AssetCsvTable> readReorderList(String assetsRootPath) {
     return _csvService.readTable(
       _reorderFile(assetsRootPath),
@@ -173,6 +188,15 @@ class AssetRegisterRepository {
     AssetCsvTable table,
   ) {
     return _csvService.writeTable(_maintenanceFile(assetsRootPath), table).then(
+      (_) => table,
+    );
+  }
+
+  Future<AssetCsvTable> writeLocationRegister(
+    String assetsRootPath,
+    AssetCsvTable table,
+  ) {
+    return _csvService.writeTable(_locationFile(assetsRootPath), table).then(
       (_) => table,
     );
   }
@@ -236,6 +260,17 @@ class AssetRegisterRepository {
       _maintenanceFile(assetsRootPath),
       row,
       expectedHeaders: maintenanceHeaders,
+    );
+  }
+
+  Future<AssetCsvTable> appendLocationRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) {
+    return _csvService.appendRow(
+      _locationFile(assetsRootPath),
+      row,
+      expectedHeaders: locationHeaders,
     );
   }
 
@@ -355,6 +390,16 @@ class AssetRegisterRepository {
         _normalizedRootPath(assetsRootPath),
         '10_REPAIR_MAINTENANCE_AND_CALIBRATION',
         'maintenance_log.csv',
+      ),
+    );
+  }
+
+  File _locationFile(String assetsRootPath) {
+    return File(
+      path.join(
+        _normalizedRootPath(assetsRootPath),
+        '09_BORROWED_LENT_AND_LOCATION_TRACKING',
+        'location_register.csv',
       ),
     );
   }

@@ -135,6 +135,10 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetRepairSummary),
                       onOpenProjectSummary: () =>
                           context.push(RouteNames.assetProjectSummary),
+                      onOpenLocationRegister: () =>
+                          context.push(RouteNames.assetLocationRegister),
+                      onOpenValuationSummary: () =>
+                          context.push(RouteNames.assetValuationSummary),
                     ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
@@ -577,6 +581,8 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenLowStock,
     required this.onOpenRepairSummary,
     required this.onOpenProjectSummary,
+    required this.onOpenLocationRegister,
+    required this.onOpenValuationSummary,
   });
 
   final VoidCallback onOpenEquipment;
@@ -584,6 +590,8 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenLowStock;
   final VoidCallback onOpenRepairSummary;
   final VoidCallback onOpenProjectSummary;
+  final VoidCallback onOpenLocationRegister;
+  final VoidCallback onOpenValuationSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -636,6 +644,16 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenProjectSummary,
                 icon: const Icon(Icons.groups_2_outlined),
                 label: const Text('Project Summary'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenLocationRegister,
+                icon: const Icon(Icons.place_outlined),
+                label: const Text('Location Register'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenValuationSummary,
+                icon: const Icon(Icons.assessment_outlined),
+                label: const Text('Valuation Summary'),
               ),
             ],
           ),

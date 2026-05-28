@@ -6,6 +6,8 @@ abstract final class RouteNames {
   static const assetLowStock = '/assets/low-stock';
   static const assetRepairSummary = '/assets/repair-summary';
   static const assetProjectSummary = '/assets/project-summary';
+  static const assetLocationRegister = '/assets/locations';
+  static const assetValuationSummary = '/assets/valuation';
   static const treasury = '/treasury';
   static const treasuryWizard = '/treasury/wizard';
   static const treasuryDecisions = '/treasury/decisions';

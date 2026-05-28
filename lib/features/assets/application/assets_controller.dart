@@ -69,6 +69,107 @@ final assetMaintenanceLogProvider = FutureProvider<AssetCsvTable>((ref) async {
   return repository.readMaintenanceLog(workspace.assetsRootPath!);
 });
 
+final assetLocationRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: AssetRegisterRepository.locationHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.readLocationRegister(workspace.assetsRootPath!);
+});
+
+final assetValuationSummaryProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: AssetRegisterRepository.valuationHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.readValuationSummary(workspace.assetsRootPath!);
+});
+
+final assetValuationOverviewProvider =
+    FutureProvider<AssetValuationOverview>((ref) async {
+  final equipmentTable = await ref.watch(assetEquipmentRegisterProvider.future);
+  final valuationTable = await ref.watch(assetValuationSummaryProvider.future);
+
+  final equipmentById = <String, Map<String, String>>{};
+  for (final row in equipmentTable.rows) {
+    final assetId = (row['asset_id'] ?? '').trim();
+    if (assetId.isNotEmpty) {
+      equipmentById[assetId] = row;
+    }
+  }
+
+  final projects = <String, _AssetValuationProjectAccumulator>{};
+  var purchaseCostTotal = 0.0;
+  var replacementValueTotal = 0.0;
+  var currentEstimatedValueTotal = 0.0;
+  var brokenLostValueTotal = 0.0;
+
+  for (final row in valuationTable.rows) {
+    final assetId = (row['asset_id'] ?? '').trim();
+    final equipment = equipmentById[assetId];
+    final projectName = _projectName(equipment?['project']);
+    final project = projects.putIfAbsent(
+      projectName,
+      () => _AssetValuationProjectAccumulator(projectName),
+    );
+
+    final purchaseCost = _parseMoney(row['purchase_cost']) ?? 0;
+    final replacementValue = _parseMoney(row['replacement_value']) ?? 0;
+    final currentValue = _parseMoney(row['current_estimated_value']) ??
+        replacementValue;
+    final isBroken = _normalizedStatus(equipment?['status']) == 'broken' ||
+        _normalizedStatus(equipment?['condition']) == 'broken';
+
+    purchaseCostTotal += purchaseCost;
+    replacementValueTotal += replacementValue;
+    currentEstimatedValueTotal += currentValue;
+    if (isBroken) {
+      brokenLostValueTotal += currentValue;
+    }
+
+    project.purchaseCostTotal += purchaseCost;
+    project.replacementValueTotal += replacementValue;
+    project.currentEstimatedValueTotal += currentValue;
+    if (isBroken) {
+      project.brokenLostValueTotal += currentValue;
+    }
+    project.items += 1;
+  }
+
+  final projectTotals = projects.values
+      .map(
+        (project) => AssetValuationProjectTotal(
+          projectName: project.projectName,
+          items: project.items,
+          purchaseCostTotal: project.purchaseCostTotal,
+          replacementValueTotal: project.replacementValueTotal,
+          currentEstimatedValueTotal: project.currentEstimatedValueTotal,
+          brokenLostValueTotal: project.brokenLostValueTotal,
+        ),
+      )
+      .toList(growable: false)
+    ..sort((a, b) => a.projectName.toLowerCase().compareTo(b.projectName.toLowerCase()));
+
+  return AssetValuationOverview(
+    purchaseCostTotal: purchaseCostTotal,
+    replacementValueTotal: replacementValueTotal,
+    currentEstimatedValueTotal: currentEstimatedValueTotal,
+    brokenLostValueTotal: brokenLostValueTotal,
+    projectTotals: projectTotals,
+    valuationRowCount: valuationTable.rows.length,
+  );
+});
+
 final assetLowStockPartsProvider =
     FutureProvider<List<Map<String, String>>>((ref) async {
   final table = await ref.watch(assetPartsRegisterProvider.future);
@@ -174,6 +275,42 @@ class AssetProjectSummary {
   final bool isMixedProject;
 }
 
+class AssetValuationOverview {
+  const AssetValuationOverview({
+    required this.purchaseCostTotal,
+    required this.replacementValueTotal,
+    required this.currentEstimatedValueTotal,
+    required this.brokenLostValueTotal,
+    required this.projectTotals,
+    required this.valuationRowCount,
+  });
+
+  final double purchaseCostTotal;
+  final double replacementValueTotal;
+  final double currentEstimatedValueTotal;
+  final double brokenLostValueTotal;
+  final List<AssetValuationProjectTotal> projectTotals;
+  final int valuationRowCount;
+}
+
+class AssetValuationProjectTotal {
+  const AssetValuationProjectTotal({
+    required this.projectName,
+    required this.items,
+    required this.purchaseCostTotal,
+    required this.replacementValueTotal,
+    required this.currentEstimatedValueTotal,
+    required this.brokenLostValueTotal,
+  });
+
+  final String projectName;
+  final int items;
+  final double purchaseCostTotal;
+  final double replacementValueTotal;
+  final double currentEstimatedValueTotal;
+  final double brokenLostValueTotal;
+}
+
 class _AssetProjectAccumulator {
   _AssetProjectAccumulator(this.projectName);
 
@@ -184,6 +321,17 @@ class _AssetProjectAccumulator {
   int brokenCount = 0;
   int lowStockCount = 0;
   int needsDecisionCount = 0;
+}
+
+class _AssetValuationProjectAccumulator {
+  _AssetValuationProjectAccumulator(this.projectName);
+
+  final String projectName;
+  int items = 0;
+  double purchaseCostTotal = 0;
+  double replacementValueTotal = 0;
+  double currentEstimatedValueTotal = 0;
+  double brokenLostValueTotal = 0;
 }
 
 String _projectName(String? value) {
@@ -202,4 +350,13 @@ int? _parseInt(String? value) {
   }
 
   return int.tryParse(trimmed);
+}
+
+double? _parseMoney(String? value) {
+  final trimmed = value?.trim() ?? '';
+  if (trimmed.isEmpty) {
+    return null;
+  }
+
+  return double.tryParse(trimmed);
 }

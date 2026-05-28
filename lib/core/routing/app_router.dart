@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/assets/presentation/assets_screen.dart';
 import '../../features/assets/presentation/equipment_register_screen.dart';
 import '../../features/assets/presentation/low_stock_screen.dart';
+import '../../features/assets/presentation/location_register_screen.dart';
 import '../../features/assets/presentation/project_summary_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/repair_summary_screen.dart';
+import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
@@ -91,6 +93,14 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'project-summary',
                   builder: (context, state) => const ProjectSummaryScreen(),
+                ),
+                GoRoute(
+                  path: 'locations',
+                  builder: (context, state) => const LocationRegisterScreen(),
+                ),
+                GoRoute(
+                  path: 'valuation',
+                  builder: (context, state) => const ValuationSummaryScreen(),
                 ),
               ],
             ),
