@@ -66,6 +66,53 @@ void main() {
   );
 
   test(
+    'createMissingRequiredStructure creates missing folders and templates',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'treasury_folder_bootstrap_test_',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
+
+      final repoRoot = Directory(p.join(tempRoot.path, 'dashboard_repo'));
+      await repoRoot.create(recursive: true);
+
+      final financeRoot = Directory(
+        p.join(tempRoot.path, '17_FINANCE_AND_TREASURY'),
+      );
+      await financeRoot.create(recursive: true);
+      await Directory(
+        p.join(financeRoot.path, '00_FINANCE_DASHBOARD'),
+      ).create(recursive: true);
+
+      final configDir = Directory(p.join(repoRoot.path, 'config'));
+      await configDir.create(recursive: true);
+      await File(
+        p.join(configDir.path, 'local_paths.json'),
+      ).writeAsString(jsonEncode({'finance_treasury_path': financeRoot.path}));
+
+      final service = TreasuryFolderService(workingDirectory: repoRoot);
+
+      final before = await service.loadWorkspace();
+      expect(before.isReady, isFalse);
+      expect(before.missingFolders, isNotEmpty);
+      expect(before.missingFiles, isNotEmpty);
+
+      final result = await service.createMissingRequiredStructure();
+      expect(result.createdFolders, isNotEmpty);
+      expect(result.createdFiles, isNotEmpty);
+
+      final after = await service.loadWorkspace();
+      expect(after.isReady, isTrue);
+      expect(after.missingFolders, isEmpty);
+      expect(after.missingFiles, isEmpty);
+    },
+  );
+
+  test(
     'writeTextFileWithBackup preserves a .bak copy before overwrite',
     () async {
       final tempRoot = await Directory.systemTemp.createTemp(

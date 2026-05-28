@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../../../core/utils/folder_bootstrap_result.dart';
+
 enum TreasuryStatusKind { safe, watch, pause, decision, future, archived }
 
 class TreasuryStateSummary {
@@ -257,6 +259,11 @@ class TreasuryFolderService {
   }
 
   Future<List<String>> createMissingRequiredFiles() async {
+    final structure = await createMissingRequiredStructure();
+    return structure.createdFiles;
+  }
+
+  Future<List<String>> createMissingRequiredFolders() async {
     final snapshot = await loadWorkspace();
     final financeRootPath = snapshot.financeRootPath;
     if (financeRootPath == null) {
@@ -266,6 +273,49 @@ class TreasuryFolderService {
     final financeRoot = Directory(financeRootPath);
     if (!await financeRoot.exists()) {
       return <String>[];
+    }
+
+    final createdFolders = <String>[];
+    for (final relativeFolder in requiredFolders) {
+      final candidate = Directory(path.join(financeRoot.path, relativeFolder));
+      if (await candidate.exists()) {
+        continue;
+      }
+
+      await candidate.create(recursive: true);
+      createdFolders.add(relativeFolder);
+    }
+
+    return createdFolders;
+  }
+
+  Future<FolderBootstrapCreationResult> createMissingRequiredStructure() async {
+    final snapshot = await loadWorkspace();
+    final financeRootPath = snapshot.financeRootPath;
+    if (financeRootPath == null) {
+      return const FolderBootstrapCreationResult(
+        createdFolders: <String>[],
+        createdFiles: <String>[],
+      );
+    }
+
+    final financeRoot = Directory(financeRootPath);
+    if (!await financeRoot.exists()) {
+      return const FolderBootstrapCreationResult(
+        createdFolders: <String>[],
+        createdFiles: <String>[],
+      );
+    }
+
+    final createdFolders = <String>[];
+    for (final relativeFolder in requiredFolders) {
+      final candidate = Directory(path.join(financeRoot.path, relativeFolder));
+      if (await candidate.exists()) {
+        continue;
+      }
+
+      await candidate.create(recursive: true);
+      createdFolders.add(relativeFolder);
     }
 
     final createdFiles = <String>[];
@@ -280,7 +330,10 @@ class TreasuryFolderService {
       createdFiles.add(relativeFile);
     }
 
-    return createdFiles;
+    return FolderBootstrapCreationResult(
+      createdFolders: createdFolders,
+      createdFiles: createdFiles,
+    );
   }
 
   Future<void> writeTextFileWithBackup(File file, String contents) async {

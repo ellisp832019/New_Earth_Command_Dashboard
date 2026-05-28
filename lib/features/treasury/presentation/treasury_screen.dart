@@ -5,10 +5,27 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/folder_bootstrap_wizard.dart';
 import '../application/treasury_controller.dart';
 import '../application/treasury_wizard_draft_controller.dart';
 import '../data/treasury_folder_service.dart';
 import '../data/treasury_wizard_flow.dart';
+
+const _treasuryUnavailableSnapshot = TreasuryWorkspaceSnapshot(
+  configPath: 'config/local_paths.json',
+  financeRootPath: null,
+  isReady: false,
+  issues: <String>['Treasury could not be loaded right now.'],
+  requiredFolders: TreasuryFolderService.requiredFolders,
+  missingFolders: <String>[],
+  missingFiles: <String>[],
+  stateSummaries: <TreasuryStateSummary>[],
+  receiptsToSortCount: 0,
+  weeklyRitualSteps: TreasuryFolderService.weeklyRitualSteps,
+  lowEnergySteps: TreasuryFolderService.lowEnergySteps,
+  guidanceNote:
+      'The Treasury area is waiting for the external Omega OS folder.',
+);
 
 class TreasuryScreen extends ConsumerWidget {
   const TreasuryScreen({super.key});
@@ -26,21 +43,7 @@ class TreasuryScreen extends ConsumerWidget {
         title: 'Treasury needs a calm setup',
         body:
             'The Treasury folder could not be loaded right now. Check the local path and try again.',
-        snapshot: const TreasuryWorkspaceSnapshot(
-          configPath: 'config/local_paths.json',
-          financeRootPath: null,
-          isReady: false,
-          issues: <String>['Treasury could not be loaded right now.'],
-          requiredFolders: TreasuryFolderService.requiredFolders,
-          missingFolders: <String>[],
-          missingFiles: <String>[],
-          stateSummaries: <TreasuryStateSummary>[],
-          receiptsToSortCount: 0,
-          weeklyRitualSteps: TreasuryFolderService.weeklyRitualSteps,
-          lowEnergySteps: TreasuryFolderService.lowEnergySteps,
-          guidanceNote:
-              'The Treasury area is waiting for the external Omega OS folder.',
-        ),
+        snapshot: _treasuryUnavailableSnapshot,
         onReload: () => ref.invalidate(treasuryWorkspaceProvider),
         onBack: () {
           if (context.canPop()) {
@@ -50,12 +53,8 @@ class TreasuryScreen extends ConsumerWidget {
 
           context.go(RouteNames.dashboard);
         },
-        onCreateMissingTemplates: () async {
-          await ref
-              .read(treasuryFolderServiceProvider)
-              .createMissingRequiredFiles();
-          ref.invalidate(treasuryWorkspaceProvider);
-        },
+        onOpenSetupWizard: () =>
+            _openSetupWizard(context, ref, _treasuryUnavailableSnapshot),
       ),
       data: (data) {
         if (!data.isReady) {
@@ -73,12 +72,7 @@ class TreasuryScreen extends ConsumerWidget {
 
               context.go(RouteNames.dashboard);
             },
-            onCreateMissingTemplates: () async {
-              await ref
-                  .read(treasuryFolderServiceProvider)
-                  .createMissingRequiredFiles();
-              ref.invalidate(treasuryWorkspaceProvider);
-            },
+            onOpenSetupWizard: () => _openSetupWizard(context, ref, data),
           );
         }
 
@@ -222,7 +216,7 @@ class _TreasurySetupScreen extends StatelessWidget {
     required this.snapshot,
     required this.onReload,
     required this.onBack,
-    required this.onCreateMissingTemplates,
+    required this.onOpenSetupWizard,
   });
 
   final String title;
@@ -230,7 +224,7 @@ class _TreasurySetupScreen extends StatelessWidget {
   final TreasuryWorkspaceSnapshot snapshot;
   final VoidCallback onReload;
   final VoidCallback onBack;
-  final Future<void> Function() onCreateMissingTemplates;
+  final VoidCallback onOpenSetupWizard;
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +253,7 @@ class _TreasurySetupScreen extends StatelessWidget {
               theme: theme,
               snapshot: snapshot,
               onReload: onReload,
-              onCreateMissingTemplates: onCreateMissingTemplates,
+              onOpenSetupWizard: onOpenSetupWizard,
             ),
           ],
         ),
@@ -1222,13 +1216,13 @@ class _SetupStepsCard extends StatelessWidget {
     required this.theme,
     required this.snapshot,
     required this.onReload,
-    required this.onCreateMissingTemplates,
+    required this.onOpenSetupWizard,
   });
 
   final ThemeData theme;
   final TreasuryWorkspaceSnapshot snapshot;
   final VoidCallback onReload;
-  final Future<void> Function() onCreateMissingTemplates;
+  final VoidCallback onOpenSetupWizard;
 
   @override
   Widget build(BuildContext context) {
@@ -1246,9 +1240,8 @@ class _SetupStepsCard extends StatelessWidget {
           ...[
             'Make sure `config/local_paths.json` exists in the dashboard repo.',
             'Set `finance_treasury_path` to the external Omega OS folder.',
-            'Confirm the required finance folders exist in that external pack.',
-            'Create any missing starter files from templates if Treasury asks for them.',
-            'Return here and reload Treasury.',
+            'Open the setup wizard to create any missing folders and starter templates.',
+            'Return here and reload Treasury after the wizard finishes.',
           ].map(
             (step) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -1280,13 +1273,13 @@ class _SetupStepsCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               FilledButton.tonalIcon(
-                onPressed: snapshot.missingFiles.isEmpty
+                onPressed:
+                    snapshot.missingFiles.isEmpty &&
+                        snapshot.missingFolders.isEmpty
                     ? null
-                    : () async {
-                        await onCreateMissingTemplates();
-                      },
+                    : onOpenSetupWizard,
                 icon: const Icon(Icons.auto_awesome_outlined),
-                label: const Text('Create missing templates'),
+                label: const Text('Open setup wizard'),
               ),
               TextButton.icon(
                 onPressed: onReload,
@@ -1299,6 +1292,51 @@ class _SetupStepsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openSetupWizard(
+  BuildContext context,
+  WidgetRef ref,
+  TreasuryWorkspaceSnapshot snapshot,
+) {
+  final service = ref.read(treasuryFolderServiceProvider);
+
+  return showFolderBootstrapWizard(
+    context: context,
+    plan: FolderBootstrapWizardPlan(
+      title: 'Treasury setup wizard',
+      subtitle:
+          'This calm pipeline checks the external finance folder and creates only what is missing. It can be reused for future business areas later.',
+      steps: const [
+        FolderBootstrapWizardStep(
+          title: 'Review the link',
+          body:
+              'Confirm the external Omega OS folder is the source of truth before any file changes happen.',
+          icon: Icons.link_outlined,
+        ),
+        FolderBootstrapWizardStep(
+          title: 'Create missing structure',
+          body:
+              'Only the missing folders and starter templates are added. Existing finance data stays untouched.',
+          icon: Icons.auto_awesome_outlined,
+        ),
+        FolderBootstrapWizardStep(
+          title: 'Reload and confirm',
+          body:
+              'Treasury rechecks the folder after creation and moves into the home view when everything is healthy.',
+          icon: Icons.refresh_outlined,
+        ),
+      ],
+      missingFolders: snapshot.missingFolders,
+      missingFiles: snapshot.missingFiles,
+    ),
+    onCreateMissingStructure: () async {
+      final result = await service.createMissingRequiredStructure();
+      ref.invalidate(treasuryWorkspaceProvider);
+      return result;
+    },
+    onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+  );
 }
 
 class _MiniChecklist extends StatelessWidget {
