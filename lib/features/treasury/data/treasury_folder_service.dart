@@ -83,6 +83,32 @@ class TreasurySubscriptionSaveResult {
   final String subscriptionTrackerPath;
 }
 
+class TreasuryDecisionRecord {
+  const TreasuryDecisionRecord({
+    required this.date,
+    required this.decisionNeeded,
+    required this.amount,
+    required this.status,
+    required this.decision,
+    required this.owner,
+    required this.notes,
+  });
+
+  final String date;
+  final String decisionNeeded;
+  final String amount;
+  final String status;
+  final String decision;
+  final String owner;
+  final String notes;
+}
+
+class TreasuryDecisionSaveResult {
+  const TreasuryDecisionSaveResult({required this.decisionsRegisterPath});
+
+  final String decisionsRegisterPath;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -766,6 +792,85 @@ class TreasuryFolderService {
     );
   }
 
+  Future<List<TreasuryDecisionRecord>> loadDecisionRegister({
+    required String financeRootPath,
+  }) async {
+    final decisionsFile = File(
+      path.join(
+        financeRootPath,
+        '10_FINANCE_MEETING_NOTES',
+        'decisions_register.csv',
+      ),
+    );
+
+    if (!await decisionsFile.exists()) {
+      return const <TreasuryDecisionRecord>[];
+    }
+
+    final lines = await decisionsFile.readAsLines();
+    if (lines.length <= 1) {
+      return const <TreasuryDecisionRecord>[];
+    }
+
+    final records = <TreasuryDecisionRecord>[];
+    for (final rawLine in lines.skip(1)) {
+      if (rawLine.trim().isEmpty) {
+        continue;
+      }
+
+      final cells = _parseCsvLine(rawLine);
+      records.add(
+        TreasuryDecisionRecord(
+          date: _csvCellValue(cells, 0),
+          decisionNeeded: _csvCellValue(cells, 1),
+          amount: _csvCellValue(cells, 2),
+          status: _csvCellValue(cells, 3),
+          decision: _csvCellValue(cells, 4),
+          owner: _csvCellValue(cells, 5),
+          notes: _csvCellValue(cells, 6),
+        ),
+      );
+    }
+
+    return records.reversed.toList(growable: false);
+  }
+
+  Future<TreasuryDecisionSaveResult> saveDecisionRecord({
+    required String financeRootPath,
+    required String date,
+    required String decisionNeeded,
+    required String amount,
+    required String status,
+    required String decision,
+    required String owner,
+    required String notes,
+  }) async {
+    final decisionsFile = File(
+      path.join(
+        financeRootPath,
+        '10_FINANCE_MEETING_NOTES',
+        'decisions_register.csv',
+      ),
+    );
+    await decisionsFile.parent.create(recursive: true);
+
+    final existingLines = await decisionsFile.exists()
+        ? await decisionsFile.readAsLines()
+        : <String>[];
+    final header = 'date,decision_needed,amount,status,decision,owner,notes';
+    final rows = <String>[
+      if (existingLines.isEmpty) header,
+      if (existingLines.isNotEmpty) ...existingLines,
+      _csvJoin([date, decisionNeeded, amount, status, decision, owner, notes]),
+    ];
+
+    await writeTextFileWithBackup(decisionsFile, '${rows.join('\n')}\n');
+
+    return TreasuryDecisionSaveResult(
+      decisionsRegisterPath: decisionsFile.path,
+    );
+  }
+
   List<String> _markdownBullets(List<String> items) {
     if (items.isEmpty) {
       return const ['- '];
@@ -793,5 +898,43 @@ class TreasuryFolderService {
     final trimmed = value.trim();
     final escaped = trimmed.replaceAll('"', '""');
     return '"$escaped"';
+  }
+
+  List<String> _parseCsvLine(String line) {
+    final values = <String>[];
+    final buffer = StringBuffer();
+    var inQuotes = false;
+
+    for (var index = 0; index < line.length; index++) {
+      final char = line[index];
+      if (char == '"') {
+        if (inQuotes && index + 1 < line.length && line[index + 1] == '"') {
+          buffer.write('"');
+          index++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (char == ',' && !inQuotes) {
+        values.add(buffer.toString());
+        buffer.clear();
+        continue;
+      }
+
+      buffer.write(char);
+    }
+
+    values.add(buffer.toString());
+    return values;
+  }
+
+  String _csvCellValue(List<String> cells, int index) {
+    if (index >= cells.length) {
+      return '';
+    }
+
+    return cells[index].trim();
   }
 }

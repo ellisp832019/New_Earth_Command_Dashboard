@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/assets/presentation/assets_screen.dart';
 import '../../features/assets/presentation/equipment_register_screen.dart';
+import '../../features/assets/presentation/low_stock_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
@@ -25,6 +26,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/treasury/presentation/treasury_screen.dart';
+import '../../features/treasury/presentation/treasury_decisions_board_screen.dart';
 import '../../features/treasury/presentation/treasury_wizard_screen.dart';
 import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
@@ -68,12 +70,15 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'equipment',
-                  builder: (context, state) =>
-                      const EquipmentRegisterScreen(),
+                  builder: (context, state) => const EquipmentRegisterScreen(),
                 ),
                 GoRoute(
                   path: 'parts',
                   builder: (context, state) => const PartsInventoryScreen(),
+                ),
+                GoRoute(
+                  path: 'low-stock',
+                  builder: (context, state) => const LowStockScreen(),
                 ),
               ],
             ),
@@ -86,6 +91,11 @@ final appRouter = GoRouter(
               path: RouteNames.treasury,
               builder: (context, state) => const TreasuryScreen(),
               routes: [
+                GoRoute(
+                  path: 'decisions',
+                  builder: (context, state) =>
+                      const TreasuryDecisionsBoardScreen(),
+                ),
                 GoRoute(
                   path: 'wizard',
                   builder: (context, state) => TreasuryWizardScreen(
@@ -191,6 +201,11 @@ final appRouter = GoRouter(
         );
         return location.toString();
       },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/dashboard/treasury/decisions',
+      redirect: (context, state) => RouteNames.treasuryDecisions,
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

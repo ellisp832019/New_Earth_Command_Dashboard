@@ -517,8 +517,11 @@ class _TreasuryEntryHubCard extends StatelessWidget {
                   final entry = entries[index];
                   return InkWell(
                     borderRadius: BorderRadius.circular(20),
-                    onTap: () =>
-                        context.push(RouteNames.treasuryWizardFor(entry.flow)),
+                    onTap: () => entry.flow == 'decisions'
+                        ? context.push(RouteNames.treasuryDecisions)
+                        : context.push(
+                            RouteNames.treasuryWizardFor(entry.flow),
+                          ),
                     child: Ink(
                       decoration: BoxDecoration(
                         color: entry.accent.withValues(alpha: 0.12),

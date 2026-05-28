@@ -3,8 +3,10 @@ abstract final class RouteNames {
   static const assets = '/assets';
   static const assetEquipment = '/assets/equipment';
   static const assetParts = '/assets/parts';
+  static const assetLowStock = '/assets/low-stock';
   static const treasury = '/treasury';
   static const treasuryWizard = '/treasury/wizard';
+  static const treasuryDecisions = '/treasury/decisions';
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const tasks = '/tasks';

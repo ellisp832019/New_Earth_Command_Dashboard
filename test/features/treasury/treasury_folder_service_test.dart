@@ -366,4 +366,60 @@ void main() {
     expect(tracker, contains('M365'));
     expect(tracker, contains('Check if it is still needed.'));
   });
+
+  test('saveDecisionRecord appends and loads a calm decision row', () async {
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'treasury_decision_test_',
+    );
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    final repoRoot = Directory(p.join(tempRoot.path, 'dashboard_repo'));
+    await repoRoot.create(recursive: true);
+
+    final financeRoot = Directory(
+      p.join(tempRoot.path, '17_FINANCE_AND_TREASURY'),
+    );
+    await financeRoot.create(recursive: true);
+    for (final relativeFolder in TreasuryFolderService.requiredFolders) {
+      await Directory(
+        p.join(financeRoot.path, relativeFolder),
+      ).create(recursive: true);
+    }
+
+    final configDir = Directory(p.join(repoRoot.path, 'config'));
+    await configDir.create(recursive: true);
+    await File(
+      p.join(configDir.path, 'local_paths.json'),
+    ).writeAsString(jsonEncode({'finance_treasury_path': financeRoot.path}));
+
+    final service = TreasuryFolderService(workingDirectory: repoRoot);
+    await service.createMissingRequiredFiles();
+
+    final result = await service.saveDecisionRecord(
+      financeRootPath: financeRoot.path,
+      date: '2026-05-28',
+      decisionNeeded: 'Approve project budget',
+      amount: '£120.00',
+      status: 'Decision',
+      decision: 'Approved with a small buffer',
+      owner: 'Hayley',
+      notes: 'Keep the next step calm and simple.',
+    );
+
+    final register = await File(result.decisionsRegisterPath).readAsString();
+    expect(register, contains('date,decision_needed,amount,status'));
+    expect(register, contains('Approve project budget'));
+    expect(register, contains('Approved with a small buffer'));
+
+    final records = await service.loadDecisionRegister(
+      financeRootPath: financeRoot.path,
+    );
+    expect(records, hasLength(1));
+    expect(records.first.decisionNeeded, 'Approve project budget');
+    expect(records.first.owner, 'Hayley');
+  });
 }
