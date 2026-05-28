@@ -33,6 +33,7 @@ import 'route_names.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorDashboardKey = GlobalKey<NavigatorState>();
 final _shellNavigatorAssetsKey = GlobalKey<NavigatorState>();
+final _shellNavigatorTreasuryKey = GlobalKey<NavigatorState>();
 final _shellNavigatorProjectsKey = GlobalKey<NavigatorState>();
 final _shellNavigatorTasksKey = GlobalKey<NavigatorState>();
 final _shellNavigatorPlannerKey = GlobalKey<NavigatorState>();
@@ -53,20 +54,6 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.dashboard,
               builder: (context, state) => const DashboardScreen(),
-              routes: [
-                GoRoute(
-                  path: 'treasury',
-                  builder: (context, state) => const TreasuryScreen(),
-                  routes: [
-                    GoRoute(
-                      path: 'wizard',
-                      builder: (context, state) => TreasuryWizardScreen(
-                        initialFlow: state.uri.queryParameters['flow'],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ),
           ],
         ),
@@ -76,6 +63,23 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.assets,
               builder: (context, state) => const AssetsScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          navigatorKey: _shellNavigatorTreasuryKey,
+          routes: [
+            GoRoute(
+              path: RouteNames.treasury,
+              builder: (context, state) => const TreasuryScreen(),
+              routes: [
+                GoRoute(
+                  path: 'wizard',
+                  builder: (context, state) => TreasuryWizardScreen(
+                    initialFlow: state.uri.queryParameters['flow'],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -152,6 +156,28 @@ final appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/dashboard/treasury',
+      redirect: (context, state) {
+        final location = Uri(
+          path: RouteNames.treasury,
+          queryParameters: state.uri.queryParameters,
+        );
+        return location.toString();
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/dashboard/treasury/wizard',
+      redirect: (context, state) {
+        final location = Uri(
+          path: RouteNames.treasuryWizard,
+          queryParameters: state.uri.queryParameters,
+        );
+        return location.toString();
+      },
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

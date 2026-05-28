@@ -1,13 +1,15 @@
 abstract final class RouteNames {
   static const dashboard = '/dashboard';
   static const assets = '/assets';
+  static const assetEquipment = '/assets/equipment';
+  static const assetParts = '/assets/parts';
+  static const treasury = '/treasury';
+  static const treasuryWizard = '/treasury/wizard';
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const tasks = '/tasks';
   static const newTask = '/tasks/new';
   static const planner = '/planner';
-  static const treasury = '/dashboard/treasury';
-  static const treasuryWizard = '/dashboard/treasury/wizard';
   static const more = '/more';
   static const journal = '/journal';
   static const newJournal = '/journal/new';
