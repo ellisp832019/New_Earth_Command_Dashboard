@@ -55,6 +55,8 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
               children: [
                 _BudgetPotsHeroCard(snapshot: snapshot),
                 const SizedBox(height: 16),
+                _BudgetPotsQuickNavCard(),
+                const SizedBox(height: 16),
                 _BudgetOverviewCard(snapshot: snapshot),
                 const SizedBox(height: 16),
                 LayoutBuilder(
@@ -221,6 +223,47 @@ class _BudgetOverviewCard extends StatelessWidget {
               color: AppColours.darkMutedText,
               height: 1.45,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetPotsQuickNavCard extends StatelessWidget {
+  const _BudgetPotsQuickNavCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(icon: Icons.route_outlined, title: 'Quick nav'),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () =>
+                    context.push(RouteNames.treasuryMonthlySummary),
+                icon: const Icon(Icons.assessment_outlined),
+                label: const Text('Monthly Summary'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasurySettings),
+                icon: const Icon(Icons.tune_outlined),
+                label: const Text('Settings'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasuryDecisions),
+                icon: const Icon(Icons.gavel_outlined),
+                label: const Text('Decisions'),
+              ),
+            ],
           ),
         ],
       ),

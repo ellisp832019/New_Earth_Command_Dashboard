@@ -65,6 +65,8 @@ class TreasuryMonthlySummaryScreen extends ConsumerWidget {
               children: [
                 _MonthlySummaryHeroCard(summary: summary),
                 const SizedBox(height: 16),
+                _MonthlySummaryQuickNavCard(),
+                const SizedBox(height: 16),
                 if (!summary.workspace.isReady) ...[
                   _SummarySetupNoticeCard(summary: summary),
                   const SizedBox(height: 16),
@@ -198,6 +200,46 @@ class _MonthlySummaryHeroCard extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _MonthlySummaryQuickNavCard extends StatelessWidget {
+  const _MonthlySummaryQuickNavCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(icon: Icons.route_outlined, title: 'Quick nav'),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasuryBudgetPots),
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const Text('Budget Pots'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasurySettings),
+                icon: const Icon(Icons.tune_outlined),
+                label: const Text('Settings'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasuryDecisions),
+                icon: const Icon(Icons.gavel_outlined),
+                label: const Text('Decisions'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -426,9 +468,9 @@ class _AssetLinkSummaryCard extends ConsumerWidget {
         child: Text(
           'Asset links could not load right now.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-                height: 1.4,
-              ),
+            color: AppColours.darkMutedText,
+            height: 1.4,
+          ),
         ),
       ),
       data: (summary) {
@@ -446,9 +488,9 @@ class _AssetLinkSummaryCard extends ConsumerWidget {
               Text(
                 'Treasury only sees the link summary here. The item records stay in Assets, and the finance IDs keep the handoff tidy.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.4,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 12),
               LayoutBuilder(
@@ -469,7 +511,9 @@ class _AssetLinkSummaryCard extends ConsumerWidget {
                     ),
                     _SummaryMetricCard(
                       title: 'Reorder estimate',
-                      value: moneyFormatter.format(summary.reorderEstimatedSpend),
+                      value: moneyFormatter.format(
+                        summary.reorderEstimatedSpend,
+                      ),
                       note: 'Low stock items that may need spending.',
                       accent: AppColours.darkSuccess,
                     ),
@@ -499,7 +543,8 @@ class _AssetLinkSummaryCard extends ConsumerWidget {
                     children: [
                       for (var index = 0; index < cards.length; index++) ...[
                         cards[index],
-                        if (index != cards.length - 1) const SizedBox(height: 12),
+                        if (index != cards.length - 1)
+                          const SizedBox(height: 12),
                       ],
                     ],
                   );
@@ -509,9 +554,9 @@ class _AssetLinkSummaryCard extends ConsumerWidget {
               Text(
                 'Broken equipment value at risk: ${moneyFormatter.format(summary.repairReplacementValueTotal)} across ${summary.brokenEquipmentCount} item${summary.brokenEquipmentCount == 1 ? '' : 's'}.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.35,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
               ),
             ],
           ),
