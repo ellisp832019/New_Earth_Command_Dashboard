@@ -118,6 +118,8 @@ class _TreasuryHomeScreen extends StatelessWidget {
             const SizedBox(height: 18),
             const _WeeklyDraftStateCard(),
             const SizedBox(height: 18),
+            const _TreasuryQuickActionsCard(),
+            const SizedBox(height: 18),
             const _TreasuryEntryHubCard(),
             const SizedBox(height: 18),
             const _MonthlySummaryPreviewCard(),
@@ -579,6 +581,65 @@ class _TreasuryEntryHubCard extends StatelessWidget {
                 },
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TreasuryQuickActionsCard extends StatelessWidget {
+  const _TreasuryQuickActionsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            icon: Icons.quickreply_outlined,
+            title: 'Quick moves',
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'These are the calm next places Hayley usually needs without having to scroll much.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () =>
+                    context.push(RouteNames.treasuryMonthlySummary),
+                icon: const Icon(Icons.assessment_outlined),
+                label: const Text('Monthly Summary'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasuryBudgetPots),
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const Text('Budget Pots'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasurySettings),
+                icon: const Icon(Icons.tune_outlined),
+                label: const Text('Settings'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasuryDecisions),
+                icon: const Icon(Icons.gavel_outlined),
+                label: const Text('Decisions'),
+              ),
+            ],
           ),
         ],
       ),
