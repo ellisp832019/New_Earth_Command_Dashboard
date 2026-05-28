@@ -75,6 +75,12 @@ class TreasuryProjectSpendSaveResult {
   final String projectSpendTrackerPath;
 }
 
+class TreasurySubscriptionSaveResult {
+  const TreasurySubscriptionSaveResult({required this.subscriptionTrackerPath});
+
+  final String subscriptionTrackerPath;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -521,7 +527,7 @@ class TreasuryFolderService {
       case '05_RECEIPTS_AND_INVOICES/receipt_index.csv':
         return 'Date,Item,Supplier,Amount,PersonalOrNewEarth,Project,FileLocation,Notes\n';
       case '06_SUBSCRIPTIONS_AND_RECURRING_COSTS/subscription_tracker.csv':
-        return 'service,purpose,cost,renewal_date,payment_source,status,keep_cancel_review,notes\n';
+        return 'Service,Purpose,Cost,RenewalDate,PaymentSource,Status,KeepCancelReview,Notes\n';
       case '10_FINANCE_MEETING_NOTES/decisions_register.csv':
         return 'date,decision_needed,amount,status,decision,owner,notes\n';
       default:
@@ -653,6 +659,57 @@ class TreasuryFolderService {
 
     return TreasuryProjectSpendSaveResult(
       projectSpendTrackerPath: spendTrackerFile.path,
+    );
+  }
+
+  Future<TreasurySubscriptionSaveResult> saveSubscriptionRecord({
+    required String financeRootPath,
+    required String serviceName,
+    required String purpose,
+    required String cost,
+    required String renewalDate,
+    required String paymentSource,
+    required String status,
+    required String keepCancelReview,
+    required String notes,
+    required DateTime recordedAt,
+  }) async {
+    final subscriptionTrackerFile = File(
+      path.join(
+        financeRootPath,
+        '06_SUBSCRIPTIONS_AND_RECURRING_COSTS',
+        'subscription_tracker.csv',
+      ),
+    );
+    await subscriptionTrackerFile.parent.create(recursive: true);
+
+    final existingLines = await subscriptionTrackerFile.exists()
+        ? await subscriptionTrackerFile.readAsLines()
+        : <String>[];
+    final header =
+        'Service,Purpose,Cost,RenewalDate,PaymentSource,Status,KeepCancelReview,Notes';
+    final rows = <String>[
+      if (existingLines.isEmpty) header,
+      if (existingLines.isNotEmpty) ...existingLines,
+      _csvJoin([
+        serviceName,
+        purpose,
+        cost,
+        renewalDate,
+        paymentSource,
+        status,
+        keepCancelReview,
+        notes,
+      ]),
+    ];
+
+    await writeTextFileWithBackup(
+      subscriptionTrackerFile,
+      '${rows.join('\n')}\n',
+    );
+
+    return TreasurySubscriptionSaveResult(
+      subscriptionTrackerPath: subscriptionTrackerFile.path,
     );
   }
 

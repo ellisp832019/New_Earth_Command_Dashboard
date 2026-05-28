@@ -173,6 +173,8 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
                                   TreasuryWizardFlow.receipts => 'Save receipt',
                                   TreasuryWizardFlow.projectSpend =>
                                     'Save project spend',
+                                  TreasuryWizardFlow.subscriptions =>
+                                    'Save subscription',
                                   _ => 'Save draft',
                                 }),
                               ),
@@ -313,6 +315,53 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
             .last;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Project spend saved to $savedName')),
+        );
+        context.pop();
+        return;
+      }
+
+      if (_flow == TreasuryWizardFlow.subscriptions) {
+        final service = ref.read(treasuryFolderServiceProvider);
+        final snapshot = await service.loadWorkspace();
+        if (!context.mounted) {
+          return;
+        }
+
+        final financeRootPath = snapshot.financeRootPath;
+        if (financeRootPath == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Treasury needs the finance folder linked first.'),
+            ),
+          );
+          return;
+        }
+
+        final result = await service.saveSubscriptionRecord(
+          financeRootPath: financeRootPath,
+          serviceName: _controllerText(0),
+          purpose: _controllerText(1),
+          cost: _controllerText(2),
+          renewalDate: _controllerText(3),
+          paymentSource: _controllerText(4),
+          status: _controllerText(5),
+          keepCancelReview: _controllerText(6),
+          notes: _controllerText(7),
+          recordedAt: DateTime.now(),
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
+        ref.invalidate(treasuryWorkspaceProvider);
+
+        final savedName = result.subscriptionTrackerPath
+            .split(Platform.pathSeparator)
+            .last;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Subscription saved to $savedName')),
         );
         context.pop();
         return;
@@ -547,6 +596,11 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
             label: 'Keep / Review',
             prompt: 'Does this feel like keep, cancel, or review?',
             hint: 'A simple direction is enough for the first pass.',
+          ),
+          _WizardStepDefinition(
+            label: 'Note',
+            prompt: 'Add one calm note for the subscription record.',
+            hint: 'One sentence is enough if that feels better.',
           ),
         ];
     }
