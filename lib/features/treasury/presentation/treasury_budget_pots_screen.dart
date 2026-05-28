@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/treasury_budget_pots_controller.dart';
+import '../data/treasury_folder_service.dart';
 
 class TreasuryBudgetPotsScreen extends ConsumerWidget {
   const TreasuryBudgetPotsScreen({super.key});
@@ -31,6 +32,11 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
           },
         ),
         actions: [
+          IconButton(
+            tooltip: 'Add pot',
+            onPressed: () => _showAddPotDialog(context, ref),
+            icon: const Icon(Icons.add),
+          ),
           IconButton(
             tooltip: 'Reload',
             onPressed: () => ref.invalidate(treasuryBudgetPotsProvider),
@@ -70,7 +76,7 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: snapshot.pots.length,
+                      itemCount: snapshot.editablePots.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 12,
@@ -78,8 +84,20 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
                         childAspectRatio: crossAxisCount == 1 ? 2.4 : 1.5,
                       ),
                       itemBuilder: (context, index) {
-                        final pot = snapshot.pots[index];
-                        return _BudgetPotCard(pot: pot);
+                        final pot = snapshot.editablePots[index];
+                        return _BudgetPotCard(
+                          pot: pot,
+                          onAdjust: () =>
+                              _showAdjustPotDialog(context, ref, pot),
+                          onMove: snapshot.editablePots.length > 1
+                              ? () => _showMovePotDialog(
+                                  context,
+                                  ref,
+                                  pot,
+                                  snapshot.editablePots,
+                                )
+                              : null,
+                        );
                       },
                     );
                   },
@@ -137,7 +155,7 @@ class _BudgetPotsHeroCard extends StatelessWidget {
                 runSpacing: 10,
                 children: [
                   _StatusPill(
-                    label: '${snapshot.pots.length} pots visible',
+                    label: '${snapshot.editablePots.length} pots visible',
                     accent: AppColours.darkSecondary,
                   ),
                   _StatusPill(
@@ -170,7 +188,7 @@ class _BudgetPotsHeroCard extends StatelessWidget {
               _HeroMetricCard(
                 label: 'Tracked states',
                 value:
-                    '${snapshot.pots.where((pot) => pot.itemCount > 0).length} active pots',
+                    '${snapshot.editablePots.where((pot) => pot.balance != 0).length} active pots',
                 note:
                     'Each pot stays calm and visible so Hayley knows where attention sits.',
                 accent: AppColours.darkSecondary,
@@ -272,13 +290,21 @@ class _BudgetPotsQuickNavCard extends StatelessWidget {
 }
 
 class _BudgetPotCard extends StatelessWidget {
-  const _BudgetPotCard({required this.pot});
+  const _BudgetPotCard({
+    required this.pot,
+    required this.onAdjust,
+    required this.onMove,
+  });
 
-  final TreasuryBudgetPot pot;
+  final TreasuryBudgetPotRecord pot;
+  final VoidCallback onAdjust;
+  final VoidCallback? onMove;
 
   @override
   Widget build(BuildContext context) {
     final accent = _accentForKind(pot.kind);
+    final money = NumberFormat.currency(symbol: '£', decimalDigits: 2);
+    final delta = pot.balance - pot.target;
 
     return Container(
       decoration: BoxDecoration(
@@ -303,16 +329,48 @@ class _BudgetPotCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _StatusPill(label: '${pot.itemCount}', accent: accent),
+              _StatusPill(
+                label: delta == 0
+                    ? 'On target'
+                    : delta > 0
+                    ? '+${money.format(delta)}'
+                    : '-${money.format(delta.abs())}',
+                accent: accent,
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            pot.subtitle,
+            pot.notes,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.35,
             ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Balance ${money.format(pot.balance)} · Target ${money.format(pot.target)}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: onAdjust,
+                icon: const Icon(Icons.tune_outlined, size: 16),
+                label: const Text('Adjust'),
+              ),
+              TextButton.icon(
+                onPressed: onMove,
+                icon: const Icon(Icons.swap_horiz, size: 16),
+                label: const Text('Move'),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           if (pot.items.isEmpty)
@@ -385,13 +443,30 @@ class _BudgetPotsFooterCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             snapshot.issues.isEmpty
-                ? 'Budget Pots is using the live Treasury summary and stays local-first.'
+                ? 'Budget Pots now keeps a local pot file inside the Treasury dashboard folder and writes with backups.'
                 : snapshot.issues.join('\n'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.45,
             ),
           ),
+          if (snapshot.budgetPotsPath != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _StatusPill(
+                  label: 'File ${snapshot.budgetPotsPath}',
+                  accent: AppColours.darkSecondary,
+                ),
+                _StatusPill(
+                  label: '${snapshot.movements.length} movements saved',
+                  accent: AppColours.darkSuccess,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -546,25 +621,354 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-Color _accentForKind(TreasuryBudgetPotKind kind) {
+Future<void> _showAddPotDialog(BuildContext context, WidgetRef ref) async {
+  final titleController = TextEditingController();
+  final targetController = TextEditingController(text: '0');
+  final notesController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  var selectedKind = TreasuryBudgetPotKind.future;
+
+  try {
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Add budget pot'),
+              content: SizedBox(
+                width: 520,
+                child: Form(
+                  key: formKey,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      TextFormField(
+                        controller: titleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Pot name',
+                        ),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Give the pot a name'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<TreasuryBudgetPotKind>(
+                        initialValue: selectedKind,
+                        decoration: const InputDecoration(labelText: 'Kind'),
+                        items: TreasuryBudgetPotKind.values
+                            .map(
+                              (kind) => DropdownMenuItem(
+                                value: kind,
+                                child: Text(_kindLabel(kind)),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setDialogState(() => selectedKind = value);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: targetController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Target'),
+                        validator: (value) {
+                          final parsed = double.tryParse(value?.trim() ?? '');
+                          if (parsed == null) {
+                            return 'Enter a target amount';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: notesController,
+                        decoration: const InputDecoration(labelText: 'Notes'),
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (!(formKey.currentState?.validate() ?? false)) {
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true || !context.mounted) {
+      return;
+    }
+
+    await ref
+        .read(treasuryBudgetPotsControllerProvider.notifier)
+        .addPot(
+          title: titleController.text.trim(),
+          notes: notesController.text.trim(),
+          target: double.tryParse(targetController.text.trim()) ?? 0,
+        );
+  } finally {
+    titleController.dispose();
+    targetController.dispose();
+    notesController.dispose();
+  }
+}
+
+Future<void> _showAdjustPotDialog(
+  BuildContext context,
+  WidgetRef ref,
+  TreasuryBudgetPotRecord pot,
+) async {
+  final amountController = TextEditingController();
+  final noteController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+
+  try {
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Adjust ${pot.title}'),
+          content: SizedBox(
+            width: 480,
+            child: Form(
+              key: formKey,
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Text(
+                    'Balance ${NumberFormat.currency(symbol: '£', decimalDigits: 2).format(pot.balance)}',
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Change amount',
+                    ),
+                    validator: (value) {
+                      final parsed = double.tryParse(value?.trim() ?? '');
+                      if (parsed == null || parsed == 0) {
+                        return 'Enter a non-zero amount';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: noteController,
+                    decoration: const InputDecoration(labelText: 'Note'),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (!(formKey.currentState?.validate() ?? false)) {
+                  return;
+                }
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSave != true || !context.mounted) {
+      return;
+    }
+
+    await ref
+        .read(treasuryBudgetPotsControllerProvider.notifier)
+        .adjustPot(
+          potId: pot.id,
+          delta: double.tryParse(amountController.text.trim()) ?? 0,
+          note: noteController.text.trim(),
+        );
+  } finally {
+    amountController.dispose();
+    noteController.dispose();
+  }
+}
+
+Future<void> _showMovePotDialog(
+  BuildContext context,
+  WidgetRef ref,
+  TreasuryBudgetPotRecord sourcePot,
+  List<TreasuryBudgetPotRecord> allPots,
+) async {
+  final destinationOptions = allPots
+      .where((pot) => pot.id != sourcePot.id)
+      .toList(growable: false);
+  if (destinationOptions.isEmpty) {
+    return;
+  }
+
+  final amountController = TextEditingController();
+  final noteController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  var destinationPotId = destinationOptions.first.id;
+
+  try {
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: Text('Move from ${sourcePot.title}'),
+              content: SizedBox(
+                width: 520,
+                child: Form(
+                  key: formKey,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      Text(
+                        'Current balance ${NumberFormat.currency(symbol: '£', decimalDigits: 2).format(sourcePot.balance)}',
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: destinationPotId,
+                        decoration: const InputDecoration(
+                          labelText: 'Destination pot',
+                        ),
+                        items: destinationOptions
+                            .map(
+                              (pot) => DropdownMenuItem(
+                                value: pot.id,
+                                child: Text(pot.title),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setDialogState(() => destinationPotId = value);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: amountController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Amount'),
+                        validator: (value) {
+                          final parsed = double.tryParse(value?.trim() ?? '');
+                          if (parsed == null || parsed <= 0) {
+                            return 'Enter a positive amount';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: noteController,
+                        decoration: const InputDecoration(labelText: 'Note'),
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (!(formKey.currentState?.validate() ?? false)) {
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true || !context.mounted) {
+      return;
+    }
+
+    await ref
+        .read(treasuryBudgetPotsControllerProvider.notifier)
+        .movePot(
+          fromPotId: sourcePot.id,
+          toPotId: destinationPotId,
+          amount: double.tryParse(amountController.text.trim()) ?? 0,
+          note: noteController.text.trim(),
+        );
+  } finally {
+    amountController.dispose();
+    noteController.dispose();
+  }
+}
+
+String _kindLabel(TreasuryBudgetPotKind kind) {
   return switch (kind) {
-    TreasuryBudgetPotKind.safe => AppColours.darkSuccess,
-    TreasuryBudgetPotKind.watch => AppColours.darkAmber,
-    TreasuryBudgetPotKind.pause => const Color(0xFFE26B6B),
-    TreasuryBudgetPotKind.decision => AppColours.darkSecondary,
-    TreasuryBudgetPotKind.future => AppColours.darkPurple,
-    TreasuryBudgetPotKind.archived => AppColours.darkMutedText,
+    TreasuryBudgetPotKind.safe => 'Safe',
+    TreasuryBudgetPotKind.watch => 'Watch',
+    TreasuryBudgetPotKind.pause => 'Pause',
+    TreasuryBudgetPotKind.decision => 'Decision',
+    TreasuryBudgetPotKind.future => 'Future',
+    TreasuryBudgetPotKind.archived => 'Archived',
   };
 }
 
-IconData _iconForKind(TreasuryBudgetPotKind kind) {
+Color _accentForKind(TreasuryStatusKind kind) {
   return switch (kind) {
-    TreasuryBudgetPotKind.safe => Icons.savings_outlined,
-    TreasuryBudgetPotKind.watch => Icons.visibility_outlined,
-    TreasuryBudgetPotKind.pause => Icons.pause_circle_outline,
-    TreasuryBudgetPotKind.decision => Icons.gavel_outlined,
-    TreasuryBudgetPotKind.future => Icons.auto_awesome_outlined,
-    TreasuryBudgetPotKind.archived => Icons.archive_outlined,
+    TreasuryStatusKind.safe => AppColours.darkSuccess,
+    TreasuryStatusKind.watch => AppColours.darkAmber,
+    TreasuryStatusKind.pause => const Color(0xFFE26B6B),
+    TreasuryStatusKind.decision => AppColours.darkSecondary,
+    TreasuryStatusKind.future => AppColours.darkPurple,
+    TreasuryStatusKind.archived => AppColours.darkMutedText,
+  };
+}
+
+IconData _iconForKind(TreasuryStatusKind kind) {
+  return switch (kind) {
+    TreasuryStatusKind.safe => Icons.savings_outlined,
+    TreasuryStatusKind.watch => Icons.visibility_outlined,
+    TreasuryStatusKind.pause => Icons.pause_circle_outline,
+    TreasuryStatusKind.decision => Icons.gavel_outlined,
+    TreasuryStatusKind.future => Icons.auto_awesome_outlined,
+    TreasuryStatusKind.archived => Icons.archive_outlined,
   };
 }
 

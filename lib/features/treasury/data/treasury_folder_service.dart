@@ -195,6 +195,84 @@ class TreasuryMonthlySummarySnapshot {
   final List<String> issues;
 }
 
+class TreasuryBudgetPotRecord {
+  const TreasuryBudgetPotRecord({
+    required this.id,
+    required this.title,
+    required this.kind,
+    required this.balance,
+    required this.target,
+    required this.notes,
+    required this.items,
+  });
+
+  final String id;
+  final String title;
+  final TreasuryStatusKind kind;
+  final double balance;
+  final double target;
+  final String notes;
+  final List<String> items;
+
+  TreasuryBudgetPotRecord copyWith({
+    String? id,
+    String? title,
+    TreasuryStatusKind? kind,
+    double? balance,
+    double? target,
+    String? notes,
+    List<String>? items,
+  }) {
+    return TreasuryBudgetPotRecord(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      kind: kind ?? this.kind,
+      balance: balance ?? this.balance,
+      target: target ?? this.target,
+      notes: notes ?? this.notes,
+      items: items ?? this.items,
+    );
+  }
+}
+
+class TreasuryBudgetPotMovement {
+  const TreasuryBudgetPotMovement({
+    required this.date,
+    required this.fromPotId,
+    required this.toPotId,
+    required this.amount,
+    required this.note,
+  });
+
+  final String date;
+  final String fromPotId;
+  final String toPotId;
+  final double amount;
+  final String note;
+}
+
+class TreasuryBudgetPotsFileState {
+  const TreasuryBudgetPotsFileState({
+    required this.updatedAt,
+    required this.pots,
+    required this.movements,
+  });
+
+  final DateTime? updatedAt;
+  final List<TreasuryBudgetPotRecord> pots;
+  final List<TreasuryBudgetPotMovement> movements;
+}
+
+class TreasuryBudgetPotsSaveResult {
+  const TreasuryBudgetPotsSaveResult({
+    required this.budgetPotsPath,
+    required this.updatedRecordCount,
+  });
+
+  final String budgetPotsPath;
+  final int updatedRecordCount;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -215,6 +293,7 @@ class TreasuryFolderService {
   static const requiredFiles = <String>[
     '00_FINANCE_DASHBOARD/dashboard_state.json',
     '00_FINANCE_DASHBOARD/weekly_status.json',
+    '00_FINANCE_DASHBOARD/budget_pots.json',
     '04_PROJECT_SPEND_TRACKERS/project_spend_tracker.csv',
     '05_RECEIPTS_AND_INVOICES/receipt_index.csv',
     '06_SUBSCRIPTIONS_AND_RECURRING_COSTS/subscription_tracker.csv',
@@ -715,6 +794,12 @@ class TreasuryFolderService {
           'project_spend_reviewed': false,
           'notes': '',
         });
+      case '00_FINANCE_DASHBOARD/budget_pots.json':
+        return const JsonEncoder.withIndent('  ').convert({
+          'updated_at': null,
+          'pots': <Map<String, dynamic>>[],
+          'movements': <Map<String, dynamic>>[],
+        });
       case '04_PROJECT_SPEND_TRACKERS/project_spend_tracker.csv':
         return 'date,project,item,supplier,amount,category,receipt_saved,status,notes\n';
       case '05_RECEIPTS_AND_INVOICES/receipt_index.csv':
@@ -1207,6 +1292,206 @@ class TreasuryFolderService {
     );
   }
 
+  Future<TreasuryBudgetPotsFileState> loadBudgetPotsState({
+    required TreasuryWorkspaceSnapshot workspace,
+    required TreasuryMonthlySummarySnapshot summary,
+  }) async {
+    final financeRootPath = workspace.financeRootPath;
+    if (financeRootPath == null) {
+      return TreasuryBudgetPotsFileState(
+        updatedAt: null,
+        pots: _defaultBudgetPotsFromSummary(summary),
+        movements: const <TreasuryBudgetPotMovement>[],
+      );
+    }
+
+    final budgetFile = File(
+      path.join(financeRootPath, '00_FINANCE_DASHBOARD', 'budget_pots.json'),
+    );
+
+    if (!await budgetFile.exists()) {
+      return TreasuryBudgetPotsFileState(
+        updatedAt: null,
+        pots: _defaultBudgetPotsFromSummary(summary),
+        movements: const <TreasuryBudgetPotMovement>[],
+      );
+    }
+
+    try {
+      final decoded = jsonDecode(await budgetFile.readAsString());
+      if (decoded is Map<String, dynamic>) {
+        final pots = <TreasuryBudgetPotRecord>[];
+        final rawPots = decoded['pots'];
+        if (rawPots is List) {
+          for (final rawPot in rawPots) {
+            if (rawPot is Map<String, dynamic>) {
+              pots.add(_budgetPotRecordFromJson(rawPot));
+            }
+          }
+        }
+
+        final movements = <TreasuryBudgetPotMovement>[];
+        final rawMovements = decoded['movements'];
+        if (rawMovements is List) {
+          for (final rawMovement in rawMovements) {
+            if (rawMovement is Map<String, dynamic>) {
+              movements.add(_budgetPotMovementFromJson(rawMovement));
+            }
+          }
+        }
+
+        return TreasuryBudgetPotsFileState(
+          updatedAt: _parseDateValue(decoded['updated_at']?.toString() ?? ''),
+          pots: pots.isEmpty ? _defaultBudgetPotsFromSummary(summary) : pots,
+          movements: movements,
+        );
+      }
+    } on FormatException {
+      // Fall back to the calm default state.
+    } on FileSystemException {
+      // Fall back to the calm default state.
+    }
+
+    return TreasuryBudgetPotsFileState(
+      updatedAt: null,
+      pots: _defaultBudgetPotsFromSummary(summary),
+      movements: const <TreasuryBudgetPotMovement>[],
+    );
+  }
+
+  Future<TreasuryBudgetPotsSaveResult> saveBudgetPotsState({
+    required String financeRootPath,
+    required List<TreasuryBudgetPotRecord> pots,
+    required List<TreasuryBudgetPotMovement> movements,
+  }) async {
+    final budgetFile = File(
+      path.join(financeRootPath, '00_FINANCE_DASHBOARD', 'budget_pots.json'),
+    );
+    await budgetFile.parent.create(recursive: true);
+
+    final payload = const JsonEncoder.withIndent('  ').convert({
+      'updated_at': DateTime.now().toIso8601String(),
+      'pots': pots.map(_budgetPotRecordToJson).toList(growable: false),
+      'movements': movements
+          .map(_budgetPotMovementToJson)
+          .toList(growable: false),
+    });
+
+    await writeTextFileWithBackup(budgetFile, payload);
+
+    return TreasuryBudgetPotsSaveResult(
+      budgetPotsPath: budgetFile.path,
+      updatedRecordCount: pots.length,
+    );
+  }
+
+  Future<TreasuryBudgetPotsSaveResult> createBudgetPotRecord({
+    required String financeRootPath,
+    required TreasuryWorkspaceSnapshot workspace,
+    required TreasuryMonthlySummarySnapshot summary,
+    required String title,
+    required String notes,
+    required double target,
+  }) async {
+    final state = await loadBudgetPotsState(
+      workspace: workspace,
+      summary: summary,
+    );
+    final newRecord = TreasuryBudgetPotRecord(
+      id: _slugify(title),
+      title: title,
+      kind: TreasuryStatusKind.future,
+      balance: 0,
+      target: target,
+      notes: notes,
+      items: const <String>[],
+    );
+
+    final updated = [...state.pots, newRecord];
+    return saveBudgetPotsState(
+      financeRootPath: financeRootPath,
+      pots: updated,
+      movements: state.movements,
+    );
+  }
+
+  Future<TreasuryBudgetPotsSaveResult> adjustBudgetPotRecord({
+    required String financeRootPath,
+    required TreasuryWorkspaceSnapshot workspace,
+    required TreasuryMonthlySummarySnapshot summary,
+    required String potId,
+    required double delta,
+    required String note,
+  }) async {
+    final state = await loadBudgetPotsState(
+      workspace: workspace,
+      summary: summary,
+    );
+    final updatedPots = state.pots
+        .map((pot) {
+          if (pot.id != potId) {
+            return pot;
+          }
+
+          return pot.copyWith(balance: pot.balance + delta);
+        })
+        .toList(growable: false);
+
+    final movement = TreasuryBudgetPotMovement(
+      date: _dateStamp(DateTime.now()),
+      fromPotId: delta < 0 ? potId : 'external',
+      toPotId: delta < 0 ? 'external' : potId,
+      amount: delta.abs(),
+      note: note,
+    );
+
+    return saveBudgetPotsState(
+      financeRootPath: financeRootPath,
+      pots: updatedPots,
+      movements: [...state.movements, movement],
+    );
+  }
+
+  Future<TreasuryBudgetPotsSaveResult> moveBudgetPotBalance({
+    required String financeRootPath,
+    required TreasuryWorkspaceSnapshot workspace,
+    required TreasuryMonthlySummarySnapshot summary,
+    required String fromPotId,
+    required String toPotId,
+    required double amount,
+    required String note,
+  }) async {
+    final state = await loadBudgetPotsState(
+      workspace: workspace,
+      summary: summary,
+    );
+    final updatedPots = state.pots
+        .map((pot) {
+          if (pot.id == fromPotId) {
+            return pot.copyWith(balance: pot.balance - amount);
+          }
+          if (pot.id == toPotId) {
+            return pot.copyWith(balance: pot.balance + amount);
+          }
+          return pot;
+        })
+        .toList(growable: false);
+
+    final movement = TreasuryBudgetPotMovement(
+      date: _dateStamp(DateTime.now()),
+      fromPotId: fromPotId,
+      toPotId: toPotId,
+      amount: amount,
+      note: note,
+    );
+
+    return saveBudgetPotsState(
+      financeRootPath: financeRootPath,
+      pots: updatedPots,
+      movements: [...state.movements, movement],
+    );
+  }
+
   List<String> _markdownBullets(List<String> items) {
     if (items.isEmpty) {
       return const ['- '];
@@ -1328,6 +1613,163 @@ class TreasuryFolderService {
     }
 
     return DateTime.tryParse(trimmed);
+  }
+
+  List<TreasuryBudgetPotRecord> _defaultBudgetPotsFromSummary(
+    TreasuryMonthlySummarySnapshot summary,
+  ) {
+    return [
+      _defaultPotForSummary(
+        summary,
+        TreasuryStatusKind.safe,
+        'Safe to Spend',
+        'Money that feels settled enough to use calmly.',
+      ),
+      _defaultPotForSummary(
+        summary,
+        TreasuryStatusKind.watch,
+        'Watch Buffer',
+        'Money or items that deserve a closer look soon.',
+      ),
+      _defaultPotForSummary(
+        summary,
+        TreasuryStatusKind.pause,
+        'Pause Reserve',
+        'Items to hold until the picture feels steadier.',
+      ),
+      _defaultPotForSummary(
+        summary,
+        TreasuryStatusKind.decision,
+        'Decision Pot',
+        'Choices waiting for a calm yes or no.',
+      ),
+      _defaultPotForSummary(
+        summary,
+        TreasuryStatusKind.future,
+        'Future Investment',
+        'Ideas to keep nearby without acting on them yet.',
+      ),
+      _defaultPotForSummary(
+        summary,
+        TreasuryStatusKind.archived,
+        'Archived',
+        'Old notes kept for reference rather than daily use.',
+      ),
+    ];
+  }
+
+  TreasuryBudgetPotRecord _defaultPotForSummary(
+    TreasuryMonthlySummarySnapshot summary,
+    TreasuryStatusKind kind,
+    String title,
+    String notes,
+  ) {
+    final stateSummary = summary.workspace.stateSummaries.firstWhere(
+      (entry) => entry.kind == kind,
+    );
+
+    return TreasuryBudgetPotRecord(
+      id: _slugify(title),
+      title: title,
+      kind: kind,
+      balance: 0,
+      target: 0,
+      notes: notes,
+      items: stateSummary.items,
+    );
+  }
+
+  Map<String, dynamic> _budgetPotRecordToJson(TreasuryBudgetPotRecord record) {
+    return {
+      'id': record.id,
+      'title': record.title,
+      'kind': record.kind.name,
+      'balance': record.balance,
+      'target': record.target,
+      'notes': record.notes,
+      'items': record.items,
+    };
+  }
+
+  TreasuryBudgetPotRecord _budgetPotRecordFromJson(Map<String, dynamic> json) {
+    return TreasuryBudgetPotRecord(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      kind: _budgetPotKindFromString(json['kind']?.toString()),
+      balance: _parseMoney(json['balance']?.toString() ?? ''),
+      target: _parseMoney(json['target']?.toString() ?? ''),
+      notes: json['notes']?.toString() ?? '',
+      items: (json['items'] is List)
+          ? (json['items'] as List)
+                .map((item) => item.toString())
+                .toList(growable: false)
+          : const <String>[],
+    );
+  }
+
+  Map<String, dynamic> _budgetPotMovementToJson(
+    TreasuryBudgetPotMovement movement,
+  ) {
+    return {
+      'date': movement.date,
+      'from_id': movement.fromPotId,
+      'to_id': movement.toPotId,
+      'amount': movement.amount,
+      'note': movement.note,
+    };
+  }
+
+  TreasuryBudgetPotMovement _budgetPotMovementFromJson(
+    Map<String, dynamic> json,
+  ) {
+    return TreasuryBudgetPotMovement(
+      date: json['date']?.toString() ?? '',
+      fromPotId: json['from_id']?.toString() ?? '',
+      toPotId: json['to_id']?.toString() ?? '',
+      amount: _parseMoney(json['amount']?.toString() ?? ''),
+      note: json['note']?.toString() ?? '',
+    );
+  }
+
+  TreasuryStatusKind _budgetPotKindFromString(String? value) {
+    switch (value?.trim().toLowerCase()) {
+      case 'safe':
+        return TreasuryStatusKind.safe;
+      case 'watch':
+        return TreasuryStatusKind.watch;
+      case 'pause':
+      case 'stop':
+        return TreasuryStatusKind.pause;
+      case 'decision':
+        return TreasuryStatusKind.decision;
+      case 'future':
+        return TreasuryStatusKind.future;
+      case 'archived':
+        return TreasuryStatusKind.archived;
+      default:
+        return TreasuryStatusKind.future;
+    }
+  }
+
+  String _slugify(String value) {
+    final lower = value.trim().toLowerCase();
+    final buffer = StringBuffer();
+    var previousDash = false;
+
+    for (final codeUnit in lower.codeUnits) {
+      final char = String.fromCharCode(codeUnit);
+      final isAlphaNumeric = RegExp(r'[a-z0-9]').hasMatch(char);
+      if (isAlphaNumeric) {
+        buffer.write(char);
+        previousDash = false;
+      } else if (!previousDash) {
+        buffer.write('-');
+        previousDash = true;
+      }
+    }
+
+    final slug = buffer.toString().replaceAll(RegExp(r'-+'), '-').trim();
+    return slug.replaceAll(RegExp(r'^-|-$'), '');
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/treasury_folder_service.dart';
+import 'treasury_controller.dart';
 import 'treasury_monthly_summary_controller.dart';
 
 enum TreasuryBudgetPotKind { safe, watch, pause, decision, future, archived }
@@ -29,6 +30,9 @@ class TreasuryBudgetPotsSnapshot {
     required this.subscriptionTotal,
     required this.pots,
     required this.issues,
+    this.budgetPotsPath,
+    this.editablePots = const <TreasuryBudgetPotRecord>[],
+    this.movements = const <TreasuryBudgetPotMovement>[],
   });
 
   final TreasuryWorkspaceSnapshot workspace;
@@ -37,6 +41,9 @@ class TreasuryBudgetPotsSnapshot {
   final double subscriptionTotal;
   final List<TreasuryBudgetPot> pots;
   final List<String> issues;
+  final String? budgetPotsPath;
+  final List<TreasuryBudgetPotRecord> editablePots;
+  final List<TreasuryBudgetPotMovement> movements;
 
   factory TreasuryBudgetPotsSnapshot.fromMonthlySummary(
     TreasuryMonthlySummarySnapshot summary,
@@ -119,9 +126,117 @@ class TreasuryBudgetPotsSnapshot {
   }
 }
 
-final treasuryBudgetPotsProvider = FutureProvider<TreasuryBudgetPotsSnapshot>((
-  ref,
-) async {
-  final summary = await ref.watch(treasuryMonthlySummaryProvider.future);
-  return TreasuryBudgetPotsSnapshot.fromMonthlySummary(summary);
-});
+class TreasuryBudgetPotsController
+    extends AsyncNotifier<TreasuryBudgetPotsSnapshot> {
+  @override
+  Future<TreasuryBudgetPotsSnapshot> build() async {
+    return _loadSnapshot();
+  }
+
+  Future<TreasuryBudgetPotsSnapshot> _loadSnapshot() async {
+    final service = ref.read(treasuryFolderServiceProvider);
+    final workspace = await ref.watch(treasuryWorkspaceProvider.future);
+    final summary = await ref.watch(treasuryMonthlySummaryProvider.future);
+    final fileState = await service.loadBudgetPotsState(
+      workspace: workspace,
+      summary: summary,
+    );
+
+    return TreasuryBudgetPotsSnapshot(
+      workspace: workspace,
+      generatedAt: summary.generatedAt,
+      projectSpendTotal: summary.projectSpendTotal,
+      subscriptionTotal: summary.subscriptionTotal,
+      pots: TreasuryBudgetPotsSnapshot.fromMonthlySummary(summary).pots,
+      issues: [
+        ...summary.issues,
+        if (fileState.updatedAt == null)
+          'Budget pots file has not been created yet.',
+      ],
+      budgetPotsPath: workspace.financeRootPath == null
+          ? null
+          : '${workspace.financeRootPath}/00_FINANCE_DASHBOARD/budget_pots.json',
+      editablePots: fileState.pots,
+      movements: fileState.movements,
+    );
+  }
+
+  Future<void> addPot({
+    required String title,
+    required String notes,
+    required double target,
+  }) async {
+    final current = await future;
+    final financeRootPath = current.workspace.financeRootPath;
+    if (financeRootPath == null) {
+      return;
+    }
+
+    final service = ref.read(treasuryFolderServiceProvider);
+    await service.createBudgetPotRecord(
+      financeRootPath: financeRootPath,
+      workspace: current.workspace,
+      summary: await ref.read(treasuryMonthlySummaryProvider.future),
+      title: title,
+      notes: notes,
+      target: target,
+    );
+    ref.invalidateSelf();
+  }
+
+  Future<void> adjustPot({
+    required String potId,
+    required double delta,
+    required String note,
+  }) async {
+    final current = await future;
+    final financeRootPath = current.workspace.financeRootPath;
+    if (financeRootPath == null) {
+      return;
+    }
+
+    final service = ref.read(treasuryFolderServiceProvider);
+    await service.adjustBudgetPotRecord(
+      financeRootPath: financeRootPath,
+      workspace: current.workspace,
+      summary: await ref.read(treasuryMonthlySummaryProvider.future),
+      potId: potId,
+      delta: delta,
+      note: note,
+    );
+    ref.invalidateSelf();
+  }
+
+  Future<void> movePot({
+    required String fromPotId,
+    required String toPotId,
+    required double amount,
+    required String note,
+  }) async {
+    final current = await future;
+    final financeRootPath = current.workspace.financeRootPath;
+    if (financeRootPath == null) {
+      return;
+    }
+
+    final service = ref.read(treasuryFolderServiceProvider);
+    await service.moveBudgetPotBalance(
+      financeRootPath: financeRootPath,
+      workspace: current.workspace,
+      summary: await ref.read(treasuryMonthlySummaryProvider.future),
+      fromPotId: fromPotId,
+      toPotId: toPotId,
+      amount: amount,
+      note: note,
+    );
+    ref.invalidateSelf();
+  }
+}
+
+final treasuryBudgetPotsControllerProvider =
+    AsyncNotifierProvider<
+      TreasuryBudgetPotsController,
+      TreasuryBudgetPotsSnapshot
+    >(TreasuryBudgetPotsController.new);
+
+final treasuryBudgetPotsProvider = treasuryBudgetPotsControllerProvider;
