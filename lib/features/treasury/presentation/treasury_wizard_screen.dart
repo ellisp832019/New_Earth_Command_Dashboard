@@ -171,6 +171,8 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
                                   TreasuryWizardFlow.weeklyRitual =>
                                     'Save review',
                                   TreasuryWizardFlow.receipts => 'Save receipt',
+                                  TreasuryWizardFlow.projectSpend =>
+                                    'Save project spend',
                                   _ => 'Save draft',
                                 }),
                               ),
@@ -245,9 +247,7 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
           item: _controllerText(0),
           supplier: _controllerText(1),
           amount: _controllerText(2),
-          personalOrNewEarth: _controllers.length > 3
-              ? _controllers[3].text
-              : '',
+          personalOrNewEarth: _controllerText(3),
           project: _controllerText(4),
           fileLocation: _controllerText(5),
           notes: _controllerText(6),
@@ -267,6 +267,53 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Receipt saved to $savedName')));
+        context.pop();
+        return;
+      }
+
+      if (_flow == TreasuryWizardFlow.projectSpend) {
+        final service = ref.read(treasuryFolderServiceProvider);
+        final snapshot = await service.loadWorkspace();
+        if (!context.mounted) {
+          return;
+        }
+
+        final financeRootPath = snapshot.financeRootPath;
+        if (financeRootPath == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Treasury needs the finance folder linked first.'),
+            ),
+          );
+          return;
+        }
+
+        final result = await service.saveProjectSpendRecord(
+          financeRootPath: financeRootPath,
+          project: _controllerText(0),
+          item: _controllerText(1),
+          supplier: _controllerText(2),
+          amount: _controllerText(3),
+          category: _controllerText(4),
+          receiptSaved: _controllerText(5),
+          status: _controllerText(6),
+          notes: _controllerText(7),
+          recordedAt: DateTime.now(),
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
+        ref.invalidate(treasuryWorkspaceProvider);
+
+        final savedName = result.projectSpendTrackerPath
+            .split(Platform.pathSeparator)
+            .last;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Project spend saved to $savedName')),
+        );
         context.pop();
         return;
       }
@@ -467,6 +514,16 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
             label: 'Receipt',
             prompt: 'Is the receipt saved yet?',
             hint: 'Choose yes, no, or to be sorted later.',
+          ),
+          _WizardStepDefinition(
+            label: 'Status',
+            prompt: 'What status should this spend carry?',
+            hint: 'Use Safe, Watch, Pause, Needs decision, or Future.',
+          ),
+          _WizardStepDefinition(
+            label: 'Note',
+            prompt: 'Add one short note for the project record.',
+            hint: 'Keep it calm and useful for later review.',
           ),
         ];
       case TreasuryWizardFlow.subscriptions:

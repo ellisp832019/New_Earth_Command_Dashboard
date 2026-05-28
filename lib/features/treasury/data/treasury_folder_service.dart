@@ -69,6 +69,12 @@ class TreasuryReceiptSaveResult {
   final String receiptIndexPath;
 }
 
+class TreasuryProjectSpendSaveResult {
+  const TreasuryProjectSpendSaveResult({required this.projectSpendTrackerPath});
+
+  final String projectSpendTrackerPath;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -599,6 +605,55 @@ class TreasuryFolderService {
     await writeTextFileWithBackup(receiptIndexFile, '${rows.join('\n')}\n');
 
     return TreasuryReceiptSaveResult(receiptIndexPath: receiptIndexFile.path);
+  }
+
+  Future<TreasuryProjectSpendSaveResult> saveProjectSpendRecord({
+    required String financeRootPath,
+    required String project,
+    required String item,
+    required String supplier,
+    required String amount,
+    required String category,
+    required String receiptSaved,
+    required String status,
+    required String notes,
+    required DateTime recordedAt,
+  }) async {
+    final spendTrackerFile = File(
+      path.join(
+        financeRootPath,
+        '04_PROJECT_SPEND_TRACKERS',
+        'project_spend_tracker.csv',
+      ),
+    );
+    await spendTrackerFile.parent.create(recursive: true);
+
+    final existingLines = await spendTrackerFile.exists()
+        ? await spendTrackerFile.readAsLines()
+        : <String>[];
+    final header =
+        'Date,Project,Item,Supplier,Amount,Category,ReceiptSaved,Status,Notes';
+    final rows = <String>[
+      if (existingLines.isEmpty) header,
+      if (existingLines.isNotEmpty) ...existingLines,
+      _csvJoin([
+        _dateStamp(recordedAt),
+        project,
+        item,
+        supplier,
+        amount,
+        category,
+        receiptSaved,
+        status,
+        notes,
+      ]),
+    ];
+
+    await writeTextFileWithBackup(spendTrackerFile, '${rows.join('\n')}\n');
+
+    return TreasuryProjectSpendSaveResult(
+      projectSpendTrackerPath: spendTrackerFile.path,
+    );
   }
 
   List<String> _markdownBullets(List<String> items) {
