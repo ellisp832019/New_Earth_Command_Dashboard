@@ -65,44 +65,57 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _BudgetOverviewCard(snapshot: snapshot),
                 const SizedBox(height: 16),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth >= 1240
-                        ? 3
-                        : constraints.maxWidth >= 760
-                        ? 2
-                        : 1;
+                if (snapshot.editablePots.isEmpty) ...[
+                  _BudgetPotsEmptyStateCard(
+                    snapshot: snapshot,
+                    onAddPot: () => _showAddPotDialog(context, ref),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  const _SectionTitle(
+                    icon: Icons.grid_view_rounded,
+                    title: 'Saved pots',
+                  ),
+                  const SizedBox(height: 12),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final crossAxisCount = constraints.maxWidth >= 1240
+                          ? 3
+                          : constraints.maxWidth >= 760
+                          ? 2
+                          : 1;
 
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: snapshot.editablePots.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: crossAxisCount == 1 ? 2.4 : 1.5,
-                      ),
-                      itemBuilder: (context, index) {
-                        final pot = snapshot.editablePots[index];
-                        return _BudgetPotCard(
-                          pot: pot,
-                          onAdjust: () =>
-                              _showAdjustPotDialog(context, ref, pot),
-                          onMove: snapshot.editablePots.length > 1
-                              ? () => _showMovePotDialog(
-                                  context,
-                                  ref,
-                                  pot,
-                                  snapshot.editablePots,
-                                )
-                              : null,
-                        );
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.editablePots.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: crossAxisCount == 1 ? 2.4 : 1.5,
+                        ),
+                        itemBuilder: (context, index) {
+                          final pot = snapshot.editablePots[index];
+                          return _BudgetPotCard(
+                            pot: pot,
+                            onAdjust: () =>
+                                _showAdjustPotDialog(context, ref, pot),
+                            onMove: snapshot.editablePots.length > 1
+                                ? () => _showMovePotDialog(
+                                    context,
+                                    ref,
+                                    pot,
+                                    snapshot.editablePots,
+                                  )
+                                : null,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 _BudgetPotsFooterCard(snapshot: snapshot),
               ],
             ),
@@ -187,11 +200,17 @@ class _BudgetPotsHeroCard extends StatelessWidget {
               const SizedBox(height: 12),
               _HeroMetricCard(
                 label: 'Tracked states',
-                value:
-                    '${snapshot.editablePots.where((pot) => pot.balance != 0).length} active pots',
+                value: '${snapshot.editablePots.length} saved pots',
                 note:
                     'Each pot stays calm and visible so Hayley knows where attention sits.',
                 accent: AppColours.darkSecondary,
+              ),
+              const SizedBox(height: 12),
+              _HeroMetricCard(
+                label: 'Saved movements',
+                value: '${snapshot.movements.length} entries',
+                note: _latestMovementNote(snapshot),
+                accent: AppColours.darkAccent,
               ),
             ],
           );
@@ -439,11 +458,11 @@ class _BudgetPotsFooterCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(icon: Icons.info_outline, title: 'Notes'),
+          const _SectionTitle(icon: Icons.info_outline, title: 'File status'),
           const SizedBox(height: 12),
           Text(
             snapshot.issues.isEmpty
-                ? 'Budget Pots now keeps a local pot file inside the Treasury dashboard folder and writes with backups.'
+                ? 'Budget Pots keeps a local pot file inside the Treasury dashboard folder and writes with backups.'
                 : snapshot.issues.join('\n'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
@@ -465,6 +484,68 @@ class _BudgetPotsFooterCard extends StatelessWidget {
                   accent: AppColours.darkSuccess,
                 ),
               ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetPotsEmptyStateCard extends StatelessWidget {
+  const _BudgetPotsEmptyStateCard({
+    required this.snapshot,
+    required this.onAddPot,
+  });
+
+  final TreasuryBudgetPotsSnapshot snapshot;
+  final VoidCallback onAddPot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            icon: Icons.inbox_outlined,
+            title: 'No pots saved yet',
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'This Treasury file is ready, but no editable pots have been created yet. Add the first calm pot to start shaping the money plan.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onAddPot,
+                icon: const Icon(Icons.add),
+                label: const Text('Add first pot'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () =>
+                    context.push(RouteNames.treasuryMonthlySummary),
+                icon: const Icon(Icons.assessment_outlined),
+                label: const Text('Open monthly summary'),
+              ),
+            ],
+          ),
+          if (snapshot.budgetPotsPath != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Saved file: ${snapshot.budgetPotsPath}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             ),
           ],
         ],
@@ -570,6 +651,19 @@ class _HeroMetricCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _latestMovementNote(TreasuryBudgetPotsSnapshot snapshot) {
+  if (snapshot.movements.isEmpty) {
+    return 'No movements have been saved yet.';
+  }
+
+  final latest = snapshot.movements.last;
+  final note = latest.note.trim().isEmpty
+      ? 'No note added.'
+      : latest.note.trim();
+  final summary = '${latest.date} · $note';
+  return summary.length > 96 ? '${summary.substring(0, 93)}...' : summary;
 }
 
 class _SectionTitle extends StatelessWidget {
