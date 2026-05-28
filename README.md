@@ -35,6 +35,7 @@ V0.1 foundation is live:
 - Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 - On Windows, Gaia now waits for a connected headset or headset microphone before the main dashboard loads
+- If you move the repo to a new folder, clear `build/windows/x64` and `.dart_tool`, then run `flutter clean` and `flutter pub get` before building Windows again
 
 ## Documentation
 
