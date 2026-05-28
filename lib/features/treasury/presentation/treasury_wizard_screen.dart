@@ -1,74 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../application/treasury_wizard_draft_controller.dart';
+import '../data/treasury_wizard_draft.dart';
+import '../data/treasury_wizard_flow.dart';
 
-enum TreasuryWizardFlow {
-  weeklyRitual,
-  receipts,
-  decisions,
-  projectSpend,
-  subscriptions,
-}
-
-TreasuryWizardFlow _resolveFlow(String? value) {
-  switch (value) {
-    case 'receipts':
-      return TreasuryWizardFlow.receipts;
-    case 'decisions':
-      return TreasuryWizardFlow.decisions;
-    case 'project_spend':
-      return TreasuryWizardFlow.projectSpend;
-    case 'subscriptions':
-      return TreasuryWizardFlow.subscriptions;
-    case 'weekly':
-    default:
-      return TreasuryWizardFlow.weeklyRitual;
-  }
-}
-
-extension on TreasuryWizardFlow {
-  String get title {
-    switch (this) {
-      case TreasuryWizardFlow.weeklyRitual:
-        return 'Weekly Ritual';
-      case TreasuryWizardFlow.receipts:
-        return 'Receipts';
-      case TreasuryWizardFlow.decisions:
-        return 'Decisions';
-      case TreasuryWizardFlow.projectSpend:
-        return 'Project Spend';
-      case TreasuryWizardFlow.subscriptions:
-        return 'Subscriptions';
-    }
-  }
-
-  String get subtitle {
-    switch (this) {
-      case TreasuryWizardFlow.weeklyRitual:
-        return 'A calm weekly review with Safe / Watch / Pause / Decision.';
-      case TreasuryWizardFlow.receipts:
-        return 'Capture a receipt or invoice without leaving the dashboard.';
-      case TreasuryWizardFlow.decisions:
-        return 'Collect the one choice Hayley and Peter need to make together.';
-      case TreasuryWizardFlow.projectSpend:
-        return 'Log project spending in a guided, low-pressure flow.';
-      case TreasuryWizardFlow.subscriptions:
-        return 'Review recurring costs one service at a time.';
-    }
-  }
-}
-
-class TreasuryWizardScreen extends StatefulWidget {
+class TreasuryWizardScreen extends ConsumerStatefulWidget {
   const TreasuryWizardScreen({super.key, this.initialFlow});
 
   final String? initialFlow;
 
   @override
-  State<TreasuryWizardScreen> createState() => _TreasuryWizardScreenState();
+  ConsumerState<TreasuryWizardScreen> createState() =>
+      _TreasuryWizardScreenState();
 }
 
-class _TreasuryWizardScreenState extends State<TreasuryWizardScreen> {
+class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
   late final TreasuryWizardFlow _flow;
   late final List<TextEditingController> _controllers;
   int _stepIndex = 0;
@@ -76,8 +25,30 @@ class _TreasuryWizardScreenState extends State<TreasuryWizardScreen> {
   @override
   void initState() {
     super.initState();
-    _flow = _resolveFlow(widget.initialFlow);
+    _flow = resolveTreasuryWizardFlow(widget.initialFlow);
     _controllers = _buildControllers(_flow);
+    final draftController = ref.read(treasuryWizardDraftsProvider.notifier);
+    draftController.ensureLength(_flow, _stepsFor(_flow).length);
+    final draft = ref.read(
+      treasuryWizardDraftsProvider.select((drafts) => drafts[_flow]),
+    );
+    if (draft != null) {
+      for (
+        var index = 0;
+        index < _controllers.length && index < draft.values.length;
+        index++
+      ) {
+        _controllers[index].text = draft.values[index];
+      }
+    }
+    for (var index = 0; index < _controllers.length; index++) {
+      final stepIndex = index;
+      _controllers[index].addListener(() {
+        ref
+            .read(treasuryWizardDraftsProvider.notifier)
+            .setField(_flow, stepIndex, _controllers[stepIndex].text);
+      });
+    }
   }
 
   @override
@@ -94,6 +65,9 @@ class _TreasuryWizardScreenState extends State<TreasuryWizardScreen> {
     final totalSteps = steps.length + 1;
     final currentProgress = (_stepIndex + 1) / totalSteps;
     final theme = Theme.of(context);
+    final draft = ref.watch(
+      treasuryWizardDraftsProvider.select((drafts) => drafts[_flow]),
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -109,6 +83,13 @@ class _TreasuryWizardScreenState extends State<TreasuryWizardScreen> {
                   progress: currentProgress,
                   onBack: () => context.pop(),
                 ),
+                if (draft != null && draft.hasContent) ...[
+                  const SizedBox(height: 14),
+                  _WizardDraftBanner(
+                    draft: draft,
+                    onContinue: () => _goToStep(_stepIndex),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Container(
                   decoration: _panelDecoration(context),
@@ -227,9 +208,13 @@ class _TreasuryWizardScreenState extends State<TreasuryWizardScreen> {
 
   void _goToStep(int nextStep) {
     setState(() => _stepIndex = nextStep);
+    ref
+        .read(treasuryWizardDraftsProvider.notifier)
+        .ensureLength(_flow, _stepsFor(_flow).length);
   }
 
   void _finish(BuildContext context) {
+    ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Draft saved locally in Treasury.')),
     );
@@ -463,6 +448,80 @@ class _WizardHeaderCard extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back to Treasury'),
               ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _WizardDraftBanner extends StatelessWidget {
+  const _WizardDraftBanner({required this.draft, required this.onContinue});
+
+  final TreasuryWizardDraft draft;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColours.darkSuccess.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColours.darkSuccess.withValues(alpha: 0.24),
+        ),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWide = constraints.maxWidth >= 860;
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _WizardFlowChip(
+                label: 'Draft saved locally',
+                accent: AppColours.darkSuccess,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Hayley can pick up where she left off.',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                draft.firstSummary,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+            ],
+          );
+
+          final action = FilledButton.tonalIcon(
+            onPressed: onContinue,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Continue draft'),
+          );
+
+          if (!useWide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [content, const SizedBox(height: 12), action],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: content),
+              const SizedBox(width: 16),
+              action,
             ],
           );
         },

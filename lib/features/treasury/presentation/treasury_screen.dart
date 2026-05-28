@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
 import '../application/treasury_controller.dart';
+import '../application/treasury_wizard_draft_controller.dart';
 import '../data/treasury_folder_service.dart';
+import '../data/treasury_wizard_flow.dart';
 
 class TreasuryScreen extends ConsumerWidget {
   const TreasuryScreen({super.key});
@@ -89,6 +91,8 @@ class _TreasuryHomeScreen extends StatelessWidget {
               dateLabel: dateLabel,
               onReload: onReload,
             ),
+            const SizedBox(height: 18),
+            const _WeeklyDraftStateCard(),
             const SizedBox(height: 18),
             const _TreasuryEntryHubCard(),
             const SizedBox(height: 18),
@@ -514,6 +518,108 @@ class _TreasuryEntryHubCard extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WeeklyDraftStateCard extends ConsumerWidget {
+  const _WeeklyDraftStateCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final draft = ref.watch(
+      treasuryWizardDraftsProvider.select(
+        (drafts) => drafts[TreasuryWizardFlow.weeklyRitual],
+      ),
+    );
+
+    if (draft == null || !draft.hasContent) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWide = constraints.maxWidth >= 860;
+          final info = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _SectionTitle(
+                icon: Icons.bookmark_added_outlined,
+                title: 'Weekly ritual draft',
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Hayley has a saved draft for the weekly review.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                draft.firstSummary,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                draft.savedAt == null
+                    ? 'Draft updated ${DateFormat('h:mm a').format(draft.updatedAt)}'
+                    : 'Saved ${DateFormat('h:mm a').format(draft.savedAt!)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.push(
+                  RouteNames.treasuryWizardFor(
+                    TreasuryWizardFlow.weeklyRitual.routeValue,
+                  ),
+                ),
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Continue'),
+              ),
+              TextButton(
+                onPressed: () => ref
+                    .read(treasuryWizardDraftsProvider.notifier)
+                    .markSaved(TreasuryWizardFlow.weeklyRitual),
+                child: const Text('Mark saved'),
+              ),
+            ],
+          );
+
+          if (!useWide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [info, const SizedBox(height: 14), actions],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: info),
+              const SizedBox(width: 20),
+              actions,
+            ],
+          );
+        },
       ),
     );
   }
