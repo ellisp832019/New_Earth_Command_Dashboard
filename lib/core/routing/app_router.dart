@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/assets/presentation/assets_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
@@ -31,6 +32,7 @@ import 'route_names.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorDashboardKey = GlobalKey<NavigatorState>();
+final _shellNavigatorAssetsKey = GlobalKey<NavigatorState>();
 final _shellNavigatorProjectsKey = GlobalKey<NavigatorState>();
 final _shellNavigatorTasksKey = GlobalKey<NavigatorState>();
 final _shellNavigatorPlannerKey = GlobalKey<NavigatorState>();
@@ -65,6 +67,15 @@ final appRouter = GoRouter(
                   ],
                 ),
               ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          navigatorKey: _shellNavigatorAssetsKey,
+          routes: [
+            GoRoute(
+              path: RouteNames.assets,
+              builder: (context, state) => const AssetsScreen(),
             ),
           ],
         ),
