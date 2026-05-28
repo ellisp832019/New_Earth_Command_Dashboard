@@ -683,9 +683,9 @@ class _MiniChecklist extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 12),
           ...items.map(
@@ -716,9 +716,9 @@ class _MiniChecklist extends StatelessWidget {
           if (items.isEmpty)
             Text(
               'Nothing is missing from this check right now.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             ),
         ],
       ),
@@ -1776,85 +1776,85 @@ List<_TreasuryBudgetPotPack> _starterPacks() {
         TreasuryBudgetPotSeed(
           title: 'Living',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 1200,
           notes: 'Day-to-day essentials and regular spending.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Home',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 500,
           notes: 'Rent, repairs, furniture, and home upkeep.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Holiday',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 300,
           notes: 'Trips, travel, and calm time away.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Personal',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 250,
           notes: 'Personal spending that does not need a more specific pot.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Emergency',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 1000,
           notes: 'Backup money for the unexpected.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Treats',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 75,
           notes: 'Guilt-free fun and occasional treats.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Health',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 100,
           notes: 'Appointments, prescriptions, and wellbeing costs.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Car / Travel',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 150,
           notes: 'Fuel, travel, maintenance, and transport costs.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Annual Bills',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 250,
           notes: 'Costs that arrive once or twice a year.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Gifts',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 100,
           notes: 'Birthdays, holidays, and thoughtful giving.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Learning',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 100,
           notes: 'Courses, books, and calm self-development.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Clothing',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 125,
           notes: 'Seasonal clothes and wardrobe refreshes.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Subscriptions',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 100,
           notes: 'Recurring services kept under gentle review.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Buffer',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 200,
           notes: 'A small flexible buffer for breathing room.',
         ),
       ],
@@ -1867,85 +1867,85 @@ List<_TreasuryBudgetPotPack> _starterPacks() {
         TreasuryBudgetPotSeed(
           title: 'Living',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 1200,
           notes: 'Day-to-day essentials and regular spending.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Home',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 500,
           notes: 'Rent, repairs, furniture, and home upkeep.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Holiday',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 300,
           notes: 'Trips, travel, and calm time away.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Personal',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 250,
           notes: 'Personal spending that does not need a more specific pot.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Emergency',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 1000,
           notes: 'Backup money for the unexpected.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Treats',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 75,
           notes: 'Guilt-free fun and occasional treats.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Health',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 100,
           notes: 'Appointments, prescriptions, and wellbeing costs.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Car / Travel',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 150,
           notes: 'Fuel, travel, maintenance, and transport costs.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Annual Bills',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 250,
           notes: 'Costs that arrive once or twice a year.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Gifts',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 100,
           notes: 'Birthdays, holidays, and thoughtful giving.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Learning',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 100,
           notes: 'Courses, books, and calm self-development.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Clothing',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 125,
           notes: 'Seasonal clothes and wardrobe refreshes.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Subscriptions',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 100,
           notes: 'Recurring services kept under gentle review.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Buffer',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 200,
           notes: 'A small flexible buffer for breathing room.',
         ),
       ],
@@ -1958,55 +1958,55 @@ List<_TreasuryBudgetPotPack> _starterPacks() {
         TreasuryBudgetPotSeed(
           title: 'Rent / Mortgage',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 1200,
           notes: 'The main home payment.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Utilities',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 250,
           notes: 'Power, water, internet, and other services.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Groceries',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 350,
           notes: 'Shared food and household essentials.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Household Supplies',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 75,
           notes: 'Cleaning, laundry, and general home supplies.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Repairs',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 150,
           notes: 'Unexpected fixes and maintenance.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Furniture',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 150,
           notes: 'Home upgrades and replacements.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Home Buffer',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 200,
           notes: 'A small shared cushion for home life.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Shared Holiday',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 300,
           notes: 'Trips and travel together.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Shared Car / Travel',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 150,
           notes: 'Shared transport and travel costs.',
         ),
       ],
@@ -2020,43 +2020,43 @@ List<_TreasuryBudgetPotPack> _starterPacks() {
         TreasuryBudgetPotSeed(
           title: 'Projects',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 500,
           notes: 'Money for active delivery work.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Tools',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 150,
           notes: 'Apps, subscriptions, and equipment for the business.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Tax',
           kind: TreasuryStatusKind.pause,
-          target: 0,
+          target: 500,
           notes: 'A calm reserve for tax and obligations.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Ops Buffer',
           kind: TreasuryStatusKind.safe,
-          target: 0,
+          target: 250,
           notes: 'A small operating cushion for New Earth.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Learning',
           kind: TreasuryStatusKind.future,
-          target: 0,
+          target: 150,
           notes: 'Training, books, and team growth.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Travel',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 100,
           notes: 'Business travel and mileage.',
         ),
         TreasuryBudgetPotSeed(
           title: 'Subscriptions',
           kind: TreasuryStatusKind.watch,
-          target: 0,
+          target: 100,
           notes: 'Recurring business services.',
         ),
       ],
@@ -2069,7 +2069,13 @@ String _seedPreview(List<TreasuryBudgetPotSeed> seeds) {
     return 'No pots in this pack yet.';
   }
 
-  final names = seeds.take(4).map((seed) => seed.title).join(', ');
+  final names = seeds
+      .take(4)
+      .map(
+        (seed) =>
+            '${seed.title} ${NumberFormat.currency(symbol: '£', decimalDigits: 0).format(seed.target)}',
+      )
+      .join(', ');
   if (seeds.length <= 4) {
     return names;
   }
