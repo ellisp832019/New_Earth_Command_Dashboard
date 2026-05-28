@@ -129,6 +129,8 @@ class _AssetsContent extends StatelessWidget {
                       onOpenLowStock: () => context.push(RouteNames.assetLowStock),
                       onOpenRepairSummary: () =>
                           context.push(RouteNames.assetRepairSummary),
+                      onOpenProjectSummary: () =>
+                          context.push(RouteNames.assetProjectSummary),
                     ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
@@ -570,12 +572,14 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenParts,
     required this.onOpenLowStock,
     required this.onOpenRepairSummary,
+    required this.onOpenProjectSummary,
   });
 
   final VoidCallback onOpenEquipment;
   final VoidCallback onOpenParts;
   final VoidCallback onOpenLowStock;
   final VoidCallback onOpenRepairSummary;
+  final VoidCallback onOpenProjectSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -623,6 +627,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenRepairSummary,
                 icon: const Icon(Icons.build_circle_outlined),
                 label: const Text('Broken / Repair'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenProjectSummary,
+                icon: const Icon(Icons.groups_2_outlined),
+                label: const Text('Project Summary'),
               ),
             ],
           ),

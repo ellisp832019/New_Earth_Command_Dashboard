@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/assets/presentation/assets_screen.dart';
 import '../../features/assets/presentation/equipment_register_screen.dart';
 import '../../features/assets/presentation/low_stock_screen.dart';
+import '../../features/assets/presentation/project_summary_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/repair_summary_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
@@ -84,6 +85,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'repair-summary',
                   builder: (context, state) => const RepairSummaryScreen(),
+                ),
+                GoRoute(
+                  path: 'project-summary',
+                  builder: (context, state) => const ProjectSummaryScreen(),
                 ),
               ],
             ),
