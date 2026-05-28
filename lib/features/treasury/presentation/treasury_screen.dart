@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/routing/route_names.dart';
 import '../application/treasury_controller.dart';
 import '../data/treasury_folder_service.dart';
 
@@ -87,6 +89,8 @@ class _TreasuryHomeScreen extends StatelessWidget {
               dateLabel: dateLabel,
               onReload: onReload,
             ),
+            const SizedBox(height: 18),
+            const _TreasuryEntryHubCard(),
             const SizedBox(height: 18),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -366,6 +370,150 @@ class _TreasuryHeroCard extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _TreasuryWizardEntry {
+  const _TreasuryWizardEntry({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.flow,
+    required this.accent,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String flow;
+  final Color accent;
+}
+
+class _TreasuryEntryHubCard extends StatelessWidget {
+  const _TreasuryEntryHubCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final entries = [
+      _TreasuryWizardEntry(
+        title: 'Weekly Ritual',
+        subtitle: 'Safe / Watch / Pause / Decision review',
+        icon: Icons.auto_awesome_outlined,
+        flow: 'weekly',
+        accent: AppColours.darkSuccess,
+      ),
+      _TreasuryWizardEntry(
+        title: 'Receipts',
+        subtitle: 'Add a receipt or invoice in a calm flow',
+        icon: Icons.receipt_long_outlined,
+        flow: 'receipts',
+        accent: AppColours.darkAmber,
+      ),
+      _TreasuryWizardEntry(
+        title: 'Decisions',
+        subtitle: 'Capture one choice that needs attention',
+        icon: Icons.gavel_outlined,
+        flow: 'decisions',
+        accent: AppColours.darkSecondary,
+      ),
+      _TreasuryWizardEntry(
+        title: 'Project Spend',
+        subtitle: 'Log project money in a guided step flow',
+        icon: Icons.work_outline,
+        flow: 'project_spend',
+        accent: AppColours.darkPurple,
+      ),
+      _TreasuryWizardEntry(
+        title: 'Subscriptions',
+        subtitle: 'Review recurring costs one by one',
+        icon: Icons.subscriptions_outlined,
+        flow: 'subscriptions',
+        accent: AppColours.darkAccent,
+      ),
+    ];
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(icon: Icons.route_outlined, title: 'Start here'),
+          const SizedBox(height: 10),
+          Text(
+            'Choose one guided flow. Hayley can stay in the front end the whole time.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth >= 1080
+                  ? 5
+                  : constraints.maxWidth >= 760
+                  ? 2
+                  : 1;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: entries.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: crossAxisCount == 1 ? 2.8 : 1.55,
+                ),
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () =>
+                        context.push(RouteNames.treasuryWizardFor(entry.flow)),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: entry.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: entry.accent.withValues(alpha: 0.24),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(entry.icon, color: entry.accent),
+                          const SizedBox(height: 10),
+                          Text(
+                            entry.title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: AppColours.darkText,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            entry.subtitle,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColours.darkMutedText,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }

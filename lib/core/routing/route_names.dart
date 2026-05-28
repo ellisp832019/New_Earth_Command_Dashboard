@@ -6,6 +6,7 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const treasury = '/dashboard/treasury';
+  static const treasuryWizard = '/dashboard/treasury/wizard';
   static const more = '/more';
   static const journal = '/journal';
   static const newJournal = '/journal/new';
@@ -74,6 +75,13 @@ abstract final class RouteNames {
     return Uri(
       path: newBusiness,
       queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String treasuryWizardFor(String flow) {
+    return Uri(
+      path: treasuryWizard,
+      queryParameters: {'flow': flow},
     ).toString();
   }
 }
