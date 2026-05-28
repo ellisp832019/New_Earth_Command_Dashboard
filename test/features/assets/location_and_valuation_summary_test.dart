@@ -116,7 +116,7 @@ void main() {
                 'replacement_value': '140',
                 'current_estimated_value': '130',
                 'valuation_reason': 'Prototype unit',
-                'evidence_link': '',
+                'evidence_link': 'receipt-001',
                 'notes': '',
               },
               {
@@ -180,6 +180,8 @@ void main() {
 
     expect(find.text('Valuation Summary'), findsOneWidget);
     expect(find.text('Purchase cost'), findsOneWidget);
+    expect(find.text('Evidence check'), findsOneWidget);
+    expect(find.text('1 linked'), findsOneWidget);
     expect(find.text('Asset value by project'), findsOneWidget);
     expect(find.text('Field scanner'), findsOneWidget);
   });
@@ -271,7 +273,7 @@ _ValuationFixture _valuationFixture() {
       'replacement_value': '140',
       'current_estimated_value': '130',
       'valuation_reason': 'Prototype unit',
-      'evidence_link': '',
+      'evidence_link': 'receipt-001',
       'notes': '',
     },
     {

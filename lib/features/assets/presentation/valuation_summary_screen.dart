@@ -85,6 +85,11 @@ class ValuationSummaryScreen extends ConsumerWidget {
                                           overviewData.brokenLostValueTotal,
                                     ),
                                     const SizedBox(height: 20),
+                                    _ValuationEvidenceCard(
+                                      valuationRows: valuationTable.rows,
+                                      equipmentRows: equipmentTable.rows,
+                                    ),
+                                    const SizedBox(height: 20),
                                     _ProjectValuationCard(
                                       projectTotals: overviewData.projectTotals,
                                       moneyFormatter: moneyFormatter,
@@ -271,6 +276,58 @@ class _ValuationSummaryRow extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ValuationEvidenceCard extends StatelessWidget {
+  const _ValuationEvidenceCard({
+    required this.valuationRows,
+    required this.equipmentRows,
+  });
+
+  final List<Map<String, String>> valuationRows;
+  final List<Map<String, String>> equipmentRows;
+
+  @override
+  Widget build(BuildContext context) {
+    final evidenceLinkedCount = _countNonEmptyValues(valuationRows, 'evidence_link');
+    final linkedAssetCount = _countNonEmptyValues(valuationRows, 'asset_id');
+    final missingEvidenceCount = valuationRows.length - evidenceLinkedCount;
+    final brokenLinkedCount = _countBrokenLinkedEntries(valuationRows, equipmentRows);
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PanelTitle(
+            title: 'Evidence check',
+            icon: Icons.verified_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Valuation rows stay easier to trust when each one has a linked asset and an evidence trail.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _InfoChip(label: '$evidenceLinkedCount linked'),
+              _InfoChip(label: '$missingEvidenceCount missing'),
+              _InfoChip(label: '$linkedAssetCount tied to an asset'),
+              _InfoChip(label: '$brokenLinkedCount broken linked'),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -523,6 +580,44 @@ class _ValuationEntryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+int _countNonEmptyValues(
+  List<Map<String, String>> rows,
+  String key,
+) {
+  var count = 0;
+  for (final row in rows) {
+    if ((row[key] ?? '').trim().isNotEmpty) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+int _countBrokenLinkedEntries(
+  List<Map<String, String>> valuationRows,
+  List<Map<String, String>> equipmentRows,
+) {
+  final equipmentById = <String, Map<String, String>>{};
+  for (final row in equipmentRows) {
+    final assetId = (row['asset_id'] ?? '').trim();
+    if (assetId.isNotEmpty) {
+      equipmentById[assetId] = row;
+    }
+  }
+
+  var count = 0;
+  for (final row in valuationRows) {
+    final assetId = (row['asset_id'] ?? '').trim();
+    final equipment = equipmentById[assetId];
+    final isBroken = (equipment?['status'] ?? '').trim().toLowerCase() == 'broken' ||
+        (equipment?['condition'] ?? '').trim().toLowerCase() == 'broken';
+    if (assetId.isNotEmpty && isBroken) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 class _ValuationFooter extends StatelessWidget {
