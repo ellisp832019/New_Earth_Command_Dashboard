@@ -122,6 +122,19 @@ class _AssetsContent extends StatelessWidget {
                       onReload: onReload,
                     ),
                     const SizedBox(height: 22),
+                    _AssetPriorityCard(
+                      snapshot: snapshot,
+                      onOpenEquipment: () =>
+                          context.push(RouteNames.assetEquipment),
+                      onOpenParts: () => context.push(RouteNames.assetParts),
+                      onOpenLowStock: () =>
+                          context.push(RouteNames.assetLowStock),
+                      onOpenRepairSummary: () =>
+                          context.push(RouteNames.assetRepairSummary),
+                      onOpenQrLabels: () =>
+                          context.push(RouteNames.assetQrLabelRegister),
+                    ),
+                    const SizedBox(height: 22),
                     _AssetSummaryGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _AssetTreasuryLinksCard(),
@@ -425,6 +438,154 @@ class _AssetSummaryGrid extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _AssetPriorityCard extends StatelessWidget {
+  const _AssetPriorityCard({
+    required this.snapshot,
+    required this.onOpenEquipment,
+    required this.onOpenParts,
+    required this.onOpenLowStock,
+    required this.onOpenRepairSummary,
+    required this.onOpenQrLabels,
+  });
+
+  final AssetWorkspaceSnapshot snapshot;
+  final VoidCallback onOpenEquipment;
+  final VoidCallback onOpenParts;
+  final VoidCallback onOpenLowStock;
+  final VoidCallback onOpenRepairSummary;
+  final VoidCallback onOpenQrLabels;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lowStockCount = _summaryCount(AssetSummaryKind.lowStock);
+    final brokenCount = _summaryCount(AssetSummaryKind.brokenRepair);
+    final needsDecisionCount = _summaryCount(AssetSummaryKind.needsDecision);
+    final wishlistCount = _summaryCount(AssetSummaryKind.wishlist);
+
+    final hasSetupWork = !snapshot.isReady;
+    final headline = hasSetupWork
+        ? 'Finish setup first'
+        : lowStockCount > 0
+            ? 'Low stock needs attention'
+            : brokenCount > 0
+                ? 'Broken / repair items need review'
+                : needsDecisionCount > 0
+                    ? 'A few items need a clear decision'
+                    : wishlistCount > 0
+                        ? 'Wishlist items are parked for later'
+                        : 'The asset workflow is steady';
+    final supportingCopy = hasSetupWork
+        ? 'Create the starter structure first, then move into the registers.'
+        : lowStockCount > 0
+            ? '$lowStockCount part${lowStockCount == 1 ? '' : 's'} are at or below threshold. That is the clearest next action.'
+            : brokenCount > 0
+                ? '$brokenCount equipment item${brokenCount == 1 ? '' : 's'} need a repair or replacement check.'
+                : needsDecisionCount > 0
+                    ? '$needsDecisionCount item${needsDecisionCount == 1 ? '' : 's'} are waiting for a decision.'
+                    : 'Use the registers below to keep the workflow moving without clutter.';
+
+    final primaryLabel = hasSetupWork
+        ? 'Create starter files'
+        : lowStockCount > 0
+            ? 'Open Low Stock / Reorder'
+            : brokenCount > 0
+                ? 'Open Broken / Repair'
+                : 'Open Equipment Register';
+    final primaryAction = hasSetupWork
+        ? onOpenEquipment
+        : lowStockCount > 0
+            ? onOpenLowStock
+            : brokenCount > 0
+                ? onOpenRepairSummary
+                : onOpenEquipment;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 980;
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelTitle(
+                title: 'Priority focus',
+                icon: Icons.priority_high_outlined,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                headline,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                supportingCopy,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: wide ? WrapAlignment.end : WrapAlignment.start,
+            children: [
+              FilledButton.icon(
+                onPressed: primaryAction,
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(primaryLabel),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenParts,
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Open Parts'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrLabels,
+                icon: const Icon(Icons.qr_code_2_outlined),
+                label: const Text('Open QR Labels'),
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [copy, const SizedBox(height: 16), actions],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 20),
+              SizedBox(width: 420, child: actions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  int _summaryCount(AssetSummaryKind kind) {
+    for (final card in snapshot.summaryCards) {
+      if (card.kind == kind) {
+        return card.count;
+      }
+    }
+    return 0;
   }
 }
 
