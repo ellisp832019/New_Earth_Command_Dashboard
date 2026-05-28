@@ -33,6 +33,7 @@ class TreasuryScreen extends ConsumerWidget {
           issues: <String>['Treasury could not be loaded right now.'],
           requiredFolders: TreasuryFolderService.requiredFolders,
           missingFolders: <String>[],
+          missingFiles: <String>[],
           stateSummaries: <TreasuryStateSummary>[],
           receiptsToSortCount: 0,
           weeklyRitualSteps: TreasuryFolderService.weeklyRitualSteps,
@@ -41,6 +42,12 @@ class TreasuryScreen extends ConsumerWidget {
               'The Treasury area is waiting for the external Omega OS folder.',
         ),
         onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+        onCreateMissingTemplates: () async {
+          await ref
+              .read(treasuryFolderServiceProvider)
+              .createMissingRequiredFiles();
+          ref.invalidate(treasuryWorkspaceProvider);
+        },
       ),
       data: (data) {
         if (!data.isReady) {
@@ -50,6 +57,12 @@ class TreasuryScreen extends ConsumerWidget {
                 'Hayley can use Treasury once the external Omega OS finance folder is linked and healthy.',
             snapshot: data,
             onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+            onCreateMissingTemplates: () async {
+              await ref
+                  .read(treasuryFolderServiceProvider)
+                  .createMissingRequiredFiles();
+              ref.invalidate(treasuryWorkspaceProvider);
+            },
           );
         }
 
@@ -192,12 +205,14 @@ class _TreasurySetupScreen extends StatelessWidget {
     required this.body,
     required this.snapshot,
     required this.onReload,
+    required this.onCreateMissingTemplates,
   });
 
   final String title;
   final String body;
   final TreasuryWorkspaceSnapshot snapshot;
   final VoidCallback onReload;
+  final Future<void> Function() onCreateMissingTemplates;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +230,14 @@ class _TreasurySetupScreen extends StatelessWidget {
             const SizedBox(height: 14),
             _SetupPathCard(snapshot: snapshot),
             const SizedBox(height: 14),
-            _SetupStepsCard(theme: theme),
+            _SetupFilesCard(snapshot: snapshot),
+            const SizedBox(height: 14),
+            _SetupStepsCard(
+              theme: theme,
+              snapshot: snapshot,
+              onReload: onReload,
+              onCreateMissingTemplates: onCreateMissingTemplates,
+            ),
           ],
         ),
       ),
@@ -1107,10 +1129,76 @@ class _SetupPathCard extends StatelessWidget {
   }
 }
 
+class _SetupFilesCard extends StatelessWidget {
+  const _SetupFilesCard({required this.snapshot});
+
+  final TreasuryWorkspaceSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            icon: Icons.description_outlined,
+            title: 'Missing files',
+          ),
+          const SizedBox(height: 12),
+          if (snapshot.missingFiles.isEmpty)
+            Text(
+              'All required Treasury files are present.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkText,
+                height: 1.4,
+              ),
+            )
+          else
+            ...snapshot.missingFiles.map(
+              (file) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.radio_button_unchecked,
+                      size: 18,
+                      color: AppColours.darkAmber,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        file,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkText,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SetupStepsCard extends StatelessWidget {
-  const _SetupStepsCard({required this.theme});
+  const _SetupStepsCard({
+    required this.theme,
+    required this.snapshot,
+    required this.onReload,
+    required this.onCreateMissingTemplates,
+  });
 
   final ThemeData theme;
+  final TreasuryWorkspaceSnapshot snapshot;
+  final VoidCallback onReload;
+  final Future<void> Function() onCreateMissingTemplates;
 
   @override
   Widget build(BuildContext context) {
@@ -1129,6 +1217,7 @@ class _SetupStepsCard extends StatelessWidget {
             'Make sure `config/local_paths.json` exists in the dashboard repo.',
             'Set `finance_treasury_path` to the external Omega OS folder.',
             'Confirm the required finance folders exist in that external pack.',
+            'Create any missing starter files from templates if Treasury asks for them.',
             'Return here and reload Treasury.',
           ].map(
             (step) => Padding(
@@ -1154,6 +1243,27 @@ class _SetupStepsCard extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: snapshot.missingFiles.isEmpty
+                    ? null
+                    : () async {
+                        await onCreateMissingTemplates();
+                      },
+                icon: const Icon(Icons.auto_awesome_outlined),
+                label: const Text('Create missing templates'),
+              ),
+              TextButton.icon(
+                onPressed: onReload,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload Treasury'),
+              ),
+            ],
           ),
         ],
       ),

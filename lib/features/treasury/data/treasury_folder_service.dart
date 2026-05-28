@@ -29,6 +29,7 @@ class TreasuryWorkspaceSnapshot {
     required this.issues,
     required this.requiredFolders,
     required this.missingFolders,
+    required this.missingFiles,
     required this.stateSummaries,
     required this.receiptsToSortCount,
     required this.weeklyRitualSteps,
@@ -42,6 +43,7 @@ class TreasuryWorkspaceSnapshot {
   final List<String> issues;
   final List<String> requiredFolders;
   final List<String> missingFolders;
+  final List<String> missingFiles;
   final List<TreasuryStateSummary> stateSummaries;
   final int receiptsToSortCount;
   final List<String> weeklyRitualSteps;
@@ -64,6 +66,15 @@ class TreasuryFolderService {
     '06_SUBSCRIPTIONS_AND_RECURRING_COSTS',
     '10_FINANCE_MEETING_NOTES',
     '15_TEMPLATES',
+  ];
+
+  static const requiredFiles = <String>[
+    '00_FINANCE_DASHBOARD/dashboard_state.json',
+    '00_FINANCE_DASHBOARD/weekly_status.json',
+    '04_PROJECT_SPEND_TRACKERS/project_spend_tracker.csv',
+    '05_RECEIPTS_AND_INVOICES/receipt_index.csv',
+    '06_SUBSCRIPTIONS_AND_RECURRING_COSTS/subscription_tracker.csv',
+    '10_FINANCE_MEETING_NOTES/decisions_register.csv',
   ];
 
   static const weeklyRitualSteps = <String>[
@@ -137,6 +148,16 @@ class TreasuryFolderService {
       }
     }
 
+    final missingFiles = <String>[];
+    if (financeRoot != null && await financeRoot.exists()) {
+      for (final relativeFile in requiredFiles) {
+        final candidate = File(path.join(financeRoot.path, relativeFile));
+        if (!await candidate.exists()) {
+          missingFiles.add(relativeFile);
+        }
+      }
+    }
+
     final stateMap = await _readStateMap(financeRoot);
     final receiptsToSortCount = await _countReceiptsToSort(financeRoot);
 
@@ -189,16 +210,58 @@ class TreasuryFolderService {
       configPath: configFile.path,
       financeRootPath: financeRootPath,
       isReady:
-          issues.isEmpty && financeRootPath != null && missingFolders.isEmpty,
+          issues.isEmpty &&
+          financeRootPath != null &&
+          missingFolders.isEmpty &&
+          missingFiles.isEmpty,
       issues: issues,
       requiredFolders: requiredFolders,
       missingFolders: missingFolders,
+      missingFiles: missingFiles,
       stateSummaries: stateSummaries,
       receiptsToSortCount: receiptsToSortCount,
       weeklyRitualSteps: weeklyRitualSteps,
       lowEnergySteps: lowEnergySteps,
       guidanceNote: guidanceNote,
     );
+  }
+
+  Future<List<String>> createMissingRequiredFiles() async {
+    final snapshot = await loadWorkspace();
+    final financeRootPath = snapshot.financeRootPath;
+    if (financeRootPath == null) {
+      return <String>[];
+    }
+
+    final financeRoot = Directory(financeRootPath);
+    if (!await financeRoot.exists()) {
+      return <String>[];
+    }
+
+    final createdFiles = <String>[];
+    for (final relativeFile in requiredFiles) {
+      final candidate = File(path.join(financeRoot.path, relativeFile));
+      if (await candidate.exists()) {
+        continue;
+      }
+
+      await candidate.parent.create(recursive: true);
+      await candidate.writeAsString(_templateForRequiredFile(relativeFile));
+      createdFiles.add(relativeFile);
+    }
+
+    return createdFiles;
+  }
+
+  Future<void> writeTextFileWithBackup(File file, String contents) async {
+    if (await file.exists()) {
+      final backupFile = File('${file.path}.bak');
+      await file.copy(backupFile.path);
+    } else {
+      await file.parent.create(recursive: true);
+    }
+
+    await file.writeAsString(contents);
   }
 
   TreasuryStateSummary _buildSummary({
@@ -326,5 +389,39 @@ class TreasuryFolderService {
     return lines.where((line) => line.trim().isNotEmpty).length > 1
         ? lines.length - 1
         : 0;
+  }
+
+  String _templateForRequiredFile(String relativePath) {
+    switch (relativePath) {
+      case '00_FINANCE_DASHBOARD/dashboard_state.json':
+        return const JsonEncoder.withIndent('  ').convert({
+          'updated_at': null,
+          'safe': <String>[],
+          'watch': <String>[],
+          'pause': <String>[],
+          'decision': <String>[],
+          'future': <String>[],
+          'archived': <String>[],
+        });
+      case '00_FINANCE_DASHBOARD/weekly_status.json':
+        return const JsonEncoder.withIndent('  ').convert({
+          'review_date': null,
+          'balance_checked': false,
+          'receipts_sorted': false,
+          'subscriptions_reviewed': false,
+          'project_spend_reviewed': false,
+          'notes': '',
+        });
+      case '04_PROJECT_SPEND_TRACKERS/project_spend_tracker.csv':
+        return 'date,project,item,supplier,amount,category,receipt_saved,status,notes\n';
+      case '05_RECEIPTS_AND_INVOICES/receipt_index.csv':
+        return 'date,item,supplier,amount,type,project,file_location,status,notes\n';
+      case '06_SUBSCRIPTIONS_AND_RECURRING_COSTS/subscription_tracker.csv':
+        return 'service,purpose,cost,renewal_date,payment_source,status,keep_cancel_review,notes\n';
+      case '10_FINANCE_MEETING_NOTES/decisions_register.csv':
+        return 'date,decision_needed,amount,status,decision,owner,notes\n';
+      default:
+        return '';
+    }
   }
 }
