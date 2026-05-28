@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
+import '../application/treasury_monthly_summary_controller.dart';
 import '../../../core/widgets/folder_bootstrap_wizard.dart';
 import '../application/treasury_controller.dart';
 import '../application/treasury_wizard_draft_controller.dart';
@@ -118,6 +119,8 @@ class _TreasuryHomeScreen extends StatelessWidget {
             const _WeeklyDraftStateCard(),
             const SizedBox(height: 18),
             const _TreasuryEntryHubCard(),
+            const SizedBox(height: 18),
+            const _MonthlySummaryPreviewCard(),
             const SizedBox(height: 18),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -570,6 +573,187 @@ class _TreasuryEntryHubCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MonthlySummaryPreviewCard extends ConsumerWidget {
+  const _MonthlySummaryPreviewCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(treasuryMonthlySummaryProvider);
+    final theme = Theme.of(context);
+
+    return summaryAsync.when(
+      loading: () => Container(
+        decoration: _cardDecoration(),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            const CircularProgressIndicator(strokeWidth: 2.5),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                'Preparing the monthly picture...',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        decoration: _cardDecoration(),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.info_outline, color: AppColours.darkAmber),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'The monthly summary will appear once Treasury can read the external finance folder again.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (summary) {
+        final currency = NumberFormat.currency(symbol: '£', decimalDigits: 2);
+        final topProject = summary.topProjectSpends.isEmpty
+            ? 'No project spend yet'
+            : summary.topProjectSpends.first.project;
+
+        return Container(
+          decoration: _cardDecoration(highlighted: true),
+          padding: const EdgeInsets.all(18),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useWideLayout = constraints.maxWidth >= 900;
+
+              final left = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionTitle(
+                    icon: Icons.assessment_outlined,
+                    title: 'Monthly picture',
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'A calm monthly read of the bigger finance picture without opening the detailed screen.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    summary.workspace.isReady
+                        ? 'Treasury is ready and the monthly summary is being read from the live finance pack.'
+                        : 'Treasury can still show the monthly shape, but the setup state needs attention.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _StatusPill(
+                        label:
+                            'Spend ${currency.format(summary.projectSpendTotal)}',
+                        accent: AppColours.darkPurple,
+                      ),
+                      _StatusPill(
+                        label:
+                            'Recurring ${currency.format(summary.subscriptionTotal)}',
+                        accent: AppColours.darkAccent,
+                      ),
+                      _StatusPill(
+                        label: 'Top project $topProject',
+                        accent: AppColours.darkSecondary,
+                      ),
+                    ],
+                  ),
+                ],
+              );
+
+              final right = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _HeroMetricCard(
+                    label: 'Safe / Watch / Pause / Decision',
+                    value:
+                        '${summary.workspace.stateSummaries.firstWhere((summary) => summary.kind == TreasuryStatusKind.safe).count} / '
+                        '${summary.workspace.stateSummaries.firstWhere((summary) => summary.kind == TreasuryStatusKind.watch).count} / '
+                        '${summary.workspace.stateSummaries.firstWhere((summary) => summary.kind == TreasuryStatusKind.pause).count} / '
+                        '${summary.workspace.stateSummaries.firstWhere((summary) => summary.kind == TreasuryStatusKind.decision).count}',
+                    note: 'The current calm status balance across Treasury.',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  const SizedBox(height: 12),
+                  _HeroMetricCard(
+                    label: 'Latest weekly rhythm',
+                    value: summary.weeklyReviewDate ?? 'No weekly review yet',
+                    note: summary.weeklyReviewNote?.isNotEmpty == true
+                        ? summary.weeklyReviewNote!
+                        : 'The weekly note will show once the ritual has been saved.',
+                    accent: AppColours.darkSecondary,
+                  ),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () =>
+                              context.push(RouteNames.treasuryMonthlySummary),
+                          icon: const Icon(Icons.open_in_new),
+                          label: const Text('Open Monthly Summary'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              ref.invalidate(treasuryMonthlySummaryProvider),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reload'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              if (!useWideLayout) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [left, const SizedBox(height: 18), right],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: left),
+                  const SizedBox(width: 20),
+                  SizedBox(width: 420, child: right),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
