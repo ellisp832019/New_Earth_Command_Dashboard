@@ -43,6 +43,32 @@ final assetPartsRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
   return repository.readPartsInventory(workspace.assetsRootPath!);
 });
 
+final assetOrdersTrackerProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: AssetRegisterRepository.ordersHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.readOrdersTracker(workspace.assetsRootPath!);
+});
+
+final assetMaintenanceLogProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: AssetRegisterRepository.maintenanceHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.readMaintenanceLog(workspace.assetsRootPath!);
+});
+
 final assetLowStockPartsProvider =
     FutureProvider<List<Map<String, String>>>((ref) async {
   final table = await ref.watch(assetPartsRegisterProvider.future);

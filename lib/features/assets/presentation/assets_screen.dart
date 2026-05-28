@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
+import '../application/asset_treasury_links_controller.dart';
 import '../data/assets_folder_service.dart';
 
 class AssetsScreen extends ConsumerStatefulWidget {
@@ -121,6 +123,8 @@ class _AssetsContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 22),
                     _AssetSummaryGrid(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    const _AssetTreasuryLinksCard(),
                     const SizedBox(height: 22),
                     _AssetRegisterLaunchCard(
                       onOpenEquipment: () =>
@@ -672,6 +676,189 @@ class _AssetFooter extends StatelessWidget {
                 color: AppColours.darkMutedText,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AssetTreasuryLinksCard extends ConsumerWidget {
+  const _AssetTreasuryLinksCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(assetTreasuryLinkSummaryProvider);
+
+    return summaryAsync.when(
+      loading: () => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading Treasury links...'),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: Text(
+          'Treasury links could not load right now.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+        ),
+      ),
+      data: (summary) {
+        final moneyFormatter = NumberFormat.currency(
+          symbol: '£',
+          decimalDigits: 2,
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: _panelDecoration(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelTitle(
+                title: 'Treasury links',
+                icon: Icons.link_outlined,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'These cards stay summary-only. Treasury holds the money decisions, while Assets keeps the item records and link IDs tidy.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.4,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 840;
+                  final cards = [
+                    _TreasuryLinkMetricCard(
+                      label: 'Receipts missing',
+                      value: summary.receiptsMissingCount.toString(),
+                      note: 'Items waiting for a receipt link.',
+                      accent: AppColours.darkAmber,
+                    ),
+                    _TreasuryLinkMetricCard(
+                      label: 'Purchase cost',
+                      value: moneyFormatter.format(summary.purchaseCostTotal),
+                      note: 'Equipment spend already tracked in Assets.',
+                      accent: AppColours.darkSecondary,
+                    ),
+                    _TreasuryLinkMetricCard(
+                      label: 'Reorder estimate',
+                      value: moneyFormatter.format(summary.reorderEstimatedSpend),
+                      note: 'Low stock items that may need a calm reorder.',
+                      accent: AppColours.darkSuccess,
+                    ),
+                    _TreasuryLinkMetricCard(
+                      label: 'Linked finance IDs',
+                      value: summary.linkedFinanceIdCount.toString(),
+                      note: 'Order and maintenance records with finance links.',
+                      accent: AppColours.darkPurple,
+                    ),
+                  ];
+
+                  if (wide) {
+                    return Row(
+                      children: [
+                        Expanded(child: cards[0]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[1]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[2]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[3]),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      for (var i = 0; i < cards.length; i++) ...[
+                        cards[i],
+                        if (i != cards.length - 1) const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Broken equipment value at risk: ${moneyFormatter.format(summary.repairReplacementValueTotal)} across ${summary.brokenEquipmentCount} item${summary.brokenEquipmentCount == 1 ? '' : 's'}.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.4,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TreasuryLinkMetricCard extends StatelessWidget {
+  const _TreasuryLinkMetricCard({
+    required this.label,
+    required this.value,
+    required this.note,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final String note;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            note,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
           ),
         ],
       ),

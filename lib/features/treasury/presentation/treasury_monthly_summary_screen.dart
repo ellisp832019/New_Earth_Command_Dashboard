@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
+import '../../assets/application/asset_treasury_links_controller.dart';
 import '../application/treasury_monthly_summary_controller.dart';
 import '../data/treasury_folder_service.dart';
 
@@ -71,6 +72,8 @@ class TreasuryMonthlySummaryScreen extends ConsumerWidget {
                 _MonthlyOverviewGrid(summary: summary),
                 const SizedBox(height: 16),
                 _ProjectSpendSummaryCard(summary: summary),
+                const SizedBox(height: 16),
+                const _AssetLinkSummaryCard(),
                 const SizedBox(height: 16),
                 _SubscriptionSummaryCard(summary: summary),
                 const SizedBox(height: 16),
@@ -404,6 +407,116 @@ class _ProjectSpendSummaryCard extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _AssetLinkSummaryCard extends ConsumerWidget {
+  const _AssetLinkSummaryCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(assetTreasuryLinkSummaryProvider);
+
+    return summaryAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (error, stackTrace) => _SectionCard(
+        title: 'Asset links',
+        icon: Icons.link_outlined,
+        child: Text(
+          'Asset links could not load right now.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
+        ),
+      ),
+      data: (summary) {
+        final moneyFormatter = NumberFormat.currency(
+          symbol: '£',
+          decimalDigits: 2,
+        );
+
+        return _SectionCard(
+          title: 'Asset links',
+          icon: Icons.link_outlined,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Treasury only sees the link summary here. The item records stay in Assets, and the finance IDs keep the handoff tidy.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.4,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 860;
+                  final cards = [
+                    _SummaryMetricCard(
+                      title: 'Receipts missing',
+                      value: summary.receiptsMissingCount.toString(),
+                      note: 'Items that still need a receipt link.',
+                      accent: AppColours.darkAmber,
+                    ),
+                    _SummaryMetricCard(
+                      title: 'Purchase cost',
+                      value: moneyFormatter.format(summary.purchaseCostTotal),
+                      note: 'Equipment spend recorded in Assets.',
+                      accent: AppColours.darkSecondary,
+                    ),
+                    _SummaryMetricCard(
+                      title: 'Reorder estimate',
+                      value: moneyFormatter.format(summary.reorderEstimatedSpend),
+                      note: 'Low stock items that may need spending.',
+                      accent: AppColours.darkSuccess,
+                    ),
+                    _SummaryMetricCard(
+                      title: 'Linked finance IDs',
+                      value: summary.linkedFinanceIdCount.toString(),
+                      note: 'Order and maintenance records with IDs.',
+                      accent: AppColours.darkPurple,
+                    ),
+                  ];
+
+                  if (wide) {
+                    return Row(
+                      children: [
+                        Expanded(child: cards[0]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[1]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[2]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[3]),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      for (var index = 0; index < cards.length; index++) ...[
+                        cards[index],
+                        if (index != cards.length - 1) const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Broken equipment value at risk: ${moneyFormatter.format(summary.repairReplacementValueTotal)} across ${summary.brokenEquipmentCount} item${summary.brokenEquipmentCount == 1 ? '' : 's'}.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
