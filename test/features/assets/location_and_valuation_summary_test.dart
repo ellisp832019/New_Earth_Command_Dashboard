@@ -57,6 +57,7 @@ void main() {
     expect(find.text('Location Register'), findsOneWidget);
     expect(find.text('Office Shelf A'), findsOneWidget);
     expect(find.text('NE-EQ-0001'), findsOneWidget);
+    expect(find.text('Photo links'), findsOneWidget);
   });
 
   test('valuation overview groups totals by project', () async {

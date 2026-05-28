@@ -37,6 +37,8 @@ class _LocationRegisterScreenState extends ConsumerState<LocationRegisterScreen>
           ),
           data: (table) {
             final uniqueAssets = _distinctValues(table.rows, 'asset_id');
+            final uniqueLocations = _distinctValues(table.rows, 'location_name');
+            final photoLinkedCount = _countWithValue(table.rows, 'photo_link');
 
             return Scaffold(
               backgroundColor: Colors.transparent,
@@ -71,6 +73,8 @@ class _LocationRegisterScreenState extends ConsumerState<LocationRegisterScreen>
                             _LocationSummaryRow(
                               locationCount: table.rows.length,
                               uniqueAssets: uniqueAssets.length,
+                              uniqueLocations: uniqueLocations.length,
+                              photoLinkedCount: photoLinkedCount,
                             ),
                             const SizedBox(height: 20),
                             if (table.rows.isEmpty)
@@ -220,10 +224,14 @@ class _LocationSummaryRow extends StatelessWidget {
   const _LocationSummaryRow({
     required this.locationCount,
     required this.uniqueAssets,
+    required this.uniqueLocations,
+    required this.photoLinkedCount,
   });
 
   final int locationCount;
   final int uniqueAssets;
+  final int uniqueLocations;
+  final int photoLinkedCount;
 
   @override
   Widget build(BuildContext context) {
@@ -241,6 +249,16 @@ class _LocationSummaryRow extends StatelessWidget {
             value: uniqueAssets,
             accent: AppColours.darkSuccess,
           ),
+          _MetricCard(
+            label: 'Named locations',
+            value: uniqueLocations,
+            accent: AppColours.darkAmber,
+          ),
+          _MetricCard(
+            label: 'Photo links',
+            value: photoLinkedCount,
+            accent: AppColours.darkPurple,
+          ),
         ];
 
         if (wide) {
@@ -249,15 +267,20 @@ class _LocationSummaryRow extends StatelessWidget {
               Expanded(child: cards[0]),
               const SizedBox(width: 12),
               Expanded(child: cards[1]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[2]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[3]),
             ],
           );
         }
 
         return Column(
           children: [
-            cards[0],
-            const SizedBox(height: 12),
-            cards[1],
+            for (var index = 0; index < cards.length; index++) ...[
+              cards[index],
+              if (index != cards.length - 1) const SizedBox(height: 12),
+            ],
           ],
         );
       },
@@ -662,4 +685,8 @@ List<String> _distinctValues(List<Map<String, String>> rows, String key) {
     }
   }
   return values.toList(growable: false);
+}
+
+int _countWithValue(List<Map<String, String>> rows, String key) {
+  return rows.where((row) => (row[key] ?? '').trim().isNotEmpty).length;
 }
