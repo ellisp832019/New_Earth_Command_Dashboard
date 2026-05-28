@@ -285,6 +285,11 @@ class _BudgetPotsQuickNavCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               FilledButton.tonalIcon(
+                onPressed: () => context.go(RouteNames.treasury),
+                icon: const Icon(Icons.home_outlined),
+                label: const Text('Treasury Home'),
+              ),
+              FilledButton.tonalIcon(
                 onPressed: () =>
                     context.push(RouteNames.treasuryMonthlySummary),
                 icon: const Icon(Icons.assessment_outlined),
