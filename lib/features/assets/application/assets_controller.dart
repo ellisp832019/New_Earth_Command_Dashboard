@@ -149,6 +149,51 @@ final assetChangeJournalEntriesProvider =
       .toList(growable: false);
 });
 
+final assetChangeConflictsProvider =
+    FutureProvider<List<AssetChangeConflict>>((ref) async {
+  final entries = await ref.watch(assetChangeJournalEntriesProvider.future);
+  final grouped = <String, List<AssetChangeJournalEntry>>{};
+
+  for (final entry in entries) {
+    final key = '${entry.recordType.trim().toLowerCase()}::${entry.recordId.trim()}';
+    grouped.putIfAbsent(key, () => <AssetChangeJournalEntry>[]).add(entry);
+  }
+
+  final conflicts = <AssetChangeConflict>[];
+  for (final group in grouped.values) {
+    if (group.length < 2) {
+      continue;
+    }
+
+    final machineIds = <String>{};
+    for (final entry in group) {
+      final machineId = entry.machineId.trim();
+      if (machineId.isNotEmpty) {
+        machineIds.add(machineId);
+      }
+    }
+
+    if (machineIds.length < 2) {
+      continue;
+    }
+
+    group.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final latest = group.last;
+    conflicts.add(
+      AssetChangeConflict(
+        recordId: latest.recordId,
+        recordType: latest.recordType,
+        entryCount: group.length,
+        machineIds: machineIds.toList(growable: false)..sort(),
+        lastChangeAt: latest.timestamp,
+      ),
+    );
+  }
+
+  conflicts.sort((a, b) => b.lastChangeAt.compareTo(a.lastChangeAt));
+  return conflicts;
+});
+
 final assetSyncStatusProvider = FutureProvider<AssetSyncStatus>((ref) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
@@ -163,12 +208,13 @@ final assetSyncStatusProvider = FutureProvider<AssetSyncStatus>((ref) async {
   }
 
   final entries = await ref.watch(assetChangeJournalEntriesProvider.future);
+  final conflicts = await ref.watch(assetChangeConflictsProvider.future);
   final lastEntry = entries.isNotEmpty ? entries.last : null;
 
   return AssetSyncStatus(
     isConnected: true,
     entryCount: entries.length,
-    conflictCount: 0,
+    conflictCount: conflicts.length,
     lastChangeAt: lastEntry?.timestamp,
     lastWriterLabel: lastEntry?.userLabel.isNotEmpty == true
         ? lastEntry!.userLabel

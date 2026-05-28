@@ -123,3 +123,27 @@ class AssetChangeJournalEntry {
     return <String, String>{};
   }
 }
+
+class AssetChangeConflict {
+  const AssetChangeConflict({
+    required this.recordId,
+    required this.recordType,
+    required this.entryCount,
+    required this.machineIds,
+    required this.lastChangeAt,
+  });
+
+  final String recordId;
+  final String recordType;
+  final int entryCount;
+  final List<String> machineIds;
+  final DateTime lastChangeAt;
+
+  String get summary {
+    final machineCount = machineIds.length;
+    final machineLabel = machineCount == 1
+        ? '1 machine'
+        : '$machineCount machines';
+    return '$recordType $recordId changed $entryCount times across $machineLabel.';
+  }
+}
