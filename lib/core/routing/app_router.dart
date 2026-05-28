@@ -10,6 +10,7 @@ import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/maintenance_log_screen.dart';
 import '../../features/assets/presentation/repair_summary_screen.dart';
 import '../../features/assets/presentation/quick_capture_screen.dart';
+import '../../features/assets/presentation/reorder_list_screen.dart';
 import '../../features/assets/presentation/supplier_register_screen.dart';
 import '../../features/assets/presentation/qr_label_register_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
@@ -122,6 +123,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'maintenance',
                   builder: (context, state) => const MaintenanceLogScreen(),
+                ),
+                GoRoute(
+                  path: 'reorder-list',
+                  builder: (context, state) => const ReorderListScreen(),
                 ),
               ],
             ),
