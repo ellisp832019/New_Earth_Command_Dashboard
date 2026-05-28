@@ -9,6 +9,7 @@ import '../../features/assets/presentation/project_summary_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/repair_summary_screen.dart';
 import '../../features/assets/presentation/quick_capture_screen.dart';
+import '../../features/assets/presentation/supplier_register_screen.dart';
 import '../../features/assets/presentation/qr_label_register_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
@@ -112,6 +113,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'quick-capture',
                   builder: (context, state) => const QuickCaptureScreen(),
+                ),
+                GoRoute(
+                  path: 'suppliers',
+                  builder: (context, state) => const SupplierRegisterScreen(),
                 ),
               ],
             ),

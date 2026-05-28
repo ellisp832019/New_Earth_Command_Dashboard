@@ -152,6 +152,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetProjectSummary),
                       onOpenLocationRegister: () =>
                           context.push(RouteNames.assetLocationRegister),
+                      onOpenSupplierRegister: () =>
+                          context.push(RouteNames.assetSupplierRegister),
                       onOpenValuationSummary: () =>
                           context.push(RouteNames.assetValuationSummary),
                       onOpenQrLabelRegister: () =>
@@ -754,6 +756,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenRepairSummary,
     required this.onOpenProjectSummary,
     required this.onOpenLocationRegister,
+    required this.onOpenSupplierRegister,
     required this.onOpenValuationSummary,
     required this.onOpenQrLabelRegister,
   });
@@ -764,6 +767,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenRepairSummary;
   final VoidCallback onOpenProjectSummary;
   final VoidCallback onOpenLocationRegister;
+  final VoidCallback onOpenSupplierRegister;
   final VoidCallback onOpenValuationSummary;
   final VoidCallback onOpenQrLabelRegister;
 
@@ -823,6 +827,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenLocationRegister,
                 icon: const Icon(Icons.place_outlined),
                 label: const Text('Location Register'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenSupplierRegister,
+                icon: const Icon(Icons.local_shipping_outlined),
+                label: const Text('Supplier Register'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenValuationSummary,

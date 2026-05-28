@@ -60,6 +60,18 @@ class AssetRegisterRepository {
     'notes',
   ];
 
+  static const supplierHeaders = <String>[
+    'supplier_id',
+    'name',
+    'website',
+    'category',
+    'reliability',
+    'delivery_speed',
+    'quality',
+    'preferred',
+    'notes',
+  ];
+
   static const maintenanceHeaders = <String>[
     'date',
     'asset_id',
@@ -138,6 +150,13 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> readSupplierRegister(String assetsRootPath) {
+    return _csvService.readTable(
+      _supplierFile(assetsRootPath),
+      expectedHeaders: supplierHeaders,
+    );
+  }
+
   Future<AssetCsvTable> readMaintenanceLog(String assetsRootPath) {
     return _csvService.readTable(
       _maintenanceFile(assetsRootPath),
@@ -196,6 +215,15 @@ class AssetRegisterRepository {
     AssetCsvTable table,
   ) {
     return _csvService.writeTable(_ordersFile(assetsRootPath), table).then(
+      (_) => table,
+    );
+  }
+
+  Future<AssetCsvTable> writeSupplierRegister(
+    String assetsRootPath,
+    AssetCsvTable table,
+  ) {
+    return _csvService.writeTable(_supplierFile(assetsRootPath), table).then(
       (_) => table,
     );
   }
@@ -275,6 +303,17 @@ class AssetRegisterRepository {
       _ordersFile(assetsRootPath),
       row,
       expectedHeaders: ordersHeaders,
+    );
+  }
+
+  Future<AssetCsvTable> appendSupplierRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) {
+    return _csvService.appendRow(
+      _supplierFile(assetsRootPath),
+      row,
+      expectedHeaders: supplierHeaders,
     );
   }
 
@@ -417,6 +456,16 @@ class AssetRegisterRepository {
         _normalizedRootPath(assetsRootPath),
         '07_SUPPLIERS_AND_ORDERS',
         'orders_tracker.csv',
+      ),
+    );
+  }
+
+  File _supplierFile(String assetsRootPath) {
+    return File(
+      path.join(
+        _normalizedRootPath(assetsRootPath),
+        '07_SUPPLIERS_AND_ORDERS',
+        'supplier_register.csv',
       ),
     );
   }
