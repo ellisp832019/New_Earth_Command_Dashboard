@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 import '../../../core/utils/folder_bootstrap_result.dart';
+import 'asset_register_repository.dart';
 
 enum AssetSummaryKind { available, lowStock, brokenRepair, needsDecision, wishlist, projectSummary }
 
@@ -51,7 +52,10 @@ class AssetWorkspaceSnapshot {
 
 class AssetFolderService {
   AssetFolderService({Directory? workingDirectory})
-      : _workingDirectory = workingDirectory ?? Directory.current;
+      : _workingDirectory = workingDirectory ?? Directory.current,
+        _registerRepository = AssetRegisterRepository(
+          workingDirectory: workingDirectory ?? Directory.current,
+        );
 
   static const _configRelativePath = 'config/local_paths.json';
   static const _assetsRootKey = 'assets_equipment_path';
@@ -82,6 +86,7 @@ class AssetFolderService {
   ];
 
   final Directory _workingDirectory;
+  final AssetRegisterRepository _registerRepository;
 
   Future<AssetWorkspaceSnapshot> loadWorkspace() async {
     final configFile = File(path.join(_workingDirectory.path, _configRelativePath));
@@ -140,16 +145,13 @@ class AssetFolderService {
       }
     }
 
-    final equipmentRows = await _readCsvRows(
-      assetsRoot == null
-          ? null
-          : File(path.join(assetsRoot.path, '01_EQUIPMENT_REGISTER', 'equipment_register.csv')),
-    );
-    final partsRows = await _readCsvRows(
-      assetsRoot == null
-          ? null
-          : File(path.join(assetsRoot.path, '02_PARTS_INVENTORY', 'parts_inventory.csv')),
-    );
+    final equipmentRows = assetsRoot == null
+        ? <Map<String, String>>[]
+        : (await _registerRepository.readEquipmentRegister(assetsRoot.path))
+            .rows;
+    final partsRows = assetsRoot == null
+        ? <Map<String, String>>[]
+        : (await _registerRepository.readPartsInventory(assetsRoot.path)).rows;
 
     final summaryCards = _buildSummaryCards(
       equipmentRows: equipmentRows,
@@ -261,6 +263,8 @@ class AssetFolderService {
     return structure.createdFiles;
   }
 
+  AssetRegisterRepository get registerRepository => _registerRepository;
+
   Future<void> writeTextFileWithBackup(File file, String contents) async {
     if (await file.exists()) {
       final backupFile = File('${file.path}.bak');
@@ -270,40 +274,6 @@ class AssetFolderService {
     }
 
     await file.writeAsString(contents);
-  }
-
-  Future<List<Map<String, String>>> _readCsvRows(File? file) async {
-    if (file == null || !await file.exists()) {
-      return <Map<String, String>>[];
-    }
-
-    final lines = await file.readAsLines();
-    if (lines.isEmpty) {
-      return <Map<String, String>>[];
-    }
-
-    final headers = _parseCsvLine(lines.first);
-    final rows = <Map<String, String>>[];
-    for (final rawLine in lines.skip(1)) {
-      if (rawLine.trim().isEmpty) {
-        continue;
-      }
-
-      final values = _parseCsvLine(rawLine);
-      final row = <String, String>{};
-      for (var index = 0; index < headers.length; index++) {
-        final header = headers[index].trim();
-        if (header.isEmpty) {
-          continue;
-        }
-
-        row[header] = index < values.length ? values[index] : '';
-      }
-
-      rows.add(row);
-    }
-
-    return rows;
   }
 
   List<AssetSummaryCard> _buildSummaryCards({
@@ -425,36 +395,6 @@ class AssetFolderService {
       default:
         return '';
     }
-  }
-
-  List<String> _parseCsvLine(String line) {
-    final values = <String>[];
-    final buffer = StringBuffer();
-    var inQuotes = false;
-
-    for (var index = 0; index < line.length; index++) {
-      final char = line[index];
-      if (char == '"') {
-        if (inQuotes && index + 1 < line.length && line[index + 1] == '"') {
-          buffer.write('"');
-          index++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-        continue;
-      }
-
-      if (char == ',' && !inQuotes) {
-        values.add(buffer.toString());
-        buffer.clear();
-        continue;
-      }
-
-      buffer.write(char);
-    }
-
-    values.add(buffer.toString());
-    return values;
   }
 
   String _normalized(String? value) {
