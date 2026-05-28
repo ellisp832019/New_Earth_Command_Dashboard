@@ -42,6 +42,14 @@ class TreasuryScreen extends ConsumerWidget {
               'The Treasury area is waiting for the external Omega OS folder.',
         ),
         onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+            return;
+          }
+
+          context.go(RouteNames.dashboard);
+        },
         onCreateMissingTemplates: () async {
           await ref
               .read(treasuryFolderServiceProvider)
@@ -57,6 +65,14 @@ class TreasuryScreen extends ConsumerWidget {
                 'Hayley can use Treasury once the external Omega OS finance folder is linked and healthy.',
             snapshot: data,
             onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+            onBack: () {
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
+
+              context.go(RouteNames.dashboard);
+            },
             onCreateMissingTemplates: () async {
               await ref
                   .read(treasuryFolderServiceProvider)
@@ -205,6 +221,7 @@ class _TreasurySetupScreen extends StatelessWidget {
     required this.body,
     required this.snapshot,
     required this.onReload,
+    required this.onBack,
     required this.onCreateMissingTemplates,
   });
 
@@ -212,6 +229,7 @@ class _TreasurySetupScreen extends StatelessWidget {
   final String body;
   final TreasuryWorkspaceSnapshot snapshot;
   final VoidCallback onReload;
+  final VoidCallback onBack;
   final Future<void> Function() onCreateMissingTemplates;
 
   @override
@@ -224,7 +242,12 @@ class _TreasurySetupScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _SetupHeaderCard(title: title, body: body, onReload: onReload),
+            _SetupHeaderCard(
+              title: title,
+              body: body,
+              onReload: onReload,
+              onBack: onBack,
+            ),
             const SizedBox(height: 14),
             _SetupIssuesCard(snapshot: snapshot),
             const SizedBox(height: 14),
@@ -966,11 +989,13 @@ class _SetupHeaderCard extends StatelessWidget {
     required this.title,
     required this.body,
     required this.onReload,
+    required this.onBack,
   });
 
   final String title;
   final String body;
   final VoidCallback onReload;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -1013,6 +1038,11 @@ class _SetupHeaderCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
+              TextButton.icon(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Dashboard'),
+              ),
               FilledButton.icon(
                 onPressed: onReload,
                 icon: const Icon(Icons.refresh),
