@@ -464,6 +464,13 @@ class _TreasuryEntryHubCard extends StatelessWidget {
         accent: AppColours.darkSecondary,
       ),
       _TreasuryWizardEntry(
+        title: 'Monthly Summary',
+        subtitle: 'Review the bigger picture calmly',
+        icon: Icons.assessment_outlined,
+        flow: 'monthly_summary',
+        accent: AppColours.darkPrimary,
+      ),
+      _TreasuryWizardEntry(
         title: 'Project Spend',
         subtitle: 'Log project money in a guided step flow',
         icon: Icons.work_outline,
@@ -497,8 +504,8 @@ class _TreasuryEntryHubCard extends StatelessWidget {
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 1080
-                  ? 5
+              final crossAxisCount = constraints.maxWidth >= 1280
+                  ? 3
                   : constraints.maxWidth >= 760
                   ? 2
                   : 1;
@@ -519,6 +526,8 @@ class _TreasuryEntryHubCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     onTap: () => entry.flow == 'decisions'
                         ? context.push(RouteNames.treasuryDecisions)
+                        : entry.flow == 'monthly_summary'
+                        ? context.push(RouteNames.treasuryMonthlySummary)
                         : context.push(
                             RouteNames.treasuryWizardFor(entry.flow),
                           ),

@@ -109,6 +109,92 @@ class TreasuryDecisionSaveResult {
   final String decisionsRegisterPath;
 }
 
+class TreasuryMonthlyProjectSpendEntry {
+  const TreasuryMonthlyProjectSpendEntry({
+    required this.date,
+    required this.project,
+    required this.item,
+    required this.supplier,
+    required this.amount,
+    required this.category,
+    required this.receiptSaved,
+    required this.status,
+    required this.notes,
+  });
+
+  final String date;
+  final String project;
+  final String item;
+  final String supplier;
+  final String amount;
+  final String category;
+  final String receiptSaved;
+  final String status;
+  final String notes;
+}
+
+class TreasuryMonthlyProjectSpendTotal {
+  const TreasuryMonthlyProjectSpendTotal({
+    required this.project,
+    required this.total,
+    required this.entries,
+  });
+
+  final String project;
+  final double total;
+  final int entries;
+}
+
+class TreasuryMonthlySubscriptionEntry {
+  const TreasuryMonthlySubscriptionEntry({
+    required this.serviceName,
+    required this.purpose,
+    required this.cost,
+    required this.renewalDate,
+    required this.paymentSource,
+    required this.status,
+    required this.keepCancelReview,
+    required this.notes,
+  });
+
+  final String serviceName;
+  final String purpose;
+  final String cost;
+  final String renewalDate;
+  final String paymentSource;
+  final String status;
+  final String keepCancelReview;
+  final String notes;
+}
+
+class TreasuryMonthlySummarySnapshot {
+  const TreasuryMonthlySummarySnapshot({
+    required this.workspace,
+    required this.generatedAt,
+    required this.projectSpendTotal,
+    required this.topProjectSpends,
+    required this.subscriptionTotal,
+    required this.upcomingSubscriptions,
+    required this.recentProjectSpendEntries,
+    required this.recentDecisions,
+    required this.weeklyReviewDate,
+    required this.weeklyReviewNote,
+    required this.issues,
+  });
+
+  final TreasuryWorkspaceSnapshot workspace;
+  final DateTime generatedAt;
+  final double projectSpendTotal;
+  final List<TreasuryMonthlyProjectSpendTotal> topProjectSpends;
+  final double subscriptionTotal;
+  final List<TreasuryMonthlySubscriptionEntry> upcomingSubscriptions;
+  final List<TreasuryMonthlyProjectSpendEntry> recentProjectSpendEntries;
+  final List<TreasuryDecisionRecord> recentDecisions;
+  final String? weeklyReviewDate;
+  final String? weeklyReviewNote;
+  final List<String> issues;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -871,6 +957,228 @@ class TreasuryFolderService {
     );
   }
 
+  Future<TreasuryMonthlySummarySnapshot> loadMonthlySummary({
+    required TreasuryWorkspaceSnapshot workspace,
+  }) async {
+    final financeRootPath = workspace.financeRootPath;
+    if (financeRootPath == null) {
+      return TreasuryMonthlySummarySnapshot(
+        workspace: workspace,
+        generatedAt: DateTime.now(),
+        projectSpendTotal: 0,
+        topProjectSpends: const <TreasuryMonthlyProjectSpendTotal>[],
+        subscriptionTotal: 0,
+        upcomingSubscriptions: const <TreasuryMonthlySubscriptionEntry>[],
+        recentProjectSpendEntries: const <TreasuryMonthlyProjectSpendEntry>[],
+        recentDecisions: const <TreasuryDecisionRecord>[],
+        weeklyReviewDate: null,
+        weeklyReviewNote: null,
+        issues: workspace.issues.isEmpty
+            ? const <String>[
+                'Treasury is waiting for the external finance folder.',
+              ]
+            : workspace.issues,
+      );
+    }
+
+    final financeRoot = Directory(financeRootPath);
+    if (!await financeRoot.exists()) {
+      return TreasuryMonthlySummarySnapshot(
+        workspace: workspace,
+        generatedAt: DateTime.now(),
+        projectSpendTotal: 0,
+        topProjectSpends: const <TreasuryMonthlyProjectSpendTotal>[],
+        subscriptionTotal: 0,
+        upcomingSubscriptions: const <TreasuryMonthlySubscriptionEntry>[],
+        recentProjectSpendEntries: const <TreasuryMonthlyProjectSpendEntry>[],
+        recentDecisions: const <TreasuryDecisionRecord>[],
+        weeklyReviewDate: null,
+        weeklyReviewNote: null,
+        issues: const <String>[
+          'The configured Treasury folder does not exist right now.',
+        ],
+      );
+    }
+
+    final projectSpendRecords = await _readCsvRecords(
+      File(
+        path.join(
+          financeRoot.path,
+          '04_PROJECT_SPEND_TRACKERS',
+          'project_spend_tracker.csv',
+        ),
+      ),
+    );
+    final subscriptionRecords = await _readCsvRecords(
+      File(
+        path.join(
+          financeRoot.path,
+          '06_SUBSCRIPTIONS_AND_RECURRING_COSTS',
+          'subscription_tracker.csv',
+        ),
+      ),
+    );
+    final weeklyStatusFile = File(
+      path.join(financeRoot.path, '00_FINANCE_DASHBOARD', 'weekly_status.json'),
+    );
+    final dashboardStateFile = File(
+      path.join(
+        financeRoot.path,
+        '00_FINANCE_DASHBOARD',
+        'dashboard_state.json',
+      ),
+    );
+
+    final projectSpendEntries = projectSpendRecords
+        .map(
+          (record) => TreasuryMonthlyProjectSpendEntry(
+            date: _csvRecordValue(record, 'date'),
+            project: _csvRecordValue(record, 'project'),
+            item: _csvRecordValue(record, 'item'),
+            supplier: _csvRecordValue(record, 'supplier'),
+            amount: _csvRecordValue(record, 'amount'),
+            category: _csvRecordValue(record, 'category'),
+            receiptSaved: _csvRecordValue(record, 'receipt_saved'),
+            status: _csvRecordValue(record, 'status'),
+            notes: _csvRecordValue(record, 'notes'),
+          ),
+        )
+        .toList(growable: false);
+
+    final topProjectSpends = <String, _ProjectSpendBucket>{};
+    for (final entry in projectSpendEntries) {
+      final projectName = entry.project.isEmpty
+          ? 'Unlabelled project'
+          : entry.project;
+      final bucket = topProjectSpends.putIfAbsent(
+        projectName,
+        () => _ProjectSpendBucket(project: projectName),
+      );
+      bucket.add(_parseMoney(entry.amount));
+    }
+
+    final topProjectSpendTotals = topProjectSpends.values.toList()
+      ..sort((left, right) {
+        final totalCompare = right.total.compareTo(left.total);
+        if (totalCompare != 0) {
+          return totalCompare;
+        }
+        return left.project.toLowerCase().compareTo(
+          right.project.toLowerCase(),
+        );
+      });
+
+    final subscriptionEntries = subscriptionRecords
+        .map(
+          (record) => TreasuryMonthlySubscriptionEntry(
+            serviceName: _csvRecordValue(record, 'service'),
+            purpose: _csvRecordValue(record, 'purpose'),
+            cost: _csvRecordValue(record, 'cost'),
+            renewalDate: _csvRecordValue(record, 'renewaldate'),
+            paymentSource: _csvRecordValue(record, 'paymentsource'),
+            status: _csvRecordValue(record, 'status'),
+            keepCancelReview: _csvRecordValue(record, 'keepcancelreview'),
+            notes: _csvRecordValue(record, 'notes'),
+          ),
+        )
+        .toList(growable: false);
+
+    final upcomingSubscriptions = [...subscriptionEntries]
+      ..sort((left, right) {
+        final leftDate = _parseDateValue(left.renewalDate);
+        final rightDate = _parseDateValue(right.renewalDate);
+        if (leftDate == null && rightDate == null) {
+          return left.serviceName.toLowerCase().compareTo(
+            right.serviceName.toLowerCase(),
+          );
+        }
+        if (leftDate == null) {
+          return 1;
+        }
+        if (rightDate == null) {
+          return -1;
+        }
+        return leftDate.compareTo(rightDate);
+      });
+
+    final recentProjectSpendEntries = [
+      ...projectSpendEntries,
+    ].reversed.take(5).toList(growable: false);
+
+    final recentDecisions = (await loadDecisionRegister(
+      financeRootPath: financeRootPath,
+    )).take(5).toList(growable: false);
+
+    String? weeklyReviewDate;
+    String? weeklyReviewNote;
+    if (await weeklyStatusFile.exists()) {
+      try {
+        final decoded =
+            jsonDecode(await weeklyStatusFile.readAsString())
+                as Map<String, dynamic>;
+        final reviewDate = decoded['review_date'];
+        if (reviewDate is String && reviewDate.trim().isNotEmpty) {
+          weeklyReviewDate = reviewDate.trim();
+        }
+        final notes = decoded['notes'];
+        if (notes is String && notes.trim().isNotEmpty) {
+          weeklyReviewNote = notes.trim();
+        }
+      } on FormatException {
+        // Keep the calm summary available even when the file is malformed.
+      }
+    }
+
+    if (weeklyReviewDate == null && await dashboardStateFile.exists()) {
+      try {
+        final decoded =
+            jsonDecode(await dashboardStateFile.readAsString())
+                as Map<String, dynamic>;
+        final updatedAt = decoded['updated_at'];
+        if (updatedAt is String && updatedAt.trim().isNotEmpty) {
+          weeklyReviewDate = updatedAt.trim();
+        }
+        final notes = decoded['notes'];
+        if (notes is String && notes.trim().isNotEmpty) {
+          weeklyReviewNote = notes.trim();
+        }
+      } on FormatException {
+        // Keep the calm summary available even when the file is malformed.
+      }
+    }
+
+    return TreasuryMonthlySummarySnapshot(
+      workspace: workspace,
+      generatedAt: DateTime.now(),
+      projectSpendTotal: topProjectSpendTotals.fold<double>(
+        0,
+        (sum, bucket) => sum + bucket.total,
+      ),
+      topProjectSpends: topProjectSpendTotals
+          .take(3)
+          .map(
+            (bucket) => TreasuryMonthlyProjectSpendTotal(
+              project: bucket.project,
+              total: bucket.total,
+              entries: bucket.entries,
+            ),
+          )
+          .toList(growable: false),
+      subscriptionTotal: subscriptionEntries.fold<double>(
+        0,
+        (sum, entry) => sum + _parseMoney(entry.cost),
+      ),
+      upcomingSubscriptions: upcomingSubscriptions
+          .take(3)
+          .toList(growable: false),
+      recentProjectSpendEntries: recentProjectSpendEntries,
+      recentDecisions: recentDecisions,
+      weeklyReviewDate: weeklyReviewDate,
+      weeklyReviewNote: weeklyReviewNote,
+      issues: workspace.issues,
+    );
+  }
+
   List<String> _markdownBullets(List<String> items) {
     if (items.isEmpty) {
       return const ['- '];
@@ -936,5 +1244,74 @@ class TreasuryFolderService {
     }
 
     return cells[index].trim();
+  }
+
+  Future<List<Map<String, String>>> _readCsvRecords(File file) async {
+    if (!await file.exists()) {
+      return const <Map<String, String>>[];
+    }
+
+    final lines = await file.readAsLines();
+    if (lines.length <= 1) {
+      return const <Map<String, String>>[];
+    }
+
+    final headers = _parseCsvLine(
+      lines.first,
+    ).map((header) => header.trim().toLowerCase()).toList(growable: false);
+    if (headers.isEmpty) {
+      return const <Map<String, String>>[];
+    }
+
+    final rows = <Map<String, String>>[];
+    for (final rawLine in lines.skip(1)) {
+      if (rawLine.trim().isEmpty) {
+        continue;
+      }
+
+      final cells = _parseCsvLine(rawLine);
+      final row = <String, String>{};
+      for (var index = 0; index < headers.length; index++) {
+        row[headers[index]] = _csvCellValue(cells, index);
+      }
+      rows.add(row);
+    }
+
+    return rows;
+  }
+
+  String _csvRecordValue(Map<String, String> record, String key) {
+    return record[key.toLowerCase()] ?? '';
+  }
+
+  double _parseMoney(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9.\-]'), '');
+    if (cleaned.isEmpty || cleaned == '-' || cleaned == '.') {
+      return 0;
+    }
+
+    return double.tryParse(cleaned) ?? 0;
+  }
+
+  DateTime? _parseDateValue(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    return DateTime.tryParse(trimmed);
+  }
+}
+
+class _ProjectSpendBucket {
+  _ProjectSpendBucket({required this.project});
+
+  final String project;
+  double total = 0;
+  int entries = 0;
+
+  void add(double amount) {
+    total += amount;
+    entries += 1;
   }
 }

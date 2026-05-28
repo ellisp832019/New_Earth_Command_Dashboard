@@ -422,4 +422,137 @@ void main() {
     expect(records.first.decisionNeeded, 'Approve project budget');
     expect(records.first.owner, 'Hayley');
   });
+
+  test(
+    'loadMonthlySummary aggregates the Treasury trackers into a calm overview',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'treasury_monthly_summary_test_',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
+
+      final repoRoot = Directory(p.join(tempRoot.path, 'dashboard_repo'));
+      await repoRoot.create(recursive: true);
+
+      final financeRoot = Directory(
+        p.join(tempRoot.path, '17_FINANCE_AND_TREASURY'),
+      );
+      await financeRoot.create(recursive: true);
+      for (final relativeFolder in TreasuryFolderService.requiredFolders) {
+        await Directory(
+          p.join(financeRoot.path, relativeFolder),
+        ).create(recursive: true);
+      }
+
+      await File(
+        p.join(
+          financeRoot.path,
+          '00_FINANCE_DASHBOARD',
+          'SAFE_WATCH_STOP_DECISION_BOARD.md',
+        ),
+      ).writeAsString('''
+# Safe / Watch / Stop / Decision Board
+
+## Safe
+- Rent is covered
+
+## Watch
+- Utilities due next week
+
+## Pause
+- No new purchases
+
+## Decision
+- Approve project budget
+''');
+
+      final configDir = Directory(p.join(repoRoot.path, 'config'));
+      await configDir.create(recursive: true);
+      await File(
+        p.join(configDir.path, 'local_paths.json'),
+      ).writeAsString(jsonEncode({'finance_treasury_path': financeRoot.path}));
+
+      final service = TreasuryFolderService(workingDirectory: repoRoot);
+      await service.createMissingRequiredFiles();
+      await service.saveWeeklyReview(
+        financeRootPath: financeRoot.path,
+        safeItems: ['Rent is covered'],
+        watchItems: ['Utilities due next week'],
+        pauseItems: ['No new purchases'],
+        decisionItems: ['Approve project budget'],
+        closingNote: 'The picture is steady this month.',
+        reviewedAt: DateTime(2026, 5, 28),
+      );
+      await service.saveProjectSpendRecord(
+        financeRootPath: financeRoot.path,
+        project: 'New Earth Dashboard',
+        item: 'Design review',
+        supplier: 'Hayley',
+        amount: '10.00',
+        category: 'Planning',
+        receiptSaved: 'Yes',
+        status: 'Safe',
+        notes: 'First pass review.',
+        recordedAt: DateTime(2026, 5, 27),
+      );
+      await service.saveProjectSpendRecord(
+        financeRootPath: financeRoot.path,
+        project: 'New Earth Dashboard',
+        item: 'Implementation',
+        supplier: 'Hayley',
+        amount: '20.00',
+        category: 'Delivery',
+        receiptSaved: 'Yes',
+        status: 'Watch',
+        notes: 'Second pass review.',
+        recordedAt: DateTime(2026, 5, 28),
+      );
+      await service.saveSubscriptionRecord(
+        financeRootPath: financeRoot.path,
+        serviceName: 'M365',
+        purpose: 'Docs and email',
+        cost: '12.99',
+        renewalDate: '2026-06-01',
+        paymentSource: 'Business card',
+        status: 'Watch',
+        keepCancelReview: 'Review',
+        notes: 'Check if still needed.',
+        recordedAt: DateTime(2026, 5, 28),
+      );
+      await service.saveDecisionRecord(
+        financeRootPath: financeRoot.path,
+        date: '2026-05-28',
+        decisionNeeded: 'Approve project budget',
+        amount: 'Â£120.00',
+        status: 'Decision',
+        decision: 'Approved with a small buffer',
+        owner: 'Hayley',
+        notes: 'Keep the next step calm and simple.',
+      );
+
+      final workspace = await service.loadWorkspace();
+      final summary = await service.loadMonthlySummary(workspace: workspace);
+
+      expect(summary.workspace.stateSummaries, hasLength(6));
+      expect(
+        summary.workspace.stateSummaries
+            .firstWhere((summary) => summary.kind == TreasuryStatusKind.safe)
+            .count,
+        1,
+      );
+      expect(summary.projectSpendTotal, closeTo(30.0, 0.001));
+      expect(summary.topProjectSpends, hasLength(1));
+      expect(summary.topProjectSpends.first.project, 'New Earth Dashboard');
+      expect(summary.subscriptionTotal, closeTo(12.99, 0.001));
+      expect(summary.upcomingSubscriptions, hasLength(1));
+      expect(summary.recentDecisions, hasLength(1));
+      expect(summary.weeklyReviewDate, '2026-05-28');
+      expect(summary.weeklyReviewNote, 'The picture is steady this month.');
+      expect(summary.recentProjectSpendEntries, hasLength(2));
+    },
+  );
 }

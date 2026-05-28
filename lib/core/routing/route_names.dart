@@ -9,6 +9,7 @@ abstract final class RouteNames {
   static const treasury = '/treasury';
   static const treasuryWizard = '/treasury/wizard';
   static const treasuryDecisions = '/treasury/decisions';
+  static const treasuryMonthlySummary = '/treasury/monthly-summary';
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const tasks = '/tasks';

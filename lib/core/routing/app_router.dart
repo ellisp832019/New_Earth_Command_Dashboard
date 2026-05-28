@@ -29,6 +29,7 @@ import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/treasury/presentation/treasury_screen.dart';
 import '../../features/treasury/presentation/treasury_decisions_board_screen.dart';
+import '../../features/treasury/presentation/treasury_monthly_summary_screen.dart';
 import '../../features/treasury/presentation/treasury_wizard_screen.dart';
 import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
@@ -105,6 +106,11 @@ final appRouter = GoRouter(
                   path: 'decisions',
                   builder: (context, state) =>
                       const TreasuryDecisionsBoardScreen(),
+                ),
+                GoRoute(
+                  path: 'monthly-summary',
+                  builder: (context, state) =>
+                      const TreasuryMonthlySummaryScreen(),
                 ),
                 GoRoute(
                   path: 'wizard',
