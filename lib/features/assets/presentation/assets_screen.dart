@@ -137,6 +137,15 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetQrLabelRegister),
                     ),
                     const SizedBox(height: 22),
+                    _AssetDecisionBridgeCard(
+                      onOpenLowStock: () =>
+                          context.push(RouteNames.assetLowStock),
+                      onOpenRepairSummary: () =>
+                          context.push(RouteNames.assetRepairSummary),
+                      onOpenValuationSummary: () =>
+                          context.push(RouteNames.assetValuationSummary),
+                    ),
+                    const SizedBox(height: 22),
                     _AssetSummaryGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _AssetTreasuryLinksCard(),
@@ -604,6 +613,324 @@ class _AssetPriorityCard extends StatelessWidget {
     }
     return 0;
   }
+}
+
+class _AssetDecisionBridgeCard extends ConsumerWidget {
+  const _AssetDecisionBridgeCard({
+    required this.onOpenLowStock,
+    required this.onOpenRepairSummary,
+    required this.onOpenValuationSummary,
+  });
+
+  final VoidCallback onOpenLowStock;
+  final VoidCallback onOpenRepairSummary;
+  final VoidCallback onOpenValuationSummary;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lowStock = ref.watch(assetLowStockPartsProvider);
+    final broken = ref.watch(assetBrokenRepairEquipmentProvider);
+    final valuation = ref.watch(assetValuationSummaryProvider);
+    final overview = ref.watch(assetValuationOverviewProvider);
+
+    return lowStock.when(
+      loading: () => _DecisionBridgeShell(
+        title: 'Decision bridge',
+        subtitle:
+            'Loading the asset-side decision signals so the next action stays clear.',
+        chips: [
+          _InlineTag(
+            label: 'Loading',
+            accent: AppColours.darkSecondary,
+            foreground: AppColours.darkText,
+          ),
+        ],
+        actions: const SizedBox.shrink(),
+      ),
+      error: (error, stackTrace) => _DecisionBridgeShell(
+        title: 'Decision bridge',
+        subtitle:
+            'Asset decision signals could not load right now, but the rest of the tab is still usable.',
+        chips: [
+          _InlineTag(
+            label: 'Try reload',
+            accent: AppColours.darkAmber,
+            foreground: AppColours.darkText,
+          ),
+        ],
+        actions: const SizedBox.shrink(),
+      ),
+      data: (lowStockRows) {
+        return broken.when(
+          loading: () => _DecisionBridgeShell(
+            title: 'Decision bridge',
+            subtitle:
+                'Loading the asset-side decision signals so the next action stays clear.',
+            chips: [
+              _InlineTag(
+                label: 'Loading',
+                accent: AppColours.darkSecondary,
+                foreground: AppColours.darkText,
+              ),
+            ],
+            actions: const SizedBox.shrink(),
+          ),
+          error: (error, stackTrace) => _DecisionBridgeShell(
+            title: 'Decision bridge',
+            subtitle:
+                'Asset decision signals could not load right now, but the rest of the tab is still usable.',
+            chips: [
+              _InlineTag(
+                label: 'Try reload',
+                accent: AppColours.darkAmber,
+                foreground: AppColours.darkText,
+              ),
+            ],
+            actions: const SizedBox.shrink(),
+          ),
+          data: (brokenRows) {
+            return valuation.when(
+              loading: () => _DecisionBridgeShell(
+                title: 'Decision bridge',
+                subtitle:
+                    'Loading the asset-side decision signals so the next action stays clear.',
+                chips: [
+                    _InlineTag(
+                      label: 'Loading',
+                      accent: AppColours.darkSecondary,
+                      foreground: AppColours.darkText,
+                    ),
+                ],
+                actions: const SizedBox.shrink(),
+              ),
+              error: (error, stackTrace) => _DecisionBridgeShell(
+                title: 'Decision bridge',
+                subtitle:
+                    'Asset decision signals could not load right now, but the rest of the tab is still usable.',
+                chips: [
+                    _InlineTag(
+                      label: 'Try reload',
+                      accent: AppColours.darkAmber,
+                      foreground: AppColours.darkText,
+                    ),
+                ],
+                actions: const SizedBox.shrink(),
+              ),
+              data: (valuationTable) {
+                return overview.when(
+                  loading: () => _DecisionBridgeShell(
+                    title: 'Decision bridge',
+                    subtitle:
+                        'Loading the asset-side decision signals so the next action stays clear.',
+                    chips: [
+                      _InlineTag(
+                        label: 'Loading',
+                        accent: AppColours.darkSecondary,
+                        foreground: AppColours.darkText,
+                      ),
+                    ],
+                    actions: const SizedBox.shrink(),
+                  ),
+                  error: (error, stackTrace) => _DecisionBridgeShell(
+                    title: 'Decision bridge',
+                    subtitle:
+                        'Asset decision signals could not load right now, but the rest of the tab is still usable.',
+                    chips: [
+                      _InlineTag(
+                        label: 'Try reload',
+                        accent: AppColours.darkAmber,
+                        foreground: AppColours.darkText,
+                      ),
+                    ],
+                    actions: const SizedBox.shrink(),
+                  ),
+                  data: (overviewData) {
+                    final linkedEvidenceCount = _countNonEmptyValues(
+                      valuationTable.rows,
+                      'evidence_link',
+                    );
+                    final missingEvidenceCount =
+                        valuationTable.rows.length - linkedEvidenceCount;
+                    final repairCount = brokenRows.length;
+                    final lowStockCount = lowStockRows.length;
+                    final decisionCount = lowStockCount +
+                        repairCount +
+                        missingEvidenceCount;
+                    final totalTrackedValue =
+                        overviewData.currentEstimatedValueTotal;
+
+                    final List<Widget> chips = [
+                      _InlineTag(
+                        label: '$lowStockCount low stock',
+                        accent: AppColours.darkSecondary,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label: '$repairCount repair',
+                        accent: AppColours.darkAmber,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label: '$linkedEvidenceCount linked',
+                        accent: AppColours.darkSuccess,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label: '$missingEvidenceCount missing evidence',
+                        accent: const Color(0xFFE26B6B),
+                        foreground: AppColours.darkText,
+                      ),
+                    ];
+
+                    final subtitle = decisionCount == 0
+                        ? 'No decision pressure is showing from the current asset registers. Keep the local records calm and easy to review.'
+                        : '$decisionCount item${decisionCount == 1 ? '' : 's'} still need a clear next step across stock, repair, or valuation evidence.';
+
+                    final actions = Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: onOpenLowStock,
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Open Low Stock'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: onOpenRepairSummary,
+                          icon: const Icon(Icons.build_outlined),
+                          label: const Text('Open Repair'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: onOpenValuationSummary,
+                          icon: const Icon(Icons.verified_outlined),
+                          label: const Text('Open Valuation'),
+                        ),
+                      ],
+                    );
+
+                  return _DecisionBridgeShell(
+                      title: 'Decision bridge',
+                      subtitle: subtitle,
+                      chips: chips,
+                      trailingCopy:
+                          'Estimated tracked value: ${NumberFormat.currency(symbol: '£', decimalDigits: 2).format(totalTrackedValue)}',
+                      actions: actions,
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _DecisionBridgeShell extends StatelessWidget {
+  const _DecisionBridgeShell({
+    required this.title,
+    required this.subtitle,
+    required this.chips,
+    required this.actions,
+    this.trailingCopy,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> chips;
+  final Widget actions;
+  final String? trailingCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 980;
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PanelTitle(
+                title: title,
+                icon: Icons.account_tree_outlined,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+              if (trailingCopy != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  trailingCopy!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          );
+
+          final chipWrap = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: chips,
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 16),
+                chipWrap,
+                const SizedBox(height: 16),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 20),
+              SizedBox(
+                width: 450,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Align(alignment: Alignment.centerRight, child: chipWrap),
+                    const SizedBox(height: 16),
+                    Align(alignment: Alignment.centerRight, child: actions),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+int _countNonEmptyValues(List<Map<String, String>> rows, String key) {
+  var count = 0;
+  for (final row in rows) {
+    if ((row[key] ?? '').trim().isNotEmpty) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 class _SummaryCard extends StatelessWidget {

@@ -46,6 +46,7 @@ void main() {
     expect(find.text('QR Labels'), findsOneWidget);
     expect(find.text('NE-EQ-0001'), findsOneWidget);
     expect(find.text('NE-EQ-0001-QR'), findsOneWidget);
+    expect(find.text('Missing codes'), findsOneWidget);
   });
 
   testWidgets('qr label register supports an empty state', (tester) async {

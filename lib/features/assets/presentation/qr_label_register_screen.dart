@@ -37,6 +37,8 @@ class _QrLabelRegisterScreenState extends ConsumerState<QrLabelRegisterScreen> {
           ),
           data: (table) {
             final labeledAssets = _distinctValues(table.rows, 'asset_id');
+            final missingLabelCodes = _countEmptyValues(table.rows, 'label_code');
+            final missingAssetIds = _countEmptyValues(table.rows, 'asset_id');
 
             return Scaffold(
               backgroundColor: Colors.transparent,
@@ -66,11 +68,15 @@ class _QrLabelRegisterScreenState extends ConsumerState<QrLabelRegisterScreen> {
                               assetPath: workspaceData.assetsRootPath,
                               labelCount: table.rows.length,
                               labeledAssets: labeledAssets.length,
+                              missingLabelCodes: missingLabelCodes,
+                              missingAssetIds: missingAssetIds,
                             ),
                             const SizedBox(height: 20),
                             _QrLabelSummaryRow(
                               labelCount: table.rows.length,
                               labeledAssets: labeledAssets.length,
+                              missingLabelCodes: missingLabelCodes,
+                              missingAssetIds: missingAssetIds,
                             ),
                             const SizedBox(height: 20),
                             if (table.rows.isEmpty)
@@ -143,11 +149,15 @@ class _QrLabelHeader extends StatelessWidget {
     required this.assetPath,
     required this.labelCount,
     required this.labeledAssets,
+    required this.missingLabelCodes,
+    required this.missingAssetIds,
   });
 
   final String? assetPath;
   final int labelCount;
   final int labeledAssets;
+  final int missingLabelCodes;
+  final int missingAssetIds;
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +196,7 @@ class _QrLabelHeader extends StatelessWidget {
               _InfoChip(label: assetPath ?? 'Asset folder not linked'),
               _InfoChip(label: '$labelCount labels'),
               _InfoChip(label: '$labeledAssets assets referenced'),
+              _InfoChip(label: '$missingLabelCodes missing codes'),
             ],
           );
 
@@ -220,10 +231,14 @@ class _QrLabelSummaryRow extends StatelessWidget {
   const _QrLabelSummaryRow({
     required this.labelCount,
     required this.labeledAssets,
+    required this.missingLabelCodes,
+    required this.missingAssetIds,
   });
 
   final int labelCount;
   final int labeledAssets;
+  final int missingLabelCodes;
+  final int missingAssetIds;
 
   @override
   Widget build(BuildContext context) {
@@ -241,6 +256,16 @@ class _QrLabelSummaryRow extends StatelessWidget {
             value: labeledAssets,
             accent: AppColours.darkSuccess,
           ),
+          _MetricCard(
+            label: 'Missing codes',
+            value: missingLabelCodes,
+            accent: AppColours.darkAmber,
+          ),
+          _MetricCard(
+            label: 'Missing asset IDs',
+            value: missingAssetIds,
+            accent: const Color(0xFFE26B6B),
+          ),
         ];
 
         if (wide) {
@@ -249,6 +274,10 @@ class _QrLabelSummaryRow extends StatelessWidget {
               Expanded(child: cards[0]),
               const SizedBox(width: 12),
               Expanded(child: cards[1]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[2]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[3]),
             ],
           );
         }
@@ -258,6 +287,10 @@ class _QrLabelSummaryRow extends StatelessWidget {
             cards[0],
             const SizedBox(height: 12),
             cards[1],
+            const SizedBox(height: 12),
+            cards[2],
+            const SizedBox(height: 12),
+            cards[3],
           ],
         );
       },
@@ -693,4 +726,14 @@ List<String> _distinctValues(List<Map<String, String>> rows, String key) {
     }
   }
   return values.toList(growable: false);
+}
+
+int _countEmptyValues(List<Map<String, String>> rows, String key) {
+  var count = 0;
+  for (final row in rows) {
+    if ((row[key] ?? '').trim().isEmpty) {
+      count += 1;
+    }
+  }
+  return count;
 }
