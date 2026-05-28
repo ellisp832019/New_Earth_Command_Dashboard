@@ -21,3 +21,6 @@ Full recommended config:
 ```
 
 Do not commit `config/local_paths.json`.
+
+The asset health check also expects a `changes/` folder inside the external asset root, with `asset_change_journal.csv` inside it.
+This journal is the first step toward safer multi-machine asset edits.

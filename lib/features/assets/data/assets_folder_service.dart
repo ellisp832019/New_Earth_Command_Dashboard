@@ -64,6 +64,7 @@ class AssetFolderService {
     '00_ASSET_DASHBOARD',
     '01_EQUIPMENT_REGISTER',
     '02_PARTS_INVENTORY',
+    'changes',
     '07_SUPPLIERS_AND_ORDERS',
     '09_BORROWED_LENT_AND_LOCATION_TRACKING',
     '10_REPAIR_MAINTENANCE_AND_CALIBRATION',
@@ -76,6 +77,7 @@ class AssetFolderService {
     '00_ASSET_DASHBOARD/asset_dashboard_state.json',
     '01_EQUIPMENT_REGISTER/equipment_register.csv',
     '02_PARTS_INVENTORY/parts_inventory.csv',
+    'changes/asset_change_journal.csv',
     '07_SUPPLIERS_AND_ORDERS/orders_tracker.csv',
     '07_SUPPLIERS_AND_ORDERS/supplier_register.csv',
     '09_BORROWED_LENT_AND_LOCATION_TRACKING/location_register.csv',
@@ -162,9 +164,9 @@ class AssetFolderService {
     final partsCount = partsRows.length;
     final guidanceNote = assetsRoot == null
         ? 'The Asset Intelligence area will calm down once the external Omega OS folder is linked.'
-        : missingFolders.isEmpty
+        : missingFolders.isEmpty && missingFiles.isEmpty
             ? 'The external asset folder is connected. Keep the system local-first and only write with care.'
-            : 'The asset folder is present, but a few expected Omega OS folders still need attention.';
+            : 'The asset folder is present, but a few expected Omega OS folders or tracker files still need attention.';
 
     return AssetWorkspaceSnapshot(
       configPath: configFile.path,
@@ -378,6 +380,8 @@ class AssetFolderService {
         return 'asset_id,name,type,project,owner,location,condition,status,purchase_date,purchase_cost,replacement_value,serial_number,receipt_link,warranty_until,notes\n';
       case '02_PARTS_INVENTORY/parts_inventory.csv':
         return 'part_id,name,category,project,quantity,min_quantity,location,supplier,last_ordered,last_cost,status,datasheet_link,notes\n';
+      case 'changes/asset_change_journal.csv':
+        return 'record_id,record_type,action,timestamp,machine_id,user_label,changed_fields,note\n';
       case '07_SUPPLIERS_AND_ORDERS/orders_tracker.csv':
         return 'order_id,date,supplier,item,project,quantity,total_cost,status,tracking,receipt_link,finance_record_id,notes\n';
       case '07_SUPPLIERS_AND_ORDERS/supplier_register.csv':
