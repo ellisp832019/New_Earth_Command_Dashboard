@@ -139,6 +139,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetLocationRegister),
                       onOpenValuationSummary: () =>
                           context.push(RouteNames.assetValuationSummary),
+                      onOpenQrLabelRegister: () =>
+                          context.push(RouteNames.assetQrLabelRegister),
                     ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
@@ -583,6 +585,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenProjectSummary,
     required this.onOpenLocationRegister,
     required this.onOpenValuationSummary,
+    required this.onOpenQrLabelRegister,
   });
 
   final VoidCallback onOpenEquipment;
@@ -592,6 +595,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenProjectSummary;
   final VoidCallback onOpenLocationRegister;
   final VoidCallback onOpenValuationSummary;
+  final VoidCallback onOpenQrLabelRegister;
 
   @override
   Widget build(BuildContext context) {
@@ -654,6 +658,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenValuationSummary,
                 icon: const Icon(Icons.assessment_outlined),
                 label: const Text('Valuation Summary'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrLabelRegister,
+                icon: const Icon(Icons.qr_code_2_outlined),
+                label: const Text('QR Labels'),
               ),
             ],
           ),

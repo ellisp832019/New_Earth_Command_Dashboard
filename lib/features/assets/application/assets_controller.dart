@@ -95,6 +95,19 @@ final assetValuationSummaryProvider = FutureProvider<AssetCsvTable>((ref) async 
   return repository.readValuationSummary(workspace.assetsRootPath!);
 });
 
+final assetQrLabelRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: AssetRegisterRepository.qrLabelHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.readQrLabelRegister(workspace.assetsRootPath!);
+});
+
 final assetValuationOverviewProvider =
     FutureProvider<AssetValuationOverview>((ref) async {
   final equipmentTable = await ref.watch(assetEquipmentRegisterProvider.future);

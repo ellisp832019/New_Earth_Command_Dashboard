@@ -104,6 +104,16 @@ class AssetRegisterRepository {
     'notes',
   ];
 
+  static const qrLabelHeaders = <String>[
+    'asset_id',
+    'label_code',
+    'qr_target',
+    'file_or_url',
+    'status',
+    'printed_date',
+    'notes',
+  ];
+
   final AssetCsvService _csvService;
   final Directory _workingDirectory;
 
@@ -153,6 +163,13 @@ class AssetRegisterRepository {
     return _csvService.readTable(
       _valuationFile(assetsRootPath),
       expectedHeaders: valuationHeaders,
+    );
+  }
+
+  Future<AssetCsvTable> readQrLabelRegister(String assetsRootPath) {
+    return _csvService.readTable(
+      _qrLabelFile(assetsRootPath),
+      expectedHeaders: qrLabelHeaders,
     );
   }
 
@@ -215,6 +232,15 @@ class AssetRegisterRepository {
     AssetCsvTable table,
   ) {
     return _csvService.writeTable(_valuationFile(assetsRootPath), table).then(
+      (_) => table,
+    );
+  }
+
+  Future<AssetCsvTable> writeQrLabelRegister(
+    String assetsRootPath,
+    AssetCsvTable table,
+  ) {
+    return _csvService.writeTable(_qrLabelFile(assetsRootPath), table).then(
       (_) => table,
     );
   }
@@ -293,6 +319,17 @@ class AssetRegisterRepository {
       _valuationFile(assetsRootPath),
       row,
       expectedHeaders: valuationHeaders,
+    );
+  }
+
+  Future<AssetCsvTable> appendQrLabelRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) {
+    return _csvService.appendRow(
+      _qrLabelFile(assetsRootPath),
+      row,
+      expectedHeaders: qrLabelHeaders,
     );
   }
 
@@ -420,6 +457,16 @@ class AssetRegisterRepository {
         _normalizedRootPath(assetsRootPath),
         '13_VALUATION_AND_INSURANCE_EVIDENCE',
         'valuation_summary.csv',
+      ),
+    );
+  }
+
+  File _qrLabelFile(String assetsRootPath) {
+    return File(
+      path.join(
+        _normalizedRootPath(assetsRootPath),
+        '12_PHOTOS_QR_LABELS_AND_BINS',
+        'qr_label_register.csv',
       ),
     );
   }
