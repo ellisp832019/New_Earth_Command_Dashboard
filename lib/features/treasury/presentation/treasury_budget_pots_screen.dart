@@ -1114,12 +1114,28 @@ Future<void> _showFirstTimeSetupWizard(
   WidgetRef ref,
 ) async {
   final packs = _starterPacks();
+  final existingSnapshot = await ref.read(treasuryBudgetPotsProvider.future);
   final targetControllers = <String, TextEditingController>{};
   for (final pack in packs) {
     for (final seed in pack.seeds) {
+      final existingPots = existingSnapshot.editablePots
+          .where(
+            (pot) =>
+                pot.ownerGroup == pack.ownerGroup &&
+                pot.title.toLowerCase() == seed.title.toLowerCase(),
+          )
+          .toList(growable: false);
+      final existingPot = existingPots.isEmpty ? null : existingPots.first;
+      final initialTarget = existingPot?.target ?? seed.target;
       targetControllers[_seedKey(pack.ownerGroup, seed.title)] =
-          TextEditingController(text: seed.target.toStringAsFixed(0));
+          TextEditingController(text: initialTarget.toStringAsFixed(0));
     }
+  }
+  if (!context.mounted) {
+    for (final controller in targetControllers.values) {
+      controller.dispose();
+    }
+    return;
   }
   final selectedOwnerGroups = <TreasuryBudgetPotOwnerGroup>{
     TreasuryBudgetPotOwnerGroup.hayley,
