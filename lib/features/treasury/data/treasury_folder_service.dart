@@ -7,6 +7,8 @@ import '../../../core/utils/folder_bootstrap_result.dart';
 
 enum TreasuryStatusKind { safe, watch, pause, decision, future, archived }
 
+enum TreasuryBudgetPotOwnerGroup { hayley, you, shared, newEarth }
+
 class TreasuryStateSummary {
   const TreasuryStateSummary({
     required this.kind,
@@ -199,6 +201,7 @@ class TreasuryBudgetPotRecord {
   const TreasuryBudgetPotRecord({
     required this.id,
     required this.title,
+    required this.ownerGroup,
     required this.kind,
     required this.balance,
     required this.target,
@@ -208,6 +211,7 @@ class TreasuryBudgetPotRecord {
 
   final String id;
   final String title;
+  final TreasuryBudgetPotOwnerGroup ownerGroup;
   final TreasuryStatusKind kind;
   final double balance;
   final double target;
@@ -217,6 +221,7 @@ class TreasuryBudgetPotRecord {
   TreasuryBudgetPotRecord copyWith({
     String? id,
     String? title,
+    TreasuryBudgetPotOwnerGroup? ownerGroup,
     TreasuryStatusKind? kind,
     double? balance,
     double? target,
@@ -226,6 +231,7 @@ class TreasuryBudgetPotRecord {
     return TreasuryBudgetPotRecord(
       id: id ?? this.id,
       title: title ?? this.title,
+      ownerGroup: ownerGroup ?? this.ownerGroup,
       kind: kind ?? this.kind,
       balance: balance ?? this.balance,
       target: target ?? this.target,
@@ -271,6 +277,24 @@ class TreasuryBudgetPotsSaveResult {
 
   final String budgetPotsPath;
   final int updatedRecordCount;
+}
+
+class TreasuryBudgetPotSeed {
+  const TreasuryBudgetPotSeed({
+    required this.title,
+    required this.kind,
+    required this.target,
+    required this.notes,
+    this.balance = 0,
+    this.items = const <String>[],
+  });
+
+  final String title;
+  final TreasuryStatusKind kind;
+  final double target;
+  final String notes;
+  final double balance;
+  final List<String> items;
 }
 
 class TreasuryFolderService {
@@ -1390,6 +1414,7 @@ class TreasuryFolderService {
     required TreasuryWorkspaceSnapshot workspace,
     required TreasuryMonthlySummarySnapshot summary,
     required String title,
+    required TreasuryBudgetPotOwnerGroup ownerGroup,
     required String notes,
     required double target,
   }) async {
@@ -1398,8 +1423,9 @@ class TreasuryFolderService {
       summary: summary,
     );
     final newRecord = TreasuryBudgetPotRecord(
-      id: _slugify(title),
+      id: _budgetPotId(ownerGroup, title),
       title: title,
+      ownerGroup: ownerGroup,
       kind: TreasuryStatusKind.future,
       balance: 0,
       target: target,
@@ -1449,6 +1475,47 @@ class TreasuryFolderService {
       financeRootPath: financeRootPath,
       pots: updatedPots,
       movements: [...state.movements, movement],
+    );
+  }
+
+  Future<TreasuryBudgetPotsSaveResult> seedBudgetPotPack({
+    required String financeRootPath,
+    required TreasuryWorkspaceSnapshot workspace,
+    required TreasuryMonthlySummarySnapshot summary,
+    required TreasuryBudgetPotOwnerGroup ownerGroup,
+    required List<TreasuryBudgetPotSeed> seeds,
+  }) async {
+    final state = await loadBudgetPotsState(
+      workspace: workspace,
+      summary: summary,
+    );
+    final existingIds = state.pots.map((pot) => pot.id).toSet();
+    final newRecords = <TreasuryBudgetPotRecord>[];
+
+    for (final seed in seeds) {
+      final record = TreasuryBudgetPotRecord(
+        id: _budgetPotId(ownerGroup, seed.title),
+        title: seed.title,
+        ownerGroup: ownerGroup,
+        kind: seed.kind,
+        balance: seed.balance,
+        target: seed.target,
+        notes: seed.notes,
+        items: seed.items,
+      );
+
+      if (existingIds.contains(record.id)) {
+        continue;
+      }
+
+      existingIds.add(record.id);
+      newRecords.add(record);
+    }
+
+    return saveBudgetPotsState(
+      financeRootPath: financeRootPath,
+      pots: [...state.pots, ...newRecords],
+      movements: state.movements,
     );
   }
 
@@ -1669,8 +1736,9 @@ class TreasuryFolderService {
     );
 
     return TreasuryBudgetPotRecord(
-      id: _slugify(title),
+      id: _budgetPotId(TreasuryBudgetPotOwnerGroup.shared, title),
       title: title,
+      ownerGroup: TreasuryBudgetPotOwnerGroup.shared,
       kind: kind,
       balance: 0,
       target: 0,
@@ -1683,6 +1751,7 @@ class TreasuryFolderService {
     return {
       'id': record.id,
       'title': record.title,
+      'owner_group': record.ownerGroup.name,
       'kind': record.kind.name,
       'balance': record.balance,
       'target': record.target,
@@ -1695,6 +1764,9 @@ class TreasuryFolderService {
     return TreasuryBudgetPotRecord(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
+      ownerGroup: _budgetPotOwnerGroupFromString(
+        json['owner_group']?.toString(),
+      ),
       kind: _budgetPotKindFromString(json['kind']?.toString()),
       balance: _parseMoney(json['balance']?.toString() ?? ''),
       target: _parseMoney(json['target']?.toString() ?? ''),
@@ -1749,6 +1821,28 @@ class TreasuryFolderService {
       default:
         return TreasuryStatusKind.future;
     }
+  }
+
+  TreasuryBudgetPotOwnerGroup _budgetPotOwnerGroupFromString(String? value) {
+    switch (value?.trim().toLowerCase()) {
+      case 'hayley':
+        return TreasuryBudgetPotOwnerGroup.hayley;
+      case 'you':
+        return TreasuryBudgetPotOwnerGroup.you;
+      case 'shared':
+        return TreasuryBudgetPotOwnerGroup.shared;
+      case 'newearth':
+      case 'new_earth':
+      case 'new-earth':
+      case 'business':
+        return TreasuryBudgetPotOwnerGroup.newEarth;
+      default:
+        return TreasuryBudgetPotOwnerGroup.shared;
+    }
+  }
+
+  String _budgetPotId(TreasuryBudgetPotOwnerGroup ownerGroup, String title) {
+    return _slugify('${ownerGroup.name}-${title.trim()}');
   }
 
   String _slugify(String value) {

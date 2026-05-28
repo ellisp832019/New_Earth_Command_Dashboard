@@ -165,6 +165,7 @@ class TreasuryBudgetPotsController
     required String title,
     required String notes,
     required double target,
+    required TreasuryBudgetPotOwnerGroup ownerGroup,
   }) async {
     final current = await future;
     final financeRootPath = current.workspace.financeRootPath;
@@ -178,8 +179,30 @@ class TreasuryBudgetPotsController
       workspace: current.workspace,
       summary: await ref.read(treasuryMonthlySummaryProvider.future),
       title: title,
+      ownerGroup: ownerGroup,
       notes: notes,
       target: target,
+    );
+    ref.invalidateSelf();
+  }
+
+  Future<void> seedStarterPack({
+    required TreasuryBudgetPotOwnerGroup ownerGroup,
+    required List<TreasuryBudgetPotSeed> seeds,
+  }) async {
+    final current = await future;
+    final financeRootPath = current.workspace.financeRootPath;
+    if (financeRootPath == null) {
+      return;
+    }
+
+    final service = ref.read(treasuryFolderServiceProvider);
+    await service.seedBudgetPotPack(
+      financeRootPath: financeRootPath,
+      workspace: current.workspace,
+      summary: await ref.read(treasuryMonthlySummaryProvider.future),
+      ownerGroup: ownerGroup,
+      seeds: seeds,
     );
     ref.invalidateSelf();
   }

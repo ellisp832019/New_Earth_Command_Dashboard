@@ -602,6 +602,7 @@ void main() {
       workspace: workspace,
       summary: summary,
       title: 'Holiday buffer',
+      ownerGroup: TreasuryBudgetPotOwnerGroup.hayley,
       notes: 'A gentle savings pot.',
       target: 250,
     );
@@ -617,7 +618,7 @@ void main() {
       financeRootPath: financeRoot.path,
       workspace: workspace,
       summary: summary,
-      potId: 'safe-to-spend',
+      potId: 'shared-safe-to-spend',
       delta: 100,
       note: 'Top up for the week ahead.',
     );
@@ -626,8 +627,8 @@ void main() {
       financeRootPath: financeRoot.path,
       workspace: workspace,
       summary: summary,
-      fromPotId: 'safe-to-spend',
-      toPotId: 'watch-buffer',
+      fromPotId: 'shared-safe-to-spend',
+      toPotId: 'shared-watch-buffer',
       amount: 25,
       note: 'Move a small amount to watch.',
     );
@@ -638,12 +639,86 @@ void main() {
     );
     expect(finalState.movements, hasLength(2));
     final safePot = finalState.pots.firstWhere(
-      (pot) => pot.id == 'safe-to-spend',
+      (pot) => pot.id == 'shared-safe-to-spend',
     );
     expect(safePot.balance, closeTo(75, 0.001));
     final watchPot = finalState.pots.firstWhere(
-      (pot) => pot.id == 'watch-buffer',
+      (pot) => pot.id == 'shared-watch-buffer',
     );
     expect(watchPot.balance, closeTo(25, 0.001));
+  });
+
+  test('seedBudgetPotPack creates calm personal starter pots safely', () async {
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'treasury_budget_pots_seed_test_',
+    );
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    final repoRoot = Directory(p.join(tempRoot.path, 'dashboard_repo'));
+    await repoRoot.create(recursive: true);
+
+    final financeRoot = Directory(
+      p.join(tempRoot.path, '17_FINANCE_AND_TREASURY'),
+    );
+    await financeRoot.create(recursive: true);
+    for (final relativeFolder in TreasuryFolderService.requiredFolders) {
+      await Directory(
+        p.join(financeRoot.path, relativeFolder),
+      ).create(recursive: true);
+    }
+
+    final configDir = Directory(p.join(repoRoot.path, 'config'));
+    await configDir.create(recursive: true);
+    await File(
+      p.join(configDir.path, 'local_paths.json'),
+    ).writeAsString(jsonEncode({'finance_treasury_path': financeRoot.path}));
+
+    final service = TreasuryFolderService(workingDirectory: repoRoot);
+    await service.createMissingRequiredFiles();
+
+    final workspace = await service.loadWorkspace();
+    final summary = await service.loadMonthlySummary(workspace: workspace);
+
+    final result = await service.seedBudgetPotPack(
+      financeRootPath: financeRoot.path,
+      workspace: workspace,
+      summary: summary,
+      ownerGroup: TreasuryBudgetPotOwnerGroup.hayley,
+      seeds: const [
+        TreasuryBudgetPotSeed(
+          title: 'Living',
+          kind: TreasuryStatusKind.safe,
+          target: 1000,
+          notes: 'Daily living costs.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Holiday',
+          kind: TreasuryStatusKind.future,
+          target: 1500,
+          notes: 'Trips and time away.',
+        ),
+      ],
+    );
+
+    expect(result.updatedRecordCount, greaterThan(0));
+
+    final state = await service.loadBudgetPotsState(
+      workspace: workspace,
+      summary: summary,
+    );
+    expect(
+      state.pots.where(
+        (pot) => pot.ownerGroup == TreasuryBudgetPotOwnerGroup.hayley,
+      ),
+      hasLength(2),
+    );
+    expect(
+      state.pots.firstWhere((pot) => pot.id == 'hayley-living').target,
+      closeTo(1000, 0.001),
+    );
   });
 }

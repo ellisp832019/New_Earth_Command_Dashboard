@@ -38,6 +38,11 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
             icon: const Icon(Icons.add),
           ),
           IconButton(
+            tooltip: 'Starter packs',
+            onPressed: () => _showStarterPacksSheet(context, ref),
+            icon: const Icon(Icons.auto_awesome_outlined),
+          ),
+          IconButton(
             tooltip: 'Reload',
             onPressed: () => ref.invalidate(treasuryBudgetPotsProvider),
             icon: const Icon(Icons.refresh),
@@ -69,6 +74,7 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
                   _BudgetPotsEmptyStateCard(
                     snapshot: snapshot,
                     onAddPot: () => _showAddPotDialog(context, ref),
+                    onStarterPacks: () => _showStarterPacksSheet(context, ref),
                   ),
                   const SizedBox(height: 16),
                 ] else ...[
@@ -135,6 +141,12 @@ class _BudgetPotsHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final money = NumberFormat.currency(symbol: '£', decimalDigits: 2);
+    final ownerCounts = {
+      for (final owner in _ownerGroupOrder)
+        owner: snapshot.editablePots
+            .where((pot) => pot.ownerGroup == owner)
+            .length,
+    };
 
     return Container(
       decoration: _cardDecoration(highlighted: true),
@@ -180,6 +192,19 @@ class _BudgetPotsHeroCard extends StatelessWidget {
                         'Recurring ${money.format(snapshot.subscriptionTotal)}',
                     accent: AppColours.darkAccent,
                   ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final owner in _ownerGroupOrder)
+                    _StatusPill(
+                      label:
+                          '${_ownerGroupLabel(owner)} ${ownerCounts[owner] ?? 0}',
+                      accent: _ownerGroupAccent(owner),
+                    ),
                 ],
               ),
             ],
@@ -384,6 +409,18 @@ class _BudgetPotCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              _StatusPill(
+                label: _ownerGroupLabel(pot.ownerGroup),
+                accent: _ownerGroupAccent(pot.ownerGroup),
+              ),
+              _StatusPill(label: _statusLabel(pot.kind), accent: accent),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
               TextButton.icon(
                 onPressed: onAdjust,
                 icon: const Icon(Icons.tune_outlined, size: 16),
@@ -467,7 +504,7 @@ class _BudgetPotsFooterCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             snapshot.issues.isEmpty
-                ? 'Budget Pots keeps a local pot file inside the Treasury dashboard folder and writes with backups.'
+                ? 'Budget Pots keeps separate personal, shared, and New Earth pots inside one local file and writes with backups.'
                 : snapshot.issues.join('\n'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
@@ -501,10 +538,12 @@ class _BudgetPotsEmptyStateCard extends StatelessWidget {
   const _BudgetPotsEmptyStateCard({
     required this.snapshot,
     required this.onAddPot,
+    required this.onStarterPacks,
   });
 
   final TreasuryBudgetPotsSnapshot snapshot;
   final VoidCallback onAddPot;
+  final VoidCallback onStarterPacks;
 
   @override
   Widget build(BuildContext context) {
@@ -541,6 +580,11 @@ class _BudgetPotsEmptyStateCard extends StatelessWidget {
                     context.push(RouteNames.treasuryMonthlySummary),
                 icon: const Icon(Icons.assessment_outlined),
                 label: const Text('Open monthly summary'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onStarterPacks,
+                icon: const Icon(Icons.auto_awesome_outlined),
+                label: const Text('Starter packs'),
               ),
             ],
           ),
@@ -725,6 +769,7 @@ Future<void> _showAddPotDialog(BuildContext context, WidgetRef ref) async {
   final targetController = TextEditingController(text: '0');
   final notesController = TextEditingController();
   final formKey = GlobalKey<FormState>();
+  var selectedOwnerGroup = TreasuryBudgetPotOwnerGroup.shared;
   var selectedKind = TreasuryBudgetPotKind.future;
 
   try {
@@ -769,6 +814,25 @@ Future<void> _showAddPotDialog(BuildContext context, WidgetRef ref) async {
                             return;
                           }
                           setDialogState(() => selectedKind = value);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<TreasuryBudgetPotOwnerGroup>(
+                        initialValue: selectedOwnerGroup,
+                        decoration: const InputDecoration(labelText: 'Owner'),
+                        items: _ownerGroupOrder
+                            .map(
+                              (ownerGroup) => DropdownMenuItem(
+                                value: ownerGroup,
+                                child: Text(_ownerGroupLabel(ownerGroup)),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setDialogState(() => selectedOwnerGroup = value);
                         },
                       ),
                       const SizedBox(height: 12),
@@ -825,12 +889,145 @@ Future<void> _showAddPotDialog(BuildContext context, WidgetRef ref) async {
           title: titleController.text.trim(),
           notes: notesController.text.trim(),
           target: double.tryParse(targetController.text.trim()) ?? 0,
+          ownerGroup: selectedOwnerGroup,
         );
   } finally {
     titleController.dispose();
     targetController.dispose();
     notesController.dispose();
   }
+}
+
+class _TreasuryBudgetPotPack {
+  const _TreasuryBudgetPotPack({
+    required this.ownerGroup,
+    required this.title,
+    required this.subtitle,
+    required this.seeds,
+  });
+
+  final TreasuryBudgetPotOwnerGroup ownerGroup;
+  final String title;
+  final String subtitle;
+  final List<TreasuryBudgetPotSeed> seeds;
+}
+
+Future<void> _showStarterPacksSheet(BuildContext context, WidgetRef ref) async {
+  final packs = _starterPacks();
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColours.darkSurface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(
+            color: AppColours.darkOutline.withValues(alpha: 0.9),
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _SectionTitle(
+                icon: Icons.auto_awesome_outlined,
+                title: 'Starter packs',
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Seed a calm set of pots for personal, shared, or New Earth money so Hayley can start using Treasury straight away.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...packs.map(
+                (pack) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () async {
+                      await ref
+                          .read(treasuryBudgetPotsControllerProvider.notifier)
+                          .seedStarterPack(
+                            ownerGroup: pack.ownerGroup,
+                            seeds: pack.seeds,
+                          );
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: _ownerGroupAccent(
+                          pack.ownerGroup,
+                        ).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _ownerGroupAccent(
+                            pack.ownerGroup,
+                          ).withValues(alpha: 0.22),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                _ownerGroupIcon(pack.ownerGroup),
+                                color: _ownerGroupAccent(pack.ownerGroup),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  pack.title,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: AppColours.darkText,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            pack.subtitle,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColours.darkMutedText,
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 Future<void> _showAdjustPotDialog(
@@ -1047,6 +1244,350 @@ String _kindLabel(TreasuryBudgetPotKind kind) {
     TreasuryBudgetPotKind.future => 'Future',
     TreasuryBudgetPotKind.archived => 'Archived',
   };
+}
+
+String _statusLabel(TreasuryStatusKind kind) {
+  return switch (kind) {
+    TreasuryStatusKind.safe => 'Safe',
+    TreasuryStatusKind.watch => 'Watch',
+    TreasuryStatusKind.pause => 'Pause',
+    TreasuryStatusKind.decision => 'Decision',
+    TreasuryStatusKind.future => 'Future',
+    TreasuryStatusKind.archived => 'Archived',
+  };
+}
+
+const _ownerGroupOrder = <TreasuryBudgetPotOwnerGroup>[
+  TreasuryBudgetPotOwnerGroup.hayley,
+  TreasuryBudgetPotOwnerGroup.you,
+  TreasuryBudgetPotOwnerGroup.shared,
+  TreasuryBudgetPotOwnerGroup.newEarth,
+];
+
+String _ownerGroupLabel(TreasuryBudgetPotOwnerGroup ownerGroup) {
+  return switch (ownerGroup) {
+    TreasuryBudgetPotOwnerGroup.hayley => 'Hayley',
+    TreasuryBudgetPotOwnerGroup.you => 'You',
+    TreasuryBudgetPotOwnerGroup.shared => 'Shared',
+    TreasuryBudgetPotOwnerGroup.newEarth => 'New Earth',
+  };
+}
+
+Color _ownerGroupAccent(TreasuryBudgetPotOwnerGroup ownerGroup) {
+  return switch (ownerGroup) {
+    TreasuryBudgetPotOwnerGroup.hayley => AppColours.darkSuccess,
+    TreasuryBudgetPotOwnerGroup.you => AppColours.darkSecondary,
+    TreasuryBudgetPotOwnerGroup.shared => AppColours.darkPrimary,
+    TreasuryBudgetPotOwnerGroup.newEarth => AppColours.darkPurple,
+  };
+}
+
+IconData _ownerGroupIcon(TreasuryBudgetPotOwnerGroup ownerGroup) {
+  return switch (ownerGroup) {
+    TreasuryBudgetPotOwnerGroup.hayley => Icons.person_outline,
+    TreasuryBudgetPotOwnerGroup.you => Icons.badge_outlined,
+    TreasuryBudgetPotOwnerGroup.shared => Icons.groups_outlined,
+    TreasuryBudgetPotOwnerGroup.newEarth => Icons.apartment_outlined,
+  };
+}
+
+List<_TreasuryBudgetPotPack> _starterPacks() {
+  return [
+    _TreasuryBudgetPotPack(
+      ownerGroup: TreasuryBudgetPotOwnerGroup.hayley,
+      title: 'Hayley personal pots',
+      subtitle:
+          'Living, home, holiday, and the calmer day-to-day personal pots.',
+      seeds: const [
+        TreasuryBudgetPotSeed(
+          title: 'Living',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Day-to-day essentials and regular spending.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Home',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Rent, repairs, furniture, and home upkeep.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Holiday',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Trips, travel, and calm time away.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Personal',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Personal spending that does not need a more specific pot.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Emergency',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Backup money for the unexpected.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Treats',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Guilt-free fun and occasional treats.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Health',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Appointments, prescriptions, and wellbeing costs.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Car / Travel',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Fuel, travel, maintenance, and transport costs.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Annual Bills',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Costs that arrive once or twice a year.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Gifts',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Birthdays, holidays, and thoughtful giving.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Learning',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Courses, books, and calm self-development.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Clothing',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Seasonal clothes and wardrobe refreshes.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Subscriptions',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Recurring services kept under gentle review.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Buffer',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'A small flexible buffer for breathing room.',
+        ),
+      ],
+    ),
+    _TreasuryBudgetPotPack(
+      ownerGroup: TreasuryBudgetPotOwnerGroup.you,
+      title: 'Your personal pots',
+      subtitle: 'The same calm structure for your own living and life money.',
+      seeds: const [
+        TreasuryBudgetPotSeed(
+          title: 'Living',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Day-to-day essentials and regular spending.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Home',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Rent, repairs, furniture, and home upkeep.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Holiday',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Trips, travel, and calm time away.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Personal',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Personal spending that does not need a more specific pot.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Emergency',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Backup money for the unexpected.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Treats',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Guilt-free fun and occasional treats.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Health',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Appointments, prescriptions, and wellbeing costs.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Car / Travel',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Fuel, travel, maintenance, and transport costs.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Annual Bills',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Costs that arrive once or twice a year.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Gifts',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Birthdays, holidays, and thoughtful giving.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Learning',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Courses, books, and calm self-development.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Clothing',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Seasonal clothes and wardrobe refreshes.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Subscriptions',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Recurring services kept under gentle review.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Buffer',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'A small flexible buffer for breathing room.',
+        ),
+      ],
+    ),
+    _TreasuryBudgetPotPack(
+      ownerGroup: TreasuryBudgetPotOwnerGroup.shared,
+      title: 'Shared household pots',
+      subtitle: 'Household life costs for the things you both use together.',
+      seeds: const [
+        TreasuryBudgetPotSeed(
+          title: 'Rent / Mortgage',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'The main home payment.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Utilities',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Power, water, internet, and other services.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Groceries',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Shared food and household essentials.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Household Supplies',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'Cleaning, laundry, and general home supplies.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Repairs',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Unexpected fixes and maintenance.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Furniture',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Home upgrades and replacements.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Home Buffer',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'A small shared cushion for home life.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Shared Holiday',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Trips and travel together.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Shared Car / Travel',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Shared transport and travel costs.',
+        ),
+      ],
+    ),
+    _TreasuryBudgetPotPack(
+      ownerGroup: TreasuryBudgetPotOwnerGroup.newEarth,
+      title: 'New Earth business pots',
+      subtitle:
+          'Project, tools, and operating money kept separate from home life.',
+      seeds: const [
+        TreasuryBudgetPotSeed(
+          title: 'Projects',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Money for active delivery work.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Tools',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Apps, subscriptions, and equipment for the business.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Tax',
+          kind: TreasuryStatusKind.pause,
+          target: 0,
+          notes: 'A calm reserve for tax and obligations.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Ops Buffer',
+          kind: TreasuryStatusKind.safe,
+          target: 0,
+          notes: 'A small operating cushion for New Earth.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Learning',
+          kind: TreasuryStatusKind.future,
+          target: 0,
+          notes: 'Training, books, and team growth.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Travel',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Business travel and mileage.',
+        ),
+        TreasuryBudgetPotSeed(
+          title: 'Subscriptions',
+          kind: TreasuryStatusKind.watch,
+          target: 0,
+          notes: 'Recurring business services.',
+        ),
+      ],
+    ),
+  ];
 }
 
 Color _accentForKind(TreasuryStatusKind kind) {
