@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../application/treasury_controller.dart';
 import '../application/treasury_wizard_draft_controller.dart';
 import '../data/treasury_wizard_draft.dart';
 import '../data/treasury_wizard_flow.dart';
@@ -164,7 +167,11 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
                               FilledButton.icon(
                                 onPressed: () => _finish(context),
                                 icon: const Icon(Icons.save_outlined),
-                                label: const Text('Save draft'),
+                                label: Text(
+                                  _flow == TreasuryWizardFlow.weeklyRitual
+                                      ? 'Save review'
+                                      : 'Save draft',
+                                ),
                               ),
                             TextButton.icon(
                               onPressed: () => context.pop(),
@@ -213,12 +220,78 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
         .ensureLength(_flow, _stepsFor(_flow).length);
   }
 
-  void _finish(BuildContext context) {
-    ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Draft saved locally in Treasury.')),
+  Future<void> _finish(BuildContext context) async {
+    if (_flow != TreasuryWizardFlow.weeklyRitual) {
+      ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Draft saved locally in Treasury.')),
+      );
+      context.pop();
+      return;
+    }
+
+    final service = ref.read(treasuryFolderServiceProvider);
+    final snapshot = await service.loadWorkspace();
+    if (!context.mounted) {
+      return;
+    }
+
+    final financeRootPath = snapshot.financeRootPath;
+    if (financeRootPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Treasury needs the finance folder linked first.'),
+        ),
+      );
+      return;
+    }
+
+    final safeItems = _itemsForController(0);
+    final watchItems = _itemsForController(1);
+    final pauseItems = _itemsForController(2);
+    final decisionItems = _itemsForController(3);
+    final closingNote = _controllers.length > 4 ? _controllers[4].text : '';
+
+    final result = await service.saveWeeklyReview(
+      financeRootPath: financeRootPath,
+      safeItems: safeItems,
+      watchItems: watchItems,
+      pauseItems: pauseItems,
+      decisionItems: decisionItems,
+      closingNote: closingNote,
+      reviewedAt: DateTime.now(),
     );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ref.read(treasuryWizardDraftsProvider.notifier).markSaved(_flow);
+    ref.invalidate(treasuryWorkspaceProvider);
+
+    final savedName = result.reviewPath.split(Platform.pathSeparator).last;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Weekly review saved: $savedName')));
     context.pop();
+  }
+
+  List<String> _itemsForController(int index) {
+    if (index >= _controllers.length) {
+      return const <String>[];
+    }
+
+    final raw = _controllers[index].text.trim();
+    if (raw.isEmpty) {
+      return const <String>[];
+    }
+
+    return raw
+        .split(RegExp(r'[\n\r;]+'))
+        .map((item) => item.replaceFirst(RegExp(r'^[\-\*\d\.\)\s]+'), ''))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
 
   List<_WizardStepDefinition> _stepsFor(TreasuryWizardFlow flow) {

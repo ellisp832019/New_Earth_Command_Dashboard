@@ -51,6 +51,18 @@ class TreasuryWorkspaceSnapshot {
   final String guidanceNote;
 }
 
+class TreasuryWeeklyReviewSaveResult {
+  const TreasuryWeeklyReviewSaveResult({
+    required this.reviewPath,
+    required this.weeklyStatusPath,
+    required this.dashboardStatePath,
+  });
+
+  final String reviewPath;
+  final String weeklyStatusPath;
+  final String dashboardStatePath;
+}
+
 class TreasuryFolderService {
   TreasuryFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -264,6 +276,86 @@ class TreasuryFolderService {
     await file.writeAsString(contents);
   }
 
+  Future<TreasuryWeeklyReviewSaveResult> saveWeeklyReview({
+    required String financeRootPath,
+    required List<String> safeItems,
+    required List<String> watchItems,
+    required List<String> pauseItems,
+    required List<String> decisionItems,
+    required String closingNote,
+    required DateTime reviewedAt,
+  }) async {
+    final financeRoot = Directory(financeRootPath);
+    final reviewFolder = Directory(
+      path.join(
+        financeRoot.path,
+        '10_FINANCE_MEETING_NOTES',
+        'Weekly_Finance_Queen_Reviews',
+      ),
+    );
+    await reviewFolder.create(recursive: true);
+
+    final dayStamp = _dateStamp(reviewedAt);
+    final reviewFile = File(
+      path.join(reviewFolder.path, '${dayStamp}_weekly_finance_review.md'),
+    );
+    final weeklyStatusFile = File(
+      path.join(financeRoot.path, '00_FINANCE_DASHBOARD', 'weekly_status.json'),
+    );
+    final dashboardStateFile = File(
+      path.join(
+        financeRoot.path,
+        '00_FINANCE_DASHBOARD',
+        'dashboard_state.json',
+      ),
+    );
+
+    final reviewContent = _buildWeeklyReviewMarkdown(
+      reviewedAt: reviewedAt,
+      safeItems: safeItems,
+      watchItems: watchItems,
+      pauseItems: pauseItems,
+      decisionItems: decisionItems,
+      closingNote: closingNote,
+    );
+    await writeTextFileWithBackup(reviewFile, reviewContent);
+
+    final weeklyStatusContent = const JsonEncoder.withIndent('  ').convert({
+      'review_date': dayStamp,
+      'balance_checked': true,
+      'receipts_sorted': true,
+      'subscriptions_reviewed': true,
+      'project_spend_reviewed': true,
+      'notes': closingNote,
+      'safe_count': safeItems.length,
+      'watch_count': watchItems.length,
+      'pause_count': pauseItems.length,
+      'decision_count': decisionItems.length,
+    });
+    await writeTextFileWithBackup(weeklyStatusFile, weeklyStatusContent);
+
+    final dashboardStateContent = const JsonEncoder.withIndent('  ').convert({
+      'updated_at': reviewedAt.toIso8601String(),
+      'weekly_review_file': path.join(
+        '10_FINANCE_MEETING_NOTES',
+        'Weekly_Finance_Queen_Reviews',
+        '${dayStamp}_weekly_finance_review.md',
+      ),
+      'safe': safeItems,
+      'watch': watchItems,
+      'pause': pauseItems,
+      'decision': decisionItems,
+      'notes': closingNote,
+    });
+    await writeTextFileWithBackup(dashboardStateFile, dashboardStateContent);
+
+    return TreasuryWeeklyReviewSaveResult(
+      reviewPath: reviewFile.path,
+      weeklyStatusPath: weeklyStatusFile.path,
+      dashboardStatePath: dashboardStateFile.path,
+    );
+  }
+
   TreasuryStateSummary _buildSummary({
     required TreasuryStatusKind kind,
     required String title,
@@ -423,5 +515,57 @@ class TreasuryFolderService {
       default:
         return '';
     }
+  }
+
+  String _buildWeeklyReviewMarkdown({
+    required DateTime reviewedAt,
+    required List<String> safeItems,
+    required List<String> watchItems,
+    required List<String> pauseItems,
+    required List<String> decisionItems,
+    required String closingNote,
+  }) {
+    final dateLabel = _dateStamp(reviewedAt);
+    return [
+      '# Weekly Finance Review',
+      '',
+      'Date: $dateLabel',
+      'Reviewed by: Hayley',
+      '',
+      '## 🟢 Safe',
+      ..._markdownBullets(safeItems),
+      '',
+      '## 🟡 Watch',
+      ..._markdownBullets(watchItems),
+      '',
+      '## 🔴 Pause',
+      ..._markdownBullets(pauseItems),
+      '',
+      '## 🔵 Needs decision',
+      ..._markdownBullets(decisionItems),
+      '',
+      '## This week, money is telling us',
+      closingNote.trim().isEmpty ? '- ' : closingNote.trim(),
+      '',
+    ].join('\n');
+  }
+
+  List<String> _markdownBullets(List<String> items) {
+    if (items.isEmpty) {
+      return const ['- '];
+    }
+
+    return items.map((item) {
+      final text = item.trim();
+      return text.isEmpty ? '- ' : '- $text';
+    }).toList();
+  }
+
+  String _dateStamp(DateTime dateTime) {
+    final local = dateTime.toLocal();
+    final year = local.year.toString().padLeft(4, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 }
