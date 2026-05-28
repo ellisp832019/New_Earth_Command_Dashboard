@@ -124,6 +124,8 @@ class _AssetsContent extends StatelessWidget {
                     const SizedBox(height: 22),
                     _AssetPriorityCard(
                       snapshot: snapshot,
+                      onOpenQuickCapture: () =>
+                          context.push(RouteNames.assetQuickCapture),
                       onOpenEquipment: () =>
                           context.push(RouteNames.assetEquipment),
                       onOpenParts: () => context.push(RouteNames.assetParts),
@@ -444,6 +446,7 @@ class _AssetSummaryGrid extends StatelessWidget {
 class _AssetPriorityCard extends StatelessWidget {
   const _AssetPriorityCard({
     required this.snapshot,
+    required this.onOpenQuickCapture,
     required this.onOpenEquipment,
     required this.onOpenParts,
     required this.onOpenLowStock,
@@ -452,6 +455,7 @@ class _AssetPriorityCard extends StatelessWidget {
   });
 
   final AssetWorkspaceSnapshot snapshot;
+  final VoidCallback onOpenQuickCapture;
   final VoidCallback onOpenEquipment;
   final VoidCallback onOpenParts;
   final VoidCallback onOpenLowStock;
@@ -542,8 +546,13 @@ class _AssetPriorityCard extends StatelessWidget {
             alignment: wide ? WrapAlignment.end : WrapAlignment.start,
             children: [
               FilledButton.icon(
-                onPressed: primaryAction,
+                onPressed: onOpenQuickCapture,
                 icon: const Icon(Icons.arrow_forward),
+                label: const Text('Quick Capture'),
+              ),
+              OutlinedButton.icon(
+                onPressed: primaryAction,
+                icon: const Icon(Icons.arrow_forward_outlined),
                 label: Text(primaryLabel),
               ),
               OutlinedButton.icon(
