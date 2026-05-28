@@ -21,6 +21,7 @@ import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
+import '../../features/treasury/presentation/treasury_screen.dart';
 import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
@@ -49,6 +50,12 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.dashboard,
               builder: (context, state) => const DashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'treasury',
+                  builder: (context, state) => const TreasuryScreen(),
+                ),
+              ],
             ),
           ],
         ),

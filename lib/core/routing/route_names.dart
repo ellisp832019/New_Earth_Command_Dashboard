@@ -5,6 +5,7 @@ abstract final class RouteNames {
   static const tasks = '/tasks';
   static const newTask = '/tasks/new';
   static const planner = '/planner';
+  static const treasury = '/dashboard/treasury';
   static const more = '/more';
   static const journal = '/journal';
   static const newJournal = '/journal/new';

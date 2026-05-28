@@ -11,6 +11,8 @@ import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../application/dashboard_controller.dart';
 import '../data/dashboard_repository.dart';
+import '../../treasury/application/treasury_controller.dart';
+import '../../treasury/data/treasury_folder_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -61,6 +63,8 @@ class _DashboardContent extends StatelessWidget {
                     _DashboardHero(snapshot: snapshot),
                     const SizedBox(height: 22),
                     _DashboardGuidanceCard(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    const _TreasuryOverviewCard(),
                     const SizedBox(height: 22),
                     _TopTaskShowcase(snapshot: snapshot),
                     const SizedBox(height: 22),
@@ -188,7 +192,6 @@ class _DashboardHero extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _TopTaskShowcase extends StatelessWidget {
@@ -290,6 +293,259 @@ class _DashboardGuidanceCard extends StatelessWidget {
       title: snapshot.nextStepTitle,
       summary: snapshot.nextStepSummary,
       reason: snapshot.nextStepReason,
+    );
+  }
+}
+
+class _TreasuryOverviewCard extends ConsumerWidget {
+  const _TreasuryOverviewCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(treasuryWorkspaceProvider);
+
+    return snapshot.when(
+      loading: () => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.account_balance_wallet_outlined,
+              color: AppColours.darkSecondary,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Treasury is loading quietly.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => _TreasuryOverviewPanel(
+        title: 'Treasury',
+        subtitle:
+            'The finance area needs a calm setup before it can show more.',
+        body:
+            'Hayley can still open Treasury, but the folder link needs attention first.',
+        statusLabel: 'Setup needed',
+        statusAccent: AppColours.darkAmber,
+        receiptsLabel: 'Receipts are unavailable until the folder is linked.',
+        onOpenTreasury: () => context.push(RouteNames.treasury),
+        onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+        stateSummaries: const <TreasuryStateSummary>[],
+      ),
+      data: (data) => _TreasuryOverviewPanel(
+        title: 'Treasury',
+        subtitle: 'Hayley\'s private finance space inside the Dashboard.',
+        body: data.isReady
+            ? 'Safe, Watch, Pause, and Decision live in one calm place, with receipts and weekly ritual close by.'
+            : 'The Treasury area is present, but the external Omega OS folder still needs a small setup check.',
+        statusLabel: data.isReady ? 'Ready' : 'Setup needed',
+        statusAccent: data.isReady
+            ? AppColours.darkSuccess
+            : AppColours.darkAmber,
+        receiptsLabel: data.receiptsToSortCount == 0
+            ? 'No receipts are waiting right now.'
+            : '${data.receiptsToSortCount} receipt${data.receiptsToSortCount == 1 ? '' : 's'} to sort.',
+        onOpenTreasury: () => context.push(RouteNames.treasury),
+        onReload: () => ref.invalidate(treasuryWorkspaceProvider),
+        stateSummaries: data.stateSummaries,
+      ),
+    );
+  }
+}
+
+class _TreasuryOverviewPanel extends StatelessWidget {
+  const _TreasuryOverviewPanel({
+    required this.title,
+    required this.subtitle,
+    required this.body,
+    required this.statusLabel,
+    required this.statusAccent,
+    required this.receiptsLabel,
+    required this.onOpenTreasury,
+    required this.onReload,
+    required this.stateSummaries,
+  });
+
+  final String title;
+  final String subtitle;
+  final String body;
+  final String statusLabel;
+  final Color statusAccent;
+  final String receiptsLabel;
+  final VoidCallback onOpenTreasury;
+  final VoidCallback onReload;
+  final List<TreasuryStateSummary> stateSummaries;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final summaryMap = {
+      for (final summary in stateSummaries) summary.kind: summary.count,
+    };
+
+    final metricChips = [
+      _TreasuryMetricChip(
+        label: 'Safe',
+        value: '${summaryMap[TreasuryStatusKind.safe] ?? 0}',
+        accent: AppColours.darkSuccess,
+      ),
+      _TreasuryMetricChip(
+        label: 'Watch',
+        value: '${summaryMap[TreasuryStatusKind.watch] ?? 0}',
+        accent: AppColours.darkAmber,
+      ),
+      _TreasuryMetricChip(
+        label: 'Pause',
+        value: '${summaryMap[TreasuryStatusKind.pause] ?? 0}',
+        accent: const Color(0xFFE26B6B),
+      ),
+      _TreasuryMetricChip(
+        label: 'Decision',
+        value: '${summaryMap[TreasuryStatusKind.decision] ?? 0}',
+        accent: AppColours.darkSecondary,
+      ),
+    ];
+
+    return Container(
+      decoration: _panelDecoration(context),
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWideLayout = constraints.maxWidth >= 960;
+
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const _PanelTitle(
+                    title: 'Treasury',
+                    icon: Icons.account_balance_wallet_outlined,
+                  ),
+                  const Spacer(),
+                  _InlineTag(
+                    label: statusLabel,
+                    accent: statusAccent,
+                    foreground: statusAccent,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                subtitle,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 740),
+                child: Text(
+                  body,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(spacing: 10, runSpacing: 10, children: metricChips),
+              const SizedBox(height: 14),
+              Text(
+                receiptsLabel,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenTreasury,
+                icon: const Icon(Icons.lock_open_outlined),
+                label: const Text('Open Treasury'),
+              ),
+              TextButton.icon(
+                onPressed: onReload,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload'),
+              ),
+            ],
+          );
+
+          if (!useWideLayout) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [content, const SizedBox(height: 16), actions],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: content),
+              const SizedBox(width: 20),
+              SizedBox(width: 220, child: actions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TreasuryMetricChip extends StatelessWidget {
+  const _TreasuryMetricChip({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 118),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.7,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -934,9 +1190,7 @@ class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
               DropdownButtonFormField<String?>(
                 key: const Key('dashboardQuickCaptureTypeField'),
                 initialValue: _type,
-                decoration: const InputDecoration(
-                  labelText: 'Capture type',
-                ),
+                decoration: const InputDecoration(labelText: 'Capture type'),
                 items: [
                   const DropdownMenuItem<String?>(
                     value: null,
@@ -1067,9 +1321,7 @@ class _ShowcaseTaskCard extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             state.title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: AppColours.darkText,
               height: 1.15,
             ),
@@ -1077,9 +1329,7 @@ class _ShowcaseTaskCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             state.subtitle,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.35,
             ),

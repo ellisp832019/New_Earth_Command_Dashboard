@@ -112,7 +112,9 @@ class _Sidebar extends StatelessWidget {
           bottomLeft: Radius.circular(32),
         ),
         border: Border(
-          right: BorderSide(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+          right: BorderSide(
+            color: AppColours.darkOutline.withValues(alpha: 0.9),
+          ),
         ),
       ),
       child: SingleChildScrollView(
@@ -285,7 +287,9 @@ class _ShellDestination extends StatelessWidget {
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
             border: selected
-                ? Border.all(color: AppColours.darkSecondary.withValues(alpha: 0.34))
+                ? Border.all(
+                    color: AppColours.darkSecondary.withValues(alpha: 0.34),
+                  )
                 : null,
           ),
           child: Column(
@@ -389,21 +393,9 @@ class _BrandMark extends StatelessWidget {
               ),
             ),
           ),
-          Icon(
-            Icons.spa_rounded,
-            color: Colors.white,
-            size: size * 0.46,
-          ),
-          Positioned(
-            top: 12,
-            left: 15,
-            child: _BrandStar(size: size * 0.07),
-          ),
-          Positioned(
-            top: 16,
-            right: 14,
-            child: _BrandStar(size: size * 0.08),
-          ),
+          Icon(Icons.spa_rounded, color: Colors.white, size: size * 0.46),
+          Positioned(top: 12, left: 15, child: _BrandStar(size: size * 0.07)),
+          Positioned(top: 16, right: 14, child: _BrandStar(size: size * 0.08)),
         ],
       ),
     );
@@ -438,11 +430,7 @@ class _ShellBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF030A15),
-            Color(0xFF071423),
-            Color(0xFF0C1D2A),
-          ],
+          colors: [Color(0xFF030A15), Color(0xFF071423), Color(0xFF0C1D2A)],
         ),
       ),
       child: Stack(
@@ -491,9 +479,7 @@ class _GlowOrb extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );

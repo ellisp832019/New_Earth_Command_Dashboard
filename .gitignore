@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+```text
+config/local_paths.json
+.local_treasury_cache/
+.treasury_runtime/
+```
