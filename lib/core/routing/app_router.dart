@@ -8,6 +8,7 @@ import '../../features/assets/presentation/location_register_screen.dart';
 import '../../features/assets/presentation/project_summary_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/repair_summary_screen.dart';
+import '../../features/assets/presentation/qr_label_register_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
@@ -31,6 +32,7 @@ import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/treasury/presentation/treasury_screen.dart';
 import '../../features/treasury/presentation/treasury_decisions_board_screen.dart';
+import '../../features/treasury/presentation/treasury_budget_pots_screen.dart';
 import '../../features/treasury/presentation/treasury_monthly_summary_screen.dart';
 import '../../features/treasury/presentation/treasury_settings_screen.dart';
 import '../../features/treasury/presentation/treasury_wizard_screen.dart';
@@ -102,6 +104,10 @@ final appRouter = GoRouter(
                   path: 'valuation',
                   builder: (context, state) => const ValuationSummaryScreen(),
                 ),
+                GoRoute(
+                  path: 'qr-labels',
+                  builder: (context, state) => const QrLabelRegisterScreen(),
+                ),
               ],
             ),
           ],
@@ -117,6 +123,10 @@ final appRouter = GoRouter(
                   path: 'decisions',
                   builder: (context, state) =>
                       const TreasuryDecisionsBoardScreen(),
+                ),
+                GoRoute(
+                  path: 'budget-pots',
+                  builder: (context, state) => const TreasuryBudgetPotsScreen(),
                 ),
                 GoRoute(
                   path: 'monthly-summary',

@@ -474,6 +474,13 @@ class _TreasuryEntryHubCard extends StatelessWidget {
         accent: AppColours.darkPrimary,
       ),
       _TreasuryWizardEntry(
+        title: 'Budget Pots',
+        subtitle: 'Plan calm allocations and buffers',
+        icon: Icons.account_balance_wallet_outlined,
+        flow: 'budget_pots',
+        accent: AppColours.darkSuccess,
+      ),
+      _TreasuryWizardEntry(
         title: 'Project Spend',
         subtitle: 'Log project money in a guided step flow',
         icon: Icons.work_outline,
@@ -531,6 +538,8 @@ class _TreasuryEntryHubCard extends StatelessWidget {
                         ? context.push(RouteNames.treasuryDecisions)
                         : entry.flow == 'monthly_summary'
                         ? context.push(RouteNames.treasuryMonthlySummary)
+                        : entry.flow == 'budget_pots'
+                        ? context.push(RouteNames.treasuryBudgetPots)
                         : context.push(
                             RouteNames.treasuryWizardFor(entry.flow),
                           ),

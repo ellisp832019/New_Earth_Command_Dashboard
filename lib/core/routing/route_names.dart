@@ -8,11 +8,13 @@ abstract final class RouteNames {
   static const assetProjectSummary = '/assets/project-summary';
   static const assetLocationRegister = '/assets/locations';
   static const assetValuationSummary = '/assets/valuation';
+  static const assetQrLabelRegister = '/assets/qr-labels';
   static const treasury = '/treasury';
   static const treasuryWizard = '/treasury/wizard';
   static const treasuryDecisions = '/treasury/decisions';
   static const treasuryMonthlySummary = '/treasury/monthly-summary';
   static const treasurySettings = '/treasury/settings';
+  static const treasuryBudgetPots = '/treasury/budget-pots';
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const tasks = '/tasks';
