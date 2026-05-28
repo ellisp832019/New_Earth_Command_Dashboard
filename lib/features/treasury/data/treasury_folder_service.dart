@@ -459,6 +459,34 @@ class TreasuryFolderService {
     await file.writeAsString(contents);
   }
 
+  Future<bool> openFinanceFolder(String financeRootPath) async {
+    final directory = Directory(financeRootPath);
+    if (!await directory.exists()) {
+      return false;
+    }
+
+    try {
+      if (Platform.isWindows) {
+        await Process.start('explorer', <String>[
+          directory.path,
+        ], runInShell: true);
+        return true;
+      }
+
+      if (Platform.isMacOS) {
+        await Process.start('open', <String>[directory.path], runInShell: true);
+        return true;
+      }
+
+      await Process.start('xdg-open', <String>[
+        directory.path,
+      ], runInShell: true);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<TreasuryWeeklyReviewSaveResult> saveWeeklyReview({
     required String financeRootPath,
     required List<String> safeItems,

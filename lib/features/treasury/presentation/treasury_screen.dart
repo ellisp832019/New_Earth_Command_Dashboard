@@ -1107,6 +1107,11 @@ class _TreasuryHealthCard extends StatelessWidget {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reload folder health'),
               ),
+              TextButton.icon(
+                onPressed: () => context.push(RouteNames.treasurySettings),
+                icon: const Icon(Icons.tune_outlined),
+                label: const Text('Open settings'),
+              ),
             ],
           );
 
