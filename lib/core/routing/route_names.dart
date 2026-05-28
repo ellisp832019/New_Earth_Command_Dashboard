@@ -13,6 +13,7 @@ abstract final class RouteNames {
   static const assetSupplierRegister = '/assets/suppliers';
   static const assetMaintenanceLog = '/assets/maintenance';
   static const assetReorderList = '/assets/reorder-list';
+  static const assetOrdersTracker = '/assets/orders';
   static const treasury = '/treasury';
   static const treasuryWizard = '/treasury/wizard';
   static const treasuryDecisions = '/treasury/decisions';

@@ -158,6 +158,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetMaintenanceLog),
                       onOpenReorderList: () =>
                           context.push(RouteNames.assetReorderList),
+                      onOpenOrdersTracker: () =>
+                          context.push(RouteNames.assetOrdersTracker),
                       onOpenValuationSummary: () =>
                           context.push(RouteNames.assetValuationSummary),
                       onOpenQrLabelRegister: () =>
@@ -763,6 +765,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenSupplierRegister,
     required this.onOpenMaintenanceLog,
     required this.onOpenReorderList,
+    required this.onOpenOrdersTracker,
     required this.onOpenValuationSummary,
     required this.onOpenQrLabelRegister,
   });
@@ -776,6 +779,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenSupplierRegister;
   final VoidCallback onOpenMaintenanceLog;
   final VoidCallback onOpenReorderList;
+  final VoidCallback onOpenOrdersTracker;
   final VoidCallback onOpenValuationSummary;
   final VoidCallback onOpenQrLabelRegister;
 
@@ -850,6 +854,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenReorderList,
                 icon: const Icon(Icons.playlist_add_check_circle_outlined),
                 label: const Text('Reorder List'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenOrdersTracker,
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Orders Tracker'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenValuationSummary,
