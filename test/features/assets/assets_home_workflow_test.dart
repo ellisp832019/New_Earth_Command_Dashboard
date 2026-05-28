@@ -17,6 +17,9 @@ void main() {
       ProviderScope(
         overrides: [
           assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetSyncStatusProvider.overrideWith(
+            (ref) async => fixture.syncStatus,
+          ),
           assetTreasuryLinkSummaryProvider.overrideWith(
             (ref) async => fixture.treasurySummary,
           ),
@@ -32,6 +35,8 @@ void main() {
     expect(find.text('Low stock needs attention'), findsOneWidget);
     expect(find.text('Open Low Stock / Reorder'), findsOneWidget);
     expect(find.text('Decision bridge'), findsOneWidget);
+    expect(find.text('Asset sync'), findsOneWidget);
+    expect(find.text('Journal ready'), findsOneWidget);
     expect(find.text('Open QR Labels'), findsOneWidget);
   });
 }
@@ -96,6 +101,14 @@ _AssetsHomeFixture _fixture() {
       brokenEquipmentCount: 1,
       repairReplacementValueTotal: 75,
     ),
+    syncStatus: const AssetSyncStatus(
+      isConnected: true,
+      entryCount: 0,
+      conflictCount: 0,
+      lastChangeAt: null,
+      lastWriterLabel: 'No writer recorded yet',
+      statusLabel: 'Journal ready',
+    ),
   );
 }
 
@@ -103,8 +116,10 @@ class _AssetsHomeFixture {
   const _AssetsHomeFixture({
     required this.snapshot,
     required this.treasurySummary,
+    required this.syncStatus,
   });
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetTreasuryLinkSummary treasurySummary;
+  final AssetSyncStatus syncStatus;
 }

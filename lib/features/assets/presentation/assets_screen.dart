@@ -146,6 +146,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetValuationSummary),
                     ),
                     const SizedBox(height: 22),
+                    const _AssetSyncStatusCard(),
+                    const SizedBox(height: 22),
                     _AssetSummaryGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _AssetTreasuryLinksCard(),
@@ -919,6 +921,144 @@ class _DecisionBridgeShell extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _AssetSyncStatusCard extends ConsumerWidget {
+  const _AssetSyncStatusCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final syncStatus = ref.watch(assetSyncStatusProvider);
+    final theme = Theme.of(context);
+
+    return syncStatus.when(
+      loading: () => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: const _PanelTitle(
+          title: 'Asset sync',
+          icon: Icons.sync_outlined,
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _PanelTitle(
+              title: 'Asset sync',
+              icon: Icons.sync_problem_outlined,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'The journal status could not load right now.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (status) {
+        final lastChangeLabel = status.lastChangeAt == null
+            ? 'No journal entries yet'
+            : DateFormat('yMMMd, h:mm a').format(status.lastChangeAt!.toLocal());
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: _panelDecoration(context),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 980;
+
+              final copy = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _PanelTitle(
+                    title: 'Asset sync',
+                    icon: Icons.sync_outlined,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    status.statusLabel,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    status.isConnected
+                        ? 'The change journal is linked, so multiple machines can start from a safer base.'
+                        : 'The change journal is not linked yet, so the tab is still in single-machine mode.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              );
+
+              final chips = Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _InlineTag(
+                    label: '${status.entryCount} journal entries',
+                    accent: AppColours.darkSecondary,
+                    foreground: AppColours.darkText,
+                  ),
+                  _InlineTag(
+                    label: '${status.conflictCount} conflicts',
+                    accent: AppColours.darkAmber,
+                    foreground: AppColours.darkText,
+                  ),
+                  _InlineTag(
+                    label: status.lastWriterLabel,
+                    accent: AppColours.darkSuccess,
+                    foreground: AppColours.darkText,
+                  ),
+                  _InlineTag(
+                    label: lastChangeLabel,
+                    accent: const Color(0xFFE26B6B),
+                    foreground: AppColours.darkText,
+                  ),
+                ],
+              );
+
+              if (!wide) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    copy,
+                    const SizedBox(height: 16),
+                    chips,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: copy),
+                  const SizedBox(width: 20),
+                  SizedBox(
+                    width: 450,
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: chips,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

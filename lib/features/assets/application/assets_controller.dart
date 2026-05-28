@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/asset_csv_service.dart';
+import '../data/asset_change_journal.dart';
 import '../data/asset_register_repository.dart';
 import '../data/assets_folder_service.dart';
 
@@ -132,6 +133,48 @@ final assetQrLabelRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
 
   final repository = ref.watch(assetRegisterRepositoryProvider);
   return repository.readQrLabelRegister(workspace.assetsRootPath!);
+});
+
+final assetChangeJournalEntriesProvider =
+    FutureProvider<List<AssetChangeJournalEntry>>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return <AssetChangeJournalEntry>[];
+  }
+
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  final table = await repository.readChangeJournal(workspace.assetsRootPath!);
+  return table.rows
+      .map(AssetChangeJournalEntry.fromCsvRow)
+      .toList(growable: false);
+});
+
+final assetSyncStatusProvider = FutureProvider<AssetSyncStatus>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetSyncStatus(
+      isConnected: false,
+      entryCount: 0,
+      conflictCount: 0,
+      lastChangeAt: null,
+      lastWriterLabel: 'No asset journal yet',
+      statusLabel: 'Journal not linked',
+    );
+  }
+
+  final entries = await ref.watch(assetChangeJournalEntriesProvider.future);
+  final lastEntry = entries.isNotEmpty ? entries.last : null;
+
+  return AssetSyncStatus(
+    isConnected: true,
+    entryCount: entries.length,
+    conflictCount: 0,
+    lastChangeAt: lastEntry?.timestamp,
+    lastWriterLabel: lastEntry?.userLabel.isNotEmpty == true
+        ? lastEntry!.userLabel
+        : 'No writer recorded yet',
+    statusLabel: entries.isEmpty ? 'Journal ready' : 'Journal active',
+  );
 });
 
 final assetValuationOverviewProvider =
@@ -371,6 +414,24 @@ class _AssetValuationProjectAccumulator {
   double replacementValueTotal = 0;
   double currentEstimatedValueTotal = 0;
   double brokenLostValueTotal = 0;
+}
+
+class AssetSyncStatus {
+  const AssetSyncStatus({
+    required this.isConnected,
+    required this.entryCount,
+    required this.conflictCount,
+    required this.lastChangeAt,
+    required this.lastWriterLabel,
+    required this.statusLabel,
+  });
+
+  final bool isConnected;
+  final int entryCount;
+  final int conflictCount;
+  final DateTime? lastChangeAt;
+  final String lastWriterLabel;
+  final String statusLabel;
 }
 
 String _projectName(String? value) {
