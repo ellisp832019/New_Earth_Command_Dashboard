@@ -38,6 +38,11 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
             icon: const Icon(Icons.add),
           ),
           IconButton(
+            tooltip: 'First-time setup wizard',
+            onPressed: () => _showFirstTimeSetupWizard(context, ref),
+            icon: const Icon(Icons.auto_fix_high_outlined),
+          ),
+          IconButton(
             tooltip: 'Starter packs',
             onPressed: () => _showStarterPacksSheet(context, ref),
             icon: const Icon(Icons.auto_awesome_outlined),
@@ -74,6 +79,8 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
                   _BudgetPotsEmptyStateCard(
                     snapshot: snapshot,
                     onAddPot: () => _showAddPotDialog(context, ref),
+                    onFirstTimeSetup: () =>
+                        _showFirstTimeSetupWizard(context, ref),
                     onStarterPacks: () => _showStarterPacksSheet(context, ref),
                   ),
                   const SizedBox(height: 16),
@@ -538,11 +545,13 @@ class _BudgetPotsEmptyStateCard extends StatelessWidget {
   const _BudgetPotsEmptyStateCard({
     required this.snapshot,
     required this.onAddPot,
+    required this.onFirstTimeSetup,
     required this.onStarterPacks,
   });
 
   final TreasuryBudgetPotsSnapshot snapshot;
   final VoidCallback onAddPot;
+  final VoidCallback onFirstTimeSetup;
   final VoidCallback onStarterPacks;
 
   @override
@@ -574,6 +583,11 @@ class _BudgetPotsEmptyStateCard extends StatelessWidget {
                 onPressed: onAddPot,
                 icon: const Icon(Icons.add),
                 label: const Text('Add first pot'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onFirstTimeSetup,
+                icon: const Icon(Icons.auto_fix_high_outlined),
+                label: const Text('First-time setup'),
               ),
               FilledButton.tonalIcon(
                 onPressed: () =>
@@ -642,6 +656,71 @@ class _BudgetPotsErrorCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MiniChecklist extends StatelessWidget {
+  const _MiniChecklist({required this.title, required this.items});
+
+  final String title;
+  final List<String> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.fiber_manual_record,
+                    size: 8,
+                    color: AppColours.darkSecondary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      item,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (items.isEmpty)
+            Text(
+              'Nothing is missing from this check right now.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1025,6 +1104,401 @@ Future<void> _showStarterPacksSheet(BuildContext context, WidgetRef ref) async {
             ],
           ),
         ),
+      );
+    },
+  );
+}
+
+Future<void> _showFirstTimeSetupWizard(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final packs = _starterPacks();
+  final selectedOwnerGroups = <TreasuryBudgetPotOwnerGroup>{
+    TreasuryBudgetPotOwnerGroup.hayley,
+    TreasuryBudgetPotOwnerGroup.you,
+    TreasuryBudgetPotOwnerGroup.shared,
+  };
+  var stepIndex = 0;
+  var isCreating = false;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final selectedPacks = packs
+              .where((pack) => selectedOwnerGroups.contains(pack.ownerGroup))
+              .toList(growable: false);
+
+          Future<void> createSetup() async {
+            if (selectedPacks.isEmpty || isCreating) {
+              return;
+            }
+
+            setState(() => isCreating = true);
+            try {
+              final controller = ref.read(
+                treasuryBudgetPotsControllerProvider.notifier,
+              );
+              for (final pack in selectedPacks) {
+                await controller.seedStarterPack(
+                  ownerGroup: pack.ownerGroup,
+                  seeds: pack.seeds,
+                );
+              }
+              if (sheetContext.mounted) {
+                Navigator.of(sheetContext).pop();
+              }
+            } finally {
+              if (sheetContext.mounted) {
+                setState(() => isCreating = false);
+              }
+            }
+          }
+
+          Widget buildIntroStep() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SectionTitle(
+                  icon: Icons.auto_fix_high_outlined,
+                  title: 'First-time setup',
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'This wizard seeds separate calm pots for Hayley, you, and the shared household. Everything stays local-first and nothing existing is overwritten.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _StatusPill(
+                      label: '${packs.length} packs available',
+                      accent: AppColours.darkSecondary,
+                    ),
+                    _StatusPill(
+                      label: 'Personal + shared',
+                      accent: AppColours.darkSuccess,
+                    ),
+                    _StatusPill(
+                      label: 'Backup-safe',
+                      accent: AppColours.darkAccent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const _MiniChecklist(
+                  title: 'What this creates',
+                  items: [
+                    'Hayley personal pots',
+                    'Your personal pots',
+                    'Shared household pots',
+                    'Optional New Earth business pots',
+                  ],
+                ),
+              ],
+            );
+          }
+
+          Widget buildSelectionStep() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SectionTitle(
+                  icon: Icons.checklist_rtl_outlined,
+                  title: 'Choose what to seed',
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Pick the lanes Hayley wants ready now. The first three are recommended for a full home setup.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ...packs.map((pack) {
+                  final selected = selectedOwnerGroups.contains(
+                    pack.ownerGroup,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        setState(() {
+                          if (selected) {
+                            selectedOwnerGroups.remove(pack.ownerGroup);
+                          } else {
+                            selectedOwnerGroups.add(pack.ownerGroup);
+                          }
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? _ownerGroupAccent(
+                                  pack.ownerGroup,
+                                ).withValues(alpha: 0.12)
+                              : AppColours.darkSurfaceAlt.withValues(
+                                  alpha: 0.8,
+                                ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: selected
+                                ? _ownerGroupAccent(
+                                    pack.ownerGroup,
+                                  ).withValues(alpha: 0.24)
+                                : AppColours.darkOutline.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: selected,
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedOwnerGroups.add(pack.ownerGroup);
+                                  } else {
+                                    selectedOwnerGroups.remove(pack.ownerGroup);
+                                  }
+                                });
+                              },
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _ownerGroupIcon(pack.ownerGroup),
+                              color: _ownerGroupAccent(pack.ownerGroup),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    pack.title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: AppColours.darkText,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${pack.seeds.length} pots · ${pack.subtitle}',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColours.darkMutedText,
+                                          height: 1.35,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            );
+          }
+
+          Widget buildReviewStep() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SectionTitle(
+                  icon: Icons.preview_outlined,
+                  title: 'Review and create',
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'These packs will be added only if they are missing. Existing pots stay exactly as they are.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ...selectedPacks.map(
+                  (pack) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _ownerGroupAccent(
+                            pack.ownerGroup,
+                          ).withValues(alpha: 0.22),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                _ownerGroupIcon(pack.ownerGroup),
+                                color: _ownerGroupAccent(pack.ownerGroup),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  pack.title,
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(
+                                        color: AppColours.darkText,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                              _StatusPill(
+                                label: '${pack.seeds.length} pots',
+                                accent: _ownerGroupAccent(pack.ownerGroup),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _seedPreview(pack.seeds),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColours.darkMutedText,
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (selectedPacks.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Nothing is selected yet. Go back and pick at least one pack.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkAmber,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+
+          final body = switch (stepIndex) {
+            0 => buildIntroStep(),
+            1 => buildSelectionStep(),
+            _ => buildReviewStep(),
+          };
+
+          return Container(
+            decoration: BoxDecoration(
+              color: AppColours.darkSurface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              border: Border.all(
+                color: AppColours.darkOutline.withValues(alpha: 0.9),
+              ),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.88,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Treasury first-time setup',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(color: AppColours.darkText),
+                          ),
+                        ),
+                        _StatusPill(
+                          label: 'Step ${stepIndex + 1}/3',
+                          accent: AppColours.darkSecondary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    LinearProgressIndicator(
+                      value: (stepIndex + 1) / 3,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(child: SingleChildScrollView(child: body)),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: isCreating
+                              ? null
+                              : () => Navigator.of(sheetContext).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: isCreating || stepIndex == 0
+                              ? null
+                              : () => setState(() => stepIndex -= 1),
+                          child: const Text('Back'),
+                        ),
+                        const Spacer(),
+                        if (stepIndex < 2)
+                          FilledButton(
+                            onPressed:
+                                stepIndex == 1 && selectedOwnerGroups.isEmpty
+                                ? null
+                                : () => setState(() => stepIndex += 1),
+                            child: const Text('Next'),
+                          )
+                        else
+                          FilledButton.icon(
+                            onPressed: selectedPacks.isEmpty || isCreating
+                                ? null
+                                : createSetup,
+                            icon: isCreating
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.auto_fix_high_outlined),
+                            label: Text(
+                              isCreating ? 'Creating...' : 'Create setup',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       );
     },
   );
@@ -1588,6 +2062,19 @@ List<_TreasuryBudgetPotPack> _starterPacks() {
       ],
     ),
   ];
+}
+
+String _seedPreview(List<TreasuryBudgetPotSeed> seeds) {
+  if (seeds.isEmpty) {
+    return 'No pots in this pack yet.';
+  }
+
+  final names = seeds.take(4).map((seed) => seed.title).join(', ');
+  if (seeds.length <= 4) {
+    return names;
+  }
+
+  return '$names and ${seeds.length - 4} more';
 }
 
 Color _accentForKind(TreasuryStatusKind kind) {
