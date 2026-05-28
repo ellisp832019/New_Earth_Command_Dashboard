@@ -261,6 +261,50 @@ class AssetRegisterRepository {
     );
   }
 
+  List<Map<String, String>> filterLowStockParts(
+    List<Map<String, String>> rows,
+  ) {
+    return rows.where((row) {
+      final status = _normalizedStatus(row['status']);
+      if (status == 'low_stock' || status == 'reorder_needed') {
+        return true;
+      }
+
+      final quantity = _parseInt(row['quantity']);
+      final minQuantity = _parseInt(row['min_quantity']);
+      return quantity != null && minQuantity != null && quantity <= minQuantity;
+    }).toList(growable: false);
+  }
+
+  List<Map<String, String>> filterReorderNeededParts(
+    List<Map<String, String>> rows,
+  ) {
+    return rows.where((row) {
+      final status = _normalizedStatus(row['status']);
+      if (status == 'reorder_needed') {
+        return true;
+      }
+
+      final quantity = _parseInt(row['quantity']);
+      final minQuantity = _parseInt(row['min_quantity']);
+      return quantity != null && minQuantity != null && quantity <= minQuantity;
+    }).toList(growable: false);
+  }
+
+  int estimateReorderSpend(List<Map<String, String>> rows) {
+    var total = 0;
+    for (final row in filterReorderNeededParts(rows)) {
+      final quantity = _parseInt(row['quantity']) ?? 0;
+      final minQuantity = _parseInt(row['min_quantity']) ?? 0;
+      final difference = minQuantity - quantity;
+      final quantityNeeded = difference > 0 ? difference : 1;
+      final lastCost = _parseDouble(row['last_cost']) ?? 0;
+      total += (quantityNeeded * lastCost).round();
+    }
+
+    return total;
+  }
+
   File _equipmentFile(String assetsRootPath) {
     return File(
       path.join(
@@ -328,5 +372,27 @@ class AssetRegisterRepository {
     }
 
     return _workingDirectory.path;
+  }
+
+  int? _parseInt(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    return int.tryParse(trimmed);
+  }
+
+  double? _parseDouble(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(trimmed);
+  }
+
+  String _normalizedStatus(String? value) {
+    return (value ?? '').trim().toLowerCase().replaceAll(' ', '_');
   }
 }

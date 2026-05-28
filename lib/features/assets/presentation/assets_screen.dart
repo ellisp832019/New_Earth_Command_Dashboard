@@ -126,6 +126,7 @@ class _AssetsContent extends StatelessWidget {
                       onOpenEquipment: () =>
                           context.push(RouteNames.assetEquipment),
                       onOpenParts: () => context.push(RouteNames.assetParts),
+                      onOpenLowStock: () => context.push(RouteNames.assetLowStock),
                     ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
@@ -565,10 +566,12 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   const _AssetRegisterLaunchCard({
     required this.onOpenEquipment,
     required this.onOpenParts,
+    required this.onOpenLowStock,
   });
 
   final VoidCallback onOpenEquipment;
   final VoidCallback onOpenParts;
+  final VoidCallback onOpenLowStock;
 
   @override
   Widget build(BuildContext context) {
@@ -606,6 +609,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenParts,
                 icon: const Icon(Icons.inventory_2_outlined),
                 label: const Text('Parts Inventory'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenLowStock,
+                icon: const Icon(Icons.trending_down_outlined),
+                label: const Text('Low Stock / Reorder'),
               ),
             ],
           ),

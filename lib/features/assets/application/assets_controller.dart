@@ -42,3 +42,10 @@ final assetPartsRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
   final repository = ref.watch(assetRegisterRepositoryProvider);
   return repository.readPartsInventory(workspace.assetsRootPath!);
 });
+
+final assetLowStockPartsProvider =
+    FutureProvider<List<Map<String, String>>>((ref) async {
+  final table = await ref.watch(assetPartsRegisterProvider.future);
+  final repository = ref.watch(assetRegisterRepositoryProvider);
+  return repository.filterLowStockParts(table.rows);
+});
