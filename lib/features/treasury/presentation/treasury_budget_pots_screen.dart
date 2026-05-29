@@ -1268,14 +1268,49 @@ Future<void> _showFirstTimeSetupWizard(
                 children: [
                   const _SectionTitle(
                     icon: Icons.checklist_rtl_outlined,
-                    title: 'Choose what to seed',
+                    title: 'Who is this for?',
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Pick the lanes Hayley wants ready now. The first three are recommended for a full home setup.',
+                    'Choose the people or groups Hayley wants to set up right now. Each pack stays separate so household and business money do not mix.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColours.darkMutedText,
                       height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      for (final pack in packs)
+                        FilterChip(
+                          selected: selectedOwnerGroups.contains(
+                            pack.ownerGroup,
+                          ),
+                          avatar: Icon(
+                            _ownerGroupIcon(pack.ownerGroup),
+                            size: 18,
+                            color: _ownerGroupAccent(pack.ownerGroup),
+                          ),
+                          label: Text(_ownerGroupLabel(pack.ownerGroup)),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedOwnerGroups.add(pack.ownerGroup);
+                              } else {
+                                selectedOwnerGroups.remove(pack.ownerGroup);
+                              }
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    '${selectedOwnerGroups.length} of ${packs.length} groups selected',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
                     ),
                   ),
                   const SizedBox(height: 14),
