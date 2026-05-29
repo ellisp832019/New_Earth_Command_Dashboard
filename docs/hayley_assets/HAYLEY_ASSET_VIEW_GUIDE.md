@@ -34,6 +34,14 @@ Use Assets when you need to see:
 6. Keep the note short.
 7. Come back to the home screen when you want the next clear step.
 
+## The first three moves
+
+1. Capture fast.
+2. Check stock.
+3. Review repair.
+
+If you do only those three things well, the rest of the tab will already feel useful.
+
 ## What each main card means
 
 - `Available` means items are ready or settled in place.

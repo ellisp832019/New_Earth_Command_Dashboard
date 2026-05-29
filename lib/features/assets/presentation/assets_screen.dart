@@ -504,9 +504,9 @@ class _AssetPriorityCard extends StatelessWidget {
     final supportingCopy = hasSetupWork
         ? 'Create the starter structure first, then move into the registers.'
         : lowStockCount > 0
-            ? '$lowStockCount part${lowStockCount == 1 ? '' : 's'} are at or below threshold. That is the clearest next action.'
+            ? '$lowStockCount part${lowStockCount == 1 ? '' : 's'} are at or below threshold. Start with stock, then move to the next clear step.'
             : brokenCount > 0
-                ? '$brokenCount equipment item${brokenCount == 1 ? '' : 's'} need a repair or replacement check.'
+                ? '$brokenCount equipment item${brokenCount == 1 ? '' : 's'} need a repair or replacement check. Keep the next step short.'
                 : needsDecisionCount > 0
                     ? '$needsDecisionCount item${needsDecisionCount == 1 ? '' : 's'} are waiting for a decision.'
                     : 'Use the registers below to keep the workflow moving without clutter.';
@@ -555,6 +555,23 @@ class _AssetPriorityCard extends StatelessWidget {
                   color: AppColours.darkMutedText,
                   height: 1.4,
                 ),
+              ),
+              const SizedBox(height: 14),
+              _QuickStartStrip(
+                steps: const [
+                  _QuickStartStep(
+                    label: '1. Capture fast',
+                    detail: 'Use Quick Capture first when something arrives.',
+                  ),
+                  _QuickStartStep(
+                    label: '2. Check stock',
+                    detail: 'Open Parts or Low Stock to see what needs buying.',
+                  ),
+                  _QuickStartStep(
+                    label: '3. Review repair',
+                    detail: 'Open Broken / Repair before a spend decision.',
+                  ),
+                ],
               ),
             ],
           );
@@ -993,8 +1010,8 @@ class _AssetSyncStatusCard extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     status.isConnected
-                        ? 'The change journal is linked, so multiple machines can start from a safer base.'
-                        : 'The change journal is not linked yet, so the tab is still in single-machine mode.',
+                        ? 'The journal is linked and ready for calm review across machines.'
+                        : 'The journal is not linked yet, so the tab is still in single-machine mode.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColours.darkMutedText,
                       height: 1.35,
@@ -1162,6 +1179,91 @@ class _SummaryCard extends StatelessWidget {
               color: AppColours.darkMutedText,
               height: 1.35,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickStartStrip extends StatelessWidget {
+  const _QuickStartStrip({required this.steps});
+
+  final List<_QuickStartStep> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 860;
+
+        if (wide) {
+          return Row(
+            children: [
+              Expanded(child: _QuickStartCard(step: steps[0])),
+              const SizedBox(width: 10),
+              Expanded(child: _QuickStartCard(step: steps[1])),
+              const SizedBox(width: 10),
+              Expanded(child: _QuickStartCard(step: steps[2])),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            _QuickStartCard(step: steps[0]),
+            const SizedBox(height: 10),
+            _QuickStartCard(step: steps[1]),
+            const SizedBox(height: 10),
+            _QuickStartCard(step: steps[2]),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _QuickStartStep {
+  const _QuickStartStep({
+    required this.label,
+    required this.detail,
+  });
+
+  final String label;
+  final String detail;
+}
+
+class _QuickStartCard extends StatelessWidget {
+  const _QuickStartCard({required this.step});
+
+  final _QuickStartStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.85)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            step.label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            step.detail,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
           ),
         ],
       ),
