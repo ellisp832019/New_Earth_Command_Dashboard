@@ -327,6 +327,7 @@ void main() {
     expect(find.text('Inbox'), findsOneWidget);
     expect(find.text('Voice Assistant'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Visual Capture'), findsOneWidget);
   });
 
   testWidgets(

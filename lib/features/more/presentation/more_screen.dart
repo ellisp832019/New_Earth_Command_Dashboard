@@ -61,6 +61,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.settings,
     ),
     _MoreItem(
+      title: 'Visual Capture',
+      description:
+          'Review receipt photos, asset photos, and capture inbox files.',
+      icon: Icons.photo_library_outlined,
+      route: RouteNames.visualCapture,
+    ),
+    _MoreItem(
       title: 'Folder Health',
       description:
           'Check Treasury, Assets, Visual Capture, and the reserved Omega OS folders.',
@@ -100,7 +107,7 @@ class MoreScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Journal, learning, content, business, wellbeing, inbox, voice, and settings all live here.',
+                  'Journal, learning, content, business, wellbeing, inbox, voice, settings, and active system links all live here.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                   ),

@@ -266,6 +266,11 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.visualCapture,
+      builder: (context, state) => const VisualCaptureScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/dashboard/treasury',
       redirect: (context, state) {
         final location = Uri(
