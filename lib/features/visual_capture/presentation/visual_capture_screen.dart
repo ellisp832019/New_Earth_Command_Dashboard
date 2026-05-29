@@ -1,6 +1,10 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/widgets/folder_bootstrap_wizard.dart';
@@ -29,10 +33,27 @@ class VisualCaptureScreen extends ConsumerStatefulWidget {
 
 class _VisualCaptureScreenState extends ConsumerState<VisualCaptureScreen> {
   bool _isCreatingStructure = false;
+  bool _isImporting = false;
+  late final TextEditingController _importPathController;
+  String _selectedCaptureType =
+      VisualCaptureFolderService.inboxCaptureTypes.first;
+
+  @override
+  void initState() {
+    super.initState();
+    _importPathController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _importPathController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(visualCaptureWorkspaceProvider);
+    final inboxSnapshot = ref.watch(visualCaptureInboxProvider);
 
     return snapshot.when(
       loading: () => const Scaffold(
@@ -66,6 +87,21 @@ class _VisualCaptureScreenState extends ConsumerState<VisualCaptureScreen> {
 
         return _VisualCaptureHomeScreen(
           snapshot: data,
+          inboxSnapshot: inboxSnapshot,
+          isImporting: _isImporting,
+          selectedCaptureType: _selectedCaptureType,
+          importPathController: _importPathController,
+          onCaptureTypeChanged: (value) {
+            if (value == null || value.isEmpty) {
+              return;
+            }
+            setState(() => _selectedCaptureType = value);
+          },
+          onPickFile: () => _handlePickFile(data.visualCaptureRootPath),
+          onImportFromPath: () =>
+              _handleImportFromPath(data.visualCaptureRootPath),
+          onOpenInboxFolder: () =>
+              _handleOpenFolder(data.visualCaptureRootPath, inboxOnly: true),
           onReload: () => ref.invalidate(visualCaptureWorkspaceProvider),
         );
       },
@@ -106,15 +142,139 @@ class _VisualCaptureScreenState extends ConsumerState<VisualCaptureScreen> {
       }
     }
   }
+
+  Future<void> _handlePickFile(String? visualCaptureRootPath) async {
+    if (visualCaptureRootPath == null || _isImporting) {
+      return;
+    }
+
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: false,
+    );
+    final sourcePath = result?.files.single.path;
+    if (sourcePath == null || sourcePath.isEmpty) {
+      return;
+    }
+
+    await _handleImport(
+      visualCaptureRootPath: visualCaptureRootPath,
+      sourcePath: sourcePath,
+    );
+  }
+
+  Future<void> _handleImportFromPath(String? visualCaptureRootPath) async {
+    if (visualCaptureRootPath == null || _isImporting) {
+      return;
+    }
+
+    final sourcePath = _importPathController.text.trim();
+    if (sourcePath.isEmpty) {
+      return;
+    }
+
+    await _handleImport(
+      visualCaptureRootPath: visualCaptureRootPath,
+      sourcePath: sourcePath,
+    );
+  }
+
+  Future<void> _handleImport({
+    required String visualCaptureRootPath,
+    required String sourcePath,
+  }) async {
+    setState(() => _isImporting = true);
+    try {
+      final result = await ref
+          .read(visualCaptureFolderServiceProvider)
+          .importImageToInbox(
+            visualCaptureRootPath: visualCaptureRootPath,
+            sourceFilePath: sourcePath,
+            captureType: _selectedCaptureType,
+          );
+
+      if (!mounted) {
+        return;
+      }
+
+      _importPathController.clear();
+      ref.invalidate(visualCaptureInboxProvider);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Added ${path.basename(result.copiedFilePath)} to the Visual Capture inbox.',
+          ),
+        ),
+      );
+    } on FileSystemException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isImporting = false);
+      }
+    }
+  }
+
+  Future<void> _handleOpenFolder(
+    String? visualCaptureRootPath, {
+    bool inboxOnly = false,
+  }) async {
+    if (visualCaptureRootPath == null) {
+      return;
+    }
+
+    final service = ref.read(visualCaptureFolderServiceProvider);
+    final opened = inboxOnly
+        ? await service.openVisualCaptureInboxFolder(visualCaptureRootPath)
+        : await service.openVisualCaptureFolder(visualCaptureRootPath);
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          opened
+              ? inboxOnly
+                    ? 'Opened the Visual Capture folder.'
+                    : 'Opened the external Visual Capture folder.'
+              : 'Visual Capture could not open the folder on this device.',
+        ),
+      ),
+    );
+  }
 }
 
 class _VisualCaptureHomeScreen extends StatelessWidget {
   const _VisualCaptureHomeScreen({
     required this.snapshot,
+    required this.inboxSnapshot,
+    required this.isImporting,
+    required this.selectedCaptureType,
+    required this.importPathController,
+    required this.onCaptureTypeChanged,
+    required this.onPickFile,
+    required this.onImportFromPath,
+    required this.onOpenInboxFolder,
     required this.onReload,
   });
 
   final VisualCaptureWorkspaceSnapshot snapshot;
+  final AsyncValue<VisualCaptureInboxSnapshot> inboxSnapshot;
+  final bool isImporting;
+  final String selectedCaptureType;
+  final TextEditingController importPathController;
+  final ValueChanged<String?> onCaptureTypeChanged;
+  final VoidCallback onPickFile;
+  final VoidCallback onImportFromPath;
+  final VoidCallback onOpenInboxFolder;
   final VoidCallback onReload;
 
   @override
@@ -143,11 +303,273 @@ class _VisualCaptureHomeScreen extends StatelessWidget {
             const SizedBox(height: 18),
             _VisualCaptureHealthCard(snapshot: snapshot, onReload: onReload),
             const SizedBox(height: 18),
+            _VisualCaptureInboxCard(
+              snapshot: snapshot,
+              inboxSnapshot: inboxSnapshot,
+              isImporting: isImporting,
+              selectedCaptureType: selectedCaptureType,
+              importPathController: importPathController,
+              onCaptureTypeChanged: onCaptureTypeChanged,
+              onPickFile: onPickFile,
+              onImportFromPath: onImportFromPath,
+              onOpenInboxFolder: onOpenInboxFolder,
+            ),
+            const SizedBox(height: 18),
             _VisualCaptureFoundationCard(snapshot: snapshot),
             const SizedBox(height: 18),
             _VisualCaptureFooterCard(theme: theme, snapshot: snapshot),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _VisualCaptureInboxCard extends StatelessWidget {
+  const _VisualCaptureInboxCard({
+    required this.snapshot,
+    required this.inboxSnapshot,
+    required this.isImporting,
+    required this.selectedCaptureType,
+    required this.importPathController,
+    required this.onCaptureTypeChanged,
+    required this.onPickFile,
+    required this.onImportFromPath,
+    required this.onOpenInboxFolder,
+  });
+
+  final VisualCaptureWorkspaceSnapshot snapshot;
+  final AsyncValue<VisualCaptureInboxSnapshot> inboxSnapshot;
+  final bool isImporting;
+  final String selectedCaptureType;
+  final TextEditingController importPathController;
+  final ValueChanged<String?> onCaptureTypeChanged;
+  final VoidCallback onPickFile;
+  final VoidCallback onImportFromPath;
+  final VoidCallback onOpenInboxFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: _panelDecoration(),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PanelTitle(title: 'Capture inbox', icon: Icons.inbox_outlined),
+          const SizedBox(height: 10),
+          Text(
+            'Import receipt photos, asset photos, repair evidence, and workbench snapshots into the Omega OS inbox without touching finance or asset records yet.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          inboxSnapshot.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (error, stackTrace) => Text(
+              'Capture inbox could not load right now.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+            data: (inbox) {
+              final items = inbox.items;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _InlineTag(
+                        label: inbox.inboxPath ?? 'Inbox path not linked',
+                        accent: AppColours.darkSurfaceRaised,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label:
+                            '${inbox.queuedFileCount} file${inbox.queuedFileCount == 1 ? '' : 's'} in inbox',
+                        accent: AppColours.darkSuccess,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label:
+                            '${items.length} indexed capture${items.length == 1 ? '' : 's'}',
+                        accent: AppColours.darkSecondary,
+                        foreground: AppColours.darkText,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final wide = constraints.maxWidth >= 920;
+                      final actionColumn = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue: selectedCaptureType,
+                            decoration: const InputDecoration(
+                              labelText: 'Capture type',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: VisualCaptureFolderService.inboxCaptureTypes
+                                .map(
+                                  (type) => DropdownMenuItem<String>(
+                                    value: type,
+                                    child: Text(type.replaceAll('_', ' ')),
+                                  ),
+                                )
+                                .toList(growable: false),
+                            onChanged: onCaptureTypeChanged,
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: importPathController,
+                            decoration: const InputDecoration(
+                              labelText: 'Source file path',
+                              hintText:
+                                  'Paste a local image path if file picker is not available',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: isImporting ? null : onPickFile,
+                                icon: isImporting
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.file_open_outlined),
+                                label: const Text('Pick image'),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: isImporting
+                                    ? null
+                                    : onImportFromPath,
+                                icon: const Icon(Icons.upload_file_outlined),
+                                label: const Text('Import path'),
+                              ),
+                              TextButton.icon(
+                                onPressed: onOpenInboxFolder,
+                                icon: const Icon(Icons.folder_open_outlined),
+                                label: const Text('Open inbox'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+
+                      final preview = _InboxPreviewList(items: items);
+
+                      if (!wide) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            actionColumn,
+                            const SizedBox(height: 16),
+                            preview,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: actionColumn),
+                          const SizedBox(width: 18),
+                          Expanded(child: preview),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InboxPreviewList extends StatelessWidget {
+  const _InboxPreviewList({required this.items});
+
+  final List<VisualCaptureInboxItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.85),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recent imports',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (items.isEmpty)
+            Text(
+              'No imports yet. Pick a local image file to add the first inbox item.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
+            )
+          else
+            ...items
+                .take(5)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.captureId,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColours.darkText,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${item.captureType.replaceAll('_', ' ')} · ${path.basename(item.filePath)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColours.darkMutedText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+        ],
       ),
     );
   }

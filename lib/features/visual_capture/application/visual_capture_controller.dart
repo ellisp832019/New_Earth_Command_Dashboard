@@ -13,3 +13,10 @@ final visualCaptureWorkspaceProvider =
       final service = ref.watch(visualCaptureFolderServiceProvider);
       return service.loadWorkspace();
     });
+
+final visualCaptureInboxProvider = FutureProvider<VisualCaptureInboxSnapshot>((
+  ref,
+) {
+  final service = ref.watch(visualCaptureFolderServiceProvider);
+  return service.loadInbox();
+});

@@ -21,6 +21,27 @@ void main() {
       missingFiles: const <String>[],
       guidanceNote: 'Connected and calm.',
     );
+    final inboxSnapshot = VisualCaptureInboxSnapshot(
+      inboxPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/19_VISUAL_RECORDS_AND_CAPTURE/14_TEMP_UPLOADS_AND_INBOX',
+      indexPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/19_VISUAL_RECORDS_AND_CAPTURE/00_VISUAL_DASHBOARD/visual_capture_index.csv',
+      items: const [
+        VisualCaptureInboxItem(
+          captureId: 'VC-20260529-00000001',
+          sourcePath: 'local_import',
+          filePath:
+              'D:/NEW_EARTH_OMEGA_OS_PACK/19_VISUAL_RECORDS_AND_CAPTURE/14_TEMP_UPLOADS_AND_INBOX/vc-20260529-00000001.jpg',
+          captureType: 'receipt',
+          project: 'MicroGrow',
+          status: 'inbox',
+          dateAdded: '2026-05-29T12:00:00.000Z',
+          notes: 'Ready for review.',
+        ),
+      ],
+      queuedFileCount: 1,
+      issues: const <String>[],
+    );
 
     final router = GoRouter(
       initialLocation: RouteNames.visualCapture,
@@ -35,7 +56,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          visualCaptureWorkspaceProvider.overrideWith((ref) async => snapshot),
+          visualCaptureWorkspaceProvider.overrideWithValue(
+            AsyncData(snapshot),
+          ),
+          visualCaptureInboxProvider.overrideWithValue(
+            AsyncData(inboxSnapshot),
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -46,5 +72,7 @@ void main() {
     expect(find.text('Visual Capture'), findsOneWidget);
     expect(find.text('Folder health'), findsOneWidget);
     expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('Source path'), findsOneWidget);
+    expect(find.text('Visual Capture is linked and calm'), findsOneWidget);
   });
 }
