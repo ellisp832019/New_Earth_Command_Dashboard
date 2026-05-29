@@ -13,7 +13,22 @@ class PartsInventoryScreen extends ConsumerStatefulWidget {
 }
 
 class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
+  final TextEditingController _searchController = TextEditingController();
   bool _isSaving = false;
+  String _activeFilter = 'all';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +36,22 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
     final parts = ref.watch(assetPartsRegisterProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _RegisterError(
         title: 'Parts Inventory',
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return parts.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _RegisterError(
             title: 'Parts Inventory',
             onReload: () => ref.invalidate(assetPartsRegisterProvider),
           ),
           data: (table) {
+            final filteredRows = _filterRows(table.rows);
             return Scaffold(
               backgroundColor: Colors.transparent,
               floatingActionButton: FloatingActionButton.extended(
@@ -65,9 +79,9 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                             _RegisterHeader(
                               title: 'Parts Inventory',
                               subtitle:
-                                  'Keep parts light, clear, and easy to reorder when stock gets low.',
+                                  'Keep parts light, clear, and easy to search by part, project, or stock status.',
                               countLabel:
-                                  '${table.rows.length} part records loaded.',
+                                  '${filteredRows.length} of ${table.rows.length} part records shown.',
                               actionLabel: workspaceData.assetsRootPath == null
                                   ? 'Asset folder not linked yet'
                                   : workspaceData.assetsRootPath!,
@@ -77,6 +91,27 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                               onBack: () => Navigator.of(context).maybePop(),
                             ),
                             const SizedBox(height: 20),
+                            _RegisterSearchBar(
+                              controller: _searchController,
+                              hintText:
+                                  'Search parts by name, ID, category, supplier, project, or status',
+                              activeFilter: _activeFilter,
+                              filterLabels: const {
+                                'all': 'All',
+                                'low_stock': 'Low Stock',
+                                'wishlist': 'Wishlist',
+                              },
+                              onFilterChanged: (value) {
+                                setState(() => _activeFilter = value);
+                              },
+                              onClear: () {
+                                setState(() {
+                                  _activeFilter = 'all';
+                                  _searchController.clear();
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
                             _RegisterSummaryRow(
                               items: [
                                 _SummaryMetric(
@@ -86,10 +121,9 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                                 ),
                                 _SummaryMetric(
                                   label: 'Wishlist',
-                                  value: _countStatuses(
-                                    table.rows,
-                                    const ['wishlist'],
-                                  ),
+                                  value: _countStatuses(table.rows, const [
+                                    'wishlist',
+                                  ]),
                                   accent: AppColours.darkPurple,
                                 ),
                                 _SummaryMetric(
@@ -100,24 +134,34 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            if (table.rows.isEmpty)
-                              _EmptyRegisterState(
-                                title: 'No parts yet',
-                                message:
-                                    'Add your first part so the reorder and low stock workflow has something to work with.',
-                                onAdd: workspaceData.assetsRootPath == null
-                                    ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
-                              )
+                            if (filteredRows.isEmpty)
+                              if (table.rows.isEmpty)
+                                _EmptyRegisterState(
+                                  title: 'No parts yet',
+                                  message:
+                                      'Add your first part so the reorder and low stock workflow has something to work with.',
+                                  onAdd: workspaceData.assetsRootPath == null
+                                      ? null
+                                      : () => _addRecord(
+                                          workspaceData.assetsRootPath!,
+                                        ),
+                                )
+                              else
+                                _EmptyFilterState(
+                                  title: 'No parts match this view',
+                                  message:
+                                      'Try a different search or switch the filter back to All.',
+                                  onClear: _clearFilters,
+                                )
                             else
                               ListView.separated(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: table.rows.length,
+                                itemCount: filteredRows.length,
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  final row = table.rows[index];
+                                  final row = filteredRows[index];
                                   return _PartCard(row: row);
                                 },
                               ),
@@ -150,17 +194,16 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendPartRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendPartRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetPartsRegisterProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Part saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Part saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -197,6 +240,69 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
     }
     return projects.length;
   }
+
+  void _clearFilters() {
+    setState(() {
+      _activeFilter = 'all';
+      _searchController.clear();
+    });
+  }
+
+  void _onSearchChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  List<Map<String, String>> _filterRows(List<Map<String, String>> rows) {
+    final query = _searchController.text.trim().toLowerCase();
+    return rows
+        .where((row) {
+          if (!_matchesActiveFilter(row)) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+
+          return _rowSearchText(row).contains(query);
+        })
+        .toList(growable: false);
+  }
+
+  bool _matchesActiveFilter(Map<String, String> row) {
+    final status = (row['status'] ?? '').trim().toLowerCase();
+    switch (_activeFilter) {
+      case 'low_stock':
+        return status == 'low_stock' ||
+            status == 'reorder_needed' ||
+            _isBelowMinQuantity(row);
+      case 'wishlist':
+        return status == 'wishlist';
+      case 'all':
+      default:
+        return true;
+    }
+  }
+
+  bool _isBelowMinQuantity(Map<String, String> row) {
+    final quantity = int.tryParse((row['quantity'] ?? '').trim());
+    final minQuantity = int.tryParse((row['min_quantity'] ?? '').trim());
+    return quantity != null && minQuantity != null && quantity <= minQuantity;
+  }
+
+  String _rowSearchText(Map<String, String> row) {
+    return [
+      row['part_id'],
+      row['name'],
+      row['category'],
+      row['project'],
+      row['location'],
+      row['supplier'],
+      row['status'],
+      row['notes'],
+    ].whereType<String>().join(' ').toLowerCase();
+  }
 }
 
 class _PartCard extends StatelessWidget {
@@ -229,14 +335,16 @@ class _PartCard extends StatelessWidget {
                       ? row['name']!.trim()
                       : 'Unnamed part',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
                 label: status.isEmpty ? 'available' : status,
-                accent: isLowStock ? AppColours.darkAmber : AppColours.darkSuccess,
+                accent: isLowStock
+                    ? AppColours.darkAmber
+                    : AppColours.darkSuccess,
               ),
             ],
           ),
@@ -255,18 +363,18 @@ class _PartCard extends StatelessWidget {
           Text(
             'Qty $quantity  •  Min $minQuantity',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           if ((row['notes'] ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -367,9 +475,17 @@ class _PartDialogState extends State<_PartDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _categoryController, label: 'Category', hintText: 'Fasteners'),
+                _field(
+                  controller: _categoryController,
+                  label: 'Category',
+                  hintText: 'Fasteners',
+                ),
                 const SizedBox(height: 12),
-                _field(controller: _projectController, label: 'Project', hintText: 'MicroGrow'),
+                _field(
+                  controller: _projectController,
+                  label: 'Project',
+                  hintText: 'MicroGrow',
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -411,17 +527,19 @@ class _PartDialogState extends State<_PartDialog> {
                   hintText: 'Electronics Drawer 2',
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _supplierController, label: 'Supplier', hintText: 'RS Components'),
+                _field(
+                  controller: _supplierController,
+                  label: 'Supplier',
+                  hintText: 'RS Components',
+                ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _status,
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: _statusOptions
                       .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ),
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -626,8 +744,7 @@ class _RegisterSummaryRow extends StatelessWidget {
       builder: (context, constraints) {
         final useWideLayout = constraints.maxWidth >= 840;
         final children = [
-          for (final item in items)
-            Expanded(child: _SummaryTile(metric: item)),
+          for (final item in items) Expanded(child: _SummaryTile(metric: item)),
         ];
 
         if (useWideLayout) {
@@ -671,17 +788,17 @@ class _SummaryTile extends StatelessWidget {
           Text(
             metric.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: metric.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: metric.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${metric.value}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -712,16 +829,16 @@ class _EmptyRegisterState extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -731,6 +848,111 @@ class _EmptyRegisterState extends StatelessWidget {
               label: const Text('Add first item'),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RegisterSearchBar extends StatelessWidget {
+  const _RegisterSearchBar({
+    required this.controller,
+    required this.hintText,
+    required this.activeFilter,
+    required this.filterLabels,
+    required this.onFilterChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final String activeFilter;
+  final Map<String, String> filterLabels;
+  final ValueChanged<String> onFilterChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: 'Search',
+              hintText: hintText,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: onClear,
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Clear search',
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final entry in filterLabels.entries)
+                FilterChip(
+                  selected: activeFilter == entry.key,
+                  label: Text(entry.value),
+                  onSelected: (_) => onFilterChanged(entry.key),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyFilterState extends StatelessWidget {
+  const _EmptyFilterState({
+    required this.title,
+    required this.message,
+    required this.onClear,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 14),
+          TextButton.icon(
+            onPressed: onClear,
+            icon: const Icon(Icons.clear_all),
+            label: const Text('Clear search and filters'),
+          ),
         ],
       ),
     );
@@ -801,9 +1023,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -827,9 +1049,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

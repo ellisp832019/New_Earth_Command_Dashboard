@@ -12,8 +12,24 @@ class EquipmentRegisterScreen extends ConsumerStatefulWidget {
       _EquipmentRegisterScreenState();
 }
 
-class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScreen> {
+class _EquipmentRegisterScreenState
+    extends ConsumerState<EquipmentRegisterScreen> {
+  final TextEditingController _searchController = TextEditingController();
   bool _isSaving = false;
+  String _activeFilter = 'all';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +37,22 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
     final equipment = ref.watch(assetEquipmentRegisterProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _RegisterError(
         title: 'Equipment Register',
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _RegisterError(
             title: 'Equipment Register',
             onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
           ),
           data: (table) {
+            final filteredRows = _filterRows(table.rows);
             return Scaffold(
               backgroundColor: Colors.transparent,
               floatingActionButton: FloatingActionButton.extended(
@@ -51,9 +66,7 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.add),
-                label: Text(
-                  _isSaving ? 'Saving' : 'Add Equipment',
-                ),
+                label: Text(_isSaving ? 'Saving' : 'Add Equipment'),
               ),
               body: SafeArea(
                 child: CustomScrollView(
@@ -67,9 +80,9 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
                             _RegisterHeader(
                               title: 'Equipment Register',
                               subtitle:
-                                  'Keep equipment clear, calm, and linked to the right project and receipt.',
+                                  'Keep equipment clear, calm, and easy to find by name, project, or status.',
                               countLabel:
-                                  '${table.rows.length} equipment items loaded.',
+                                  '${filteredRows.length} of ${table.rows.length} equipment items shown.',
                               actionLabel: workspaceData.assetsRootPath == null
                                   ? 'Asset folder not linked yet'
                                   : workspaceData.assetsRootPath!,
@@ -79,22 +92,44 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
                               onBack: () => Navigator.of(context).maybePop(),
                             ),
                             const SizedBox(height: 20),
+                            _RegisterSearchBar(
+                              controller: _searchController,
+                              hintText:
+                                  'Search equipment by name, ID, project, location, or status',
+                              activeFilter: _activeFilter,
+                              filterLabels: const {
+                                'all': 'All',
+                                'available': 'Ready',
+                                'attention': 'Attention',
+                              },
+                              onFilterChanged: (value) {
+                                setState(() => _activeFilter = value);
+                              },
+                              onClear: () {
+                                setState(() {
+                                  _activeFilter = 'all';
+                                  _searchController.clear();
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
                             _RegisterSummaryRow(
                               items: [
                                 _SummaryMetric(
                                   label: 'Available',
-                                  value: _countStatuses(
-                                    table.rows,
-                                    const ['available', 'in_use', 'in_storage'],
-                                  ),
+                                  value: _countStatuses(table.rows, const [
+                                    'available',
+                                    'in_use',
+                                    'in_storage',
+                                  ]),
                                   accent: AppColours.darkSuccess,
                                 ),
                                 _SummaryMetric(
                                   label: 'Broken / Repair',
-                                  value: _countStatuses(
-                                    table.rows,
-                                    const ['broken', 'repairing'],
-                                  ),
+                                  value: _countStatuses(table.rows, const [
+                                    'broken',
+                                    'repairing',
+                                  ]),
                                   accent: const Color(0xFFE26B6B),
                                 ),
                                 _SummaryMetric(
@@ -105,24 +140,34 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
                               ],
                             ),
                             const SizedBox(height: 20),
-                            if (table.rows.isEmpty)
-                              _EmptyRegisterState(
-                                title: 'No equipment yet',
-                                message:
-                                    'Add your first item to start building a calm equipment register.',
-                                onAdd: workspaceData.assetsRootPath == null
-                                    ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
-                              )
+                            if (filteredRows.isEmpty)
+                              if (table.rows.isEmpty)
+                                _EmptyRegisterState(
+                                  title: 'No equipment yet',
+                                  message:
+                                      'Add your first item to start building a calm equipment register.',
+                                  onAdd: workspaceData.assetsRootPath == null
+                                      ? null
+                                      : () => _addRecord(
+                                          workspaceData.assetsRootPath!,
+                                        ),
+                                )
+                              else
+                                _EmptyFilterState(
+                                  title: 'No equipment matches this view',
+                                  message:
+                                      'Try a different search or switch the filter back to All.',
+                                  onClear: _clearFilters,
+                                )
                             else
                               ListView.separated(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: table.rows.length,
+                                itemCount: filteredRows.length,
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  final row = table.rows[index];
+                                  final row = filteredRows[index];
                                   return _EquipmentCard(row: row);
                                 },
                               ),
@@ -155,17 +200,16 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendEquipmentRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendEquipmentRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetEquipmentRegisterProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Equipment item saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Equipment item saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -190,6 +234,67 @@ class _EquipmentRegisterScreenState extends ConsumerState<EquipmentRegisterScree
     }
     return projects.length;
   }
+
+  void _clearFilters() {
+    setState(() {
+      _activeFilter = 'all';
+      _searchController.clear();
+    });
+  }
+
+  void _onSearchChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  List<Map<String, String>> _filterRows(List<Map<String, String>> rows) {
+    final query = _searchController.text.trim().toLowerCase();
+    return rows
+        .where((row) {
+          if (!_matchesActiveFilter(row)) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+
+          return _rowSearchText(row).contains(query);
+        })
+        .toList(growable: false);
+  }
+
+  bool _matchesActiveFilter(Map<String, String> row) {
+    final status = (row['status'] ?? '').trim().toLowerCase();
+    final condition = (row['condition'] ?? '').trim().toLowerCase();
+    switch (_activeFilter) {
+      case 'available':
+        return status == 'available' ||
+            status == 'in_use' ||
+            status == 'in_storage';
+      case 'attention':
+        return status == 'broken' ||
+            status == 'repairing' ||
+            condition == 'broken' ||
+            condition == 'repairing';
+      case 'all':
+      default:
+        return true;
+    }
+  }
+
+  String _rowSearchText(Map<String, String> row) {
+    return [
+      row['asset_id'],
+      row['name'],
+      row['type'],
+      row['project'],
+      row['location'],
+      row['status'],
+      row['condition'],
+      row['notes'],
+    ].whereType<String>().join(' ').toLowerCase();
+  }
 }
 
 class _EquipmentCard extends StatelessWidget {
@@ -200,9 +305,8 @@ class _EquipmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = (row['status'] ?? 'available').trim();
-    final isHealthy = status == 'available' ||
-        status == 'in_use' ||
-        status == 'in_storage';
+    final isHealthy =
+        status == 'available' || status == 'in_use' || status == 'in_storage';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -218,14 +322,16 @@ class _EquipmentCard extends StatelessWidget {
                       ? row['name']!.trim()
                       : 'Unnamed equipment',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
                 label: status.isEmpty ? 'available' : status,
-                accent: isHealthy ? AppColours.darkSuccess : AppColours.darkAmber,
+                accent: isHealthy
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
               ),
             ],
           ),
@@ -245,9 +351,9 @@ class _EquipmentCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -349,9 +455,17 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _buildField(controller: _typeController, label: 'Type', hintText: 'Tool'),
+                _buildField(
+                  controller: _typeController,
+                  label: 'Type',
+                  hintText: 'Tool',
+                ),
                 const SizedBox(height: 12),
-                _buildField(controller: _projectController, label: 'Project', hintText: 'MicroGrow'),
+                _buildField(
+                  controller: _projectController,
+                  label: 'Project',
+                  hintText: 'MicroGrow',
+                ),
                 const SizedBox(height: 12),
                 _buildField(
                   controller: _locationController,
@@ -364,10 +478,8 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: _statusOptions
                       .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ),
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -382,10 +494,8 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
                   decoration: const InputDecoration(labelText: 'Condition'),
                   items: _conditionOptions
                       .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ),
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -447,10 +557,7 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
   }) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-      ),
+      decoration: InputDecoration(labelText: label, hintText: hintText),
       validator: validator,
     );
   }
@@ -587,8 +694,7 @@ class _RegisterSummaryRow extends StatelessWidget {
       builder: (context, constraints) {
         final useWideLayout = constraints.maxWidth >= 840;
         final children = [
-          for (final item in items)
-            Expanded(child: _SummaryTile(metric: item)),
+          for (final item in items) Expanded(child: _SummaryTile(metric: item)),
         ];
 
         if (useWideLayout) {
@@ -632,17 +738,17 @@ class _SummaryTile extends StatelessWidget {
           Text(
             metric.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: metric.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: metric.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${metric.value}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -673,16 +779,16 @@ class _EmptyRegisterState extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -733,6 +839,112 @@ class _RegisterError extends StatelessWidget {
   }
 }
 
+class _RegisterSearchBar extends StatelessWidget {
+  const _RegisterSearchBar({
+    required this.controller,
+    required this.hintText,
+    required this.activeFilter,
+    required this.filterLabels,
+    required this.onFilterChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final String activeFilter;
+  final Map<String, String> filterLabels;
+  final ValueChanged<String> onFilterChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: 'Search',
+              hintText: hintText,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: onClear,
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Clear search',
+                    ),
+            ),
+            onChanged: (_) {},
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final entry in filterLabels.entries)
+                FilterChip(
+                  selected: activeFilter == entry.key,
+                  label: Text(entry.value),
+                  onSelected: (_) => onFilterChanged(entry.key),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyFilterState extends StatelessWidget {
+  const _EmptyFilterState({
+    required this.title,
+    required this.message,
+    required this.onClear,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 14),
+          TextButton.icon(
+            onPressed: onClear,
+            icon: const Icon(Icons.clear_all),
+            label: const Text('Clear search and filters'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SummaryMetric {
   const _SummaryMetric({
     required this.label,
@@ -762,9 +974,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -788,9 +1000,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
