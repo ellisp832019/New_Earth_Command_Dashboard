@@ -14,6 +14,25 @@ class VoiceAiAssistRequest {
   final VoiceCommandType? selectedType;
   final VoiceWizardStep? wizardStep;
   final VoiceConversationContext? conversationContext;
+
+  @override
+  bool operator ==(Object other) {
+    return other is VoiceAiAssistRequest &&
+        other.transcript == transcript &&
+        other.prompt == prompt &&
+        other.selectedType == selectedType &&
+        other.wizardStep == wizardStep &&
+        other.conversationContext == conversationContext;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    transcript,
+    prompt,
+    selectedType,
+    wizardStep,
+    conversationContext,
+  );
 }
 
 class VoiceAiAssistResponse {

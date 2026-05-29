@@ -10,7 +10,9 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../core/database/app_database.dart';
 import 'application/voice_conversation_dock_controller.dart';
+import 'application/voice_ai_assist_controller.dart';
 import 'application/voice_session_controller.dart';
+import 'ai/voice_ai_assist_service.dart';
 import 'voice_command_action_service.dart';
 import 'desktop_speech_bridge_service.dart';
 import 'voice_command_model.dart';
@@ -1656,6 +1658,18 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final wizardSummary = _mode == _VoiceInteractionMode.wizard
         ? _wizardConversationSummary()
         : null;
+    final aiAssistRequest = VoiceAiAssistRequest(
+      transcript: _mode == _VoiceInteractionMode.wizard
+          ? _wizardAnswerController.text
+          : _transcriptController.text,
+      prompt: wizardPrompt,
+      selectedType: _currentType,
+      wizardStep: _mode == _VoiceInteractionMode.wizard ? _wizardStep : null,
+      conversationContext: conversationContext,
+    );
+    final aiAssistAsync = ref.watch(
+      voiceAiBriefingAssistProvider(aiAssistRequest),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -2021,6 +2035,86 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         ),
                       ],
                     ],
+                    const SizedBox(height: 10),
+                    Text(
+                      'AI Assist',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    aiAssistAsync.when(
+                      data: (aiAssist) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              aiAssist.summary,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              aiAssist.nextStep,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            if (aiAssist.suggestedType != null ||
+                                aiAssist.suggestedTitle != null) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  if (aiAssist.suggestedType != null)
+                                    Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      label: Text(
+                                        'AI type: ${aiAssist.suggestedType!.label}',
+                                      ),
+                                    ),
+                                  if (aiAssist.suggestedTitle != null)
+                                    Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      label: Text(
+                                        'AI title: ${aiAssist.suggestedTitle}',
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                            if (aiAssist.hints.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: aiAssist.hints
+                                    .map(
+                                      (hint) => Chip(
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        label: Text(hint),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                      loading: () => Text(
+                        'Preparing AI assist suggestions...',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      error: (error, stackTrace) => Text(
+                        'AI assist could not load right now.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
                     if (briefing.actions.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Wrap(
