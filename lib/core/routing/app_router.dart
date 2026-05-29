@@ -16,6 +16,7 @@ import '../../features/assets/presentation/supplier_register_screen.dart';
 import '../../features/assets/presentation/asset_conflicts_screen.dart';
 import '../../features/assets/presentation/qr_label_register_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
+import '../../features/visual_capture/presentation/visual_capture_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
@@ -137,6 +138,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'orders',
                   builder: (context, state) => const OrdersTrackerScreen(),
+                ),
+                GoRoute(
+                  path: 'visual-capture',
+                  builder: (context, state) => const VisualCaptureScreen(),
                 ),
               ],
             ),
