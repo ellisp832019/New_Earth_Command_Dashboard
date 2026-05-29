@@ -44,11 +44,62 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-```text
+# ============================================================
+# NEW EARTH OMEGA OS
+# ============================================================
+
+# Local path configuration
 config/local_paths.json
+
+# Treasury
 .local_treasury_cache/
 .treasury_runtime/
+.backup_treasury_*/
+
+# Asset Intelligence
 .local_asset_cache/
 .asset_runtime/
-.backup_treasury_*/
-```
+.backup_assets_*/
+
+# Visual Capture
+.local_visual_capture_cache/
+.visual_capture_runtime/
+capture_inbox_cache/
+.backup_visual_*/
+
+# OCR / AI Processing
+ocr_temp/
+ocr_cache/
+ai_processing_cache/
+extracted_receipts/
+generated_metadata/
+
+# QR Label System
+.qr_label_runtime/
+.local_print_queue/
+generated_qr_temp/
+printer_cache/
+
+# Generated thumbnails and previews
+*.thumb.cache
+*.thumbnail.jpg
+*.thumbnail.png
+
+# Temporary uploads
+temp_uploads/
+capture_staging/
+import_staging/
+
+# Local exports
+exports_temp/
+reports_temp/
+
+# Personal / sensitive data
+private_receipts/
+sensitive_images/
+redacted_exports/
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
