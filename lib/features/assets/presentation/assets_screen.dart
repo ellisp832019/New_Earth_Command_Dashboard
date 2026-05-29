@@ -1000,6 +1000,16 @@ class _AssetSyncStatusCard extends ConsumerWidget {
                       height: 1.35,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () {
+                      ref.invalidate(assetChangeJournalEntriesProvider);
+                      ref.invalidate(assetChangeConflictsProvider);
+                      ref.invalidate(assetSyncStatusProvider);
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh journal'),
+                  ),
                 ],
               );
 

@@ -39,6 +39,7 @@ void main() {
     expect(find.text('Journal active'), findsOneWidget);
     expect(find.text('1 conflicts'), findsOneWidget);
     expect(find.text('Review Conflicts'), findsOneWidget);
+    expect(find.text('Refresh journal'), findsOneWidget);
     expect(find.text('Open QR Labels'), findsOneWidget);
   });
 }
