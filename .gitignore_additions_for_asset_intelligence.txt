@@ -1,8 +1,0 @@
-# Treasury local machine config/runtime
-config/local_paths.json
-.local_treasury_cache/
-.treasury_runtime/
-
-# Asset Intelligence local cache/runtime
-.local_asset_cache/
-.asset_runtime/

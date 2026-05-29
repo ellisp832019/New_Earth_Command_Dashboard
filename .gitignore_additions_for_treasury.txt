@@ -1,6 +1,0 @@
-# Treasury local machine config
-config/local_paths.json
-
-# Optional local finance cache/runtime
-.local_treasury_cache/
-.treasury_runtime/
