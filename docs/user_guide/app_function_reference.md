@@ -415,6 +415,7 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 
 - Voice Capture can be opened from `Dashboard` Quick Capture or from `More`.
 - On Windows, Gaia waits for a connected headset or headset microphone before the app fully opens.
+- While that headset gate is open, Gaia keeps rechecking automatically so a newly connected headset can unlock the app without a restart.
 - On Windows, Gaia gives a short startup greeting once voice replies are ready, so you know the assistant is alive before you speak.
 - Microphone capture is press-to-listen only; there is no always-listening background mode.
 - On Windows, `Start Listening` first tries the local desktop speech bridge for one-shot Whisper transcription before falling back to the system dictation path.

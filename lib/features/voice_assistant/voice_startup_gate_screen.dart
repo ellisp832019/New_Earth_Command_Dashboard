@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,13 +7,55 @@ import '../settings/application/settings_controller.dart';
 import 'application/voice_startup_gate_controller.dart';
 import 'voice_startup_gate_service.dart';
 
-class VoiceStartupGateScreen extends ConsumerWidget {
+class VoiceStartupGateScreen extends ConsumerStatefulWidget {
   const VoiceStartupGateScreen({super.key, required this.result});
 
   final VoiceStartupGateResult result;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VoiceStartupGateScreen> createState() =>
+      _VoiceStartupGateScreenState();
+}
+
+class _VoiceStartupGateScreenState
+    extends ConsumerState<VoiceStartupGateScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleRefresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant VoiceStartupGateScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _scheduleRefresh();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleRefresh() {
+    _refreshTimer?.cancel();
+    if (widget.result.isReady) {
+      return;
+    }
+
+    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ref.invalidate(voiceStartupGateProvider);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -31,18 +75,20 @@ class VoiceStartupGateScreen extends ConsumerWidget {
                     style: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 12),
+                  Text(widget.result.message, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 8),
                   Text(
-                    result.message,
-                    style: theme.textTheme.bodyLarge,
+                    'Gaia keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
+                    style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 20),
-                  if (result.devices.isNotEmpty) ...[
+                  if (widget.result.devices.isNotEmpty) ...[
                     Text(
                       'Detected audio inputs',
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    ...result.devices.map(
+                    ...widget.result.devices.map(
                       (device) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
@@ -94,7 +140,7 @@ class VoiceStartupGateScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Gaia will continue only after it sees a connected headset or headset microphone.',
+                    'Gaia will continue only after it sees a connected headset or headset microphone, but it keeps rechecking while this screen is open.',
                     style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 8),

@@ -602,6 +602,7 @@ That means:
 - fullscreen mode is preserved
 - you can still review the text before saving
 - Gaia waits for a connected headset or headset microphone before the app fully opens on Windows
+- while the headset gate is showing, Gaia keeps rechecking automatically so you can connect a headset without restarting
 
 Gaia also keeps a small wake listener armed while the app is open, so saying `Hey Gaia` can bring the Voice Assistant forward without first pressing a button. The wake listener stays local, review-first, and only active while Gaia is running.
 
