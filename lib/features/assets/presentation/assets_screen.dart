@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 import '../application/asset_treasury_links_controller.dart';
+import '../data/asset_summary_report.dart';
 import '../data/assets_folder_service.dart';
 
 class AssetsScreen extends ConsumerStatefulWidget {
@@ -30,9 +33,8 @@ class _AssetsScreenState extends ConsumerState<AssetsScreen> {
         onCreateStructure: _handleCreateStructure,
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => Scaffold(
         body: _AssetsError(
           onReload: () => ref.invalidate(assetWorkspaceProvider),
@@ -148,6 +150,8 @@ class _AssetsContent extends StatelessWidget {
                     const SizedBox(height: 22),
                     const _AssetSyncStatusCard(),
                     const SizedBox(height: 22),
+                    const _AssetReportExportCard(),
+                    const SizedBox(height: 22),
                     _AssetSummaryGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _AssetTreasuryLinksCard(),
@@ -156,7 +160,8 @@ class _AssetsContent extends StatelessWidget {
                       onOpenEquipment: () =>
                           context.push(RouteNames.assetEquipment),
                       onOpenParts: () => context.push(RouteNames.assetParts),
-                      onOpenLowStock: () => context.push(RouteNames.assetLowStock),
+                      onOpenLowStock: () =>
+                          context.push(RouteNames.assetLowStock),
                       onOpenRepairSummary: () =>
                           context.push(RouteNames.assetRepairSummary),
                       onOpenProjectSummary: () =>
@@ -277,7 +282,10 @@ class _AssetHero extends StatelessWidget {
             children: [
               Expanded(child: copy),
               const SizedBox(width: 24),
-              SizedBox(width: 520, child: Align(alignment: Alignment.topRight, child: chips)),
+              SizedBox(
+                width: 520,
+                child: Align(alignment: Alignment.topRight, child: chips),
+              ),
             ],
           );
         },
@@ -367,6 +375,46 @@ class _AssetHealthCard extends StatelessWidget {
                   ],
                 ),
               ],
+              if (snapshot.missingFolders.isNotEmpty ||
+                  snapshot.missingFiles.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Missing data',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Starter folders and tracker files are missing, so the setup helper can finish the structure cleanly.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    if (snapshot.missingFolders.isNotEmpty)
+                      _InlineTag(
+                        label:
+                            '${snapshot.missingFolders.length} folder${snapshot.missingFolders.length == 1 ? '' : 's'} missing',
+                        accent: AppColours.darkAmber,
+                        foreground: AppColours.darkText,
+                      ),
+                    if (snapshot.missingFiles.isNotEmpty)
+                      _InlineTag(
+                        label:
+                            '${snapshot.missingFiles.length} file${snapshot.missingFiles.length == 1 ? '' : 's'} missing',
+                        accent: AppColours.darkAmber,
+                        foreground: AppColours.darkText,
+                      ),
+                  ],
+                ),
+              ],
             ],
           );
 
@@ -450,10 +498,7 @@ class _AssetSummaryGrid extends StatelessWidget {
             for (var index = 0; index < cards.length; index++)
               SizedBox(
                 width: useThreeColumns ? cardWidth : constraints.maxWidth,
-                child: _SummaryCard(
-                  data: cards[index],
-                  accent: accents[index],
-                ),
+                child: _SummaryCard(data: cards[index], accent: accents[index]),
               ),
           ],
         );
@@ -493,38 +538,38 @@ class _AssetPriorityCard extends StatelessWidget {
     final headline = hasSetupWork
         ? 'Finish setup first'
         : lowStockCount > 0
-            ? 'Low stock needs attention'
-            : brokenCount > 0
-                ? 'Broken / repair items need review'
-                : needsDecisionCount > 0
-                    ? 'A few items need a clear decision'
-                    : wishlistCount > 0
-                        ? 'Wishlist items are parked for later'
-                        : 'The asset workflow is steady';
+        ? 'Low stock needs attention'
+        : brokenCount > 0
+        ? 'Broken / repair items need review'
+        : needsDecisionCount > 0
+        ? 'A few items need a clear decision'
+        : wishlistCount > 0
+        ? 'Wishlist items are parked for later'
+        : 'The asset workflow is steady';
     final supportingCopy = hasSetupWork
         ? 'Create the starter structure first, then move into the registers.'
         : lowStockCount > 0
-            ? '$lowStockCount part${lowStockCount == 1 ? '' : 's'} are at or below threshold. Start with stock, then move to the next clear step.'
-            : brokenCount > 0
-                ? '$brokenCount equipment item${brokenCount == 1 ? '' : 's'} need a repair or replacement check. Keep the next step short.'
-                : needsDecisionCount > 0
-                    ? '$needsDecisionCount item${needsDecisionCount == 1 ? '' : 's'} are waiting for a decision.'
-                    : 'Use the registers below to keep the workflow moving without clutter.';
+        ? '$lowStockCount part${lowStockCount == 1 ? '' : 's'} are at or below threshold. Start with stock, then move to the next clear step.'
+        : brokenCount > 0
+        ? '$brokenCount equipment item${brokenCount == 1 ? '' : 's'} need a repair or replacement check. Keep the next step short.'
+        : needsDecisionCount > 0
+        ? '$needsDecisionCount item${needsDecisionCount == 1 ? '' : 's'} are waiting for a decision.'
+        : 'Use the registers below to keep the workflow moving without clutter.';
 
     final primaryLabel = hasSetupWork
         ? 'Create starter files'
         : lowStockCount > 0
-            ? 'Open Low Stock / Reorder'
-            : brokenCount > 0
-                ? 'Open Broken / Repair'
-                : 'Open Equipment Register';
+        ? 'Open Low Stock / Reorder'
+        : brokenCount > 0
+        ? 'Open Broken / Repair'
+        : 'Open Equipment Register';
     final primaryAction = hasSetupWork
         ? onOpenEquipment
         : lowStockCount > 0
-            ? onOpenLowStock
-            : brokenCount > 0
-                ? onOpenRepairSummary
-                : onOpenEquipment;
+        ? onOpenLowStock
+        : brokenCount > 0
+        ? onOpenRepairSummary
+        : onOpenEquipment;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -714,11 +759,11 @@ class _AssetDecisionBridgeCard extends ConsumerWidget {
                 subtitle:
                     'Loading the asset-side decision signals so the next action stays clear.',
                 chips: [
-                    _InlineTag(
-                      label: 'Loading',
-                      accent: AppColours.darkSecondary,
-                      foreground: AppColours.darkText,
-                    ),
+                  _InlineTag(
+                    label: 'Loading',
+                    accent: AppColours.darkSecondary,
+                    foreground: AppColours.darkText,
+                  ),
                 ],
                 actions: const SizedBox.shrink(),
               ),
@@ -727,11 +772,11 @@ class _AssetDecisionBridgeCard extends ConsumerWidget {
                 subtitle:
                     'Asset decision signals could not load right now, but the rest of the tab is still usable.',
                 chips: [
-                    _InlineTag(
-                      label: 'Try reload',
-                      accent: AppColours.darkAmber,
-                      foreground: AppColours.darkText,
-                    ),
+                  _InlineTag(
+                    label: 'Try reload',
+                    accent: AppColours.darkAmber,
+                    foreground: AppColours.darkText,
+                  ),
                 ],
                 actions: const SizedBox.shrink(),
               ),
@@ -772,9 +817,8 @@ class _AssetDecisionBridgeCard extends ConsumerWidget {
                         valuationTable.rows.length - linkedEvidenceCount;
                     final repairCount = brokenRows.length;
                     final lowStockCount = lowStockRows.length;
-                    final decisionCount = lowStockCount +
-                        repairCount +
-                        missingEvidenceCount;
+                    final decisionCount =
+                        lowStockCount + repairCount + missingEvidenceCount;
                     final totalTrackedValue =
                         overviewData.currentEstimatedValueTotal;
 
@@ -827,7 +871,7 @@ class _AssetDecisionBridgeCard extends ConsumerWidget {
                       ],
                     );
 
-                  return _DecisionBridgeShell(
+                    return _DecisionBridgeShell(
                       title: 'Decision bridge',
                       subtitle: subtitle,
                       chips: chips,
@@ -874,10 +918,7 @@ class _DecisionBridgeShell extends StatelessWidget {
           final copy = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _PanelTitle(
-                title: title,
-                icon: Icons.account_tree_outlined,
-              ),
+              _PanelTitle(title: title, icon: Icons.account_tree_outlined),
               const SizedBox(height: 10),
               Text(
                 subtitle,
@@ -899,11 +940,7 @@ class _DecisionBridgeShell extends StatelessWidget {
             ],
           );
 
-          final chipWrap = Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: chips,
-          );
+          final chipWrap = Wrap(spacing: 10, runSpacing: 10, children: chips);
 
           if (!wide) {
             return Column(
@@ -983,7 +1020,9 @@ class _AssetSyncStatusCard extends ConsumerWidget {
       data: (status) {
         final lastChangeLabel = status.lastChangeAt == null
             ? 'No journal entries yet'
-            : DateFormat('yMMMd, h:mm a').format(status.lastChangeAt!.toLocal());
+            : DateFormat(
+                'yMMMd, h:mm a',
+              ).format(status.lastChangeAt!.toLocal());
 
         return Container(
           padding: const EdgeInsets.all(20),
@@ -1090,10 +1129,7 @@ class _AssetSyncStatusCard extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: chips,
-                        ),
+                        Align(alignment: Alignment.topRight, child: chips),
                         if (status.conflictCount > 0) ...[
                           const SizedBox(height: 14),
                           OutlinedButton.icon(
@@ -1112,6 +1148,168 @@ class _AssetSyncStatusCard extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _AssetReportExportCard extends ConsumerStatefulWidget {
+  const _AssetReportExportCard();
+
+  @override
+  ConsumerState<_AssetReportExportCard> createState() =>
+      _AssetReportExportCardState();
+}
+
+class _AssetReportExportCardState
+    extends ConsumerState<_AssetReportExportCard> {
+  bool _isExporting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = ref
+        .watch(assetWorkspaceProvider)
+        .maybeWhen(data: (data) => data, orElse: () => null);
+    final syncStatus = ref
+        .watch(assetSyncStatusProvider)
+        .maybeWhen(data: (data) => data, orElse: () => null);
+    final treasurySummary = ref
+        .watch(assetTreasuryLinkSummaryProvider)
+        .maybeWhen(data: (data) => data, orElse: () => null);
+    final theme = Theme.of(context);
+    final canExport =
+        snapshot?.assetsRootPath != null &&
+        syncStatus != null &&
+        treasurySummary != null;
+
+    return Container(
+      decoration: _panelDecoration(context),
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWideLayout = constraints.maxWidth >= 960;
+
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelTitle(
+                title: 'Asset summary report',
+                icon: Icons.description_outlined,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Create a calm local snapshot of the current asset counts, sync status, and Treasury link summary.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Saved to 00_ASSET_DASHBOARD/asset_intelligence_summary.md',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: _isExporting || !canExport ? null : _exportReport,
+                icon: _isExporting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.download_outlined),
+                label: Text(
+                  _isExporting ? 'Exporting' : 'Export summary report',
+                ),
+              ),
+            ],
+          );
+
+          if (!useWideLayout) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [content, const SizedBox(height: 16), actions],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: content),
+              const SizedBox(width: 20),
+              SizedBox(width: 260, child: actions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _exportReport() async {
+    final snapshot = ref
+        .read(assetWorkspaceProvider)
+        .maybeWhen(data: (data) => data, orElse: () => null);
+    final syncStatus = ref
+        .read(assetSyncStatusProvider)
+        .maybeWhen(data: (data) => data, orElse: () => null);
+    final treasurySummary = ref
+        .read(assetTreasuryLinkSummaryProvider)
+        .maybeWhen(data: (data) => data, orElse: () => null);
+    if (snapshot?.assetsRootPath == null ||
+        syncStatus == null ||
+        treasurySummary == null) {
+      return;
+    }
+
+    setState(() => _isExporting = true);
+    try {
+      final report = _buildReport(
+        snapshot: snapshot!,
+        syncStatus: syncStatus,
+        treasurySummary: treasurySummary,
+      );
+      final file = File(
+        path.join(
+          snapshot.assetsRootPath!,
+          '00_ASSET_DASHBOARD',
+          'asset_intelligence_summary.md',
+        ),
+      );
+      await ref
+          .read(assetFolderServiceProvider)
+          .writeTextFileWithBackup(file, report);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Asset summary report exported.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  String _buildReport({
+    required AssetWorkspaceSnapshot snapshot,
+    required AssetSyncStatus syncStatus,
+    required AssetTreasuryLinkSummary treasurySummary,
+  }) {
+    return buildAssetSummaryReport(
+      snapshot: snapshot,
+      syncStatus: syncStatus,
+      treasurySummary: treasurySummary,
     );
   }
 }
@@ -1224,10 +1422,7 @@ class _QuickStartStrip extends StatelessWidget {
 }
 
 class _QuickStartStep {
-  const _QuickStartStep({
-    required this.label,
-    required this.detail,
-  });
+  const _QuickStartStep({required this.label, required this.detail});
 
   final String label;
   final String detail;
@@ -1245,7 +1440,9 @@ class _QuickStartCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.85)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.85),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1253,17 +1450,17 @@ class _QuickStartCard extends StatelessWidget {
           Text(
             step.label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             step.detail,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -1345,10 +1542,7 @@ class _AssetFolderCheckCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   for (final file in snapshot.missingFiles)
-                    _InlineTag(
-                      label: file,
-                      accent: AppColours.darkSecondary,
-                    ),
+                    _InlineTag(label: file, accent: AppColours.darkSecondary),
                 ],
               ),
             ],
@@ -1398,10 +1592,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelTitle(
-            title: 'Registers',
-            icon: Icons.view_list_outlined,
-          ),
+          const _PanelTitle(title: 'Registers', icon: Icons.view_list_outlined),
           const SizedBox(height: 10),
           Text(
             'Open the working registers for equipment and parts. These views stay calm and focused on the next useful action.',
@@ -1484,10 +1675,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
 }
 
 class _AssetFooter extends StatelessWidget {
-  const _AssetFooter({
-    required this.theme,
-    required this.snapshot,
-  });
+  const _AssetFooter({required this.theme, required this.snapshot});
 
   final ThemeData theme;
   final AssetWorkspaceSnapshot snapshot;
@@ -1499,7 +1687,9 @@ class _AssetFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Row(
         children: [
@@ -1549,9 +1739,9 @@ class _AssetTreasuryLinksCard extends ConsumerWidget {
         decoration: _panelDecoration(context),
         child: Text(
           'Treasury links could not load right now.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
         ),
       ),
       data: (summary) {
@@ -1574,9 +1764,9 @@ class _AssetTreasuryLinksCard extends ConsumerWidget {
               Text(
                 'These cards stay summary-only. Treasury holds the money decisions, while Assets keeps the item records and link IDs tidy.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.4,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 16),
               LayoutBuilder(
@@ -1597,7 +1787,9 @@ class _AssetTreasuryLinksCard extends ConsumerWidget {
                     ),
                     _TreasuryLinkMetricCard(
                       label: 'Reorder estimate',
-                      value: moneyFormatter.format(summary.reorderEstimatedSpend),
+                      value: moneyFormatter.format(
+                        summary.reorderEstimatedSpend,
+                      ),
                       note: 'Low stock items that may need a calm reorder.',
                       accent: AppColours.darkSuccess,
                     ),
@@ -1637,9 +1829,9 @@ class _AssetTreasuryLinksCard extends ConsumerWidget {
               Text(
                 'Broken equipment value at risk: ${moneyFormatter.format(summary.repairReplacementValueTotal)} across ${summary.brokenEquipmentCount} item${summary.brokenEquipmentCount == 1 ? '' : 's'}.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.4,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -1677,26 +1869,26 @@ class _TreasuryLinkMetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             note,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -1750,9 +1942,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -1786,18 +1978,18 @@ class _HeaderChip extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accentColor,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
+              color: accentColor,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -1828,10 +2020,10 @@ class _InlineTag extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: foreground ?? accent,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            ),
+          color: foreground ?? accent,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
       ),
     );
   }
