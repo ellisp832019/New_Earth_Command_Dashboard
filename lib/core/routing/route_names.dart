@@ -28,6 +28,7 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const omegaOsFolderHealth = '/more/omega-os-health';
   static const journal = '/journal';
   static const newJournal = '/journal/new';
   static const learning = '/learning';

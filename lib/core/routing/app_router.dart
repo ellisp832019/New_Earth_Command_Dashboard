@@ -35,6 +35,7 @@ import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
 import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/settings/presentation/omega_os_folder_health_screen.dart';
 import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/treasury/presentation/treasury_screen.dart';
@@ -251,6 +252,13 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
+              routes: [
+                GoRoute(
+                  path: 'omega-os-health',
+                  builder: (context, state) =>
+                      const OmegaOsFolderHealthScreen(),
+                ),
+              ],
             ),
           ],
         ),

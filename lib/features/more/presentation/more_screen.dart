@@ -60,6 +60,13 @@ class MoreScreen extends StatelessWidget {
       icon: Icons.settings_outlined,
       route: RouteNames.settings,
     ),
+    _MoreItem(
+      title: 'Folder Health',
+      description:
+          'Check Treasury, Assets, Visual Capture, and the reserved Omega OS folders.',
+      icon: Icons.health_and_safety_outlined,
+      route: RouteNames.omegaOsFolderHealth,
+    ),
   ];
 
   @override
@@ -104,9 +111,7 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 1000
-                  ? 2
-                  : 1;
+              final crossAxisCount = constraints.maxWidth >= 1000 ? 2 : 1;
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
