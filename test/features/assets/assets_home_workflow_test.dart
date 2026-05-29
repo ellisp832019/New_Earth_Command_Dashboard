@@ -36,7 +36,9 @@ void main() {
     expect(find.text('Open Low Stock / Reorder'), findsOneWidget);
     expect(find.text('Decision bridge'), findsOneWidget);
     expect(find.text('Asset sync'), findsOneWidget);
-    expect(find.text('Journal ready'), findsOneWidget);
+    expect(find.text('Journal active'), findsOneWidget);
+    expect(find.text('1 conflicts'), findsOneWidget);
+    expect(find.text('Review Conflicts'), findsOneWidget);
     expect(find.text('Open QR Labels'), findsOneWidget);
   });
 }
@@ -104,10 +106,10 @@ _AssetsHomeFixture _fixture() {
     syncStatus: const AssetSyncStatus(
       isConnected: true,
       entryCount: 0,
-      conflictCount: 0,
+      conflictCount: 1,
       lastChangeAt: null,
       lastWriterLabel: 'No writer recorded yet',
-      statusLabel: 'Journal ready',
+      statusLabel: 'Journal active',
     ),
   );
 }

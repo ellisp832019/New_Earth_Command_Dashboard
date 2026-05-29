@@ -1037,6 +1037,18 @@ class _AssetSyncStatusCard extends ConsumerWidget {
                     copy,
                     const SizedBox(height: 16),
                     chips,
+                    if (status.conflictCount > 0) ...[
+                      const SizedBox(height: 14),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              context.push(RouteNames.assetConflictReview),
+                          icon: const Icon(Icons.rule_folder_outlined),
+                          label: const Text('Review Conflicts'),
+                        ),
+                      ),
+                    ],
                   ],
                 );
               }
@@ -1048,9 +1060,23 @@ class _AssetSyncStatusCard extends ConsumerWidget {
                   const SizedBox(width: 20),
                   SizedBox(
                     width: 450,
-                    child: Align(
-                      alignment: Alignment.topRight,
-                      child: chips,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: chips,
+                        ),
+                        if (status.conflictCount > 0) ...[
+                          const SizedBox(height: 14),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                context.push(RouteNames.assetConflictReview),
+                            icon: const Icon(Icons.rule_folder_outlined),
+                            label: const Text('Review Conflicts'),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],

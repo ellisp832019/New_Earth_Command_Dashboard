@@ -13,6 +13,7 @@ import '../../features/assets/presentation/quick_capture_screen.dart';
 import '../../features/assets/presentation/orders_tracker_screen.dart';
 import '../../features/assets/presentation/reorder_list_screen.dart';
 import '../../features/assets/presentation/supplier_register_screen.dart';
+import '../../features/assets/presentation/asset_conflicts_screen.dart';
 import '../../features/assets/presentation/qr_label_register_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
@@ -112,6 +113,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'qr-labels',
                   builder: (context, state) => const QrLabelRegisterScreen(),
+                ),
+                GoRoute(
+                  path: 'conflicts',
+                  builder: (context, state) => const AssetConflictsScreen(),
                 ),
                 GoRoute(
                   path: 'quick-capture',
