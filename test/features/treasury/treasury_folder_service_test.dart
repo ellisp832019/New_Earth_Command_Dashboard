@@ -42,6 +42,7 @@ void main() {
 
       final before = await service.loadWorkspace();
       expect(before.isReady, isFalse);
+      expect(before.guidanceNote, contains('reserved'));
       expect(
         before.missingFiles,
         containsAll(TreasuryFolderService.requiredFiles),

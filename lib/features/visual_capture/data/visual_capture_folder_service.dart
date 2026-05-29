@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../../../core/constants/omega_os_folder_registry.dart';
 import '../../../core/utils/folder_bootstrap_result.dart';
 
 class VisualCaptureWorkspaceSnapshot {
@@ -123,10 +124,10 @@ class VisualCaptureFolderService {
     }
 
     final guidanceNote = visualCaptureRoot == null
-        ? 'The Visual Capture area will calm down once the external Omega OS folder is linked.'
+        ? 'The Visual Capture area will calm down once the external Omega OS folder is linked. ${OmegaOsFolderRegistry.reservedSystemsNote}'
         : missingFolders.isEmpty && missingFiles.isEmpty
-        ? 'The external visual capture folder is connected. Capture stays local-first and starter files are in place.'
-        : 'The visual capture folder is present, but a few expected Omega OS folders or tracker files still need attention.';
+        ? 'The external visual capture folder is connected. Capture stays local-first and starter files are in place. ${OmegaOsFolderRegistry.reservedSystemsNote}'
+        : 'The visual capture folder is present, but a few expected Omega OS folders or tracker files still need attention. ${OmegaOsFolderRegistry.reservedSystemsNote}';
 
     return VisualCaptureWorkspaceSnapshot(
       configPath: configFile.path,

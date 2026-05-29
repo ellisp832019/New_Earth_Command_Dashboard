@@ -17,6 +17,8 @@ Add these to `config/local_paths.json` when the linked Omega OS folders are read
 "visual_capture_path": "D:/NEW_EARTH_OMEGA_OS_PACK/19_VISUAL_RECORDS_AND_CAPTURE"
 ```
 
+Omega OS also reserves `20_CONTACTS_AND_RELATIONSHIPS`, `21_PROJECTS_AND_PROGRAMMES`, `22_KNOWLEDGE_AND_LEARNING`, and `23_AI_AND_AUTOMATION` for later. The Dashboard should treat them as inactive until those systems are built.
+
 ## Rule
 
 Commit:

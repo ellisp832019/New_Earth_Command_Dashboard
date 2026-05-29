@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../../../core/constants/omega_os_folder_registry.dart';
 import '../../../core/utils/folder_bootstrap_result.dart';
 
 enum TreasuryStatusKind { safe, watch, pause, decision, future, archived }
@@ -448,10 +449,10 @@ class TreasuryFolderService {
     ];
 
     final guidanceNote = financeRoot == null
-        ? 'The Treasury area will calm down once the external Omega OS folder is linked.'
+        ? 'The Treasury area will calm down once the external Omega OS folder is linked. ${OmegaOsFolderRegistry.reservedSystemsNote}'
         : missingFolders.isEmpty
-        ? 'The external finance folder is connected. Keep the system local-first and only write with care.'
-        : 'The finance folder is present, but a few expected Omega OS folders still need attention.';
+        ? 'The external finance folder is connected. Keep the system local-first and only write with care. ${OmegaOsFolderRegistry.reservedSystemsNote}'
+        : 'The finance folder is present, but a few expected Omega OS folders still need attention. ${OmegaOsFolderRegistry.reservedSystemsNote}';
 
     return TreasuryWorkspaceSnapshot(
       configPath: configFile.path,

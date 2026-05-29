@@ -3,10 +3,18 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../../../core/constants/omega_os_folder_registry.dart';
 import '../../../core/utils/folder_bootstrap_result.dart';
 import 'asset_register_repository.dart';
 
-enum AssetSummaryKind { available, lowStock, brokenRepair, needsDecision, wishlist, projectSummary }
+enum AssetSummaryKind {
+  available,
+  lowStock,
+  brokenRepair,
+  needsDecision,
+  wishlist,
+  projectSummary,
+}
 
 class AssetSummaryCard {
   const AssetSummaryCard({
@@ -52,10 +60,10 @@ class AssetWorkspaceSnapshot {
 
 class AssetFolderService {
   AssetFolderService({Directory? workingDirectory})
-      : _workingDirectory = workingDirectory ?? Directory.current,
-        _registerRepository = AssetRegisterRepository(
-          workingDirectory: workingDirectory ?? Directory.current,
-        );
+    : _workingDirectory = workingDirectory ?? Directory.current,
+      _registerRepository = AssetRegisterRepository(
+        workingDirectory: workingDirectory ?? Directory.current,
+      );
 
   static const _configRelativePath = 'config/local_paths.json';
   static const _assetsRootKey = 'assets_equipment_path';
@@ -91,12 +99,16 @@ class AssetFolderService {
   final AssetRegisterRepository _registerRepository;
 
   Future<AssetWorkspaceSnapshot> loadWorkspace() async {
-    final configFile = File(path.join(_workingDirectory.path, _configRelativePath));
+    final configFile = File(
+      path.join(_workingDirectory.path, _configRelativePath),
+    );
     final issues = <String>[];
     String? assetsRootPath;
 
     if (!await configFile.exists()) {
-      issues.add('config/local_paths.json was not found in the dashboard repo.');
+      issues.add(
+        'config/local_paths.json was not found in the dashboard repo.',
+      );
     } else {
       try {
         final decoded = jsonDecode(await configFile.readAsString());
@@ -149,8 +161,9 @@ class AssetFolderService {
 
     final equipmentRows = assetsRoot == null
         ? <Map<String, String>>[]
-        : (await _registerRepository.readEquipmentRegister(assetsRoot.path))
-            .rows;
+        : (await _registerRepository.readEquipmentRegister(
+            assetsRoot.path,
+          )).rows;
     final partsRows = assetsRoot == null
         ? <Map<String, String>>[]
         : (await _registerRepository.readPartsInventory(assetsRoot.path)).rows;
@@ -163,10 +176,10 @@ class AssetFolderService {
     final equipmentCount = equipmentRows.length;
     final partsCount = partsRows.length;
     final guidanceNote = assetsRoot == null
-        ? 'The Asset Intelligence area will calm down once the external Omega OS folder is linked.'
+        ? 'The Asset Intelligence area will calm down once the external Omega OS folder is linked. ${OmegaOsFolderRegistry.reservedSystemsNote}'
         : missingFolders.isEmpty && missingFiles.isEmpty
-            ? 'The external asset folder is connected. Keep the system local-first and only write with care.'
-            : 'The asset folder is present, but a few expected Omega OS folders or tracker files still need attention.';
+        ? 'The external asset folder is connected. Keep the system local-first and only write with care. ${OmegaOsFolderRegistry.reservedSystemsNote}'
+        : 'The asset folder is present, but a few expected Omega OS folders or tracker files still need attention. ${OmegaOsFolderRegistry.reservedSystemsNote}';
 
     return AssetWorkspaceSnapshot(
       configPath: configFile.path,

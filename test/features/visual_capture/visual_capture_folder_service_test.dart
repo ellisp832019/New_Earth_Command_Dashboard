@@ -34,6 +34,7 @@ void main() {
 
       final before = await service.loadWorkspace();
       expect(before.isReady, isFalse);
+      expect(before.guidanceNote, contains('reserved'));
       expect(before.missingFolders, contains('00_VISUAL_DASHBOARD'));
       expect(
         before.missingFiles,
