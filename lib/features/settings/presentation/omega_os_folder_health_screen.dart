@@ -84,6 +84,8 @@ class _OmegaOsFolderHealthScreenState
                 const SizedBox(height: 16),
                 _SummaryStrip(snapshot: data),
                 const SizedBox(height: 16),
+                const _RoleCard(),
+                const SizedBox(height: 16),
                 const _SectionTitle(
                   icon: Icons.check_circle_outline,
                   title: 'Active systems',
@@ -512,6 +514,110 @@ class _FooterCard extends StatelessWidget {
           height: 1.4,
         ),
       ),
+    );
+  }
+}
+
+class _RoleCard extends StatelessWidget {
+  const _RoleCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'System roles',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const _RoleLine(
+            icon: Icons.payments_outlined,
+            iconColor: AppColours.darkSuccess,
+            title: 'Treasury',
+            text: 'Money, budgets, receipts, and spending decisions.',
+          ),
+          const SizedBox(height: 10),
+          const _RoleLine(
+            icon: Icons.inventory_2_outlined,
+            iconColor: AppColours.darkSecondary,
+            title: 'Assets',
+            text:
+                'Equipment, parts, stock, location, valuation, and QR Labels.',
+          ),
+          const SizedBox(height: 10),
+          const _RoleLine(
+            icon: Icons.photo_library_outlined,
+            iconColor: AppColours.darkAmber,
+            title: 'Visual Capture',
+            text:
+                'Receipt photos, asset photos, repair photos, and OCR queues.',
+          ),
+          const SizedBox(height: 10),
+          const _RoleLine(
+            icon: Icons.radio_button_unchecked,
+            iconColor: AppColours.darkMutedText,
+            title: 'Reserved systems',
+            text: 'Folders 20-23 are parked for later and stay inactive.',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoleLine extends StatelessWidget {
+  const _RoleLine({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: iconColor),
+        const SizedBox(width: 10),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                TextSpan(text: text),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
