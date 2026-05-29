@@ -168,7 +168,15 @@ class _EquipmentRegisterScreenState
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
                                   final row = filteredRows[index];
-                                  return _EquipmentCard(row: row);
+                                  return _EquipmentCard(
+                                    row: row,
+                                    onEdit: workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _editRecord(
+                                            workspaceData.assetsRootPath!,
+                                            row,
+                                          ),
+                                  );
                                 },
                               ),
                           ],
@@ -210,6 +218,41 @@ class _EquipmentRegisterScreenState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Equipment item saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _editRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final draft = await showDialog<_EquipmentDraft>(
+      context: context,
+      builder: (context) => _EquipmentDialog(existingRow: row),
+    );
+    if (draft == null) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .updateEquipmentRecord(assetsRootPath, draft.toRow());
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(assetEquipmentRegisterProvider);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Equipment item updated.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -298,9 +341,10 @@ class _EquipmentRegisterScreenState
 }
 
 class _EquipmentCard extends StatelessWidget {
-  const _EquipmentCard({required this.row});
+  const _EquipmentCard({required this.row, this.onEdit});
 
   final Map<String, String> row;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +377,14 @@ class _EquipmentCard extends StatelessWidget {
                     ? AppColours.darkSuccess
                     : AppColours.darkAmber,
               ),
+              if (onEdit != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onEdit,
+                  tooltip: 'Edit equipment',
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -363,7 +415,9 @@ class _EquipmentCard extends StatelessWidget {
 }
 
 class _EquipmentDialog extends StatefulWidget {
-  const _EquipmentDialog();
+  const _EquipmentDialog({this.existingRow});
+
+  final Map<String, String>? existingRow;
 
   @override
   State<_EquipmentDialog> createState() => _EquipmentDialogState();
@@ -400,12 +454,19 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
   @override
   void initState() {
     super.initState();
-    _assetIdController = TextEditingController();
-    _nameController = TextEditingController();
-    _typeController = TextEditingController();
-    _projectController = TextEditingController();
-    _locationController = TextEditingController();
-    _notesController = TextEditingController();
+    final row = widget.existingRow;
+    _assetIdController = TextEditingController(text: row?['asset_id'] ?? '');
+    _nameController = TextEditingController(text: row?['name'] ?? '');
+    _typeController = TextEditingController(text: row?['type'] ?? '');
+    _projectController = TextEditingController(text: row?['project'] ?? '');
+    _locationController = TextEditingController(text: row?['location'] ?? '');
+    _notesController = TextEditingController(text: row?['notes'] ?? '');
+    _status = row?['status']?.trim().isNotEmpty == true
+        ? row!['status']!.trim()
+        : 'available';
+    _condition = row?['condition']?.trim().isNotEmpty == true
+        ? row!['condition']!.trim()
+        : 'good';
   }
 
   @override
@@ -421,8 +482,9 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.existingRow != null;
     return AlertDialog(
-      title: const Text('Add Equipment'),
+      title: Text(isEditing ? 'Edit Equipment' : 'Add Equipment'),
       content: SizedBox(
         width: 560,
         child: Form(
@@ -435,6 +497,7 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
                   controller: _assetIdController,
                   label: 'Asset ID',
                   hintText: 'NE-EQ-0001',
+                  enabled: !isEditing,
                   validator: (value) {
                     if ((value ?? '').trim().isEmpty) {
                       return 'Enter an asset ID.';
@@ -554,9 +617,11 @@ class _EquipmentDialogState extends State<_EquipmentDialog> {
     required String label,
     String? hintText,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return TextFormField(
       controller: controller,
+      enabled: enabled,
       decoration: InputDecoration(labelText: label, hintText: hintText),
       validator: validator,
     );

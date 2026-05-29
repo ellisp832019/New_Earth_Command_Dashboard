@@ -9,8 +9,8 @@ class AssetRegisterRepository {
   AssetRegisterRepository({
     AssetCsvService? csvService,
     Directory? workingDirectory,
-  })  : _csvService = csvService ?? AssetCsvService(),
-        _workingDirectory = workingDirectory ?? Directory.current;
+  }) : _csvService = csvService ?? AssetCsvService(),
+       _workingDirectory = workingDirectory ?? Directory.current;
 
   static const equipmentHeaders = <String>[
     'asset_id',
@@ -197,81 +197,81 @@ class AssetRegisterRepository {
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_equipmentFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_equipmentFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writePartsInventory(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_partsFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_partsFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeOrdersTracker(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_ordersFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_ordersFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeSupplierRegister(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_supplierFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_supplierFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeMaintenanceLog(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_maintenanceFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_maintenanceFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeLocationRegister(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_locationFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_locationFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeReorderList(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_reorderFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_reorderFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeValuationSummary(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_valuationFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_valuationFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> writeQrLabelRegister(
     String assetsRootPath,
     AssetCsvTable table,
   ) {
-    return _csvService.writeTable(_qrLabelFile(assetsRootPath), table).then(
-      (_) => table,
-    );
+    return _csvService
+        .writeTable(_qrLabelFile(assetsRootPath), table)
+        .then((_) => table);
   }
 
   Future<AssetCsvTable> appendEquipmentRecord(
@@ -285,6 +285,21 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> updateEquipmentRecord(
+    String assetsRootPath,
+    Map<String, String> updatedRow,
+  ) async {
+    final table = await readEquipmentRegister(assetsRootPath);
+    return _replaceRowByKey(
+      file: _equipmentFile(assetsRootPath),
+      headers: equipmentHeaders,
+      rows: table.rows,
+      keyColumn: 'asset_id',
+      keyValue: updatedRow['asset_id'],
+      updatedRow: updatedRow,
+    );
+  }
+
   Future<AssetCsvTable> appendPartRecord(
     String assetsRootPath,
     Map<String, String> row,
@@ -293,6 +308,21 @@ class AssetRegisterRepository {
       _partsFile(assetsRootPath),
       row,
       expectedHeaders: partsHeaders,
+    );
+  }
+
+  Future<AssetCsvTable> updatePartRecord(
+    String assetsRootPath,
+    Map<String, String> updatedRow,
+  ) async {
+    final table = await readPartsInventory(assetsRootPath);
+    return _replaceRowByKey(
+      file: _partsFile(assetsRootPath),
+      headers: partsHeaders,
+      rows: table.rows,
+      keyColumn: 'part_id',
+      keyValue: updatedRow['part_id'],
+      updatedRow: updatedRow,
     );
   }
 
@@ -403,45 +433,55 @@ class AssetRegisterRepository {
   List<Map<String, String>> filterLowStockParts(
     List<Map<String, String>> rows,
   ) {
-    return rows.where((row) {
-      final status = _normalizedStatus(row['status']);
-      if (status == 'low_stock' || status == 'reorder_needed') {
-        return true;
-      }
+    return rows
+        .where((row) {
+          final status = _normalizedStatus(row['status']);
+          if (status == 'low_stock' || status == 'reorder_needed') {
+            return true;
+          }
 
-      final quantity = _parseInt(row['quantity']);
-      final minQuantity = _parseInt(row['min_quantity']);
-      return quantity != null && minQuantity != null && quantity <= minQuantity;
-    }).toList(growable: false);
+          final quantity = _parseInt(row['quantity']);
+          final minQuantity = _parseInt(row['min_quantity']);
+          return quantity != null &&
+              minQuantity != null &&
+              quantity <= minQuantity;
+        })
+        .toList(growable: false);
   }
 
   List<Map<String, String>> filterReorderNeededParts(
     List<Map<String, String>> rows,
   ) {
-    return rows.where((row) {
-      final status = _normalizedStatus(row['status']);
-      if (status == 'reorder_needed') {
-        return true;
-      }
+    return rows
+        .where((row) {
+          final status = _normalizedStatus(row['status']);
+          if (status == 'reorder_needed') {
+            return true;
+          }
 
-      final quantity = _parseInt(row['quantity']);
-      final minQuantity = _parseInt(row['min_quantity']);
-      return quantity != null && minQuantity != null && quantity <= minQuantity;
-    }).toList(growable: false);
+          final quantity = _parseInt(row['quantity']);
+          final minQuantity = _parseInt(row['min_quantity']);
+          return quantity != null &&
+              minQuantity != null &&
+              quantity <= minQuantity;
+        })
+        .toList(growable: false);
   }
 
   List<Map<String, String>> filterBrokenRepairEquipment(
     List<Map<String, String>> rows,
   ) {
-    return rows.where((row) {
-      final status = _normalizedStatus(row['status']);
-      if (status == 'broken' || status == 'repairing') {
-        return true;
-      }
+    return rows
+        .where((row) {
+          final status = _normalizedStatus(row['status']);
+          if (status == 'broken' || status == 'repairing') {
+            return true;
+          }
 
-      final condition = _normalizedStatus(row['condition']);
-      return condition == 'broken' || condition == 'repairing';
-    }).toList(growable: false);
+          final condition = _normalizedStatus(row['condition']);
+          return condition == 'broken' || condition == 'repairing';
+        })
+        .toList(growable: false);
   }
 
   int estimateReorderSpend(List<Map<String, String>> rows) {
@@ -587,5 +627,68 @@ class AssetRegisterRepository {
 
   String _normalizedStatus(String? value) {
     return (value ?? '').trim().toLowerCase().replaceAll(' ', '_');
+  }
+
+  Future<AssetCsvTable> _replaceRowByKey({
+    required File file,
+    required List<String> headers,
+    required List<Map<String, String>> rows,
+    required String keyColumn,
+    required String? keyValue,
+    required Map<String, String> updatedRow,
+  }) async {
+    final normalizedKey = (keyValue ?? '').trim();
+    if (normalizedKey.isEmpty) {
+      throw ArgumentError.value(
+        keyValue,
+        keyColumn,
+        'Key column cannot be empty',
+      );
+    }
+
+    var replaced = false;
+    final updatedRows = <Map<String, String>>[];
+    for (final row in rows) {
+      final currentKey = (row[keyColumn] ?? '').trim();
+      if (currentKey == normalizedKey) {
+        updatedRows.add(updatedRow);
+        replaced = true;
+      } else {
+        updatedRows.add(row);
+      }
+    }
+
+    if (!replaced) {
+      updatedRows.add(updatedRow);
+    }
+
+    final table = AssetCsvTable(
+      headers: _csvServiceHeaders(headers, updatedRows),
+      rows: updatedRows,
+    );
+    await _csvService.writeTable(file, table);
+    return table;
+  }
+
+  List<String> _csvServiceHeaders(
+    List<String> headers,
+    Iterable<Map<String, String>> rows,
+  ) {
+    final merged = <String>[];
+    for (final header in headers) {
+      final trimmed = header.trim();
+      if (trimmed.isNotEmpty && !merged.contains(trimmed)) {
+        merged.add(trimmed);
+      }
+    }
+    for (final row in rows) {
+      for (final key in row.keys) {
+        final trimmed = key.trim();
+        if (trimmed.isNotEmpty && !merged.contains(trimmed)) {
+          merged.add(trimmed);
+        }
+      }
+    }
+    return merged;
   }
 }

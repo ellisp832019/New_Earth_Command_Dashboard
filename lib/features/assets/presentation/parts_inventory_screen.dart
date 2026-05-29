@@ -162,7 +162,15 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
                                   final row = filteredRows[index];
-                                  return _PartCard(row: row);
+                                  return _PartCard(
+                                    row: row,
+                                    onEdit: workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _editRecord(
+                                            workspaceData.assetsRootPath!,
+                                            row,
+                                          ),
+                                  );
                                 },
                               ),
                           ],
@@ -204,6 +212,41 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Part saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _editRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final draft = await showDialog<_PartDraft>(
+      context: context,
+      builder: (context) => _PartDialog(existingRow: row),
+    );
+    if (draft == null) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .updatePartRecord(assetsRootPath, draft.toRow());
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(assetPartsRegisterProvider);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Part updated.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -306,9 +349,10 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
 }
 
 class _PartCard extends StatelessWidget {
-  const _PartCard({required this.row});
+  const _PartCard({required this.row, this.onEdit});
 
   final Map<String, String> row;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -346,6 +390,14 @@ class _PartCard extends StatelessWidget {
                     ? AppColours.darkAmber
                     : AppColours.darkSuccess,
               ),
+              if (onEdit != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onEdit,
+                  tooltip: 'Edit part',
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -384,7 +436,9 @@ class _PartCard extends StatelessWidget {
 }
 
 class _PartDialog extends StatefulWidget {
-  const _PartDialog();
+  const _PartDialog({this.existingRow});
+
+  final Map<String, String>? existingRow;
 
   @override
   State<_PartDialog> createState() => _PartDialogState();
@@ -414,15 +468,21 @@ class _PartDialogState extends State<_PartDialog> {
   @override
   void initState() {
     super.initState();
-    _partIdController = TextEditingController();
-    _nameController = TextEditingController();
-    _categoryController = TextEditingController();
-    _projectController = TextEditingController();
-    _quantityController = TextEditingController(text: '0');
-    _minQuantityController = TextEditingController(text: '0');
-    _locationController = TextEditingController();
-    _supplierController = TextEditingController();
-    _notesController = TextEditingController();
+    final row = widget.existingRow;
+    _partIdController = TextEditingController(text: row?['part_id'] ?? '');
+    _nameController = TextEditingController(text: row?['name'] ?? '');
+    _categoryController = TextEditingController(text: row?['category'] ?? '');
+    _projectController = TextEditingController(text: row?['project'] ?? '');
+    _quantityController = TextEditingController(text: row?['quantity'] ?? '0');
+    _minQuantityController = TextEditingController(
+      text: row?['min_quantity'] ?? '0',
+    );
+    _locationController = TextEditingController(text: row?['location'] ?? '');
+    _supplierController = TextEditingController(text: row?['supplier'] ?? '');
+    _notesController = TextEditingController(text: row?['notes'] ?? '');
+    _status = row?['status']?.trim().isNotEmpty == true
+        ? row!['status']!.trim()
+        : 'available';
   }
 
   @override
@@ -441,8 +501,9 @@ class _PartDialogState extends State<_PartDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.existingRow != null;
     return AlertDialog(
-      title: const Text('Add Part'),
+      title: Text(isEditing ? 'Edit Part' : 'Add Part'),
       content: SizedBox(
         width: 560,
         child: Form(
@@ -455,6 +516,7 @@ class _PartDialogState extends State<_PartDialog> {
                   controller: _partIdController,
                   label: 'Part ID',
                   hintText: 'NE-PART-0001',
+                  enabled: !isEditing,
                   validator: (value) {
                     if ((value ?? '').trim().isEmpty) {
                       return 'Enter a part ID.';
@@ -601,9 +663,11 @@ class _PartDialogState extends State<_PartDialog> {
     String? hintText,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return TextFormField(
       controller: controller,
+      enabled: enabled,
       decoration: InputDecoration(labelText: label, hintText: hintText),
       keyboardType: keyboardType,
       validator: validator,
