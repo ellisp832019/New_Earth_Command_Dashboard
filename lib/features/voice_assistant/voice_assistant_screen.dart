@@ -23,6 +23,7 @@ import 'widgets/command_history_list.dart';
 import 'widgets/command_type_selector.dart';
 import 'widgets/voice_presence_chip.dart';
 import 'widgets/transcript_preview_card.dart';
+import 'widgets/voice_conversation_thread_card.dart';
 
 const _taskCategoryOptions = [
   'Build',
@@ -1703,46 +1704,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
           const SizedBox(height: 20),
           if (conversationContext != null) ...[
-            Card(
-              key: const Key('voiceConversationThreadCard'),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Current Thread', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 6),
-                    Text(
-                      conversationContext.summary,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${conversationContext.label} • ${conversationContext.entryCount} entry${conversationContext.entryCount == 1 ? '' : 's'}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.tonalIcon(
-                          key: const Key('voiceContinueThreadButton'),
-                          onPressed: _continueCurrentThread,
-                          icon: const Icon(Icons.play_arrow_outlined),
-                          label: const Text('Continue'),
-                        ),
-                        TextButton.icon(
-                          key: const Key('voiceNewThreadButton'),
-                          onPressed: _startNewThread,
-                          icon: const Icon(Icons.fiber_new_outlined),
-                          label: const Text('New'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            VoiceConversationThreadCard(
+              conversationContext: conversationContext,
+              onResumeThread: _continueCurrentThread,
+              onStartFresh: _startNewThread,
             ),
             const SizedBox(height: 16),
           ],

@@ -1,0 +1,118 @@
+import 'package:flutter/material.dart';
+
+import '../voice_command_model.dart';
+
+class VoiceConversationThreadCard extends StatelessWidget {
+  const VoiceConversationThreadCard({
+    super.key,
+    required this.conversationContext,
+    required this.onResumeThread,
+    required this.onStartFresh,
+  });
+
+  final VoiceConversationContext conversationContext;
+  final VoidCallback onResumeThread;
+  final VoidCallback onStartFresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      key: const Key('voiceConversationThreadCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Remembered thread',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  label: Text(
+                    'Saved entries: ${conversationContext.entryCount}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Pick up the latest saved step or start a fresh thread.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              conversationContext.summary,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Latest capture',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              conversationContext.title?.isNotEmpty == true
+                  ? conversationContext.title!
+                  : conversationContext.label,
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  label: Text(
+                    'Type: ${conversationContext.type?.label ?? 'Saved'}',
+                  ),
+                ),
+                if (conversationContext.projectName != null &&
+                    conversationContext.projectName!.isNotEmpty)
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    label: Text(
+                      'Project: ${conversationContext.projectName}',
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonalIcon(
+                  key: const Key('voiceContinueThreadButton'),
+                  onPressed: onResumeThread,
+                  icon: const Icon(Icons.play_arrow_outlined),
+                  label: const Text('Resume thread'),
+                ),
+                TextButton.icon(
+                  key: const Key('voiceNewThreadButton'),
+                  onPressed: onStartFresh,
+                  icon: const Icon(Icons.fiber_new_outlined),
+                  label: const Text('Start fresh'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
