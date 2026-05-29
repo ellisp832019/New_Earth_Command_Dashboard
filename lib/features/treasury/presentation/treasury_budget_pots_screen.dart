@@ -1177,6 +1177,16 @@ Future<void> _showFirstTimeSetupWizard(
                 )
                 .toList(growable: false);
 
+            void resetToSuggestedValues() {
+              for (final pack in packs) {
+                for (final seed in pack.seeds) {
+                  final controller =
+                      targetControllers[_seedKey(pack.ownerGroup, seed.title)];
+                  controller?.text = seed.target.toStringAsFixed(0);
+                }
+              }
+            }
+
             Future<void> createSetup() async {
               if (reviewedPacks.isEmpty || isCreating) {
                 return;
@@ -1381,6 +1391,17 @@ Future<void> _showFirstTimeSetupWizard(
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColours.darkMutedText,
                       height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: isCreating
+                          ? null
+                          : () => setState(resetToSuggestedValues),
+                      icon: const Icon(Icons.restart_alt_outlined),
+                      label: const Text('Reset to suggested values'),
                     ),
                   ),
                   const SizedBox(height: 14),
