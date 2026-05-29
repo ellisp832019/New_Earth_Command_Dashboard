@@ -163,4 +163,51 @@ void main() {
     expect(conflicts.single.entryCount, 2);
     expect(conflicts.single.machineIds, containsAll(['HAYLEY-LAPTOP', 'PETER-DESKTOP']));
   });
+
+  test('asset register repository rebuilds the journal snapshot to latest entries', () async {
+    final tempRoot = await Directory.systemTemp.createTemp('asset-rebuild-test-');
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    final assetsRoot = Directory('${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS');
+    await assetsRoot.create(recursive: true);
+
+    final repository = AssetRegisterRepository(workingDirectory: tempRoot);
+    await repository.appendChangeJournalEntry(
+      assetsRoot.path,
+      AssetChangeJournalEntry(
+        recordId: 'NE-EQ-0001',
+        recordType: 'equipment',
+        action: AssetChangeAction.update,
+        timestamp: DateTime.utc(2026, 5, 28, 10, 0),
+        machineId: 'HAYLEY-LAPTOP',
+        userLabel: 'Hayley',
+        changedFields: const {'status': 'broken'},
+        note: '',
+      ),
+    );
+    await repository.appendChangeJournalEntry(
+      assetsRoot.path,
+      AssetChangeJournalEntry(
+        recordId: 'NE-EQ-0001',
+        recordType: 'equipment',
+        action: AssetChangeAction.update,
+        timestamp: DateTime.utc(2026, 5, 28, 10, 12),
+        machineId: 'PETER-DESKTOP',
+        userLabel: 'Peter',
+        changedFields: const {'status': 'repairing'},
+        note: '',
+      ),
+    );
+
+    final rebuilt = await repository.rebuildChangeJournalSnapshot(assetsRoot.path);
+    final parsed = rebuilt.rows.map(AssetChangeJournalEntry.fromCsvRow).toList();
+
+    expect(parsed, hasLength(1));
+    expect(parsed.single.machineId, 'PETER-DESKTOP');
+    expect(parsed.single.changedFields['status'], 'repairing');
+  });
 }

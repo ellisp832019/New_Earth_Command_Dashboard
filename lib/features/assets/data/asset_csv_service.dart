@@ -135,6 +135,40 @@ class AssetCsvService {
         .toList(growable: false);
   }
 
+  List<AssetChangeJournalEntry> compactJournalEntries(
+    Iterable<AssetChangeJournalEntry> entries,
+  ) {
+    final latestByRecord = <String, AssetChangeJournalEntry>{};
+
+    for (final entry in entries) {
+      final recordKey =
+          '${entry.recordType.trim().toLowerCase()}::${entry.recordId.trim()}';
+      final existing = latestByRecord[recordKey];
+      if (existing == null ||
+          entry.timestamp.isAfter(existing.timestamp) ||
+          entry.timestamp.isAtSameMomentAs(existing.timestamp)) {
+        latestByRecord[recordKey] = entry;
+      }
+    }
+
+    final compacted = latestByRecord.values.toList(growable: false);
+    compacted.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return compacted;
+  }
+
+  Future<AssetCsvTable> writeJournalSnapshot(
+    File file,
+    Iterable<AssetChangeJournalEntry> entries,
+  ) async {
+    final compacted = compactJournalEntries(entries);
+    final table = AssetCsvTable(
+      headers: AssetChangeJournalEntry.headers,
+      rows: compacted.map((entry) => entry.toCsvRow()).toList(growable: false),
+    );
+    await writeTable(file, table);
+    return table;
+  }
+
   List<String> _mergeHeaders(
     List<String> headers,
     Iterable<Map<String, String>> rows,

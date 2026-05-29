@@ -390,6 +390,16 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> rebuildChangeJournalSnapshot(String assetsRootPath) {
+    return readChangeJournal(assetsRootPath).then((table) {
+      final entries = table.rows.map(AssetChangeJournalEntry.fromCsvRow);
+      return _csvService.writeJournalSnapshot(
+        _changeJournalFile(assetsRootPath),
+        entries,
+      );
+    });
+  }
+
   List<Map<String, String>> filterLowStockParts(
     List<Map<String, String>> rows,
   ) {

@@ -67,6 +67,6 @@ void main() {
       find.textContaining('changed 2 times across 2 machines.'),
       findsOneWidget,
     );
-    expect(find.text('Review these edits before consolidating them into the asset records.'), findsOneWidget);
+    expect(find.text('Compact journal to latest'), findsOneWidget);
   });
 }

@@ -50,6 +50,46 @@ class AssetConflictsScreen extends ConsumerWidget {
                               conflictCount: conflictRows.length,
                             ),
                             const SizedBox(height: 20),
+                            if (conflictRows.isNotEmpty)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: FilledButton.icon(
+                                  onPressed: () async {
+                                    final assetsRootPath =
+                                        workspaceData.assetsRootPath;
+                                    if (assetsRootPath == null) {
+                                      return;
+                                    }
+
+                                    await ref
+                                        .read(assetRegisterRepositoryProvider)
+                                        .rebuildChangeJournalSnapshot(
+                                          assetsRootPath,
+                                        );
+                                    ref.invalidate(
+                                      assetChangeJournalEntriesProvider,
+                                    );
+                                    ref.invalidate(
+                                      assetChangeConflictsProvider,
+                                    );
+                                    ref.invalidate(assetSyncStatusProvider);
+                                    if (!context.mounted) {
+                                      return;
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Asset journal compacted to the latest entry for each record.',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.cleaning_services_outlined),
+                                  label: const Text('Compact journal to latest'),
+                                ),
+                              ),
+                            if (conflictRows.isNotEmpty)
+                              const SizedBox(height: 20),
                             if (conflictRows.isEmpty)
                               const _AssetConflictsEmptyState()
                             else
@@ -216,7 +256,7 @@ class _AssetConflictCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Review these edits before consolidating them into the asset records.',
+            'Review these edits before compacting the journal to the latest clean record.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.35,

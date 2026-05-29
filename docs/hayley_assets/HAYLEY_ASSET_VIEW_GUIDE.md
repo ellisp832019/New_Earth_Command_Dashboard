@@ -168,8 +168,9 @@ It means two edits touched the same record and the app wants you to review them 
 2. Read the record name.
 3. Check the machine names.
 4. Check the change count.
-5. Decide what the clean record should be.
-6. Keep the review short and neutral.
+5. If the latest edit is clearly the one to keep, use `Compact journal to latest`.
+6. Decide what the clean record should be.
+7. Keep the review short and neutral.
 
 ## Simple rules to remember
 
