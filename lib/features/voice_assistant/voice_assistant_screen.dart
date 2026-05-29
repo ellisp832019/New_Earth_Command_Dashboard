@@ -1983,7 +1983,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               sectionLabel: 'Voice Briefing',
               title: briefing.summary,
               summary: briefing.nextStep,
-              reason: briefing.projectContext ??
+              reason:
+                  briefing.projectContext ??
                   briefing.threadContext ??
                   'It keeps the thread moving without adding noise.',
             ),
@@ -2181,6 +2182,20 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       'content',
                       'business',
                       'idea',
+                    ],
+                    templateById: templateById,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStarterDeckGroup(
+                    theme: theme,
+                    groupKey: const Key('voiceStarterDeckShortcutGroup'),
+                    title: 'Shortcuts',
+                    templateIds: const [
+                      'project-checkpoint',
+                      'carry-forward',
+                      'meeting-notes',
+                      'quick-review',
+                      'business-follow-up',
                     ],
                     templateById: templateById,
                   ),
@@ -2414,6 +2429,16 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         return Icons.calendar_month_outlined;
       case 'project':
         return Icons.folder_open_outlined;
+      case 'carry-forward':
+        return Icons.forward_outlined;
+      case 'meeting-notes':
+        return Icons.meeting_room_outlined;
+      case 'project-checkpoint':
+        return Icons.flag_outlined;
+      case 'business-follow-up':
+        return Icons.phone_forwarded_outlined;
+      case 'quick-review':
+        return Icons.rate_review_outlined;
       case 'task':
         return Icons.task_alt_outlined;
       case 'journal':

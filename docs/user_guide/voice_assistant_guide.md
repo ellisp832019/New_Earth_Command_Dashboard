@@ -55,6 +55,7 @@ The current Voice Assistant can:
 - greet once at startup on Windows when voice replies are enabled, so you know Gaia is ready before you speak
 - speak the captured wake response back through the headset when the dashboard conversation dock appears
 - surface quick follow-up chips in the dashboard dock so you can continue the conversation into a task, project, journal entry, or another assistant step without leaving the dashboard
+- use shortcut templates for carry-forward, meeting notes, project checkpoints, quick reviews, and business follow-ups
 - run action macros such as `Start Build Day`, `Plan Day`, `Summarize Today`, `Recall Memory`, `What's Next`, and `Continue Thread`
 - keep the wake layer, dashboard dock, and full assistant aligned through one shared voice session so only one path owns speaking or listening at a time
 

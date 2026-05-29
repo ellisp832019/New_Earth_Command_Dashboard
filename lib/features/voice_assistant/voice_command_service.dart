@@ -55,6 +55,46 @@ class VoiceCommandService {
       type: VoiceCommandType.project,
     ),
     VoiceCommandTemplate(
+      id: 'carry-forward',
+      label: 'Carry Forward',
+      description: 'Move unfinished work into the next calm step.',
+      transcript:
+          'Task: Carry forward my unfinished top tasks and show me the next practical step.',
+      type: VoiceCommandType.task,
+    ),
+    VoiceCommandTemplate(
+      id: 'meeting-notes',
+      label: 'Meeting Notes',
+      description: 'Turn a meeting into a summary with follow-ups.',
+      transcript:
+          'Journal: Turn these meeting notes into a clear summary, decisions, and follow-up actions.',
+      type: VoiceCommandType.journalEntry,
+    ),
+    VoiceCommandTemplate(
+      id: 'project-checkpoint',
+      label: 'Project Checkpoint',
+      description: 'Review the current project shape and next move.',
+      transcript:
+          'Project: Review the current project checkpoint, status, and next action.',
+      type: VoiceCommandType.project,
+    ),
+    VoiceCommandTemplate(
+      id: 'business-follow-up',
+      label: 'Business Follow-up',
+      description: 'Capture a clear next step for a lead or partner.',
+      transcript:
+          'Business: Follow up on the lead, confirm the status, and define the next contact step.',
+      type: VoiceCommandType.businessOpportunity,
+    ),
+    VoiceCommandTemplate(
+      id: 'quick-review',
+      label: 'Quick Review',
+      description: 'Turn a rough thought into a short review note.',
+      transcript:
+          'Journal: Give me a quick review of today, the blockers, and what should carry forward.',
+      type: VoiceCommandType.journalEntry,
+    ),
+    VoiceCommandTemplate(
       id: 'task',
       label: 'Task',
       description: 'Capture one clear action.',

@@ -272,7 +272,9 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('A blank daily plan is ready. One calm choice will start the day.'),
+      find.text(
+        'A blank daily plan is ready. One calm choice will start the day.',
+      ),
       findsOneWidget,
     );
     expect(
@@ -758,10 +760,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Carry Forward'), findsOneWidget);
-    expect(
-      find.text('Park what can wait until later.'),
-      findsOneWidget,
-    );
+    expect(find.text('Park what can wait until later.'), findsOneWidget);
     expect(find.text('Tomorrow\'s Focus'), findsOneWidget);
     expect(
       find.text('Note the likely first move for tomorrow.'),
@@ -1374,10 +1373,7 @@ void main() {
       expect(find.text('Recent Business Opportunities'), findsOneWidget);
       expect(find.text('Project partner lead'), findsOneWidget);
 
-      await tester.drag(
-        find.byType(Scrollable).first,
-        const Offset(0, 3000),
-      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 3000));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('addProjectBusinessButton')));
@@ -2005,6 +2001,32 @@ void main() {
     );
   });
 
+  testWidgets('voice assistant starter deck shows shortcut templates', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    appRouter.go('/voice-assistant');
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceStarterDeckShortcutGroup')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('voiceStarterDeckShortcutGroup')),
+      findsOneWidget,
+    );
+    expect(find.text('Shortcuts'), findsOneWidget);
+    expect(find.text('Carry Forward'), findsOneWidget);
+    expect(find.text('Meeting Notes'), findsOneWidget);
+    expect(find.text('Project Checkpoint'), findsOneWidget);
+  });
+
   testWidgets('voice assistant can open with a preset type from the dock', (
     WidgetTester tester,
   ) async {
@@ -2042,7 +2064,8 @@ void main() {
         ],
         child: const MaterialApp(
           home: VoiceAssistantScreen(
-            initialTranscript: 'Draft a note about the dashboard voice workflow',
+            initialTranscript:
+                'Draft a note about the dashboard voice workflow',
             initialType: 'project',
           ),
         ),
@@ -2316,9 +2339,7 @@ void main() {
 
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(
-      find.text(
-        'No learning items yet. Add a skill when it feels useful.',
-      ),
+      find.text('No learning items yet. Add a skill when it feels useful.'),
       findsOneWidget,
     );
   });
@@ -2338,9 +2359,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('addLearningItemButton')));
     await tester.pumpAndSettle();
-    final formScrollable = find.byWidgetPredicate(
-      (widget) => widget is Scrollable && widget.axisDirection == AxisDirection.down,
-    ).last;
+    final formScrollable = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        )
+        .last;
 
     await tester.enterText(
       find.byKey(const Key('learningTopicField')),
@@ -2501,9 +2526,7 @@ void main() {
 
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(
-      find.text(
-        'No content yet. Turn a build update into a gentle post idea.',
-      ),
+      find.text('No content yet. Turn a build update into a gentle post idea.'),
       findsOneWidget,
     );
   });
@@ -2708,9 +2731,7 @@ void main() {
 
     expect(find.text('Business'), findsAtLeastNWidgets(1));
     expect(
-      find.text(
-        'No business items yet. Capture a lead when it feels useful.',
-      ),
+      find.text('No business items yet. Capture a lead when it feels useful.'),
       findsOneWidget,
     );
   });
