@@ -427,6 +427,7 @@ For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guid
 - The `Assistant Reply` card gives a short plain-language read on what the app thinks you said before you save it.
 - The `Voice Briefing` card turns the current command into a numbered suggested sequence of next steps.
 - The `Current Thread` card keeps a running voice conversation in view so you can continue it or start fresh.
+- The command history can now be searched by phrase or type, which makes it easier to reuse a good capture quickly.
 - `Wizard Mode` turns the assistant into a step-by-step conversation that assembles the draft from one answer at a time.
 - Gaia now keeps a handsfree wake listener armed while the app is open on Windows, so saying `Hey Gaia` can bring up the Voice Assistant without pressing Start Listening first.
 - If the wake route is still settling, Gaia can also surface a small conversation dock on the dashboard with the captured transcript and next step, speak that captured reply through the configured voice output, and offer quick follow-up chips that reopen the assistant with a preselected intent.

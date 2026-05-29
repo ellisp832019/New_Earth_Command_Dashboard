@@ -50,6 +50,7 @@ The current Voice Assistant can:
 - save reviewed captures into local dashboard data
 - prepare Codex prompts for manual review only
 - recall past voice commands from history
+- search the command history by phrase or type and tap a result to restore it
 - speak short assistant replies and voice briefings on Windows using the locally installed system voices
 - greet once at startup on Windows when voice replies are enabled, so you know Gaia is ready before you speak
 - speak the captured wake response back through the headset when the dashboard conversation dock appears
