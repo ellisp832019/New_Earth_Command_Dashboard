@@ -103,3 +103,6 @@ redacted_exports/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Catch-all generated backup folders
+.backup_*/
