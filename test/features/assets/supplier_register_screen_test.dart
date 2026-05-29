@@ -90,6 +90,42 @@ void main() {
       'Good for fast prototype orders.',
     );
   });
+
+  testWidgets('supplier register edits a supplier row', (tester) async {
+    final fixture = _fixture();
+    final repository = _RecordingAssetRegisterRepository();
+    await tester.binding.setSurfaceSize(const Size(1400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetSupplierRegisterProvider.overrideWith(
+            (ref) async => fixture.table,
+          ),
+          assetRegisterRepositoryProvider.overrideWith((ref) => repository),
+        ],
+        child: const MaterialApp(home: SupplierRegisterScreen()),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byTooltip('Edit supplier').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(1), 'RS Components Pro');
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.lastSupplierRow, isNotNull);
+    expect(repository.lastSupplierRow!['supplier_id'], 'SUP-001');
+    expect(repository.lastSupplierRow!['name'], 'RS Components Pro');
+  });
 }
 
 _SupplierFixture _fixture({bool empty = false}) {
@@ -112,7 +148,8 @@ _SupplierFixture _fixture({bool empty = false}) {
   return _SupplierFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: <String>[],
@@ -131,18 +168,14 @@ _SupplierFixture _fixture({bool empty = false}) {
 }
 
 class _SupplierFixture {
-  const _SupplierFixture({
-    required this.snapshot,
-    required this.table,
-  });
+  const _SupplierFixture({required this.snapshot, required this.table});
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetCsvTable table;
 }
 
 class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
-  _RecordingAssetRegisterRepository()
-      : super(csvService: AssetCsvService());
+  _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastSupplierRow;
 
@@ -155,6 +188,18 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
     return AssetCsvTable(
       headers: AssetRegisterRepository.supplierHeaders,
       rows: [row],
+    );
+  }
+
+  @override
+  Future<AssetCsvTable> updateSupplierRecord(
+    String assetsRootPath,
+    Map<String, String> updatedRow,
+  ) async {
+    lastSupplierRow = Map<String, String>.from(updatedRow);
+    return AssetCsvTable(
+      headers: AssetRegisterRepository.supplierHeaders,
+      rows: [updatedRow],
     );
   }
 }

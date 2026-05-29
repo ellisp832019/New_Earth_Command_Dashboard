@@ -337,6 +337,21 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> updateOrderRecord(
+    String assetsRootPath,
+    Map<String, String> updatedRow,
+  ) async {
+    final table = await readOrdersTracker(assetsRootPath);
+    return _replaceRowByKey(
+      file: _ordersFile(assetsRootPath),
+      headers: ordersHeaders,
+      rows: table.rows,
+      keyColumn: 'order_id',
+      keyValue: updatedRow['order_id'],
+      updatedRow: updatedRow,
+    );
+  }
+
   Future<AssetCsvTable> appendSupplierRecord(
     String assetsRootPath,
     Map<String, String> row,
@@ -345,6 +360,21 @@ class AssetRegisterRepository {
       _supplierFile(assetsRootPath),
       row,
       expectedHeaders: supplierHeaders,
+    );
+  }
+
+  Future<AssetCsvTable> updateSupplierRecord(
+    String assetsRootPath,
+    Map<String, String> updatedRow,
+  ) async {
+    final table = await readSupplierRegister(assetsRootPath);
+    return _replaceRowByKey(
+      file: _supplierFile(assetsRootPath),
+      headers: supplierHeaders,
+      rows: table.rows,
+      keyColumn: 'supplier_id',
+      keyValue: updatedRow['supplier_id'],
+      updatedRow: updatedRow,
     );
   }
 

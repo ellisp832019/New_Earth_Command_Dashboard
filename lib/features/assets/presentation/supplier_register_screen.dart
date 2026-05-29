@@ -12,7 +12,8 @@ class SupplierRegisterScreen extends ConsumerStatefulWidget {
       _SupplierRegisterScreenState();
 }
 
-class _SupplierRegisterScreenState extends ConsumerState<SupplierRegisterScreen> {
+class _SupplierRegisterScreenState
+    extends ConsumerState<SupplierRegisterScreen> {
   bool _isSaving = false;
 
   @override
@@ -21,18 +22,16 @@ class _SupplierRegisterScreenState extends ConsumerState<SupplierRegisterScreen>
     final suppliers = ref.watch(assetSupplierRegisterProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _RegisterError(
         title: 'Supplier Register',
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return suppliers.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _RegisterError(
             title: 'Supplier Register',
             onReload: () => ref.invalidate(assetSupplierRegisterProvider),
@@ -104,7 +103,9 @@ class _SupplierRegisterScreenState extends ConsumerState<SupplierRegisterScreen>
                                     'Add the first supplier so ordering and maintenance links stay easy to follow.',
                                 onAdd: workspaceData.assetsRootPath == null
                                     ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
+                                    : () => _addRecord(
+                                        workspaceData.assetsRootPath!,
+                                      ),
                               )
                             else
                               ListView.separated(
@@ -114,7 +115,16 @@ class _SupplierRegisterScreenState extends ConsumerState<SupplierRegisterScreen>
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  return _SupplierCard(row: table.rows[index]);
+                                  final row = table.rows[index];
+                                  return _SupplierCard(
+                                    row: row,
+                                    onEdit: workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _editRecord(
+                                            workspaceData.assetsRootPath!,
+                                            row,
+                                          ),
+                                  );
                                 },
                               ),
                           ],
@@ -146,17 +156,51 @@ class _SupplierRegisterScreenState extends ConsumerState<SupplierRegisterScreen>
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendSupplierRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendSupplierRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetSupplierRegisterProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Supplier saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Supplier saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _editRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final draft = await showDialog<_SupplierDraft>(
+      context: context,
+      builder: (context) => _SupplierDialog(existingRow: row),
+    );
+    if (draft == null) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .updateSupplierRecord(assetsRootPath, draft.toRow());
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(assetSupplierRegisterProvider);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Supplier updated.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -194,9 +238,10 @@ class _SupplierRegisterScreenState extends ConsumerState<SupplierRegisterScreen>
 }
 
 class _SupplierCard extends StatelessWidget {
-  const _SupplierCard({required this.row});
+  const _SupplierCard({required this.row, this.onEdit});
 
   final Map<String, String> row;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -216,15 +261,25 @@ class _SupplierCard extends StatelessWidget {
                       ? row['name']!.trim()
                       : 'Unnamed supplier',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
                 label: preferred ? 'preferred' : 'listed',
-                accent: preferred ? AppColours.darkSuccess : AppColours.darkSecondary,
+                accent: preferred
+                    ? AppColours.darkSuccess
+                    : AppColours.darkSecondary,
               ),
+              if (onEdit != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onEdit,
+                  tooltip: 'Edit supplier',
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -252,9 +307,9 @@ class _SupplierCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -264,7 +319,9 @@ class _SupplierCard extends StatelessWidget {
 }
 
 class _SupplierDialog extends StatefulWidget {
-  const _SupplierDialog();
+  const _SupplierDialog({this.existingRow});
+
+  final Map<String, String>? existingRow;
 
   @override
   State<_SupplierDialog> createState() => _SupplierDialogState();
@@ -285,14 +342,24 @@ class _SupplierDialogState extends State<_SupplierDialog> {
   @override
   void initState() {
     super.initState();
-    _supplierIdController = TextEditingController();
-    _nameController = TextEditingController();
-    _websiteController = TextEditingController();
-    _categoryController = TextEditingController();
-    _reliabilityController = TextEditingController();
-    _deliverySpeedController = TextEditingController();
-    _qualityController = TextEditingController();
-    _notesController = TextEditingController();
+    final row = widget.existingRow;
+    _supplierIdController = TextEditingController(
+      text: row?['supplier_id'] ?? '',
+    );
+    _nameController = TextEditingController(text: row?['name'] ?? '');
+    _websiteController = TextEditingController(text: row?['website'] ?? '');
+    _categoryController = TextEditingController(text: row?['category'] ?? '');
+    _reliabilityController = TextEditingController(
+      text: row?['reliability'] ?? '',
+    );
+    _deliverySpeedController = TextEditingController(
+      text: row?['delivery_speed'] ?? '',
+    );
+    _qualityController = TextEditingController(text: row?['quality'] ?? '');
+    _notesController = TextEditingController(text: row?['notes'] ?? '');
+    _preferred = row?['preferred']?.trim().isNotEmpty == true
+        ? row!['preferred']!.trim().toLowerCase()
+        : 'no';
   }
 
   @override
@@ -310,8 +377,9 @@ class _SupplierDialogState extends State<_SupplierDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.existingRow != null;
     return AlertDialog(
-      title: const Text('Add Supplier'),
+      title: Text(isEditing ? 'Edit Supplier' : 'Add Supplier'),
       content: SizedBox(
         width: 560,
         child: Form(
@@ -324,6 +392,7 @@ class _SupplierDialogState extends State<_SupplierDialog> {
                   controller: _supplierIdController,
                   label: 'Supplier ID',
                   hintText: 'SUP-001',
+                  enabled: !isEditing,
                   validator: (value) {
                     if ((value ?? '').trim().isEmpty) {
                       return 'Enter a supplier ID.';
@@ -448,13 +517,12 @@ class _SupplierDialogState extends State<_SupplierDialog> {
     String? hintText,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-      ),
+      enabled: enabled,
+      decoration: InputDecoration(labelText: label, hintText: hintText),
       keyboardType: keyboardType,
       validator: validator,
     );
@@ -588,8 +656,7 @@ class _RegisterSummaryRow extends StatelessWidget {
       builder: (context, constraints) {
         final useWideLayout = constraints.maxWidth >= 840;
         final children = [
-          for (final item in items)
-            Expanded(child: _SummaryTile(metric: item)),
+          for (final item in items) Expanded(child: _SummaryTile(metric: item)),
         ];
 
         if (useWideLayout) {
@@ -633,17 +700,17 @@ class _SummaryTile extends StatelessWidget {
           Text(
             metric.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: metric.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: metric.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${metric.value}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -674,16 +741,16 @@ class _EmptyRegisterState extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -763,9 +830,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -789,9 +856,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -85,6 +85,40 @@ void main() {
     expect(repository.lastOrderRow!['project'], 'MicroGrow');
     expect(repository.lastOrderRow!['finance_record_id'], 'FIN-123');
   });
+
+  testWidgets('orders tracker edits a record', (tester) async {
+    final fixture = _fixture();
+    final repository = _RecordingAssetRegisterRepository();
+    await tester.binding.setSurfaceSize(const Size(1400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetOrdersTrackerProvider.overrideWith((ref) async => fixture.table),
+          assetRegisterRepositoryProvider.overrideWith((ref) => repository),
+        ],
+        child: const MaterialApp(home: OrdersTrackerScreen()),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byTooltip('Edit order').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(2), 'M3 screws pack');
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.lastOrderRow, isNotNull);
+    expect(repository.lastOrderRow!['order_id'], 'NE-ORDER-0001');
+    expect(repository.lastOrderRow!['item'], 'M3 screws pack');
+  });
 }
 
 _OrdersFixture _fixture({bool empty = false}) {
@@ -110,7 +144,8 @@ _OrdersFixture _fixture({bool empty = false}) {
   return _OrdersFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: <String>[],
@@ -129,18 +164,14 @@ _OrdersFixture _fixture({bool empty = false}) {
 }
 
 class _OrdersFixture {
-  const _OrdersFixture({
-    required this.snapshot,
-    required this.table,
-  });
+  const _OrdersFixture({required this.snapshot, required this.table});
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetCsvTable table;
 }
 
 class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
-  _RecordingAssetRegisterRepository()
-      : super(csvService: AssetCsvService());
+  _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastOrderRow;
 
@@ -153,6 +184,18 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
     return AssetCsvTable(
       headers: AssetRegisterRepository.ordersHeaders,
       rows: [row],
+    );
+  }
+
+  @override
+  Future<AssetCsvTable> updateOrderRecord(
+    String assetsRootPath,
+    Map<String, String> updatedRow,
+  ) async {
+    lastOrderRow = Map<String, String>.from(updatedRow);
+    return AssetCsvTable(
+      headers: AssetRegisterRepository.ordersHeaders,
+      rows: [updatedRow],
     );
   }
 }

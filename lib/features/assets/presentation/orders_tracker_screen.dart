@@ -22,24 +22,26 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
     final orders = ref.watch(assetOrdersTrackerProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _RegisterError(
         title: 'Orders Tracker',
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return orders.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _RegisterError(
             title: 'Orders Tracker',
             onReload: () => ref.invalidate(assetOrdersTrackerProvider),
           ),
           data: (table) {
-            final pendingCount = _countStatuses(table.rows, const ['open', 'watch', 'ordered']);
+            final pendingCount = _countStatuses(table.rows, const [
+              'open',
+              'watch',
+              'ordered',
+            ]);
             final linkedFinance = _countLinkedFinance(table.rows);
 
             return Scaffold(
@@ -70,8 +72,7 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
                               title: 'Orders Tracker',
                               subtitle:
                                   'Keep supplier orders visible and calm without losing the finance link.',
-                              countLabel:
-                                  '${table.rows.length} orders loaded.',
+                              countLabel: '${table.rows.length} orders loaded.',
                               actionLabel: workspaceData.assetsRootPath == null
                                   ? 'Asset folder not linked yet'
                                   : workspaceData.assetsRootPath!,
@@ -108,7 +109,9 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
                                     'Add the first order to keep supplier follow-up and receipts tidy.',
                                 onAdd: workspaceData.assetsRootPath == null
                                     ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
+                                    : () => _addRecord(
+                                        workspaceData.assetsRootPath!,
+                                      ),
                               )
                             else
                               ListView.separated(
@@ -118,7 +121,16 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  return _OrderCard(row: table.rows[index]);
+                                  final row = table.rows[index];
+                                  return _OrderCard(
+                                    row: row,
+                                    onEdit: workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _editRecord(
+                                            workspaceData.assetsRootPath!,
+                                            row,
+                                          ),
+                                  );
                                 },
                               ),
                           ],
@@ -150,17 +162,53 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendOrderRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendOrderRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetOrdersTrackerProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Order saved.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _editRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final draft = await showDialog<_OrderDraft>(
+      context: context,
+      builder: (context) => _OrderDialog(existingRow: row),
+    );
+    if (draft == null) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final updatedRow = draft.toRow();
+      updatedRow['order_id'] = row['order_id'] ?? updatedRow['order_id'] ?? '';
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .updateOrderRecord(assetsRootPath, updatedRow);
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(assetOrdersTrackerProvider);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Order updated.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -201,14 +249,16 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
 }
 
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.row});
+  const _OrderCard({required this.row, this.onEdit});
 
   final Map<String, String> row;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     final status = (row['status'] ?? 'open').trim();
-    final isOpen = status.toLowerCase() == 'open' || status.toLowerCase() == 'watch';
+    final isOpen =
+        status.toLowerCase() == 'open' || status.toLowerCase() == 'watch';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -224,15 +274,23 @@ class _OrderCard extends StatelessWidget {
                       ? row['item']!.trim()
                       : 'Untitled order',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
                 label: status,
                 accent: isOpen ? AppColours.darkAmber : AppColours.darkSuccess,
               ),
+              if (onEdit != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onEdit,
+                  tooltip: 'Edit order',
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -252,9 +310,20 @@ class _OrderCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _InfoChip(label: 'Qty ${row['quantity'] ?? '0'}'),
-              _InfoChip(label: 'Total ${row['total_cost']?.trim().isNotEmpty == true ? row['total_cost']!.trim() : '0'}'),
-              _InfoChip(label: row['receipt_link']?.trim().isNotEmpty == true ? 'Receipt linked' : 'No receipt'),
-              _InfoChip(label: row['finance_record_id']?.trim().isNotEmpty == true ? 'Finance linked' : 'No finance link'),
+              _InfoChip(
+                label:
+                    'Total ${row['total_cost']?.trim().isNotEmpty == true ? row['total_cost']!.trim() : '0'}',
+              ),
+              _InfoChip(
+                label: row['receipt_link']?.trim().isNotEmpty == true
+                    ? 'Receipt linked'
+                    : 'No receipt',
+              ),
+              _InfoChip(
+                label: row['finance_record_id']?.trim().isNotEmpty == true
+                    ? 'Finance linked'
+                    : 'No finance link',
+              ),
             ],
           ),
           if ((row['notes'] ?? '').trim().isNotEmpty) ...[
@@ -262,9 +331,9 @@ class _OrderCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -274,7 +343,9 @@ class _OrderCard extends StatelessWidget {
 }
 
 class _OrderDialog extends StatefulWidget {
-  const _OrderDialog();
+  const _OrderDialog({this.existingRow});
+
+  final Map<String, String>? existingRow;
 
   @override
   State<_OrderDialog> createState() => _OrderDialogState();
@@ -305,17 +376,27 @@ class _OrderDialogState extends State<_OrderDialog> {
   @override
   void initState() {
     super.initState();
+    final row = widget.existingRow;
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _dateController = TextEditingController(text: today);
-    _supplierController = TextEditingController();
-    _itemController = TextEditingController();
-    _projectController = TextEditingController();
-    _quantityController = TextEditingController(text: '1');
-    _totalCostController = TextEditingController(text: '0');
-    _trackingController = TextEditingController();
-    _receiptController = TextEditingController();
-    _financeController = TextEditingController();
-    _notesController = TextEditingController();
+    _dateController = TextEditingController(text: row?['date'] ?? today);
+    _supplierController = TextEditingController(text: row?['supplier'] ?? '');
+    _itemController = TextEditingController(text: row?['item'] ?? '');
+    _projectController = TextEditingController(text: row?['project'] ?? '');
+    _quantityController = TextEditingController(text: row?['quantity'] ?? '1');
+    _totalCostController = TextEditingController(
+      text: row?['total_cost'] ?? '0',
+    );
+    _trackingController = TextEditingController(text: row?['tracking'] ?? '');
+    _receiptController = TextEditingController(
+      text: row?['receipt_link'] ?? '',
+    );
+    _financeController = TextEditingController(
+      text: row?['finance_record_id'] ?? '',
+    );
+    _notesController = TextEditingController(text: row?['notes'] ?? '');
+    _status = row?['status']?.trim().isNotEmpty == true
+        ? row!['status']!.trim()
+        : 'open';
   }
 
   @override
@@ -335,8 +416,9 @@ class _OrderDialogState extends State<_OrderDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.existingRow != null;
     return AlertDialog(
-      title: const Text('Add Order'),
+      title: Text(isEditing ? 'Edit Order' : 'Add Order'),
       content: SizedBox(
         width: 560,
         child: Form(
@@ -345,7 +427,11 @@ class _OrderDialogState extends State<_OrderDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _field(controller: _dateController, label: 'Date', hintText: '2026-05-28'),
+                _field(
+                  controller: _dateController,
+                  label: 'Date',
+                  hintText: '2026-05-28',
+                ),
                 const SizedBox(height: 12),
                 _field(
                   controller: _supplierController,
@@ -371,7 +457,11 @@ class _OrderDialogState extends State<_OrderDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _projectController, label: 'Project', hintText: 'MicroGrow'),
+                _field(
+                  controller: _projectController,
+                  label: 'Project',
+                  hintText: 'MicroGrow',
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -405,21 +495,31 @@ class _OrderDialogState extends State<_OrderDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _trackingController, label: 'Tracking', hintText: 'TRACK-001'),
+                _field(
+                  controller: _trackingController,
+                  label: 'Tracking',
+                  hintText: 'TRACK-001',
+                ),
                 const SizedBox(height: 12),
-                _field(controller: _receiptController, label: 'Receipt link', hintText: 'file or URL'),
+                _field(
+                  controller: _receiptController,
+                  label: 'Receipt link',
+                  hintText: 'file or URL',
+                ),
                 const SizedBox(height: 12),
-                _field(controller: _financeController, label: 'Finance record ID', hintText: 'FIN-123'),
+                _field(
+                  controller: _financeController,
+                  label: 'Finance record ID',
+                  hintText: 'FIN-123',
+                ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _status,
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: _statusOptions
                       .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ),
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -481,9 +581,11 @@ class _OrderDialogState extends State<_OrderDialog> {
     required String label,
     String? hintText,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return TextFormField(
       controller: controller,
+      enabled: enabled,
       decoration: InputDecoration(labelText: label, hintText: hintText),
       validator: validator,
     );
@@ -624,8 +726,7 @@ class _RegisterSummaryRow extends StatelessWidget {
       builder: (context, constraints) {
         final useWideLayout = constraints.maxWidth >= 840;
         final children = [
-          for (final item in items)
-            Expanded(child: _SummaryTile(metric: item)),
+          for (final item in items) Expanded(child: _SummaryTile(metric: item)),
         ];
 
         if (useWideLayout) {
@@ -669,17 +770,17 @@ class _SummaryTile extends StatelessWidget {
           Text(
             metric.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: metric.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: metric.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${metric.value}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -710,16 +811,16 @@ class _EmptyRegisterState extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -799,9 +900,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -825,9 +926,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
