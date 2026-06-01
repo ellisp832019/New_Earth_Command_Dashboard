@@ -917,6 +917,11 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.folder_open_outlined),
                 label: const Text('Open Module Folder'),
               ),
+              FilledButton.icon(
+                onPressed: _runStartupScript,
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text('Run Startup Script'),
+              ),
               if (catalogueExists)
                 OutlinedButton.icon(
                   onPressed: _openCatalogueFile,
@@ -1125,6 +1130,51 @@ class _KnowledgeLibraryDashboardCardState
     if (Platform.isLinux) {
       await Process.start('xdg-open', [catalogueFile.path]);
     }
+  }
+
+  Future<void> _runStartupScript() async {
+    if (!Platform.isWindows) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('The startup script button is currently Windows-only.'),
+        ),
+      );
+      return;
+    }
+
+    final scriptFile = File(
+      '${_moduleDirectory().path}${Platform.pathSeparator}start_knowledge_engine.ps1',
+    );
+
+    if (!scriptFile.existsSync()) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find start_knowledge_engine.ps1.'),
+        ),
+      );
+      return;
+    }
+
+    await Process.start(
+      'powershell.exe',
+      [
+        '-NoLogo',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        scriptFile.path,
+      ],
+      workingDirectory: _moduleDirectory().path,
+    );
   }
 }
 

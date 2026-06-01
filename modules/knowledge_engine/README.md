@@ -34,6 +34,10 @@ python scripts/build_catalogue.py
 uvicorn api.main:app --reload --port 8787
 ```
 
+You can also launch the module from the Dashboard by running
+`start_knowledge_engine.ps1`, which prepares the folder structure and starts
+the API in one visible PowerShell window.
+
 Optional but recommended:
 
 ```powershell

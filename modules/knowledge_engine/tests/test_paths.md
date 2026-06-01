@@ -87,6 +87,9 @@ Run:
 uvicorn api.main:app --reload --port 8787
 ```
 
+Or run `start_knowledge_engine.ps1` from the module root to prepare the
+folders and start the API in one step.
+
 Open:
 
 ```txt
