@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -677,8 +678,7 @@ class KnowledgeLibraryDashboardCard extends StatefulWidget {
 class _KnowledgeLibraryDashboardCardState
     extends State<KnowledgeLibraryDashboardCard> {
   final KnowledgeLibraryRepository _repository = KnowledgeLibraryRepository();
-  static const String _startCommand =
-      'cd modules/knowledge_engine && uvicorn api.main:app --reload --port 8787';
+  static const String _apiAddress = 'http://127.0.0.1:8787';
 
   KnowledgeLibraryHealth? _health;
   KnowledgeLibraryStats? _stats;
@@ -735,6 +735,12 @@ class _KnowledgeLibraryDashboardCardState
     final theme = Theme.of(context);
     final health = _health;
     final stats = _stats;
+    final moduleDirectory = _moduleDirectory();
+    final catalogueFile = File(
+      '${moduleDirectory.path}${Platform.pathSeparator}08_LIBRARY_CATALOGUE'
+      '${Platform.pathSeparator}pdf_catalogue.json',
+    );
+    final catalogueExists = catalogueFile.existsSync();
     final isOffline = _error != null && _isApiConnectionIssue(_error);
     final statusColor = health?.isHealthy == true
         ? AppColours.darkSuccess
@@ -811,6 +817,13 @@ class _KnowledgeLibraryDashboardCardState
                     value: stats == null ? '...' : '${stats.audioGenerated}',
                     accent: AppColours.darkPurple,
                   ),
+                  _KnowledgeMetricChip(
+                    label: 'Catalogue',
+                    value: catalogueExists ? 'Ready' : 'Missing',
+                    accent: catalogueExists
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -824,6 +837,16 @@ class _KnowledgeLibraryDashboardCardState
                     : _error == null
                     ? 'Local module status loaded successfully.'
                     : 'Knowledge Library needs attention before it can report live status.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                catalogueExists
+                    ? 'Catalogue JSON is ready at 08_LIBRARY_CATALOGUE/pdf_catalogue.json.'
+                    : 'Catalogue JSON has not been built yet. Run the scanner and catalogue builder.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.35,
@@ -851,28 +874,28 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.open_in_new_rounded),
                 label: const Text('Open Library'),
               ),
+              FilledButton.tonalIcon(
+                onPressed: _openModuleFolder,
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Open Module Folder'),
+              ),
               TextButton.icon(
                 onPressed: _loading ? null : _refresh,
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Refresh'),
               ),
-              if (isOffline)
+              OutlinedButton.icon(
+                onPressed: _copySetupSequence,
+                icon: const Icon(Icons.content_copy_rounded),
+                label: const Text('Copy Setup'),
+              ),
+                if (isOffline)
                 OutlinedButton.icon(
                   onPressed: () async {
-                    final messenger = ScaffoldMessenger.of(context);
-                    await Clipboard.setData(
-                      const ClipboardData(text: _startCommand),
-                    );
-                    if (!mounted) {
-                      return;
-                    }
-
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text(
+                    await _copyText(
+                      text: _startCommand(moduleDirectory),
+                      successMessage:
                           'Copied the Knowledge Library start command.',
-                        ),
-                      ),
                     );
                   },
                   icon: const Icon(Icons.content_copy_rounded),
@@ -881,20 +904,10 @@ class _KnowledgeLibraryDashboardCardState
               else
                 OutlinedButton.icon(
                   onPressed: () async {
-                    final messenger = ScaffoldMessenger.of(context);
-                    await Clipboard.setData(
-                      const ClipboardData(text: 'http://127.0.0.1:8787'),
-                    );
-                    if (!mounted) {
-                      return;
-                    }
-
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text(
+                    await _copyText(
+                      text: _apiAddress,
+                      successMessage:
                           'Copied the Knowledge Library API address.',
-                        ),
-                      ),
                     );
                   },
                   icon: const Icon(Icons.copy_rounded),
@@ -933,6 +946,92 @@ class _KnowledgeLibraryDashboardCardState
         text.contains('socketexception') ||
         text.contains('127.0.0.1') ||
         text.contains('localhost');
+  }
+
+  Directory _moduleDirectory() {
+    final current = Directory.current;
+    final normalized = current.path.replaceAll('\\', '/');
+    if (normalized.endsWith('/modules/knowledge_engine')) {
+      return current;
+    }
+
+    return Directory(
+      '${current.path}${Platform.pathSeparator}modules${Platform.pathSeparator}knowledge_engine',
+    );
+  }
+
+  String _startCommandSequence(Directory moduleDirectory) {
+    return [
+      _startCommand(moduleDirectory),
+      'python -m venv .venv',
+      'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass',
+      '.\\.venv\\Scripts\\Activate.ps1',
+      'python -m pip install -r requirements.txt',
+      'python scripts\\setup_omega_folders.py',
+      'python scripts\\scan_library.py',
+      'python scripts\\extract_text.py',
+      'python scripts\\build_catalogue.py',
+      'uvicorn api.main:app --reload --port 8787',
+    ].join('\n');
+  }
+
+  String _startCommand(Directory moduleDirectory) {
+    return [
+      'Set-Location "${moduleDirectory.path}"',
+      'uvicorn api.main:app --reload --port 8787',
+    ].join('\n');
+  }
+
+  Future<void> _copySetupSequence() async {
+    await _copyText(
+      text: _startCommandSequence(_moduleDirectory()),
+      successMessage: 'Copied the full Knowledge Library setup sequence.',
+    );
+  }
+
+  Future<void> _copyText({
+    required String text,
+    required String successMessage,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) {
+      return;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(content: Text(successMessage)),
+    );
+  }
+
+  Future<void> _openModuleFolder() async {
+    final moduleDirectory = _moduleDirectory();
+    if (!moduleDirectory.existsSync()) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find the Knowledge Engine module folder.'),
+        ),
+      );
+      return;
+    }
+
+    if (Platform.isWindows) {
+      await Process.start('explorer.exe', [moduleDirectory.path]);
+      return;
+    }
+
+    if (Platform.isMacOS) {
+      await Process.start('open', [moduleDirectory.path]);
+      return;
+    }
+
+    if (Platform.isLinux) {
+      await Process.start('xdg-open', [moduleDirectory.path]);
+    }
   }
 }
 
