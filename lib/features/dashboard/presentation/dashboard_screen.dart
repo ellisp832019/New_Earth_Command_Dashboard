@@ -677,6 +677,8 @@ class KnowledgeLibraryDashboardCard extends StatefulWidget {
 class _KnowledgeLibraryDashboardCardState
     extends State<KnowledgeLibraryDashboardCard> {
   final KnowledgeLibraryRepository _repository = KnowledgeLibraryRepository();
+  static const String _startCommand =
+      'cd modules/knowledge_engine && uvicorn api.main:app --reload --port 8787';
 
   KnowledgeLibraryHealth? _health;
   KnowledgeLibraryStats? _stats;
@@ -733,10 +735,15 @@ class _KnowledgeLibraryDashboardCardState
     final theme = Theme.of(context);
     final health = _health;
     final stats = _stats;
+    final isOffline = _error != null && _isApiConnectionIssue(_error);
     final statusColor = health?.isHealthy == true
         ? AppColours.darkSuccess
         : AppColours.darkAmber;
-    final statusLabel = health?.isHealthy == true ? 'Ready' : 'Offline';
+    final statusLabel = health?.isHealthy == true
+        ? 'Ready'
+        : isOffline
+        ? 'Offline'
+        : 'Needs attention';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -812,15 +819,17 @@ class _KnowledgeLibraryDashboardCardState
                     ? 'Refreshing local module status...'
                     : health?.message.isNotEmpty == true
                     ? health!.message
+                    : isOffline
+                    ? 'The Knowledge Library API is offline. Start it locally and refresh the card.'
                     : _error == null
                     ? 'Local module status loaded successfully.'
-                    : 'Knowledge Library API is not reachable yet.',
+                    : 'Knowledge Library needs attention before it can report live status.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.35,
                 ),
               ),
-              if (_error != null) ...[
+              if (_error != null && !isOffline) ...[
                 const SizedBox(height: 8),
                 Text(
                   _error.toString(),
@@ -847,27 +856,50 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Refresh'),
               ),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  await Clipboard.setData(
-                    const ClipboardData(
-                      text: 'http://127.0.0.1:8787',
-                    ),
-                  );
-                  if (!mounted) {
-                    return;
-                  }
+              if (isOffline)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    await Clipboard.setData(
+                      const ClipboardData(text: _startCommand),
+                    );
+                    if (!mounted) {
+                      return;
+                    }
 
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Copied the Knowledge Library API address.'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.copy_rounded),
-                label: const Text('Copy API'),
-              ),
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Copied the Knowledge Library start command.',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.content_copy_rounded),
+                  label: const Text('Copy Start Command'),
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    await Clipboard.setData(
+                      const ClipboardData(text: 'http://127.0.0.1:8787'),
+                    );
+                    if (!mounted) {
+                      return;
+                    }
+
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Copied the Knowledge Library API address.',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded),
+                  label: const Text('Copy API'),
+                ),
             ],
           );
 
@@ -893,6 +925,14 @@ class _KnowledgeLibraryDashboardCardState
         },
       ),
     );
+  }
+
+  bool _isApiConnectionIssue(Object? error) {
+    final text = error.toString().toLowerCase();
+    return text.contains('connection refused') ||
+        text.contains('socketexception') ||
+        text.contains('127.0.0.1') ||
+        text.contains('localhost');
   }
 }
 
