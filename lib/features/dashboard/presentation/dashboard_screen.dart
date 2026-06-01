@@ -852,6 +852,14 @@ class _KnowledgeLibraryDashboardCardState
                   height: 1.35,
                 ),
               ),
+              const SizedBox(height: 6),
+              SelectableText(
+                'Module folder: ${moduleDirectory.path}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  height: 1.35,
+                ),
+              ),
               if (_error != null && !isOffline) ...[
                 const SizedBox(height: 8),
                 Text(
@@ -879,6 +887,12 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.folder_open_outlined),
                 label: const Text('Open Module Folder'),
               ),
+              if (catalogueExists)
+                OutlinedButton.icon(
+                  onPressed: _openCatalogueFile,
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Open Catalogue'),
+                ),
               TextButton.icon(
                 onPressed: _loading ? null : _refresh,
                 icon: const Icon(Icons.refresh_rounded),
@@ -889,7 +903,7 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.content_copy_rounded),
                 label: const Text('Copy Setup'),
               ),
-                if (isOffline)
+              if (isOffline)
                 OutlinedButton.icon(
                   onPressed: () async {
                     await _copyText(
@@ -949,15 +963,30 @@ class _KnowledgeLibraryDashboardCardState
   }
 
   Directory _moduleDirectory() {
-    final current = Directory.current;
-    final normalized = current.path.replaceAll('\\', '/');
-    if (normalized.endsWith('/modules/knowledge_engine')) {
-      return current;
-    }
-
+    final workspaceRoot = _workspaceRootDirectory();
     return Directory(
-      '${current.path}${Platform.pathSeparator}modules${Platform.pathSeparator}knowledge_engine',
+      '${workspaceRoot.path}${Platform.pathSeparator}modules${Platform.pathSeparator}knowledge_engine',
     );
+  }
+
+  Directory _workspaceRootDirectory() {
+    var directory = Directory.current;
+
+    while (true) {
+      final candidate = Directory(
+        '${directory.path}${Platform.pathSeparator}modules${Platform.pathSeparator}knowledge_engine',
+      );
+      if (candidate.existsSync()) {
+        return directory;
+      }
+
+      final parent = directory.parent;
+      if (parent.path == directory.path) {
+        return Directory.current;
+      }
+
+      directory = parent;
+    }
   }
 
   String _startCommandSequence(Directory moduleDirectory) {
@@ -1031,6 +1060,40 @@ class _KnowledgeLibraryDashboardCardState
 
     if (Platform.isLinux) {
       await Process.start('xdg-open', [moduleDirectory.path]);
+    }
+  }
+
+  Future<void> _openCatalogueFile() async {
+    final catalogueFile = File(
+      '${_moduleDirectory().path}${Platform.pathSeparator}08_LIBRARY_CATALOGUE'
+      '${Platform.pathSeparator}pdf_catalogue.json',
+    );
+
+    if (!catalogueFile.existsSync()) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('The catalogue JSON is not available yet.'),
+        ),
+      );
+      return;
+    }
+
+    if (Platform.isWindows) {
+      await Process.start('explorer.exe', ['/select,${catalogueFile.path}']);
+      return;
+    }
+
+    if (Platform.isMacOS) {
+      await Process.start('open', [catalogueFile.path]);
+      return;
+    }
+
+    if (Platform.isLinux) {
+      await Process.start('xdg-open', [catalogueFile.path]);
     }
   }
 }
