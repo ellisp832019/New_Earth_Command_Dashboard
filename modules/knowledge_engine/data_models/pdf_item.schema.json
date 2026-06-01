@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KnowledgeEnginePdfItem",
+  "type": "object",
+  "required": ["id", "filename", "full_path", "relative_path", "source_section", "category", "audio_status"],
+  "properties": {
+    "id": {"type": "string"},
+    "filename": {"type": "string"},
+    "title": {"type": "string"},
+    "full_path": {"type": "string"},
+    "relative_path": {"type": "string"},
+    "source_section": {"type": "string"},
+    "category": {"type": "string"},
+    "file_size_bytes": {"type": "integer"},
+    "created_at": {"type": "string"},
+    "modified_at": {"type": "string"},
+    "page_count": {"type": ["integer", "null"]},
+    "text_extractable": {"type": "boolean"},
+    "ocr_required": {"type": "boolean"},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "summary_status": {"type": "string"},
+    "audio_status": {"type": "string"},
+    "listened_status": {"type": "string"},
+    "notes_path": {"type": ["string", "null"]},
+    "extracted_text_path": {"type": ["string", "null"]},
+    "audio_manifest_path": {"type": ["string", "null"]}
+  }
+}

@@ -519,7 +519,10 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
                 child: TextField(
                   controller: _captureController,
                   focusNode: _captureFocusNode,
-                  autofocus: true,
+                  // Only grab focus when we arm capture. Keeping this field
+                  // unfocused at startup avoids a permanent keyboard target
+                  // on Windows that can interfere with key event bookkeeping.
+                  autofocus: false,
                   enableInteractiveSelection: false,
                   decoration: const InputDecoration(
                     border: InputBorder.none,
