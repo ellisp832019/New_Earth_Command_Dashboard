@@ -29,7 +29,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python scripts/setup_omega_folders.py
 python scripts/scan_library.py
-python scripts/extract_text.py
+python scripts/extract_text.py --batch-size 100
 python scripts/build_catalogue.py
 uvicorn api.main:app --reload --port 8787
 ```
@@ -49,6 +49,8 @@ If `config.json` is not present, the scripts fall back to `config.example.json`.
 - Generates `08_LIBRARY_CATALOGUE/pdf_catalogue.csv`.
 - Generates `08_LIBRARY_CATALOGUE/library_stats.json`.
 - Extracts readable PDF text into `09_AI_INDEXING/extracted_text`.
+- Runs text extraction in resumable batches and saves progress in
+  `09_AI_INDEXING/extracted_text/extraction_state.json`.
 - Flags likely scanned PDFs that need OCR.
 - Exposes a local FastAPI service for the Dashboard.
 - Prepares safe placeholders for summaries and audio output.

@@ -54,12 +54,14 @@ Expected:
 Run:
 
 ```powershell
-python scripts/extract_text.py
+python scripts/extract_text.py --batch-size 100
 ```
 
 Expected:
 
 - extracted text files appear in `09_AI_INDEXING/extracted_text`
+- repeated runs continue from the last completed batch
+- `09_AI_INDEXING/extracted_text/extraction_state.json` tracks progress
 - scanned PDFs are skipped and flagged as OCR required
 
 ## Catalogue Builder
