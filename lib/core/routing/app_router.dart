@@ -30,6 +30,7 @@ import '../../features/journal/presentation/journal_screen.dart';
 import '../../features/learning/presentation/add_learning_item_screen.dart';
 import '../../features/learning/presentation/learning_screen.dart';
 import '../../features/more/presentation/more_screen.dart';
+import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
@@ -253,6 +254,11 @@ final appRouter = GoRouter(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
               routes: [
+                GoRoute(
+                  path: 'knowledge-library',
+                  builder: (context, state) =>
+                      const KnowledgeLibraryScreen(),
+                ),
                 GoRoute(
                   path: 'omega-os-health',
                   builder: (context, state) =>

@@ -9,6 +9,13 @@ class MoreScreen extends StatelessWidget {
 
   static const _items = [
     _MoreItem(
+      title: 'Knowledge Library',
+      description:
+          'Search the Omega OS PDF catalogue and review extractable items.',
+      icon: Icons.library_books_outlined,
+      route: RouteNames.knowledgeLibrary,
+    ),
+    _MoreItem(
       title: 'Journal',
       description:
           'Capture build progress, lessons, decisions, and reflections.',
