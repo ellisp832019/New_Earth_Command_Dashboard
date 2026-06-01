@@ -68,8 +68,10 @@ def scan_library() -> list[dict]:
                 "id": item_id,
                 "filename": sanitize_text(pdf_path.name),
                 "title": title,
-                "full_path": sanitize_text(str(pdf_path)),
-                "relative_path": sanitize_text(str(relative).replace("\\", "/")),
+                # Keep filesystem paths exact. Sanitizing them can change valid
+                # Windows paths when filenames or folders contain repeated spaces.
+                "full_path": str(pdf_path),
+                "relative_path": relative.as_posix(),
                 "source_section": sanitize_text(source_section),
                 "category": sanitize_text(category),
                 "file_size_bytes": stat.st_size,
@@ -83,22 +85,18 @@ def scan_library() -> list[dict]:
                 "audio_status": "not_started",
                 "listened_status": "not_started",
                 "notes_path": None,
-                "extracted_text_path": sanitize_text(
-                    str(
-                        paths["extracted_text"]
-                        / source_section
-                        / category
-                        / f"{slug}.txt"
-                    )
+                "extracted_text_path": str(
+                    paths["extracted_text"]
+                    / source_section
+                    / category
+                    / f"{slug}.txt"
                 ),
-                "audio_manifest_path": sanitize_text(
-                    str(
-                        paths["audio"]
-                        / source_section
-                        / category
-                        / slug
-                        / "audio_manifest.json"
-                    )
+                "audio_manifest_path": str(
+                    paths["audio"]
+                    / source_section
+                    / category
+                    / slug
+                    / "audio_manifest.json"
                 ),
             })
 
