@@ -120,6 +120,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
             children: [
               _TopBar(
                 onBackToDashboard: () => context.go(RouteNames.dashboard),
+                onBackToMore: () => context.go(RouteNames.more),
               ),
               const SizedBox(height: 14),
               _HeaderCard(
@@ -176,7 +177,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                           final detailPanel = _DetailPanel(
                             item: selectedItem,
                             onOpenOriginal: _openOriginal,
+                            onOpenContainingFolder: _openContainingFolder,
                             onCopyPath: _copyOriginalPath,
+                            onCopyExtractedPath: _copyExtractedPath,
                             onOpenExtractedText: _openExtractedText,
                             onRefresh: _refreshAll,
                           );
@@ -486,12 +489,53 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
       SnackBar(content: Text('Copied path for ${item.filename}.')),
     );
   }
+
+  Future<void> _copyExtractedPath(KnowledgeLibraryItem item) async {
+    final extracted = item.extractedTextPath;
+    if (extracted == null || extracted.trim().isEmpty) {
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: extracted));
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied extracted text path for ${item.filename}.')),
+    );
+  }
+
+  Future<void> _openContainingFolder(KnowledgeLibraryItem item) async {
+    try {
+      await _repository.openContainingFolder(item.fullPath);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Opened the folder for ${item.filename}.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open the folder: $error')),
+      );
+    }
+  }
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onBackToDashboard});
+  const _TopBar({
+    required this.onBackToDashboard,
+    required this.onBackToMore,
+  });
 
   final VoidCallback onBackToDashboard;
+  final VoidCallback onBackToMore;
 
   @override
   Widget build(BuildContext context) {
@@ -501,6 +545,12 @@ class _TopBar extends StatelessWidget {
           onPressed: onBackToDashboard,
           icon: const Icon(Icons.arrow_back_rounded),
           label: const Text('Back to Dashboard'),
+        ),
+        const SizedBox(width: 10),
+        TextButton.icon(
+          onPressed: onBackToMore,
+          icon: const Icon(Icons.menu_open_rounded),
+          label: const Text('Back to More'),
         ),
         const Spacer(),
       ],
@@ -1117,14 +1167,18 @@ class _DetailPanel extends StatelessWidget {
   const _DetailPanel({
     required this.item,
     required this.onOpenOriginal,
+    required this.onOpenContainingFolder,
     required this.onCopyPath,
+    required this.onCopyExtractedPath,
     required this.onOpenExtractedText,
     required this.onRefresh,
   });
 
   final KnowledgeLibraryItem? item;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenOriginal;
+  final Future<void> Function(KnowledgeLibraryItem item) onOpenContainingFolder;
   final Future<void> Function(KnowledgeLibraryItem item) onCopyPath;
+  final Future<void> Function(KnowledgeLibraryItem item) onCopyExtractedPath;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenExtractedText;
   final VoidCallback onRefresh;
 
@@ -1284,9 +1338,21 @@ class _DetailPanel extends StatelessWidget {
                         label: const Text('Open original'),
                       ),
                       OutlinedButton.icon(
+                        onPressed: () => onOpenContainingFolder(current),
+                        icon: const Icon(Icons.folder_open_outlined),
+                        label: const Text('Open folder'),
+                      ),
+                      OutlinedButton.icon(
                         onPressed: () => onCopyPath(current),
                         icon: const Icon(Icons.copy_rounded),
                         label: const Text('Copy path'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: current.hasExtractedText
+                            ? () => onCopyExtractedPath(current)
+                            : null,
+                        icon: const Icon(Icons.content_copy_rounded),
+                        label: const Text('Copy text path'),
                       ),
                       if (current.hasExtractedText)
                         TextButton.icon(
