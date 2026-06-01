@@ -34,6 +34,38 @@ def load_items() -> list[dict[str, Any]]:
     return items
 
 
+def load_extraction_state() -> dict[str, Any]:
+    config = load_config()
+    paths = output_paths(config)
+    state_path = paths["extracted_text"] / "extraction_state.json"
+    report_path = paths["extracted_text"] / "extraction_failures.json"
+
+    if state_path.exists():
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+        except Exception:
+            state = {}
+    else:
+        state = {}
+
+    if report_path.exists():
+        try:
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        except Exception:
+            report = {}
+    else:
+        report = {}
+
+    return {
+        "state_path": str(state_path),
+        "report_path": str(report_path),
+        "completed_ids": state.get("completed_ids", []),
+        "failed_ids": state.get("failed_ids", []),
+        "failed_items": report.get("items", []),
+        "last_run_at": state.get("last_run_at"),
+    }
+
+
 @app.get("/")
 def root() -> dict[str, str]:
     return {
@@ -109,3 +141,30 @@ def library_stats() -> dict[str, Any]:
         return json.loads(stats_path.read_text(encoding="utf-8"))
     items = load_items()
     return {"total_pdfs": len(items), "message": "Run build_catalogue.py for full stats."}
+
+
+@app.get("/library/extraction/status")
+def library_extraction_status() -> dict[str, Any]:
+    items = load_items()
+    extraction = load_extraction_state()
+    completed_ids = set(str(item_id) for item_id in extraction["completed_ids"])
+    failed_ids = set(str(item_id) for item_id in extraction["failed_ids"])
+
+    text_extractable = sum(1 for item in items if item.get("text_extractable"))
+    ocr_required = sum(1 for item in items if item.get("ocr_required"))
+    extracted = len(completed_ids)
+    failed = len(failed_ids)
+    pending = max(text_extractable - extracted - failed, 0)
+
+    return {
+        "total_pdfs": len(items),
+        "text_extractable": text_extractable,
+        "ocr_required": ocr_required,
+        "extracted": extracted,
+        "failed": failed,
+        "pending": pending,
+        "last_run_at": extraction["last_run_at"],
+        "state_path": extraction["state_path"],
+        "report_path": extraction["report_path"],
+        "failed_items": extraction["failed_items"],
+    }

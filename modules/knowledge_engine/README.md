@@ -51,6 +51,7 @@ If `config.json` is not present, the scripts fall back to `config.example.json`.
 - Extracts readable PDF text into `09_AI_INDEXING/extracted_text`.
 - Runs text extraction in resumable batches and saves progress in
   `09_AI_INDEXING/extracted_text/extraction_state.json`.
+- Writes a failure report to `09_AI_INDEXING/extracted_text/extraction_failures.json`.
 - Flags likely scanned PDFs that need OCR.
 - Exposes a local FastAPI service for the Dashboard.
 - Prepares safe placeholders for summaries and audio output.
@@ -78,8 +79,9 @@ The Flutter Dashboard should connect to the module in this order:
 2. Add search using `GET /library/search?q=...`.
 3. Open an item detail drawer or page with `GET /library/item/{id}`.
 4. Surface module health and counts with `GET /health` and `GET /library/stats`.
-5. Add actions for opening the original PDF path from the item payload.
-6. Keep MP3 and semantic search as future stubs until the local pipeline is ready.
+5. Surface extraction progress with `GET /library/extraction/status`.
+6. Add actions for opening the original PDF path from the item payload.
+7. Keep MP3 and semantic search as future stubs until the local pipeline is ready.
 
 ## What Comes Later
 

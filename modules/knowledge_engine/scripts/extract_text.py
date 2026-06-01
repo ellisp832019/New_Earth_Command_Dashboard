@@ -10,6 +10,7 @@ from common import ensure_dir, load_config, output_paths, silence_mupdf_diagnost
 
 
 STATE_FILENAME = "extraction_state.json"
+FAILURE_REPORT_FILENAME = "extraction_failures.json"
 
 
 def extract_text_for_item(item: dict) -> tuple[str, str | None]:
@@ -40,6 +41,7 @@ def load_state(state_path: Path) -> dict:
         return {
             "completed_ids": [],
             "failed_ids": [],
+            "failed_items": [],
             "last_run_at": None,
         }
 
@@ -56,12 +58,18 @@ def load_state(state_path: Path) -> dict:
         return {
             "completed_ids": [],
             "failed_ids": [],
+            "failed_items": [],
             "last_run_at": None,
         }
+
+    failed_items = decoded.get("failed_items", [])
+    if not isinstance(failed_items, list):
+        failed_items = []
 
     return {
         "completed_ids": list(decoded.get("completed_ids", [])),
         "failed_ids": list(decoded.get("failed_ids", [])),
+        "failed_items": failed_items,
         "last_run_at": decoded.get("last_run_at"),
     }
 
@@ -69,6 +77,18 @@ def load_state(state_path: Path) -> dict:
 def save_state(state_path: Path, state: dict) -> None:
     state_path.write_text(
         json.dumps(state, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
+def save_failure_report(report_path: Path, failed_items: list[dict]) -> None:
+    report = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "count": len(failed_items),
+        "items": failed_items,
+    }
+    report_path.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 
@@ -101,6 +121,7 @@ def main() -> None:
     paths = output_paths(config)
     catalogue_path = paths["catalogue"] / "pdf_catalogue.json"
     state_path = paths["extracted_text"] / STATE_FILENAME
+    report_path = paths["extracted_text"] / FAILURE_REPORT_FILENAME
 
     if not catalogue_path.exists():
         raise FileNotFoundError(f"Run scan_library.py first. Missing: {catalogue_path}")
@@ -112,6 +133,11 @@ def main() -> None:
     state = load_state(state_path)
     completed_ids = set(state["completed_ids"])
     failed_ids = set(state["failed_ids"])
+    failed_items_map = {
+        str(item.get("id", "")): item
+        for item in state.get("failed_items", [])
+        if isinstance(item, dict)
+    }
 
     pending = []
     already_done = 0
@@ -172,16 +198,32 @@ def main() -> None:
         else:
             failed += 1
             failed_ids.add(item_id)
+            failed_items_map[item_id] = {
+                "id": item_id,
+                "title": title,
+                "filename": item.get("filename"),
+                "full_path": item.get("full_path"),
+                "extracted_text_path": item.get("extracted_text_path"),
+                "error": error,
+                "failed_at": datetime.now().isoformat(timespec="seconds"),
+            }
             print(f"[{index}/{len(pending)}] FAILED: {title} :: {error}")
 
         state["completed_ids"] = sorted(completed_ids)
         state["failed_ids"] = sorted(failed_ids)
+        state["failed_items"] = sorted(
+            failed_items_map.values(),
+            key=lambda entry: (entry.get("title", ""), entry.get("full_path", "")),
+        )
         state["last_run_at"] = datetime.now().isoformat(timespec="seconds")
         save_state(state_path, state)
+
+    save_failure_report(report_path, state.get("failed_items", []))
 
     print(f"Extracted text for {extracted} PDFs in this batch")
     print(f"Failed in this batch: {failed}")
     print(f"Resume state: {state_path}")
+    print(f"Failure report: {report_path}")
 
 
 if __name__ == "__main__":

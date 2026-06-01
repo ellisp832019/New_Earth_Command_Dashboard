@@ -682,6 +682,7 @@ class _KnowledgeLibraryDashboardCardState
 
   KnowledgeLibraryHealth? _health;
   KnowledgeLibraryStats? _stats;
+  KnowledgeLibraryExtractionStatus? _extractionStatus;
   Object? _error;
   bool _loading = true;
 
@@ -707,6 +708,7 @@ class _KnowledgeLibraryDashboardCardState
       final results = await Future.wait([
         _repository.loadHealth(),
         _repository.loadStats(),
+        _repository.loadExtractionStatus(),
       ]);
 
       if (!mounted) {
@@ -716,6 +718,8 @@ class _KnowledgeLibraryDashboardCardState
       setState(() {
         _health = results[0] as KnowledgeLibraryHealth;
         _stats = results[1] as KnowledgeLibraryStats;
+        _extractionStatus =
+            results[2] as KnowledgeLibraryExtractionStatus;
         _loading = false;
       });
     } catch (error) {
@@ -735,6 +739,7 @@ class _KnowledgeLibraryDashboardCardState
     final theme = Theme.of(context);
     final health = _health;
     final stats = _stats;
+    final extractionStatus = _extractionStatus;
     final moduleDirectory = _moduleDirectory();
     final catalogueFile = File(
       '${moduleDirectory.path}${Platform.pathSeparator}08_LIBRARY_CATALOGUE'
@@ -818,6 +823,19 @@ class _KnowledgeLibraryDashboardCardState
                     accent: AppColours.darkPurple,
                   ),
                   _KnowledgeMetricChip(
+                    label: 'Extraction',
+                    value: extractionStatus == null
+                        ? '...'
+                        : '${extractionStatus.extracted} / '
+                              '${extractionStatus.ocrRequired} / '
+                              '${extractionStatus.failed}',
+                    accent: extractionStatus == null
+                        ? AppColours.darkSecondary
+                        : extractionStatus.hasFailures
+                        ? AppColours.darkAmber
+                        : AppColours.darkSuccess,
+                  ),
+                  _KnowledgeMetricChip(
                     label: 'Catalogue',
                     value: catalogueExists ? 'Ready' : 'Missing',
                     accent: catalogueExists
@@ -860,6 +878,18 @@ class _KnowledgeLibraryDashboardCardState
                   height: 1.35,
                 ),
               ),
+              if (extractionStatus != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Extracted ${extractionStatus.extracted} PDFs, '
+                  '${extractionStatus.ocrRequired} need OCR, '
+                  '${extractionStatus.failed} failed so far.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                ),
+              ],
               if (_error != null && !isOffline) ...[
                 const SizedBox(height: 8),
                 Text(

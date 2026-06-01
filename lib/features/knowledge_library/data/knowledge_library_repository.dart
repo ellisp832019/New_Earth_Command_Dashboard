@@ -68,6 +68,13 @@ class KnowledgeLibraryRepository {
     return KnowledgeLibraryStats.fromJson(json);
   }
 
+  Future<KnowledgeLibraryExtractionStatus> loadExtractionStatus() async {
+    final json = await _getJson(
+      baseUri.replace(path: '/library/extraction/status'),
+    );
+    return KnowledgeLibraryExtractionStatus.fromJson(json);
+  }
+
   Future<void> revealOriginalFile(String path) async {
     if (path.isEmpty) {
       return;
@@ -284,6 +291,48 @@ class KnowledgeLibraryHealth {
       status: json['status']?.toString() ?? 'unknown',
       module: json['module']?.toString() ?? 'knowledge_library',
       message: json['message']?.toString() ?? '',
+    );
+  }
+}
+
+class KnowledgeLibraryExtractionStatus {
+  const KnowledgeLibraryExtractionStatus({
+    required this.totalPdfs,
+    required this.textExtractable,
+    required this.ocrRequired,
+    required this.extracted,
+    required this.failed,
+    required this.pending,
+    required this.lastRunAt,
+    required this.statePath,
+    required this.reportPath,
+  });
+
+  final int totalPdfs;
+  final int textExtractable;
+  final int ocrRequired;
+  final int extracted;
+  final int failed;
+  final int pending;
+  final DateTime? lastRunAt;
+  final String statePath;
+  final String reportPath;
+
+  bool get hasFailures => failed > 0;
+
+  factory KnowledgeLibraryExtractionStatus.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return KnowledgeLibraryExtractionStatus(
+      totalPdfs: _intValue(json['total_pdfs']),
+      textExtractable: _intValue(json['text_extractable']),
+      ocrRequired: _intValue(json['ocr_required']),
+      extracted: _intValue(json['extracted']),
+      failed: _intValue(json['failed']),
+      pending: _intValue(json['pending']),
+      lastRunAt: _dateValue(json['last_run_at']),
+      statePath: json['state_path']?.toString() ?? '',
+      reportPath: json['report_path']?.toString() ?? '',
     );
   }
 }

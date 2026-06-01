@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 config.json
 09_AI_INDEXING/extracted_text/extraction_state.json
+09_AI_INDEXING/extracted_text/extraction_failures.json

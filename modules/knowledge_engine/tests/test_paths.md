@@ -62,6 +62,7 @@ Expected:
 - extracted text files appear in `09_AI_INDEXING/extracted_text`
 - repeated runs continue from the last completed batch
 - `09_AI_INDEXING/extracted_text/extraction_state.json` tracks progress
+- `09_AI_INDEXING/extracted_text/extraction_failures.json` lists damaged or failed PDFs
 - scanned PDFs are skipped and flagged as OCR required
 
 ## Catalogue Builder
@@ -94,4 +95,5 @@ http://127.0.0.1:8787/library
 http://127.0.0.1:8787/library/search?q=MicroGrow
 http://127.0.0.1:8787/library/item/<id>
 http://127.0.0.1:8787/library/stats
+http://127.0.0.1:8787/library/extraction/status
 ```
