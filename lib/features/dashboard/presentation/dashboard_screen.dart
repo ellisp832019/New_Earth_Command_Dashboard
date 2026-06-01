@@ -734,6 +734,78 @@ class _KnowledgeLibraryDashboardCardState
     }
   }
 
+  Future<void> _refreshExtractionStatus() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final extractionStatus = await _repository.loadExtractionStatus();
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _extractionStatus = extractionStatus;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _error = error;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _openFailureReport() async {
+    final extractionStatus = _extractionStatus;
+    if (extractionStatus == null || extractionStatus.reportPath.isEmpty) {
+      return;
+    }
+
+    try {
+      await _repository.openFailureReport(extractionStatus.reportPath);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Opened the extraction failure report.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open the failure report: $error'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _copyModulePath() async {
+    final moduleDirectory = _moduleDirectory();
+    await Clipboard.setData(ClipboardData(text: moduleDirectory.path));
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Copied module path: ${moduleDirectory.path}'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -822,7 +894,7 @@ class _KnowledgeLibraryDashboardCardState
                     value: stats == null ? '...' : '${stats.audioGenerated}',
                     accent: AppColours.darkPurple,
                   ),
-                  _KnowledgeMetricChip(
+              _KnowledgeMetricChip(
                     label: 'Extraction',
                     value: extractionStatus == null
                         ? '...'
@@ -861,22 +933,48 @@ class _KnowledgeLibraryDashboardCardState
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
-                catalogueExists
-                    ? 'Catalogue JSON is ready at 08_LIBRARY_CATALOGUE/pdf_catalogue.json.'
-                    : 'Catalogue JSON has not been built yet. Run the scanner and catalogue builder.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      catalogueExists
+                          ? 'Catalogue JSON is ready at 08_LIBRARY_CATALOGUE/pdf_catalogue.json.'
+                          : 'Catalogue JSON has not been built yet. Run the scanner and catalogue builder.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  if (extractionStatus != null) ...[
+                    const SizedBox(width: 10),
+                    TextButton.icon(
+                      onPressed: _loading ? null : _refreshExtractionStatus,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Refresh Extraction'),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 6),
-              SelectableText(
-                'Module folder: ${moduleDirectory.path}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  height: 1.35,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      'Module folder: ${moduleDirectory.path}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton.icon(
+                    onPressed: _copyModulePath,
+                    icon: const Icon(Icons.copy_rounded),
+                    label: const Text('Copy Module Path'),
+                  ),
+                ],
               ),
               if (extractionStatus != null) ...[
                 const SizedBox(height: 6),
@@ -943,6 +1041,12 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.content_copy_rounded),
                 label: const Text('Copy Setup'),
               ),
+              if (extractionStatus != null)
+                OutlinedButton.icon(
+                  onPressed: _openFailureReport,
+                  icon: const Icon(Icons.report_outlined),
+                  label: const Text('Open Failure Report'),
+                ),
               if (isOffline)
                 OutlinedButton.icon(
                   onPressed: () async {

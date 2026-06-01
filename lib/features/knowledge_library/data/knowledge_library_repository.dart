@@ -161,6 +161,14 @@ class KnowledgeLibraryRepository {
     }
   }
 
+  Future<void> openFailureReport(String path) async {
+    if (path.isEmpty) {
+      return;
+    }
+
+    await openInDefaultApp(path);
+  }
+
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
     final request = await _client.getUrl(uri);
     final response = await request.close().timeout(
