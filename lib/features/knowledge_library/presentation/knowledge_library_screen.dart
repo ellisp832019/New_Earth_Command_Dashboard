@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../data/knowledge_library_repository.dart';
 
@@ -116,6 +118,10 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _TopBar(
+                onBackToDashboard: () => context.go(RouteNames.dashboard),
+              ),
+              const SizedBox(height: 14),
               _HeaderCard(
                 status: _status,
                 onRefresh: _refreshAll,
@@ -425,13 +431,13 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
   Future<void> _openOriginal(KnowledgeLibraryItem item) async {
     try {
-      await _repository.revealOriginalFile(item.fullPath);
+      await _repository.openInDefaultApp(item.fullPath);
       if (!mounted) {
         return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Opened ${item.filename} in the file explorer.')),
+        SnackBar(content: Text('Opened ${item.filename}.')),
       );
     } catch (error) {
       if (!mounted) {
@@ -451,7 +457,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     }
 
     try {
-      await _repository.revealOriginalFile(extracted);
+      await _repository.openInDefaultApp(extracted);
       if (!mounted) {
         return;
       }
@@ -478,6 +484,26 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Copied path for ${item.filename}.')),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onBackToDashboard});
+
+  final VoidCallback onBackToDashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        TextButton.icon(
+          onPressed: onBackToDashboard,
+          icon: const Icon(Icons.arrow_back_rounded),
+          label: const Text('Back to Dashboard'),
+        ),
+        const Spacer(),
+      ],
     );
   }
 }

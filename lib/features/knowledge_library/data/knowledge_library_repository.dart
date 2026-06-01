@@ -96,6 +96,26 @@ class KnowledgeLibraryRepository {
     }
   }
 
+  Future<void> openInDefaultApp(String path) async {
+    if (path.isEmpty) {
+      return;
+    }
+
+    if (Platform.isWindows) {
+      await Process.start('cmd.exe', ['/c', 'start', '', path]);
+      return;
+    }
+
+    if (Platform.isMacOS) {
+      await Process.start('open', [path]);
+      return;
+    }
+
+    if (Platform.isLinux) {
+      await Process.start('xdg-open', [path]);
+    }
+  }
+
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
     final request = await _client.getUrl(uri);
     final response = await request.close().timeout(
