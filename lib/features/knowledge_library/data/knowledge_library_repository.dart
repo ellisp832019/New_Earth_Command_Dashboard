@@ -29,6 +29,11 @@ class KnowledgeLibraryRepository {
     return KnowledgeLibraryPage.fromJson(json);
   }
 
+  Future<KnowledgeLibraryHealth> loadHealth() async {
+    final json = await _getJson(baseUri.replace(path: '/health'));
+    return KnowledgeLibraryHealth.fromJson(json);
+  }
+
   Future<KnowledgeLibrarySearchResult> search({
     required String query,
     int limit = 200,
@@ -257,6 +262,28 @@ class KnowledgeLibraryStats {
       textExtractable: _intValue(json['text_extractable']),
       ocrRequired: _intValue(json['ocr_required']),
       audioGenerated: _intValue(json['audio_generated']),
+    );
+  }
+}
+
+class KnowledgeLibraryHealth {
+  const KnowledgeLibraryHealth({
+    required this.status,
+    required this.module,
+    required this.message,
+  });
+
+  final String status;
+  final String module;
+  final String message;
+
+  bool get isHealthy => status.toLowerCase() == 'ok';
+
+  factory KnowledgeLibraryHealth.fromJson(Map<String, dynamic> json) {
+    return KnowledgeLibraryHealth(
+      status: json['status']?.toString() ?? 'unknown',
+      module: json['module']?.toString() ?? 'knowledge_library',
+      message: json['message']?.toString() ?? '',
     );
   }
 }

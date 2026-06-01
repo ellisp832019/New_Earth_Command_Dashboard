@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +10,7 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../widgets/calm_guidance_card.dart';
 import '../../inbox/application/inbox_controller.dart';
+import '../../knowledge_library/data/knowledge_library_repository.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../application/dashboard_controller.dart';
@@ -638,19 +642,256 @@ class _SupportModuleGrid extends StatelessWidget {
             ? 2
             : 1;
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-            childAspectRatio: crossAxisCount == 1 ? 3.1 : 2.05,
-          ),
-          itemCount: cards.length,
-          itemBuilder: (context, index) => _MiniModuleCard(state: cards[index]),
+        return Column(
+          children: [
+            const KnowledgeLibraryDashboardCard(),
+            const SizedBox(height: 14),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                childAspectRatio: crossAxisCount == 1 ? 3.1 : 2.05,
+              ),
+              itemCount: cards.length,
+              itemBuilder: (context, index) =>
+                  _MiniModuleCard(state: cards[index]),
+            ),
+          ],
         );
       },
+    );
+  }
+}
+
+class KnowledgeLibraryDashboardCard extends StatefulWidget {
+  const KnowledgeLibraryDashboardCard({super.key});
+
+  @override
+  State<KnowledgeLibraryDashboardCard> createState() =>
+      _KnowledgeLibraryDashboardCardState();
+}
+
+class _KnowledgeLibraryDashboardCardState
+    extends State<KnowledgeLibraryDashboardCard> {
+  final KnowledgeLibraryRepository _repository = KnowledgeLibraryRepository();
+
+  KnowledgeLibraryHealth? _health;
+  KnowledgeLibraryStats? _stats;
+  Object? _error;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    _repository.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        _repository.loadHealth(),
+        _repository.loadStats(),
+      ]);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _health = results[0] as KnowledgeLibraryHealth;
+        _stats = results[1] as KnowledgeLibraryStats;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _error = error;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final health = _health;
+    final stats = _stats;
+    final statusColor = health?.isHealthy == true
+        ? AppColours.darkSuccess
+        : AppColours.darkAmber;
+    final statusLabel = health?.isHealthy == true ? 'Ready' : 'Offline';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context, highlighted: true),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 980;
+
+          final overview = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.library_books_outlined,
+                    color: AppColours.darkSecondary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Knowledge Library',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  _InlineTag(
+                    label: statusLabel,
+                    accent: statusColor,
+                    foreground: statusColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Quick access to the Omega OS PDF archive with live health and catalogue counts.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _KnowledgeMetricChip(
+                    label: 'PDFs',
+                    value: stats == null ? '...' : '${stats.totalPdfs}',
+                    accent: AppColours.darkSecondary,
+                  ),
+                  _KnowledgeMetricChip(
+                    label: 'Text',
+                    value: stats == null ? '...' : '${stats.textExtractable}',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  _KnowledgeMetricChip(
+                    label: 'OCR',
+                    value: stats == null ? '...' : '${stats.ocrRequired}',
+                    accent: AppColours.darkAmber,
+                  ),
+                  _KnowledgeMetricChip(
+                    label: 'Audio',
+                    value: stats == null ? '...' : '${stats.audioGenerated}',
+                    accent: AppColours.darkPurple,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _loading
+                    ? 'Refreshing local module status...'
+                    : health?.message.isNotEmpty == true
+                    ? health!.message
+                    : _error == null
+                    ? 'Local module status loaded successfully.'
+                    : 'Knowledge Library API is not reachable yet.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _error.toString(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+              ],
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.push(RouteNames.knowledgeLibrary),
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text('Open Library'),
+              ),
+              TextButton.icon(
+                onPressed: _loading ? null : _refresh,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Refresh'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  await Clipboard.setData(
+                    const ClipboardData(
+                      text: 'http://127.0.0.1:8787',
+                    ),
+                  );
+                  if (!mounted) {
+                    return;
+                  }
+
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Copied the Knowledge Library API address.'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text('Copy API'),
+              ),
+            ],
+          );
+
+          if (!isWide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                overview,
+                const SizedBox(height: 16),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: overview),
+              const SizedBox(width: 20),
+              SizedBox(width: 260, child: actions),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -1444,6 +1685,52 @@ class _MiniModuleCard extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KnowledgeMetricChip extends StatelessWidget {
+  const _KnowledgeMetricChip({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 116),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.7,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
