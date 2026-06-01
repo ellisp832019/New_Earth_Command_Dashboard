@@ -178,6 +178,8 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                             item: selectedItem,
                             onOpenOriginal: _openOriginal,
                             onOpenContainingFolder: _openContainingFolder,
+                            onOpenExtractedTextFolder:
+                                _openExtractedTextFolder,
                             onCopyPath: _copyOriginalPath,
                             onCopyExtractedPath: _copyExtractedPath,
                             onOpenExtractedText: _openExtractedText,
@@ -523,6 +525,36 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not open the folder: $error')),
+      );
+    }
+  }
+
+  Future<void> _openExtractedTextFolder(KnowledgeLibraryItem item) async {
+    final extracted = item.extractedTextPath;
+    if (extracted == null || extracted.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      await _repository.openExtractedTextFolder(extracted);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Opened the extracted text folder for ${item.filename}.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open the extracted text folder: $error'),
+        ),
       );
     }
   }
@@ -1168,6 +1200,7 @@ class _DetailPanel extends StatelessWidget {
     required this.item,
     required this.onOpenOriginal,
     required this.onOpenContainingFolder,
+    required this.onOpenExtractedTextFolder,
     required this.onCopyPath,
     required this.onCopyExtractedPath,
     required this.onOpenExtractedText,
@@ -1177,6 +1210,8 @@ class _DetailPanel extends StatelessWidget {
   final KnowledgeLibraryItem? item;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenOriginal;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenContainingFolder;
+  final Future<void> Function(KnowledgeLibraryItem item)
+      onOpenExtractedTextFolder;
   final Future<void> Function(KnowledgeLibraryItem item) onCopyPath;
   final Future<void> Function(KnowledgeLibraryItem item) onCopyExtractedPath;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenExtractedText;
@@ -1342,26 +1377,42 @@ class _DetailPanel extends StatelessWidget {
                         icon: const Icon(Icons.folder_open_outlined),
                         label: const Text('Open folder'),
                       ),
+                      if (current.hasExtractedText)
+                        OutlinedButton.icon(
+                          onPressed: () => onOpenExtractedTextFolder(current),
+                          icon: const Icon(Icons.folder_copy_outlined),
+                          label: const Text('Text folder'),
+                        ),
                       OutlinedButton.icon(
                         onPressed: () => onCopyPath(current),
                         icon: const Icon(Icons.copy_rounded),
                         label: const Text('Copy path'),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: current.hasExtractedText
-                            ? () => onCopyExtractedPath(current)
-                            : null,
-                        icon: const Icon(Icons.content_copy_rounded),
-                        label: const Text('Copy text path'),
-                      ),
                       if (current.hasExtractedText)
-                        TextButton.icon(
-                          onPressed: () => onOpenExtractedText(current),
-                          icon: const Icon(Icons.description_outlined),
-                          label: const Text('Open text'),
-                        ),
+                        ...[
+                          OutlinedButton.icon(
+                            onPressed: () => onCopyExtractedPath(current),
+                            icon: const Icon(Icons.content_copy_rounded),
+                            label: const Text('Copy text path'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => onOpenExtractedText(current),
+                            icon: const Icon(Icons.description_outlined),
+                            label: const Text('Open text'),
+                          ),
+                        ],
                     ],
                   ),
+                  if (current.hasExtractedText) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'The text path action only appears when extracted text exists.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   Text(
                     'The Knowledge Engine never moves the source PDF. It only reads Omega OS and writes generated outputs into the reserved local folders.',

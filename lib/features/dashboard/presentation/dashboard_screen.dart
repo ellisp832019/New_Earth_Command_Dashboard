@@ -912,6 +912,11 @@ class _KnowledgeLibraryDashboardCardState
                 icon: const Icon(Icons.open_in_new_rounded),
                 label: const Text('Open Library'),
               ),
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.dashboard),
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: const Text('Back to Dashboard'),
+              ),
               FilledButton.tonalIcon(
                 onPressed: _openModuleFolder,
                 icon: const Icon(Icons.folder_open_outlined),

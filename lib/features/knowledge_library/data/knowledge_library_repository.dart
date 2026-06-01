@@ -138,6 +138,29 @@ class KnowledgeLibraryRepository {
     }
   }
 
+  Future<void> openExtractedTextFolder(String path) async {
+    if (path.isEmpty) {
+      return;
+    }
+
+    final extractedPath = File(path);
+    final folderPath = extractedPath.parent.path;
+
+    if (Platform.isWindows) {
+      await Process.start('explorer.exe', [folderPath]);
+      return;
+    }
+
+    if (Platform.isMacOS) {
+      await Process.start('open', [folderPath]);
+      return;
+    }
+
+    if (Platform.isLinux) {
+      await Process.start('xdg-open', [folderPath]);
+    }
+  }
+
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
     final request = await _client.getUrl(uri);
     final response = await request.close().timeout(
