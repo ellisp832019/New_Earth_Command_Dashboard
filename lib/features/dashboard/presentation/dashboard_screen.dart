@@ -1163,18 +1163,45 @@ class _KnowledgeLibraryDashboardCardState
       return;
     }
 
-    await Process.start(
-      'powershell.exe',
-      [
-        '-NoLogo',
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        scriptFile.path,
-      ],
-      workingDirectory: _moduleDirectory().path,
-    );
+    try {
+      await Process.start(
+        'cmd.exe',
+        [
+          '/c',
+          'start',
+          '""',
+          'powershell.exe',
+          '-NoLogo',
+          '-NoProfile',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-NoExit',
+          '-File',
+          scriptFile.path,
+        ],
+        workingDirectory: _moduleDirectory().path,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Knowledge Engine startup window opened.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not launch the startup script: $error'),
+        ),
+      );
+    }
   }
 }
 
