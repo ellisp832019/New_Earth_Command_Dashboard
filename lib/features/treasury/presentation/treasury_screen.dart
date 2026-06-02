@@ -282,6 +282,10 @@ class _TreasuryHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final financeRoot = snapshot.financeRootPath ?? 'Not linked yet';
+    final stateCounts = {
+      for (final summary in snapshot.stateSummaries)
+        summary.kind: summary.count,
+    };
 
     return Container(
       decoration: _cardDecoration(highlighted: true),
@@ -340,6 +344,32 @@ class _TreasuryHeroCard extends StatelessWidget {
                   _StatusPill(
                     label: financeRoot,
                     accent: AppColours.darkPrimary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _StatusPill(
+                    label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  _StatusPill(
+                    label:
+                        'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                    accent: AppColours.darkAmber,
+                  ),
+                  _StatusPill(
+                    label:
+                        'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                    accent: const Color(0xFFE26B6B),
+                  ),
+                  _StatusPill(
+                    label:
+                        'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
+                    accent: AppColours.darkSecondary,
                   ),
                 ],
               ),
@@ -787,6 +817,11 @@ class _MonthlySummaryPreviewCard extends ConsumerWidget {
                       runSpacing: 10,
                       alignment: WrapAlignment.end,
                       children: [
+                        TextButton.icon(
+                          onPressed: () => context.push(RouteNames.dashboard),
+                          icon: const Icon(Icons.dashboard_outlined),
+                          label: const Text('Back to Dashboard'),
+                        ),
                         FilledButton.icon(
                           onPressed: () =>
                               context.push(RouteNames.treasuryMonthlySummary),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../widgets/calm_guidance_card.dart';
 import '../application/planner_controller.dart';
@@ -20,7 +22,21 @@ class PlannerScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('Daily Planner')),
+      appBar: AppBar(
+        title: const Text('Daily Planner'),
+        actions: [
+          IconButton(
+            tooltip: 'Open Tasks',
+            onPressed: () => context.push(RouteNames.tasks),
+            icon: const Icon(Icons.task_alt_outlined),
+          ),
+          IconButton(
+            tooltip: 'Back to Dashboard',
+            onPressed: () => context.push(RouteNames.dashboard),
+            icon: const Icon(Icons.dashboard_outlined),
+          ),
+        ],
+      ),
       body: todayPlan.when(
         data: (plan) => taskOptions.when(
           data: (tasks) => _PlannerView(
@@ -602,8 +618,7 @@ class _PlannerGuidanceCard extends StatelessWidget {
     return _PlannerGuidance(
       title: 'Set one small anchor',
       summary: 'Choose a main focus before adding more detail.',
-      reason:
-          'A single clear focus keeps the planner calm and easier to use.',
+      reason: 'A single clear focus keeps the planner calm and easier to use.',
     );
   }
 }

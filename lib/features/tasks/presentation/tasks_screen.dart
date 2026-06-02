@@ -126,6 +126,10 @@ class _TaskListView extends ConsumerWidget {
           (task.notes?.toLowerCase().contains(normalizedQuery) ?? false);
       return matchesStatus && matchesProject && matchesSearch;
     }).toList();
+    final topThreeCount = topTaskIds.length;
+    final parkedCount = tasks.where((task) => task.status == 'Parked').length;
+    final blockedCount = tasks.where((task) => task.status == 'Blocked').length;
+    final todayCount = tasks.where((task) => task.status == 'Today').length;
 
     final headerPanel = Container(
       padding: const EdgeInsets.all(22),
@@ -194,6 +198,21 @@ class _TaskListView extends ConsumerWidget {
                 ],
               );
             },
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _TaskSummaryChip(
+                label: 'Visible',
+                value: '${filteredTasks.length}',
+              ),
+              _TaskSummaryChip(label: 'Top 3', value: '$topThreeCount / 3'),
+              _TaskSummaryChip(label: 'Today', value: '$todayCount'),
+              _TaskSummaryChip(label: 'Parked', value: '$parkedCount'),
+              _TaskSummaryChip(label: 'Blocked', value: '$blockedCount'),
+            ],
           ),
           const SizedBox(height: 16),
           TextField(
@@ -265,6 +284,23 @@ class _TaskListView extends ConsumerWidget {
                   .read(selectedTaskProjectFilterProvider.notifier)
                   .setFilter(value);
             },
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.planner),
+                icon: const Icon(Icons.event_note_outlined),
+                label: const Text('Open Planner'),
+              ),
+              TextButton.icon(
+                onPressed: () => context.push(RouteNames.dashboard),
+                icon: const Icon(Icons.dashboard_outlined),
+                label: const Text('Back to Dashboard'),
+              ),
+            ],
           ),
         ],
       ),
@@ -398,6 +434,48 @@ class _TaskListView extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('${task.title} archived.')));
+  }
+}
+
+class _TaskSummaryChip extends StatelessWidget {
+  const _TaskSummaryChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -163,6 +163,16 @@ class _DashboardHero extends StatelessWidget {
             children: [
               _HeaderMetricChip(label: 'Focus', value: focusChip),
               _HeaderMetricChip(
+                label: 'Top 3',
+                value: '${snapshot.topTasks.length}/3',
+                accentColor: AppColours.darkSuccess,
+              ),
+              _HeaderMetricChip(
+                label: 'Projects',
+                value: '${snapshot.activeProjectCount}',
+                accentColor: AppColours.darkPrimary,
+              ),
+              _HeaderMetricChip(
                 label: 'Energy',
                 value: snapshot.energyLabel,
                 accentColor: AppColours.darkSuccess,
@@ -172,10 +182,38 @@ class _DashboardHero extends StatelessWidget {
             ],
           );
 
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.tasks),
+                icon: const Icon(Icons.task_alt_outlined),
+                label: const Text('Open Tasks'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.planner),
+                icon: const Icon(Icons.event_note_outlined),
+                label: const Text('Open Planner'),
+              ),
+              TextButton.icon(
+                onPressed: () => context.push(RouteNames.treasury),
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const Text('Open Treasury'),
+              ),
+            ],
+          );
+
           if (!useWideLayout) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [...brandAndCopy, const SizedBox(height: 18), chips],
+              children: [
+                ...brandAndCopy,
+                const SizedBox(height: 18),
+                chips,
+                const SizedBox(height: 18),
+                actions,
+              ],
             );
           }
 
@@ -185,7 +223,11 @@ class _DashboardHero extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: brandAndCopy,
+                  children: [
+                    ...brandAndCopy,
+                    const SizedBox(height: 18),
+                    actions,
+                  ],
                 ),
               ),
               const SizedBox(width: 24),
@@ -720,8 +762,7 @@ class _KnowledgeLibraryDashboardCardState
       setState(() {
         _health = results[0] as KnowledgeLibraryHealth;
         _stats = results[1] as KnowledgeLibraryStats;
-        _extractionStatus =
-            results[2] as KnowledgeLibraryExtractionStatus;
+        _extractionStatus = results[2] as KnowledgeLibraryExtractionStatus;
         _loading = false;
       });
     } catch (error) {
@@ -777,9 +818,7 @@ class _KnowledgeLibraryDashboardCardState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Opened the extraction failure report.'),
-        ),
+        const SnackBar(content: Text('Opened the extraction failure report.')),
       );
     } catch (error) {
       if (!mounted) {
@@ -787,9 +826,7 @@ class _KnowledgeLibraryDashboardCardState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not open the failure report: $error'),
-        ),
+        SnackBar(content: Text('Could not open the failure report: $error')),
       );
     }
   }
@@ -802,9 +839,7 @@ class _KnowledgeLibraryDashboardCardState
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Copied module path: ${moduleDirectory.path}'),
-      ),
+      SnackBar(content: Text('Copied module path: ${moduleDirectory.path}')),
     );
   }
 
@@ -918,7 +953,7 @@ class _KnowledgeLibraryDashboardCardState
                     value: stats == null ? '...' : '${stats.audioGenerated}',
                     accent: AppColours.darkPurple,
                   ),
-              _KnowledgeMetricChip(
+                  _KnowledgeMetricChip(
                     label: 'Extraction',
                     value: extractionStatus == null
                         ? '...'
@@ -1160,11 +1195,7 @@ class _KnowledgeLibraryDashboardCardState
           if (!isWide) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                overview,
-                const SizedBox(height: 16),
-                actions,
-              ],
+              children: [overview, const SizedBox(height: 16), actions],
             );
           }
 
@@ -1255,9 +1286,7 @@ class _KnowledgeLibraryDashboardCardState
       return;
     }
 
-    messenger.showSnackBar(
-      SnackBar(content: Text(successMessage)),
-    );
+    messenger.showSnackBar(SnackBar(content: Text(successMessage)));
   }
 
   _QueueCounts _queueCounts(List<Map<String, String>> rows) {
@@ -1298,10 +1327,9 @@ class _KnowledgeLibraryDashboardCardState
       return 'No saved template';
     }
 
-    final templates = rows
-        .map(QrBulkTemplate.fromCsvRow)
-        .toList(growable: false)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final templates =
+        rows.map(QrBulkTemplate.fromCsvRow).toList(growable: false)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     final latestName = templates.first.templateName.trim();
     return latestName.isEmpty ? 'No saved template' : latestName;
@@ -1459,23 +1487,19 @@ class _KnowledgeLibraryDashboardCardState
     }
 
     try {
-      await Process.start(
-        'cmd.exe',
-        [
-          '/c',
-          'start',
-          '""',
-          'powershell.exe',
-          '-NoLogo',
-          '-NoProfile',
-          '-ExecutionPolicy',
-          'Bypass',
-          '-NoExit',
-          '-File',
-          scriptFile.path,
-        ],
-        workingDirectory: _moduleDirectory().path,
-      );
+      await Process.start('cmd.exe', [
+        '/c',
+        'start',
+        '""',
+        'powershell.exe',
+        '-NoLogo',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-NoExit',
+        '-File',
+        scriptFile.path,
+      ], workingDirectory: _moduleDirectory().path);
 
       if (!mounted) {
         return;
@@ -1492,9 +1516,7 @@ class _KnowledgeLibraryDashboardCardState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not launch the startup script: $error'),
-        ),
+        SnackBar(content: Text('Could not launch the startup script: $error')),
       );
     }
   }
