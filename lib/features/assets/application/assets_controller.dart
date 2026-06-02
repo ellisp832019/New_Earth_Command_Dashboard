@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/asset_csv_service.dart';
 import '../data/asset_change_journal.dart';
+import '../data/asset_inventory_session_service.dart';
 import '../data/asset_register_repository.dart';
 import '../data/assets_folder_service.dart';
 import '../data/qr_label_printing_service.dart';
@@ -12,22 +13,29 @@ final assetFolderServiceProvider = Provider<AssetFolderService>((ref) {
   return AssetFolderService();
 });
 
-final assetRegisterRepositoryProvider = Provider<AssetRegisterRepository>((ref) {
+final assetRegisterRepositoryProvider = Provider<AssetRegisterRepository>((
+  ref,
+) {
   return ref.watch(assetFolderServiceProvider).registerRepository;
 });
 
 final assetQrLabelPrintServiceProvider = Provider<QrLabelPrintService>((ref) {
-  return QrLabelPrintService(
-    workingDirectory: Directory.current,
-  );
+  return QrLabelPrintService(workingDirectory: Directory.current);
 });
+
+final assetInventorySessionServiceProvider =
+    Provider<AssetInventorySessionService>((ref) {
+      return AssetInventorySessionService(workingDirectory: Directory.current);
+    });
 
 final assetWorkspaceProvider = FutureProvider<AssetWorkspaceSnapshot>((ref) {
   final service = ref.watch(assetFolderServiceProvider);
   return service.loadWorkspace();
 });
 
-final assetEquipmentRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
+final assetEquipmentRegisterProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
     return const AssetCsvTable(
@@ -66,7 +74,9 @@ final assetOrdersTrackerProvider = FutureProvider<AssetCsvTable>((ref) async {
   return repository.readOrdersTracker(workspace.assetsRootPath!);
 });
 
-final assetSupplierRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
+final assetSupplierRegisterProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
     return const AssetCsvTable(
@@ -105,7 +115,9 @@ final assetMaintenanceLogProvider = FutureProvider<AssetCsvTable>((ref) async {
   return repository.readMaintenanceLog(workspace.assetsRootPath!);
 });
 
-final assetLocationRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
+final assetLocationRegisterProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
     return const AssetCsvTable(
@@ -118,7 +130,9 @@ final assetLocationRegisterProvider = FutureProvider<AssetCsvTable>((ref) async 
   return repository.readLocationRegister(workspace.assetsRootPath!);
 });
 
-final assetValuationSummaryProvider = FutureProvider<AssetCsvTable>((ref) async {
+final assetValuationSummaryProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
     return const AssetCsvTable(
@@ -144,8 +158,9 @@ final assetQrLabelRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
   return repository.readQrLabelRegister(workspace.assetsRootPath!);
 });
 
-final assetQrLabelTemplateRegisterProvider =
-    FutureProvider<AssetCsvTable>((ref) async {
+final assetQrLabelTemplateRegisterProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
     return const AssetCsvTable(
@@ -171,7 +186,9 @@ final assetQrPrintQueueProvider = FutureProvider<AssetCsvTable>((ref) async {
   return service.readPrintQueue(workspace.assetsRootPath!);
 });
 
-final assetQrPrinterProfilesProvider = FutureProvider<AssetCsvTable>((ref) async {
+final assetQrPrinterProfilesProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
     return const AssetCsvTable(
@@ -199,25 +216,29 @@ final assetQrBulkTemplatesProvider = FutureProvider<AssetCsvTable>((ref) async {
 
 final assetChangeJournalEntriesProvider =
     FutureProvider<List<AssetChangeJournalEntry>>((ref) async {
-  final workspace = await ref.watch(assetWorkspaceProvider.future);
-  if (workspace.assetsRootPath == null) {
-    return <AssetChangeJournalEntry>[];
-  }
+      final workspace = await ref.watch(assetWorkspaceProvider.future);
+      if (workspace.assetsRootPath == null) {
+        return <AssetChangeJournalEntry>[];
+      }
 
-  final repository = ref.watch(assetRegisterRepositoryProvider);
-  final table = await repository.readChangeJournal(workspace.assetsRootPath!);
-  return table.rows
-      .map(AssetChangeJournalEntry.fromCsvRow)
-      .toList(growable: false);
-});
+      final repository = ref.watch(assetRegisterRepositoryProvider);
+      final table = await repository.readChangeJournal(
+        workspace.assetsRootPath!,
+      );
+      return table.rows
+          .map(AssetChangeJournalEntry.fromCsvRow)
+          .toList(growable: false);
+    });
 
-final assetChangeConflictsProvider =
-    FutureProvider<List<AssetChangeConflict>>((ref) async {
+final assetChangeConflictsProvider = FutureProvider<List<AssetChangeConflict>>((
+  ref,
+) async {
   final entries = await ref.watch(assetChangeJournalEntriesProvider.future);
   final grouped = <String, List<AssetChangeJournalEntry>>{};
 
   for (final entry in entries) {
-    final key = '${entry.recordType.trim().toLowerCase()}::${entry.recordId.trim()}';
+    final key =
+        '${entry.recordType.trim().toLowerCase()}::${entry.recordId.trim()}';
     grouped.putIfAbsent(key, () => <AssetChangeJournalEntry>[]).add(entry);
   }
 
@@ -256,6 +277,21 @@ final assetChangeConflictsProvider =
   return conflicts;
 });
 
+final assetInventorySessionLogProvider = FutureProvider<AssetCsvTable>((
+  ref,
+) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: AssetInventorySessionService.sessionLogHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final service = ref.watch(assetInventorySessionServiceProvider);
+  return service.readSessionLog(workspace.assetsRootPath!);
+});
+
 final assetSyncStatusProvider = FutureProvider<AssetSyncStatus>((ref) async {
   final workspace = await ref.watch(assetWorkspaceProvider.future);
   if (workspace.assetsRootPath == null) {
@@ -285,8 +321,9 @@ final assetSyncStatusProvider = FutureProvider<AssetSyncStatus>((ref) async {
   );
 });
 
-final assetValuationOverviewProvider =
-    FutureProvider<AssetValuationOverview>((ref) async {
+final assetValuationOverviewProvider = FutureProvider<AssetValuationOverview>((
+  ref,
+) async {
   final equipmentTable = await ref.watch(assetEquipmentRegisterProvider.future);
   final valuationTable = await ref.watch(assetValuationSummaryProvider.future);
 
@@ -315,9 +352,10 @@ final assetValuationOverviewProvider =
 
     final purchaseCost = _parseMoney(row['purchase_cost']) ?? 0;
     final replacementValue = _parseMoney(row['replacement_value']) ?? 0;
-    final currentValue = _parseMoney(row['current_estimated_value']) ??
-        replacementValue;
-    final isBroken = _normalizedStatus(equipment?['status']) == 'broken' ||
+    final currentValue =
+        _parseMoney(row['current_estimated_value']) ?? replacementValue;
+    final isBroken =
+        _normalizedStatus(equipment?['status']) == 'broken' ||
         _normalizedStatus(equipment?['condition']) == 'broken';
 
     purchaseCostTotal += purchaseCost;
@@ -336,19 +374,24 @@ final assetValuationOverviewProvider =
     project.items += 1;
   }
 
-  final projectTotals = projects.values
-      .map(
-        (project) => AssetValuationProjectTotal(
-          projectName: project.projectName,
-          items: project.items,
-          purchaseCostTotal: project.purchaseCostTotal,
-          replacementValueTotal: project.replacementValueTotal,
-          currentEstimatedValueTotal: project.currentEstimatedValueTotal,
-          brokenLostValueTotal: project.brokenLostValueTotal,
-        ),
-      )
-      .toList(growable: false)
-    ..sort((a, b) => a.projectName.toLowerCase().compareTo(b.projectName.toLowerCase()));
+  final projectTotals =
+      projects.values
+          .map(
+            (project) => AssetValuationProjectTotal(
+              projectName: project.projectName,
+              items: project.items,
+              purchaseCostTotal: project.purchaseCostTotal,
+              replacementValueTotal: project.replacementValueTotal,
+              currentEstimatedValueTotal: project.currentEstimatedValueTotal,
+              brokenLostValueTotal: project.brokenLostValueTotal,
+            ),
+          )
+          .toList(growable: false)
+        ..sort(
+          (a, b) => a.projectName.toLowerCase().compareTo(
+            b.projectName.toLowerCase(),
+          ),
+        );
 
   return AssetValuationOverview(
     purchaseCostTotal: purchaseCostTotal,
@@ -360,8 +403,9 @@ final assetValuationOverviewProvider =
   );
 });
 
-final assetLowStockPartsProvider =
-    FutureProvider<List<Map<String, String>>>((ref) async {
+final assetLowStockPartsProvider = FutureProvider<List<Map<String, String>>>((
+  ref,
+) async {
   final table = await ref.watch(assetPartsRegisterProvider.future);
   final repository = ref.watch(assetRegisterRepositoryProvider);
   return repository.filterLowStockParts(table.rows);
@@ -369,13 +413,14 @@ final assetLowStockPartsProvider =
 
 final assetBrokenRepairEquipmentProvider =
     FutureProvider<List<Map<String, String>>>((ref) async {
-  final table = await ref.watch(assetEquipmentRegisterProvider.future);
-  final repository = ref.watch(assetRegisterRepositoryProvider);
-  return repository.filterBrokenRepairEquipment(table.rows);
-});
+      final table = await ref.watch(assetEquipmentRegisterProvider.future);
+      final repository = ref.watch(assetRegisterRepositoryProvider);
+      return repository.filterBrokenRepairEquipment(table.rows);
+    });
 
-final assetProjectSummaryProvider =
-    FutureProvider<List<AssetProjectSummary>>((ref) async {
+final assetProjectSummaryProvider = FutureProvider<List<AssetProjectSummary>>((
+  ref,
+) async {
   final equipmentTable = await ref.watch(assetEquipmentRegisterProvider.future);
   final partsTable = await ref.watch(assetPartsRegisterProvider.future);
 
@@ -391,7 +436,10 @@ final assetProjectSummaryProvider =
 
     final status = _normalizedStatus(row['status']);
     final condition = _normalizedStatus(row['condition']);
-    if (status == 'broken' || status == 'repairing' || condition == 'broken' || condition == 'repairing') {
+    if (status == 'broken' ||
+        status == 'repairing' ||
+        condition == 'broken' ||
+        condition == 'repairing') {
       project.brokenCount += 1;
     } else if (status == 'available' ||
         status == 'in_use' ||
@@ -413,7 +461,8 @@ final assetProjectSummaryProvider =
     final status = _normalizedStatus(row['status']);
     final quantity = _parseInt(row['quantity']);
     final minQuantity = _parseInt(row['min_quantity']);
-    final isLowStock = status == 'low_stock' ||
+    final isLowStock =
+        status == 'low_stock' ||
         status == 'reorder_needed' ||
         (quantity != null && minQuantity != null && quantity <= minQuantity);
     if (isLowStock) {
@@ -424,21 +473,27 @@ final assetProjectSummaryProvider =
     }
   }
 
-  final summaries = projects.values
-      .map(
-        (project) => AssetProjectSummary(
-          projectName: project.projectName,
-          equipmentCount: project.equipmentCount,
-          partsCount: project.partsCount,
-          availableCount: project.availableCount,
-          brokenCount: project.brokenCount,
-          lowStockCount: project.lowStockCount,
-          needsDecisionCount: project.needsDecisionCount,
-          isMixedProject: project.equipmentCount > 0 && project.partsCount > 0,
-        ),
-      )
-      .toList(growable: false)
-    ..sort((a, b) => a.projectName.toLowerCase().compareTo(b.projectName.toLowerCase()));
+  final summaries =
+      projects.values
+          .map(
+            (project) => AssetProjectSummary(
+              projectName: project.projectName,
+              equipmentCount: project.equipmentCount,
+              partsCount: project.partsCount,
+              availableCount: project.availableCount,
+              brokenCount: project.brokenCount,
+              lowStockCount: project.lowStockCount,
+              needsDecisionCount: project.needsDecisionCount,
+              isMixedProject:
+                  project.equipmentCount > 0 && project.partsCount > 0,
+            ),
+          )
+          .toList(growable: false)
+        ..sort(
+          (a, b) => a.projectName.toLowerCase().compareTo(
+            b.projectName.toLowerCase(),
+          ),
+        );
 
   return summaries;
 });

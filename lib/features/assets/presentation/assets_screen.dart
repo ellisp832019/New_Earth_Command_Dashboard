@@ -192,6 +192,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetQrPrintQueue),
                       onOpenScanLookup: () =>
                           context.push(RouteNames.assetScanLookup),
+                      onOpenInventorySession: () =>
+                          context.push(RouteNames.assetInventorySession),
                     ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
@@ -1597,6 +1599,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenQrHistory,
     required this.onOpenQrPrintQueue,
     required this.onOpenScanLookup,
+    required this.onOpenInventorySession,
   });
 
   final VoidCallback onOpenEquipment;
@@ -1615,6 +1618,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenQrHistory;
   final VoidCallback onOpenQrPrintQueue;
   final VoidCallback onOpenScanLookup;
+  final VoidCallback onOpenInventorySession;
 
   @override
   Widget build(BuildContext context) {
@@ -1719,6 +1723,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenScanLookup,
                 icon: const Icon(Icons.search),
                 label: const Text('Scan Lookup'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenInventorySession,
+                icon: const Icon(Icons.checklist_rtl_outlined),
+                label: const Text('Inventory Session'),
               ),
             ],
           ),

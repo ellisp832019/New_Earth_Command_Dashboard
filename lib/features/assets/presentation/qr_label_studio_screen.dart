@@ -68,9 +68,8 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     final bulkTemplatesAsync = ref.watch(assetQrBulkTemplatesProvider);
 
     return workspaceAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _StudioError(
         message: 'Knowledge of the asset folder is not ready yet.',
         onBack: () => context.go(RouteNames.assets),
@@ -78,9 +77,8 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       ),
       data: (workspace) {
         return equipmentAsync.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _StudioError(
             message: 'Equipment register could not load right now.',
             onBack: () => context.go(RouteNames.assets),
@@ -130,16 +128,19 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                           return;
                         }
                         setState(() {
-                          _statusMessage = 'PM260 preset added for this workspace.';
+                          _statusMessage =
+                              'PM260 preset added for this workspace.';
                         });
                       });
                     }
-                    final selectedPrinterProfile =
-                        _selectedPrinterProfile(printerProfiles);
+                    final selectedPrinterProfile = _selectedPrinterProfile(
+                      printerProfiles,
+                    );
                     final hasPm260Preset = printerProfiles.any((row) {
                       final id = (row['profile_id'] ?? '').trim().toLowerCase();
-                      final printerName =
-                          (row['printer_name'] ?? '').trim().toLowerCase();
+                      final printerName = (row['printer_name'] ?? '')
+                          .trim()
+                          .toLowerCase();
                       return id ==
                               QrLabelPrintService.pm260Preset.profileId
                                   .toLowerCase() ||
@@ -151,22 +152,19 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                     final latestTemplateLabel = _latestTemplateLabel(
                       bulkTemplatesAsync.asData?.value.rows ?? const [],
                     );
-                    final readyRows = _queueRowsByStatus(
-                      queueTable.rows,
-                      {'generated', 'queued'},
-                    );
-                    final retryRows = _queueRowsByStatus(
-                      queueTable.rows,
-                      {'reprint_needed'},
-                    );
-                    final printedRows = _queueRowsByStatus(
-                      queueTable.rows,
-                      {'printed'},
-                    );
-                    final appliedRows = _queueRowsByStatus(
-                      queueTable.rows,
-                      {'applied'},
-                    );
+                    final readyRows = _queueRowsByStatus(queueTable.rows, {
+                      'generated',
+                      'queued',
+                    });
+                    final retryRows = _queueRowsByStatus(queueTable.rows, {
+                      'reprint_needed',
+                    });
+                    final printedRows = _queueRowsByStatus(queueTable.rows, {
+                      'printed',
+                    });
+                    final appliedRows = _queueRowsByStatus(queueTable.rows, {
+                      'applied',
+                    });
 
                     return Scaffold(
                       backgroundColor: Colors.transparent,
@@ -182,14 +180,22 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                     _StudioHero(
                                       onBackToAssets: () =>
                                           context.go(RouteNames.assets),
-                                      onBackToRegister: () =>
-                                          context.go(RouteNames.assetQrLabelRegister),
-                                      onOpenHistory: () =>
-                                          context.push(RouteNames.assetQrLabelHistory),
-                                      onOpenPrintQueue: () =>
-                                          context.push(RouteNames.assetQrPrintQueue),
-                                      onOpenScanLookup: () =>
-                                          context.push(RouteNames.assetScanLookup),
+                                      onBackToRegister: () => context.go(
+                                        RouteNames.assetQrLabelRegister,
+                                      ),
+                                      onOpenHistory: () => context.push(
+                                        RouteNames.assetQrLabelHistory,
+                                      ),
+                                      onOpenPrintQueue: () => context.push(
+                                        RouteNames.assetQrPrintQueue,
+                                      ),
+                                      onOpenScanLookup: () => context.push(
+                                        RouteNames.assetScanLookup,
+                                      ),
+                                      onOpenInventorySession: () =>
+                                          context.push(
+                                            RouteNames.assetInventorySession,
+                                          ),
                                       readyCount: readyRows.length,
                                       retryCount: retryRows.length,
                                       printedCount: printedRows.length,
@@ -200,19 +206,26 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                         ref.invalidate(
                                           assetQrLabelTemplateRegisterProvider,
                                         );
-                                        ref.invalidate(assetQrPrintQueueProvider);
-                                        ref.invalidate(assetQrBulkTemplatesProvider);
+                                        ref.invalidate(
+                                          assetQrPrintQueueProvider,
+                                        );
+                                        ref.invalidate(
+                                          assetQrBulkTemplatesProvider,
+                                        );
                                         ref.invalidate(
                                           assetQrPrinterProfilesProvider,
                                         );
-                                        ref.invalidate(assetEquipmentRegisterProvider);
+                                        ref.invalidate(
+                                          assetEquipmentRegisterProvider,
+                                        );
                                       },
                                       workspacePath: workspace.assetsRootPath,
                                     ),
                                     const SizedBox(height: 20),
                                     LayoutBuilder(
                                       builder: (context, constraints) {
-                                        final wide = constraints.maxWidth >= 1200;
+                                        final wide =
+                                            constraints.maxWidth >= 1200;
                                         final left = Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -226,8 +239,7 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                                   _labelTextController,
                                               locationController:
                                                   _locationController,
-                                              notesController:
-                                                  _notesController,
+                                              notesController: _notesController,
                                               selectedAsset: _selectedAsset,
                                               filteredAssets: filteredAssets,
                                               labelType: _labelType,
@@ -263,54 +275,54 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               },
                                               onGeneratePreview:
                                                   assetsRootPath == null
-                                                      ? null
-                                                      : () => _generatePreview(
-                                                          assetsRootPath,
-                                                          selectedPrinterProfile,
-                                                        ),
+                                                  ? null
+                                                  : () => _generatePreview(
+                                                      assetsRootPath,
+                                                      selectedPrinterProfile,
+                                                    ),
                                               onAddToQueue:
                                                   assetsRootPath == null
-                                                      ? null
-                                                      : () => _addToQueue(
-                                                          assetsRootPath,
-                                                          selectedPrinterProfile,
-                                                        ),
+                                                  ? null
+                                                  : () => _addToQueue(
+                                                      assetsRootPath,
+                                                      selectedPrinterProfile,
+                                                    ),
                                               onBulkGenerate:
                                                   assetsRootPath == null ||
-                                                          filteredAssets.isEmpty
-                                                      ? null
-                                                      : () => _bulkGenerate(
-                                                          assetsRootPath,
-                                                          selectedPrinterProfile,
-                                                          filteredAssets,
-                                                        ),
+                                                      filteredAssets.isEmpty
+                                                  ? null
+                                                  : () => _bulkGenerate(
+                                                      assetsRootPath,
+                                                      selectedPrinterProfile,
+                                                      filteredAssets,
+                                                    ),
                                               onLoadLatestTemplate:
                                                   assetsRootPath == null
-                                                      ? null
-                                                      : () =>
-                                                          _loadLatestBulkTemplate(
-                                                            assetsRootPath,
-                                                          ),
+                                                  ? null
+                                                  : () =>
+                                                        _loadLatestBulkTemplate(
+                                                          assetsRootPath,
+                                                        ),
                                               onCopyLatestTemplate:
                                                   assetsRootPath == null
-                                                      ? null
-                                                      : () =>
-                                                          _copyLatestBulkTemplate(
-                                                            assetsRootPath,
-                                                          ),
+                                                  ? null
+                                                  : () =>
+                                                        _copyLatestBulkTemplate(
+                                                          assetsRootPath,
+                                                        ),
                                               onSaveBulkTemplate:
                                                   assetsRootPath == null
-                                                      ? null
-                                                      : () => _saveBulkTemplate(
-                                                          assetsRootPath,
-                                                          selectedPrinterProfile,
-                                                        ),
+                                                  ? null
+                                                  : () => _saveBulkTemplate(
+                                                      assetsRootPath,
+                                                      selectedPrinterProfile,
+                                                    ),
                                               onLoadBulkTemplate:
                                                   assetsRootPath == null
-                                                      ? null
-                                                      : () => _loadBulkTemplate(
-                                                          assetsRootPath,
-                                                        ),
+                                                  ? null
+                                                  : () => _loadBulkTemplate(
+                                                      assetsRootPath,
+                                                    ),
                                               onPrint: assetsRootPath == null
                                                   ? null
                                                   : () => _printLabel(
@@ -341,16 +353,17 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               profiles: printerProfiles,
                                               onAddProfile: () =>
                                                   _addPrinterProfile(
-                                                workspace.assetsRootPath!,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                  ),
                                               onAddPm260Preset: () =>
                                                   _addPm260Preset(
-                                                workspace.assetsRootPath!,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                  ),
                                             ),
                                             const SizedBox(height: 20),
                                             _LabelRegisterCard(
-                                              labels: labelRegisterAsync
+                                              labels:
+                                                  labelRegisterAsync
                                                       .asData
                                                       ?.value
                                                       .rows ??
@@ -365,19 +378,19 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               accent: AppColours.darkSuccess,
                                               onMarkPrinted: (queueId) =>
                                                   _markQueuePrinted(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                               onMarkApplied: (queueId) =>
                                                   _markQueueApplied(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                               onMarkReprintNeeded: (queueId) =>
                                                   _markQueueReprintNeeded(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                             ),
                                             const SizedBox(height: 20),
                                             _QueueBoardCard(
@@ -388,19 +401,19 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               accent: AppColours.darkAmber,
                                               onMarkPrinted: (queueId) =>
                                                   _markQueuePrinted(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                               onMarkApplied: (queueId) =>
                                                   _markQueueApplied(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                               onMarkReprintNeeded: (queueId) =>
                                                   _markQueueReprintNeeded(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                             ),
                                             const SizedBox(height: 20),
                                             _QueueBoardCard(
@@ -411,19 +424,19 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               accent: AppColours.darkSecondary,
                                               onMarkPrinted: (queueId) =>
                                                   _markQueuePrinted(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                               onMarkApplied: (queueId) =>
                                                   _markQueueApplied(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                               onMarkReprintNeeded: (queueId) =>
                                                   _markQueueReprintNeeded(
-                                                workspace.assetsRootPath!,
-                                                queueId,
-                                              ),
+                                                    workspace.assetsRootPath!,
+                                                    queueId,
+                                                  ),
                                             ),
                                           ],
                                         );
@@ -588,14 +601,10 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     }
   }
 
-  Future<void> _markQueuePrinted(
-    String assetsRootPath,
-    String queueId,
-  ) async {
-    await ref.read(assetQrLabelPrintServiceProvider).markQueuePrinted(
-          assetsRootPath,
-          queueId,
-        );
+  Future<void> _markQueuePrinted(String assetsRootPath, String queueId) async {
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .markQueuePrinted(assetsRootPath, queueId);
     ref.invalidate(assetQrPrintQueueProvider);
     ref.invalidate(assetQrLabelTemplateRegisterProvider);
     if (mounted) {
@@ -642,7 +651,8 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
 
     setState(() {
       _isBusy = true;
-      _statusMessage = 'Bulk generating ${rows.length} label${rows.length == 1 ? '' : 's'}...';
+      _statusMessage =
+          'Bulk generating ${rows.length} label${rows.length == 1 ? '' : 's'}...';
     });
 
     final service = ref.read(assetQrLabelPrintServiceProvider);
@@ -703,15 +713,14 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       context: context,
       builder: (context) {
         final controller = TextEditingController(
-          text: 'Bulk ${_searchController.text.trim().isEmpty ? 'labels' : _searchController.text.trim()}',
+          text:
+              'Bulk ${_searchController.text.trim().isEmpty ? 'labels' : _searchController.text.trim()}',
         );
         return AlertDialog(
           title: const Text('Save bulk template'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Template name',
-            ),
+            decoration: const InputDecoration(labelText: 'Template name'),
           ),
           actions: [
             TextButton(
@@ -719,7 +728,8 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
               child: const Text('Save'),
             ),
           ],
@@ -757,10 +767,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
   Future<void> _loadBulkTemplate(String assetsRootPath) async {
     final service = ref.read(assetQrLabelPrintServiceProvider);
     final table = await service.readBulkTemplates(assetsRootPath);
-    final templates = table.rows
-        .map(QrBulkTemplate.fromCsvRow)
-        .toList(growable: false)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final templates =
+        table.rows.map(QrBulkTemplate.fromCsvRow).toList(growable: false)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     if (templates.isEmpty) {
       if (!mounted) {
@@ -843,10 +852,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
   Future<void> _loadLatestBulkTemplate(String assetsRootPath) async {
     final service = ref.read(assetQrLabelPrintServiceProvider);
     final table = await service.readBulkTemplates(assetsRootPath);
-    final templates = table.rows
-        .map(QrBulkTemplate.fromCsvRow)
-        .toList(growable: false)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final templates =
+        table.rows.map(QrBulkTemplate.fromCsvRow).toList(growable: false)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     if (templates.isEmpty) {
       if (!mounted) {
@@ -866,17 +874,18 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       _labelSize = selected.labelSize;
       _printerProfileId = selected.printerProfileId;
       _priority = selected.priority;
-      _statusMessage = 'Loaded latest bulk template "${selected.templateName}".';
+      _statusMessage =
+          'Loaded latest bulk template "${selected.templateName}".';
     });
   }
 
   Future<void> _copyLatestBulkTemplate(String assetsRootPath) async {
-    final table = await ref.read(assetQrLabelPrintServiceProvider)
+    final table = await ref
+        .read(assetQrLabelPrintServiceProvider)
         .readBulkTemplates(assetsRootPath);
-    final templates = table.rows
-        .map(QrBulkTemplate.fromCsvRow)
-        .toList(growable: false)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final templates =
+        table.rows.map(QrBulkTemplate.fromCsvRow).toList(growable: false)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     if (templates.isEmpty) {
       if (!mounted) {
@@ -910,14 +919,10 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     });
   }
 
-  Future<void> _markQueueApplied(
-    String assetsRootPath,
-    String queueId,
-  ) async {
-    await ref.read(assetQrLabelPrintServiceProvider).markQueueApplied(
-          assetsRootPath,
-          queueId,
-        );
+  Future<void> _markQueueApplied(String assetsRootPath, String queueId) async {
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .markQueueApplied(assetsRootPath, queueId);
     ref.invalidate(assetQrPrintQueueProvider);
     ref.invalidate(assetQrLabelTemplateRegisterProvider);
     if (mounted) {
@@ -931,10 +936,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     String assetsRootPath,
     String queueId,
   ) async {
-    await ref.read(assetQrLabelPrintServiceProvider).markQueueReprintNeeded(
-          assetsRootPath,
-          queueId,
-        );
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .markQueueReprintNeeded(assetsRootPath, queueId);
     ref.invalidate(assetQrPrintQueueProvider);
     ref.invalidate(assetQrLabelTemplateRegisterProvider);
     if (mounted) {
@@ -953,10 +957,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       return;
     }
 
-    await ref.read(assetQrLabelPrintServiceProvider).appendPrinterProfile(
-          assetsRootPath,
-          profile,
-        );
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .appendPrinterProfile(assetsRootPath, profile);
     ref.invalidate(assetQrPrinterProfilesProvider);
     if (mounted) {
       setState(() {
@@ -967,9 +970,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
   }
 
   Future<void> _addPm260Preset(String assetsRootPath) async {
-    await ref.read(assetQrLabelPrintServiceProvider).ensurePm260Preset(
-          assetsRootPath,
-        );
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .ensurePm260Preset(assetsRootPath);
     ref.invalidate(assetQrPrinterProfilesProvider);
     if (mounted) {
       setState(() {
@@ -1051,26 +1054,31 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       return rows.take(8).toList(growable: false);
     }
 
-    return rows.where((row) {
-      final haystack = [
-        row['asset_id'],
-        row['name'],
-        row['type'],
-        row['project'],
-        row['location'],
-      ].join(' ').toLowerCase();
-      return haystack.contains(trimmed);
-    }).take(8).toList(growable: false);
+    return rows
+        .where((row) {
+          final haystack = [
+            row['asset_id'],
+            row['name'],
+            row['type'],
+            row['project'],
+            row['location'],
+          ].join(' ').toLowerCase();
+          return haystack.contains(trimmed);
+        })
+        .take(8)
+        .toList(growable: false);
   }
 
   List<Map<String, String>> _queueRowsByStatus(
     List<Map<String, String>> rows,
     Set<String> statuses,
   ) {
-    return rows.where((row) {
-      final status = (row['status'] ?? '').trim().toLowerCase();
-      return statuses.contains(status);
-    }).toList(growable: false);
+    return rows
+        .where((row) {
+          final status = (row['status'] ?? '').trim().toLowerCase();
+          return statuses.contains(status);
+        })
+        .toList(growable: false);
   }
 
   String _latestTemplateLabel(List<Map<String, String>> rows) {
@@ -1078,10 +1086,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       return 'No saved template';
     }
 
-    final templates = rows
-        .map(QrBulkTemplate.fromCsvRow)
-        .toList(growable: false)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final templates =
+        rows.map(QrBulkTemplate.fromCsvRow).toList(growable: false)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final latestName = templates.first.templateName.trim();
     return latestName.isEmpty ? 'No saved template' : latestName;
   }
@@ -1094,6 +1101,7 @@ class _StudioHero extends StatelessWidget {
     required this.onOpenHistory,
     required this.onOpenPrintQueue,
     required this.onOpenScanLookup,
+    required this.onOpenInventorySession,
     required this.readyCount,
     required this.retryCount,
     required this.printedCount,
@@ -1109,6 +1117,7 @@ class _StudioHero extends StatelessWidget {
   final VoidCallback onOpenHistory;
   final VoidCallback onOpenPrintQueue;
   final VoidCallback onOpenScanLookup;
+  final VoidCallback onOpenInventorySession;
   final int readyCount;
   final int retryCount;
   final int printedCount;
@@ -1132,24 +1141,24 @@ class _StudioHero extends StatelessWidget {
               Text(
                 'QR Label Studio',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColours.darkText,
-                    ),
+                  color: AppColours.darkText,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Generate QR PNGs, save print-ready PDFs, queue labels, and hand them to the Windows print dialog for the PM260 or any other installed thermal driver.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.35,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 workspacePath ?? 'Asset folder not linked',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -1219,6 +1228,11 @@ class _StudioHero extends StatelessWidget {
                 icon: const Icon(Icons.search),
                 label: const Text('Scan Lookup'),
               ),
+              OutlinedButton.icon(
+                onPressed: onOpenInventorySession,
+                icon: const Icon(Icons.checklist_rtl_outlined),
+                label: const Text('Inventory Session'),
+              ),
               TextButton.icon(
                 onPressed: onRefresh,
                 icon: const Icon(Icons.refresh),
@@ -1239,7 +1253,10 @@ class _StudioHero extends StatelessWidget {
             children: [
               Expanded(child: copy),
               const SizedBox(width: 20),
-              SizedBox(width: 360, child: Align(alignment: Alignment.topRight, child: actions)),
+              SizedBox(
+                width: 360,
+                child: Align(alignment: Alignment.topRight, child: actions),
+              ),
             ],
           );
         },
@@ -1329,9 +1346,9 @@ class _BuildCard extends StatelessWidget {
           Text(
             'Search an asset, adjust the label text, choose a size, and generate a print-ready label for the PM260 workflow.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -1346,9 +1363,9 @@ class _BuildCard extends StatelessWidget {
           if (filteredAssets.isEmpty)
             Text(
               'No equipment matches that search yet.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             ConstrainedBox(
@@ -1356,8 +1373,7 @@ class _BuildCard extends StatelessWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: filteredAssets.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final row = filteredAssets[index];
                   final assetId = (row['asset_id'] ?? '').trim();
@@ -1389,9 +1405,7 @@ class _BuildCard extends StatelessWidget {
                               children: [
                                 Text(
                                   name.isEmpty ? assetId : name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
+                                  style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(
                                         color: AppColours.darkText,
                                         fontWeight: FontWeight.w700,
@@ -1400,9 +1414,7 @@ class _BuildCard extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   assetId,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: AppColours.darkSecondary,
                                         fontWeight: FontWeight.w700,
@@ -1412,9 +1424,7 @@ class _BuildCard extends StatelessWidget {
                                   const SizedBox(height: 4),
                                   Text(
                                     location,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: AppColours.darkMutedText,
                                         ),
@@ -1493,7 +1503,9 @@ class _BuildCard extends StatelessWidget {
                   initialValue: selectedPrinterProfile.isEmpty
                       ? null
                       : selectedPrinterProfile,
-                  decoration: const InputDecoration(labelText: 'Printer profile'),
+                  decoration: const InputDecoration(
+                    labelText: 'Printer profile',
+                  ),
                   items: [
                     const DropdownMenuItem<String>(
                       value: 'manual',
@@ -1565,7 +1577,9 @@ class _BuildCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               FilledButton.icon(
-                onPressed: isBusy || !canUseWorkspace ? null : onGeneratePreview,
+                onPressed: isBusy || !canUseWorkspace
+                    ? null
+                    : onGeneratePreview,
                 icon: isBusy
                     ? const SizedBox(
                         width: 16,
@@ -1581,15 +1595,15 @@ class _BuildCard extends StatelessWidget {
                 label: const Text('Add to queue'),
               ),
               FilledButton.tonalIcon(
-                onPressed:
-                    isBusy || !canUseWorkspace || onBulkGenerate == null
-                        ? null
-                        : onBulkGenerate,
+                onPressed: isBusy || !canUseWorkspace || onBulkGenerate == null
+                    ? null
+                    : onBulkGenerate,
                 icon: const Icon(Icons.playlist_add),
                 label: const Text('Bulk generate'),
               ),
               OutlinedButton.icon(
-                onPressed: isBusy || !canUseWorkspace || onLoadLatestTemplate == null
+                onPressed:
+                    isBusy || !canUseWorkspace || onLoadLatestTemplate == null
                     ? null
                     : onLoadLatestTemplate,
                 icon: const Icon(Icons.history_toggle_off_outlined),
@@ -1598,24 +1612,24 @@ class _BuildCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed:
                     isBusy || !canUseWorkspace || onCopyLatestTemplate == null
-                        ? null
-                        : onCopyLatestTemplate,
+                    ? null
+                    : onCopyLatestTemplate,
                 icon: const Icon(Icons.copy_outlined),
                 label: const Text('Copy latest'),
               ),
               OutlinedButton.icon(
                 onPressed:
                     isBusy || !canUseWorkspace || onSaveBulkTemplate == null
-                        ? null
-                        : onSaveBulkTemplate,
+                    ? null
+                    : onSaveBulkTemplate,
                 icon: const Icon(Icons.save_outlined),
                 label: const Text('Save template'),
               ),
               OutlinedButton.icon(
                 onPressed:
                     isBusy || !canUseWorkspace || onLoadBulkTemplate == null
-                        ? null
-                        : onLoadBulkTemplate,
+                    ? null
+                    : onLoadBulkTemplate,
                 icon: const Icon(Icons.folder_open_outlined),
                 label: const Text('Load template'),
               ),
@@ -1637,9 +1651,9 @@ class _BuildCard extends StatelessWidget {
             Text(
               statusMessage!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColours.darkSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ],
@@ -1649,10 +1663,7 @@ class _BuildCard extends StatelessWidget {
 }
 
 class _PreviewCard extends StatelessWidget {
-  const _PreviewCard({
-    required this.preview,
-    required this.currentDraft,
-  });
+  const _PreviewCard({required this.preview, required this.currentDraft});
 
   final QrLabelPreview? preview;
   final QrLabelDraft currentDraft;
@@ -1674,9 +1685,9 @@ class _PreviewCard extends StatelessWidget {
             Text(
               'Generate a preview to see the QR code, title, asset ID, and saved print-ready files.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.4,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
             )
           else
             LayoutBuilder(
@@ -1699,17 +1710,17 @@ class _PreviewCard extends StatelessWidget {
                     Text(
                       currentDraft.labelTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppColours.darkText,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       preview!.assetId,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColours.darkSecondary,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: AppColours.darkSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -1717,24 +1728,24 @@ class _PreviewCard extends StatelessWidget {
                           ? preview!.assetId
                           : currentDraft.labelText,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColours.darkMutedText,
-                            height: 1.4,
-                          ),
+                        color: AppColours.darkMutedText,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Size: ${currentDraft.labelSize}   Queue ID: ${preview!.labelId}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColours.darkSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: AppColours.darkSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'PDF: ${path.basename(preview!.pdfFile.path)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColours.darkMutedText,
-                          ),
+                        color: AppColours.darkMutedText,
+                      ),
                     ),
                   ],
                 );
@@ -1742,11 +1753,7 @@ class _PreviewCard extends StatelessWidget {
                 if (!wide) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      image,
-                      const SizedBox(height: 16),
-                      details,
-                    ],
+                    children: [image, const SizedBox(height: 16), details],
                   );
                 }
 
@@ -1810,9 +1817,9 @@ class _PrinterProfilesCard extends StatelessWidget {
             Text(
               'No printer profiles yet. Add one for the PM260 or your chosen thermal printer.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.4,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
             )
           else
             Column(
@@ -1823,7 +1830,9 @@ class _PrinterProfilesCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
+                        color: AppColours.darkSurfaceAlt.withValues(
+                          alpha: 0.94,
+                        ),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: AppColours.darkOutline),
                       ),
@@ -1837,9 +1846,7 @@ class _PrinterProfilesCard extends StatelessWidget {
                                   (row['printer_name'] ?? '').trim().isEmpty
                                       ? (row['profile_id'] ?? '').trim()
                                       : (row['printer_name'] ?? '').trim(),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
+                                  style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(
                                         color: AppColours.darkText,
                                         fontWeight: FontWeight.w700,
@@ -1848,9 +1855,7 @@ class _PrinterProfilesCard extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   '${row['connection_type'] ?? ''}  •  ${row['label_width_mm'] ?? ''} x ${row['label_height_mm'] ?? ''} mm  •  ${row['dpi'] ?? ''} dpi',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: AppColours.darkMutedText,
                                       ),
@@ -1891,25 +1896,25 @@ class _LabelRegisterCard extends StatelessWidget {
           Text(
             'Generated label records are kept locally so printing and later applying stay easy to track.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             '${labels.length} labels recorded',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           if (labels.isEmpty)
             Text(
               'No generated labels yet.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -1970,17 +1975,17 @@ class _QueueBoardCard extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 12),
           if (rows.isEmpty)
             Text(
               'Nothing here right now.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -2037,9 +2042,9 @@ class _QueueRowCard extends StatelessWidget {
                 child: Text(
                   row['asset_id'] ?? 'Unknown asset',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _InlineCount(count: 1, accent: accent, label: status),
@@ -2048,9 +2053,9 @@ class _QueueRowCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${row['label_type'] ?? ''} • ${row['label_size'] ?? ''} • ${path.basename(row['generated_file'] ?? '')}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -2103,23 +2108,23 @@ class _MiniRecordCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkSecondary),
           ),
           const SizedBox(height: 4),
           Text(
             detail,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -2128,10 +2133,7 @@ class _MiniRecordCard extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.icon,
-  });
+  const _SectionTitle({required this.title, required this.icon});
 
   final String title;
   final IconData icon;
@@ -2146,9 +2148,9 @@ class _SectionTitle extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-                fontWeight: FontWeight.w700,
-              ),
+            color: AppColours.darkText,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -2178,19 +2180,16 @@ class _InlineCount extends StatelessWidget {
       child: Text(
         '$label: $count',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({
-    required this.label,
-    required this.accent,
-  });
+  const _StatusPill({required this.label, required this.accent});
 
   final String label;
   final Color accent;
@@ -2207,9 +2206,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

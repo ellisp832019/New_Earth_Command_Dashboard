@@ -23,23 +23,23 @@ class _QrLabelRegisterScreenState extends ConsumerState<QrLabelRegisterScreen> {
     final labels = ref.watch(assetQrLabelRegisterProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stackTrace) => _QrLabelError(
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) =>
+          _QrLabelError(onReload: () => ref.invalidate(assetWorkspaceProvider)),
       data: (workspaceData) {
         return labels.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _QrLabelError(
             onReload: () => ref.invalidate(assetQrLabelRegisterProvider),
           ),
           data: (table) {
             final labeledAssets = _distinctValues(table.rows, 'asset_id');
-            final missingLabelCodes = _countEmptyValues(table.rows, 'label_code');
+            final missingLabelCodes = _countEmptyValues(
+              table.rows,
+              'label_code',
+            );
             final missingAssetIds = _countEmptyValues(table.rows, 'asset_id');
 
             return Scaffold(
@@ -85,7 +85,9 @@ class _QrLabelRegisterScreenState extends ConsumerState<QrLabelRegisterScreen> {
                               _EmptyQrLabelState(
                                 onAdd: workspaceData.assetsRootPath == null
                                     ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
+                                    : () => _addRecord(
+                                        workspaceData.assetsRootPath!,
+                                      ),
                               )
                             else
                               ListView.separated(
@@ -127,17 +129,16 @@ class _QrLabelRegisterScreenState extends ConsumerState<QrLabelRegisterScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendQrLabelRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendQrLabelRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetQrLabelRegisterProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR label saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('QR label saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -216,6 +217,11 @@ class _QrLabelHeader extends StatelessWidget {
                 icon: const Icon(Icons.history_outlined),
                 label: const Text('History'),
               ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(RouteNames.assetInventorySession),
+                icon: const Icon(Icons.checklist_rtl_outlined),
+                label: const Text('Inventory Session'),
+              ),
               FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.assetQrLabelStudio),
                 icon: const Icon(Icons.print_outlined),
@@ -247,10 +253,7 @@ class _QrLabelHeader extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: chips,
-                    ),
+                    Align(alignment: Alignment.topRight, child: chips),
                     const SizedBox(height: 16),
                     actions,
                   ],
@@ -354,7 +357,9 @@ class _QrLabelCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,9 +370,9 @@ class _QrLabelCard extends StatelessWidget {
                 child: Text(
                   labelCode,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
@@ -393,9 +398,9 @@ class _QrLabelCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -425,9 +430,9 @@ class _EmptyQrLabelState extends StatelessWidget {
           Text(
             'Start with a few label rows so scanning can be added later without changing the register shape.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -640,17 +645,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '$value',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -673,9 +678,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -699,9 +704,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -725,15 +730,18 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceAlt.withValues(alpha: 0.96)

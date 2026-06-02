@@ -18,6 +18,7 @@ import '../../features/assets/presentation/qr_label_register_screen.dart';
 import '../../features/assets/presentation/qr_label_studio_screen.dart';
 import '../../features/assets/presentation/qr_label_history_screen.dart';
 import '../../features/assets/presentation/qr_print_queue_screen.dart';
+import '../../features/assets/presentation/inventory_session_screen.dart';
 import '../../features/assets/presentation/scan_lookup_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/visual_capture/presentation/visual_capture_screen.dart';
@@ -141,6 +142,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'scan-lookup',
                   builder: (context, state) => const ScanLookupScreen(),
+                ),
+                GoRoute(
+                  path: 'inventory-session',
+                  builder: (context, state) => const InventorySessionScreen(),
                 ),
                 GoRoute(
                   path: 'conflicts',
@@ -281,8 +286,7 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'knowledge-library',
-                  builder: (context, state) =>
-                      const KnowledgeLibraryScreen(),
+                  builder: (context, state) => const KnowledgeLibraryScreen(),
                 ),
                 GoRoute(
                   path: 'omega-os-health',

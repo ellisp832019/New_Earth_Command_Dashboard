@@ -13,6 +13,7 @@ abstract final class RouteNames {
   static const assetQrPrintQueue = '/assets/qr-print-queue';
   static const assetQrLabelHistory = '/assets/qr-history';
   static const assetScanLookup = '/assets/scan-lookup';
+  static const assetInventorySession = '/assets/inventory-session';
   static const assetConflictReview = '/assets/conflicts';
   static const assetQuickCapture = '/assets/quick-capture';
   static const assetSupplierRegister = '/assets/suppliers';
