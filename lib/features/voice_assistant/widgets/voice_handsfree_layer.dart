@@ -91,7 +91,6 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     _isStarted = true;
 
     if (WindowsVoiceTypingService.isSupported) {
-      _captureFocusNode.requestFocus();
       final capture = await _desktopSpeechBridgeService.captureOnce();
       if (!mounted) {
         return;
@@ -127,6 +126,8 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
               detail: 'Mic not available',
             );
         _scheduleRearm();
+      } else {
+        _captureFocusNode.requestFocus();
       }
       return;
     }

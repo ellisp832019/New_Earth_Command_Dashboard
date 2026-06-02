@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../voice_command_model.dart';
 
@@ -18,6 +19,7 @@ class CommandHistoryList extends StatefulWidget {
 
 class _CommandHistoryListState extends State<CommandHistoryList> {
   final TextEditingController _searchController = TextEditingController();
+  VoiceCommandType? _selectedType;
 
   @override
   void dispose() {
@@ -27,16 +29,47 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
 
   List<VoiceCommand> get _filteredCommands {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) {
-      return widget.commands;
+    return widget.commands.where((command) {
+      final matchesSearch = query.isEmpty ||
+          command.transcript.toLowerCase().contains(query) ||
+          command.type.label.toLowerCase().contains(query);
+      final matchesType =
+          _selectedType == null || command.type == _selectedType;
+      return matchesSearch && matchesType;
+    }).toList(growable: false);
+  }
+
+  Future<void> _copyTranscript(String transcript) async {
+    final trimmed = transcript.trim();
+    if (trimmed.isEmpty) {
+      return;
     }
 
-    return widget.commands
-        .where((command) {
-          return command.transcript.toLowerCase().contains(query) ||
-              command.type.label.toLowerCase().contains(query);
-        })
-        .toList(growable: false);
+    await Clipboard.setData(ClipboardData(text: trimmed));
+  }
+
+  Widget _buildTypeChip({
+    required String label,
+    required VoiceCommandType? type,
+  }) {
+    final selected = _selectedType == type;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) {
+        setState(() {
+          _selectedType = selected ? null : type;
+        });
+      },
+    );
+  }
+
+  String _formatDateTime(DateTime value) {
+    final day = value.day.toString().padLeft(2, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
   }
 
   @override
@@ -108,8 +141,19 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
         Text(
           hasSearch
               ? 'Showing captures that match your search.'
-              : 'Tap any saved command to restore it into the editor.',
+              : 'Tap any saved command to restore it into the editor. Use the chips to narrow the list by type.',
           style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildTypeChip(label: 'All', type: null),
+            ...VoiceCommandType.values.map(
+              (type) => _buildTypeChip(label: type.label, type: type),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         if (filteredCommands.isEmpty) ...[
@@ -136,11 +180,33 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
                 leading: const Icon(Icons.history_rounded),
                 title: Text(command.transcript),
                 subtitle: Text(
-                  '${command.type.label} • ${command.createdAt.hour.toString().padLeft(2, '0')}:${command.createdAt.minute.toString().padLeft(2, '0')}',
+                  '${command.type.label} • ${_formatDateTime(command.createdAt)}',
                 ),
-                trailing: Icon(
-                  Icons.restore_outlined,
-                  color: theme.colorScheme.primary,
+                trailing: Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: 'Copy transcript',
+                      onPressed: () async {
+                        await _copyTranscript(command.transcript);
+                        if (!context.mounted) {
+                          return;
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Copied voice transcript.'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded),
+                    ),
+                    Icon(
+                      Icons.restore_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ],
                 ),
               ),
             );
