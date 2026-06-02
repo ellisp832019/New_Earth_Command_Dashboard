@@ -9,6 +9,10 @@ abstract final class RouteNames {
   static const assetLocationRegister = '/assets/locations';
   static const assetValuationSummary = '/assets/valuation';
   static const assetQrLabelRegister = '/assets/qr-labels';
+  static const assetQrLabelStudio = '/assets/qr-studio';
+  static const assetQrPrintQueue = '/assets/qr-print-queue';
+  static const assetQrLabelHistory = '/assets/qr-history';
+  static const assetScanLookup = '/assets/scan-lookup';
   static const assetConflictReview = '/assets/conflicts';
   static const assetQuickCapture = '/assets/quick-capture';
   static const assetSupplierRegister = '/assets/suppliers';

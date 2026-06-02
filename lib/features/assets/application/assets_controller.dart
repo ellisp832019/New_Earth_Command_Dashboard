@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/asset_csv_service.dart';
 import '../data/asset_change_journal.dart';
 import '../data/asset_register_repository.dart';
 import '../data/assets_folder_service.dart';
+import '../data/qr_label_printing_service.dart';
 
 final assetFolderServiceProvider = Provider<AssetFolderService>((ref) {
   return AssetFolderService();
@@ -11,6 +14,12 @@ final assetFolderServiceProvider = Provider<AssetFolderService>((ref) {
 
 final assetRegisterRepositoryProvider = Provider<AssetRegisterRepository>((ref) {
   return ref.watch(assetFolderServiceProvider).registerRepository;
+});
+
+final assetQrLabelPrintServiceProvider = Provider<QrLabelPrintService>((ref) {
+  return QrLabelPrintService(
+    workingDirectory: Directory.current,
+  );
 });
 
 final assetWorkspaceProvider = FutureProvider<AssetWorkspaceSnapshot>((ref) {
@@ -133,6 +142,59 @@ final assetQrLabelRegisterProvider = FutureProvider<AssetCsvTable>((ref) async {
 
   final repository = ref.watch(assetRegisterRepositoryProvider);
   return repository.readQrLabelRegister(workspace.assetsRootPath!);
+});
+
+final assetQrLabelTemplateRegisterProvider =
+    FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: QrLabelPrintService.labelRegisterHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final service = ref.watch(assetQrLabelPrintServiceProvider);
+  return service.readLabelRegister(workspace.assetsRootPath!);
+});
+
+final assetQrPrintQueueProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: QrLabelPrintService.queueHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final service = ref.watch(assetQrLabelPrintServiceProvider);
+  return service.readPrintQueue(workspace.assetsRootPath!);
+});
+
+final assetQrPrinterProfilesProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: QrLabelPrintService.printerProfileHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final service = ref.watch(assetQrLabelPrintServiceProvider);
+  return service.readPrinterProfiles(workspace.assetsRootPath!);
+});
+
+final assetQrBulkTemplatesProvider = FutureProvider<AssetCsvTable>((ref) async {
+  final workspace = await ref.watch(assetWorkspaceProvider.future);
+  if (workspace.assetsRootPath == null) {
+    return const AssetCsvTable(
+      headers: QrLabelPrintService.bulkTemplateHeaders,
+      rows: <Map<String, String>>[],
+    );
+  }
+
+  final service = ref.watch(assetQrLabelPrintServiceProvider);
+  return service.readBulkTemplates(workspace.assetsRootPath!);
 });
 
 final assetChangeJournalEntriesProvider =

@@ -15,6 +15,10 @@ import '../../features/assets/presentation/reorder_list_screen.dart';
 import '../../features/assets/presentation/supplier_register_screen.dart';
 import '../../features/assets/presentation/asset_conflicts_screen.dart';
 import '../../features/assets/presentation/qr_label_register_screen.dart';
+import '../../features/assets/presentation/qr_label_studio_screen.dart';
+import '../../features/assets/presentation/qr_label_history_screen.dart';
+import '../../features/assets/presentation/qr_print_queue_screen.dart';
+import '../../features/assets/presentation/scan_lookup_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/visual_capture/presentation/visual_capture_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
@@ -87,11 +91,16 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'equipment',
-                  builder: (context, state) => const EquipmentRegisterScreen(),
+                  builder: (context, state) => EquipmentRegisterScreen(
+                    initialSearch: state.uri.queryParameters['q'],
+                    initialAssetId: state.uri.queryParameters['assetId'],
+                  ),
                 ),
                 GoRoute(
                   path: 'parts',
-                  builder: (context, state) => const PartsInventoryScreen(),
+                  builder: (context, state) => PartsInventoryScreen(
+                    initialSearch: state.uri.queryParameters['q'],
+                  ),
                 ),
                 GoRoute(
                   path: 'low-stock',
@@ -116,6 +125,22 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'qr-labels',
                   builder: (context, state) => const QrLabelRegisterScreen(),
+                ),
+                GoRoute(
+                  path: 'qr-studio',
+                  builder: (context, state) => const QrLabelStudioScreen(),
+                ),
+                GoRoute(
+                  path: 'qr-history',
+                  builder: (context, state) => const QrLabelHistoryScreen(),
+                ),
+                GoRoute(
+                  path: 'qr-print-queue',
+                  builder: (context, state) => const QrPrintQueueScreen(),
+                ),
+                GoRoute(
+                  path: 'scan-lookup',
+                  builder: (context, state) => const ScanLookupScreen(),
                 ),
                 GoRoute(
                   path: 'conflicts',

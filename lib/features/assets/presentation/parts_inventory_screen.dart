@@ -5,7 +5,12 @@ import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
 class PartsInventoryScreen extends ConsumerStatefulWidget {
-  const PartsInventoryScreen({super.key});
+  const PartsInventoryScreen({
+    super.key,
+    this.initialSearch,
+  });
+
+  final String? initialSearch;
 
   @override
   ConsumerState<PartsInventoryScreen> createState() =>
@@ -20,6 +25,9 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearch?.trim().isNotEmpty == true) {
+      _searchController.text = widget.initialSearch!.trim();
+    }
     _searchController.addListener(_onSearchChanged);
   }
 

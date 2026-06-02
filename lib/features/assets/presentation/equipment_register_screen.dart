@@ -5,7 +5,14 @@ import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
 class EquipmentRegisterScreen extends ConsumerStatefulWidget {
-  const EquipmentRegisterScreen({super.key});
+  const EquipmentRegisterScreen({
+    super.key,
+    this.initialSearch,
+    this.initialAssetId,
+  });
+
+  final String? initialSearch;
+  final String? initialAssetId;
 
   @override
   ConsumerState<EquipmentRegisterScreen> createState() =>
@@ -17,10 +24,16 @@ class _EquipmentRegisterScreenState
   final TextEditingController _searchController = TextEditingController();
   bool _isSaving = false;
   String _activeFilter = 'all';
+  bool _didHandleInitialTarget = false;
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearch?.trim().isNotEmpty == true) {
+      _searchController.text = widget.initialSearch!.trim();
+    } else if (widget.initialAssetId?.trim().isNotEmpty == true) {
+      _searchController.text = widget.initialAssetId!.trim();
+    }
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -53,6 +66,11 @@ class _EquipmentRegisterScreenState
           ),
           data: (table) {
             final filteredRows = _filterRows(table.rows);
+            _maybeAutoOpenInitialRecord(
+              context,
+              workspaceData.assetsRootPath,
+              table.rows,
+            );
             return Scaffold(
               backgroundColor: Colors.transparent,
               floatingActionButton: FloatingActionButton.extended(
@@ -289,6 +307,35 @@ class _EquipmentRegisterScreenState
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void _maybeAutoOpenInitialRecord(
+    BuildContext context,
+    String? assetsRootPath,
+    List<Map<String, String>> rows,
+  ) {
+    final initialAssetId = widget.initialAssetId?.trim();
+    if (_didHandleInitialTarget ||
+        assetsRootPath == null ||
+        initialAssetId == null ||
+        initialAssetId.isEmpty) {
+      return;
+    }
+
+    final match = rows.where((row) {
+      return (row['asset_id'] ?? '').trim() == initialAssetId;
+    }).toList(growable: false);
+    if (match.isEmpty) {
+      return;
+    }
+
+    _didHandleInitialTarget = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+      await _editRecord(assetsRootPath, match.first);
+    });
   }
 
   List<Map<String, String>> _filterRows(List<Map<String, String>> rows) {

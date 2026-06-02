@@ -79,6 +79,12 @@ class AssetFolderService {
     '11_REORDER_LOW_STOCK_AND_WISHLIST',
     '12_PHOTOS_QR_LABELS_AND_BINS',
     '13_VALUATION_AND_INSURANCE_EVIDENCE',
+    '12_PHOTOS_QR_LABELS_AND_BINS/01_GENERATED_QR_PNGS',
+    '12_PHOTOS_QR_LABELS_AND_BINS/02_LABEL_TEMPLATES',
+    '12_PHOTOS_QR_LABELS_AND_BINS/03_PRINT_QUEUE',
+    '12_PHOTOS_QR_LABELS_AND_BINS/03_PRINT_QUEUE/label_manifests',
+    '12_PHOTOS_QR_LABELS_AND_BINS/03_PRINT_QUEUE/history_exports',
+    '12_PHOTOS_QR_LABELS_AND_BINS/10_PRINTER_SETUP_AND_PROFILES',
   ];
 
   static const requiredFiles = <String>[
@@ -93,6 +99,10 @@ class AssetFolderService {
     '11_REORDER_LOW_STOCK_AND_WISHLIST/reorder_list.csv',
     '13_VALUATION_AND_INSURANCE_EVIDENCE/valuation_summary.csv',
     '12_PHOTOS_QR_LABELS_AND_BINS/qr_label_register.csv',
+    '12_PHOTOS_QR_LABELS_AND_BINS/02_LABEL_TEMPLATES/qr_label_register.csv',
+    '12_PHOTOS_QR_LABELS_AND_BINS/02_LABEL_TEMPLATES/bulk_templates.csv',
+    '12_PHOTOS_QR_LABELS_AND_BINS/03_PRINT_QUEUE/print_queue.csv',
+    '12_PHOTOS_QR_LABELS_AND_BINS/10_PRINTER_SETUP_AND_PROFILES/printer_profiles.csv',
   ];
 
   final Directory _workingDirectory;
@@ -409,6 +419,14 @@ class AssetFolderService {
         return 'asset_id,item,category,purchase_cost,replacement_value,current_estimated_value,valuation_reason,evidence_link,notes\n';
       case '12_PHOTOS_QR_LABELS_AND_BINS/qr_label_register.csv':
         return 'asset_id,label_code,qr_target,file_or_url,status,printed_date,notes\n';
+      case '12_PHOTOS_QR_LABELS_AND_BINS/02_LABEL_TEMPLATES/qr_label_register.csv':
+        return 'label_id,asset_id,label_type,label_size,qr_payload,label_text,generated_file,manifest_file,print_status,printed_date,applied_date,location,notes\n';
+      case '12_PHOTOS_QR_LABELS_AND_BINS/02_LABEL_TEMPLATES/bulk_templates.csv':
+        return 'template_id,template_name,search_query,label_type,label_size,printer_profile_id,priority,notes,created_at\n';
+      case '12_PHOTOS_QR_LABELS_AND_BINS/03_PRINT_QUEUE/print_queue.csv':
+        return 'queue_id,date_added,asset_id,label_type,label_size,priority,status,generated_file,manifest_file,printer_profile,notes\n';
+      case '12_PHOTOS_QR_LABELS_AND_BINS/10_PRINTER_SETUP_AND_PROFILES/printer_profiles.csv':
+        return 'profile_id,printer_name,connection_type,label_width_mm,label_height_mm,dpi,notes\n';
       default:
         return '';
     }

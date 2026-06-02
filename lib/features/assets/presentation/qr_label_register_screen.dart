@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
@@ -200,10 +202,38 @@ class _QrLabelHeader extends StatelessWidget {
             ],
           );
 
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.assets),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Assets'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(RouteNames.assetQrLabelHistory),
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('History'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.assetQrLabelStudio),
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Open Studio'),
+              ),
+            ],
+          );
+
           if (!wide) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [copy, const SizedBox(height: 16), chips],
+              children: [
+                copy,
+                const SizedBox(height: 16),
+                chips,
+                const SizedBox(height: 16),
+                actions,
+              ],
             );
           }
 
@@ -214,9 +244,16 @@ class _QrLabelHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: chips,
+                    ),
+                    const SizedBox(height: 16),
+                    actions,
+                  ],
                 ),
               ),
             ],

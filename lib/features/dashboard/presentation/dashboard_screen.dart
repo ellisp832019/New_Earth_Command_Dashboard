@@ -10,6 +10,8 @@ import 'package:intl/intl.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../widgets/calm_guidance_card.dart';
+import '../../assets/application/assets_controller.dart';
+import '../../assets/data/qr_label_printing_service.dart';
 import '../../inbox/application/inbox_controller.dart';
 import '../../knowledge_library/data/knowledge_library_repository.dart';
 import '../../planner/application/planner_controller.dart';
@@ -667,16 +669,16 @@ class _SupportModuleGrid extends StatelessWidget {
   }
 }
 
-class KnowledgeLibraryDashboardCard extends StatefulWidget {
+class KnowledgeLibraryDashboardCard extends ConsumerStatefulWidget {
   const KnowledgeLibraryDashboardCard({super.key});
 
   @override
-  State<KnowledgeLibraryDashboardCard> createState() =>
+  ConsumerState<KnowledgeLibraryDashboardCard> createState() =>
       _KnowledgeLibraryDashboardCardState();
 }
 
 class _KnowledgeLibraryDashboardCardState
-    extends State<KnowledgeLibraryDashboardCard> {
+    extends ConsumerState<KnowledgeLibraryDashboardCard> {
   final KnowledgeLibraryRepository _repository = KnowledgeLibraryRepository();
   static const String _apiAddress = 'http://127.0.0.1:8787';
 
@@ -809,16 +811,38 @@ class _KnowledgeLibraryDashboardCardState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final queueAsync = ref.watch(assetQrPrintQueueProvider);
+    final bulkTemplatesAsync = ref.watch(assetQrBulkTemplatesProvider);
     final health = _health;
     final stats = _stats;
     final extractionStatus = _extractionStatus;
+    final queueRows =
+        queueAsync.asData?.value.rows ?? const <Map<String, String>>[];
+    final queueCounts = _queueCounts(queueRows);
     final moduleDirectory = _moduleDirectory();
     final catalogueFile = File(
       '${moduleDirectory.path}${Platform.pathSeparator}08_LIBRARY_CATALOGUE'
       '${Platform.pathSeparator}pdf_catalogue.json',
     );
     final catalogueExists = catalogueFile.existsSync();
+    final latestTemplateLabel = _latestBulkTemplateLabel(
+      bulkTemplatesAsync.asData?.value.rows ?? const <Map<String, String>>[],
+    );
     final isOffline = _error != null && _isApiConnectionIssue(_error);
+    final qrHealthLabel = _qrHealthLabel(
+      catalogueExists: catalogueExists,
+      latestTemplateLabel: latestTemplateLabel,
+      queueCounts: queueCounts,
+      extractionStatus: extractionStatus,
+      isOffline: isOffline,
+    );
+    final qrHealthAccent = _qrHealthAccent(
+      latestTemplateLabel: latestTemplateLabel,
+      queueCounts: queueCounts,
+      catalogueExists: catalogueExists,
+      extractionStatus: extractionStatus,
+      isOffline: isOffline,
+    );
     final statusColor = health?.isHealthy == true
         ? AppColours.darkSuccess
         : AppColours.darkAmber;
@@ -914,6 +938,38 @@ class _KnowledgeLibraryDashboardCardState
                         ? AppColours.darkSuccess
                         : AppColours.darkAmber,
                   ),
+                  _KnowledgeMetricChip(
+                    label: 'Print Queue',
+                    value: queueAsync.isLoading
+                        ? '...'
+                        : '${queueCounts.ready} / ${queueCounts.printed} / ${queueCounts.applied}',
+                    accent: queueCounts.hasAny
+                        ? AppColours.darkSecondary
+                        : AppColours.darkMutedText,
+                  ),
+                  _KnowledgeMetricChip(
+                    label: 'Retry',
+                    value: queueAsync.isLoading
+                        ? '...'
+                        : '${queueCounts.retry}',
+                    accent: queueCounts.retry > 0
+                        ? AppColours.darkAmber
+                        : AppColours.darkMutedText,
+                  ),
+                  _KnowledgeMetricChip(
+                    label: 'Template',
+                    value: bulkTemplatesAsync.isLoading
+                        ? '...'
+                        : latestTemplateLabel,
+                    accent: latestTemplateLabel == 'No saved template'
+                        ? AppColours.darkMutedText
+                        : AppColours.darkSecondary,
+                  ),
+                  _KnowledgeMetricChip(
+                    label: 'QR Health',
+                    value: qrHealthLabel,
+                    accent: qrHealthAccent,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -931,6 +987,28 @@ class _KnowledgeLibraryDashboardCardState
                   color: AppColours.darkMutedText,
                   height: 1.35,
                 ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      queueCounts.hasAny
+                          ? 'QR print queue: ${queueCounts.ready} ready, ${queueCounts.retry} retry, ${queueCounts.printed} printed, ${queueCounts.applied} applied.'
+                          : 'QR print queue is empty right now.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton.icon(
+                    onPressed: () => context.push(RouteNames.assetQrPrintQueue),
+                    icon: const Icon(Icons.playlist_add_check),
+                    label: const Text('Open Print Queue'),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               Row(
@@ -1019,6 +1097,11 @@ class _KnowledgeLibraryDashboardCardState
                 onPressed: _openModuleFolder,
                 icon: const Icon(Icons.folder_open_outlined),
                 label: const Text('Open Module Folder'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(RouteNames.assetQrLabelHistory),
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('Open QR History'),
               ),
               FilledButton.icon(
                 onPressed: _runStartupScript,
@@ -1175,6 +1258,109 @@ class _KnowledgeLibraryDashboardCardState
     messenger.showSnackBar(
       SnackBar(content: Text(successMessage)),
     );
+  }
+
+  _QueueCounts _queueCounts(List<Map<String, String>> rows) {
+    var ready = 0;
+    var retry = 0;
+    var printed = 0;
+    var applied = 0;
+
+    for (final row in rows) {
+      final status = (row['status'] ?? '').trim().toLowerCase();
+      switch (status) {
+        case 'generated':
+        case 'queued':
+          ready += 1;
+          break;
+        case 'reprint_needed':
+          retry += 1;
+          break;
+        case 'printed':
+          printed += 1;
+          break;
+        case 'applied':
+          applied += 1;
+          break;
+      }
+    }
+
+    return _QueueCounts(
+      ready: ready,
+      retry: retry,
+      printed: printed,
+      applied: applied,
+    );
+  }
+
+  String _latestBulkTemplateLabel(List<Map<String, String>> rows) {
+    if (rows.isEmpty) {
+      return 'No saved template';
+    }
+
+    final templates = rows
+        .map(QrBulkTemplate.fromCsvRow)
+        .toList(growable: false)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    final latestName = templates.first.templateName.trim();
+    return latestName.isEmpty ? 'No saved template' : latestName;
+  }
+
+  String _qrHealthLabel({
+    required bool catalogueExists,
+    required String latestTemplateLabel,
+    required _QueueCounts queueCounts,
+    required KnowledgeLibraryExtractionStatus? extractionStatus,
+    required bool isOffline,
+  }) {
+    if (isOffline) {
+      return 'Offline';
+    }
+
+    if (!catalogueExists) {
+      return 'Setup needed';
+    }
+
+    if (extractionStatus?.hasFailures == true) {
+      return 'Review failures';
+    }
+
+    if (queueCounts.retry > 0) {
+      return 'Retry pending';
+    }
+
+    if (queueCounts.ready > 0) {
+      return 'Ready to print';
+    }
+
+    if (latestTemplateLabel == 'No saved template') {
+      return 'Template needed';
+    }
+
+    return 'Ready';
+  }
+
+  Color _qrHealthAccent({
+    required bool catalogueExists,
+    required String latestTemplateLabel,
+    required _QueueCounts queueCounts,
+    required KnowledgeLibraryExtractionStatus? extractionStatus,
+    required bool isOffline,
+  }) {
+    if (isOffline || !catalogueExists) {
+      return AppColours.darkAmber;
+    }
+
+    if (extractionStatus?.hasFailures == true || queueCounts.retry > 0) {
+      return AppColours.darkAmber;
+    }
+
+    if (queueCounts.ready > 0 || latestTemplateLabel != 'No saved template') {
+      return AppColours.darkSuccess;
+    }
+
+    return AppColours.darkSecondary;
   }
 
   Future<void> _openModuleFolder() async {
@@ -2322,6 +2508,22 @@ class _InlineTag extends StatelessWidget {
       ),
     );
   }
+}
+
+class _QueueCounts {
+  const _QueueCounts({
+    required this.ready,
+    required this.retry,
+    required this.printed,
+    required this.applied,
+  });
+
+  final int ready;
+  final int retry;
+  final int printed;
+  final int applied;
+
+  bool get hasAny => ready + retry + printed + applied > 0;
 }
 
 class _CaptureTypeChip extends StatelessWidget {

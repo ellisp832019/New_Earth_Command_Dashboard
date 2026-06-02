@@ -139,6 +139,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetRepairSummary),
                       onOpenQrLabels: () =>
                           context.push(RouteNames.assetQrLabelRegister),
+                      onOpenQrHistory: () =>
+                          context.push(RouteNames.assetQrLabelHistory),
                     ),
                     const SizedBox(height: 22),
                     _AssetDecisionBridgeCard(
@@ -182,6 +184,14 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetValuationSummary),
                       onOpenQrLabelRegister: () =>
                           context.push(RouteNames.assetQrLabelRegister),
+                      onOpenQrLabelStudio: () =>
+                          context.push(RouteNames.assetQrLabelStudio),
+                      onOpenQrHistory: () =>
+                          context.push(RouteNames.assetQrLabelHistory),
+                      onOpenQrPrintQueue: () =>
+                          context.push(RouteNames.assetQrPrintQueue),
+                      onOpenScanLookup: () =>
+                          context.push(RouteNames.assetScanLookup),
                     ),
                     const SizedBox(height: 22),
                     _AssetFolderCheckCard(snapshot: snapshot),
@@ -519,6 +529,7 @@ class _AssetPriorityCard extends StatelessWidget {
     required this.onOpenLowStock,
     required this.onOpenRepairSummary,
     required this.onOpenQrLabels,
+    required this.onOpenQrHistory,
   });
 
   final AssetWorkspaceSnapshot snapshot;
@@ -529,6 +540,7 @@ class _AssetPriorityCard extends StatelessWidget {
   final VoidCallback onOpenLowStock;
   final VoidCallback onOpenRepairSummary;
   final VoidCallback onOpenQrLabels;
+  final VoidCallback onOpenQrHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -654,6 +666,11 @@ class _AssetPriorityCard extends StatelessWidget {
                 onPressed: onOpenQrLabels,
                 icon: const Icon(Icons.qr_code_2_outlined),
                 label: const Text('Open QR Labels'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrHistory,
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('QR History'),
               ),
             ],
           );
@@ -1576,6 +1593,10 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenOrdersTracker,
     required this.onOpenValuationSummary,
     required this.onOpenQrLabelRegister,
+    required this.onOpenQrLabelStudio,
+    required this.onOpenQrHistory,
+    required this.onOpenQrPrintQueue,
+    required this.onOpenScanLookup,
   });
 
   final VoidCallback onOpenEquipment;
@@ -1590,6 +1611,10 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenOrdersTracker;
   final VoidCallback onOpenValuationSummary;
   final VoidCallback onOpenQrLabelRegister;
+  final VoidCallback onOpenQrLabelStudio;
+  final VoidCallback onOpenQrHistory;
+  final VoidCallback onOpenQrPrintQueue;
+  final VoidCallback onOpenScanLookup;
 
   @override
   Widget build(BuildContext context) {
@@ -1674,6 +1699,26 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenQrLabelRegister,
                 icon: const Icon(Icons.qr_code_2_outlined),
                 label: const Text('QR Labels'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrLabelStudio,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('QR Studio'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrHistory,
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('QR History'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrPrintQueue,
+                icon: const Icon(Icons.playlist_add_check),
+                label: const Text('Print Queue'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenScanLookup,
+                icon: const Icon(Icons.search),
+                label: const Text('Scan Lookup'),
               ),
             ],
           ),
