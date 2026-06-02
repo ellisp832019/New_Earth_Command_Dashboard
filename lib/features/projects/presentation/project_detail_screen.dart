@@ -85,6 +85,19 @@ class ProjectDetailScreen extends ConsumerWidget {
                                 icon: const Icon(Icons.archive_outlined),
                                 label: const Text('Archive'),
                               ),
+                              TextButton.icon(
+                                key: const Key('openProjectTasksButton'),
+                                onPressed: () => context.push(RouteNames.tasks),
+                                icon: const Icon(Icons.task_outlined),
+                                label: const Text('Open Tasks'),
+                              ),
+                              TextButton.icon(
+                                key: const Key('openProjectPlannerButton'),
+                                onPressed: () =>
+                                    context.push(RouteNames.planner),
+                                icon: const Icon(Icons.calendar_month_outlined),
+                                label: const Text('Open Planner'),
+                              ),
                               FilledButton.icon(
                                 key: const Key('addProjectTaskButton'),
                                 onPressed: () => context.push(
@@ -246,7 +259,8 @@ class ProjectDetailScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _ProjectSectionCard(
                 title: 'Vision / Purpose',
-                body: project.vision ?? 'Project vision has not been added yet.',
+                body:
+                    project.vision ?? 'Project vision has not been added yet.',
               ),
               const SizedBox(height: 12),
               _ProjectSectionCard(

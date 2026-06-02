@@ -88,9 +88,8 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     super.dispose();
   }
 
-  List<KnowledgeLibraryItem> get _items => _currentItems
-      .where(_filter.matches)
-      .toList(growable: false);
+  List<KnowledgeLibraryItem> get _items =>
+      _currentItems.where(_filter.matches).toList(growable: false);
 
   List<KnowledgeLibraryItem> get _currentItems =>
       _searchResult?.items ?? _page?.items ?? const [];
@@ -150,13 +149,11 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
               if (stats != null) const SizedBox(height: 16),
               Expanded(
                 child: _error != null
-                    ? _ErrorPanel(
-                        error: _error!,
-                        onRetry: _refreshAll,
-                      )
+                    ? _ErrorPanel(error: _error!, onRetry: _refreshAll)
                     : LayoutBuilder(
                         builder: (context, constraints) {
-                          final useWideLayout = isWide &&
+                          final useWideLayout =
+                              isWide &&
                               constraints.maxWidth >= 1100 &&
                               visibleItems.isNotEmpty;
 
@@ -178,10 +175,11 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                             item: selectedItem,
                             onOpenOriginal: _openOriginal,
                             onOpenContainingFolder: _openContainingFolder,
-                            onOpenExtractedTextFolder:
-                                _openExtractedTextFolder,
+                            onOpenExtractedTextFolder: _openExtractedTextFolder,
                             onCopyPath: _copyOriginalPath,
                             onCopyExtractedPath: _copyExtractedPath,
+                            onCopyManifestPath: _copyManifestPath,
+                            onOpenManifest: _openManifest,
                             onOpenExtractedText: _openExtractedText,
                             onRefresh: _refreshAll,
                           );
@@ -241,7 +239,8 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
           _stats = stats;
           _page = page;
           _searchResult = null;
-          _status = 'Loaded ${page.items.length} PDFs from the local catalogue.';
+          _status =
+              'Loaded ${page.items.length} PDFs from the local catalogue.';
           _selectDefaultItem(page.items);
         });
         return;
@@ -256,7 +255,8 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
         _stats = stats;
         _searchResult = searchResult;
         _page = null;
-        _status = 'Found ${searchResult.totalMatches} result${searchResult.totalMatches == 1 ? '' : 's'} for "$query".';
+        _status =
+            'Found ${searchResult.totalMatches} result${searchResult.totalMatches == 1 ? '' : 's'} for "$query".';
         _selectDefaultItem(searchResult.items);
       });
     } catch (error) {
@@ -365,7 +365,8 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
         _stats = stats;
         _searchResult = searchResult;
         _page = null;
-        _status = 'Found ${searchResult.totalMatches} result${searchResult.totalMatches == 1 ? '' : 's'} for "$query".';
+        _status =
+            'Found ${searchResult.totalMatches} result${searchResult.totalMatches == 1 ? '' : 's'} for "$query".';
         _selectDefaultItem(searchResult.items);
       });
     } catch (error) {
@@ -441,9 +442,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Opened ${item.filename}.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Opened ${item.filename}.')));
     } catch (error) {
       if (!mounted) {
         return;
@@ -468,7 +469,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Opened the extracted text for ${item.filename}.')),
+        SnackBar(
+          content: Text('Opened the extracted text for ${item.filename}.'),
+        ),
       );
     } catch (error) {
       if (!mounted) {
@@ -504,8 +507,52 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Copied extracted text path for ${item.filename}.')),
+      SnackBar(
+        content: Text('Copied extracted text path for ${item.filename}.'),
+      ),
     );
+  }
+
+  Future<void> _copyManifestPath(KnowledgeLibraryItem item) async {
+    final manifest = item.audioManifestPath;
+    if (manifest == null || manifest.trim().isEmpty) {
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: manifest));
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied manifest path for ${item.filename}.')),
+    );
+  }
+
+  Future<void> _openManifest(KnowledgeLibraryItem item) async {
+    final manifest = item.audioManifestPath;
+    if (manifest == null || manifest.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      await _repository.openInDefaultApp(manifest);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Opened the manifest for ${item.filename}.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open the manifest: $error')),
+      );
+    }
   }
 
   Future<void> _openContainingFolder(KnowledgeLibraryItem item) async {
@@ -543,7 +590,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Opened the extracted text folder for ${item.filename}.'),
+          content: Text(
+            'Opened the extracted text folder for ${item.filename}.',
+          ),
         ),
       );
     } catch (error) {
@@ -561,10 +610,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({
-    required this.onBackToDashboard,
-    required this.onBackToMore,
-  });
+  const _TopBar({required this.onBackToDashboard, required this.onBackToMore});
 
   final VoidCallback onBackToDashboard;
   final VoidCallback onBackToMore;
@@ -638,8 +684,14 @@ class _HeaderCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: const [
-                  _HeaderPill(label: 'Local API', icon: Icons.cloud_off_outlined),
-                  _HeaderPill(label: 'Source of truth: Omega OS', icon: Icons.folder_open_outlined),
+                  _HeaderPill(
+                    label: 'Local API',
+                    icon: Icons.cloud_off_outlined,
+                  ),
+                  _HeaderPill(
+                    label: 'Source of truth: Omega OS',
+                    icon: Icons.folder_open_outlined,
+                  ),
                   _HeaderPill(label: 'No file moves', icon: Icons.lock_outline),
                 ],
               ),
@@ -705,11 +757,7 @@ class _HeaderCard extends StatelessWidget {
                 width: 320,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    actions,
-                    const SizedBox(height: 14),
-                    statusRow,
-                  ],
+                  children: [actions, const SizedBox(height: 14), statusRow],
                 ),
               ),
             ],
@@ -774,8 +822,7 @@ class _SearchBar extends StatelessWidget {
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       decoration: InputDecoration(
-        hintText:
-            'Search title, filename, folder, tags, or extracted text...',
+        hintText: 'Search title, filename, folder, tags, or extracted text...',
         prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: controller.text.isEmpty
             ? null
@@ -841,10 +888,7 @@ class _StatsGrid extends StatelessWidget {
 }
 
 class _FilterStrip extends StatelessWidget {
-  const _FilterStrip({
-    required this.selected,
-    required this.onSelected,
-  });
+  const _FilterStrip({required this.selected, required this.onSelected});
 
   final KnowledgeLibraryFilter selected;
   final ValueChanged<KnowledgeLibraryFilter> onSelected;
@@ -1088,10 +1132,7 @@ class _LibraryItemCard extends StatelessWidget {
                   ),
                 if (item.ocrRequired) ...[
                   const SizedBox(width: 6),
-                  const _MiniBadge(
-                    label: 'OCR',
-                    accent: AppColours.darkAmber,
-                  ),
+                  const _MiniBadge(label: 'OCR', accent: AppColours.darkAmber),
                 ],
               ],
             ),
@@ -1203,6 +1244,8 @@ class _DetailPanel extends StatelessWidget {
     required this.onOpenExtractedTextFolder,
     required this.onCopyPath,
     required this.onCopyExtractedPath,
+    required this.onCopyManifestPath,
+    required this.onOpenManifest,
     required this.onOpenExtractedText,
     required this.onRefresh,
   });
@@ -1211,9 +1254,11 @@ class _DetailPanel extends StatelessWidget {
   final Future<void> Function(KnowledgeLibraryItem item) onOpenOriginal;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenContainingFolder;
   final Future<void> Function(KnowledgeLibraryItem item)
-      onOpenExtractedTextFolder;
+  onOpenExtractedTextFolder;
   final Future<void> Function(KnowledgeLibraryItem item) onCopyPath;
   final Future<void> Function(KnowledgeLibraryItem item) onCopyExtractedPath;
+  final Future<void> Function(KnowledgeLibraryItem item) onCopyManifestPath;
+  final Future<void> Function(KnowledgeLibraryItem item) onOpenManifest;
   final Future<void> Function(KnowledgeLibraryItem item) onOpenExtractedText;
   final VoidCallback onRefresh;
 
@@ -1314,10 +1359,7 @@ class _DetailPanel extends StatelessWidget {
                     value: current.ocrRequired ? 'Yes' : 'No',
                   ),
                   const SizedBox(height: 14),
-                  _PathBlock(
-                    title: 'Original file',
-                    value: current.fullPath,
-                  ),
+                  _PathBlock(title: 'Original file', value: current.fullPath),
                   if (current.extractedTextPath != null &&
                       current.extractedTextPath!.trim().isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -1329,9 +1371,14 @@ class _DetailPanel extends StatelessWidget {
                   if (current.notesPath != null &&
                       current.notesPath!.trim().isNotEmpty) ...[
                     const SizedBox(height: 10),
+                    _PathBlock(title: 'Notes path', value: current.notesPath!),
+                  ],
+                  if (current.audioManifestPath != null &&
+                      current.audioManifestPath!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
                     _PathBlock(
-                      title: 'Notes path',
-                      value: current.notesPath!,
+                      title: 'Audio manifest',
+                      value: current.audioManifestPath!,
                     ),
                   ],
                   const SizedBox(height: 14),
@@ -1354,13 +1401,13 @@ class _DetailPanel extends StatelessWidget {
                             ),
                           ]
                         : current.tags
-                            .map(
-                              (tag) => _MiniBadge(
-                                label: tag,
-                                accent: AppColours.darkSecondary,
-                              ),
-                            )
-                            .toList(growable: false),
+                              .map(
+                                (tag) => _MiniBadge(
+                                  label: tag,
+                                  accent: AppColours.darkSecondary,
+                                ),
+                              )
+                              .toList(growable: false),
                   ),
                   const SizedBox(height: 16),
                   Wrap(
@@ -1388,19 +1435,31 @@ class _DetailPanel extends StatelessWidget {
                         icon: const Icon(Icons.copy_rounded),
                         label: const Text('Copy path'),
                       ),
-                      if (current.hasExtractedText)
-                        ...[
-                          OutlinedButton.icon(
-                            onPressed: () => onCopyExtractedPath(current),
-                            icon: const Icon(Icons.content_copy_rounded),
-                            label: const Text('Copy text path'),
-                          ),
-                          TextButton.icon(
-                            onPressed: () => onOpenExtractedText(current),
-                            icon: const Icon(Icons.description_outlined),
-                            label: const Text('Open text'),
-                          ),
-                        ],
+                      if (current.hasExtractedText) ...[
+                        OutlinedButton.icon(
+                          onPressed: () => onCopyExtractedPath(current),
+                          icon: const Icon(Icons.content_copy_rounded),
+                          label: const Text('Copy text path'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => onOpenExtractedText(current),
+                          icon: const Icon(Icons.description_outlined),
+                          label: const Text('Open text'),
+                        ),
+                      ],
+                      if (current.audioManifestPath != null &&
+                          current.audioManifestPath!.trim().isNotEmpty) ...[
+                        OutlinedButton.icon(
+                          onPressed: () => onCopyManifestPath(current),
+                          icon: const Icon(Icons.copy_rounded),
+                          label: const Text('Copy manifest path'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => onOpenManifest(current),
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('Open manifest'),
+                        ),
+                      ],
                     ],
                   ),
                   if (current.hasExtractedText) ...[
@@ -1493,9 +1552,9 @@ class _DetailRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
             ),
           ),
         ],
@@ -1526,9 +1585,9 @@ class _EmptyListState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
@@ -1572,9 +1631,9 @@ class _ErrorPanel extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 'Knowledge Library could not reach the local API.',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),

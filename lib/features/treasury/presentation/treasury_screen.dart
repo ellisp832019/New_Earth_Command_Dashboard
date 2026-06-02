@@ -822,6 +822,20 @@ class _MonthlySummaryPreviewCard extends ConsumerWidget {
                           icon: const Icon(Icons.dashboard_outlined),
                           label: const Text('Back to Dashboard'),
                         ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              context.push(RouteNames.treasuryBudgetPots),
+                          icon: const Icon(
+                            Icons.account_balance_wallet_outlined,
+                          ),
+                          label: const Text('Open Budget Pots'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              context.push(RouteNames.treasuryDecisions),
+                          icon: const Icon(Icons.rule_outlined),
+                          label: const Text('Open Decisions'),
+                        ),
                         FilledButton.icon(
                           onPressed: () =>
                               context.push(RouteNames.treasuryMonthlySummary),
