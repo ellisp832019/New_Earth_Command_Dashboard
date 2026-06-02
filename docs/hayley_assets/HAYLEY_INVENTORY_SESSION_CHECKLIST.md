@@ -2,6 +2,13 @@
 
 Print this page before the weekly stocktake.
 
+## Printing
+
+- For the paper checklist, choose `Epson XP-3200` in the Windows print dialog.
+- Use `A4` and `Portrait` unless you have a better local setup already saved.
+- QR labels still belong in the label printer flow, not this paper checklist.
+- Print preview first so the one-page layout stays tidy.
+
 ## Session details
 
 Date: ____________________  Session: ____________________
