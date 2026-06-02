@@ -12,6 +12,8 @@ The app is built local-first, offline-first, and clarity-first. Documentation sh
 - [Architecture Decisions](architecture/architecture_decisions.md)
 - [Visual Direction](design/visual_direction.md)
 - [Asset Index](assets/asset_index.md)
+- [Hayley Asset Intelligence Guide](hayley_assets/HAYLEY_ASSET_VIEW_GUIDE.md)
+- [Inventory Session Checklist](hayley_assets/HAYLEY_INVENTORY_SESSION_CHECKLIST.md)
 - [Codex Workflow](developer_guide/codex_workflow.md)
 - [Local Build Guide](developer_guide/local_build.md)
 

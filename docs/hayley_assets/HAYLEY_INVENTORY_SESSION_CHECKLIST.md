@@ -4,51 +4,50 @@ Print this page before the weekly stocktake.
 
 ## Session details
 
-- Date: ____________________
-- Session name: ____________________
-- Counted by: ____________________
-- Area / room / shelf: ____________________
-- Notes: ____________________
+Date: ____________________  Session: ____________________
+
+Counted by: ____________________  Area: ____________________
+
+Notes: ____________________________________________________
 
 ## Before you start
 
-- [ ] Open the app and go to `Assets`
-- [ ] Open `Inventory Session`
-- [ ] Enter the session name
+- [ ] Open `Assets` > `Inventory Session`
+- [ ] Enter session name
 - [ ] Enter who is counting
-- [ ] Add any short notes
+- [ ] Add short notes
 - [ ] Build the weekly pack
 - [ ] Open or print the latest PDF
 
 ## Count equipment
 
-- [ ] Walk equipment shelf by shelf
+- [ ] Walk shelf by shelf
 - [ ] Check the asset ID against the QR label
-- [ ] Mark items that are missing a label
+- [ ] Mark missing labels
 - [ ] Mark broken or moved items
-- [ ] Write a short note if something is unclear
+- [ ] Keep notes short
 
 ## Count parts
 
-- [ ] Walk the parts shelves and boxes
+- [ ] Walk shelves and boxes
 - [ ] Check quantities against the pack
-- [ ] Mark parts that are low or empty
-- [ ] Mark anything that needs reorder attention
-- [ ] Write the supplier or location if it helps later
+- [ ] Mark low or empty parts
+- [ ] Mark reorder attention
+- [ ] Add supplier or location if needed
 
 ## Follow-up list
 
-- [ ] Export unlabeled equipment CSV if needed
-- [ ] Export low-stock parts CSV if needed
-- [ ] Copy any paths you want to save for later
+- [ ] Export unlabeled equipment CSV
+- [ ] Export low-stock parts CSV
+- [ ] Copy any paths you want to save
 - [ ] Keep the follow-up list short and calm
 
 ## Close the session
 
-- [ ] Save any notes that matter
+- [ ] Save important notes
 - [ ] Review the latest pack
 - [ ] Keep the PDF and CSV in the inventory sessions folder
-- [ ] Return to the dashboard when finished
+- [ ] Return to the dashboard
 
 ## Quick rules
 
@@ -56,4 +55,3 @@ Print this page before the weekly stocktake.
 - Use the QR label before counting when possible.
 - Park anything uncertain instead of guessing.
 - Leave the original files where they are.
-
