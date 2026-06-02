@@ -23,6 +23,7 @@ class _InventorySessionScreenState
     extends ConsumerState<InventorySessionScreen> {
   late final TextEditingController _sessionNameController;
   late final TextEditingController _notesController;
+  late final TextEditingController _countedByController;
   AssetInventorySessionPack? _latestPack;
   bool _isBuilding = false;
 
@@ -35,12 +36,14 @@ class _InventorySessionScreenState
     _notesController = TextEditingController(
       text: 'Print this pack, count the shelves, and mark anything missing.',
     );
+    _countedByController = TextEditingController(text: 'Hayley');
   }
 
   @override
   void dispose() {
     _sessionNameController.dispose();
     _notesController.dispose();
+    _countedByController.dispose();
     super.dispose();
   }
 
@@ -152,6 +155,17 @@ class _InventorySessionScreenState
                                 .length;
                             final unlabeledEquipmentCount =
                                 equipmentCount - labeledEquipmentCount;
+                            final unlabeledEquipmentRows =
+                                _buildUnlabeledFollowUpRows(
+                                  equipmentTable.rows,
+                                  qrLabelsByAssetId,
+                                  countedBy: _countedByController.text,
+                                );
+                            final lowStockFollowUpRows =
+                                _buildLowStockFollowUpRows(
+                                  lowStockRows,
+                                  countedBy: _countedByController.text,
+                                );
 
                             return Scaffold(
                               backgroundColor: Colors.transparent,
@@ -209,6 +223,14 @@ class _InventorySessionScreenState
                                               sessionNameController:
                                                   _sessionNameController,
                                               notesController: _notesController,
+                                              countedByController:
+                                                  _countedByController,
+                                              onSetCountedBy: (value) {
+                                                setState(() {
+                                                  _countedByController.text =
+                                                      value;
+                                                });
+                                              },
                                               onBuildPack:
                                                   _isBuilding ||
                                                       workspace
@@ -230,6 +252,39 @@ class _InventorySessionScreenState
                                                     ),
                                               isBusy: _isBuilding,
                                               latestPack: _latestPack,
+                                            ),
+                                            const SizedBox(height: 20),
+                                            _InventoryFollowUpCard(
+                                              countedBy: _countedByController
+                                                  .text
+                                                  .trim(),
+                                              unlabeledRows:
+                                                  unlabeledEquipmentRows,
+                                              lowStockRows:
+                                                  lowStockFollowUpRows,
+                                              onExportUnlabeled:
+                                                  unlabeledEquipmentRows.isEmpty
+                                                  ? null
+                                                  : () => _exportFollowUpRows(
+                                                      workspace.assetsRootPath!,
+                                                      fileStem:
+                                                          '${_sessionNameController.text}_unlabeled_follow_up',
+                                                      rows:
+                                                          unlabeledEquipmentRows,
+                                                      title:
+                                                          'unlabeled equipment',
+                                                    ),
+                                              onExportLowStock:
+                                                  lowStockFollowUpRows.isEmpty
+                                                  ? null
+                                                  : () => _exportFollowUpRows(
+                                                      workspace.assetsRootPath!,
+                                                      fileStem:
+                                                          '${_sessionNameController.text}_low_stock_follow_up',
+                                                      rows:
+                                                          lowStockFollowUpRows,
+                                                      title: 'low stock parts',
+                                                    ),
                                             ),
                                             const SizedBox(height: 20),
                                             if (_latestPack != null) ...[
@@ -357,6 +412,7 @@ class _InventorySessionScreenState
           .buildInventoryPack(
             assetsRootPath,
             sessionName: _sessionNameController.text,
+            countedBy: _countedByController.text,
             equipmentRows: equipmentRows,
             partsRows: partsRows,
             qrLabelsByAssetId: qrLabelsByAssetId,
@@ -385,6 +441,95 @@ class _InventorySessionScreenState
           _isBuilding = false;
         });
       }
+    }
+  }
+
+  List<AssetInventorySessionRow> _buildUnlabeledFollowUpRows(
+    List<Map<String, String>> equipmentRows,
+    Map<String, Map<String, String>> qrLabelsByAssetId, {
+    required String countedBy,
+  }) {
+    return equipmentRows
+        .where((row) {
+          final assetId = (row['asset_id'] ?? '').trim();
+          final labelCode = (qrLabelsByAssetId[assetId]?['label_code'] ?? '')
+              .trim();
+          return assetId.isNotEmpty && labelCode.isEmpty;
+        })
+        .map(
+          (row) => AssetInventorySessionRow(
+            itemKind: 'equipment',
+            recordId: (row['asset_id'] ?? '').trim(),
+            name: (row['name'] ?? '').trim(),
+            project: (row['project'] ?? '').trim(),
+            location: (row['location'] ?? '').trim(),
+            currentStatus: (row['status'] ?? '').trim(),
+            expectedQuantity: 1,
+            countActual: '',
+            countedBy: countedBy.trim(),
+            countedAt: '',
+            qrLabelCode: '',
+            notes: 'Needs QR label',
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  List<AssetInventorySessionRow> _buildLowStockFollowUpRows(
+    List<Map<String, String>> lowStockRows, {
+    required String countedBy,
+  }) {
+    return lowStockRows
+        .map(
+          (row) => AssetInventorySessionRow(
+            itemKind: 'part',
+            recordId: (row['part_id'] ?? '').trim(),
+            name: (row['name'] ?? '').trim(),
+            project: (row['project'] ?? '').trim(),
+            location: (row['location'] ?? '').trim(),
+            currentStatus: (row['status'] ?? '').trim(),
+            expectedQuantity:
+                int.tryParse((row['min_quantity'] ?? '').trim()) ?? 0,
+            countActual: '',
+            countedBy: countedBy.trim(),
+            countedAt: '',
+            qrLabelCode: '',
+            notes:
+                'Quantity ${row['quantity'] ?? '0'} / Min ${row['min_quantity'] ?? '0'}',
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  Future<void> _exportFollowUpRows(
+    String assetsRootPath, {
+    required String fileStem,
+    required List<AssetInventorySessionRow> rows,
+    required String title,
+  }) async {
+    try {
+      final file = await ref
+          .read(assetInventorySessionServiceProvider)
+          .exportRowsCsv(assetsRootPath, fileStem: fileStem, rows: rows);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Exported ${rows.length} $title row${rows.length == 1 ? '' : 's'} to ${path.basename(file.path)}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not export $title rows: $error')),
+      );
     }
   }
 
@@ -571,6 +716,8 @@ class _InventoryPlanCard extends StatelessWidget {
   const _InventoryPlanCard({
     required this.sessionNameController,
     required this.notesController,
+    required this.countedByController,
+    required this.onSetCountedBy,
     required this.onBuildPack,
     required this.onOpenLatestPack,
     required this.isBusy,
@@ -579,6 +726,8 @@ class _InventoryPlanCard extends StatelessWidget {
 
   final TextEditingController sessionNameController;
   final TextEditingController notesController;
+  final TextEditingController countedByController;
+  final ValueChanged<String> onSetCountedBy;
   final VoidCallback? onBuildPack;
   final VoidCallback? onOpenLatestPack;
   final bool isBusy;
@@ -621,6 +770,33 @@ class _InventoryPlanCard extends StatelessWidget {
               labelText: 'Session notes',
               hintText: 'What to count, what to check, and what to flag.',
             ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: countedByController,
+            decoration: const InputDecoration(
+              labelText: 'Counted by',
+              hintText: 'Hayley or Ellis',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton(
+                onPressed: () => onSetCountedBy('Hayley'),
+                child: const Text('Hayley'),
+              ),
+              TextButton(
+                onPressed: () => onSetCountedBy('Ellis'),
+                child: const Text('Ellis'),
+              ),
+              TextButton(
+                onPressed: () => onSetCountedBy('Hayley + Ellis'),
+                child: const Text('Shared'),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -750,6 +926,188 @@ class _LatestPackCard extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InventoryFollowUpCard extends StatelessWidget {
+  const _InventoryFollowUpCard({
+    required this.countedBy,
+    required this.unlabeledRows,
+    required this.lowStockRows,
+    required this.onExportUnlabeled,
+    required this.onExportLowStock,
+  });
+
+  final String countedBy;
+  final List<AssetInventorySessionRow> unlabeledRows;
+  final List<AssetInventorySessionRow> lowStockRows;
+  final VoidCallback? onExportUnlabeled;
+  final VoidCallback? onExportLowStock;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Follow-up list',
+            icon: Icons.fact_check_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Use this to separate the items that need a QR label or a reorder decision before you close the week.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatChip(
+                label: 'Counted by',
+                value: countedBy.isEmpty ? 'Not set' : countedBy,
+              ),
+              _StatChip(label: 'Unlabeled', value: '${unlabeledRows.length}'),
+              _StatChip(label: 'Low stock', value: '${lowStockRows.length}'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 860;
+              final unlabeled = _FollowUpColumn(
+                title: 'Unlabeled equipment',
+                icon: Icons.qr_code_2_outlined,
+                emptyText: 'All equipment already has a QR label.',
+                rows: unlabeledRows,
+              );
+              final lowStock = _FollowUpColumn(
+                title: 'Low-stock parts',
+                icon: Icons.inventory_2_outlined,
+                emptyText: 'No low-stock parts need a follow-up right now.',
+                rows: lowStockRows,
+              );
+
+              if (!wide) {
+                return Column(
+                  children: [unlabeled, const SizedBox(height: 12), lowStock],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: unlabeled),
+                  const SizedBox(width: 12),
+                  Expanded(child: lowStock),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onExportUnlabeled,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Export unlabeled CSV'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onExportLowStock,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Export low-stock CSV'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FollowUpColumn extends StatelessWidget {
+  const _FollowUpColumn({
+    required this.title,
+    required this.icon,
+    required this.emptyText,
+    required this.rows,
+  });
+
+  final String title;
+  final IconData icon;
+  final String emptyText;
+  final List<AssetInventorySessionRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(title: title, icon: icon),
+          const SizedBox(height: 10),
+          if (rows.isEmpty)
+            Text(
+              emptyText,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
+            )
+          else
+            Column(
+              children: [
+                for (final row in rows.take(5))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _StatChip(
+                            label: row.recordId.isEmpty
+                                ? 'No ID'
+                                : row.recordId,
+                            value: row.name.isEmpty ? 'Unnamed item' : row.name,
+                          ),
+                          if (row.project.isNotEmpty)
+                            _StatChip(label: 'Project', value: row.project),
+                          if (row.location.isNotEmpty)
+                            _StatChip(label: 'Location', value: row.location),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (rows.length > 5)
+                  Text(
+                    '+ ${rows.length - 5} more',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
     );

@@ -49,6 +49,7 @@ class AssetInventorySessionService {
   Future<AssetInventorySessionPack> buildInventoryPack(
     String assetsRootPath, {
     required String sessionName,
+    required String countedBy,
     required List<Map<String, String>> equipmentRows,
     required List<Map<String, String>> partsRows,
     required Map<String, Map<String, String>> qrLabelsByAssetId,
@@ -65,8 +66,9 @@ class AssetInventorySessionService {
     final equipmentItems = _buildEquipmentItems(
       equipmentRows,
       qrLabelsByAssetId,
+      countedBy: countedBy,
     );
-    final partItems = _buildPartItems(partsRows);
+    final partItems = _buildPartItems(partsRows, countedBy: countedBy);
     final rows = <AssetInventorySessionRow>[...equipmentItems, ...partItems];
 
     final csvFile = File(
@@ -144,6 +146,28 @@ class AssetInventorySessionService {
     );
   }
 
+  Future<File> exportRowsCsv(
+    String assetsRootPath, {
+    required String fileStem,
+    required List<AssetInventorySessionRow> rows,
+  }) async {
+    final exportFolder = _inventorySessionsFolder(assetsRootPath);
+    await exportFolder.create(recursive: true);
+    final file = File(
+      path.join(exportFolder.path, '${_safeFileName(fileStem)}.csv'),
+    );
+
+    await _csvService.writeTable(
+      file,
+      AssetCsvTable(
+        headers: sessionChecklistHeaders,
+        rows: rows.map((row) => row.toCsvRow()).toList(growable: false),
+      ),
+    );
+
+    return file;
+  }
+
   Directory _inventorySessionsFolder(String assetsRootPath) {
     return Directory(
       path.join(
@@ -170,8 +194,9 @@ class AssetInventorySessionService {
 
   List<AssetInventorySessionRow> _buildEquipmentItems(
     List<Map<String, String>> equipmentRows,
-    Map<String, Map<String, String>> qrLabelsByAssetId,
-  ) {
+    Map<String, Map<String, String>> qrLabelsByAssetId, {
+    required String countedBy,
+  }) {
     return equipmentRows
         .map((row) {
           final assetId = _clean(row['asset_id']);
@@ -185,7 +210,7 @@ class AssetInventorySessionService {
             currentStatus: _clean(row['status']),
             expectedQuantity: 1,
             countActual: '',
-            countedBy: '',
+            countedBy: countedBy.trim(),
             countedAt: '',
             qrLabelCode: _clean(qrRow?['label_code']),
             notes: _clean(row['notes']),
@@ -195,8 +220,9 @@ class AssetInventorySessionService {
   }
 
   List<AssetInventorySessionRow> _buildPartItems(
-    List<Map<String, String>> partsRows,
-  ) {
+    List<Map<String, String>> partsRows, {
+    required String countedBy,
+  }) {
     return partsRows
         .map((row) {
           return AssetInventorySessionRow(
@@ -208,7 +234,7 @@ class AssetInventorySessionService {
             currentStatus: _clean(row['status']),
             expectedQuantity: _intValue(row['quantity']) ?? 0,
             countActual: '',
-            countedBy: '',
+            countedBy: countedBy.trim(),
             countedAt: '',
             qrLabelCode: '',
             notes: _clean(row['notes']),

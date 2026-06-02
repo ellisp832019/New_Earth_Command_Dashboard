@@ -130,6 +130,45 @@ The project detail screen provides:
 
 ---
 
+## Assets
+
+### Purpose
+
+The `Assets` area is for equipment, parts, labels, low stock, valuation, and weekly stocktake work.
+
+### What it does
+
+- Holds the equipment register and parts inventory
+- Surfaces low stock and reorder pressure
+- Manages QR labels and the print queue
+- Builds the weekly inventory session pack for stocktake
+- Keeps local exports and follow-up lists together in Omega OS
+
+### Key functions
+
+- Open `Inventory Session` to build the weekly pack
+- Open `QR Labels` to manage label codes and print prep
+- Open `Low Stock / Reorder` to review parts that need attention
+- Open `Equipment Register` to check asset details and location
+- Open `Parts Inventory` to review quantities and suppliers
+
+### How to use it
+
+1. Open `Assets`.
+2. Check folder health and counts.
+3. Build the inventory session pack when you need to count stock.
+4. Use the follow-up list to separate unlabeled equipment from low-stock parts.
+5. Export the filtered rows when you need a smaller action list.
+6. Return to the register that needs attention and keep the work local.
+
+### Best practice
+
+- Use the inventory session flow for weekly stocktakes.
+- Use the QR label tools before the count if equipment still needs labels.
+- Keep the register notes short and practical so the next review is easier.
+
+---
+
 ## Tasks
 
 ### Purpose

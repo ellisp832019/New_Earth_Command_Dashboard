@@ -152,6 +152,19 @@ Use this when you need a calm view of what the assets may be worth.
 4. Add the printed date when the label is used.
 5. Keep the label code consistent with the asset ID.
 
+## Step by step: when you need to do a stocktake
+
+1. Open `Inventory Session`.
+2. Enter the session name and who is counting.
+3. Build the weekly pack.
+4. Open the latest PDF or CSV and print it if needed.
+5. Walk equipment and parts together, shelf by shelf.
+6. Use the follow-up list for unlabeled equipment and low-stock parts.
+7. Export the unlabeled or low-stock CSV when you need a smaller action list.
+8. Keep the notes short and calm so the next person can continue easily.
+
+For a printable one-page version, use [Hayley and Ellis Inventory Session Checklist](HAYLEY_INVENTORY_SESSION_CHECKLIST.md).
+
 ## What the sync card is for
 
 The `Asset sync` card helps you see whether the journal is connected and whether conflicts are showing.
