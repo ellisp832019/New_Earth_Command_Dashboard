@@ -41,6 +41,15 @@ Codex must treat these files as the source of truth for the project.
 11. `11_build_instructions.md`
    - First coding tasks, Codex prompts, repo setup.
 
+## Roadmaps
+
+- [App Roadmap](../roadmap/app_roadmap.md)
+- [MVP Roadmap](../roadmap/mvp_roadmap.md)
+- [MVP Execution Plan](../roadmap/mvp_execution_plan.md)
+- [Voice Roadmap](../roadmap/voice_10_task_roadmap.md)
+- [AI Roadmap](../roadmap/ai_10_task_roadmap.md)
+- [Treasury Roadmap](../roadmap/treasury_20_task_roadmap.md)
+
 ## Build Rule
 
 Do not build the whole app at once.

@@ -8,6 +8,7 @@ The app is built local-first, offline-first, and clarity-first. Documentation sh
 
 - [Getting Started](user_guide/getting_started.md)
 - [MVP Roadmap](roadmap/mvp_roadmap.md)
+- [App Roadmap](roadmap/app_roadmap.md)
 - [Architecture Decisions](architecture/architecture_decisions.md)
 - [Visual Direction](design/visual_direction.md)
 - [Asset Index](assets/asset_index.md)
@@ -32,7 +33,7 @@ The Functional Specification Document lives in [fsd](fsd/00_master_index.md). Be
 - `user_guide/` explains how to use the app.
 - `developer_guide/` explains how to build and maintain the app.
 - `architecture/` records decisions that shape implementation.
-- `roadmap/` keeps the MVP build order clear.
+- `roadmap/` keeps the MVP and app-level build order clear.
 - `testing/` holds verification notes and release checks.
 - `assets/` documents the image library and how it should be used.
 - `design/` captures brand, colour, layout, and tone guidance.

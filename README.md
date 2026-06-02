@@ -41,6 +41,7 @@ V0.1 foundation is live:
 
 - [Documentation Home](docs/README.md)
 - [Getting Started](docs/user_guide/getting_started.md)
+- [App Roadmap](docs/roadmap/app_roadmap.md)
 - [MVP Roadmap](docs/roadmap/mvp_roadmap.md)
 - [Architecture Decisions](docs/architecture/architecture_decisions.md)
 - [Visual Direction](docs/design/visual_direction.md)
