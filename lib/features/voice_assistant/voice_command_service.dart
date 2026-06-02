@@ -818,9 +818,9 @@ class VoiceCommandService {
 
     if (isWakeOnly) {
       return VoiceCommandAssistantResponse(
-        summary: 'Wake phrase heard. I am here and ready to help.',
+        summary: 'Wake phrase heard. I am here.',
         nextStep:
-            'Say what you want to create, open, summarize, continue, or ask what I can do.',
+            'Say what you want to create, open, summarize, continue, or ask for help.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -828,10 +828,8 @@ class VoiceCommandService {
 
     if (_isConversationGreetingRequest(lowerTranscript)) {
       return VoiceCommandAssistantResponse(
-        summary:
-            'I am doing well and I am here with you. Ask me what I can do, or tell me to create, open, summarize, or continue.',
-        nextStep:
-            'You can keep the conversation going by asking for help, a summary, or the next practical move.',
+        summary: 'I am here with you.',
+        nextStep: 'Ask for help, a summary, or the next practical move.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -840,9 +838,9 @@ class VoiceCommandService {
     if (_isHelpRequest(lowerTranscript)) {
       return VoiceCommandAssistantResponse(
         summary:
-            'I can help you create tasks, projects, journal entries, content ideas, business opportunities, inbox items, and more.',
+            'I can help with tasks, projects, journal entries, content ideas, business opportunities, inbox items, and more.',
         nextStep:
-            'Try saying create a task, create a project, summarize today, continue the thread, or ask for the next move.',
+            'Try create a task, create a project, summarize today, continue the thread, or ask for the next move.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -850,10 +848,8 @@ class VoiceCommandService {
 
     if (_isSummaryRequest(lowerTranscript)) {
       return VoiceCommandAssistantResponse(
-        summary:
-            'This sounds like a daily review. I can help you summarize the day, open Planner, or shape the note into Journal or Tasks.',
-        nextStep:
-            'Choose whether you want a summary, a journal note, or the next practical task.',
+        summary: 'This sounds like a daily review.',
+        nextStep: 'Choose summary, a journal note, or the next practical task.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -861,10 +857,8 @@ class VoiceCommandService {
 
     if (_isNextStepRequest(lowerTranscript)) {
       return VoiceCommandAssistantResponse(
-        summary:
-            'This sounds like a next-step request. I can surface Tasks, Projects, or the current thread to keep momentum moving.',
-        nextStep:
-            'Open the place that matches the next move, then save the capture if it belongs there.',
+        summary: 'This sounds like a next-step request.',
+        nextStep: 'Open Tasks, Projects, or the current thread.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -886,8 +880,7 @@ class VoiceCommandService {
           suggestion: suggestion,
           conversationContext: conversationContext,
         ),
-        nextStep:
-            'Use the suggested action plan, then save the result in the right local module.',
+        nextStep: 'Use the plan, then save it in the right local module.',
         projectContext: projectContext,
         threadContext: threadContext,
       );
@@ -896,9 +889,9 @@ class VoiceCommandService {
     if (lowerTranscript.contains('build day')) {
       return VoiceCommandAssistantResponse(
         summary:
-            'I heard a build-day command. I can help you open the day view, check the planner, or preload the build-day template.',
+            'I heard a build-day command. I can open Planner or preload the build-day template.',
         nextStep:
-            'Use the router or template deck to open Planner and shape the day before you save anything.',
+            'Open Planner or the build-day template before you save anything.',
         projectContext: projectContext,
       );
     }
@@ -907,7 +900,7 @@ class VoiceCommandService {
       case VoiceCommandType.task:
         return VoiceCommandAssistantResponse(
           summary:
-              'This reads like a task. I can open Tasks, preload the task template, or send it toward Planner if it belongs in today.',
+              'This reads like a task. I can open Tasks, preload the task template, or send it toward Planner.',
           nextStep:
               'Review the title, category, and priority before you save it.',
           projectContext: projectContext,
@@ -916,7 +909,7 @@ class VoiceCommandService {
       case VoiceCommandType.project:
         return VoiceCommandAssistantResponse(
           summary:
-              'This sounds like a project. I can open Projects, preload the project template, or help you turn the idea into a concrete project record.',
+              'This sounds like a project. I can open Projects, preload the project template, or help shape a project record.',
           nextStep:
               'Check the project name, status, priority, vision, and first next action before saving.',
           projectContext: projectContext,
@@ -925,7 +918,7 @@ class VoiceCommandService {
       case VoiceCommandType.journalEntry:
         return VoiceCommandAssistantResponse(
           summary:
-              'This sounds like a journal entry. I can open Journal or reload the reflection template for a cleaner note.',
+              'This sounds like a journal entry. I can open Journal or reload the reflection template.',
           nextStep:
               'Tighten the worked-on, learned, and next-actions fields before saving.',
           projectContext: projectContext,
@@ -934,7 +927,7 @@ class VoiceCommandService {
       case VoiceCommandType.contentIdea:
         return VoiceCommandAssistantResponse(
           summary:
-              'This looks like a content idea. I can open Content, preload the draft template, or jump to Projects for context.',
+              'This looks like a content idea. I can open Content, preload the draft template, or jump to Projects.',
           nextStep: 'Check the platform and content type before you keep it.',
           projectContext: projectContext,
           threadContext: threadContext,
@@ -942,7 +935,7 @@ class VoiceCommandService {
       case VoiceCommandType.businessOpportunity:
         return VoiceCommandAssistantResponse(
           summary:
-              'This sounds like a business lead. I can open Business, preload the opportunity template, or move into Projects for context.',
+              'This sounds like a business lead. I can open Business, preload the opportunity template, or move to Projects.',
           nextStep:
               'Confirm the contact, status, and next action before saving.',
           projectContext: projectContext,
@@ -959,16 +952,15 @@ class VoiceCommandService {
       case VoiceCommandType.idea:
         return VoiceCommandAssistantResponse(
           summary:
-              'This reads like a future idea. I can park it in Inbox or keep it attached to the day for later review.',
-          nextStep:
-              'If it does not belong to today, let Inbox hold it for you.',
+              'This reads like a future idea. I can park it in Inbox or keep it with today for later review.',
+          nextStep: 'If it does not belong to today, let Inbox hold it.',
           projectContext: projectContext,
           threadContext: threadContext,
         );
       case null:
         return VoiceCommandAssistantResponse(
           summary:
-              'I do not have a strong type yet. I can still help by opening the right area, loading a starter, or turning this into a safe prompt.',
+              'I do not have a strong type yet. I can still help by opening the right area, loading a starter, or shaping a safe prompt.',
           nextStep:
               'Pick a starter deck option or let the router guide the next move.',
           projectContext: projectContext,
@@ -995,8 +987,8 @@ class VoiceCommandService {
     );
 
     return VoiceCommandBriefing(
-      summary: assistantResponse.summary,
-      nextStep: assistantResponse.nextStep,
+      summary: _briefingLine(assistantResponse.summary),
+      nextStep: _briefingLine(assistantResponse.nextStep),
       projectContext: assistantResponse.projectContext,
       threadContext: assistantResponse.threadContext,
       actions: actions.take(3).toList(),
@@ -1430,6 +1422,18 @@ Rules:
     }
 
     return '${conversationContext.summary} ';
+  }
+
+  String _briefingLine(String text) {
+    final trimmed = text.trim();
+    if (trimmed.startsWith('I can ')) {
+      return trimmed.replaceFirst('I can ', '').trim();
+    }
+    if (trimmed.startsWith('I am ')) {
+      return trimmed.replaceFirst('I am ', '').trim();
+    }
+
+    return trimmed;
   }
 
   String? _buildThreadContextLine(

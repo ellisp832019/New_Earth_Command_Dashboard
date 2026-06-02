@@ -166,18 +166,20 @@ void main() {
       find.byKey(const Key('voiceConversationFollowUpField')),
       'What can you do?',
     );
-    await tester.tap(find.byKey(const Key('voiceConversationFollowUpSendButton')));
+    await tester.tap(
+      find.byKey(const Key('voiceConversationFollowUpSendButton')),
+    );
     await tester.pumpAndSettle();
 
     expect(
       find.text(
-        'I can help you create tasks, projects, journal entries, content ideas, business opportunities, inbox items, and more.',
+        'I can help with tasks, projects, journal entries, content ideas, business opportunities, inbox items, and more.',
       ),
       findsOneWidget,
     );
     expect(
       find.text(
-        'Try saying create a task, create a project, summarize today, continue the thread, or ask for the next move.',
+        'Try create a task, create a project, summarize today, continue the thread, or ask for the next move.',
       ),
       findsOneWidget,
     );

@@ -172,6 +172,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   List<VoiceCommand> _history = [];
   String? _lastCodexPrompt;
   VoiceCommandSuggestion? _suggestion;
+  String? _lastTemplateId;
   String? _taskCategoryValue;
   String? _taskPriorityValue;
   String? _projectStatusValue;
@@ -670,7 +671,6 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   Future<void> _startListening({bool preferDesktopBridge = true}) async {
-    _activeSpeechFocusNode.requestFocus();
     final session = ref.read(voiceSessionProvider.notifier);
     if (!session.beginListening(
       owner: VoiceSessionOwner.assistant,
@@ -767,7 +767,6 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   Future<void> _startWindowsDesktopCapture({
     required bool preferDesktopBridge,
   }) async {
-    _activeSpeechFocusNode.requestFocus();
     final session = ref.read(voiceSessionProvider.notifier);
 
     setState(() {
@@ -781,6 +780,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
 
     Future<bool> startWindowsTyping() async {
+      _activeSpeechFocusNode.requestFocus();
       final available = await WindowsVoiceTypingService.startVoiceTyping();
 
       if (!mounted) {
@@ -1303,6 +1303,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     setState(() {
       _suggestion = suggestion;
       _selectedType = template.type;
+      _lastTemplateId = template.id;
       _transcriptController.text = template.transcript;
       _transcriptController.selection = TextSelection.collapsed(
         offset: template.transcript.length,
@@ -1330,6 +1331,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final suggestion = _service.suggestCommand(transcript: command.transcript);
     setState(() {
       _selectedType = command.type;
+      _lastTemplateId = null;
       _transcriptController.text = command.transcript;
       _transcriptController.selection = TextSelection.collapsed(
         offset: command.transcript.length,
@@ -1370,6 +1372,31 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     if (action.id == 'continue-thread') {
       _continueCurrentThread();
     }
+  }
+
+  void _loadLatestTemplate() {
+    final templates = _service.getTemplates();
+    if (templates.isEmpty) {
+      return;
+    }
+
+    _applyTemplate(templates.first);
+  }
+
+  void _repeatLastTemplate() {
+    final lastTemplateId = _lastTemplateId;
+    if (lastTemplateId == null) {
+      _loadLatestTemplate();
+      return;
+    }
+
+    final template = _service.getTemplateById(lastTemplateId);
+    if (template == null) {
+      _loadLatestTemplate();
+      return;
+    }
+
+    _applyTemplate(template);
   }
 
   void _rememberConversationThread({
@@ -1435,6 +1462,33 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       opacity: 0.32,
     );
     _wizardAnswerFocusNode.requestFocus();
+  }
+
+  Future<void> _copyConversationSummary() async {
+    final conversationContext = _conversationContext;
+    if (conversationContext == null) {
+      return;
+    }
+
+    final parts = <String>[
+      'Thread: ${conversationContext.label}',
+      'Summary: ${conversationContext.summary}',
+      if (conversationContext.projectName != null &&
+          conversationContext.projectName!.isNotEmpty)
+        'Project: ${conversationContext.projectName}',
+      if (conversationContext.title != null &&
+          conversationContext.title!.isNotEmpty)
+        'Latest: ${conversationContext.title}',
+    ];
+
+    await Clipboard.setData(ClipboardData(text: parts.join('\n')));
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Copied remembered thread summary.')),
+    );
   }
 
   VoiceTtsVoiceOption? _resolveSelectedVoice(
@@ -1722,6 +1776,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               conversationContext: conversationContext,
               onResumeThread: _continueCurrentThread,
               onStartFresh: _startNewThread,
+              onCopySummary: _copyConversationSummary,
             ),
             const SizedBox(height: 16),
           ],
@@ -1959,7 +2014,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ],
           if (briefing != null) ...[
             CalmGuidanceCard(
-              sectionLabel: 'Voice Briefing',
+              sectionLabel: 'Briefing',
               title: briefing.summary,
               summary: briefing.nextStep,
               reason:
@@ -1975,10 +2030,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Voice Briefing', style: theme.textTheme.titleSmall),
+                    Text('Briefing', style: theme.textTheme.titleSmall),
                     const SizedBox(height: 6),
+                    Text('What I heard', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 4),
                     Text(briefing.summary, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 6),
+                    Text('Next step', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 4),
                     Text(briefing.nextStep, style: theme.textTheme.bodySmall),
                     if (briefing.projectContext != null ||
                         briefing.threadContext != null) ...[
@@ -2579,6 +2638,25 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     )
                     .toList(),
               ),
+              if (groupKey == const Key('voiceStarterDeckPlanGroup')) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _loadLatestTemplate,
+                      icon: const Icon(Icons.history_toggle_off_outlined),
+                      label: const Text('Load latest template'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _repeatLastTemplate,
+                      icon: const Icon(Icons.repeat_rounded),
+                      label: const Text('Repeat last template'),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

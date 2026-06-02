@@ -30,6 +30,7 @@ void main() {
             onStartFresh: () {
               startedFresh = true;
             },
+            onCopySummary: () {},
           ),
         ),
       ),
@@ -42,6 +43,7 @@ void main() {
     expect(find.text('Type: Project'), findsOneWidget);
     expect(find.text('Project: MicroGrow'), findsOneWidget);
     expect(find.text('Resume thread'), findsOneWidget);
+    expect(find.text('Copy summary'), findsOneWidget);
     expect(find.text('Start fresh'), findsOneWidget);
 
     await tester.tap(find.text('Resume thread'));

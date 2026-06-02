@@ -57,20 +57,17 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
               )
               .take(4)
               .toList();
+    final followUpActions = _buildFollowUpActions(
+      dock: dock,
+      voiceService: voiceService,
+      suggestion: suggestion,
+      primaryActions: quickActions,
+    );
     final macroActions = voiceService
         .buildMacroActions(conversationContext: dock.conversationContext)
         .where((action) => action.id != 'continue-thread')
         .take(5)
         .toList();
-    final followUpActions = <VoiceCommandQuickAction>[
-      ...quickActions,
-      if (dock.conversationContext != null)
-        const VoiceCommandQuickAction(
-          id: 'continue-thread',
-          label: 'Continue Thread',
-          description: 'Pick up the current thread from the dock.',
-        ),
-    ];
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),
@@ -413,6 +410,48 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         ),
       ),
     );
+  }
+
+  List<VoiceCommandQuickAction> _buildFollowUpActions({
+    required VoiceConversationDockState dock,
+    required VoiceCommandService voiceService,
+    required VoiceCommandSuggestion? suggestion,
+    required List<VoiceCommandQuickAction> primaryActions,
+  }) {
+    final contextualTranscript = [
+      dock.transcript,
+      dock.summary,
+      dock.nextStep,
+    ].where((part) => part.trim().isNotEmpty).join(' ');
+
+    final contextActions = contextualTranscript.isEmpty
+        ? const <VoiceCommandQuickAction>[]
+        : voiceService
+              .suggestQuickActions(
+                transcript: contextualTranscript,
+                suggestion: suggestion,
+                conversationContext: dock.conversationContext,
+              )
+              .take(4)
+              .toList();
+
+    final actions = <VoiceCommandQuickAction>[
+      if (dock.conversationContext != null)
+        const VoiceCommandQuickAction(
+          id: 'continue-thread',
+          label: 'Continue Thread',
+          description: 'Pick up the current thread from the dock.',
+        ),
+      ...primaryActions,
+      ...contextActions,
+    ];
+
+    final deduped = <String, VoiceCommandQuickAction>{};
+    for (final action in actions) {
+      deduped.putIfAbsent(action.id, () => action);
+    }
+
+    return deduped.values.take(5).toList();
   }
 
   void _handleDockAction(

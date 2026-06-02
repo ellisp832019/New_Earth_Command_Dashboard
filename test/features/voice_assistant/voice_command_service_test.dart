@@ -365,7 +365,7 @@ void main() {
       transcript: 'What can you do for me?',
     );
 
-    expect(response.summary, contains('help you create tasks'));
+    expect(response.summary, contains('help with tasks'));
     expect(response.nextStep, contains('create a task'));
   });
 
@@ -383,7 +383,7 @@ void main() {
 
       expect(suggestion.usedWakePhrase, isTrue);
       expect(suggestion.isWakeOnly, isFalse);
-      expect(response.summary, contains('doing well'));
+      expect(response.summary, contains('I am here with you'));
       expect(response.summary, isNot(contains('Wake phrase heard')));
     },
   );

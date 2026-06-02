@@ -1989,7 +1989,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
-    expect(find.text('Voice Briefing'), findsOneWidget);
+    expect(find.text('Briefing'), findsOneWidget);
     expect(find.text('AI Assist'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
