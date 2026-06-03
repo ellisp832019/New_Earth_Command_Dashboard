@@ -98,6 +98,7 @@ def load_config(config_path: Path) -> SyncConfig:
                     "INDEX.md",
                     "DOC_REGISTRY.md",
                     "PROJECT_GRAPH.md",
+                    "PROJECT_MAP.md",
                     "PROJECT_OVERVIEW.md",
                     "CURRENT_PROGRESS.md",
                     "CURRENT_STATE.md",
@@ -636,6 +637,7 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "CURRENT_PROGRESS.md"),
                     vault_link(config, "CODE_MAP.md"),
                     vault_link(config, "MILESTONE_SUMMARIES.md"),
@@ -669,6 +671,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
         ("INDEX.md", "Entry point", "One-click vault landing page.", "Canonical"),
         ("DOC_REGISTRY.md", "Registry", "Maps the note families and avoids duplicate roles.", "Canonical"),
         ("PROJECT_GRAPH.md", "Graph", "Relationship map for folders, modules, notes, and workflows.", "Canonical"),
+        ("PROJECT_MAP.md", "Operations", "Active module map for day-to-day navigation and handoffs.", "Canonical"),
         ("PROJECT_OVERVIEW.md", "Active state", "Project summary, purpose, and current branch signal.", "Canonical"),
         ("CURRENT_STATE.md", "Active state", "Detailed live status, risks, and next actions.", "Canonical"),
         ("CURRENT_PROGRESS.md", "Active state", "What works, what is incomplete, and the live sync signal.", "Canonical"),
@@ -711,6 +714,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -746,6 +750,8 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
                 [
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -772,6 +778,7 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
                     vault_link(config, "CHANGE_INTELLIGENCE.md"),
                     vault_link(config, "RISK_TRACKER.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "TASKS.md"),
                     vault_link(config, "OPEN_QUESTIONS.md"),
                 ]
@@ -869,6 +876,7 @@ def generate_project_graph(context: Dict[str, object], config: SyncConfig, repo_
                     vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CODE_MAP.md"),
                     vault_link(config, "ARCHITECTURE.md"),
@@ -883,10 +891,92 @@ def generate_project_graph(context: Dict[str, object], config: SyncConfig, repo_
     )
 
 
+def generate_project_map(context: Dict[str, object], config: SyncConfig, repo_root: Path) -> str:
+    feature_root = repo_root / "lib" / "features"
+    modules = []
+    if feature_root.exists():
+        for child in sorted([p for p in feature_root.iterdir() if p.is_dir()], key=lambda p: p.name):
+            file_count = sum(1 for item in child.rglob("*") if item.is_file())
+            label = child.name.replace("_", " ").title()
+            modules.append((label, f"`lib/features/{child.name}/`", f"{file_count} tracked files"))
+
+    operational_lanes = [
+        ("Dashboard", "`lib/features/dashboard/`", "Live overview, quick capture, and entry points."),
+        ("Projects", "`lib/features/project_intelligence/`", "Project context, capture, and related knowledge."),
+        ("Tasks", "`lib/features/planner/`", "Task review, carry-forward, and Top 3 flow."),
+        ("Treasury", "`lib/features/assets/`", "Treasury, assets, QR, inventory, and workspace operations."),
+        ("Knowledge", "`lib/features/knowledge_library/`", "Knowledge library, extraction, and file handling."),
+        ("Meetings", "`lib/features/meeting_system/`", "Meeting bundles, transcript import, and review flow."),
+        ("Voice", "`lib/features/more/`", "Voice assistant entry points and shared session flow."),
+        ("Obsidian Sync", "`obsidian_sync/`", "Project memory exports and vault mirroring."),
+    ]
+
+    next_moves = context["roadmap_immediate"] or context["next_actions"] or [
+        "Finish the current local-first slice.",
+        "Keep the vault notes easy to scan.",
+        "Keep the operational focus on one slice at a time.",
+    ]
+
+    body = "\n".join(
+        [
+            "## What This Map Is For",
+            "- Use this note when you want to understand the active modules, not just the file graph.",
+            "- It is the operational bridge between the app, the docs, and the Obsidian memory layer.",
+            "",
+            "## Active Module Lanes",
+            render_table([("Module", "Path", "Why It Matters")] + operational_lanes),
+            "",
+            "## Feature Inventory",
+            render_table(
+                [("Feature", "Path", "Size Signal")] + modules[:12] if modules else [("Feature", "Path", "Size Signal")]
+            ),
+            "",
+            "## What To Touch For Common Jobs",
+            render_list(
+                [
+                    "Dashboard and capture work -> `lib/features/dashboard/`",
+                    "Task review and carry-forward -> `lib/features/planner/`",
+                    "Treasury, assets, and QR/print -> `lib/features/assets/`",
+                    "Knowledge library and extraction -> `lib/features/knowledge_library/`",
+                    "Meeting bundles and transcript handling -> `lib/features/meeting_system/`",
+                    "Vault note generation and sync -> `obsidian_sync/`",
+                ]
+            ),
+            "",
+            "## Active Next Moves",
+            render_list(next_moves),
+            "",
+            "## Operational Rules",
+            "- Treat each module lane as a handoff point, not a duplicate note family.",
+            "- If a lane changes meaningfully, update the graph and registry together.",
+            "- Keep the map focused on active work, not the full archive.",
+            "",
+            "## Related Docs",
+            render_list(
+                [
+                    vault_link(config, "START_HERE.md"),
+                    vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_OVERVIEW.md"),
+                    vault_link(config, "CURRENT_STATE.md"),
+                    vault_link(config, "TASKS.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Project Map",
+        "Operational map for active modules and work handoffs.",
+        body,
+    )
+
+
 def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     current_docs = [
         "DOC_REGISTRY.md",
         "PROJECT_GRAPH.md",
+        "PROJECT_MAP.md",
         "PROJECT_OVERVIEW.md",
         "CURRENT_STATE.md",
         "CURRENT_PROGRESS.md",
@@ -1753,6 +1843,7 @@ def run_sync(config_path: Path) -> SyncResult:
         "INDEX.md": generate_index(context, config),
         "DOC_REGISTRY.md": generate_doc_registry(context, config),
         "PROJECT_GRAPH.md": generate_project_graph(context, config, repo_root),
+        "PROJECT_MAP.md": generate_project_map(context, config, repo_root),
         "PROJECT_OVERVIEW.md": generate_project_overview(context, config),
         "CURRENT_PROGRESS.md": generate_current_progress(context, config, changed_files + added_files + removed_files),
         "MILESTONE_SUMMARIES.md": generate_milestone_summaries(context, config, repo_root),
