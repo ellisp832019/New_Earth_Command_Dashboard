@@ -6,13 +6,21 @@
   "obsidian_project_folder": "01_ACTIVE_PROJECTS",
   "vault_note_prefix": "NEW_EARTH_DASHBOARD_",
   "export_docs": [
+    "INDEX.md",
     "PROJECT_OVERVIEW.md",
     "CURRENT_PROGRESS.md",
+    "CURRENT_STATE.md",
+    "ARCHITECTURE.md",
+    "ROADMAP.md",
+    "DECISIONS.md",
     "DECISIONS_LOG.md",
     "BUILD_LOG.md",
+    "BUILD_LOG_SUMMARY.md",
     "CODE_MAP.md",
     "TASKS.md",
     "OPEN_QUESTIONS.md",
+    "WEEKLY_REPORT.md",
+    "FULL_BUILD_HISTORY.md",
     "DAILY_SYNC_LOG.md"
   ],
   "watched_paths": [

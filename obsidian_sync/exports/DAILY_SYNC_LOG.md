@@ -7,6 +7,8 @@ Append-only sync history. Handwritten notes can live above or below the autogene
 
 | Timestamp | Status | Changed Files | Updated Docs | Copied Docs | Note |
 |---|---|---:|---:|---:|---|
+| 2026-06-03 17:30:15 GMT Summer Time | success | 0 | 0 | 8 | Updated 0 export docs. Changed watched source files: 0. Copied 8 docs to the configured vault. |
+| 2026-06-03 17:29:39 GMT Summer Time | success | 0 | 5 | 6 | Updated 5 export docs. Changed watched source files: 0. Copied 6 docs to the configured vault. |
 | 2026-06-03 17:22:47 GMT Summer Time | success | 0 | 4 | 8 | Updated 4 export docs. Changed watched source files: 0. Copied 8 docs to the configured vault. |
 
 ## Latest Run Details
@@ -14,6 +16,6 @@ Append-only sync history. Handwritten notes can live above or below the autogene
 - Repo root: `D:\Dev\Projects\New Earth - Command Dashboard`
 - Vault destination: `D:\NEW_EARTH_OMEGA_OS_PACK\09_KNOWLEDGE_VAULT_OBSIDIAN\NEW_EARTH_OMEGA_KNOWLEDGE_VAULT\01_ACTIVE_PROJECTS`
 - Changed watched source files: 0
-- Updated export docs: PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, BUILD_LOG.md, OPEN_QUESTIONS.md
-- Copied docs: PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, DECISIONS_LOG.md, BUILD_LOG.md, CODE_MAP.md, TASKS.md, OPEN_QUESTIONS.md, DAILY_SYNC_LOG.md
+- Updated export docs: None
+- Copied docs: CURRENT_STATE.md, ARCHITECTURE.md, ROADMAP.md, DECISIONS.md, BUILD_LOG_SUMMARY.md, WEEKLY_REPORT.md, FULL_BUILD_HISTORY.md, DAILY_SYNC_LOG.md
 <!-- AUTO-GENERATED:END -->

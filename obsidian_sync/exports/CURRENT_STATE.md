@@ -48,10 +48,11 @@ It is built to reduce overwhelm and keep the day organized from one calm dashboa
 
 ## Related Files
 
-- [[ARCHITECTURE]]
-- [[ROADMAP]]
-- [[DECISIONS]]
-- [[BUILD_LOG]]
+- [[NEW_EARTH_DASHBOARD_INDEX]]
+- [[NEW_EARTH_DASHBOARD_ARCHITECTURE]]
+- [[NEW_EARTH_DASHBOARD_ROADMAP]]
+- [[NEW_EARTH_DASHBOARD_DECISIONS]]
+- [[NEW_EARTH_DASHBOARD_BUILD_LOG]]
 - `README.md`
 - `docs/README.md`
 - `docs/fsd/00_master_index.md`

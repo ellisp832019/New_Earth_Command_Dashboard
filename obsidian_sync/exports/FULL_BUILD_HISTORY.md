@@ -298,6 +298,14 @@ This was a stability and documentation day. Voice copy and history got tighter, 
 
 The latest recorded work links meetings back into the broader task and project system, while also strengthening knowledge library retry flow, QR manifests, treasury review, and backup notes.
 
+## 2026-06-03 - Obsidian Sync Module And Vault Cleanup
+
+- `b2294ab` Add Obsidian sync module and exports
+- `2ff0d70` Repoint Obsidian sync to Omega vault
+- `bf12feb` Point Obsidian sync at Omega vault pack
+
+This brought the Obsidian sync module into the repo, added the export set, and then cleaned up the vault destination so the notes now point at the real Omega knowledge vault path.
+
 ## Development Log Correlation
 
 The development log in `docs/developer_guide/development_log.md` confirms the major project phases:

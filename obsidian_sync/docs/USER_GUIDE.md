@@ -44,6 +44,7 @@ The note names are mirrored with a prefix so the vault can keep dashboard notes 
 
 ```text
 NEW_EARTH_DASHBOARD_PROJECT_OVERVIEW.md
+NEW_EARTH_DASHBOARD_INDEX.md
 NEW_EARTH_DASHBOARD_CURRENT_PROGRESS.md
 NEW_EARTH_DASHBOARD_BUILD_LOG.md
 ```
