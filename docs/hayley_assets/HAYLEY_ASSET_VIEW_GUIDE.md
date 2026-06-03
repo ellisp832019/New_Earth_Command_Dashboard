@@ -165,6 +165,8 @@ Use this when you need a calm view of what the assets may be worth.
 
 For a printable one-page version, use [Hayley and Ellis Inventory Session Checklist](HAYLEY_INVENTORY_SESSION_CHECKLIST.md).
 
+Inside the app, the Inventory Session page also has quick links for the printable checklist, the QR guide, and the inventory sessions folder so the weekly pack stays close to the working flow.
+
 ## What the sync card is for
 
 The `Asset sync` card helps you see whether the journal is connected and whether conflicts are showing.

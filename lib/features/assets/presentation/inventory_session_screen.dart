@@ -133,6 +133,7 @@ class _InventorySessionScreenState
                             ),
                           ),
                           data: (sessionLogTable) {
+                            final assetsRootPath = workspace.assetsRootPath;
                             final qrLabelsByAssetId = {
                               for (final row in labelsTable.rows)
                                 if ((row['asset_id'] ?? '').trim().isNotEmpty)
@@ -252,6 +253,30 @@ class _InventorySessionScreenState
                                                     ),
                                               isBusy: _isBuilding,
                                               latestPack: _latestPack,
+                                            ),
+                                            const SizedBox(height: 20),
+                                            _InventoryReferenceCard(
+                                              onOpenChecklist: () => _openRepoFile(
+                                                path.join(
+                                                  'docs',
+                                                  'hayley_assets',
+                                                  'HAYLEY_INVENTORY_SESSION_CHECKLIST.md',
+                                                ),
+                                              ),
+                                              onOpenQrGuide: () => _openRepoFile(
+                                                path.join(
+                                                  'docs',
+                                                  'hayley_assets',
+                                                  'HAYLEY_QR_LABEL_GUIDE.md',
+                                                ),
+                                              ),
+                                              onOpenSessionsFolder:
+                                                  assetsRootPath == null
+                                                  ? null
+                                                  : () =>
+                                                        _openInventorySessionsFolder(
+                                                          assetsRootPath,
+                                                        ),
                                             ),
                                             const SizedBox(height: 20),
                                             _InventoryFollowUpCard(
@@ -538,6 +563,18 @@ class _InventorySessionScreenState
     await Process.start('explorer.exe', [folder.path]);
   }
 
+  Future<void> _openInventorySessionsFolder(String assetsRootPath) async {
+    final folder = Directory(
+      path.join(
+        assetsRootPath,
+        '12_PHOTOS_QR_LABELS_AND_BINS',
+        '04_INVENTORY_SESSIONS',
+      ),
+    );
+    await folder.create(recursive: true);
+    await _openFolder(folder);
+  }
+
   Future<void> _openFile(File file) async {
     if (!Platform.isWindows) return;
     await Process.start('cmd.exe', [
@@ -546,6 +583,15 @@ class _InventorySessionScreenState
       '""',
       file.path,
     ], workingDirectory: file.parent.path);
+  }
+
+  Future<void> _openRepoFile(String relativePath) async {
+    final file = File(path.join(Directory.current.path, relativePath));
+    if (!await file.exists()) {
+      return;
+    }
+
+    await _openFile(file);
   }
 
   Future<void> _copyPath(String value) async {
@@ -820,6 +866,65 @@ class _InventoryPlanCard extends StatelessWidget {
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: const Text('Open latest PDF'),
                 ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InventoryReferenceCard extends StatelessWidget {
+  const _InventoryReferenceCard({
+    required this.onOpenChecklist,
+    required this.onOpenQrGuide,
+    required this.onOpenSessionsFolder,
+  });
+
+  final VoidCallback onOpenChecklist;
+  final VoidCallback onOpenQrGuide;
+  final VoidCallback? onOpenSessionsFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Session references',
+            icon: Icons.menu_book_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Keep the printable checklist and the QR guide open when you are actually counting. They stay close to the local workflow and do not change the records.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenChecklist,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Open checklist'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrGuide,
+                icon: const Icon(Icons.qr_code_2_outlined),
+                label: const Text('Open QR guide'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenSessionsFolder,
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Open sessions folder'),
+              ),
             ],
           ),
         ],
