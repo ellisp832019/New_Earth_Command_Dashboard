@@ -11,7 +11,8 @@ It scans the source repo, updates generated docs, and mirrors them into an Obsid
 1. Copy the `obsidian_sync` folder into the repo root.
 2. Edit `obsidian_sync_config.json`.
 3. Set the vault destination path.
-4. Run the manual sync command.
+4. Set the note prefix if the vault uses project-prefixed file names.
+5. Run the manual sync command.
 
 ## Manual Sync
 
@@ -31,3 +32,18 @@ It scans the source repo, updates generated docs, and mirrors them into an Obsid
 - The module is local-first and does not require cloud sync.
 - The vault path should be configured before mirror mode is used.
 
+## New Earth Vault Layout
+
+For the New Earth Dashboard, the synced files are intended to land in:
+
+```text
+D:/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS
+```
+
+The note names are mirrored with a prefix so the vault can keep dashboard notes grouped and recognisable:
+
+```text
+NEW_EARTH_DASHBOARD_PROJECT_OVERVIEW.md
+NEW_EARTH_DASHBOARD_CURRENT_PROGRESS.md
+NEW_EARTH_DASHBOARD_BUILD_LOG.md
+```

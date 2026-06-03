@@ -2,8 +2,9 @@
   "project_name": "New Earth Command Dashboard",
   "project_type": "dashboard",
   "source_repo_path": "..",
-  "obsidian_vault_path": "D:/NEW_EARTH_OBSIDIAN_VAULT",
-  "obsidian_project_folder": "01_ACTIVE_PROJECTS/NEW_EARTH_COMMAND_DASHBOARD",
+  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT",
+  "obsidian_project_folder": "01_ACTIVE_PROJECTS",
+  "vault_note_prefix": "NEW_EARTH_DASHBOARD_",
   "export_docs": [
     "PROJECT_OVERVIEW.md",
     "CURRENT_PROGRESS.md",

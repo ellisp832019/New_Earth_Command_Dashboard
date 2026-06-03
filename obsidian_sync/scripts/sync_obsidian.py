@@ -57,6 +57,7 @@ class SyncConfig:
     source_repo_path: str
     obsidian_vault_path: str
     obsidian_project_folder: str
+    vault_note_prefix: str
     export_docs: List[str]
     watched_paths: List[str]
     watched_file_patterns: List[str]
@@ -88,6 +89,7 @@ def load_config(config_path: Path) -> SyncConfig:
         source_repo_path=raw.get("source_repo_path", ".."),
         obsidian_vault_path=raw.get("obsidian_vault_path", ""),
         obsidian_project_folder=raw.get("obsidian_project_folder", ""),
+        vault_note_prefix=raw.get("vault_note_prefix", ""),
         export_docs=list(
             raw.get(
                 "export_docs",
@@ -967,15 +969,23 @@ def update_daily_sync_log(
     )
 
 
-def mirror_to_vault(export_root: Path, destination_root: Path, docs: Sequence[str]) -> List[str]:
+def mirror_to_vault(
+    export_root: Path,
+    vault_root: Path,
+    destination_root: Path,
+    docs: Sequence[str],
+    vault_note_prefix: str,
+) -> List[str]:
     copied = []
+    if not vault_root.exists():
+        return copied
     if not destination_root.exists():
         safe_mkdir(destination_root)
     for doc in docs:
         src = export_root / doc
         if not src.exists():
             continue
-        dst = destination_root / doc
+        dst = destination_root / f"{vault_note_prefix}{doc}" if vault_note_prefix else destination_root / doc
         src_text = read_text(src)
         if dst.exists():
             existing = read_text(dst)
@@ -1029,9 +1039,16 @@ def run_sync(config_path: Path) -> SyncResult:
     copied_docs: List[str] = []
     skipped_copy = False
     if config.obsidian_vault_path.strip() and config.obsidian_project_folder.strip():
-        destination = resolve_path(module_root, config.obsidian_vault_path) / config.obsidian_project_folder
+        vault_root = resolve_path(module_root, config.obsidian_vault_path)
+        destination = vault_root / config.obsidian_project_folder
         try:
-            copied_docs = mirror_to_vault(export_root, destination, [*generated_docs.keys(), "DAILY_SYNC_LOG.md"])
+            copied_docs = mirror_to_vault(
+                export_root,
+                vault_root,
+                destination,
+                [*generated_docs.keys(), "DAILY_SYNC_LOG.md"],
+                config.vault_note_prefix,
+            )
         except Exception as exc:  # noqa: BLE001
             skipped_copy = True
             message = f"Exports updated, but vault mirror failed: {exc}"

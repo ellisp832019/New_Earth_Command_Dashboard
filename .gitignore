@@ -93,6 +93,7 @@ import_staging/
 # Local exports
 exports_temp/
 reports_temp/
+obsidian_sync/.sync_state.json
 
 # Personal / sensitive data
 private_receipts/
