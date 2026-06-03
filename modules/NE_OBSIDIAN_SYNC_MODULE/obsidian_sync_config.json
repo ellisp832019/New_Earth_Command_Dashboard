@@ -1,0 +1,38 @@
+{
+  "project_name": "PROJECT_NAME_HERE",
+  "project_type": "app | firmware | dashboard | website | research | hardware | documentation",
+  "repo_root": ".",
+  "obsidian_vault_path": "D:/NEW_EARTH_OBSIDIAN_VAULT",
+  "obsidian_project_folder": "01_ACTIVE_PROJECTS/PROJECT_NAME_HERE",
+  "export_docs": [
+    "CURRENT_STATE.md",
+    "ARCHITECTURE.md",
+    "ROADMAP.md",
+    "DECISIONS.md",
+    "BUILD_LOG.md",
+    "WEEKLY_REPORT.md"
+  ],
+  "source_of_truth": [
+    "README.md",
+    "docs",
+    "src",
+    "lib",
+    "firmware",
+    "software",
+    "CHANGELOG.md",
+    "pubspec.yaml",
+    "platformio.ini",
+    "package.json"
+  ],
+  "ignore": [
+    ".git",
+    "build",
+    "node_modules",
+    ".dart_tool",
+    ".pio",
+    "venv",
+    "__pycache__",
+    "dist",
+    ".next"
+  ]
+}
