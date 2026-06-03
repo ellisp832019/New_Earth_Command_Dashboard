@@ -6,7 +6,7 @@ Use this note for the live project state. The sync tool only edits the autogener
 ## Live Sync Snapshot
 - Changed source files in this run: 0
 - Branch: `feat/asset-intelligence-tab`
-- Commit snapshot: `9ea5c35-dirty`
+- Commit snapshot: `454bee8`
 
 ## Current Risks
 - Keep the app local-first and offline-first.
