@@ -14,10 +14,10 @@ Closed out the first safe version of the New Earth Dashboard Voice Bridge:
 - Marked the task record complete so the repo reflects the finished voice-bridge slice
 
 ## Snapshot
-- Latest commit snapshot: `2026-06-03|e51b1f3|Refresh Obsidian exports after project graph upgrade`
+- Latest commit snapshot: `2026-06-03|60a0db6|Add project map to Obsidian sync`
+- `60a0db6` Add project map to Obsidian sync (2026-06-03)
 - `e51b1f3` Refresh Obsidian exports after project graph upgrade (2026-06-03)
 - `9fb2caa` Add project graph to Obsidian sync (2026-06-03)
-- `71b9139` Refresh Obsidian exports after start page upgrade (2026-06-03)
 
 ## See Also
 - [[NEW_EARTH_DASHBOARD_BUILD_LOG]]
