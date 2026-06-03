@@ -2041,6 +2041,7 @@ void main() {
                 showBusinessCard: true,
                 showLearningCard: true,
                 showContentCard: true,
+                showProjectsWorkspaceSnapshot: true,
                 dailyTopTaskLimit: 3,
                 voiceRepliesEnabled: false,
                 voiceAssistantEnabled: true,

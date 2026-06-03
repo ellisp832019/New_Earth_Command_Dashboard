@@ -8,6 +8,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/project_intelligence_controller.dart';
 import '../data/project_repo_bridge_models.dart';
+import '../../settings/application/settings_controller.dart';
 
 class ProjectsIntelligenceScreen extends ConsumerStatefulWidget {
   const ProjectsIntelligenceScreen({super.key});
@@ -25,9 +26,12 @@ class _ProjectsIntelligenceScreenState
   Widget build(BuildContext context) {
     final bundleSnapshot = ref.watch(projectIntelligenceBundleProvider);
     final workspaceSnapshot = ref.watch(projectsProvider);
+    final settingsSnapshot = ref.watch(settingsSnapshotProvider);
     final service = ref.read(projectRepoBridgeServiceProvider);
-    final showWorkspaceSnapshot =
-        ref.watch(projectHubWorkspaceExpandedProvider);
+    final showWorkspaceSnapshot = settingsSnapshot.maybeWhen(
+      data: (snapshot) => snapshot.settings.showProjectsWorkspaceSnapshot,
+      orElse: () => true,
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -242,9 +246,9 @@ class _ProjectsIntelligenceScreenState
                 workspaceSnapshot: workspaceSnapshot,
                 isExpanded: showWorkspaceSnapshot,
                 onToggle: () {
-                  ref
-                      .read(projectHubWorkspaceExpandedProvider.notifier)
-                      .toggle();
+                  ref.read(settingsControllerProvider).setShowProjectsWorkspaceSnapshot(
+                    !showWorkspaceSnapshot,
+                  );
                 },
               ),
               const SizedBox(height: 16),

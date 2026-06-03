@@ -27,6 +27,7 @@ class SettingsRepository {
     bool? showBusinessCard,
     bool? showLearningCard,
     bool? showContentCard,
+    bool? showProjectsWorkspaceSnapshot,
   }) async {
     final settings = await _getOrCreateSettings();
     final timestamp = DateTime.now();
@@ -47,6 +48,10 @@ class SettingsRepository {
         showContentCard: showContentCard == null
             ? const Value.absent()
             : Value(showContentCard),
+        showProjectsWorkspaceSnapshot:
+            showProjectsWorkspaceSnapshot == null
+            ? const Value.absent()
+            : Value(showProjectsWorkspaceSnapshot),
         updatedAt: Value(timestamp),
       ),
     );
@@ -131,6 +136,7 @@ class SettingsRepository {
             showBusinessCard: const Value(true),
             showLearningCard: const Value(true),
             showContentCard: const Value(true),
+            showProjectsWorkspaceSnapshot: const Value(true),
             dailyTopTaskLimit: const Value(3),
             voiceRepliesEnabled: const Value(true),
             voiceAssistantEnabled: const Value(true),

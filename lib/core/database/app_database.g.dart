@@ -8529,6 +8529,21 @@ class $AppSettingsTable extends AppSettings
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _showProjectsWorkspaceSnapshotMeta =
+      const VerificationMeta('showProjectsWorkspaceSnapshot');
+  @override
+  late final GeneratedColumn<bool> showProjectsWorkspaceSnapshot =
+      GeneratedColumn<bool>(
+        'show_projects_workspace_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_projects_workspace_snapshot" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
   static const VerificationMeta _dailyTopTaskLimitMeta = const VerificationMeta(
     'dailyTopTaskLimit',
   );
@@ -8669,6 +8684,7 @@ class $AppSettingsTable extends AppSettings
     showBusinessCard,
     showLearningCard,
     showContentCard,
+    showProjectsWorkspaceSnapshot,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
@@ -8749,6 +8765,15 @@ class $AppSettingsTable extends AppSettings
         showContentCard.isAcceptableOrUnknown(
           data['show_content_card']!,
           _showContentCardMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_projects_workspace_snapshot')) {
+      context.handle(
+        _showProjectsWorkspaceSnapshotMeta,
+        showProjectsWorkspaceSnapshot.isAcceptableOrUnknown(
+          data['show_projects_workspace_snapshot']!,
+          _showProjectsWorkspaceSnapshotMeta,
         ),
       );
     }
@@ -8886,6 +8911,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}show_content_card'],
       )!,
+      showProjectsWorkspaceSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_projects_workspace_snapshot'],
+      )!,
       dailyTopTaskLimit: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}daily_top_task_limit'],
@@ -8947,6 +8976,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showBusinessCard;
   final bool showLearningCard;
   final bool showContentCard;
+  final bool showProjectsWorkspaceSnapshot;
   final int dailyTopTaskLimit;
   final bool voiceRepliesEnabled;
   final bool voiceAssistantEnabled;
@@ -8966,6 +8996,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showBusinessCard,
     required this.showLearningCard,
     required this.showContentCard,
+    required this.showProjectsWorkspaceSnapshot,
     required this.dailyTopTaskLimit,
     required this.voiceRepliesEnabled,
     required this.voiceAssistantEnabled,
@@ -8990,6 +9021,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['show_business_card'] = Variable<bool>(showBusinessCard);
     map['show_learning_card'] = Variable<bool>(showLearningCard);
     map['show_content_card'] = Variable<bool>(showContentCard);
+    map['show_projects_workspace_snapshot'] = Variable<bool>(
+      showProjectsWorkspaceSnapshot,
+    );
     map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit);
     map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled);
     map['voice_assistant_enabled'] = Variable<bool>(voiceAssistantEnabled);
@@ -9029,6 +9063,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showBusinessCard: Value(showBusinessCard),
       showLearningCard: Value(showLearningCard),
       showContentCard: Value(showContentCard),
+      showProjectsWorkspaceSnapshot: Value(showProjectsWorkspaceSnapshot),
       dailyTopTaskLimit: Value(dailyTopTaskLimit),
       voiceRepliesEnabled: Value(voiceRepliesEnabled),
       voiceAssistantEnabled: Value(voiceAssistantEnabled),
@@ -9067,6 +9102,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showBusinessCard: serializer.fromJson<bool>(json['showBusinessCard']),
       showLearningCard: serializer.fromJson<bool>(json['showLearningCard']),
       showContentCard: serializer.fromJson<bool>(json['showContentCard']),
+      showProjectsWorkspaceSnapshot: serializer.fromJson<bool>(
+        json['showProjectsWorkspaceSnapshot'],
+      ),
       dailyTopTaskLimit: serializer.fromJson<int>(json['dailyTopTaskLimit']),
       voiceRepliesEnabled: serializer.fromJson<bool>(
         json['voiceRepliesEnabled'],
@@ -9107,6 +9145,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'showBusinessCard': serializer.toJson<bool>(showBusinessCard),
       'showLearningCard': serializer.toJson<bool>(showLearningCard),
       'showContentCard': serializer.toJson<bool>(showContentCard),
+      'showProjectsWorkspaceSnapshot': serializer.toJson<bool>(
+        showProjectsWorkspaceSnapshot,
+      ),
       'dailyTopTaskLimit': serializer.toJson<int>(dailyTopTaskLimit),
       'voiceRepliesEnabled': serializer.toJson<bool>(voiceRepliesEnabled),
       'voiceAssistantEnabled': serializer.toJson<bool>(voiceAssistantEnabled),
@@ -9139,6 +9180,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showBusinessCard,
     bool? showLearningCard,
     bool? showContentCard,
+    bool? showProjectsWorkspaceSnapshot,
     int? dailyTopTaskLimit,
     bool? voiceRepliesEnabled,
     bool? voiceAssistantEnabled,
@@ -9160,6 +9202,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showBusinessCard: showBusinessCard ?? this.showBusinessCard,
     showLearningCard: showLearningCard ?? this.showLearningCard,
     showContentCard: showContentCard ?? this.showContentCard,
+    showProjectsWorkspaceSnapshot:
+        showProjectsWorkspaceSnapshot ?? this.showProjectsWorkspaceSnapshot,
     dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
     voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
     voiceAssistantEnabled: voiceAssistantEnabled ?? this.voiceAssistantEnabled,
@@ -9202,6 +9246,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showContentCard: data.showContentCard.present
           ? data.showContentCard.value
           : this.showContentCard,
+      showProjectsWorkspaceSnapshot: data.showProjectsWorkspaceSnapshot.present
+          ? data.showProjectsWorkspaceSnapshot.value
+          : this.showProjectsWorkspaceSnapshot,
       dailyTopTaskLimit: data.dailyTopTaskLimit.present
           ? data.dailyTopTaskLimit.value
           : this.dailyTopTaskLimit,
@@ -9244,6 +9291,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('showBusinessCard: $showBusinessCard, ')
           ..write('showLearningCard: $showLearningCard, ')
           ..write('showContentCard: $showContentCard, ')
+          ..write(
+            'showProjectsWorkspaceSnapshot: $showProjectsWorkspaceSnapshot, ',
+          )
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
@@ -9268,6 +9318,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showBusinessCard,
     showLearningCard,
     showContentCard,
+    showProjectsWorkspaceSnapshot,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
@@ -9291,6 +9342,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showBusinessCard == this.showBusinessCard &&
           other.showLearningCard == this.showLearningCard &&
           other.showContentCard == this.showContentCard &&
+          other.showProjectsWorkspaceSnapshot ==
+              this.showProjectsWorkspaceSnapshot &&
           other.dailyTopTaskLimit == this.dailyTopTaskLimit &&
           other.voiceRepliesEnabled == this.voiceRepliesEnabled &&
           other.voiceAssistantEnabled == this.voiceAssistantEnabled &&
@@ -9313,6 +9366,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showBusinessCard;
   final Value<bool> showLearningCard;
   final Value<bool> showContentCard;
+  final Value<bool> showProjectsWorkspaceSnapshot;
   final Value<int> dailyTopTaskLimit;
   final Value<bool> voiceRepliesEnabled;
   final Value<bool> voiceAssistantEnabled;
@@ -9333,6 +9387,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showBusinessCard = const Value.absent(),
     this.showLearningCard = const Value.absent(),
     this.showContentCard = const Value.absent(),
+    this.showProjectsWorkspaceSnapshot = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
@@ -9354,6 +9409,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showBusinessCard = const Value.absent(),
     this.showLearningCard = const Value.absent(),
     this.showContentCard = const Value.absent(),
+    this.showProjectsWorkspaceSnapshot = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
@@ -9377,6 +9433,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showBusinessCard,
     Expression<bool>? showLearningCard,
     Expression<bool>? showContentCard,
+    Expression<bool>? showProjectsWorkspaceSnapshot,
     Expression<int>? dailyTopTaskLimit,
     Expression<bool>? voiceRepliesEnabled,
     Expression<bool>? voiceAssistantEnabled,
@@ -9399,6 +9456,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (showBusinessCard != null) 'show_business_card': showBusinessCard,
       if (showLearningCard != null) 'show_learning_card': showLearningCard,
       if (showContentCard != null) 'show_content_card': showContentCard,
+      if (showProjectsWorkspaceSnapshot != null)
+        'show_projects_workspace_snapshot': showProjectsWorkspaceSnapshot,
       if (dailyTopTaskLimit != null) 'daily_top_task_limit': dailyTopTaskLimit,
       if (voiceRepliesEnabled != null)
         'voice_replies_enabled': voiceRepliesEnabled,
@@ -9430,6 +9489,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showBusinessCard,
     Value<bool>? showLearningCard,
     Value<bool>? showContentCard,
+    Value<bool>? showProjectsWorkspaceSnapshot,
     Value<int>? dailyTopTaskLimit,
     Value<bool>? voiceRepliesEnabled,
     Value<bool>? voiceAssistantEnabled,
@@ -9451,6 +9511,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       showBusinessCard: showBusinessCard ?? this.showBusinessCard,
       showLearningCard: showLearningCard ?? this.showLearningCard,
       showContentCard: showContentCard ?? this.showContentCard,
+      showProjectsWorkspaceSnapshot:
+          showProjectsWorkspaceSnapshot ?? this.showProjectsWorkspaceSnapshot,
       dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
       voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
       voiceAssistantEnabled:
@@ -9498,6 +9560,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     }
     if (showContentCard.present) {
       map['show_content_card'] = Variable<bool>(showContentCard.value);
+    }
+    if (showProjectsWorkspaceSnapshot.present) {
+      map['show_projects_workspace_snapshot'] = Variable<bool>(
+        showProjectsWorkspaceSnapshot.value,
+      );
     }
     if (dailyTopTaskLimit.present) {
       map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit.value);
@@ -9562,6 +9629,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('showBusinessCard: $showBusinessCard, ')
           ..write('showLearningCard: $showLearningCard, ')
           ..write('showContentCard: $showContentCard, ')
+          ..write(
+            'showProjectsWorkspaceSnapshot: $showProjectsWorkspaceSnapshot, ',
+          )
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
@@ -13410,6 +13480,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showBusinessCard,
       Value<bool> showLearningCard,
       Value<bool> showContentCard,
+      Value<bool> showProjectsWorkspaceSnapshot,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
@@ -13432,6 +13503,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showBusinessCard,
       Value<bool> showLearningCard,
       Value<bool> showContentCard,
+      Value<bool> showProjectsWorkspaceSnapshot,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
@@ -13487,6 +13559,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get showContentCard => $composableBuilder(
     column: $table.showContentCard,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showProjectsWorkspaceSnapshot => $composableBuilder(
+    column: $table.showProjectsWorkspaceSnapshot,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13590,6 +13667,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showProjectsWorkspaceSnapshot => $composableBuilder(
+    column: $table.showProjectsWorkspaceSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
     builder: (column) => ColumnOrderings(column),
@@ -13688,6 +13770,11 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get showProjectsWorkspaceSnapshot => $composableBuilder(
+    column: $table.showProjectsWorkspaceSnapshot,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
     builder: (column) => column,
@@ -13778,6 +13865,8 @@ class $$AppSettingsTableTableManager
                 Value<bool> showBusinessCard = const Value.absent(),
                 Value<bool> showLearningCard = const Value.absent(),
                 Value<bool> showContentCard = const Value.absent(),
+                Value<bool> showProjectsWorkspaceSnapshot =
+                    const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
@@ -13799,6 +13888,7 @@ class $$AppSettingsTableTableManager
                 showBusinessCard: showBusinessCard,
                 showLearningCard: showLearningCard,
                 showContentCard: showContentCard,
+                showProjectsWorkspaceSnapshot: showProjectsWorkspaceSnapshot,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,
@@ -13821,6 +13911,8 @@ class $$AppSettingsTableTableManager
                 Value<bool> showBusinessCard = const Value.absent(),
                 Value<bool> showLearningCard = const Value.absent(),
                 Value<bool> showContentCard = const Value.absent(),
+                Value<bool> showProjectsWorkspaceSnapshot =
+                    const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
@@ -13842,6 +13934,7 @@ class $$AppSettingsTableTableManager
                 showBusinessCard: showBusinessCard,
                 showLearningCard: showLearningCard,
                 showContentCard: showContentCard,
+                showProjectsWorkspaceSnapshot: showProjectsWorkspaceSnapshot,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,

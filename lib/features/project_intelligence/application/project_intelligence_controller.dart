@@ -23,17 +23,3 @@ final projectIntelligenceBundleProvider =
       final service = ref.watch(projectRepoBridgeServiceProvider);
       return service.refreshBundle();
     });
-
-final projectHubWorkspaceExpandedProvider =
-    NotifierProvider<ProjectHubWorkspaceExpandedNotifier, bool>(
-      ProjectHubWorkspaceExpandedNotifier.new,
-    );
-
-class ProjectHubWorkspaceExpandedNotifier extends Notifier<bool> {
-  @override
-  bool build() => true;
-
-  void toggle() {
-    state = !state;
-  }
-}

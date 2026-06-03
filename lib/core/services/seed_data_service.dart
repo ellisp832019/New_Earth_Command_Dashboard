@@ -103,6 +103,7 @@ class SeedDataService {
             showBusinessCard: const Value(true),
             showLearningCard: const Value(true),
             showContentCard: const Value(true),
+            showProjectsWorkspaceSnapshot: const Value(true),
             dailyTopTaskLimit: const Value(3),
             voiceRepliesEnabled: const Value(true),
             preferredTtsVoiceName: const Value(null),

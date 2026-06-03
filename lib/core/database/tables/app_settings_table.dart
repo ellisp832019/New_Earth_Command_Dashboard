@@ -15,6 +15,9 @@ class AppSettings extends Table {
       boolean().named('show_learning_card').withDefault(const Constant(true))();
   BoolColumn get showContentCard =>
       boolean().named('show_content_card').withDefault(const Constant(true))();
+  BoolColumn get showProjectsWorkspaceSnapshot => boolean()
+      .named('show_projects_workspace_snapshot')
+      .withDefault(const Constant(true))();
   IntColumn get dailyTopTaskLimit =>
       integer().named('daily_top_task_limit').withDefault(const Constant(3))();
   BoolColumn get voiceRepliesEnabled =>

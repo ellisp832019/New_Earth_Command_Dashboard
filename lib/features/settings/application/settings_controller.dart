@@ -61,6 +61,13 @@ class SettingsController {
     _invalidate();
   }
 
+  Future<void> setShowProjectsWorkspaceSnapshot(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDashboardCardVisibility(showProjectsWorkspaceSnapshot: value);
+    _invalidate();
+  }
+
   Future<void> setThemeMode(String value) async {
     await _ref.read(settingsRepositoryProvider).updateThemeMode(value);
     _invalidate();
