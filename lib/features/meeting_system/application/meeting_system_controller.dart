@@ -55,6 +55,11 @@ final meetingTemplatesProvider = FutureProvider<MeetingTemplatesSnapshot>((
   return service.loadTemplates();
 });
 
+final meetingOmegaHubProvider = FutureProvider<MeetingOmegaHubSnapshot>((ref) {
+  final service = ref.watch(meetingFolderServiceProvider);
+  return service.loadOmegaHub();
+});
+
 final meetingDetailProvider =
     FutureProvider.family<MeetingDetailSnapshot, String>((ref, meetingId) {
       final service = ref.watch(meetingFolderServiceProvider);

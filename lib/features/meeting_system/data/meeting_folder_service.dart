@@ -565,6 +565,34 @@ class MeetingTemplatesSnapshot {
       documents.every((document) => document.exists);
 }
 
+class MeetingOmegaHubFolder {
+  const MeetingOmegaHubFolder({
+    required this.label,
+    required this.path,
+    required this.description,
+  });
+
+  final String label;
+  final String path;
+  final String description;
+}
+
+class MeetingOmegaHubSnapshot {
+  const MeetingOmegaHubSnapshot({
+    required this.omegaRootPath,
+    required this.projectsRootPath,
+    required this.coreFolders,
+    required this.projectAreas,
+    required this.issues,
+  });
+
+  final String? omegaRootPath;
+  final String? projectsRootPath;
+  final List<MeetingOmegaHubFolder> coreFolders;
+  final List<MeetingOmegaHubFolder> projectAreas;
+  final List<String> issues;
+}
+
 class MeetingFolderService {
   MeetingFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -935,6 +963,121 @@ class MeetingFolderService {
     return MeetingTemplatesSnapshot(
       templateFolderPath: templateFolderPath,
       documents: documents,
+      issues: issues,
+    );
+  }
+
+  Future<MeetingOmegaHubSnapshot> loadOmegaHub() async {
+    final workspace = await loadWorkspace();
+    final omegaRootPath = workspace.omegaRootPath;
+    final projectsRootPath = omegaRootPath == null
+        ? null
+        : path.join(omegaRootPath, _projectsRootName);
+    final issues = <String>[...workspace.issues];
+
+    final coreFolders = omegaRootPath == null
+        ? <MeetingOmegaHubFolder>[]
+        : <MeetingOmegaHubFolder>[
+            MeetingOmegaHubFolder(
+              label: '00_MEETINGS_AND_CALLS',
+              path: path.join(
+                omegaRootPath,
+                _projectsRootName,
+                _meetingsFolderName,
+              ),
+              description:
+                  'The living meeting archive. New meetings are created here.',
+            ),
+            MeetingOmegaHubFolder(
+              label: '01_MASTER_INDEXES',
+              path: path.join(
+                omegaRootPath,
+                _projectsRootName,
+                _masterIndexesFolderName,
+              ),
+              description:
+                  'The meeting index and the master meeting log for fast lookup.',
+            ),
+            MeetingOmegaHubFolder(
+              label: '02_ACTIONS_AND_FOLLOW_UPS',
+              path: path.join(
+                omegaRootPath,
+                _projectsRootName,
+                _actionsFolderName,
+              ),
+              description:
+                  'Open actions, follow-up records, and master action logs.',
+            ),
+            MeetingOmegaHubFolder(
+              label: '03_DECISIONS_AND_APPROVALS',
+              path: path.join(
+                omegaRootPath,
+                _projectsRootName,
+                _decisionsFolderName,
+              ),
+              description:
+                  'Decisions and approval trail for the meeting system.',
+            ),
+            MeetingOmegaHubFolder(
+              label: '06_TEMPLATES',
+              path: path.join(omegaRootPath, _projectsRootName, '06_TEMPLATES'),
+              description:
+                  'Reusable starter templates that seed each meeting folder.',
+            ),
+          ];
+
+    final projectAreas = <MeetingOmegaHubFolder>[];
+    if (projectsRootPath != null) {
+      final projectsRoot = Directory(projectsRootPath);
+      if (await projectsRoot.exists()) {
+        try {
+          final entries = await projectsRoot.list().toList();
+          final reservedNames = <String>{
+            _meetingsFolderName,
+            _masterIndexesFolderName,
+            _actionsFolderName,
+            _decisionsFolderName,
+            '04_PROJECT_BRIEFS_AND_CURRENT_STATUS',
+            '05_PROPOSALS_QUOTES_AND_OUTREACH',
+            '06_TEMPLATES',
+          };
+
+          for (final entry in entries) {
+            if (entry is! Directory) {
+              continue;
+            }
+
+            final folderName = path.basename(entry.path);
+            if (folderName.startsWith('.')) {
+              continue;
+            }
+            if (reservedNames.contains(folderName)) {
+              continue;
+            }
+
+            projectAreas.add(
+              MeetingOmegaHubFolder(
+                label: folderName,
+                path: entry.path,
+                description:
+                    'Project area and source-of-truth folder inside Omega OS.',
+              ),
+            );
+          }
+          projectAreas.sort((a, b) => a.label.compareTo(b.label));
+        } on FileSystemException {
+          issues.add(
+            'The project areas under 21_PROJECTS_AND_PROGRAMMES could not be listed.',
+          );
+        }
+      }
+    }
+
+    return MeetingOmegaHubSnapshot(
+      omegaRootPath: omegaRootPath,
+      projectsRootPath: projectsRootPath,
+      coreFolders: coreFolders,
+      projectAreas: projectAreas,
       issues: issues,
     );
   }
