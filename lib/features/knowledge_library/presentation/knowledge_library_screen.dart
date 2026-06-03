@@ -67,6 +67,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   KnowledgeLibraryPage? _page;
   KnowledgeLibrarySearchResult? _searchResult;
   KnowledgeLibraryStats? _stats;
+  KnowledgeLibraryExtractionStatus? _extractionStatus;
   KnowledgeLibraryItem? _selectedItem;
   KnowledgeLibraryFilter _filter = KnowledgeLibraryFilter.all;
   String? _sourceSectionFilter;
@@ -153,6 +154,14 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                 },
               ),
               const SizedBox(height: 14),
+              if (_extractionStatus != null) ...[
+                _ExtractionStatusCard(
+                  status: _extractionStatus!,
+                  onOpenReport: _openFailureReport,
+                  onCopyRetryCommand: _copyRetryCommand,
+                ),
+                const SizedBox(height: 14),
+              ],
               if (stats != null)
                 _SourceSectionStrip(
                   sections: stats.bySourceSection,
@@ -263,6 +272,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
     try {
       final stats = await _repository.loadStats();
+      final extractionStatus = await _repository.loadExtractionStatus();
       if (!mounted || serial != _requestSerial) {
         return;
       }
@@ -275,6 +285,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
         setState(() {
           _stats = stats;
+          _extractionStatus = extractionStatus;
           _page = page;
           _searchResult = null;
           _status =
@@ -291,6 +302,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
       setState(() {
         _stats = stats;
+        _extractionStatus = extractionStatus;
         _searchResult = searchResult;
         _page = null;
         _status =
@@ -394,6 +406,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
     try {
       final stats = await _repository.loadStats();
+      final extractionStatus = await _repository.loadExtractionStatus();
       final searchResult = await _repository.search(query: query);
       if (!mounted || serial != _requestSerial) {
         return;
@@ -401,6 +414,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
       setState(() {
         _stats = stats;
+        _extractionStatus = extractionStatus;
         _searchResult = searchResult;
         _page = null;
         _status =
@@ -665,6 +679,49 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _openFailureReport() async {
+    final status = _extractionStatus;
+    if (status == null || status.reportPath.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      await _repository.openFailureReport(status.reportPath);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Opened the extraction failure report.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open the failure report: $error')),
+      );
+    }
+  }
+
+  Future<void> _copyRetryCommand() async {
+    const command = '''
+cd "D:\\Dev\\Projects\\New Earth - Command Dashboard\\modules\\knowledge_engine"
+.\\.venv\\Scripts\\Activate.ps1
+python scripts\\extract_text.py --batch-size 100 --retry-failures
+''';
+
+    await Clipboard.setData(const ClipboardData(text: command));
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Copied extraction retry command.')),
+    );
   }
 }
 
@@ -1072,6 +1129,117 @@ class _SourceSectionStrip extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ExtractionStatusCard extends StatelessWidget {
+  const _ExtractionStatusCard({
+    required this.status,
+    required this.onOpenReport,
+    required this.onCopyRetryCommand,
+  });
+
+  final KnowledgeLibraryExtractionStatus status;
+  final VoidCallback onOpenReport;
+  final VoidCallback onCopyRetryCommand;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasFailures = status.hasFailures;
+
+    return Container(
+      decoration: _panelDecoration(highlighted: hasFailures),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.fact_check_outlined,
+                color: AppColours.darkSecondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Extraction status',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _MiniBadge(
+                label: hasFailures ? 'Needs review' : 'Healthy',
+                accent: hasFailures
+                    ? AppColours.darkAmber
+                    : AppColours.darkSuccess,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'This shows the current text extraction progress plus the local failure report so retries stay easy to manage.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _MiniBadge(
+                label: 'Extracted ${status.extracted}',
+                accent: AppColours.darkSuccess,
+              ),
+              _MiniBadge(
+                label: 'Pending ${status.pending}',
+                accent: AppColours.darkSecondary,
+              ),
+              _MiniBadge(
+                label: 'Failed ${status.failed}',
+                accent: hasFailures
+                    ? AppColours.darkAmber
+                    : AppColours.darkMutedText,
+              ),
+              _MiniBadge(
+                label: 'OCR ${status.ocrRequired}',
+                accent: AppColours.darkPurple,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenReport,
+                icon: const Icon(Icons.description_outlined),
+                label: const Text('Open failure report'),
+              ),
+              TextButton.icon(
+                onPressed: onCopyRetryCommand,
+                icon: const Icon(Icons.restart_alt_outlined),
+                label: const Text('Copy retry command'),
+              ),
+            ],
+          ),
+          if (status.lastRunAt != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Last run: ${DateFormat('d MMM y, HH:mm').format(status.lastRunAt!)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
