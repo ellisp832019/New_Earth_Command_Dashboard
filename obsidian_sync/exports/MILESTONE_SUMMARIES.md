@@ -75,7 +75,7 @@ Phase summaries across the project lifetime.
 
 ## Obsidian Sync And Documentation
 - Date range: 2026-05-23 to 2026-06-03
-- Commit count: 16
+- Commit count: 17
 - Summary: The project memory layer was made portable and easier to maintain inside Obsidian.
 
 ### Anchor Commits

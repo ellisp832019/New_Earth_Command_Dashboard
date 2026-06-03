@@ -17,7 +17,7 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_FULL_BUILD_HISTORY]]
 
 ## What Changed Most Recently
-- Latest commit signal: `2026-06-03|82c1d7d|Add Obsidian start page and intelligence notes`
+- Latest commit signal: `2026-06-03|71b9139|Refresh Obsidian exports after start page upgrade`
 - Branch: `feat/asset-intelligence-tab`
 
 ## Current Focus
@@ -37,6 +37,7 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_MILESTONE_SUMMARIES]]
 - [[NEW_EARTH_DASHBOARD_CHANGE_INTELLIGENCE]]
 - [[NEW_EARTH_DASHBOARD_RISK_TRACKER]]
+- [[NEW_EARTH_DASHBOARD_PROJECT_GRAPH]]
 - [[NEW_EARTH_DASHBOARD_TASKS]]
 - [[NEW_EARTH_DASHBOARD_OPEN_QUESTIONS]]
 <!-- AUTO-GENERATED:END -->

@@ -97,6 +97,7 @@ def load_config(config_path: Path) -> SyncConfig:
                     "START_HERE.md",
                     "INDEX.md",
                     "DOC_REGISTRY.md",
+                    "PROJECT_GRAPH.md",
                     "PROJECT_OVERVIEW.md",
                     "CURRENT_PROGRESS.md",
                     "CURRENT_STATE.md",
@@ -634,6 +635,7 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
                     vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "CURRENT_PROGRESS.md"),
                     vault_link(config, "CODE_MAP.md"),
                     vault_link(config, "MILESTONE_SUMMARIES.md"),
@@ -666,6 +668,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
         ("START_HERE.md", "Entry point", "Human-friendly starting page and navigation hub.", "Canonical"),
         ("INDEX.md", "Entry point", "One-click vault landing page.", "Canonical"),
         ("DOC_REGISTRY.md", "Registry", "Maps the note families and avoids duplicate roles.", "Canonical"),
+        ("PROJECT_GRAPH.md", "Graph", "Relationship map for folders, modules, notes, and workflows.", "Canonical"),
         ("PROJECT_OVERVIEW.md", "Active state", "Project summary, purpose, and current branch signal.", "Canonical"),
         ("CURRENT_STATE.md", "Active state", "Detailed live status, risks, and next actions.", "Canonical"),
         ("CURRENT_PROGRESS.md", "Active state", "What works, what is incomplete, and the live sync signal.", "Canonical"),
@@ -707,6 +710,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
                     vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -767,6 +771,7 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
                     vault_link(config, "MILESTONE_SUMMARIES.md"),
                     vault_link(config, "CHANGE_INTELLIGENCE.md"),
                     vault_link(config, "RISK_TRACKER.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "TASKS.md"),
                     vault_link(config, "OPEN_QUESTIONS.md"),
                 ]
@@ -780,9 +785,108 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
     )
 
 
+def generate_project_graph(context: Dict[str, object], config: SyncConfig, repo_root: Path) -> str:
+    feature_root = repo_root / "lib" / "features"
+    feature_groups = []
+    if feature_root.exists():
+        for child in sorted([p for p in feature_root.iterdir() if p.is_dir()], key=lambda p: p.name):
+            file_count = sum(1 for item in child.rglob("*") if item.is_file())
+            feature_groups.append((f"`lib/features/{child.name}/`", f"{file_count} tracked files"))
+
+    folder_rows = [
+        ("`lib/`", "Flutter features, shared services, and app UI.", "Primary app surface"),
+        ("`docs/`", "Roadmaps, FSD docs, architecture notes, and guides.", "Project memory and spec layer"),
+        ("`modules/`", "Support modules like meeting system and repo tooling.", "Shared operational modules"),
+        ("`assets/`", "Screenshots, guides, and visual support files.", "Reference material"),
+        ("`tools/`", "Desktop helpers and small local scripts.", "Utility layer"),
+        ("`config/`", "Local configuration and path mapping.", "Environment glue"),
+        ("`obsidian_sync/`", "Sync scripts, exports, templates, and docs.", "Obsidian integration"),
+    ]
+    if feature_groups:
+        folder_rows.extend((name, desc, "Feature slice") for name, desc in feature_groups[:12])
+
+    note_rows = [
+        ("START_HERE.md", "Human entry point", "The first note to open in the vault."),
+        ("INDEX.md", "Technical hub", "The menu of canonical notes and logs."),
+        ("DOC_REGISTRY.md", "Canonical map", "The role map that prevents duplicate-purpose notes."),
+        ("PROJECT_OVERVIEW.md", "Project summary", "What the project is and where it is heading."),
+        ("CURRENT_STATE.md", "Live state", "The most detailed active status note."),
+        ("CURRENT_PROGRESS.md", "Progress signal", "What works, what is incomplete, and the sync signal."),
+        ("MILESTONE_SUMMARIES.md", "Phase view", "Grouped story of the project life cycle."),
+        ("CHANGE_INTELLIGENCE.md", "Churn view", "What changed recently and where it happened."),
+        ("RISK_TRACKER.md", "Risk view", "Current blockers and watch items."),
+        ("BUILD_LOG.md", "Snapshot log", "Current build picture and latest progress."),
+        ("FULL_BUILD_HISTORY.md", "Archive", "The full chronological project history."),
+    ]
+
+    flow_rows = [
+        ("Repo source", "Code, docs, and task files in this repository."),
+        ("Sync engine", "Generates Markdown and resolves canonical note roles."),
+        ("Export folder", "Staging area under `obsidian_sync/exports`."),
+        ("Vault mirror", "Copies notes into the Omega vault project folder."),
+        ("Obsidian view", "Human reading, linking, and handwritten notes."),
+    ]
+
+    body = "\n".join(
+        [
+            "## What This Graph Shows",
+            "- The project graph is a relationship map, not another status note.",
+            "- It shows how the code folders, generated notes, and local vault all connect.",
+            "",
+            "## Folder Graph",
+            render_table([("Folder", "Purpose", "Relationship")] + folder_rows),
+            "",
+            "## Note Graph",
+            render_table([("Note", "Role", "Relationship")] + note_rows),
+            "",
+            "## Local-First Flow",
+            render_list([f"{left} -> {right}" for left, right in flow_rows]),
+            "",
+            "## Dependency Spine",
+            render_list(
+                [
+                    "Flutter and Material 3 provide the app shell.",
+                    "`go_router` shapes the navigation graph.",
+                    "`flutter_riverpod` manages state when it is needed.",
+                    "`drift` and SQLite store local project data.",
+                    "The Obsidian sync module turns repo content into vault notes.",
+                ]
+            ),
+            "",
+            "## Relationship Notes",
+            render_list(
+                [
+                    "The registry defines which note owns each role.",
+                    "The start page points humans to the shortest path into the vault.",
+                    "The index keeps the canonical note set easy to scan.",
+                    "The graph note explains how the pieces connect without repeating the content of the other notes.",
+                ]
+            ),
+            "",
+            "## Related Docs",
+            render_list(
+                [
+                    vault_link(config, "START_HERE.md"),
+                    vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_OVERVIEW.md"),
+                    vault_link(config, "CODE_MAP.md"),
+                    vault_link(config, "ARCHITECTURE.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Project Graph",
+        "Relationship map for the repo, notes, and vault flow.",
+        body,
+    )
+
+
 def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     current_docs = [
         "DOC_REGISTRY.md",
+        "PROJECT_GRAPH.md",
         "PROJECT_OVERVIEW.md",
         "CURRENT_STATE.md",
         "CURRENT_PROGRESS.md",
@@ -1648,6 +1752,7 @@ def run_sync(config_path: Path) -> SyncResult:
         "START_HERE.md": generate_start_here(context, config),
         "INDEX.md": generate_index(context, config),
         "DOC_REGISTRY.md": generate_doc_registry(context, config),
+        "PROJECT_GRAPH.md": generate_project_graph(context, config, repo_root),
         "PROJECT_OVERVIEW.md": generate_project_overview(context, config),
         "CURRENT_PROGRESS.md": generate_current_progress(context, config, changed_files + added_files + removed_files),
         "MILESTONE_SUMMARIES.md": generate_milestone_summaries(context, config, repo_root),
