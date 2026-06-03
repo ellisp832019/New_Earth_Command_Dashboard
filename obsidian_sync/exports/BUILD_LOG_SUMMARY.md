@@ -14,10 +14,10 @@ Closed out the first safe version of the New Earth Dashboard Voice Bridge:
 - Marked the task record complete so the repo reflects the finished voice-bridge slice
 
 ## Snapshot
-- Latest commit snapshot: `2026-06-03|da7caca|Refresh Obsidian exports after module status upgrade`
+- Latest commit snapshot: `2026-06-03|b6ecc34|Add module relations to Obsidian sync`
+- `b6ecc34` Add module relations to Obsidian sync (2026-06-03)
 - `da7caca` Refresh Obsidian exports after module status upgrade (2026-06-03)
 - `dd7d80d` Add module status to Obsidian sync (2026-06-03)
-- `26f0a84` Refresh Obsidian exports after project map upgrade (2026-06-03)
 
 ## See Also
 - [[NEW_EARTH_DASHBOARD_BUILD_LOG]]
