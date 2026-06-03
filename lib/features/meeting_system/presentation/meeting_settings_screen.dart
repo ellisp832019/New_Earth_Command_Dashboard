@@ -17,7 +17,36 @@ class MeetingSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
+  final TextEditingController _masterIndexSearchController =
+      TextEditingController();
   bool _refreshing = false;
+  String _masterIndexStatusFilter = 'All';
+
+  static const _masterIndexStatusOptions = <String>[
+    'All',
+    'planned',
+    'open',
+    'waiting',
+    'complete',
+    'archived',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _masterIndexSearchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _masterIndexSearchController.removeListener(_onSearchChanged);
+    _masterIndexSearchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +54,8 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
     final hubSnapshot = ref.watch(meetingOmegaHubProvider);
     final masterIndexSnapshot = ref.watch(meetingMasterIndexProvider);
     final latestMeetingSnapshot = ref.watch(meetingLatestMeetingProvider);
+    final statusSummarySnapshot = ref.watch(meetingStatusSummaryProvider);
+    final rowsSnapshot = ref.watch(meetingListRowsProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -289,6 +320,227 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    statusSummarySnapshot.when(
+                      loading: () => Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: meetingPanelDecoration(),
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (error, stackTrace) => Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: meetingPanelDecoration(),
+                        child: _MeetingSettingsError(
+                          error: error,
+                          onRetry: () =>
+                              ref.invalidate(meetingStatusSummaryProvider),
+                        ),
+                      ),
+                      data: (summary) => Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: meetingPanelDecoration(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const MeetingSectionHeader(
+                              title: 'Meeting status summary',
+                              subtitle:
+                                  'A calm count of where the meeting work is right now.',
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                MeetingStatChip(
+                                  label: 'Total',
+                                  value: '${summary.totalCount}',
+                                  accentColor: AppColours.darkSecondary,
+                                ),
+                                MeetingStatChip(
+                                  label: 'Planned',
+                                  value: '${summary.plannedCount}',
+                                  accentColor: AppColours.darkAmber,
+                                ),
+                                MeetingStatChip(
+                                  label: 'Open',
+                                  value: '${summary.openCount}',
+                                  accentColor: AppColours.darkPrimary,
+                                ),
+                                MeetingStatChip(
+                                  label: 'Waiting',
+                                  value: '${summary.waitingCount}',
+                                  accentColor: AppColours.darkPurple,
+                                ),
+                                MeetingStatChip(
+                                  label: 'Complete',
+                                  value: '${summary.completeCount}',
+                                  accentColor: AppColours.darkSuccess,
+                                ),
+                                MeetingStatChip(
+                                  label: 'Archived',
+                                  value: '${summary.archivedCount}',
+                                  accentColor: AppColours.darkMutedText,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    rowsSnapshot.when(
+                      loading: () => Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: meetingPanelDecoration(),
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (error, stackTrace) => Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: meetingPanelDecoration(),
+                        child: _MeetingSettingsError(
+                          error: error,
+                          onRetry: () =>
+                              ref.invalidate(meetingListRowsProvider),
+                        ),
+                      ),
+                      data: (rows) {
+                        final filteredRows =
+                            rows
+                                .where(_matchesMasterIndexFilter)
+                                .toList(growable: false)
+                              ..sort(
+                                (a, b) =>
+                                    b.meeting.date.compareTo(a.meeting.date),
+                              );
+
+                        return Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: meetingPanelDecoration(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const MeetingSectionHeader(
+                                title: 'Master index search',
+                                subtitle:
+                                    'Search the live meeting index by project, person, title, status, or folder path.',
+                              ),
+                              const SizedBox(height: 12),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final wide = constraints.maxWidth >= 980;
+                                  final searchField = TextField(
+                                    controller: _masterIndexSearchController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Search meetings',
+                                      prefixIcon: Icon(Icons.search),
+                                    ),
+                                  );
+                                  final statusField =
+                                      DropdownButtonFormField<String>(
+                                        initialValue: _masterIndexStatusFilter,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Status',
+                                        ),
+                                        items: _masterIndexStatusOptions
+                                            .map(
+                                              (status) =>
+                                                  DropdownMenuItem<String>(
+                                                    value: status,
+                                                    child: Text(status),
+                                                  ),
+                                            )
+                                            .toList(growable: false),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _masterIndexStatusFilter =
+                                                value ?? 'All';
+                                          });
+                                        },
+                                      );
+
+                                  if (wide) {
+                                    return Row(
+                                      children: [
+                                        Expanded(child: searchField),
+                                        const SizedBox(width: 12),
+                                        SizedBox(
+                                          width: 180,
+                                          child: statusField,
+                                        ),
+                                      ],
+                                    );
+                                  }
+
+                                  return Column(
+                                    children: [
+                                      searchField,
+                                      const SizedBox(height: 12),
+                                      statusField,
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  for (final status
+                                      in _masterIndexStatusOptions)
+                                    ChoiceChip(
+                                      label: Text(status),
+                                      selected:
+                                          _masterIndexStatusFilter == status,
+                                      onSelected: (_) {
+                                        setState(() {
+                                          _masterIndexStatusFilter = status;
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                '${filteredRows.length} matching meeting${filteredRows.length == 1 ? '' : 's'}',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: AppColours.darkMutedText),
+                              ),
+                              const SizedBox(height: 12),
+                              if (filteredRows.isEmpty)
+                                const MeetingEmptyPanel(
+                                  title: 'No meetings match the current filter',
+                                  message:
+                                      'Try a wider search or switch the status chip back to All.',
+                                  icon: Icons.search_off_outlined,
+                                )
+                              else
+                                ...filteredRows
+                                    .take(5)
+                                    .map(
+                                      (row) => Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 10,
+                                        ),
+                                        child: _MasterIndexResultTile(
+                                          row: row,
+                                          onOpenMeeting: () => context.push(
+                                            RouteNames.meetingDetail(
+                                              row.meeting.id,
+                                            ),
+                                          ),
+                                          onOpenFolder: () =>
+                                              service.openFolder(
+                                                row.meeting.folderPath,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     Container(
@@ -596,6 +848,44 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
       }
     }
   }
+
+  bool _matchesMasterIndexFilter(MeetingListRow row) {
+    final search = _masterIndexSearchController.text.trim().toLowerCase();
+    final statusFilter = _masterIndexStatusFilter.toLowerCase();
+    final meeting = row.meeting;
+    final status = meeting.status.trim().toLowerCase();
+
+    if (statusFilter != 'all' && status != statusFilter) {
+      return false;
+    }
+
+    if (search.isEmpty) {
+      return true;
+    }
+
+    final searchableTerms = <String>[
+      meeting.id,
+      meeting.date,
+      meeting.project,
+      meeting.title,
+      meeting.personOrGroup,
+      meeting.meetingType,
+      meeting.status,
+      meeting.folderPath,
+      meeting.agendaPath,
+      meeting.notesPath,
+      meeting.actionsPath,
+      meeting.decisionsPath,
+      meeting.followUpPath,
+      meeting.purpose,
+      meeting.tags.join(' '),
+      row.actionCount.toString(),
+      row.decisionCount.toString(),
+      row.followUpLabel,
+    ];
+
+    return searchableTerms.any((value) => value.toLowerCase().contains(search));
+  }
 }
 
 class _ProjectAreaTile extends StatelessWidget {
@@ -714,6 +1004,132 @@ class _PathRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MasterIndexResultTile extends StatelessWidget {
+  const _MasterIndexResultTile({
+    required this.row,
+    required this.onOpenMeeting,
+    required this.onOpenFolder,
+  });
+
+  final MeetingListRow row;
+  final VoidCallback onOpenMeeting;
+  final VoidCallback onOpenFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    final meeting = row.meeting;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      meeting.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${meeting.date} • ${meeting.project} • ${meeting.personOrGroup}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColours.darkPrimary.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppColours.darkPrimary.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Text(
+                  meeting.status,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              MeetingStatChip(
+                label: 'Actions',
+                value: '${row.actionCount}',
+                accentColor: AppColours.darkSecondary,
+              ),
+              MeetingStatChip(
+                label: 'Decisions',
+                value: '${row.decisionCount}',
+                accentColor: AppColours.darkPurple,
+              ),
+              MeetingStatChip(
+                label: 'Follow-up',
+                value: row.followUpLabel,
+                accentColor: AppColours.darkSuccess,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SelectableText(
+            meeting.folderPath,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkSecondary),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenMeeting,
+                icon: const Icon(Icons.open_in_new_outlined),
+                label: const Text('Open meeting'),
+              ),
+              TextButton.icon(
+                onPressed: onOpenFolder,
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Open folder'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

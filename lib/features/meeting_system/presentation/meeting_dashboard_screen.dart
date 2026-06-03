@@ -20,10 +20,12 @@ class MeetingDashboardScreen extends ConsumerStatefulWidget {
 class _MeetingDashboardScreenState
     extends ConsumerState<MeetingDashboardScreen> {
   bool _bootstrapping = false;
+  bool _exportingLatestBundle = false;
 
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(meetingDashboardSnapshotProvider);
+    final statusSummarySnapshot = ref.watch(meetingStatusSummaryProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -160,6 +162,22 @@ class _MeetingDashboardScreenState
                             label: const Text('Follow-ups'),
                           ),
                           TextButton.icon(
+                            onPressed: data.recentMeetings.isEmpty ||
+                                    _exportingLatestBundle
+                                ? null
+                                : () => _exportLatestBundle(data.recentMeetings.first),
+                            icon: _exportingLatestBundle
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.inventory_2_outlined),
+                            label: const Text('Export latest'),
+                          ),
+                          TextButton.icon(
                             onPressed: _bootstrapping ? null : _createStructure,
                             icon: _bootstrapping
                                 ? const SizedBox(
@@ -199,6 +217,62 @@ class _MeetingDashboardScreenState
                         ],
                       );
                     },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                statusSummarySnapshot.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (error, stackTrace) => const SizedBox.shrink(),
+                  data: (statusSummary) => Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: meetingPanelDecoration(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const MeetingSectionHeader(
+                          title: 'Status summary',
+                          subtitle:
+                              'A quick glance at the current meeting state mix.',
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            MeetingStatChip(
+                              label: 'Total',
+                              value: '${statusSummary.totalCount}',
+                              accentColor: AppColours.darkSecondary,
+                            ),
+                            MeetingStatChip(
+                              label: 'Planned',
+                              value: '${statusSummary.plannedCount}',
+                              accentColor: AppColours.darkAmber,
+                            ),
+                            MeetingStatChip(
+                              label: 'Open',
+                              value: '${statusSummary.openCount}',
+                              accentColor: AppColours.darkPrimary,
+                            ),
+                            MeetingStatChip(
+                              label: 'Waiting',
+                              value: '${statusSummary.waitingCount}',
+                              accentColor: AppColours.darkPurple,
+                            ),
+                            MeetingStatChip(
+                              label: 'Complete',
+                              value: '${statusSummary.completeCount}',
+                              accentColor: AppColours.darkSuccess,
+                            ),
+                            MeetingStatChip(
+                              label: 'Archived',
+                              value: '${statusSummary.archivedCount}',
+                              accentColor: AppColours.darkMutedText,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -343,6 +417,31 @@ class _MeetingDashboardScreenState
       if (mounted) {
         setState(() {
           _bootstrapping = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _exportLatestBundle(MeetingRecord meeting) async {
+    setState(() {
+      _exportingLatestBundle = true;
+    });
+
+    try {
+      final result = await ref
+          .read(meetingFolderServiceProvider)
+          .exportMeetingBundle(meeting.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Latest bundle exported to ${result.bundlePath}')),
+      );
+      await ref.read(meetingFolderServiceProvider).openFolder(result.bundlePath);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _exportingLatestBundle = false;
         });
       }
     }

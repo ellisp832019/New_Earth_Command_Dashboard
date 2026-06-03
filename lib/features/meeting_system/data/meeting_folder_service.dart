@@ -609,6 +609,24 @@ class MeetingMasterIndexSnapshot {
   final bool exists;
 }
 
+class MeetingStatusSummarySnapshot {
+  const MeetingStatusSummarySnapshot({
+    required this.totalCount,
+    required this.plannedCount,
+    required this.openCount,
+    required this.waitingCount,
+    required this.completeCount,
+    required this.archivedCount,
+  });
+
+  final int totalCount;
+  final int plannedCount;
+  final int openCount;
+  final int waitingCount;
+  final int completeCount;
+  final int archivedCount;
+}
+
 class MeetingFolderService {
   MeetingFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -896,6 +914,44 @@ class MeetingFolderService {
       return null;
     }
     return meetings.first;
+  }
+
+  Future<MeetingStatusSummarySnapshot> loadStatusSummary() async {
+    final meetings = await listMeetings();
+    var plannedCount = 0;
+    var openCount = 0;
+    var waitingCount = 0;
+    var completeCount = 0;
+    var archivedCount = 0;
+
+    for (final meeting in meetings) {
+      switch (meeting.status.trim().toLowerCase()) {
+        case 'planned':
+          plannedCount++;
+          break;
+        case 'open':
+          openCount++;
+          break;
+        case 'waiting':
+          waitingCount++;
+          break;
+        case 'complete':
+          completeCount++;
+          break;
+        case 'archived':
+          archivedCount++;
+          break;
+      }
+    }
+
+    return MeetingStatusSummarySnapshot(
+      totalCount: meetings.length,
+      plannedCount: plannedCount,
+      openCount: openCount,
+      waitingCount: waitingCount,
+      completeCount: completeCount,
+      archivedCount: archivedCount,
+    );
   }
 
   Future<MeetingTemplatesSnapshot> loadTemplates() async {

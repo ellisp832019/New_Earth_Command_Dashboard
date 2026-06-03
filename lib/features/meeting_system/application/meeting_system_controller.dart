@@ -72,6 +72,12 @@ final meetingLatestMeetingProvider = FutureProvider<MeetingRecord?>((ref) {
   return service.getLatestMeeting();
 });
 
+final meetingStatusSummaryProvider =
+    FutureProvider<MeetingStatusSummarySnapshot>((ref) {
+      final service = ref.watch(meetingFolderServiceProvider);
+      return service.loadStatusSummary();
+    });
+
 final meetingDetailProvider =
     FutureProvider.family<MeetingDetailSnapshot, String>((ref, meetingId) {
       final service = ref.watch(meetingFolderServiceProvider);

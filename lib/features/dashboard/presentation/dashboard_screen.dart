@@ -15,6 +15,7 @@ import '../../assets/data/qr_label_printing_service.dart';
 import '../../inbox/application/inbox_controller.dart';
 import '../../knowledge_library/data/knowledge_library_repository.dart';
 import '../../meeting_system/application/meeting_system_controller.dart';
+import '../../meeting_system/data/meeting_folder_service.dart';
 import '../../meeting_system/presentation/meeting_system_widgets.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
@@ -726,10 +727,13 @@ class MeetingSystemDashboardCard extends ConsumerStatefulWidget {
 class _MeetingSystemDashboardCardState
     extends ConsumerState<MeetingSystemDashboardCard> {
   bool _bootstrapping = false;
+  bool _exportingLatestBundle = false;
 
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(meetingDashboardSnapshotProvider);
+    final latestMeetingSnapshot = ref.watch(meetingLatestMeetingProvider);
+    final statusSummarySnapshot = ref.watch(meetingStatusSummaryProvider);
 
     return snapshot.when(
       loading: () => Container(
@@ -769,6 +773,8 @@ class _MeetingSystemDashboardCardState
       ),
       data: (data) {
         final workspace = data.workspace;
+        final latestMeeting = latestMeetingSnapshot.asData?.value;
+        final statusSummary = statusSummarySnapshot.asData?.value;
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -834,6 +840,35 @@ class _MeetingSystemDashboardCardState
                           ),
                         ],
                       ),
+                      if (statusSummary != null) ...[
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            MeetingStatChip(
+                              label: 'Planned',
+                              value: '${statusSummary.plannedCount}',
+                              accentColor: AppColours.darkAmber,
+                            ),
+                            MeetingStatChip(
+                              label: 'Open',
+                              value: '${statusSummary.openCount}',
+                              accentColor: AppColours.darkPrimary,
+                            ),
+                            MeetingStatChip(
+                              label: 'Waiting',
+                              value: '${statusSummary.waitingCount}',
+                              accentColor: AppColours.darkPurple,
+                            ),
+                            MeetingStatChip(
+                              label: 'Complete',
+                              value: '${statusSummary.completeCount}',
+                              accentColor: AppColours.darkSuccess,
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   );
 
@@ -876,6 +911,22 @@ class _MeetingSystemDashboardCardState
                             context.push(RouteNames.meetingSettings),
                         icon: const Icon(Icons.settings_outlined),
                         label: const Text('Settings'),
+                      ),
+                      TextButton.icon(
+                        onPressed:
+                            _exportingLatestBundle || latestMeeting == null
+                            ? null
+                            : () => _exportLatestBundle(latestMeeting),
+                        icon: _exportingLatestBundle
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.archive_outlined),
+                        label: const Text('Export latest'),
                       ),
                       TextButton.icon(
                         onPressed: _bootstrapping ? null : _createStructure,
@@ -940,6 +991,44 @@ class _MeetingSystemDashboardCardState
       if (mounted) {
         setState(() {
           _bootstrapping = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _exportLatestBundle(MeetingRecord meeting) async {
+    setState(() {
+      _exportingLatestBundle = true;
+    });
+
+    try {
+      final service = ref.read(meetingFolderServiceProvider);
+      final result = await service.exportMeetingBundle(meeting.id);
+      if (!mounted) {
+        return;
+      }
+
+      final messenger = ScaffoldMessenger.of(context);
+      await service.openFolder(result.bundlePath);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Exported latest meeting bundle to ${result.bundlePath}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not export the latest bundle: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _exportingLatestBundle = false;
         });
       }
     }
