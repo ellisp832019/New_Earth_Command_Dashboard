@@ -69,6 +69,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   KnowledgeLibraryStats? _stats;
   KnowledgeLibraryItem? _selectedItem;
   KnowledgeLibraryFilter _filter = KnowledgeLibraryFilter.all;
+  String? _sourceSectionFilter;
   String _query = '';
   String _status = 'Loading the Omega OS library catalogue...';
   bool _isLoadingMore = false;
@@ -91,6 +92,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   List<KnowledgeLibraryItem> get _items =>
       _currentItems.where(_filter.matches).toList(growable: false);
 
+  List<KnowledgeLibraryItem> get _visibleItems =>
+      _items.where(_matchesSourceSection).toList(growable: false);
+
   List<KnowledgeLibraryItem> get _currentItems =>
       _searchResult?.items ?? _page?.items ?? const [];
 
@@ -105,9 +109,13 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   Widget build(BuildContext context) {
     final stats = _stats;
     final selectedItem = _selectedItem;
-    final visibleItems = _items;
+    final visibleItems = _visibleItems;
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 1200;
+    final hasActiveFilters =
+        _query.trim().isNotEmpty ||
+        _filter != KnowledgeLibraryFilter.all ||
+        _sourceSectionFilter != null;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -145,6 +153,36 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                 },
               ),
               const SizedBox(height: 14),
+              if (stats != null)
+                _SourceSectionStrip(
+                  sections: stats.bySourceSection,
+                  selected: _sourceSectionFilter,
+                  onSelected: (value) {
+                    setState(() {
+                      _sourceSectionFilter = value;
+                      _ensureSelectionStillVisible();
+                    });
+                  },
+                  onClear: _sourceSectionFilter == null
+                      ? null
+                      : () {
+                          setState(() {
+                            _sourceSectionFilter = null;
+                            _ensureSelectionStillVisible();
+                          });
+                        },
+                ),
+              if (stats != null) const SizedBox(height: 14),
+              if (hasActiveFilters)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _clearAllFilters,
+                    icon: const Icon(Icons.filter_alt_off_outlined),
+                    label: const Text('Clear all filters'),
+                  ),
+                ),
+              if (hasActiveFilters) const SizedBox(height: 10),
               if (stats != null) _StatsGrid(stats: stats),
               if (stats != null) const SizedBox(height: 16),
               Expanded(
@@ -388,6 +426,17 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     unawaited(_refreshAll());
   }
 
+  void _clearAllFilters() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _query = '';
+      _filter = KnowledgeLibraryFilter.all;
+      _sourceSectionFilter = null;
+    });
+    unawaited(_refreshAll());
+  }
+
   void _selectItem(KnowledgeLibraryItem item) {
     setState(() {
       _selectedItem = item;
@@ -415,12 +464,22 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   void _ensureSelectionStillVisible() {
     final selected = _selectedItem;
     if (selected == null) {
-      _selectedItem = _items.isEmpty ? null : _items.first;
+      _selectedItem = _visibleItems.isEmpty ? null : _visibleItems.first;
       return;
     }
 
-    final match = _findItemById(_items, selected.id);
-    _selectedItem = match ?? (_items.isEmpty ? null : _items.first);
+    final match = _findItemById(_visibleItems, selected.id);
+    _selectedItem =
+        match ?? (_visibleItems.isEmpty ? null : _visibleItems.first);
+  }
+
+  bool _matchesSourceSection(KnowledgeLibraryItem item) {
+    final filter = _sourceSectionFilter;
+    if (filter == null || filter.trim().isEmpty) {
+      return true;
+    }
+
+    return item.sourceSection == filter;
   }
 
   KnowledgeLibraryItem? _findItemById(
@@ -920,6 +979,99 @@ class _FilterStrip extends StatelessWidget {
             ),
           )
           .toList(growable: false),
+    );
+  }
+}
+
+class _SourceSectionStrip extends StatelessWidget {
+  const _SourceSectionStrip({
+    required this.sections,
+    required this.selected,
+    required this.onSelected,
+    this.onClear,
+  });
+
+  final Map<String, int> sections;
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = sections.entries.toList()
+      ..sort((left, right) {
+        final countCompare = right.value.compareTo(left.value);
+        if (countCompare != 0) {
+          return countCompare;
+        }
+
+        return left.key.toLowerCase().compareTo(right.key.toLowerCase());
+      });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Source section',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: AppColours.darkText),
+            ),
+            const Spacer(),
+            if (onClear != null)
+              TextButton(onPressed: onClear, child: const Text('Clear')),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              selected: selected == null,
+              label: const Text('All sections'),
+              onSelected: (_) => onSelected(null),
+              labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: selected == null
+                    ? AppColours.darkBackground
+                    : AppColours.darkText,
+                fontWeight: FontWeight.w600,
+              ),
+              selectedColor: AppColours.darkPrimary,
+              backgroundColor: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+              side: BorderSide(
+                color: selected == null
+                    ? AppColours.darkPrimary
+                    : AppColours.darkOutline,
+              ),
+            ),
+            ...entries.map(
+              (entry) => ChoiceChip(
+                selected: entry.key == selected,
+                label: Text('${entry.key} (${entry.value})'),
+                onSelected: (_) => onSelected(entry.key),
+                labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: entry.key == selected
+                      ? AppColours.darkBackground
+                      : AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+                selectedColor: AppColours.darkSecondary,
+                backgroundColor: AppColours.darkSurfaceAlt.withValues(
+                  alpha: 0.9,
+                ),
+                side: BorderSide(
+                  color: entry.key == selected
+                      ? AppColours.darkSecondary
+                      : AppColours.darkOutline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
