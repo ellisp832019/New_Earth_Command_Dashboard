@@ -13,12 +13,12 @@ What changed recently and where the churn is concentrated.
 - No file deltas detected in the watched scope.
 
 ## Recent Commit Signal
+- `da7caca` Refresh Obsidian exports after module status upgrade (2026-06-03)
 - `dd7d80d` Add module status to Obsidian sync (2026-06-03)
 - `26f0a84` Refresh Obsidian exports after project map upgrade (2026-06-03)
 - `60a0db6` Add project map to Obsidian sync (2026-06-03)
 - `e51b1f3` Refresh Obsidian exports after project graph upgrade (2026-06-03)
 - `9fb2caa` Add project graph to Obsidian sync (2026-06-03)
-- `71b9139` Refresh Obsidian exports after start page upgrade (2026-06-03)
 
 ## What To Watch Next
 - If voice, wake handling, and routing change together, review those paths as one slice.

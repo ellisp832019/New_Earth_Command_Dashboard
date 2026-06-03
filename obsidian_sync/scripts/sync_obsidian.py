@@ -100,6 +100,7 @@ def load_config(config_path: Path) -> SyncConfig:
                     "PROJECT_GRAPH.md",
                     "PROJECT_MAP.md",
                     "MODULE_STATUS.md",
+                    "MODULE_RELATIONS.md",
                     "PROJECT_OVERVIEW.md",
                     "CURRENT_PROGRESS.md",
                     "CURRENT_STATE.md",
@@ -674,6 +675,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
         ("PROJECT_GRAPH.md", "Graph", "Relationship map for folders, modules, notes, and workflows.", "Canonical"),
         ("PROJECT_MAP.md", "Operations", "Active module map for day-to-day navigation and handoffs.", "Canonical"),
         ("MODULE_STATUS.md", "Operations", "Quick lane status for active modules and handoffs.", "Canonical"),
+        ("MODULE_RELATIONS.md", "Operations", "How active modules feed into and depend on each other.", "Canonical"),
         ("PROJECT_OVERVIEW.md", "Active state", "Project summary, purpose, and current branch signal.", "Canonical"),
         ("CURRENT_STATE.md", "Active state", "Detailed live status, risks, and next actions.", "Canonical"),
         ("CURRENT_PROGRESS.md", "Active state", "What works, what is incomplete, and the live sync signal.", "Canonical"),
@@ -718,6 +720,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
                     vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "MODULE_STATUS.md"),
+                    vault_link(config, "MODULE_RELATIONS.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -784,6 +787,7 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
                     vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "MODULE_STATUS.md"),
+                    vault_link(config, "MODULE_RELATIONS.md"),
                     vault_link(config, "TASKS.md"),
                     vault_link(config, "OPEN_QUESTIONS.md"),
                 ]
@@ -883,6 +887,7 @@ def generate_project_graph(context: Dict[str, object], config: SyncConfig, repo_
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "MODULE_STATUS.md"),
                     vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "MODULE_RELATIONS.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CODE_MAP.md"),
                     vault_link(config, "ARCHITECTURE.md"),
@@ -1015,6 +1020,7 @@ def generate_module_status(context: Dict[str, object], config: SyncConfig) -> st
                 [
                     vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "MODULE_RELATIONS.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "TASKS.md"),
                 ]
@@ -1031,12 +1037,71 @@ def generate_module_status(context: Dict[str, object], config: SyncConfig) -> st
     )
 
 
+def generate_module_relations(context: Dict[str, object], config: SyncConfig) -> str:
+    relations = [
+        ("Dashboard", "Projects, Tasks, Treasury", "Capture and overview work often starts here and routes outward."),
+        ("Projects", "Dashboard, Knowledge, Meetings", "Project context gathers evidence and links to follow-up workflows."),
+        ("Tasks", "Dashboard, Projects, Treasury", "Task review turns captured work into the next practical action."),
+        ("Treasury", "Projects, Tasks, Assets", "Treasury work often depends on project context and leads into asset handling."),
+        ("Knowledge", "Projects, Meetings, Obsidian Sync", "Knowledge extraction feeds back into project memory and vault notes."),
+        ("Meetings", "Projects, Tasks, Knowledge", "Meeting bundles create inputs for follow-up tasks and archive notes."),
+        ("Voice", "Dashboard, Projects, Tasks", "Voice capture is a front door to other lanes, but remains parked for now."),
+        ("Obsidian Sync", "All lanes", "Exports and vault notes depend on the rest of the repo being kept in sync."),
+    ]
+
+    dependency_notes = [
+        "If Dashboard changes, re-check Projects and Tasks because they share the user-facing handoff path.",
+        "If Treasury changes, verify the asset and QR workflows before the lane is considered stable.",
+        "If Knowledge changes, confirm that extraction and sync notes still line up with the source files.",
+        "If Meetings changes, confirm that task carry-forward and project references still resolve cleanly.",
+        "If Obsidian Sync changes, update the registry, graph, map, and status notes together.",
+    ]
+
+    body = "\n".join(
+        [
+            "## Why This Exists",
+            "- Use this note when you want to see how module changes travel across the system.",
+            "- It shows upstream and downstream relationships rather than a simple lane list.",
+            "",
+            "## Module Relationships",
+            render_table([("Module", "Feeds Into", "Relation")] + relations),
+            "",
+            "## Change Handoffs",
+            render_list(dependency_notes),
+            "",
+            "## Reading Guide",
+            "- Upstream means the module usually supplies context or input.",
+            "- Downstream means the module often receives follow-up work or generated output.",
+            "- Shared means the modules should be reviewed together when one changes.",
+            "",
+            "## Cross-Checks",
+            render_list(
+                [
+                    vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "CURRENT_STATE.md"),
+                ]
+            ),
+            "",
+            "## Operating Rule",
+            "- When one lane changes, scan the related lanes before calling the slice complete.",
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Module Relations",
+        "Relationships and handoffs between the active module lanes.",
+        body,
+    )
+
+
 def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     current_docs = [
         "DOC_REGISTRY.md",
         "PROJECT_GRAPH.md",
         "PROJECT_MAP.md",
         "MODULE_STATUS.md",
+        "MODULE_RELATIONS.md",
         "PROJECT_OVERVIEW.md",
         "CURRENT_STATE.md",
         "CURRENT_PROGRESS.md",
@@ -1905,6 +1970,7 @@ def run_sync(config_path: Path) -> SyncResult:
         "PROJECT_GRAPH.md": generate_project_graph(context, config, repo_root),
         "PROJECT_MAP.md": generate_project_map(context, config, repo_root),
         "MODULE_STATUS.md": generate_module_status(context, config),
+        "MODULE_RELATIONS.md": generate_module_relations(context, config),
         "PROJECT_OVERVIEW.md": generate_project_overview(context, config),
         "CURRENT_PROGRESS.md": generate_current_progress(context, config, changed_files + added_files + removed_files),
         "MILESTONE_SUMMARIES.md": generate_milestone_summaries(context, config, repo_root),

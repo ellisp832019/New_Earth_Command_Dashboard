@@ -20,7 +20,7 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_FULL_BUILD_HISTORY]]
 
 ## What Changed Most Recently
-- Latest commit signal: `2026-06-03|dd7d80d|Add module status to Obsidian sync`
+- Latest commit signal: `2026-06-03|da7caca|Refresh Obsidian exports after module status upgrade`
 - Branch: `feat/asset-intelligence-tab`
 
 ## Current Focus
@@ -43,6 +43,7 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_PROJECT_GRAPH]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_MAP]]
 - [[NEW_EARTH_DASHBOARD_MODULE_STATUS]]
+- [[NEW_EARTH_DASHBOARD_MODULE_RELATIONS]]
 - [[NEW_EARTH_DASHBOARD_TASKS]]
 - [[NEW_EARTH_DASHBOARD_OPEN_QUESTIONS]]
 <!-- AUTO-GENERATED:END -->
