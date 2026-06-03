@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -21,6 +22,7 @@ class MeetingDetailScreen extends ConsumerStatefulWidget {
 
 class _MeetingDetailScreenState extends ConsumerState<MeetingDetailScreen> {
   bool _isExporting = false;
+  bool _isExportingBundle = false;
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +148,21 @@ class _MeetingDetailScreenState extends ConsumerState<MeetingDetailScreen> {
                                 label: const Text('Export summary'),
                               ),
                               TextButton.icon(
+                                onPressed: _isExportingBundle
+                                    ? null
+                                    : () => _exportBundle(detail),
+                                icon: _isExportingBundle
+                                    ? const SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.inventory_2_outlined),
+                                label: const Text('Export bundle'),
+                              ),
+                              TextButton.icon(
                                 onPressed: () =>
                                     context.push(RouteNames.meetingAll),
                                 icon: const Icon(Icons.table_chart_outlined),
@@ -222,6 +239,34 @@ class _MeetingDetailScreenState extends ConsumerState<MeetingDetailScreen> {
       if (mounted) {
         setState(() {
           _isExporting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _exportBundle(MeetingDetailSnapshot detail) async {
+    setState(() {
+      _isExportingBundle = true;
+    });
+
+    try {
+      final result = await ref
+          .read(meetingFolderServiceProvider)
+          .exportMeetingBundle(detail.meeting.id);
+      ref.invalidate(meetingDetailProvider(widget.meetingId));
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bundle exported to ${result.bundlePath}')),
+      );
+      await ref
+          .read(meetingFolderServiceProvider)
+          .openFolder(result.bundlePath);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExportingBundle = false;
         });
       }
     }
@@ -1102,13 +1147,22 @@ Peter
   }
 }
 
-class _MeetingAttachmentsTab extends ConsumerWidget {
+class _MeetingAttachmentsTab extends ConsumerStatefulWidget {
   const _MeetingAttachmentsTab({required this.detail});
 
   final MeetingDetailSnapshot detail;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MeetingAttachmentsTab> createState() =>
+      _MeetingAttachmentsTabState();
+}
+
+class _MeetingAttachmentsTabState
+    extends ConsumerState<_MeetingAttachmentsTab> {
+  bool _isImporting = false;
+
+  @override
+  Widget build(BuildContext context) {
     final service = ref.read(meetingFolderServiceProvider);
 
     return ListView(
@@ -1126,26 +1180,122 @@ class _MeetingAttachmentsTab extends ConsumerWidget {
                     'Drop PDFs, screenshots, audio files, or reference docs here.',
               ),
               const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: _isImporting
+                        ? null
+                        : () => _pickTranscriptFiles(),
+                    icon: _isImporting
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.upload_file_outlined),
+                    label: const Text('Import transcript'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () =>
+                        service.openFolder(widget.detail.transcriptsFolderPath),
+                    icon: const Icon(Icons.folder_open_outlined),
+                    label: const Text('Open transcript folder'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               _FileLinkRow(
                 label: 'Attachments folder',
-                path: detail.attachmentsFolderPath,
-                onOpen: () => service.openFolder(detail.attachmentsFolderPath),
+                path: widget.detail.attachmentsFolderPath,
+                onOpen: () =>
+                    service.openFolder(widget.detail.attachmentsFolderPath),
               ),
               _FileLinkRow(
                 label: 'Audio or transcripts',
-                path: detail.transcriptsFolderPath,
-                onOpen: () => service.openFolder(detail.transcriptsFolderPath),
+                path: widget.detail.transcriptsFolderPath,
+                onOpen: () =>
+                    service.openFolder(widget.detail.transcriptsFolderPath),
               ),
               _FileLinkRow(
                 label: 'Exports folder',
-                path: detail.exportsFolderPath,
-                onOpen: () => service.openFolder(detail.exportsFolderPath),
+                path: widget.detail.exportsFolderPath,
+                onOpen: () =>
+                    service.openFolder(widget.detail.exportsFolderPath),
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _pickTranscriptFiles() async {
+    if (_isImporting) {
+      return;
+    }
+
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowMultiple: true,
+      allowedExtensions: <String>[
+        'txt',
+        'md',
+        'doc',
+        'docx',
+        'srt',
+        'vtt',
+        'wav',
+        'mp3',
+        'm4a',
+        'mp4',
+        'aac',
+      ],
+      withData: false,
+    );
+    final paths =
+        result?.files
+            .map((file) => file.path)
+            .whereType<String>()
+            .where((path) => path.trim().isNotEmpty)
+            .toList(growable: false) ??
+        <String>[];
+    if (paths.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isImporting = true;
+    });
+
+    try {
+      final imported = await ref
+          .read(meetingFolderServiceProvider)
+          .importTranscriptFiles(widget.detail.meeting.id, paths);
+      ref.invalidate(meetingDetailProvider(widget.detail.meeting.id));
+      ref.invalidate(meetingDashboardSnapshotProvider);
+      ref.invalidate(meetingWorkspaceProvider);
+      ref.invalidate(meetingListRowsProvider);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            imported.isEmpty
+                ? 'No transcript files were imported.'
+                : 'Imported ${imported.length} transcript file${imported.length == 1 ? '' : 's'}.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isImporting = false;
+        });
+      }
+    }
   }
 }
 

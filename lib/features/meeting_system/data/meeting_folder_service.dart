@@ -39,6 +39,18 @@ class MeetingCreateResult {
   final String indexPath;
 }
 
+class MeetingBundleResult {
+  const MeetingBundleResult({
+    required this.bundlePath,
+    required this.summaryPath,
+    required this.filePaths,
+  });
+
+  final String bundlePath;
+  final String summaryPath;
+  final List<String> filePaths;
+}
+
 class MeetingRecord {
   const MeetingRecord({
     required this.id,
@@ -1218,6 +1230,114 @@ class MeetingFolderService {
     return summaryPath;
   }
 
+  Future<MeetingBundleResult> exportMeetingBundle(String meetingId) async {
+    final detail = await readMeeting(meetingId);
+    final bundleFolder = Directory(
+      path.join(
+        detail.exportsFolderPath,
+        'bundles',
+        _buildBundleFolderName(detail.meeting),
+      ),
+    );
+    await bundleFolder.create(recursive: true);
+
+    final summaryPath = path.join(bundleFolder.path, 'meeting_summary.md');
+    final filePaths = <String>[summaryPath];
+    await File(
+      summaryPath,
+    ).writeAsString(_renderMeetingSummary(detail), flush: true);
+
+    final copies = <({String name, String content})>[
+      (name: '00_AGENDA.md', content: detail.agendaMarkdown),
+      (name: '01_MEETING_NOTES.md', content: detail.notesMarkdown),
+      (
+        name: '02_ACTIONS.md',
+        content: _renderActionsTemplate(
+          meeting: detail.meeting,
+          actions: detail.actions,
+        ),
+      ),
+      (
+        name: '03_DECISIONS.md',
+        content: _renderDecisionsTemplate(
+          meeting: detail.meeting,
+          decisions: detail.decisions,
+        ),
+      ),
+      (
+        name: '04_FOLLOW_UP.md',
+        content: _renderFollowUpTemplate(
+          meeting: detail.meeting,
+          followUp: detail.followUp,
+        ),
+      ),
+    ];
+
+    for (final item in copies) {
+      final filePath = path.join(bundleFolder.path, item.name);
+      await File(filePath).writeAsString(item.content, flush: true);
+      filePaths.add(filePath);
+    }
+
+    final manifestPath = path.join(bundleFolder.path, 'bundle_manifest.md');
+    final manifest = _renderBundleManifest(
+      meeting: detail.meeting,
+      bundleFolderPath: bundleFolder.path,
+      summaryPath: summaryPath,
+      filePaths: filePaths,
+    );
+    await File(manifestPath).writeAsString(manifest, flush: true);
+    filePaths.add(manifestPath);
+
+    return MeetingBundleResult(
+      bundlePath: bundleFolder.path,
+      summaryPath: summaryPath,
+      filePaths: filePaths,
+    );
+  }
+
+  Future<List<String>> importTranscriptFiles(
+    String meetingId,
+    List<String> sourceFilePaths,
+  ) async {
+    final detail = await readMeeting(meetingId);
+    final folder = Directory(detail.transcriptsFolderPath);
+    await folder.create(recursive: true);
+
+    final importedPaths = <String>[];
+    final stamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '')
+        .replaceAll('.', '')
+        .replaceAll('-', '');
+
+    for (var index = 0; index < sourceFilePaths.length; index++) {
+      final sourcePath = sourceFilePaths[index].trim();
+      if (sourcePath.isEmpty) {
+        continue;
+      }
+
+      final sourceFile = File(sourcePath);
+      if (!await sourceFile.exists()) {
+        continue;
+      }
+
+      final extension = path.extension(sourcePath);
+      final fileName = path.basenameWithoutExtension(sourcePath);
+      final targetName =
+          '${stamp}_${index + 1}_${_folderPart(fileName)}$extension';
+      final targetPath = path.join(folder.path, targetName);
+      await sourceFile.copy(targetPath);
+      importedPaths.add(targetPath);
+    }
+
+    if (importedPaths.isNotEmpty) {
+      await _touchMeeting(detail.meeting);
+    }
+
+    return importedPaths;
+  }
+
   Future<void> openFolder(String folderPath) async {
     if (folderPath.trim().isEmpty) {
       return;
@@ -2086,6 +2206,38 @@ $rows
     return buffer.toString();
   }
 
+  String _renderBundleManifest({
+    required MeetingRecord meeting,
+    required String bundleFolderPath,
+    required String summaryPath,
+    required List<String> filePaths,
+  }) {
+    final buffer = StringBuffer()
+      ..writeln('# Meeting Export Bundle')
+      ..writeln()
+      ..writeln('| Field | Value |')
+      ..writeln('|---|---|')
+      ..writeln('| Meeting | ${meeting.title} |')
+      ..writeln('| Date | ${meeting.date} |')
+      ..writeln('| Project | ${meeting.project} |')
+      ..writeln('| Person / Group | ${meeting.personOrGroup} |')
+      ..writeln('| Bundle folder | $bundleFolderPath |')
+      ..writeln('| Summary | $summaryPath |')
+      ..writeln()
+      ..writeln('## Included files')
+      ..writeln();
+
+    for (final filePath in filePaths) {
+      buffer.writeln('- $filePath');
+    }
+
+    buffer.writeln();
+    buffer.writeln(
+      'This bundle keeps the meeting export readable in Omega OS without moving the source meeting files.',
+    );
+    return buffer.toString();
+  }
+
   String _templateAgendaPlaceholder() {
     return '''
 # Agenda - YYYY-MM-DD Project / Person
@@ -2199,6 +2351,10 @@ Peter
     String personOrGroup,
   ) {
     return '${date}_${_folderPart(project)}_${_folderPart(personOrGroup)}';
+  }
+
+  String _buildBundleFolderName(MeetingRecord meeting) {
+    return '${meeting.date}_${_folderPart(meeting.project)}_${_folderPart(meeting.personOrGroup)}_${_folderPart(meeting.title)}_bundle';
   }
 
   String _buildMeetingId(String date, String project, String personOrGroup) {

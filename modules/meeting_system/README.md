@@ -35,6 +35,8 @@ D:\NEW_EARTH_OMEGA_OS_PACK\21_PROJECTS_AND_PROGRAMMES\01_MASTER_INDEXES
 - Follow-up tracker
 - Template library
 - Meeting settings
+- Transcript import
+- Export bundles
 - Document links
 - Attachment links
 - Transcript/audio links
