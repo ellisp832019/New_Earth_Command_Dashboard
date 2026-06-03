@@ -9,6 +9,13 @@ class MoreScreen extends StatelessWidget {
 
   static const _items = [
     _MoreItem(
+      title: 'Meeting System',
+      description:
+          'Plan meetings, capture actions, track decisions, and keep follow-ups in Omega OS.',
+      icon: Icons.event_note_outlined,
+      route: RouteNames.meetingDashboard,
+    ),
+    _MoreItem(
       title: 'Knowledge Library',
       description:
           'Search the Omega OS PDF catalogue and review extractable items.',

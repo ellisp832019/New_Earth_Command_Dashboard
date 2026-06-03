@@ -9,6 +9,7 @@ The app is built local-first, offline-first, and clarity-first. Documentation sh
 - [Getting Started](user_guide/getting_started.md)
 - [MVP Roadmap](roadmap/mvp_roadmap.md)
 - [App Roadmap](roadmap/app_roadmap.md)
+- [Meeting System module](../modules/meeting_system/README.md)
 - [Architecture Decisions](architecture/architecture_decisions.md)
 - [Visual Direction](design/visual_direction.md)
 - [Asset Index](assets/asset_index.md)

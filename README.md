@@ -35,6 +35,7 @@ V0.1 foundation is live:
 - Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 - On Windows, Gaia now waits for a connected headset or headset microphone before the main dashboard loads
+- Meeting System phase 1 is live with dashboard, meeting index, wizard, detail, and trackers
 - If you move the repo to a new folder, clear `build/windows/x64` and `.dart_tool`, then run `flutter clean` and `flutter pub get` before building Windows again
 
 ## Documentation
@@ -42,6 +43,7 @@ V0.1 foundation is live:
 - [Documentation Home](docs/README.md)
 - [Getting Started](docs/user_guide/getting_started.md)
 - [App Roadmap](docs/roadmap/app_roadmap.md)
+- [Meeting System module](modules/meeting_system/README.md)
 - [MVP Roadmap](docs/roadmap/mvp_roadmap.md)
 - [Architecture Decisions](docs/architecture/architecture_decisions.md)
 - [Visual Direction](docs/design/visual_direction.md)

@@ -14,6 +14,8 @@ import '../../assets/application/assets_controller.dart';
 import '../../assets/data/qr_label_printing_service.dart';
 import '../../inbox/application/inbox_controller.dart';
 import '../../knowledge_library/data/knowledge_library_repository.dart';
+import '../../meeting_system/application/meeting_system_controller.dart';
+import '../../meeting_system/presentation/meeting_system_widgets.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../application/dashboard_controller.dart';
@@ -689,6 +691,8 @@ class _SupportModuleGrid extends StatelessWidget {
 
         return Column(
           children: [
+            const MeetingSystemDashboardCard(),
+            const SizedBox(height: 14),
             const KnowledgeLibraryDashboardCard(),
             const SizedBox(height: 14),
             GridView.builder(
@@ -708,6 +712,231 @@ class _SupportModuleGrid extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class MeetingSystemDashboardCard extends ConsumerStatefulWidget {
+  const MeetingSystemDashboardCard({super.key});
+
+  @override
+  ConsumerState<MeetingSystemDashboardCard> createState() =>
+      _MeetingSystemDashboardCardState();
+}
+
+class _MeetingSystemDashboardCardState
+    extends ConsumerState<MeetingSystemDashboardCard> {
+  bool _bootstrapping = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = ref.watch(meetingDashboardSnapshotProvider);
+
+    return snapshot.when(
+      loading: () => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: _panelDecoration(context),
+        child: const LinearProgressIndicator(),
+      ),
+      error: (error, stackTrace) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: _panelDecoration(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Meeting System',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Meeting System could not load right now.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(meetingDashboardSnapshotProvider),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (data) {
+        final workspace = data.workspace;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: _panelDecoration(context, highlighted: true),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 1020;
+                  final summary = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.event_note_outlined,
+                            color: AppColours.darkSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Meeting System',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: AppColours.darkText,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Keep meetings, actions, decisions, and follow-ups living in Omega OS.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          MeetingStatChip(
+                            label: 'Meetings',
+                            value: '${workspace.meetingCount}',
+                            accentColor: AppColours.darkPrimary,
+                          ),
+                          MeetingStatChip(
+                            label: 'Actions',
+                            value: '${workspace.actionCount}',
+                            accentColor: AppColours.darkSuccess,
+                          ),
+                          MeetingStatChip(
+                            label: 'Follow-ups',
+                            value: '${workspace.followUpCount}',
+                            accentColor: AppColours.darkPurple,
+                          ),
+                          MeetingStatChip(
+                            label: 'Decisions',
+                            value: '${workspace.decisionCount}',
+                            accentColor: AppColours.darkAmber,
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+
+                  final actions = Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    alignment: wide ? WrapAlignment.end : WrapAlignment.start,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: () =>
+                            context.push(RouteNames.meetingDashboard),
+                        icon: const Icon(Icons.open_in_new_outlined),
+                        label: const Text('Open Meetings'),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.push(RouteNames.meetingNew),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New Meeting'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () =>
+                            context.push(RouteNames.meetingActions),
+                        icon: const Icon(Icons.checklist_outlined),
+                        label: const Text('Actions'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () =>
+                            context.push(RouteNames.meetingTemplates),
+                        icon: const Icon(Icons.description_outlined),
+                        label: const Text('Templates'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () =>
+                            context.push(RouteNames.meetingSettings),
+                        icon: const Icon(Icons.settings_outlined),
+                        label: const Text('Settings'),
+                      ),
+                      TextButton.icon(
+                        onPressed: _bootstrapping ? null : _createStructure,
+                        icon: _bootstrapping
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.create_new_folder_outlined),
+                        label: const Text('Starter files'),
+                      ),
+                      TextButton.icon(
+                        onPressed: workspace.meetingsRootPath == null
+                            ? null
+                            : () => ref
+                                  .read(meetingFolderServiceProvider)
+                                  .openFolder(workspace.meetingsRootPath!),
+                        icon: const Icon(Icons.folder_open_outlined),
+                        label: const Text('Open folder'),
+                      ),
+                    ],
+                  );
+
+                  if (!wide) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [summary, const SizedBox(height: 16), actions],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: summary),
+                      const SizedBox(width: 20),
+                      Flexible(child: actions),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _createStructure() async {
+    setState(() {
+      _bootstrapping = true;
+    });
+
+    try {
+      await ref
+          .read(meetingFolderServiceProvider)
+          .createMissingRequiredStructure();
+      ref.invalidate(meetingDashboardSnapshotProvider);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _bootstrapping = false;
+        });
+      }
+    }
   }
 }
 

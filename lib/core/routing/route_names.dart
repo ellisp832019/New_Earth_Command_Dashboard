@@ -34,6 +34,14 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const meetingDashboard = '/more/meetings';
+  static const meetingAll = '/more/meetings/all';
+  static const meetingNew = '/more/meetings/new';
+  static const meetingActions = '/more/meetings/actions';
+  static const meetingDecisions = '/more/meetings/decisions';
+  static const meetingFollowUps = '/more/meetings/follow-ups';
+  static const meetingTemplates = '/more/meetings/templates';
+  static const meetingSettings = '/more/meetings/settings';
   static const knowledgeLibrary = '/more/knowledge-library';
   static const omegaOsFolderHealth = '/more/omega-os-health';
   static const journal = '/journal';
@@ -69,6 +77,10 @@ abstract final class RouteNames {
 
   static String editContent(String contentItemId) {
     return '/content/$contentItemId/edit';
+  }
+
+  static String meetingDetail(String meetingId) {
+    return '/more/meetings/$meetingId';
   }
 
   static String newTaskForProject(String projectId) {

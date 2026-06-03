@@ -36,6 +36,15 @@ import '../../features/learning/presentation/add_learning_item_screen.dart';
 import '../../features/learning/presentation/learning_screen.dart';
 import '../../features/more/presentation/more_screen.dart';
 import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
+import '../../features/meeting_system/presentation/all_meetings_screen.dart';
+import '../../features/meeting_system/presentation/meeting_actions_screen.dart';
+import '../../features/meeting_system/presentation/meeting_dashboard_screen.dart';
+import '../../features/meeting_system/presentation/meeting_decisions_screen.dart';
+import '../../features/meeting_system/presentation/meeting_detail_screen.dart';
+import '../../features/meeting_system/presentation/meeting_follow_ups_screen.dart';
+import '../../features/meeting_system/presentation/meeting_settings_screen.dart';
+import '../../features/meeting_system/presentation/meeting_templates_screen.dart';
+import '../../features/meeting_system/presentation/new_meeting_wizard_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
@@ -284,6 +293,51 @@ final appRouter = GoRouter(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
               routes: [
+                GoRoute(
+                  path: 'meetings',
+                  builder: (context, state) => const MeetingDashboardScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'all',
+                      builder: (context, state) => const AllMeetingsScreen(),
+                    ),
+                    GoRoute(
+                      path: 'new',
+                      builder: (context, state) =>
+                          const NewMeetingWizardScreen(),
+                    ),
+                    GoRoute(
+                      path: 'actions',
+                      builder: (context, state) => const MeetingActionsScreen(),
+                    ),
+                    GoRoute(
+                      path: 'decisions',
+                      builder: (context, state) =>
+                          const MeetingDecisionsScreen(),
+                    ),
+                    GoRoute(
+                      path: 'follow-ups',
+                      builder: (context, state) =>
+                          const MeetingFollowUpsScreen(),
+                    ),
+                    GoRoute(
+                      path: 'templates',
+                      builder: (context, state) =>
+                          const MeetingTemplatesScreen(),
+                    ),
+                    GoRoute(
+                      path: 'settings',
+                      builder: (context, state) =>
+                          const MeetingSettingsScreen(),
+                    ),
+                    GoRoute(
+                      path: ':meetingId',
+                      builder: (context, state) => MeetingDetailScreen(
+                        meetingId: state.pathParameters['meetingId']!,
+                      ),
+                    ),
+                  ],
+                ),
                 GoRoute(
                   path: 'knowledge-library',
                   builder: (context, state) => const KnowledgeLibraryScreen(),
