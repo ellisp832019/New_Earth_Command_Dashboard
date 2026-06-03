@@ -7,6 +7,7 @@
   "vault_note_prefix": "NEW_EARTH_DASHBOARD_",
   "export_docs": [
     "INDEX.md",
+    "DOC_REGISTRY.md",
     "PROJECT_OVERVIEW.md",
     "CURRENT_PROGRESS.md",
     "CURRENT_STATE.md",

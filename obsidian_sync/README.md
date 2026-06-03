@@ -7,6 +7,7 @@ The module scans the current repo, generates Obsidian-ready Markdown notes, and 
 ## What It Produces
 
 - `INDEX.md`
+- `DOC_REGISTRY.md`
 - `PROJECT_OVERVIEW.md`
 - `CURRENT_STATE.md`
 - `CURRENT_PROGRESS.md`
@@ -88,6 +89,7 @@ The vault-facing files are prefixed like this:
 
 ```text
 NEW_EARTH_DASHBOARD_PROJECT_OVERVIEW.md
+NEW_EARTH_DASHBOARD_DOC_REGISTRY.md
 NEW_EARTH_DASHBOARD_CURRENT_PROGRESS.md
 NEW_EARTH_DASHBOARD_INDEX.md
 NEW_EARTH_DASHBOARD_BUILD_LOG.md

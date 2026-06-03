@@ -90,11 +90,12 @@ def load_config(config_path: Path) -> SyncConfig:
         obsidian_vault_path=raw.get("obsidian_vault_path", ""),
         obsidian_project_folder=raw.get("obsidian_project_folder", ""),
         vault_note_prefix=raw.get("vault_note_prefix", ""),
-        export_docs=list(
+        export_docs=dedupe_preserve_order(
             raw.get(
                 "export_docs",
                 [
                     "INDEX.md",
+                    "DOC_REGISTRY.md",
                     "PROJECT_OVERVIEW.md",
                     "CURRENT_PROGRESS.md",
                     "CURRENT_STATE.md",
@@ -113,7 +114,7 @@ def load_config(config_path: Path) -> SyncConfig:
                 ],
             )
         ),
-        watched_paths=list(
+        watched_paths=dedupe_preserve_order(
             raw.get(
                 "watched_paths",
                 [
@@ -139,7 +140,7 @@ def load_config(config_path: Path) -> SyncConfig:
                 ],
             )
         ),
-        watched_file_patterns=list(
+        watched_file_patterns=dedupe_preserve_order(
             raw.get(
                 "watched_file_patterns",
                 [
@@ -158,7 +159,7 @@ def load_config(config_path: Path) -> SyncConfig:
                 ],
             )
         ),
-        ignore_paths=list(
+        ignore_paths=dedupe_preserve_order(
             raw.get(
                 "ignore_paths",
                 [
@@ -189,6 +190,17 @@ def resolve_path(base: Path, candidate: str) -> Path:
 
 def safe_mkdir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
+
+
+def dedupe_preserve_order(items: Sequence[str]) -> List[str]:
+    seen = set()
+    result = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
 
 
 def read_text(path: Path) -> str:
@@ -353,6 +365,27 @@ def extract_latest_dated_entry(markdown: str) -> str:
                 end = index
                 break
     return "\n".join(lines[start:end]).strip()
+
+
+def parse_full_commit_history(repo_root: Path) -> List[Tuple[str, str, str]]:
+    try:
+        result = subprocess.run(
+            ["git", "log", "--reverse", "--date=short", "--pretty=format:%ad|%h|%s"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except Exception:
+        return []
+
+    commits = []
+    for line in result.stdout.splitlines():
+        if "|" not in line:
+            continue
+        date, sha, subject = line.split("|", 2)
+        commits.append((date.strip(), sha.strip(), subject.strip()))
+    return commits
 
 
 def bullet_items(markdown: str, heading: str) -> List[str]:
@@ -552,6 +585,7 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
             render_list(
                 [
                     vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "CURRENT_PROGRESS.md"),
                     vault_link(config, "CODE_MAP.md"),
                     vault_link(config, "DECISIONS_LOG.md"),
@@ -576,8 +610,64 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
     )
 
 
+def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str:
+    rows = [
+        ("INDEX.md", "Entry point", "One-click vault landing page.", "Canonical"),
+        ("DOC_REGISTRY.md", "Registry", "Maps the note families and avoids duplicate roles.", "Canonical"),
+        ("PROJECT_OVERVIEW.md", "Active state", "Project summary, purpose, and current branch signal.", "Canonical"),
+        ("CURRENT_STATE.md", "Active state", "Detailed live status, risks, and next actions.", "Canonical"),
+        ("CURRENT_PROGRESS.md", "Active state", "What works, what is incomplete, and the live sync signal.", "Canonical"),
+        ("ARCHITECTURE.md", "Architecture", "System overview, dependencies, and integration points.", "Canonical"),
+        ("CODE_MAP.md", "Architecture", "Folder map and data flow reference.", "Canonical"),
+        ("ROADMAP.md", "Planning", "Near-term and longer-term direction.", "Canonical"),
+        ("TASKS.md", "Planning", "Immediate actions and what stays parked.", "Canonical"),
+        ("DECISIONS.md", "Reference", "Short decision snapshot for quick scanning.", "Supporting"),
+        ("DECISIONS_LOG.md", "Reference", "Detailed decision record and open decisions.", "Canonical"),
+        ("BUILD_LOG.md", "Logs", "Current build snapshot and latest progress.", "Canonical"),
+        ("BUILD_LOG_SUMMARY.md", "Logs", "Short build summary for quick reading.", "Supporting"),
+        ("FULL_BUILD_HISTORY.md", "Archive", "Full chronological project history from git.", "Canonical"),
+        ("WEEKLY_REPORT.md", "Reporting", "Weekly wins, blockers, risks, and summary.", "Canonical"),
+        ("OPEN_QUESTIONS.md", "Planning", "Unresolved questions and TODO markers.", "Canonical"),
+        ("DAILY_SYNC_LOG.md", "Operations", "Append-only sync history.", "Canonical"),
+    ]
+
+    body = "\n".join(
+        [
+            "## Why This Exists",
+            "- The sync exports intentionally include both live notes and historical notes.",
+            "- This registry makes the note roles explicit so the vault does not drift into duplicate-purpose files.",
+            "- When two notes cover the same theme, one is the canonical note and the other is clearly marked as supporting or summary only.",
+            "",
+            "## Canonical Note Registry",
+            render_table([("Note", "Family", "Purpose", "Role")] + rows),
+            "",
+            "## Duplicate Prevention Rules",
+            "- Keep one canonical note per role.",
+            "- Use supporting notes only for summaries or shortcuts back to the canonical note.",
+            "- If a new note overlaps an existing one, update the registry first.",
+            "",
+            "## Read Order",
+            render_list(
+                [
+                    vault_link(config, "INDEX.md"),
+                    vault_link(config, "PROJECT_OVERVIEW.md"),
+                    vault_link(config, "CURRENT_STATE.md"),
+                    vault_link(config, "BUILD_LOG.md"),
+                    vault_link(config, "FULL_BUILD_HISTORY.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Document Registry",
+        "Canonical note map for the Obsidian export set.",
+        body,
+    )
+
+
 def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     current_docs = [
+        "DOC_REGISTRY.md",
         "PROJECT_OVERVIEW.md",
         "CURRENT_STATE.md",
         "CURRENT_PROGRESS.md",
@@ -598,11 +688,11 @@ def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     ]
     body = "\n".join(
         [
-            "## Start Here",
-            render_list([vault_link(config, doc) for doc in current_docs]),
-            "",
-            "## Logs And History",
-            render_list([vault_link(config, doc) for doc in logs]),
+        "## Start Here",
+        render_list([vault_link(config, doc) for doc in current_docs]),
+        "",
+        "## Logs And History",
+        render_list([vault_link(config, doc) for doc in logs]),
             "",
             "## Current Focus",
             render_list(
@@ -620,6 +710,7 @@ def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
             "",
             "## How To Use",
             "- Open this note first.",
+            "- Use the document registry to avoid repeating the same note role in multiple places.",
             "- Jump to the live state or the build history from here.",
             "- Keep handwritten notes outside the autogenerated block.",
         ]
@@ -762,6 +853,41 @@ def generate_decisions_log(context: Dict[str, object], config: SyncConfig) -> st
     )
 
 
+def generate_decisions_summary(context: Dict[str, object], config: SyncConfig) -> str:
+    key_decisions = [
+        "Local-first and offline-first for V0.1.",
+        "Use a feature-based Flutter structure.",
+        "Use go_router for navigation.",
+        "Use Riverpod when state is needed.",
+        "Keep the dashboard calm and review-first.",
+    ]
+
+    body = "\n".join(
+        [
+            "## Key Technical Decisions",
+            render_list(key_decisions),
+            "",
+            "## Why They Matter",
+            "- These decisions keep the app local, readable, and easy to extend.",
+            "- They also keep the Obsidian export set understandable by separating the summary from the long-form decision log.",
+            "",
+            "## See Also",
+            render_list(
+                [
+                    vault_link(config, "DECISIONS_LOG.md"),
+                    vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Decisions",
+        "Short decision summary for quick scanning.",
+        body,
+    )
+
+
 def generate_build_log(context: Dict[str, object], config: SyncConfig, changed_files: Sequence[str]) -> str:
     devlog = context["devlog_summary"]
     commits = context["recent_commits"][:5]
@@ -808,12 +934,112 @@ def generate_build_log(context: Dict[str, object], config: SyncConfig, changed_f
             "",
             "## Next Build Step",
             render_list(next_step),
+            "",
+            "## Archive Links",
+            render_list(
+                [
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "FULL_BUILD_HISTORY.md"),
+                ]
+            ),
         ]
     ).strip()
     return heading_block(
         f"{config.project_name} Build Log",
         "This note tracks the build and sync picture for the current repo.",
         body,
+    )
+
+
+def generate_build_log_summary(context: Dict[str, object], config: SyncConfig) -> str:
+    recent_commits = context["recent_commits"][:3]
+    latest_commit = context["git"]["last_commit"]
+    devlog_summary = context["devlog_summary"] or "No development log summary found."
+    commit_points = [
+        f"Latest commit snapshot: `{latest_commit}`" if latest_commit else "Latest commit snapshot unavailable.",
+    ]
+    commit_points.extend([f"`{sha}` {subject} ({date})" for date, sha, subject in recent_commits])
+
+    body = "\n".join(
+        [
+            "## Latest Summary",
+            devlog_summary,
+            "",
+            "## Snapshot",
+            render_list(commit_points),
+            "",
+            "## See Also",
+            render_list(
+                [
+                    vault_link(config, "BUILD_LOG.md"),
+                    vault_link(config, "FULL_BUILD_HISTORY.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Build Log Summary",
+        "Short build summary for quick reading.",
+        body,
+    )
+
+
+def generate_full_build_history(context: Dict[str, object], config: SyncConfig, repo_root: Path) -> str:
+    commits = parse_full_commit_history(repo_root)
+    if not commits:
+        history_body = "\n".join(
+            [
+                "## Scope",
+                "- The repository history could not be read from git in this environment.",
+                "",
+                "## Notes",
+                "- Use `BUILD_LOG.md` for the current snapshot until git history is available.",
+            ]
+        ).strip()
+        return heading_block(
+            f"{config.project_name} Full Build History",
+            "Canonical long-form project history.",
+            history_body,
+        )
+
+    grouped: Dict[str, List[Tuple[str, str]]] = {}
+    for date, sha, subject in commits:
+        grouped.setdefault(date, []).append((sha, subject))
+
+    sections = [
+        "## Scope",
+        "- This note captures the project history from the repository timeline and the development log.",
+        "- It is the canonical long-form archive for the entire project life cycle.",
+        "",
+        "## How To Read This",
+        "- The log is chronological, oldest to newest.",
+        "- Each date groups the commits from that period.",
+        "- Supporting summaries live in `BUILD_LOG.md` and `BUILD_LOG_SUMMARY.md`.",
+        "",
+    ]
+
+    for date in sorted(grouped):
+        sections.append(f"## {date}")
+        sections.extend([f"- `{sha}` {subject}" for sha, subject in grouped[date]])
+        sections.append("")
+
+    sections.extend(
+        [
+            "## Development Log Correlation",
+            "- The development log in `docs/developer_guide/development_log.md` matches the major phases captured here.",
+            "- If a detail is inferred from commit clusters, it is kept as a plain summary rather than overstated as a fact.",
+            "",
+            "## Notes",
+            "- The timeline is complete as of the repository history available in this clone.",
+            "- If more narrative detail is needed later, the next step is to mine commit diffs into a curated milestone story.",
+        ]
+    )
+
+    return heading_block(
+        f"{config.project_name} Full Build History",
+        "Canonical long-form project history.",
+        "\n".join(sections).strip(),
     )
 
 
@@ -1099,13 +1325,17 @@ def run_sync(config_path: Path) -> SyncResult:
     context = summarize_repo(repo_root, config)
     generated_docs = {
         "INDEX.md": generate_index(context, config),
+        "DOC_REGISTRY.md": generate_doc_registry(context, config),
         "PROJECT_OVERVIEW.md": generate_project_overview(context, config),
         "CURRENT_PROGRESS.md": generate_current_progress(context, config, changed_files + added_files + removed_files),
+        "DECISIONS.md": generate_decisions_summary(context, config),
         "DECISIONS_LOG.md": generate_decisions_log(context, config),
         "BUILD_LOG.md": generate_build_log(context, config, changed_files + added_files + removed_files),
+        "BUILD_LOG_SUMMARY.md": generate_build_log_summary(context, config),
         "CODE_MAP.md": generate_code_map(context, config, repo_root),
         "TASKS.md": generate_tasks(context, config),
         "OPEN_QUESTIONS.md": generate_open_questions(context, config, changed_files + added_files + removed_files),
+        "FULL_BUILD_HISTORY.md": generate_full_build_history(context, config, repo_root),
     }
 
     updated_docs = ensure_export_docs(export_root, generated_docs)
