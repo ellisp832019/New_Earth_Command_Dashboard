@@ -124,6 +124,8 @@ class _TreasuryHomeScreen extends StatelessWidget {
             const SizedBox(height: 18),
             const _MonthlySummaryPreviewCard(),
             const SizedBox(height: 18),
+            const _DecisionReviewCard(),
+            const SizedBox(height: 18),
             LayoutBuilder(
               builder: (context, constraints) {
                 final useTwoColumns = constraints.maxWidth >= 960;
@@ -975,6 +977,168 @@ class _WeeklyDraftStateCard extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _DecisionReviewCard extends ConsumerWidget {
+  const _DecisionReviewCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(treasuryMonthlySummaryProvider);
+    final theme = Theme.of(context);
+
+    return summaryAsync.when(
+      loading: () => Container(
+        decoration: _cardDecoration(),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            const CircularProgressIndicator(strokeWidth: 2.5),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                'Gathering the latest decisions...',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        decoration: _cardDecoration(),
+        padding: const EdgeInsets.all(18),
+        child: Text(
+          'Decision review will appear once Treasury can read the finance folder again.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: AppColours.darkMutedText,
+            height: 1.4,
+          ),
+        ),
+      ),
+      data: (summary) {
+        final recentDecisions = summary.recentDecisions;
+
+        return Container(
+          decoration: _cardDecoration(),
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _SectionTitle(
+                icon: Icons.gavel_outlined,
+                title: 'Decision review',
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'A small, calm scan of the latest finance decisions so the monthly picture and the next choice stay close together.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _StatusPill(
+                    label: '${recentDecisions.length} recent decisions',
+                    accent: AppColours.darkSecondary,
+                  ),
+                  _StatusPill(
+                    label: summary.weeklyReviewDate ?? 'No weekly review yet',
+                    accent: AppColours.darkSuccess,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (recentDecisions.isEmpty)
+                Text(
+                  'No decision records have been logged yet.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                )
+              else
+                ...recentDecisions
+                    .take(3)
+                    .map(
+                      (decision) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColours.darkSurfaceAlt.withValues(
+                              alpha: 0.9,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColours.darkOutline),
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                decision.decisionNeeded,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: AppColours.darkText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${decision.date} • ${decision.status}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppColours.darkSecondary,
+                                ),
+                              ),
+                              if (decision.decision.trim().isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  decision.decision,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: AppColours.darkMutedText,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => context.push(RouteNames.treasuryDecisions),
+                    icon: const Icon(Icons.gavel_outlined),
+                    label: const Text('Open Decisions'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () =>
+                        context.push(RouteNames.treasuryMonthlySummary),
+                    icon: const Icon(Icons.assessment_outlined),
+                    label: const Text('Open Monthly Summary'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () =>
+                        ref.invalidate(treasuryMonthlySummaryProvider),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reload'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
