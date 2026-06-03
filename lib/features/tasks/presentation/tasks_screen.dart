@@ -290,6 +290,12 @@ class _TaskListView extends ConsumerWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
+              if (parkedCount > 0)
+                FilledButton.tonalIcon(
+                  onPressed: () => _showParkedWork(ref),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Review Parked'),
+                ),
               FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.planner),
                 icon: const Icon(Icons.event_note_outlined),
@@ -397,6 +403,12 @@ class _TaskListView extends ConsumerWidget {
         );
       },
     );
+  }
+
+  void _showParkedWork(WidgetRef ref) {
+    ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('Parked');
+    ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(null);
+    ref.read(taskSearchQueryProvider.notifier).clear();
   }
 
   Future<void> _confirmArchiveTask(

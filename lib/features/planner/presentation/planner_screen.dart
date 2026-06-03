@@ -8,6 +8,7 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../widgets/calm_guidance_card.dart';
 import '../application/planner_controller.dart';
+import '../../tasks/application/tasks_controller.dart';
 
 class PlannerScreen extends ConsumerWidget {
   const PlannerScreen({super.key, this.initialSection});
@@ -330,6 +331,12 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           onSave: () => _saveCarryForward(context),
         ),
         const SizedBox(height: 12),
+        _CarryForwardReviewCard(
+          carryForwardNotes: plan.carryForwardNotes?.trim() ?? '',
+          onReviewParked: () => _openParkedTasks(context),
+          onOpenTasks: () => context.push(RouteNames.tasks),
+        ),
+        const SizedBox(height: 12),
         _EditablePlannerCard(
           title: 'Tomorrow\'s Focus',
           fieldKey: const Key('plannerTomorrowFocusField'),
@@ -544,6 +551,13 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
       curve: Curves.easeOut,
       alignment: 0.1,
     );
+  }
+
+  void _openParkedTasks(BuildContext context) {
+    ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('Parked');
+    ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(null);
+    ref.read(taskSearchQueryProvider.notifier).clear();
+    context.push(RouteNames.tasks);
   }
 }
 
@@ -895,6 +909,77 @@ class _TopThreePlannerCard extends StatelessWidget {
                   : const Icon(Icons.filter_3_outlined),
               label: const Text('Save Top 3'),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CarryForwardReviewCard extends StatelessWidget {
+  const _CarryForwardReviewCard({
+    required this.carryForwardNotes,
+    required this.onReviewParked,
+    required this.onOpenTasks,
+  });
+
+  final String carryForwardNotes;
+  final VoidCallback onReviewParked;
+  final VoidCallback onOpenTasks;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasNotes = carryForwardNotes.trim().isNotEmpty;
+
+    return Container(
+      decoration: _plannerPanelDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Carry Forward Review',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasNotes
+                ? 'Review the parked work when you are ready to reopen it.'
+                : 'Nothing is parked yet. This area will help when items need to wait.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          if (hasNotes) ...[
+            const SizedBox(height: 10),
+            Text(
+              carryForwardNotes,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColours.darkText,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onReviewParked,
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Review Parked'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenTasks,
+                icon: const Icon(Icons.task_alt_outlined),
+                label: const Text('Open Tasks'),
+              ),
+            ],
           ),
         ],
       ),

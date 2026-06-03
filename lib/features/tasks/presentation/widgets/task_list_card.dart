@@ -471,10 +471,10 @@ class _SmartTaskHint extends StatelessWidget {
         );
       case 'Parked':
         return _SmartTaskSuggestion(
-          heading: 'Suggested next step: reopen only if it matters now.',
+          heading: 'Suggested next step: reopen it into the plan.',
           detail:
-              'Bring it back to Inbox or Today, or archive it if it is truly finished.',
-          primary: _SmartTaskPrimary.moveToInbox,
+              'Move it back to Planned when it needs another pass, or send it to Today if it is ready now.',
+          primary: _SmartTaskPrimary.moveToPlanned,
           secondary: _SmartTaskPrimary.moveToToday,
         );
       case 'Done':
@@ -527,6 +527,29 @@ enum _SmartTaskPrimary {
 
 extension on TaskListCard {
   List<Widget> _quickActionButtons() {
+    if (task.status == 'Parked') {
+      return [
+        OutlinedButton.icon(
+          key: Key('taskMoveToPlannedButton-${task.taskId}'),
+          onPressed: onMoveToPlanned,
+          icon: const Icon(Icons.event_note_outlined),
+          label: const Text('Move To Planned'),
+        ),
+        OutlinedButton.icon(
+          key: Key('taskMoveToTodayButton-${task.taskId}'),
+          onPressed: onMoveToToday,
+          icon: const Icon(Icons.today_outlined),
+          label: const Text('Move To Today'),
+        ),
+        OutlinedButton.icon(
+          key: Key('taskArchiveButton-${task.taskId}'),
+          onPressed: onArchive,
+          icon: const Icon(Icons.archive_outlined),
+          label: const Text('Archive'),
+        ),
+      ];
+    }
+
     return [
       if (task.status != 'Today' && task.status != 'Done')
         OutlinedButton.icon(
