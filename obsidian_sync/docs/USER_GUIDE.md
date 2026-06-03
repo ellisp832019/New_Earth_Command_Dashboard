@@ -37,7 +37,7 @@ It scans the source repo, updates generated docs, and mirrors them into an Obsid
 For the New Earth Dashboard, the synced files are intended to land in:
 
 ```text
-D:/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS
+D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS
 ```
 
 The note names are mirrored with a prefix so the vault can keep dashboard notes grouped and recognisable:

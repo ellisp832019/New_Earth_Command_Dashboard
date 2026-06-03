@@ -7,20 +7,13 @@ Append-only sync history. Handwritten notes can live above or below the autogene
 
 | Timestamp | Status | Changed Files | Updated Docs | Copied Docs | Note |
 |---|---|---:|---:|---:|---|
-| 2026-06-03 16:46:06 GMT Summer Time | success | 0 | 3 | 4 | Updated 3 export docs. Changed watched source files: 0. Copied 4 docs to the configured vault. |
-| 2026-06-03 16:45:33 GMT Summer Time | success | 0 | 3 | 4 | Updated 3 export docs. Changed watched source files: 0. Copied 4 docs to the configured vault. |
-| 2026-06-03 16:44:55 GMT Summer Time | success | 0 | 1 | 2 | Updated 1 export docs. Changed watched source files: 0. Copied 2 docs to the configured vault. |
-| 2026-06-03 16:44:24 GMT Summer Time | success | 0 | 0 | 1 | Updated 0 export docs. Changed watched source files: 0. Copied 1 docs to the configured vault. |
-| 2026-06-03 16:43:34 GMT Summer Time | success | 0 | 0 | 1 | Updated 0 export docs. Changed watched source files: 0. Copied 1 docs to the configured vault. |
-| 2026-06-03 16:41:50 GMT Summer Time | success | 0 | 1 | 2 | Updated 1 export docs. Changed watched source files: 0. Copied 2 docs to the configured vault. |
-| 2026-06-03 16:41:30 GMT Summer Time | warning | 0 | 7 | 0 | Exports updated, but vault mirror failed: bad escape \D at position 454 (line 10, column 6) |
-| 2026-06-03 16:40:24 GMT Summer Time | success | 0 | 8 | 8 | Updated 8 export docs. Changed watched source files: 0. Copied 8 docs to the configured vault. |
+| 2026-06-03 17:22:47 GMT Summer Time | success | 0 | 4 | 8 | Updated 4 export docs. Changed watched source files: 0. Copied 8 docs to the configured vault. |
 
 ## Latest Run Details
 - Project: New Earth Command Dashboard
 - Repo root: `D:\Dev\Projects\New Earth - Command Dashboard`
-- Vault destination: `D:\NEW_EARTH_OBSIDIAN_VAULT\01_ACTIVE_PROJECTS\NEW_EARTH_COMMAND_DASHBOARD`
+- Vault destination: `D:\NEW_EARTH_OMEGA_OS_PACK\09_KNOWLEDGE_VAULT_OBSIDIAN\NEW_EARTH_OMEGA_KNOWLEDGE_VAULT\01_ACTIVE_PROJECTS`
 - Changed watched source files: 0
-- Updated export docs: CURRENT_PROGRESS.md, BUILD_LOG.md, OPEN_QUESTIONS.md
-- Copied docs: CURRENT_PROGRESS.md, BUILD_LOG.md, OPEN_QUESTIONS.md, DAILY_SYNC_LOG.md
+- Updated export docs: PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, BUILD_LOG.md, OPEN_QUESTIONS.md
+- Copied docs: PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, DECISIONS_LOG.md, BUILD_LOG.md, CODE_MAP.md, TASKS.md, OPEN_QUESTIONS.md, DAILY_SYNC_LOG.md
 <!-- AUTO-GENERATED:END -->

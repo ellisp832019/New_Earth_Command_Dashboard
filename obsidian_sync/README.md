@@ -73,7 +73,7 @@ This module is tuned for:
 For this repo, the synced notes are intended to land in:
 
 ```text
-D:/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS
+D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS
 ```
 
 The vault-facing files are prefixed like this:
