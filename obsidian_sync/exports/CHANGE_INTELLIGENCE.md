@@ -13,12 +13,12 @@ What changed recently and where the churn is concentrated.
 - No file deltas detected in the watched scope.
 
 ## Recent Commit Signal
+- `82c1d7d` Add Obsidian start page and intelligence notes (2026-06-03)
 - `0755c99` Add Obsidian registry and full build history (2026-06-03)
 - `4ba4e3d` Refresh Obsidian exports after index cleanup (2026-06-03)
 - `01e6776` Add Obsidian index and full project history (2026-06-03)
 - `bf12feb` Point Obsidian sync at Omega vault pack (2026-06-03)
 - `2ff0d70` Repoint Obsidian sync to Omega vault (2026-06-03)
-- `b2294ab` Add Obsidian sync module and exports (2026-06-03)
 
 ## What To Watch Next
 - If voice, wake handling, and routing change together, review those paths as one slice.
