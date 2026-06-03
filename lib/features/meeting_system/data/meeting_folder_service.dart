@@ -51,6 +51,22 @@ class MeetingBundleResult {
   final List<String> filePaths;
 }
 
+class MeetingBundleReviewSnapshot {
+  const MeetingBundleReviewSnapshot({
+    required this.bundlePath,
+    required this.summaryPath,
+    required this.manifestPath,
+    required this.fileCount,
+    required this.exists,
+  });
+
+  final String bundlePath;
+  final String summaryPath;
+  final String manifestPath;
+  final int fileCount;
+  final bool exists;
+}
+
 class MeetingRecord {
   const MeetingRecord({
     required this.id,
@@ -1564,6 +1580,51 @@ class MeetingFolderService {
       bundlePath: bundleFolder.path,
       summaryPath: summaryPath,
       filePaths: filePaths,
+    );
+  }
+
+  Future<MeetingBundleReviewSnapshot?> loadLatestBundleReview(
+    String meetingId,
+  ) async {
+    final detail = await readMeeting(meetingId);
+    final bundlesFolder = Directory(
+      path.join(detail.exportsFolderPath, 'bundles'),
+    );
+    if (!await bundlesFolder.exists()) {
+      return null;
+    }
+
+    final bundleFolders = bundlesFolder
+        .listSync()
+        .whereType<Directory>()
+        .toList(growable: false);
+    if (bundleFolders.isEmpty) {
+      return null;
+    }
+
+    bundleFolders.sort((a, b) {
+      final aStat = a.statSync();
+      final bStat = b.statSync();
+      final modifiedCompare = bStat.modified.compareTo(aStat.modified);
+      if (modifiedCompare != 0) {
+        return modifiedCompare;
+      }
+      return path.basename(b.path).compareTo(path.basename(a.path));
+    });
+
+    final latest = bundleFolders.first;
+    final summaryPath = path.join(latest.path, 'meeting_summary.md');
+    final manifestPath = path.join(latest.path, 'bundle_manifest.md');
+    final fileCount = latest.listSync().whereType<File>().length;
+    final exists =
+        await File(summaryPath).exists() && await File(manifestPath).exists();
+
+    return MeetingBundleReviewSnapshot(
+      bundlePath: latest.path,
+      summaryPath: summaryPath,
+      manifestPath: manifestPath,
+      fileCount: fileCount,
+      exists: exists,
     );
   }
 

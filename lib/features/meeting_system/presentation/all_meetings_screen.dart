@@ -195,6 +195,18 @@ class _AllMeetingsScreenState extends ConsumerState<AllMeetingsScreen> {
                             icon: const Icon(Icons.dashboard_outlined),
                             label: const Text('Dashboard'),
                           ),
+                          TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _searchController.clear();
+                                _projectController.clear();
+                                _personController.clear();
+                                _statusFilter = 'All';
+                              });
+                            },
+                            icon: const Icon(Icons.clear_outlined),
+                            label: const Text('Clear filters'),
+                          ),
                         ],
                       ),
                     ],

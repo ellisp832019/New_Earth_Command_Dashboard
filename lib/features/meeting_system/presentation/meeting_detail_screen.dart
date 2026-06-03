@@ -280,6 +280,10 @@ class _MeetingOverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bundleReviewAsync = ref.watch(
+      meetingLatestBundleReviewProvider(detail.meeting.id),
+    );
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -347,6 +351,107 @@ class _MeetingOverviewTab extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        bundleReviewAsync.when(
+          loading: () => Container(
+            padding: const EdgeInsets.all(18),
+            decoration: meetingPanelDecoration(),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Loading bundle review...'),
+              ],
+            ),
+          ),
+          error: (error, stackTrace) => Container(
+            padding: const EdgeInsets.all(18),
+            decoration: meetingPanelDecoration(),
+            child: Text(
+              'Bundle review could not load right now.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ),
+          ),
+          data: (bundleReview) {
+            if (bundleReview == null) {
+              return MeetingEmptyPanel(
+                title: 'No bundle exported yet',
+                message:
+                    'Export a bundle from this meeting when you want a compact review pack with the summary, notes, actions, decisions, and follow-up together.',
+                icon: Icons.inventory_2_outlined,
+                action: FilledButton.tonalIcon(
+                  onPressed: () => ref
+                      .read(meetingFolderServiceProvider)
+                      .openFolder(detail.meeting.folderPath),
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: const Text('Open meeting folder'),
+                ),
+              );
+            }
+
+            return Container(
+              padding: const EdgeInsets.all(18),
+              decoration: meetingPanelDecoration(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const MeetingSectionHeader(
+                    title: 'Bundle review',
+                    subtitle:
+                        'The latest export bundle for this meeting stays openable from here.',
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      MeetingStatChip(
+                        label: 'Files',
+                        value: '${bundleReview.fileCount}',
+                        accentColor: AppColours.darkPrimary,
+                      ),
+                      MeetingStatChip(
+                        label: 'Ready',
+                        value: bundleReview.exists ? 'Yes' : 'Partial',
+                        accentColor: bundleReview.exists
+                            ? AppColours.darkSuccess
+                            : AppColours.darkAmber,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _FileLinkRow(
+                    label: 'Bundle folder',
+                    path: bundleReview.bundlePath,
+                    onOpen: () => ref
+                        .read(meetingFolderServiceProvider)
+                        .openFolder(bundleReview.bundlePath),
+                  ),
+                  _FileLinkRow(
+                    label: 'Summary',
+                    path: bundleReview.summaryPath,
+                    onOpen: () => ref
+                        .read(meetingFolderServiceProvider)
+                        .openFile(bundleReview.summaryPath),
+                  ),
+                  _FileLinkRow(
+                    label: 'Manifest',
+                    path: bundleReview.manifestPath,
+                    onOpen: () => ref
+                        .read(meetingFolderServiceProvider)
+                        .openFile(bundleReview.manifestPath),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
