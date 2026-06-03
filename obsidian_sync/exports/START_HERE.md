@@ -17,7 +17,7 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_FULL_BUILD_HISTORY]]
 
 ## What Changed Most Recently
-- Latest commit signal: `2026-06-03|71b9139|Refresh Obsidian exports after start page upgrade`
+- Latest commit signal: `2026-06-03|9fb2caa|Add project graph to Obsidian sync`
 - Branch: `feat/asset-intelligence-tab`
 
 ## Current Focus

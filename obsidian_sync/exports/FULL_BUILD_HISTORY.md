@@ -256,6 +256,7 @@ Canonical long-form project history.
 - `0755c99` Add Obsidian registry and full build history
 - `82c1d7d` Add Obsidian start page and intelligence notes
 - `71b9139` Refresh Obsidian exports after start page upgrade
+- `9fb2caa` Add project graph to Obsidian sync
 
 ## Development Log Correlation
 - The development log in `docs/developer_guide/development_log.md` matches the major phases captured here.
