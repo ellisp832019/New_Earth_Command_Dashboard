@@ -17,11 +17,11 @@ Closed out the first safe version of the New Earth Dashboard Voice Bridge:
 - No watched source changes detected in this run.
 
 ## Recent Commits
+- `0755c99` Add Obsidian registry and full build history (2026-06-03)
 - `4ba4e3d` Refresh Obsidian exports after index cleanup (2026-06-03)
 - `01e6776` Add Obsidian index and full project history (2026-06-03)
 - `bf12feb` Point Obsidian sync at Omega vault pack (2026-06-03)
 - `2ff0d70` Repoint Obsidian sync to Omega vault (2026-06-03)
-- `b2294ab` Add Obsidian sync module and exports (2026-06-03)
 
 ## What Was Tested
 - `flutter analyze` has been part of the recorded development workflow.

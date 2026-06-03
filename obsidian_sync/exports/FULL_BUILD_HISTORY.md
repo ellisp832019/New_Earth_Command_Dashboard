@@ -253,6 +253,7 @@ Canonical long-form project history.
 - `bf12feb` Point Obsidian sync at Omega vault pack
 - `01e6776` Add Obsidian index and full project history
 - `4ba4e3d` Refresh Obsidian exports after index cleanup
+- `0755c99` Add Obsidian registry and full build history
 
 ## Development Log Correlation
 - The development log in `docs/developer_guide/development_log.md` matches the major phases captured here.

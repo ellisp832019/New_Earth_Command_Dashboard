@@ -6,6 +6,7 @@
   "obsidian_project_folder": "01_ACTIVE_PROJECTS",
   "vault_note_prefix": "NEW_EARTH_DASHBOARD_",
   "export_docs": [
+    "START_HERE.md",
     "INDEX.md",
     "DOC_REGISTRY.md",
     "PROJECT_OVERVIEW.md",
@@ -13,6 +14,9 @@
     "CURRENT_STATE.md",
     "ARCHITECTURE.md",
     "ROADMAP.md",
+    "MILESTONE_SUMMARIES.md",
+    "CHANGE_INTELLIGENCE.md",
+    "RISK_TRACKER.md",
     "DECISIONS.md",
     "DECISIONS_LOG.md",
     "BUILD_LOG.md",

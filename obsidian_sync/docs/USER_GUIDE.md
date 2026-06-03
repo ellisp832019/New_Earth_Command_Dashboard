@@ -44,8 +44,11 @@ The note names are mirrored with a prefix so the vault can keep dashboard notes 
 
 ```text
 NEW_EARTH_DASHBOARD_PROJECT_OVERVIEW.md
+NEW_EARTH_DASHBOARD_START_HERE.md
 NEW_EARTH_DASHBOARD_INDEX.md
 NEW_EARTH_DASHBOARD_DOC_REGISTRY.md
 NEW_EARTH_DASHBOARD_CURRENT_PROGRESS.md
 NEW_EARTH_DASHBOARD_BUILD_LOG.md
 ```
+
+Open `NEW_EARTH_DASHBOARD_START_HERE.md` first, then use `NEW_EARTH_DASHBOARD_INDEX.md` or the registry for deeper navigation.

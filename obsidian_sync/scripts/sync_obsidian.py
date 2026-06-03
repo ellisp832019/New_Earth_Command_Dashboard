@@ -94,6 +94,7 @@ def load_config(config_path: Path) -> SyncConfig:
             raw.get(
                 "export_docs",
                 [
+                    "START_HERE.md",
                     "INDEX.md",
                     "DOC_REGISTRY.md",
                     "PROJECT_OVERVIEW.md",
@@ -101,6 +102,9 @@ def load_config(config_path: Path) -> SyncConfig:
                     "CURRENT_STATE.md",
                     "ARCHITECTURE.md",
                     "ROADMAP.md",
+                    "MILESTONE_SUMMARIES.md",
+                    "CHANGE_INTELLIGENCE.md",
+                    "RISK_TRACKER.md",
                     "DECISIONS.md",
                     "DECISIONS_LOG.md",
                     "BUILD_LOG.md",
@@ -388,6 +392,49 @@ def parse_full_commit_history(repo_root: Path) -> List[Tuple[str, str, str]]:
     return commits
 
 
+def top_level_path(path: str) -> str:
+    parts = Path(path).parts
+    if not parts:
+        return path
+    if len(parts) == 1:
+        return parts[0]
+    return parts[0]
+
+
+def commit_phase(subject: str) -> str:
+    normalized = subject.lower()
+    phase_rules = [
+        ("Obsidian Sync And Documentation", ["obsidian", "sync", "export", "history", "index", "registry"]),
+        ("Knowledge And Meetings", ["knowledge", "meeting", "bundle", "extraction", "library", "transcript"]),
+        ("Treasury And Asset Intelligence", ["treasury", "asset", "qr", "inventory", "capture", "omega os", "folder health", "backup"]),
+        ("Voice And Interaction", ["voice", "assistant", "wake", "briefing", "wizard", "dock", "thread"]),
+        ("Foundation And Dashboard", ["shell", "database", "seed", "dashboard", "planner", "task", "journal", "content", "business", "wellbeing", "inbox", "settings"]),
+        ("Calm UI And Refinement", ["calm", "soften", "ground", "polish", "spacing", "copy", "wording", "component"]),
+    ]
+    for label, keywords in phase_rules:
+        if any(keyword in normalized for keyword in keywords):
+            return label
+    return "General Progress"
+
+
+def build_milestone_groups(commits: Sequence[Tuple[str, str, str]]) -> List[Tuple[str, List[Tuple[str, str, str]]]]:
+    groups: Dict[str, List[Tuple[str, str, str]]] = {}
+    for date, sha, subject in commits:
+        groups.setdefault(commit_phase(subject), []).append((date, sha, subject))
+
+    ordered_labels = [
+        "Foundation And Dashboard",
+        "Voice And Interaction",
+        "Calm UI And Refinement",
+        "Treasury And Asset Intelligence",
+        "Knowledge And Meetings",
+        "Obsidian Sync And Documentation",
+        "General Progress",
+    ]
+    ordered_groups = [(label, groups[label]) for label in ordered_labels if label in groups]
+    return ordered_groups
+
+
 def bullet_items(markdown: str, heading: str) -> List[str]:
     section = extract_section(markdown, heading)
     items: List[str] = []
@@ -584,10 +631,14 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
             "## Related Docs",
             render_list(
                 [
+                    vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "CURRENT_PROGRESS.md"),
                     vault_link(config, "CODE_MAP.md"),
+                    vault_link(config, "MILESTONE_SUMMARIES.md"),
+                    vault_link(config, "CHANGE_INTELLIGENCE.md"),
+                    vault_link(config, "RISK_TRACKER.md"),
                     vault_link(config, "DECISIONS_LOG.md"),
                     vault_link(config, "BUILD_LOG.md"),
                     vault_link(config, "FULL_BUILD_HISTORY.md"),
@@ -612,6 +663,7 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
 
 def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str:
     rows = [
+        ("START_HERE.md", "Entry point", "Human-friendly starting page and navigation hub.", "Canonical"),
         ("INDEX.md", "Entry point", "One-click vault landing page.", "Canonical"),
         ("DOC_REGISTRY.md", "Registry", "Maps the note families and avoids duplicate roles.", "Canonical"),
         ("PROJECT_OVERVIEW.md", "Active state", "Project summary, purpose, and current branch signal.", "Canonical"),
@@ -620,6 +672,9 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
         ("ARCHITECTURE.md", "Architecture", "System overview, dependencies, and integration points.", "Canonical"),
         ("CODE_MAP.md", "Architecture", "Folder map and data flow reference.", "Canonical"),
         ("ROADMAP.md", "Planning", "Near-term and longer-term direction.", "Canonical"),
+        ("MILESTONE_SUMMARIES.md", "History", "Phase summaries across the project lifetime.", "Canonical"),
+        ("CHANGE_INTELLIGENCE.md", "History", "What changed recently and where the churn is.", "Canonical"),
+        ("RISK_TRACKER.md", "Operations", "Current blockers, severity, and next actions.", "Canonical"),
         ("TASKS.md", "Planning", "Immediate actions and what stays parked.", "Canonical"),
         ("DECISIONS.md", "Reference", "Short decision snapshot for quick scanning.", "Supporting"),
         ("DECISIONS_LOG.md", "Reference", "Detailed decision record and open decisions.", "Canonical"),
@@ -649,7 +704,9 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
             "## Read Order",
             render_list(
                 [
+                    vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -665,6 +722,64 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
     )
 
 
+def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
+    focus = context["roadmap_immediate"] or context["next_actions"] or [
+        "Finish the current local-first slice.",
+        "Keep the sync notes calm and easy to navigate.",
+        "Avoid widening scope before the current slice is stable.",
+    ]
+    current_signal = context["git"]["last_commit"] or context["git"]["commit"] or "unknown"
+
+    body = "\n".join(
+        [
+            "## What This Is",
+            f"- {config.project_name} is the local-first project memory and operating hub for New Earth.",
+            "- This page is the human-friendly starting point.",
+            "- Use it when you want the shortest path to the live state and the most useful follow-up notes.",
+            "",
+            "## Where To Begin",
+            render_list(
+                [
+                    vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_OVERVIEW.md"),
+                    vault_link(config, "CURRENT_STATE.md"),
+                    vault_link(config, "BUILD_LOG.md"),
+                    vault_link(config, "FULL_BUILD_HISTORY.md"),
+                ]
+            ),
+            "",
+            "## What Changed Most Recently",
+            f"- Latest commit signal: `{current_signal}`",
+            f"- Branch: `{context['git']['branch'] or 'unknown'}`",
+            "",
+            "## Current Focus",
+            render_list(focus),
+            "",
+            "## Safe Working Rules",
+            "- Keep handwritten notes outside the autogenerated block.",
+            "- Use the registry before adding new export notes.",
+            "- Keep one note per role so the vault stays easy to scan.",
+            "",
+            "## Fast Links",
+            render_list(
+                [
+                    vault_link(config, "MILESTONE_SUMMARIES.md"),
+                    vault_link(config, "CHANGE_INTELLIGENCE.md"),
+                    vault_link(config, "RISK_TRACKER.md"),
+                    vault_link(config, "TASKS.md"),
+                    vault_link(config, "OPEN_QUESTIONS.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Start Here",
+        "Human-friendly entry point for the Obsidian vault.",
+        body,
+    )
+
+
 def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     current_docs = [
         "DOC_REGISTRY.md",
@@ -674,6 +789,9 @@ def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
         "ARCHITECTURE.md",
         "CODE_MAP.md",
         "ROADMAP.md",
+        "MILESTONE_SUMMARIES.md",
+        "CHANGE_INTELLIGENCE.md",
+        "RISK_TRACKER.md",
         "TASKS.md",
     ]
     logs = [
@@ -688,11 +806,14 @@ def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     ]
     body = "\n".join(
         [
-        "## Start Here",
-        render_list([vault_link(config, doc) for doc in current_docs]),
-        "",
-        "## Logs And History",
-        render_list([vault_link(config, doc) for doc in logs]),
+            "## Start Here",
+            render_list([vault_link(config, "START_HERE.md")]),
+            "",
+            "## Canonical Notes",
+            render_list([vault_link(config, doc) for doc in current_docs]),
+            "",
+            "## Logs And History",
+            render_list([vault_link(config, doc) for doc in logs]),
             "",
             "## Current Focus",
             render_list(
@@ -710,6 +831,7 @@ def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
             "",
             "## How To Use",
             "- Open this note first.",
+            "- Use the start here page for a quicker human-friendly landing page.",
             "- Use the document registry to avoid repeating the same note role in multiple places.",
             "- Jump to the live state or the build history from here.",
             "- Keep handwritten notes outside the autogenerated block.",
@@ -981,6 +1103,205 @@ def generate_build_log_summary(context: Dict[str, object], config: SyncConfig) -
     return heading_block(
         f"{config.project_name} Build Log Summary",
         "Short build summary for quick reading.",
+        body,
+    )
+
+
+def generate_milestone_summaries(context: Dict[str, object], config: SyncConfig, repo_root: Path) -> str:
+    commits = parse_full_commit_history(repo_root)
+    if not commits:
+        body = "\n".join(
+            [
+                "## Summary",
+                "- Git history is not available in this environment.",
+                "",
+                "## Related Notes",
+                render_list(
+                    [
+                        vault_link(config, "FULL_BUILD_HISTORY.md"),
+                        vault_link(config, "BUILD_LOG.md"),
+                    ]
+                ),
+            ]
+        ).strip()
+        return heading_block(
+            f"{config.project_name} Milestone Summaries",
+            "Phase summaries across the project lifetime.",
+            body,
+        )
+
+    phase_summaries = {
+        "Foundation And Dashboard": "The app shell, local data model, and daily dashboard loops came together first.",
+        "Voice And Interaction": "The voice bridge, assistant flow, and wake/session behaviour became a real working slice.",
+        "Calm UI And Refinement": "The interface and wording were smoothed to reduce friction and overwhelm.",
+        "Treasury And Asset Intelligence": "Treasury, asset, QR, inventory, and Omega OS operational tooling expanded quickly.",
+        "Knowledge And Meetings": "Knowledge library, extraction, meeting bundles, and cross-linking became first-class workflows.",
+        "Obsidian Sync And Documentation": "The project memory layer was made portable and easier to maintain inside Obsidian.",
+        "General Progress": "Mixed improvements that do not fit a single theme but still moved the repo forward.",
+    }
+    grouped = build_milestone_groups(commits)
+    sections = [
+        "## How To Read This",
+        "- This is a phase summary note, not the full archive.",
+        "- Use `FULL_BUILD_HISTORY.md` when you want every commit.",
+        "- Use this note when you want the story of the project in a compact form.",
+        "",
+    ]
+
+    for phase, items in grouped:
+        start_date = items[0][0]
+        end_date = items[-1][0]
+        anchors = [f"`{sha}` {subject} ({date})" for date, sha, subject in items[:6]]
+        sections.extend(
+            [
+                f"## {phase}",
+                f"- Date range: {start_date} to {end_date}",
+                f"- Commit count: {len(items)}",
+                f"- Summary: {phase_summaries.get(phase, 'Project changes in this phase supported the broader local-first build.')}",
+                "",
+                "### Anchor Commits",
+                render_list(anchors),
+                "",
+            ]
+        )
+
+    sections.extend(
+        [
+            "## Current Takeaway",
+            "- The repository has moved from app foundation into long-lived operational tooling, knowledge, and project memory.",
+            "- The next improvements should stay focused on clarity, traceability, and a single obvious place to start.",
+        ]
+    )
+
+    return heading_block(
+        f"{config.project_name} Milestone Summaries",
+        "Phase summaries across the project lifetime.",
+        "\n".join(sections).strip(),
+    )
+
+
+def generate_change_intelligence(
+    context: Dict[str, object],
+    config: SyncConfig,
+    changed_files: Sequence[str],
+    added_files: Sequence[str],
+    removed_files: Sequence[str],
+) -> str:
+    all_changes = list(changed_files) + list(added_files) + list(removed_files)
+    total_changes = len(all_changes)
+    top_level_counts: Dict[str, int] = {}
+    for file_path in all_changes:
+        root = top_level_path(file_path)
+        top_level_counts[root] = top_level_counts.get(root, 0) + 1
+    top_areas = sorted(top_level_counts.items(), key=lambda item: (-item[1], item[0]))[:8]
+    recent_commits = context["recent_commits"][:6]
+
+    body = "\n".join(
+        [
+            "## Since Last Sync",
+            f"- Changed files: {len(changed_files)}",
+            f"- Added files: {len(added_files)}",
+            f"- Removed files: {len(removed_files)}",
+            f"- Total file deltas tracked: {total_changes}",
+            "",
+            "## Change Hotspots",
+            render_list([f"{area}: {count}" for area, count in top_areas] if top_areas else ["No file deltas detected in the watched scope."]),
+            "",
+            "## Recent Commit Signal",
+            render_list([f"`{sha}` {subject} ({date})" for date, sha, subject in recent_commits]),
+            "",
+            "## What To Watch Next",
+            render_list(
+                [
+                    "If voice, wake handling, and routing change together, review those paths as one slice.",
+                    "If docs start changing without source changes, check whether the vault registry needs a refresh.",
+                    "If local asset or treasury folders move, verify the sync config and ignore paths.",
+                ]
+            ),
+            "",
+            "## Related Notes",
+            render_list(
+                [
+                    vault_link(config, "RISK_TRACKER.md"),
+                    vault_link(config, "BUILD_LOG.md"),
+                    vault_link(config, "FULL_BUILD_HISTORY.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Change Intelligence",
+        "What changed recently and where the churn is concentrated.",
+        body,
+    )
+
+
+def generate_risk_tracker(context: Dict[str, object], config: SyncConfig) -> str:
+    risks = bullet_items(context["readme"], "Current Risks")
+    if not risks:
+        risks = bullet_items(context["roadmap"], "Working Principles")
+    if not risks:
+        risks = [
+            "The app surface is broad, so routing and docs can drift if too many slices move at once.",
+            "Windows-specific voice dependencies can vary by machine.",
+            "Local file paths and asset/config assumptions need to stay stable.",
+        ]
+
+    open_questions = bullet_items(context["ai_roadmap"], "Open Decisions")
+    if not open_questions:
+        open_questions = [
+            "Which slice should come after voice polish?",
+            "When should the AI adapter move beyond roadmap-only status?",
+            "How much should the sync module be shared across downstream repos?",
+        ]
+
+    rows = []
+    for risk in risks[:6]:
+        normalized = risk.lower()
+        if "voice" in normalized or "windows" in normalized:
+            severity = "High"
+        elif "routing" in normalized or "docs" in normalized or "file" in normalized:
+            severity = "Medium"
+        else:
+            severity = "Low"
+        rows.append(
+            (
+                severity,
+                risk,
+                "Review the affected slice before widening scope.",
+            )
+        )
+
+    body = "\n".join(
+        [
+            "## Current Risks",
+            render_table([("Severity", "Risk", "Next Action")] + rows),
+            "",
+            "## Open Questions",
+            render_list(open_questions),
+            "",
+            "## Blocker Watch",
+            render_list(
+                [
+                    "Keep voice, wake handling, and routing changes in the same review pass when possible.",
+                    "Keep Obsidian export names canonical so the vault does not accumulate duplicate note roles.",
+                    "Keep local path assumptions aligned between the repo and the Omega vault layout.",
+                ]
+            ),
+            "",
+            "## Related Notes",
+            render_list(
+                [
+                    vault_link(config, "CHANGE_INTELLIGENCE.md"),
+                    vault_link(config, "CURRENT_PROGRESS.md"),
+                    vault_link(config, "OPEN_QUESTIONS.md"),
+                ]
+            ),
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Risk Tracker",
+        "Live risk and blocker watch list.",
         body,
     )
 
@@ -1324,10 +1645,20 @@ def run_sync(config_path: Path) -> SyncResult:
 
     context = summarize_repo(repo_root, config)
     generated_docs = {
+        "START_HERE.md": generate_start_here(context, config),
         "INDEX.md": generate_index(context, config),
         "DOC_REGISTRY.md": generate_doc_registry(context, config),
         "PROJECT_OVERVIEW.md": generate_project_overview(context, config),
         "CURRENT_PROGRESS.md": generate_current_progress(context, config, changed_files + added_files + removed_files),
+        "MILESTONE_SUMMARIES.md": generate_milestone_summaries(context, config, repo_root),
+        "CHANGE_INTELLIGENCE.md": generate_change_intelligence(
+            context,
+            config,
+            changed_files,
+            added_files,
+            removed_files,
+        ),
+        "RISK_TRACKER.md": generate_risk_tracker(context, config),
         "DECISIONS.md": generate_decisions_summary(context, config),
         "DECISIONS_LOG.md": generate_decisions_log(context, config),
         "BUILD_LOG.md": generate_build_log(context, config, changed_files + added_files + removed_files),
