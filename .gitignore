@@ -107,3 +107,4 @@ Desktop.ini
 # Catch-all generated backup folders
 .backup_*/
 backups/
+!backups/README.md
