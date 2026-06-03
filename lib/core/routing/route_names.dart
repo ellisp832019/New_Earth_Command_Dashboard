@@ -93,6 +93,29 @@ abstract final class RouteNames {
     ).toString();
   }
 
+  static String newTaskWithContext({
+    String? projectId,
+    String? title,
+    String? description,
+    String? notes,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (title != null && title.isNotEmpty) {
+      queryParameters['title'] = title;
+    }
+    if (description != null && description.isNotEmpty) {
+      queryParameters['description'] = description;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      queryParameters['notes'] = notes;
+    }
+
+    return Uri(path: newTask, queryParameters: queryParameters).toString();
+  }
+
   static String newJournalForProject(String projectId) {
     return Uri(
       path: newJournal,

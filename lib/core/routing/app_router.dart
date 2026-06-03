@@ -237,8 +237,7 @@ final appRouter = GoRouter(
                   routes: [
                     GoRoute(
                       path: 'new',
-                      builder: (context, state) =>
-                          const AddEditProjectScreen(),
+                      builder: (context, state) => const AddEditProjectScreen(),
                     ),
                     GoRoute(
                       path: ':projectId',
@@ -271,6 +270,10 @@ final appRouter = GoRouter(
                   path: 'new',
                   builder: (context, state) => AddEditTaskScreen(
                     projectId: state.uri.queryParameters['projectId'],
+                    initialTitle: state.uri.queryParameters['title'],
+                    initialDescription:
+                        state.uri.queryParameters['description'],
+                    initialNotes: state.uri.queryParameters['notes'],
                   ),
                 ),
                 GoRoute(

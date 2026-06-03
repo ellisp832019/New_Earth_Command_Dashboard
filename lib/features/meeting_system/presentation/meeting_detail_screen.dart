@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../projects/application/projects_controller.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
 import 'meeting_system_widgets.dart';
@@ -1412,6 +1414,7 @@ class _MeetingLinksTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final projectsAsync = ref.watch(projectsProvider);
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -1428,49 +1431,151 @@ class _MeetingLinksTab extends ConsumerWidget {
                     'Useful places to connect this meeting to other Omega OS records.',
               ),
               const SizedBox(height: 12),
-              Text(
-                'Project record',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
+              projectsAsync.when(
+                loading: () => const Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 10),
+                    Text('Checking for a matching project...'),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                detail.meeting.project,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkText,
+                error: (error, stackTrace) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Project links are available once the workspace loads.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.go(RouteNames.projectsIntelligence),
+                      icon: const Icon(Icons.folder_open_outlined),
+                      label: const Text('Open Projects Hub'),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Linked visuals',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Store screenshots, diagrams, and supporting captures in 19_VISUAL_RECORDS_AND_CAPTURE, then link them from the meeting folder.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Linked project docs',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Project-specific context should stay in Omega OS under 21_PROJECTS_AND_PROGRAMMES and linked from here rather than duplicated.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+                data: (projects) {
+                  final linkedProject = _resolveLinkedProject(
+                    projects,
+                    detail.meeting.project,
+                  );
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Project record',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        detail.meeting.project,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkText,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        linkedProject == null
+                            ? 'No exact project match was found. Keep the meeting as archive source-of-truth text, then use the Projects Hub to resolve the live project record if needed.'
+                            : 'Matched project: ${linkedProject.name} (${linkedProject.projectId}). Use the live project record or spin up a task from this meeting.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          if (linkedProject != null) ...[
+                            FilledButton.tonalIcon(
+                              onPressed: () => context.push(
+                                RouteNames.projectDetail(
+                                  linkedProject.projectId,
+                                ),
+                              ),
+                              icon: const Icon(Icons.folder_open_outlined),
+                              label: const Text('Open project'),
+                            ),
+                            FilledButton.icon(
+                              onPressed: () => context.push(
+                                RouteNames.newTaskWithContext(
+                                  projectId: linkedProject.projectId,
+                                  title: 'Follow-up: ${detail.meeting.title}',
+                                  description: _meetingTaskDescription(
+                                    detail.meeting,
+                                  ),
+                                  notes: _meetingTaskNotes(detail.meeting),
+                                ),
+                              ),
+                              icon: const Icon(Icons.add_task_outlined),
+                              label: const Text('Create task'),
+                            ),
+                          ] else ...[
+                            FilledButton.tonalIcon(
+                              onPressed: () =>
+                                  context.go(RouteNames.projectsIntelligence),
+                              icon: const Icon(Icons.folder_open_outlined),
+                              label: const Text('Open Projects Hub'),
+                            ),
+                          ],
+                          TextButton.icon(
+                            onPressed: () => context.push(RouteNames.tasks),
+                            icon: const Icon(Icons.task_outlined),
+                            label: const Text('Open Tasks'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () =>
+                                context.push(RouteNames.meetingAll),
+                            icon: const Icon(Icons.table_chart_outlined),
+                            label: const Text('All Meetings'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Linked visuals',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Store screenshots, diagrams, and supporting captures in 19_VISUAL_RECORDS_AND_CAPTURE, then link them from the meeting folder.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Linked project docs',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Project-specific context should stay in Omega OS under 21_PROJECTS_AND_PROGRAMMES and linked from here rather than duplicated.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -1478,6 +1583,54 @@ class _MeetingLinksTab extends ConsumerWidget {
       ],
     );
   }
+}
+
+Project? _resolveLinkedProject(List<Project> projects, String meetingProject) {
+  final normalizedMeetingProject = _normalize(meetingProject);
+  if (normalizedMeetingProject.isEmpty) {
+    return null;
+  }
+
+  for (final project in projects) {
+    final normalizedProjectName = _normalize(project.name);
+    if (normalizedProjectName == normalizedMeetingProject) {
+      return project;
+    }
+  }
+
+  for (final project in projects) {
+    final normalizedProjectName = _normalize(project.name);
+    if (normalizedProjectName.contains(normalizedMeetingProject) ||
+        normalizedMeetingProject.contains(normalizedProjectName)) {
+      return project;
+    }
+  }
+
+  return null;
+}
+
+String _normalize(String value) {
+  return value.trim().toLowerCase();
+}
+
+String _meetingTaskDescription(MeetingRecord meeting) {
+  return [
+    'Meeting follow-up for ${meeting.title}.',
+    'Project: ${meeting.project}',
+    'Person / Group: ${meeting.personOrGroup}',
+    'Date: ${meeting.date}',
+    if (meeting.purpose.isNotEmpty) 'Purpose: ${meeting.purpose}',
+  ].join('\n');
+}
+
+String _meetingTaskNotes(MeetingRecord meeting) {
+  final tags = meeting.tags.isEmpty ? 'None' : meeting.tags.join(', ');
+  return [
+    'Created from meeting archive.',
+    'Meeting ID: ${meeting.id}',
+    'Meeting folder: ${meeting.folderPath}',
+    'Tags: $tags',
+  ].join('\n');
 }
 
 class _MetadataGrid extends StatelessWidget {

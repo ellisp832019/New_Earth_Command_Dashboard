@@ -8,10 +8,20 @@ import '../../projects/application/projects_controller.dart';
 import '../application/tasks_controller.dart';
 
 class AddEditTaskScreen extends ConsumerStatefulWidget {
-  const AddEditTaskScreen({super.key, this.taskId, this.projectId});
+  const AddEditTaskScreen({
+    super.key,
+    this.taskId,
+    this.projectId,
+    this.initialTitle,
+    this.initialDescription,
+    this.initialNotes,
+  });
 
   final String? taskId;
   final String? projectId;
+  final String? initialTitle;
+  final String? initialDescription;
+  final String? initialNotes;
 
   @override
   ConsumerState<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
@@ -63,10 +73,12 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController();
-    _descriptionController = TextEditingController();
+    _titleController = TextEditingController(text: widget.initialTitle ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.initialDescription ?? '',
+    );
     _estimatedMinutesController = TextEditingController();
-    _notesController = TextEditingController();
+    _notesController = TextEditingController(text: widget.initialNotes ?? '');
     _projectId = widget.projectId;
   }
 
