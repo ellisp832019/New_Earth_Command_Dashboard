@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,9 +19,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
     final queueAsync = ref.watch(assetQrPrintQueueProvider);
 
     return workspaceAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _ErrorState(
         message: 'The asset folder is not ready for the print queue yet.',
         onBack: () => context.go(RouteNames.assets),
@@ -27,27 +28,20 @@ class QrPrintQueueScreen extends ConsumerWidget {
       ),
       data: (workspace) {
         return queueAsync.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _ErrorState(
             message: 'The print queue could not load right now.',
             onBack: () => context.go(RouteNames.assetQrLabelStudio),
             onReload: () => ref.invalidate(assetQrPrintQueueProvider),
           ),
           data: (table) {
-            final readyRows = _rowsByStatus(
-              table.rows,
-              {'generated', 'queued'},
-            );
-            final retryRows = _rowsByStatus(
-              table.rows,
-              {'reprint_needed'},
-            );
-            final printedRows = _rowsByStatus(
-              table.rows,
-              {'printed'},
-            );
+            final readyRows = _rowsByStatus(table.rows, {
+              'generated',
+              'queued',
+            });
+            final retryRows = _rowsByStatus(table.rows, {'reprint_needed'});
+            final printedRows = _rowsByStatus(table.rows, {'printed'});
             final appliedRows = _rowsByStatus(table.rows, {'applied'});
 
             return Scaffold(
@@ -64,7 +58,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
                             _HeroCard(
                               onBackToStudio: () =>
                                   context.go(RouteNames.assetQrLabelStudio),
-                              onBackToAssets: () => context.go(RouteNames.assets),
+                              onBackToAssets: () =>
+                                  context.go(RouteNames.assets),
                               onRefresh: () =>
                                   ref.invalidate(assetQrPrintQueueProvider),
                               onExportReadyQueue: () => _exportReadyQueue(
@@ -104,6 +99,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
                                 queueId,
                                 'reprint_needed',
                               ),
+                              onOpenManifest: (queueId) =>
+                                  _openManifest(context, queueId, readyRows),
                               onRetry: (queueId) => _retryQueue(
                                 ref,
                                 workspace.assetsRootPath!,
@@ -135,6 +132,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
                                 queueId,
                                 'reprint_needed',
                               ),
+                              onOpenManifest: (queueId) =>
+                                  _openManifest(context, queueId, retryRows),
                               onRetry: (queueId) => _retryQueue(
                                 ref,
                                 workspace.assetsRootPath!,
@@ -166,6 +165,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
                                 queueId,
                                 'reprint_needed',
                               ),
+                              onOpenManifest: (queueId) =>
+                                  _openManifest(context, queueId, printedRows),
                               onRetry: (queueId) => _retryQueue(
                                 ref,
                                 workspace.assetsRootPath!,
@@ -175,7 +176,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
                             const SizedBox(height: 20),
                             _QueueSection(
                               title: 'Applied',
-                              subtitle: 'Labels already placed on the physical item.',
+                              subtitle:
+                                  'Labels already placed on the physical item.',
                               rows: appliedRows,
                               accent: AppColours.darkSecondary,
                               onMarkPrinted: (queueId) => _markQueue(
@@ -196,6 +198,8 @@ class QrPrintQueueScreen extends ConsumerWidget {
                                 queueId,
                                 'reprint_needed',
                               ),
+                              onOpenManifest: (queueId) =>
+                                  _openManifest(context, queueId, appliedRows),
                               onRetry: (queueId) => _retryQueue(
                                 ref,
                                 workspace.assetsRootPath!,
@@ -285,10 +289,12 @@ class QrPrintQueueScreen extends ConsumerWidget {
     List<Map<String, String>> rows,
     Set<String> statuses,
   ) {
-    return rows.where((row) {
-      final status = (row['status'] ?? '').trim().toLowerCase();
-      return statuses.contains(status);
-    }).toList(growable: false);
+    return rows
+        .where((row) {
+          final status = (row['status'] ?? '').trim().toLowerCase();
+          return statuses.contains(status);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -356,24 +362,24 @@ class _HeroCard extends StatelessWidget {
               Text(
                 'Print Queue',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColours.darkText,
-                    ),
+                  color: AppColours.darkText,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Keep labels calm and trackable while they move from generated to printed and applied.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.35,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 workspacePath ?? 'Asset folder not linked',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           );
@@ -390,7 +396,10 @@ class _HeroCard extends StatelessWidget {
             children: [
               Expanded(child: copy),
               const SizedBox(width: 20),
-              SizedBox(width: 360, child: Align(alignment: Alignment.topRight, child: actions)),
+              SizedBox(
+                width: 360,
+                child: Align(alignment: Alignment.topRight, child: actions),
+              ),
             ],
           );
         },
@@ -408,6 +417,7 @@ class _QueueSection extends StatelessWidget {
     required this.onMarkPrinted,
     required this.onMarkApplied,
     required this.onMarkReprintNeeded,
+    required this.onOpenManifest,
     required this.onRetry,
   });
 
@@ -418,6 +428,7 @@ class _QueueSection extends StatelessWidget {
   final Future<void> Function(String queueId) onMarkPrinted;
   final Future<void> Function(String queueId) onMarkApplied;
   final Future<void> Function(String queueId) onMarkReprintNeeded;
+  final Future<void> Function(String queueId) onOpenManifest;
   final Future<void> Function(String queueId) onRetry;
 
   @override
@@ -433,9 +444,9 @@ class _QueueSection extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColours.darkText,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const Spacer(),
               _InlineBadge(count: rows.length, accent: accent),
@@ -444,17 +455,17 @@ class _QueueSection extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 14),
           if (rows.isEmpty)
             Text(
               'Nothing here yet.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -468,6 +479,8 @@ class _QueueSection extends StatelessWidget {
                       onMarkApplied: () => onMarkApplied(row['queue_id'] ?? ''),
                       onMarkReprintNeeded: () =>
                           onMarkReprintNeeded(row['queue_id'] ?? ''),
+                      onOpenManifest: () =>
+                          onOpenManifest(row['queue_id'] ?? ''),
                       onRetry: () => onRetry(row['queue_id'] ?? ''),
                     ),
                   ),
@@ -485,6 +498,7 @@ class _QueueItemCard extends StatelessWidget {
     required this.onMarkPrinted,
     required this.onMarkApplied,
     required this.onMarkReprintNeeded,
+    required this.onOpenManifest,
     required this.onRetry,
   });
 
@@ -492,6 +506,7 @@ class _QueueItemCard extends StatelessWidget {
   final VoidCallback onMarkPrinted;
   final VoidCallback onMarkApplied;
   final VoidCallback onMarkReprintNeeded;
+  final VoidCallback onOpenManifest;
   final VoidCallback onRetry;
 
   @override
@@ -514,9 +529,9 @@ class _QueueItemCard extends StatelessWidget {
                 child: Text(
                   row['asset_id'] ?? 'Unknown asset',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _InlineBadge(count: 1, accent: accent, label: status),
@@ -525,18 +540,19 @@ class _QueueItemCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${row['label_type'] ?? ''} • ${row['label_size'] ?? ''} • ${path.basename(row['generated_file'] ?? '')}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
+              TextButton(onPressed: onRetry, child: const Text('Retry now')),
               TextButton(
-                onPressed: onRetry,
-                child: const Text('Retry now'),
+                onPressed: onOpenManifest,
+                child: const Text('Open manifest'),
               ),
               TextButton(
                 onPressed: onMarkPrinted,
@@ -559,11 +575,7 @@ class _QueueItemCard extends StatelessWidget {
 }
 
 class _InlineBadge extends StatelessWidget {
-  const _InlineBadge({
-    required this.count,
-    required this.accent,
-    this.label,
-  });
+  const _InlineBadge({required this.count, required this.accent, this.label});
 
   final int count;
   final Color accent;
@@ -581,9 +593,9 @@ class _InlineBadge extends StatelessWidget {
       child: Text(
         label ?? '$count',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -672,4 +684,42 @@ Color _statusAccent(String status) {
     default:
       return AppColours.darkSecondary;
   }
+}
+
+Future<void> _openManifest(
+  BuildContext context,
+  String queueId,
+  List<Map<String, String>> rows,
+) async {
+  final row = rows.firstWhere(
+    (item) => (item['queue_id'] ?? '').trim() == queueId.trim(),
+    orElse: () => const <String, String>{},
+  );
+  final manifestPath = (row['manifest_file'] ?? '').trim();
+  if (manifestPath.isEmpty) {
+    return;
+  }
+
+  final manifestFile = File(manifestPath);
+  if (!await manifestFile.exists()) {
+    return;
+  }
+
+  if (Platform.isWindows) {
+    await Process.start('cmd.exe', ['/c', 'start', '', manifestFile.path]);
+  } else if (Platform.isMacOS) {
+    await Process.start('open', [manifestFile.path]);
+  } else {
+    await Process.start('xdg-open', [manifestFile.path]);
+  }
+
+  if (!context.mounted) {
+    return;
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Opened manifest for ${path.basename(manifestFile.path)}'),
+    ),
+  );
 }

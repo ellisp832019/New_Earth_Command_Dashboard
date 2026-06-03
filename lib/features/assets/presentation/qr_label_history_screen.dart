@@ -23,9 +23,8 @@ class QrLabelHistoryScreen extends ConsumerWidget {
     final queueAsync = ref.watch(assetQrPrintQueueProvider);
 
     return workspaceAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _HistoryError(
         message: 'The asset workspace is not ready for label history yet.',
         onBack: () => context.go(RouteNames.assets),
@@ -33,13 +32,13 @@ class QrLabelHistoryScreen extends ConsumerWidget {
       ),
       data: (workspace) {
         return labelsAsync.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _HistoryError(
             message: 'The label register could not load right now.',
             onBack: () => context.go(RouteNames.assetQrLabelRegister),
-            onReload: () => ref.invalidate(assetQrLabelTemplateRegisterProvider),
+            onReload: () =>
+                ref.invalidate(assetQrLabelTemplateRegisterProvider),
           ),
           data: (labelTable) {
             return queueAsync.when(
@@ -53,18 +52,11 @@ class QrLabelHistoryScreen extends ConsumerWidget {
               ),
               data: (queueTable) {
                 final labels = _sortedLabelRows(labelTable.rows);
-                final retryRows = _rowsByStatus(
-                  queueTable.rows,
-                  {'reprint_needed'},
-                );
-                final printedRows = _rowsByStatus(
-                  queueTable.rows,
-                  {'printed'},
-                );
-                final appliedRows = _rowsByStatus(
-                  queueTable.rows,
-                  {'applied'},
-                );
+                final retryRows = _rowsByStatus(queueTable.rows, {
+                  'reprint_needed',
+                });
+                final printedRows = _rowsByStatus(queueTable.rows, {'printed'});
+                final appliedRows = _rowsByStatus(queueTable.rows, {'applied'});
                 final recentCount = math.min(labels.length, 12);
 
                 return Scaffold(
@@ -91,16 +83,16 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                                   onBackToRegister: () => context.go(
                                     RouteNames.assetQrLabelRegister,
                                   ),
-                                  onOpenQueue: () =>
-                                      context.push(RouteNames.assetQrPrintQueue),
+                                  onOpenQueue: () => context.push(
+                                    RouteNames.assetQrPrintQueue,
+                                  ),
                                   onRefresh: () {
                                     ref.invalidate(
                                       assetQrLabelTemplateRegisterProvider,
                                     );
                                     ref.invalidate(assetQrPrintQueueProvider);
                                   },
-                                  onOpenExportFolder: () =>
-                                      _openExportFolder(
+                                  onOpenExportFolder: () => _openExportFolder(
                                     workspace.assetsRootPath!,
                                   ),
                                   onExportRecent: () => _exportRecentHistory(
@@ -119,17 +111,21 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                                   title: 'Recent label records',
                                   subtitle:
                                       'The calm audit trail for generated labels, printed status, and applied status.',
-                                  rows: labels.take(recentCount).toList(
-                                        growable: false,
-                                      ),
+                                  rows: labels
+                                      .take(recentCount)
+                                      .toList(growable: false),
                                   accent: AppColours.darkSecondary,
                                   emptyText: 'No label records yet.',
                                   itemBuilder: (row) => _LabelRecordCard(
                                     row: row,
-                                    onOpenFile: () =>
-                                        _openGeneratedFile(row['generated_file']),
+                                    onOpenFile: () => _openGeneratedFile(
+                                      row['generated_file'],
+                                    ),
                                     onOpenFolder: () => _openParentFolder(
                                       row['generated_file'],
+                                    ),
+                                    onOpenManifest: () => _openGeneratedFile(
+                                      row['manifest_file'],
                                     ),
                                     onCopyPath: () => _copyToClipboard(
                                       context,
@@ -162,6 +158,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                                       ref,
                                       workspace.assetsRootPath!,
                                       row['queue_id'] ?? '',
+                                    ),
+                                    onOpenManifest: () => _openGeneratedFile(
+                                      row['manifest_file'],
                                     ),
                                     onMarkPrinted: () => _markQueueStatus(
                                       ref,
@@ -207,10 +206,12 @@ class QrLabelHistoryScreen extends ConsumerWidget {
     List<Map<String, String>> rows,
     Set<String> statuses,
   ) {
-    return rows.where((row) {
-      final status = (row['status'] ?? '').trim().toLowerCase();
-      return statuses.contains(status);
-    }).toList(growable: false);
+    return rows
+        .where((row) {
+          final status = (row['status'] ?? '').trim().toLowerCase();
+          return statuses.contains(status);
+        })
+        .toList(growable: false);
   }
 
   Future<void> _markLabelPrinted(
@@ -222,10 +223,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
       return;
     }
 
-    await ref.read(assetQrLabelPrintServiceProvider).markLabelPrinted(
-          assetsRootPath,
-          labelId,
-        );
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .markLabelPrinted(assetsRootPath, labelId);
     ref.invalidate(assetQrLabelTemplateRegisterProvider);
   }
 
@@ -238,10 +238,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
       return;
     }
 
-    await ref.read(assetQrLabelPrintServiceProvider).markLabelApplied(
-          assetsRootPath,
-          labelId,
-        );
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .markLabelApplied(assetsRootPath, labelId);
     ref.invalidate(assetQrLabelTemplateRegisterProvider);
   }
 
@@ -254,10 +253,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
       return;
     }
 
-    await ref.read(assetQrLabelPrintServiceProvider).markQueueQueued(
-          assetsRootPath,
-          queueId,
-        );
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .markQueueQueued(assetsRootPath, queueId);
     ref.invalidate(assetQrPrintQueueProvider);
   }
 
@@ -329,9 +327,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
 
     await Clipboard.setData(ClipboardData(text: trimmed));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -442,34 +440,46 @@ class _HistoryHero extends StatelessWidget {
               Text(
                 'QR Label History',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColours.darkText,
-                    ),
+                  color: AppColours.darkText,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'See the calm audit trail for generated labels, queue progress, and retry items without leaving the local workspace.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.35,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 workspacePath ?? 'Asset folder not linked',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: [
-                  _HistoryPill(label: 'Labels: $labelCount', accent: AppColours.darkSecondary),
-                  _HistoryPill(label: 'Printed: $printedCount', accent: AppColours.darkAmber),
-                  _HistoryPill(label: 'Applied: $appliedCount', accent: AppColours.darkSuccess),
-                  _HistoryPill(label: 'Retry: $retryCount', accent: AppColours.darkAmber),
+                  _HistoryPill(
+                    label: 'Labels: $labelCount',
+                    accent: AppColours.darkSecondary,
+                  ),
+                  _HistoryPill(
+                    label: 'Printed: $printedCount',
+                    accent: AppColours.darkAmber,
+                  ),
+                  _HistoryPill(
+                    label: 'Applied: $appliedCount',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  _HistoryPill(
+                    label: 'Retry: $retryCount',
+                    accent: AppColours.darkAmber,
+                  ),
                 ],
               ),
             ],
@@ -583,17 +593,17 @@ class _HistorySection extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 14),
           if (rows.isEmpty)
             Text(
               emptyText,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -616,6 +626,7 @@ class _LabelRecordCard extends StatelessWidget {
     required this.row,
     required this.onOpenFile,
     required this.onOpenFolder,
+    required this.onOpenManifest,
     required this.onCopyPath,
     required this.onMarkPrinted,
     required this.onMarkApplied,
@@ -624,6 +635,7 @@ class _LabelRecordCard extends StatelessWidget {
   final Map<String, String> row;
   final VoidCallback onOpenFile;
   final VoidCallback onOpenFolder;
+  final VoidCallback onOpenManifest;
   final VoidCallback onCopyPath;
   final VoidCallback onMarkPrinted;
   final VoidCallback onMarkApplied;
@@ -651,12 +663,15 @@ class _LabelRecordCard extends StatelessWidget {
                       ? row['label_id']!.trim()
                       : 'Label record',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              _HistoryPill(label: status.isEmpty ? 'unknown' : status, accent: accent),
+              _HistoryPill(
+                label: status.isEmpty ? 'unknown' : status,
+                accent: accent,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -673,18 +688,18 @@ class _LabelRecordCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Printed: ${_formatDate(row['printed_date'])}  •  Applied: ${_formatDate(row['applied_date'])}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           if ((row['location'] ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               row['location']!.trim(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColours.darkSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
           if ((row['notes'] ?? '').trim().isNotEmpty) ...[
@@ -692,9 +707,9 @@ class _LabelRecordCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
           const SizedBox(height: 10),
@@ -702,18 +717,16 @@ class _LabelRecordCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              TextButton(
-                onPressed: onOpenFile,
-                child: const Text('Open PDF'),
-              ),
+              TextButton(onPressed: onOpenFile, child: const Text('Open PDF')),
               TextButton(
                 onPressed: onOpenFolder,
                 child: const Text('Open folder'),
               ),
               TextButton(
-                onPressed: onCopyPath,
-                child: const Text('Copy path'),
+                onPressed: onOpenManifest,
+                child: const Text('Open manifest'),
               ),
+              TextButton(onPressed: onCopyPath, child: const Text('Copy path')),
               TextButton(
                 onPressed: onMarkPrinted,
                 child: const Text('Mark printed'),
@@ -736,12 +749,14 @@ class _RetryQueueCard extends StatelessWidget {
     required this.onRetry,
     required this.onMarkPrinted,
     required this.onMarkApplied,
+    required this.onOpenManifest,
   });
 
   final Map<String, String> row;
   final VoidCallback onRetry;
   final VoidCallback onMarkPrinted;
   final VoidCallback onMarkApplied;
+  final VoidCallback onOpenManifest;
 
   @override
   Widget build(BuildContext context) {
@@ -765,29 +780,33 @@ class _RetryQueueCard extends StatelessWidget {
                       ? row['asset_id']!.trim()
                       : 'Unknown asset',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              _HistoryPill(label: status.isEmpty ? 'unknown' : status, accent: accent),
+              _HistoryPill(
+                label: status.isEmpty ? 'unknown' : status,
+                accent: accent,
+              ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             '${row['label_type'] ?? ''} • ${row['label_size'] ?? ''} • ${path.basename(row['generated_file'] ?? '')}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
+              TextButton(onPressed: onRetry, child: const Text('Retry now')),
               TextButton(
-                onPressed: onRetry,
-                child: const Text('Retry now'),
+                onPressed: onOpenManifest,
+                child: const Text('Open manifest'),
               ),
               TextButton(
                 onPressed: onMarkPrinted,
@@ -806,10 +825,7 @@ class _RetryQueueCard extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.icon,
-  });
+  const _SectionTitle({required this.title, required this.icon});
 
   final String title;
   final IconData icon;
@@ -824,9 +840,9 @@ class _SectionTitle extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-                fontWeight: FontWeight.w700,
-              ),
+            color: AppColours.darkText,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -834,10 +850,7 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _HistoryPill extends StatelessWidget {
-  const _HistoryPill({
-    required this.label,
-    required this.accent,
-  });
+  const _HistoryPill({required this.label, required this.accent});
 
   final String label;
   final Color accent;
@@ -854,9 +867,9 @@ class _HistoryPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -879,9 +892,9 @@ class _MiniChip extends StatelessWidget {
       child: Text(
         label.isEmpty ? '—' : label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
