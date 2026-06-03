@@ -263,6 +263,7 @@ Canonical long-form project history.
 - `dd7d80d` Add module status to Obsidian sync
 - `da7caca` Refresh Obsidian exports after module status upgrade
 - `b6ecc34` Add module relations to Obsidian sync
+- `9ea5c35` Refresh Obsidian exports after module relations upgrade
 
 ## Development Log Correlation
 - The development log in `docs/developer_guide/development_log.md` matches the major phases captured here.

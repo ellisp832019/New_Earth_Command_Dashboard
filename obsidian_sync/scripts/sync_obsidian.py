@@ -602,8 +602,6 @@ def vault_link(config: SyncConfig, doc_name: str) -> str:
 
 def generate_project_overview(context: Dict[str, object], config: SyncConfig) -> str:
     status = context["current_status"] or []
-    next_actions = context["next_actions"] or context["roadmap_immediate"] or []
-    recent_commits = context["recent_commits"][:6]
 
     body = "\n".join(
         [
@@ -616,21 +614,17 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
             "- Keep the daily workflow calm, clear, and review-first.",
             "- Support projects, tasks, capture, planning, and progress tracking without cloud dependency.",
             "",
-            "## What Currently Works",
-            render_list(status),
-            "",
             "## Current Scope Guardrails",
             "- No login in V0.1.",
             "- No cloud sync in V0.1.",
             "- No live calendar, GitHub, WordPress, or MicroGrow integration yet.",
             "- No AI assistant in V0.1.",
             "",
-            "## Current Branch And Repo Signal",
+            "## Summary Signal",
+            render_list(status[:6]),
+            "",
             f"- Branch: `{context['git']['branch'] or 'unknown'}`",
             f"- Current commit snapshot: `{context['git']['commit'] or 'unknown'}`",
-            "",
-            "## Next Priority Actions",
-            render_list(next_actions),
             "",
             "## Related Docs",
             render_list(
@@ -655,9 +649,6 @@ def generate_project_overview(context: Dict[str, object], config: SyncConfig) ->
                     "`docs/architecture/architecture_decisions.md`",
                 ]
             ),
-            "",
-            "## Recent Commits",
-            render_list([f"`{sha}` {subject} ({date})" for date, sha, subject in recent_commits]),
         ]
     ).strip()
     return heading_block(
@@ -1164,41 +1155,28 @@ def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
 
 
 def generate_current_progress(context: Dict[str, object], config: SyncConfig, changed_files: Sequence[str]) -> str:
-    works = context["current_status"] or []
-    incomplete = []
-    incomplete.extend(bullet_items(context["readme"], "What Is Incomplete"))
-    if not incomplete:
-        incomplete.extend(context["roadmap_not_yet"])
-    if not incomplete:
-        incomplete.extend(
-            [
-                "No login in V0.1.",
-                "No cloud sync in V0.1.",
-                "No live calendar, GitHub, WordPress, or MicroGrow integration yet.",
-                "No AI assistant in V0.1.",
-            ]
-        )
-
-    risks = bullet_items(context["readme"], "Current Risks")
-    if not risks:
-        risks = bullet_items(context["roadmap"], "Working Principles")
+    next_actions = context["next_actions"] or context["roadmap_immediate"] or [
+        "Finish the current local-first slice.",
+        "Keep the docs and build notes aligned.",
+        "Avoid widening scope before the current slice is stable.",
+    ]
+    risks = bullet_items(context["readme"], "Current Risks") or bullet_items(context["roadmap"], "Working Principles")
     if not risks:
         risks = [
             "The app surface is broad, so routing and docs can drift if too many slices move at once.",
             "Windows-specific voice dependencies can vary by machine.",
             "Local file paths and asset/config assumptions need to stay stable.",
-            "Too many parallel feature slices could dilute MVP focus.",
         ]
-
-    next_actions = context["next_actions"] or context["roadmap_immediate"] or []
+    sync_signal = [
+        f"Changed source files in this run: {len(changed_files)}",
+        f"Branch: `{context['git']['branch'] or 'unknown'}`",
+        f"Commit snapshot: `{context['git']['commit'] or 'unknown'}`",
+    ]
 
     body = "\n".join(
         [
-            "## What Works",
-            render_list(works),
-            "",
-            "## What Is Incomplete",
-            render_list(incomplete),
+            "## Live Sync Snapshot",
+            render_list(sync_signal),
             "",
             "## Current Risks",
             render_list(risks),
@@ -1206,10 +1184,10 @@ def generate_current_progress(context: Dict[str, object], config: SyncConfig, ch
             "## Next Priority Actions",
             render_list(next_actions),
             "",
-            "## Last Sync Signal",
-            f"- Changed source files in this run: {len(changed_files)}",
-            f"- Branch: `{context['git']['branch'] or 'unknown'}`",
-            f"- Commit snapshot: `{context['git']['commit'] or 'unknown'}`",
+            "## What This Note Is For",
+            "- Use this as the quick sync pulse for the current run.",
+            "- The fuller live state lives in `CURRENT_STATE.md`.",
+            "- The rollout plan lives in `ROADMAP.md` and `TASKS.md`.",
         ]
     ).strip()
     return heading_block(
@@ -1683,7 +1661,7 @@ def generate_full_build_history(context: Dict[str, object], config: SyncConfig, 
     )
 
 
-def generate_code_map(context: Dict[str, object], config: SyncConfig, repo_root: Path) -> str:
+def generate_code_map(context: Dict[str, object], config: SyncConfig) -> str:
     important_roots = [
         ("`lib/`", "Flutter application source, feature modules, core services, routing, and UI widgets."),
         ("`docs/`", "Functional specs, roadmap notes, guides, and architecture decisions."),
@@ -1695,69 +1673,31 @@ def generate_code_map(context: Dict[str, object], config: SyncConfig, repo_root:
         ("`obsidian_sync/`", "This sync module, generated exports, templates, and scripts."),
     ]
 
-    feature_root = repo_root / "lib" / "features"
-    feature_groups = []
-    if feature_root.exists():
-        for child in sorted([p for p in feature_root.iterdir() if p.is_dir()], key=lambda p: p.name):
-            count = sum(1 for _ in child.rglob("*") if _.is_file())
-            feature_groups.append((f"`lib/features/{child.name}/`", f"{count} tracked files"))
-
-    top_files = []
-    for filename in ["README.md", "TASK.md", "pubspec.yaml", "analysis_options.yaml"]:
-        path = repo_root / filename
-        if path.exists():
-            top_files.append((f"`{filename}`", "Top-level repo guidance or configuration."))
-
-    data_flow = [
-        "User action in a feature screen",
-        "Riverpod controller or local service",
-        "Drift database, file workflow, or local helper",
-        "State refresh and updated UI",
-    ]
-
-    dependencies = [
-        "Flutter and Material 3",
-        "`go_router`",
-        "`flutter_riverpod`",
-        "`drift` and SQLite",
-        "`speech_to_text` and the Windows speech bridge",
-        "`path_provider`, `path`, `uuid`, `file_picker`, `qr_flutter`, `pdf`, and `printing`",
-    ]
-
-    integrations = [
-        "Local SQLite database",
-        "Local filesystem exports and caches",
-        "Windows voice typing and headset gate flow",
-        "QR labels and PDF print workflows",
-        "Obsidian sync exports for long-term project memory",
-        "Omega OS / repo bridge supporting modules",
-    ]
-
     body = "\n".join(
         [
-            "## System Overview",
-            f"{config.project_name} is a local-first Flutter app with a feature-based folder structure and a router-driven shell.",
+            "## Location Map",
+            render_table([("Location", "Purpose")] + important_roots),
             "",
-            "## Main Components",
-            render_table([("Component", "Purpose")] + important_roots + feature_groups[:10] + top_files),
+            "## What To Use This For",
+            render_list(
+                [
+                    "Find the main source roots quickly.",
+                    "Use the project map for feature lanes and the architecture note for system detail.",
+                    "Jump to the right top-level area without reading the longer architecture note.",
+                ]
+            ),
             "",
-            "## Important Folders",
-            render_list([f"{path} - {purpose}" for path, purpose in important_roots + feature_groups[:8]]),
-            "",
-            "## Data Flow",
-            render_list(data_flow),
-            "",
-            "## External Dependencies",
-            render_list([f"`{item}`" if not item.startswith("`") else item for item in dependencies]),
-            "",
-            "## Integration Points",
-            render_list(integrations),
-            "",
-            "## Known Architecture Risks",
-            "- The router and feature count are large and need discipline.",
-            "- Voice session ownership must stay singular to avoid lifecycle collisions.",
-            "- Windows speech and headset handling vary by hardware and environment.",
-            "- Local file workflows can drift if config paths are not kept consistent.",
+            "## Related Docs",
+            render_list(
+                [
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
+                    vault_link(config, "MODULE_RELATIONS.md"),
+                    vault_link(config, "ARCHITECTURE.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                ]
+            ),
         ]
     ).strip()
     return heading_block(
@@ -1775,23 +1715,7 @@ def generate_tasks(context: Dict[str, object], config: SyncConfig) -> str:
             "Keep the docs and build notes aligned.",
             "Avoid widening scope before the current slice is stable.",
         ]
-    month_plan = {
-        "Week 1": "Finish voice polish and reduce any rough edges in the assistant flow.",
-        "Week 2": "Harden asset intelligence and QR/print workflows.",
-        "Week 3": "Keep knowledge library and local file workflows stable.",
-        "Week 4": "Only start the AI adapter path if the voice path remains calm.",
-    }
-    three_month = [
-        "Keep the core dashboard, capture, projects, and tasks loop reliable.",
-        "Stabilize the voice stack before layering in AI assist.",
-        "Harden treasury, assets, and knowledge workflows for day-to-day use.",
-    ]
-    future = [
-        "Optional AI assist through a small adapter contract.",
-        "Cloud sync only after the local-first foundation is strong.",
-        "Calendar, GitHub, WordPress, and MicroGrow live integrations later.",
-    ]
-    not_yet = context["roadmap_not_yet"] or [
+    parked = context["roadmap_not_yet"] or [
         "Login.",
         "Cloud sync.",
         "Full AI assistant.",
@@ -1801,27 +1725,23 @@ def generate_tasks(context: Dict[str, object], config: SyncConfig) -> str:
 
     body = "\n".join(
         [
-            "## Immediate Next Actions",
+            "## Immediate Actions",
             render_list(immediate),
             "",
-            "## 4 Week Plan",
-            "\n".join([f"### {week}\n\n- {desc}" for week, desc in month_plan.items()]),
-            "",
-            "## 3 Month Direction",
-            render_list(three_month),
-            "",
-            "## Future Expansion",
-            render_list(future),
-            "",
-            "## Not Yet",
+            "## Parked For Now",
             "These are useful later, but not the current focus:",
             "",
-            render_list(not_yet),
+            render_list(parked),
+            "",
+            "## How To Use This Note",
+            "- This is the short action note, not the roadmap.",
+            "- If you want the 4 week and 3 month plan, open `ROADMAP.md`.",
+            "- If you want the live sync pulse, open `CURRENT_PROGRESS.md`.",
         ]
     ).strip()
     return heading_block(
         f"{config.project_name} Tasks",
-        "This note tracks the next practical actions and what stays parked for now.",
+        "Short action list and parked work.",
         body,
     )
 
@@ -1986,7 +1906,7 @@ def run_sync(config_path: Path) -> SyncResult:
         "DECISIONS_LOG.md": generate_decisions_log(context, config),
         "BUILD_LOG.md": generate_build_log(context, config, changed_files + added_files + removed_files),
         "BUILD_LOG_SUMMARY.md": generate_build_log_summary(context, config),
-        "CODE_MAP.md": generate_code_map(context, config, repo_root),
+        "CODE_MAP.md": generate_code_map(context, config),
         "TASKS.md": generate_tasks(context, config),
         "OPEN_QUESTIONS.md": generate_open_questions(context, config, changed_files + added_files + removed_files),
         "FULL_BUILD_HISTORY.md": generate_full_build_history(context, config, repo_root),
