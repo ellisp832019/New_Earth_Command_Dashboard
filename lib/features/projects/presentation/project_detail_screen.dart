@@ -379,7 +379,7 @@ class ProjectDetailScreen extends ConsumerWidget {
       return;
     }
 
-    context.go(RouteNames.projects);
+    context.go(RouteNames.projectsWorkspace);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('${project.name} archived.')));

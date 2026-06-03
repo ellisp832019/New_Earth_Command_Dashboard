@@ -1,0 +1,33 @@
+{
+  "merged_at": "2026-06-03T00:00:00Z",
+  "projects": [
+    {
+      "projectId": "microgrow",
+      "name": "MicroGrow",
+      "dashboardStatus": "active",
+      "dashboardTasks": [
+        {
+          "id": "freeze_pin_map",
+          "title": "Freeze PCB V0.1 pin map",
+          "status": "active",
+          "projectId": "microgrow"
+        }
+      ],
+      "repoLinked": true,
+      "repoId": "microgrow",
+      "repoPath": "D:/PROJECTS/microgrow",
+      "omegaPath": "D:/NEW_EARTH_OMEGA_OS_PACK/03_ACTIVE_PROJECTS/MicroGrow",
+      "currentPhase": "PCB V0.1 preparation and diagnostics stabilization",
+      "latestRepoStatus": {
+        "branch": "develop",
+        "dirty_files": [],
+        "todo_markers": []
+      },
+      "nextActions": [
+        "Freeze PCB V0.1 pin map"
+      ],
+      "codexHandoffReady": true,
+      "lastMergedAt": "2026-06-03T00:00:00Z"
+    }
+  ]
+}

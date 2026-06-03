@@ -45,6 +45,7 @@ import '../../features/meeting_system/presentation/meeting_follow_ups_screen.dar
 import '../../features/meeting_system/presentation/meeting_settings_screen.dart';
 import '../../features/meeting_system/presentation/meeting_templates_screen.dart';
 import '../../features/meeting_system/presentation/new_meeting_wizard_screen.dart';
+import '../../features/project_intelligence/presentation/projects_intelligence_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
@@ -227,24 +228,31 @@ final appRouter = GoRouter(
           navigatorKey: _shellNavigatorProjectsKey,
           routes: [
             GoRoute(
-              path: RouteNames.projects,
-              builder: (context, state) => const ProjectsScreen(),
+              path: RouteNames.projectsIntelligence,
+              builder: (context, state) => const ProjectsIntelligenceScreen(),
               routes: [
                 GoRoute(
-                  path: 'new',
-                  builder: (context, state) => const AddEditProjectScreen(),
-                ),
-                GoRoute(
-                  path: ':projectId',
-                  builder: (context, state) => ProjectDetailScreen(
-                    projectId: state.pathParameters['projectId']!,
-                  ),
+                  path: 'workspace',
+                  builder: (context, state) => const ProjectsScreen(),
                   routes: [
                     GoRoute(
-                      path: 'edit',
-                      builder: (context, state) => AddEditProjectScreen(
+                      path: 'new',
+                      builder: (context, state) =>
+                          const AddEditProjectScreen(),
+                    ),
+                    GoRoute(
+                      path: ':projectId',
+                      builder: (context, state) => ProjectDetailScreen(
                         projectId: state.pathParameters['projectId']!,
                       ),
+                      routes: [
+                        GoRoute(
+                          path: 'edit',
+                          builder: (context, state) => AddEditProjectScreen(
+                            projectId: state.pathParameters['projectId']!,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -343,6 +351,11 @@ final appRouter = GoRouter(
                   builder: (context, state) => const KnowledgeLibraryScreen(),
                 ),
                 GoRoute(
+                  path: 'projects-intelligence',
+                  builder: (context, state) =>
+                      const ProjectsIntelligenceScreen(),
+                ),
+                GoRoute(
                   path: 'omega-os-health',
                   builder: (context, state) =>
                       const OmegaOsFolderHealthScreen(),
@@ -352,6 +365,45 @@ final appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.projectsIntelligenceLegacy,
+      redirect: (context, state) => RouteNames.projectsIntelligence,
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.projects,
+      redirect: (context, state) => Uri(
+        path: RouteNames.projectsWorkspace,
+        queryParameters: state.uri.queryParameters,
+      ).toString(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.newProject,
+      redirect: (context, state) => Uri(
+        path: '${RouteNames.projectsWorkspace}/new',
+        queryParameters: state.uri.queryParameters,
+      ).toString(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/projects/:projectId/edit',
+      redirect: (context, state) => Uri(
+        path:
+            '${RouteNames.projectsWorkspace}/${state.pathParameters['projectId']!}/edit',
+        queryParameters: state.uri.queryParameters,
+      ).toString(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/projects/:projectId',
+      redirect: (context, state) => Uri(
+        path:
+            '${RouteNames.projectsWorkspace}/${state.pathParameters['projectId']!}',
+        queryParameters: state.uri.queryParameters,
+      ).toString(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

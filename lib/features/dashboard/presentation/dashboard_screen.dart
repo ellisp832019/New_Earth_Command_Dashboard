@@ -2106,7 +2106,7 @@ class _ActiveProjectsPanel extends StatelessWidget {
               ),
               const Spacer(),
               TextButton(
-                onPressed: () => context.go(RouteNames.projects),
+                onPressed: () => context.go(RouteNames.projectsWorkspace),
                 child: const Text('View all'),
               ),
             ],

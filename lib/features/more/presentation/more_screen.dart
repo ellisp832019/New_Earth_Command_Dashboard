@@ -23,6 +23,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.knowledgeLibrary,
     ),
     _MoreItem(
+      title: 'Projects Intelligence',
+      description:
+          'Review read-only project and repo health from the bridge layer.',
+      icon: Icons.account_tree_outlined,
+      route: RouteNames.projectsIntelligence,
+    ),
+    _MoreItem(
       title: 'Journal',
       description:
           'Capture build progress, lessons, decisions, and reflections.',
@@ -121,7 +128,7 @@ class MoreScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Journal, learning, content, business, wellbeing, inbox, voice, settings, and active system links all live here.',
+                  'Journal, learning, content, business, wellbeing, inbox, voice, settings, projects intelligence, and active system links all live here.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                   ),

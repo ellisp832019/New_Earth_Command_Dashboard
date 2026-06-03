@@ -1,0 +1,12 @@
+# Runtime generated bridge data
+/data/repo_snapshots/*.json
+/data/progress_logs/*.md
+/data/dashboard_cache/*.json
+/data/unified/*.json
+/omega_exports/*
+
+# Keep examples
+!data/repo_snapshots/.gitkeep
+!data/progress_logs/.gitkeep
+!data/dashboard_cache/.gitkeep
+!data/unified/.gitkeep

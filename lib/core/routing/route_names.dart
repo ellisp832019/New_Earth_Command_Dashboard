@@ -30,6 +30,7 @@ abstract final class RouteNames {
   static const treasuryBudgetPots = '/treasury/budget-pots';
   static const projects = '/projects';
   static const newProject = '/projects/new';
+  static const projectsWorkspace = '/projects-intelligence/workspace';
   static const tasks = '/tasks';
   static const newTask = '/tasks/new';
   static const planner = '/planner';
@@ -42,6 +43,8 @@ abstract final class RouteNames {
   static const meetingFollowUps = '/more/meetings/follow-ups';
   static const meetingTemplates = '/more/meetings/templates';
   static const meetingSettings = '/more/meetings/settings';
+  static const projectsIntelligence = '/projects-intelligence';
+  static const projectsIntelligenceLegacy = '/more/projects-intelligence';
   static const knowledgeLibrary = '/more/knowledge-library';
   static const omegaOsFolderHealth = '/more/omega-os-health';
   static const journal = '/journal';
