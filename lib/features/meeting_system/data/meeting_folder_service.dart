@@ -593,6 +593,22 @@ class MeetingOmegaHubSnapshot {
   final List<String> issues;
 }
 
+class MeetingMasterIndexSnapshot {
+  const MeetingMasterIndexSnapshot({
+    required this.indexPath,
+    required this.masterLogPath,
+    required this.meetingCount,
+    required this.preview,
+    required this.exists,
+  });
+
+  final String indexPath;
+  final String masterLogPath;
+  final int meetingCount;
+  final String preview;
+  final bool exists;
+}
+
 class MeetingFolderService {
   MeetingFolderService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -874,6 +890,14 @@ class MeetingFolderService {
     return followUps;
   }
 
+  Future<MeetingRecord?> getLatestMeeting() async {
+    final meetings = await listMeetings();
+    if (meetings.isEmpty) {
+      return null;
+    }
+    return meetings.first;
+  }
+
   Future<MeetingTemplatesSnapshot> loadTemplates() async {
     final workspace = await loadWorkspace();
     final omegaRootPath = workspace.omegaRootPath;
@@ -964,6 +988,54 @@ class MeetingFolderService {
       templateFolderPath: templateFolderPath,
       documents: documents,
       issues: issues,
+    );
+  }
+
+  Future<MeetingMasterIndexSnapshot> loadMasterIndexPreview() async {
+    final workspace = await loadWorkspace();
+    final omegaRootPath = workspace.omegaRootPath;
+    final indexPath = omegaRootPath == null
+        ? path.join(
+            _workingDirectory.path,
+            _projectsRootName,
+            _masterIndexesFolderName,
+            _meetingIndexFileName,
+          )
+        : path.join(
+            omegaRootPath,
+            _projectsRootName,
+            _masterIndexesFolderName,
+            _meetingIndexFileName,
+          );
+    final masterLogPath = omegaRootPath == null
+        ? path.join(
+            _workingDirectory.path,
+            _projectsRootName,
+            _masterIndexesFolderName,
+            _meetingMasterLogFileName,
+          )
+        : path.join(
+            omegaRootPath,
+            _projectsRootName,
+            _masterIndexesFolderName,
+            _meetingMasterLogFileName,
+          );
+
+    final meetings = omegaRootPath == null
+        ? <MeetingRecord>[]
+        : await listMeetings();
+    final masterLogFile = File(masterLogPath);
+    final exists = await masterLogFile.exists();
+    final preview = exists
+        ? _buildPreviewSnippet(await _readTextFile(masterLogFile))
+        : _buildMasterIndexPreview(meetings);
+
+    return MeetingMasterIndexSnapshot(
+      indexPath: indexPath,
+      masterLogPath: masterLogPath,
+      meetingCount: meetings.length,
+      preview: preview,
+      exists: exists,
     );
   }
 
@@ -2043,6 +2115,50 @@ class MeetingFolderService {
       return preview;
     }
     return '${preview.substring(0, 317)}...';
+  }
+
+  String _buildPreviewSnippet(String content) {
+    final lines = content
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trimRight())
+        .where((line) => line.trim().isNotEmpty)
+        .toList(growable: false);
+    if (lines.isEmpty) {
+      return 'No preview available yet.';
+    }
+    final previewLines = lines.take(8).toList(growable: false);
+    final preview = previewLines.join('\n');
+    if (preview.length <= 420) {
+      return preview;
+    }
+    return '${preview.substring(0, 417)}...';
+  }
+
+  String _buildMasterIndexPreview(List<MeetingRecord> meetings) {
+    if (meetings.isEmpty) {
+      return 'No meetings have been added yet, so the master index is still empty.';
+    }
+
+    final buffer = StringBuffer()
+      ..writeln('# Meeting Master Index Preview')
+      ..writeln()
+      ..writeln('| Date | Project | Title | Person / Group |')
+      ..writeln('|---|---|---|---|');
+
+    for (final meeting in meetings.take(5)) {
+      buffer.writeln(
+        '| ${meeting.date} | ${meeting.project} | ${meeting.title} | ${meeting.personOrGroup} |',
+      );
+    }
+
+    if (meetings.length > 5) {
+      buffer.writeln();
+      buffer.writeln(
+        '...and ${meetings.length - 5} more meeting${meetings.length - 5 == 1 ? '' : 's'}.',
+      );
+    }
+
+    return buffer.toString();
   }
 
   String _initialFileContent(String relativePath) {

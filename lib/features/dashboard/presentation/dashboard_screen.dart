@@ -849,6 +849,12 @@ class _MeetingSystemDashboardCardState
                         label: const Text('Open Meetings'),
                       ),
                       FilledButton.tonalIcon(
+                        onPressed: () =>
+                            context.push(RouteNames.meetingSettings),
+                        icon: const Icon(Icons.account_tree_outlined),
+                        label: const Text('Open Hub'),
+                      ),
+                      FilledButton.tonalIcon(
                         onPressed: () => context.push(RouteNames.meetingNew),
                         icon: const Icon(Icons.add),
                         label: const Text('New Meeting'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
@@ -22,6 +23,8 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
   Widget build(BuildContext context) {
     final snapshot = ref.watch(meetingWorkspaceProvider);
     final hubSnapshot = ref.watch(meetingOmegaHubProvider);
+    final masterIndexSnapshot = ref.watch(meetingMasterIndexProvider);
+    final latestMeetingSnapshot = ref.watch(meetingLatestMeetingProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -139,6 +142,12 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                                           service.openFolder(meetingsRootPath),
                                 icon: const Icon(Icons.event_note_outlined),
                                 label: const Text('Open meetings folder'),
+                              ),
+                              TextButton.icon(
+                                onPressed: () =>
+                                    context.push(RouteNames.meetingDashboard),
+                                icon: const Icon(Icons.dashboard_outlined),
+                                label: const Text('Back to Dashboard'),
                               ),
                               TextButton.icon(
                                 onPressed: workspace.configPath.isEmpty
@@ -319,6 +328,217 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                               pathText: folder.path,
                               onOpen: () => service.openFolder(folder.path),
                             ),
+                          ),
+                          const SizedBox(height: 16),
+                          latestMeetingSnapshot.when(
+                            loading: () => const SizedBox.shrink(),
+                            error: (error, stackTrace) =>
+                                const SizedBox.shrink(),
+                            data: (latestMeeting) {
+                              if (latestMeeting == null) {
+                                return const SizedBox.shrink();
+                              }
+
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppColours.darkSurfaceRaised
+                                      .withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: AppColours.darkOutline.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Latest meeting folder',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(
+                                                  color:
+                                                      AppColours.darkSecondary,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            latestMeeting.title,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: AppColours.darkText,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${latestMeeting.project}  •  ${latestMeeting.date}  •  ${latestMeeting.personOrGroup}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color:
+                                                      AppColours.darkMutedText,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: [
+                                        TextButton.icon(
+                                          onPressed: () => service.openFolder(
+                                            latestMeeting.folderPath,
+                                          ),
+                                          icon: const Icon(
+                                            Icons.folder_open_outlined,
+                                          ),
+                                          label: const Text('Open folder'),
+                                        ),
+                                        TextButton.icon(
+                                          onPressed: () => context.push(
+                                            RouteNames.meetingDetail(
+                                              latestMeeting.id,
+                                            ),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.open_in_new_outlined,
+                                          ),
+                                          label: const Text('Open meeting'),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          masterIndexSnapshot.when(
+                            loading: () => const SizedBox.shrink(),
+                            error: (error, stackTrace) =>
+                                const SizedBox.shrink(),
+                            data: (masterIndex) {
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppColours.darkSurfaceRaised
+                                      .withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: AppColours.darkOutline.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Master index preview',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            color: AppColours.darkSecondary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${masterIndex.meetingCount} meeting${masterIndex.meetingCount == 1 ? '' : 's'} tracked in the index.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: AppColours.darkMutedText,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    SelectableText(
+                                      masterIndex.indexPath,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: AppColours.darkSecondary,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: AppColours.darkSurface
+                                            .withValues(alpha: 0.95),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: AppColours.darkOutline
+                                              .withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        masterIndex.preview,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AppColours.darkText,
+                                              height: 1.45,
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: [
+                                        TextButton.icon(
+                                          onPressed:
+                                              masterIndex.indexPath.isEmpty
+                                              ? null
+                                              : () => service.openFile(
+                                                  masterIndex.indexPath,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.description_outlined,
+                                          ),
+                                          label: const Text(
+                                            'Open meeting_index',
+                                          ),
+                                        ),
+                                        TextButton.icon(
+                                          onPressed:
+                                              masterIndex.masterLogPath.isEmpty
+                                              ? null
+                                              : () => service.openFile(
+                                                  masterIndex.masterLogPath,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.notes_outlined,
+                                          ),
+                                          label: const Text('Open master log'),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           Text(

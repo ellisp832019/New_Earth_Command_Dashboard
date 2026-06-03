@@ -60,6 +60,18 @@ final meetingOmegaHubProvider = FutureProvider<MeetingOmegaHubSnapshot>((ref) {
   return service.loadOmegaHub();
 });
 
+final meetingMasterIndexProvider = FutureProvider<MeetingMasterIndexSnapshot>((
+  ref,
+) {
+  final service = ref.watch(meetingFolderServiceProvider);
+  return service.loadMasterIndexPreview();
+});
+
+final meetingLatestMeetingProvider = FutureProvider<MeetingRecord?>((ref) {
+  final service = ref.watch(meetingFolderServiceProvider);
+  return service.getLatestMeeting();
+});
+
 final meetingDetailProvider =
     FutureProvider.family<MeetingDetailSnapshot, String>((ref, meetingId) {
       final service = ref.watch(meetingFolderServiceProvider);
