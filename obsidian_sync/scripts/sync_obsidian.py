@@ -99,6 +99,7 @@ def load_config(config_path: Path) -> SyncConfig:
                     "DOC_REGISTRY.md",
                     "PROJECT_GRAPH.md",
                     "PROJECT_MAP.md",
+                    "MODULE_STATUS.md",
                     "PROJECT_OVERVIEW.md",
                     "CURRENT_PROGRESS.md",
                     "CURRENT_STATE.md",
@@ -672,6 +673,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
         ("DOC_REGISTRY.md", "Registry", "Maps the note families and avoids duplicate roles.", "Canonical"),
         ("PROJECT_GRAPH.md", "Graph", "Relationship map for folders, modules, notes, and workflows.", "Canonical"),
         ("PROJECT_MAP.md", "Operations", "Active module map for day-to-day navigation and handoffs.", "Canonical"),
+        ("MODULE_STATUS.md", "Operations", "Quick lane status for active modules and handoffs.", "Canonical"),
         ("PROJECT_OVERVIEW.md", "Active state", "Project summary, purpose, and current branch signal.", "Canonical"),
         ("CURRENT_STATE.md", "Active state", "Detailed live status, risks, and next actions.", "Canonical"),
         ("CURRENT_PROGRESS.md", "Active state", "What works, what is incomplete, and the live sync signal.", "Canonical"),
@@ -715,6 +717,7 @@ def generate_doc_registry(context: Dict[str, object], config: SyncConfig) -> str
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -752,6 +755,7 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "BUILD_LOG.md"),
@@ -779,6 +783,7 @@ def generate_start_here(context: Dict[str, object], config: SyncConfig) -> str:
                     vault_link(config, "RISK_TRACKER.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
                     vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
                     vault_link(config, "TASKS.md"),
                     vault_link(config, "OPEN_QUESTIONS.md"),
                 ]
@@ -876,6 +881,7 @@ def generate_project_graph(context: Dict[str, object], config: SyncConfig, repo_
                     vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
                     vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CODE_MAP.md"),
@@ -958,6 +964,7 @@ def generate_project_map(context: Dict[str, object], config: SyncConfig, repo_ro
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "DOC_REGISTRY.md"),
                     vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "MODULE_STATUS.md"),
                     vault_link(config, "PROJECT_OVERVIEW.md"),
                     vault_link(config, "CURRENT_STATE.md"),
                     vault_link(config, "TASKS.md"),
@@ -972,11 +979,64 @@ def generate_project_map(context: Dict[str, object], config: SyncConfig, repo_ro
     )
 
 
+def generate_module_status(context: Dict[str, object], config: SyncConfig) -> str:
+    lanes = [
+        ("Dashboard", "Stable", "Core dashboard flows are in place and should change slowly.", "Keep it calm and avoid broad rewrites."),
+        ("Projects", "Active", "Project context and related knowledge are still being refined.", "Finish the next review-first polish pass."),
+        ("Tasks", "Stable", "Task review, carry-forward, and Top 3 support are established.", "Only adjust when the task flow itself changes."),
+        ("Treasury", "Active", "Treasury, assets, QR, and inventory remain a live focus area.", "Continue treasury navigation polish and asset hardening."),
+        ("Knowledge", "Active", "Knowledge library and extraction flows are live and still being refined.", "Keep extraction and file handling resilient."),
+        ("Meetings", "Active", "Meeting bundle workflows are present and cross-linked.", "Keep review and export paths reliable."),
+        ("Voice", "Parked", "The voice slice is intentionally parked after the completed bridge work.", "Do not widen scope until the current active slice settles."),
+        ("Obsidian Sync", "Stable", "Sync, registry, graph, map, and history notes are now established.", "Maintain canonical note roles and update links together."),
+    ]
+
+    current_focus = context["roadmap_immediate"] or context["next_actions"] or [
+        "Finish the current local-first slice.",
+        "Keep module handoffs clear.",
+        "Avoid widening scope before the active lane is stable.",
+    ]
+
+    body = "\n".join(
+        [
+            "## Lane Status",
+            render_table([("Lane", "State", "Why", "Next Action")] + lanes),
+            "",
+            "## Reading Guide",
+            "- Stable means the lane should only change when the underlying workflow changes.",
+            "- Active means the lane is still moving and should be reviewed before broad edits.",
+            "- Parked means the lane is intentionally held for now and should not be expanded casually.",
+            "",
+            "## Current Focus",
+            render_list(current_focus),
+            "",
+            "## Cross-Checks",
+            render_list(
+                [
+                    vault_link(config, "PROJECT_MAP.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "CURRENT_STATE.md"),
+                    vault_link(config, "TASKS.md"),
+                ]
+            ),
+            "",
+            "## Operating Rule",
+            "- If a lane moves from active to stable or parked, update this note first and then update the hub links.",
+        ]
+    ).strip()
+    return heading_block(
+        f"{config.project_name} Module Status",
+        "Operational lane status for active modules and handoffs.",
+        body,
+    )
+
+
 def generate_index(context: Dict[str, object], config: SyncConfig) -> str:
     current_docs = [
         "DOC_REGISTRY.md",
         "PROJECT_GRAPH.md",
         "PROJECT_MAP.md",
+        "MODULE_STATUS.md",
         "PROJECT_OVERVIEW.md",
         "CURRENT_STATE.md",
         "CURRENT_PROGRESS.md",
@@ -1844,6 +1904,7 @@ def run_sync(config_path: Path) -> SyncResult:
         "DOC_REGISTRY.md": generate_doc_registry(context, config),
         "PROJECT_GRAPH.md": generate_project_graph(context, config, repo_root),
         "PROJECT_MAP.md": generate_project_map(context, config, repo_root),
+        "MODULE_STATUS.md": generate_module_status(context, config),
         "PROJECT_OVERVIEW.md": generate_project_overview(context, config),
         "CURRENT_PROGRESS.md": generate_current_progress(context, config, changed_files + added_files + removed_files),
         "MILESTONE_SUMMARIES.md": generate_milestone_summaries(context, config, repo_root),

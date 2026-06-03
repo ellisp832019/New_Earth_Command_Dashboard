@@ -7,6 +7,7 @@ Append-only sync history. Handwritten notes can live above or below the autogene
 
 | Timestamp | Status | Changed Files | Updated Docs | Copied Docs | Note |
 |---|---|---:|---:|---:|---|
+| 2026-06-03 20:08:56 GMT Summer Time | success | 0 | 13 | 14 | Updated 13 export docs. Changed watched source files: 0. Copied 14 docs to the configured vault. |
 | 2026-06-03 20:05:42 GMT Summer Time | success | 0 | 8 | 9 | Updated 8 export docs. Changed watched source files: 0. Copied 9 docs to the configured vault. |
 | 2026-06-03 20:05:19 GMT Summer Time | success | 0 | 1 | 2 | Updated 1 export docs. Changed watched source files: 0. Copied 2 docs to the configured vault. |
 | 2026-06-03 20:04:52 GMT Summer Time | success | 0 | 11 | 12 | Updated 11 export docs. Changed watched source files: 0. Copied 12 docs to the configured vault. |
@@ -27,6 +28,6 @@ Append-only sync history. Handwritten notes can live above or below the autogene
 - Repo root: `D:\Dev\Projects\New Earth - Command Dashboard`
 - Vault destination: `D:\NEW_EARTH_OMEGA_OS_PACK\09_KNOWLEDGE_VAULT_OBSIDIAN\NEW_EARTH_OMEGA_KNOWLEDGE_VAULT\01_ACTIVE_PROJECTS`
 - Changed watched source files: 0
-- Updated export docs: START_HERE.md, PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, MILESTONE_SUMMARIES.md, CHANGE_INTELLIGENCE.md, BUILD_LOG.md, BUILD_LOG_SUMMARY.md, FULL_BUILD_HISTORY.md
-- Copied docs: START_HERE.md, PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, MILESTONE_SUMMARIES.md, CHANGE_INTELLIGENCE.md, BUILD_LOG.md, BUILD_LOG_SUMMARY.md, FULL_BUILD_HISTORY.md, DAILY_SYNC_LOG.md
+- Updated export docs: START_HERE.md, INDEX.md, DOC_REGISTRY.md, PROJECT_GRAPH.md, PROJECT_MAP.md, MODULE_STATUS.md, PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, MILESTONE_SUMMARIES.md, CHANGE_INTELLIGENCE.md, BUILD_LOG.md, BUILD_LOG_SUMMARY.md, FULL_BUILD_HISTORY.md
+- Copied docs: START_HERE.md, INDEX.md, DOC_REGISTRY.md, PROJECT_GRAPH.md, PROJECT_MAP.md, MODULE_STATUS.md, PROJECT_OVERVIEW.md, CURRENT_PROGRESS.md, MILESTONE_SUMMARIES.md, CHANGE_INTELLIGENCE.md, BUILD_LOG.md, BUILD_LOG_SUMMARY.md, FULL_BUILD_HISTORY.md, DAILY_SYNC_LOG.md
 <!-- AUTO-GENERATED:END -->

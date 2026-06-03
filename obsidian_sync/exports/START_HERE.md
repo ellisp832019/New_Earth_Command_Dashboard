@@ -13,13 +13,14 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_DOC_REGISTRY]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_GRAPH]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_MAP]]
+- [[NEW_EARTH_DASHBOARD_MODULE_STATUS]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_OVERVIEW]]
 - [[NEW_EARTH_DASHBOARD_CURRENT_STATE]]
 - [[NEW_EARTH_DASHBOARD_BUILD_LOG]]
 - [[NEW_EARTH_DASHBOARD_FULL_BUILD_HISTORY]]
 
 ## What Changed Most Recently
-- Latest commit signal: `2026-06-03|60a0db6|Add project map to Obsidian sync`
+- Latest commit signal: `2026-06-03|26f0a84|Refresh Obsidian exports after project map upgrade`
 - Branch: `feat/asset-intelligence-tab`
 
 ## Current Focus
@@ -41,6 +42,7 @@ Human-friendly entry point for the Obsidian vault.
 - [[NEW_EARTH_DASHBOARD_RISK_TRACKER]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_GRAPH]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_MAP]]
+- [[NEW_EARTH_DASHBOARD_MODULE_STATUS]]
 - [[NEW_EARTH_DASHBOARD_TASKS]]
 - [[NEW_EARTH_DASHBOARD_OPEN_QUESTIONS]]
 <!-- AUTO-GENERATED:END -->

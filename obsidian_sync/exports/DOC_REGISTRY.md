@@ -16,6 +16,7 @@ Canonical note map for the Obsidian export set.
 | DOC_REGISTRY.md | Registry | Maps the note families and avoids duplicate roles. | Canonical |
 | PROJECT_GRAPH.md | Graph | Relationship map for folders, modules, notes, and workflows. | Canonical |
 | PROJECT_MAP.md | Operations | Active module map for day-to-day navigation and handoffs. | Canonical |
+| MODULE_STATUS.md | Operations | Quick lane status for active modules and handoffs. | Canonical |
 | PROJECT_OVERVIEW.md | Active state | Project summary, purpose, and current branch signal. | Canonical |
 | CURRENT_STATE.md | Active state | Detailed live status, risks, and next actions. | Canonical |
 | CURRENT_PROGRESS.md | Active state | What works, what is incomplete, and the live sync signal. | Canonical |
@@ -46,6 +47,7 @@ Canonical note map for the Obsidian export set.
 - [[NEW_EARTH_DASHBOARD_DOC_REGISTRY]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_GRAPH]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_MAP]]
+- [[NEW_EARTH_DASHBOARD_MODULE_STATUS]]
 - [[NEW_EARTH_DASHBOARD_PROJECT_OVERVIEW]]
 - [[NEW_EARTH_DASHBOARD_CURRENT_STATE]]
 - [[NEW_EARTH_DASHBOARD_BUILD_LOG]]

@@ -259,6 +259,7 @@ Canonical long-form project history.
 - `9fb2caa` Add project graph to Obsidian sync
 - `e51b1f3` Refresh Obsidian exports after project graph upgrade
 - `60a0db6` Add project map to Obsidian sync
+- `26f0a84` Refresh Obsidian exports after project map upgrade
 
 ## Development Log Correlation
 - The development log in `docs/developer_guide/development_log.md` matches the major phases captured here.
