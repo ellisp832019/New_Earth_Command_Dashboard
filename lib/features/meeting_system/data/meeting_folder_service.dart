@@ -88,6 +88,9 @@ class MeetingRecordingImportResult {
     required this.minutesFromScheduledWindow,
     required this.matchConfidenceLabel,
     required this.matchExplanation,
+    required this.harvestedActionCount,
+    required this.harvestedDecisionCount,
+    required this.harvestedFollowUpCount,
     required this.transcriptLength,
   });
 
@@ -99,6 +102,9 @@ class MeetingRecordingImportResult {
   final int minutesFromScheduledWindow;
   final String matchConfidenceLabel;
   final String matchExplanation;
+  final int harvestedActionCount;
+  final int harvestedDecisionCount;
+  final int harvestedFollowUpCount;
   final int transcriptLength;
 }
 
@@ -2545,6 +2551,11 @@ class MeetingFolderService {
       flush: true,
     );
 
+    final harvest = await _harvestTranscriptArtifacts(
+      meeting: match.meeting,
+      transcriptMarkdown: transcriptMarkdown,
+    );
+
     await _touchMeeting(match.meeting);
 
     return MeetingRecordingImportResult(
@@ -2556,6 +2567,9 @@ class MeetingFolderService {
       minutesFromScheduledWindow: match.minutesFromScheduledWindow,
       matchConfidenceLabel: match.matchConfidenceLabel,
       matchExplanation: match.matchExplanation,
+      harvestedActionCount: harvest.actionCount,
+      harvestedDecisionCount: harvest.decisionCount,
+      harvestedFollowUpCount: harvest.followUpCount,
       transcriptLength: cleanedTranscript.length,
     );
   }
@@ -3893,6 +3907,160 @@ $rows
     return buffer.toString().replaceFirst(RegExp(r'\s+$'), '\n');
   }
 
+  Future<_HarvestResult> _harvestTranscriptArtifacts({
+    required MeetingRecord meeting,
+    required String transcriptMarkdown,
+  }) async {
+    final plainTranscript = _plainTranscriptFromMarkdown(transcriptMarkdown);
+    if (plainTranscript.trim().isEmpty) {
+      return const _HarvestResult();
+    }
+
+    final sentences = _splitTranscriptSentences(plainTranscript);
+    var actionCount = 0;
+    var decisionCount = 0;
+    var followUpCount = 0;
+
+    for (final sentence in sentences) {
+      final normalized = sentence.toLowerCase();
+
+      if (actionCount < 3 && _looksLikeAction(sentence, normalized)) {
+        try {
+          await addAction(
+            meeting.id,
+            MeetingActionInput(
+              action: sentence,
+              owner: meeting.personOrGroup,
+              dueDate: '',
+              status: 'open',
+              notes: 'Auto-harvested from imported transcript.',
+            ),
+          );
+          actionCount += 1;
+        } on StateError {
+          // Ignore duplicates or malformed suggestions.
+        }
+      }
+
+      if (decisionCount < 3 && _looksLikeDecision(sentence, normalized)) {
+        try {
+          await addDecision(
+            meeting.id,
+            MeetingDecisionInput(
+              decision: sentence,
+              reason: 'Auto-harvested from imported transcript.',
+              status: 'proposed',
+            ),
+          );
+          decisionCount += 1;
+        } on StateError {
+          // Ignore duplicates or malformed suggestions.
+        }
+      }
+
+      if (followUpCount < 3 && _looksLikeFollowUp(sentence, normalized)) {
+        try {
+          await updateFollowUp(
+            meeting.id,
+            MeetingFollowUpInput(
+              person: meeting.personOrGroup,
+              messageNeeded: true,
+              sent: false,
+              responseReceived: false,
+              nextStep: sentence,
+              notes: 'Auto-harvested from imported transcript.',
+              messageDraft: sentence,
+            ),
+          );
+          followUpCount += 1;
+        } on StateError {
+          // Ignore duplicates or malformed suggestions.
+        }
+      }
+    }
+
+    return _HarvestResult(
+      actionCount: actionCount,
+      decisionCount: decisionCount,
+      followUpCount: followUpCount,
+    );
+  }
+
+  String _plainTranscriptFromMarkdown(String transcriptMarkdown) {
+    final lines = transcriptMarkdown.replaceAll('\r\n', '\n').split('\n');
+    final plainLines = <String>[];
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      if (trimmed.startsWith('## ')) {
+        continue;
+      }
+      if (trimmed.startsWith('[') && trimmed.contains('] ')) {
+        final closingIndex = trimmed.indexOf('] ');
+        if (closingIndex != -1 && closingIndex + 2 < trimmed.length) {
+          plainLines.add(trimmed.substring(closingIndex + 2));
+          continue;
+        }
+      }
+      plainLines.add(trimmed);
+    }
+    return plainLines.join(' ');
+  }
+
+  List<String> _splitTranscriptSentences(String transcript) {
+    final normalized = transcript.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.isEmpty) {
+      return const <String>[];
+    }
+    final matches = RegExp(r'[^.!?]+[.!?]?').allMatches(normalized);
+    final sentences = <String>[];
+    for (final match in matches) {
+      final sentence = match.group(0)?.trim() ?? '';
+      if (sentence.isNotEmpty) {
+        sentences.add(sentence);
+      }
+    }
+    return sentences;
+  }
+
+  bool _looksLikeAction(String sentence, String normalized) {
+    if (sentence.length < 12) {
+      return false;
+    }
+    return normalized.contains('action') ||
+        normalized.contains('next step') ||
+        normalized.contains('follow up') ||
+        normalized.contains('we need to') ||
+        normalized.contains("we'll") ||
+        normalized.contains('we should') ||
+        normalized.contains('please') ||
+        normalized.contains('can you') ||
+        normalized.contains('i will');
+  }
+
+  bool _looksLikeDecision(String sentence, String normalized) {
+    if (sentence.length < 12) {
+      return false;
+    }
+    return normalized.contains('decid') ||
+        normalized.contains('agreed') ||
+        normalized.contains('decision') ||
+        normalized.contains('we will proceed');
+  }
+
+  bool _looksLikeFollowUp(String sentence, String normalized) {
+    if (sentence.length < 12) {
+      return false;
+    }
+    return normalized.contains('follow up') ||
+        normalized.contains('follow-up') ||
+        normalized.contains('message') ||
+        normalized.contains('email') ||
+        normalized.contains('check in');
+  }
+
   String _formatTimestampLabel(DateTime value) {
     final local = value.toLocal();
     final year = local.year.toString().padLeft(4, '0');
@@ -4521,4 +4689,16 @@ String _firstNonEmpty(List<String> values) {
 
 extension _FirstOrNullExtension<T> on List<T> {
   T? get firstOrNull => isEmpty ? null : first;
+}
+
+class _HarvestResult {
+  const _HarvestResult({
+    this.actionCount = 0,
+    this.decisionCount = 0,
+    this.followUpCount = 0,
+  });
+
+  final int actionCount;
+  final int decisionCount;
+  final int followUpCount;
 }

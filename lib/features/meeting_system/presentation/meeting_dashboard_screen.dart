@@ -723,6 +723,17 @@ class _MeetingDashboardScreenState
           ? 'It matched the scheduled window.'
           : 'It matched within ${result.minutesFromScheduledWindow} min of the scheduled window.';
       final confidenceLabel = 'Match confidence: ${result.matchConfidenceLabel}.';
+      final harvestParts = <String>[
+        if (result.harvestedActionCount > 0)
+          '${result.harvestedActionCount} action${result.harvestedActionCount == 1 ? '' : 's'}',
+        if (result.harvestedDecisionCount > 0)
+          '${result.harvestedDecisionCount} decision${result.harvestedDecisionCount == 1 ? '' : 's'}',
+        if (result.harvestedFollowUpCount > 0)
+          '${result.harvestedFollowUpCount} follow-up${result.harvestedFollowUpCount == 1 ? '' : 's'}',
+      ];
+      final harvestLabel = harvestParts.isEmpty
+          ? 'No follow-up items were auto-harvested.'
+          : 'Auto-harvested ${harvestParts.join(', ')}.';
       context.push(
         Uri(
           path: RouteNames.meetingDetail(result.meeting.id),
@@ -733,7 +744,7 @@ class _MeetingDashboardScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Imported $fileName into "${result.meeting.title}" and opened the transcript preview. $distanceLabel $confidenceLabel',
+            'Imported $fileName into "${result.meeting.title}" and opened the transcript preview. $distanceLabel $confidenceLabel $harvestLabel',
           ),
         ),
       );
