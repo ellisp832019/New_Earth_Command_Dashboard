@@ -8,10 +8,15 @@ import 'package:xml/xml.dart';
 
 import '../../../core/constants/omega_os_folder_registry.dart';
 import '../../../core/utils/folder_bootstrap_result.dart';
+import '../../voice_assistant/desktop_speech_bridge_service.dart';
 
 class MeetingCreateRequest {
   const MeetingCreateRequest({
     required this.date,
+    required this.time,
+    required this.timezoneLabel,
+    required this.timezoneOffsetMinutes,
+    required this.durationMinutes,
     required this.project,
     required this.title,
     required this.personOrGroup,
@@ -21,6 +26,10 @@ class MeetingCreateRequest {
   });
 
   final String date;
+  final String time;
+  final String timezoneLabel;
+  final int timezoneOffsetMinutes;
+  final int durationMinutes;
   final String project;
   final String title;
   final String personOrGroup;
@@ -69,6 +78,81 @@ class MeetingBundleReviewSnapshot {
   final bool exists;
 }
 
+class MeetingRecordingImportResult {
+  const MeetingRecordingImportResult({
+    required this.meeting,
+    required this.recordingSourcePath,
+    required this.recordingStoredPath,
+    required this.transcriptPath,
+    required this.recordingModifiedAt,
+    required this.minutesFromScheduledWindow,
+    required this.matchConfidenceLabel,
+    required this.matchExplanation,
+    required this.transcriptLength,
+  });
+
+  final MeetingRecord meeting;
+  final String recordingSourcePath;
+  final String recordingStoredPath;
+  final String transcriptPath;
+  final DateTime recordingModifiedAt;
+  final int minutesFromScheduledWindow;
+  final String matchConfidenceLabel;
+  final String matchExplanation;
+  final int transcriptLength;
+}
+
+abstract interface class MeetingRecordingTranscriber {
+  Future<String?> transcribeFile(String sourcePath);
+}
+
+class DesktopMeetingRecordingTranscriber
+    implements MeetingRecordingTranscriber {
+  DesktopMeetingRecordingTranscriber({
+    DesktopSpeechBridgeService? bridgeService,
+  }) : _bridgeService = bridgeService ?? DesktopSpeechBridgeService();
+
+  final DesktopSpeechBridgeService _bridgeService;
+
+  @override
+  Future<String?> transcribeFile(String sourcePath) async {
+    final capture = await _bridgeService.transcribeFile(sourcePath);
+    final transcript = capture?.transcript.trim() ?? '';
+    if (transcript.isEmpty) {
+      return null;
+    }
+    return transcript;
+  }
+}
+
+class _RecordingFileCandidate {
+  const _RecordingFileCandidate({
+    required this.path,
+    required this.modifiedAt,
+  });
+
+  final String path;
+  final DateTime modifiedAt;
+}
+
+class _MeetingRecordingMatchCandidate {
+  const _MeetingRecordingMatchCandidate({
+    required this.meeting,
+    required this.meetingStartLocal,
+    required this.meetingEndLocal,
+    required this.minutesFromScheduledWindow,
+    required this.matchConfidenceLabel,
+    required this.matchExplanation,
+  });
+
+  final MeetingRecord meeting;
+  final DateTime? meetingStartLocal;
+  final DateTime? meetingEndLocal;
+  final int minutesFromScheduledWindow;
+  final String matchConfidenceLabel;
+  final String matchExplanation;
+}
+
 class MeetingAttachmentRecord {
   const MeetingAttachmentRecord({
     required this.path,
@@ -93,6 +177,10 @@ class MeetingRecord {
   const MeetingRecord({
     required this.id,
     required this.date,
+    required this.time,
+    required this.timezoneLabel,
+    required this.timezoneOffsetMinutes,
+    required this.durationMinutes,
     required this.project,
     required this.title,
     required this.personOrGroup,
@@ -112,6 +200,10 @@ class MeetingRecord {
 
   final String id;
   final String date;
+  final String time;
+  final String timezoneLabel;
+  final int timezoneOffsetMinutes;
+  final int durationMinutes;
   final String project;
   final String title;
   final String personOrGroup;
@@ -131,6 +223,10 @@ class MeetingRecord {
   MeetingRecord copyWith({
     String? id,
     String? date,
+    String? time,
+    String? timezoneLabel,
+    int? timezoneOffsetMinutes,
+    int? durationMinutes,
     String? project,
     String? title,
     String? personOrGroup,
@@ -150,6 +246,11 @@ class MeetingRecord {
     return MeetingRecord(
       id: id ?? this.id,
       date: date ?? this.date,
+      time: time ?? this.time,
+      timezoneLabel: timezoneLabel ?? this.timezoneLabel,
+      timezoneOffsetMinutes:
+          timezoneOffsetMinutes ?? this.timezoneOffsetMinutes,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
       project: project ?? this.project,
       title: title ?? this.title,
       personOrGroup: personOrGroup ?? this.personOrGroup,
@@ -172,6 +273,10 @@ class MeetingRecord {
     return <String, dynamic>{
       'id': id,
       'date': date,
+      'time': time,
+      'timezone_label': timezoneLabel,
+      'timezone_offset_minutes': timezoneOffsetMinutes,
+      'duration_minutes': durationMinutes,
       'project': project,
       'title': title,
       'person_or_group': personOrGroup,
@@ -194,6 +299,26 @@ class MeetingRecord {
     return MeetingRecord(
       id: _stringValue(json['id']),
       date: _stringValue(json['date']),
+      time: _firstNonEmpty([
+        _stringValue(json['time']),
+        _stringValue(json['meeting_time']),
+        _stringValue(json['meetingTime']),
+      ]),
+      timezoneLabel: _firstNonEmpty([
+        _stringValue(json['timezone_label']),
+        _stringValue(json['timezoneLabel']),
+        _stringValue(json['time_zone']),
+        _stringValue(json['timeZone']),
+        'Local',
+      ]),
+      timezoneOffsetMinutes: _intValue(
+        json['timezone_offset_minutes'],
+        fallback: _intValue(json['timezoneOffsetMinutes'], fallback: 0),
+      ),
+      durationMinutes: _intValue(
+        json['duration_minutes'],
+        fallback: _intValue(json['durationMinutes'], fallback: 60),
+      ),
       project: _stringValue(json['project']),
       title: _stringValue(json['title']),
       personOrGroup: _firstNonEmpty([
@@ -242,6 +367,33 @@ class MeetingRecord {
       purpose: _stringValue(json['purpose']),
     );
   }
+
+  bool get hasScheduledTime => time.trim().isNotEmpty;
+
+  String get timezoneDisplayLabel {
+    final label = timezoneLabel.trim();
+    if (label.isNotEmpty) {
+      return label;
+    }
+    return formatUtcOffsetLabel(timezoneOffsetMinutes);
+  }
+
+  String get scheduleDisplayLabel {
+    if (!hasScheduledTime) {
+      return date;
+    }
+    return '$date $time ${timezoneDisplayLabel.isEmpty ? '' : timezoneDisplayLabel}';
+  }
+
+  DateTime? get scheduledStartUtc => _parseScheduledStartUtc(
+    date: date,
+    time: time,
+    timezoneOffsetMinutes: timezoneOffsetMinutes,
+  );
+
+  DateTime? get scheduledEndUtc {
+    return _parseScheduledEndUtc(this);
+  }
 }
 
 class MeetingActionRecord {
@@ -272,6 +424,36 @@ class MeetingActionRecord {
   final String notes;
   final String createdAt;
   final String updatedAt;
+
+  MeetingActionRecord copyWith({
+    String? id,
+    String? meetingId,
+    String? meetingTitle,
+    String? meetingDate,
+    String? project,
+    String? action,
+    String? owner,
+    String? dueDate,
+    String? status,
+    String? notes,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return MeetingActionRecord(
+      id: id ?? this.id,
+      meetingId: meetingId ?? this.meetingId,
+      meetingTitle: meetingTitle ?? this.meetingTitle,
+      meetingDate: meetingDate ?? this.meetingDate,
+      project: project ?? this.project,
+      action: action ?? this.action,
+      owner: owner ?? this.owner,
+      dueDate: dueDate ?? this.dueDate,
+      status: status ?? this.status,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -483,6 +665,34 @@ class MeetingListRow {
   }
 }
 
+class MeetingNotificationRecord {
+  const MeetingNotificationRecord({
+    required this.id,
+    required this.meetingId,
+    required this.title,
+    required this.message,
+    required this.severity,
+    required this.meetingDate,
+    required this.meetingTime,
+    required this.myTimeLabel,
+    required this.timezoneLabel,
+    required this.createdAt,
+    required this.actionLabel,
+  });
+
+  final String id;
+  final String meetingId;
+  final String title;
+  final String message;
+  final String severity;
+  final String meetingDate;
+  final String meetingTime;
+  final String myTimeLabel;
+  final String timezoneLabel;
+  final String createdAt;
+  final String actionLabel;
+}
+
 class MeetingDetailSnapshot {
   const MeetingDetailSnapshot({
     required this.meeting,
@@ -546,6 +756,8 @@ class MeetingDashboardSnapshot {
     required this.workspace,
     required this.generatedAt,
     required this.recentMeetings,
+    required this.upcomingMeetings,
+    required this.notifications,
     required this.openActions,
     required this.recentDecisions,
     required this.waitingFollowUps,
@@ -558,6 +770,8 @@ class MeetingDashboardSnapshot {
   final MeetingWorkspaceSnapshot workspace;
   final DateTime generatedAt;
   final List<MeetingRecord> recentMeetings;
+  final List<MeetingRecord> upcomingMeetings;
+  final List<MeetingNotificationRecord> notifications;
   final List<MeetingActionRecord> openActions;
   final List<MeetingDecisionRecord> recentDecisions;
   final List<MeetingFollowUpRecord> waitingFollowUps;
@@ -666,8 +880,12 @@ class MeetingStatusSummarySnapshot {
 }
 
 class MeetingFolderService {
-  MeetingFolderService({Directory? workingDirectory})
-    : _workingDirectory = workingDirectory ?? Directory.current;
+  MeetingFolderService({
+    Directory? workingDirectory,
+    MeetingRecordingTranscriber? recordingTranscriber,
+  }) : _workingDirectory = workingDirectory ?? Directory.current,
+       _recordingTranscriber =
+           recordingTranscriber ?? DesktopMeetingRecordingTranscriber();
 
   static const _configRelativePath = 'config/local_paths.json';
   static const _omegaRootKey = 'omega_os_root';
@@ -684,6 +902,21 @@ class MeetingFolderService {
   static const _decisionMasterLogFileName = 'DECISION_MASTER_LOG.md';
   static const _followUpIndexFileName = 'follow_up_index.json';
   static const _followUpMasterLogFileName = 'FOLLOW_UP_MASTER_LOG.md';
+  static const _supportedRecordingExtensions = <String>{
+    '.mkv',
+    '.mp4',
+    '.mov',
+    '.m4v',
+    '.webm',
+    '.avi',
+    '.wmv',
+    '.mp3',
+    '.m4a',
+    '.wav',
+    '.flac',
+    '.aac',
+    '.ogg',
+  };
 
   static const _agendaTemplateFileName = '00_AGENDA.md';
   static const _notesTemplateFileName = '01_MEETING_NOTES.md';
@@ -734,6 +967,7 @@ class MeetingFolderService {
   ];
 
   final Directory _workingDirectory;
+  final MeetingRecordingTranscriber _recordingTranscriber;
 
   Future<MeetingWorkspaceSnapshot> loadWorkspace() async {
     final config = await _loadOmegaRootPath();
@@ -831,16 +1065,28 @@ class MeetingFolderService {
 
     final today = DateTime.now();
     final recentMeetings = [...meetings]..sort(_sortMeetingsDesc);
+    final upcomingMeetings = [...meetings]
+      ..removeWhere((meeting) {
+        final start = meeting.scheduledStartUtc;
+        if (start == null) {
+          return true;
+        }
+        return start.isBefore(today.toUtc().subtract(const Duration(hours: 1)));
+      })
+      ..sort(_sortMeetingsAscBySchedule);
     final recentDecisions = [...decisions]..sort(_sortDecisionsDesc);
     final waitingFollowUps = followUps.where(_needsFollowUp).toList()
       ..sort(_sortFollowUpsDesc);
     final openActions = actions.where(_isOpenAction).toList()
       ..sort(_sortActionsAsc);
+    final notifications = _buildMeetingNotifications(meetings, today);
 
     return MeetingDashboardSnapshot(
       workspace: workspace,
       generatedAt: today,
       recentMeetings: recentMeetings.take(5).toList(growable: false),
+      upcomingMeetings: upcomingMeetings.take(6).toList(growable: false),
+      notifications: notifications.take(6).toList(growable: false),
       openActions: openActions.take(5).toList(growable: false),
       recentDecisions: recentDecisions.take(5).toList(growable: false),
       waitingFollowUps: waitingFollowUps.take(5).toList(growable: false),
@@ -865,6 +1111,17 @@ class MeetingFolderService {
     final meetings = await _readMeetingsFromRoot(omegaRootPath);
     meetings.sort(_sortMeetingsDesc);
     return meetings;
+  }
+
+  Future<List<MeetingNotificationRecord>> listNotifications() async {
+    final workspace = await loadWorkspace();
+    final omegaRootPath = workspace.omegaRootPath;
+    if (omegaRootPath == null) {
+      return <MeetingNotificationRecord>[];
+    }
+
+    final meetings = await _readMeetingsFromRoot(omegaRootPath);
+    return _buildMeetingNotifications(meetings, DateTime.now());
   }
 
   Future<List<MeetingListRow>> listMeetingRows() async {
@@ -1359,10 +1616,51 @@ class MeetingFolderService {
       throw StateError('Meeting date must use yyyy-MM-dd.');
     }
 
+    final parsedTime = _parseClockValue(request.time);
+    if (parsedTime == null) {
+      throw StateError('Meeting time must use HH:mm.');
+    }
+
+    if (request.durationMinutes <= 0) {
+      throw StateError('Meeting duration must be at least 1 minute.');
+    }
+
+    final scheduledStartUtc = _parseScheduledStartUtc(
+      date: request.date,
+      time: request.time,
+      timezoneOffsetMinutes: request.timezoneOffsetMinutes,
+    );
+    if (scheduledStartUtc == null) {
+      throw StateError('Meeting schedule could not be parsed.');
+    }
+    final scheduledEndUtc = scheduledStartUtc.add(
+      Duration(minutes: request.durationMinutes),
+    );
+
+    final existingMeetings = await _readMeetingsFromRoot(omegaRootPath);
+    for (final existing in existingMeetings) {
+      final existingStart = existing.scheduledStartUtc;
+      final existingEnd = existing.scheduledEndUtc;
+      if (existingStart == null || existingEnd == null) {
+        continue;
+      }
+
+      final overlaps =
+          scheduledStartUtc.isBefore(existingEnd) &&
+          existingStart.isBefore(scheduledEndUtc);
+      if (overlaps) {
+        throw StateError(
+          'This meeting overlaps with "${existing.title}" on ${existing.date} at ${existing.time.isEmpty ? 'an unscheduled time' : existing.time}.',
+        );
+      }
+    }
+
     final meetingId = _buildMeetingId(
       request.date,
       request.project,
       request.personOrGroup,
+      request.time,
+      request.timezoneOffsetMinutes,
     );
     final meetingFolder = Directory(
       path.join(
@@ -1375,6 +1673,8 @@ class MeetingFolderService {
           request.date,
           request.project,
           request.personOrGroup,
+          request.time,
+          request.timezoneOffsetMinutes,
         ),
       ),
     );
@@ -1394,6 +1694,10 @@ class MeetingFolderService {
     final meeting = MeetingRecord(
       id: meetingId,
       date: request.date,
+      time: request.time,
+      timezoneLabel: request.timezoneLabel,
+      timezoneOffsetMinutes: request.timezoneOffsetMinutes,
+      durationMinutes: request.durationMinutes,
       project: request.project,
       title: request.title,
       personOrGroup: request.personOrGroup,
@@ -1436,11 +1740,10 @@ class MeetingFolderService {
       flush: true,
     );
 
-    final meetings = await _readMeetingsFromRoot(omegaRootPath);
-    meetings.removeWhere((item) => item.id == meeting.id);
-    meetings.add(meeting);
-    await _writeMeetingIndex(omegaRootPath, meetings);
-    await _writeMeetingMasterLog(omegaRootPath, meetings);
+    existingMeetings.removeWhere((item) => item.id == meeting.id);
+    existingMeetings.add(meeting);
+    await _writeMeetingIndex(omegaRootPath, existingMeetings);
+    await _writeMeetingMasterLog(omegaRootPath, existingMeetings);
 
     return MeetingCreateResult(
       meetingId: meetingId,
@@ -1466,34 +1769,131 @@ class MeetingFolderService {
   ) async {
     final meeting = await _requireMeeting(meetingId);
     final now = DateTime.now().toIso8601String().split('.').first;
+    final actions = await _readActionsFromRoot(_rootPath(meeting.folderPath));
+    final actionText = input.action.trim();
+    final owner = input.owner.trim();
+    final dueDate = input.dueDate.trim();
+    final status = input.status.trim().isEmpty ? 'open' : input.status.trim();
+    final notes = input.notes.trim();
+
+    final duplicateExists = actions.any(
+      (item) =>
+          item.meetingId == meeting.id &&
+          _isDuplicateAction(item, action: actionText, owner: owner),
+    );
+    if (duplicateExists) {
+      throw StateError('This action already exists for this meeting.');
+    }
+
     final action = MeetingActionRecord(
       id: 'act_${_uuid.v4().replaceAll('-', '')}',
       meetingId: meeting.id,
       meetingTitle: meeting.title,
       meetingDate: meeting.date,
       project: meeting.project,
-      action: input.action.trim(),
-      owner: input.owner.trim(),
-      dueDate: input.dueDate.trim(),
-      status: input.status.trim().isEmpty ? 'open' : input.status.trim(),
-      notes: input.notes.trim(),
+      action: actionText,
+      owner: owner,
+      dueDate: dueDate,
+      status: status,
+      notes: notes,
       createdAt: now,
       updatedAt: now,
     );
 
-    final actions = await _readActionsFromRoot(_rootPath(meeting.folderPath));
-    actions.removeWhere((item) => item.id == action.id);
-    actions.add(action);
-    await _writeActionsIndex(_rootPath(meeting.folderPath), actions);
-    await _writeActionMasterLog(_rootPath(meeting.folderPath), actions);
+    final updatedActions = <MeetingActionRecord>[...actions, action];
+    final dedupedActions = _dedupeActions(updatedActions);
+    await _writeActionsIndex(_rootPath(meeting.folderPath), dedupedActions);
+    await _writeActionMasterLog(_rootPath(meeting.folderPath), dedupedActions);
     await _writeMeetingActionsFile(
       meeting,
-      actions
+      dedupedActions
           .where((item) => item.meetingId == meeting.id)
           .toList(growable: false),
     );
     await _touchMeeting(meeting);
     return action;
+  }
+
+  Future<MeetingActionRecord> updateAction(
+    String meetingId,
+    String actionId,
+    MeetingActionInput input,
+  ) async {
+    final meeting = await _requireMeeting(meetingId);
+    final now = DateTime.now().toIso8601String().split('.').first;
+    final actions = await _readActionsFromRoot(_rootPath(meeting.folderPath));
+    final existingIndex = actions.indexWhere((item) => item.id == actionId);
+    if (existingIndex == -1) {
+      throw StateError('Action $actionId could not be found.');
+    }
+
+    final actionText = input.action.trim();
+    final owner = input.owner.trim();
+    final dueDate = input.dueDate.trim();
+    final status = input.status.trim().isEmpty ? 'open' : input.status.trim();
+    final notes = input.notes.trim();
+
+    final duplicate = actions.any(
+      (item) =>
+          item.meetingId == meeting.id &&
+          item.id != actionId &&
+          _isDuplicateAction(item, action: actionText, owner: owner),
+    );
+    if (duplicate) {
+      throw StateError('This action already exists for this meeting.');
+    }
+
+    final updatedAction = actions[existingIndex].copyWith(
+      meetingTitle: meeting.title,
+      meetingDate: meeting.date,
+      project: meeting.project,
+      action: actionText,
+      owner: owner,
+      dueDate: dueDate,
+      status: status,
+      notes: notes,
+      updatedAt: now,
+    );
+
+    final updatedActions = <MeetingActionRecord>[
+      for (var i = 0; i < actions.length; i++)
+        if (i == existingIndex) updatedAction else actions[i],
+    ];
+    final dedupedActions = _dedupeActions(updatedActions);
+    await _writeActionsIndex(_rootPath(meeting.folderPath), dedupedActions);
+    await _writeActionMasterLog(_rootPath(meeting.folderPath), dedupedActions);
+    await _writeMeetingActionsFile(
+      meeting,
+      dedupedActions
+          .where((item) => item.meetingId == meeting.id)
+          .toList(growable: false),
+    );
+    await _touchMeeting(meeting);
+    return updatedAction;
+  }
+
+  Future<void> deleteAction(String meetingId, String actionId) async {
+    final meeting = await _requireMeeting(meetingId);
+    final actions = await _readActionsFromRoot(_rootPath(meeting.folderPath));
+    final existingIndex = actions.indexWhere((item) => item.id == actionId);
+    if (existingIndex == -1) {
+      throw StateError('Action $actionId could not be found.');
+    }
+
+    final updatedActions = <MeetingActionRecord>[
+      for (var i = 0; i < actions.length; i++)
+        if (i != existingIndex) actions[i],
+    ];
+    final dedupedActions = _dedupeActions(updatedActions);
+    await _writeActionsIndex(_rootPath(meeting.folderPath), dedupedActions);
+    await _writeActionMasterLog(_rootPath(meeting.folderPath), dedupedActions);
+    await _writeMeetingActionsFile(
+      meeting,
+      dedupedActions
+          .where((item) => item.meetingId == meeting.id)
+          .toList(growable: false),
+    );
+    await _touchMeeting(meeting);
   }
 
   Future<MeetingDecisionRecord> addDecision(
@@ -1532,6 +1932,69 @@ class MeetingFolderService {
     return decision;
   }
 
+  Future<MeetingDecisionRecord> updateDecision(
+    String meetingId,
+    String decisionId,
+    MeetingDecisionInput input,
+  ) async {
+    final meeting = await _requireMeeting(meetingId);
+    final now = DateTime.now().toIso8601String().split('.').first;
+    final decisions = await _readDecisionsFromRoot(
+      _rootPath(meeting.folderPath),
+    );
+    final existingIndex = decisions.indexWhere((item) => item.id == decisionId);
+    if (existingIndex == -1) {
+      throw StateError('Decision $decisionId could not be found.');
+    }
+
+    final updatedDecision = MeetingDecisionRecord(
+      id: decisions[existingIndex].id,
+      meetingId: meeting.id,
+      meetingTitle: meeting.title,
+      meetingDate: meeting.date,
+      project: meeting.project,
+      decision: input.decision.trim(),
+      reason: input.reason.trim(),
+      status: input.status.trim().isEmpty ? 'proposed' : input.status.trim(),
+      createdAt: decisions[existingIndex].createdAt,
+      updatedAt: now,
+    );
+
+    decisions[existingIndex] = updatedDecision;
+    await _writeDecisionsIndex(_rootPath(meeting.folderPath), decisions);
+    await _writeDecisionMasterLog(_rootPath(meeting.folderPath), decisions);
+    await _writeMeetingDecisionsFile(
+      meeting,
+      decisions
+          .where((item) => item.meetingId == meeting.id)
+          .toList(growable: false),
+    );
+    await _touchMeeting(meeting);
+    return updatedDecision;
+  }
+
+  Future<void> deleteDecision(String meetingId, String decisionId) async {
+    final meeting = await _requireMeeting(meetingId);
+    final decisions = await _readDecisionsFromRoot(
+      _rootPath(meeting.folderPath),
+    );
+    final existingIndex = decisions.indexWhere((item) => item.id == decisionId);
+    if (existingIndex == -1) {
+      throw StateError('Decision $decisionId could not be found.');
+    }
+
+    decisions.removeAt(existingIndex);
+    await _writeDecisionsIndex(_rootPath(meeting.folderPath), decisions);
+    await _writeDecisionMasterLog(_rootPath(meeting.folderPath), decisions);
+    await _writeMeetingDecisionsFile(
+      meeting,
+      decisions
+          .where((item) => item.meetingId == meeting.id)
+          .toList(growable: false),
+    );
+    await _touchMeeting(meeting);
+  }
+
   Future<MeetingFollowUpRecord> updateFollowUp(
     String meetingId,
     MeetingFollowUpInput input,
@@ -1565,6 +2028,137 @@ class MeetingFolderService {
     await _writeMeetingFollowUpFile(meeting, followUp);
     await _touchMeeting(meeting);
     return followUp;
+  }
+
+  Future<void> deleteFollowUp(String meetingId) async {
+    final meeting = await _requireMeeting(meetingId);
+    final followUps = await _readFollowUpsFromRoot(
+      _rootPath(meeting.folderPath),
+    );
+    final before = followUps.length;
+    followUps.removeWhere((item) => item.meetingId == meeting.id);
+    if (followUps.length == before) {
+      throw StateError('No follow-up record was found for this meeting.');
+    }
+
+    await _writeFollowUpsIndex(_rootPath(meeting.folderPath), followUps);
+    await _writeFollowUpMasterLog(_rootPath(meeting.folderPath), followUps);
+    await _writeMeetingFollowUpFile(meeting, null);
+    await _touchMeeting(meeting);
+  }
+
+  Future<MeetingRecord> updateMeetingSchedule(
+    String meetingId,
+    MeetingScheduleInput input,
+  ) async {
+    final workspace = await loadWorkspace();
+    final omegaRootPath = workspace.omegaRootPath;
+    if (omegaRootPath == null) {
+      throw StateError('Omega OS root path is not configured.');
+    }
+
+    final existingMeeting = await _requireMeeting(meetingId);
+    final parsedDate = DateTime.tryParse(input.date);
+    if (parsedDate == null) {
+      throw StateError('Meeting date must use yyyy-MM-dd.');
+    }
+
+    final parsedTime = _parseClockValue(input.time);
+    if (parsedTime == null) {
+      throw StateError('Meeting time must use HH:mm.');
+    }
+
+    if (input.durationMinutes <= 0) {
+      throw StateError('Meeting duration must be at least 1 minute.');
+    }
+
+    final scheduledStartUtc = _parseScheduledStartUtc(
+      date: input.date,
+      time: input.time,
+      timezoneOffsetMinutes: input.timezoneOffsetMinutes,
+    );
+    if (scheduledStartUtc == null) {
+      throw StateError('Meeting schedule could not be parsed.');
+    }
+    final scheduledEndUtc = scheduledStartUtc.add(
+      Duration(minutes: input.durationMinutes),
+    );
+
+    final existingMeetings = await _readMeetingsFromRoot(omegaRootPath);
+    for (final other in existingMeetings) {
+      if (other.id == existingMeeting.id) {
+        continue;
+      }
+
+      final otherStart = other.scheduledStartUtc;
+      final otherEnd = other.scheduledEndUtc;
+      if (otherStart == null || otherEnd == null) {
+        continue;
+      }
+
+      final overlaps =
+          scheduledStartUtc.isBefore(otherEnd) &&
+          otherStart.isBefore(scheduledEndUtc);
+      if (overlaps) {
+        throw StateError(
+          'This meeting overlaps with "${other.title}" on ${other.date} at ${other.time.isEmpty ? 'an unscheduled time' : other.time}.',
+        );
+      }
+    }
+
+    final oldFolder = Directory(existingMeeting.folderPath);
+    final newFolderPath = path.join(
+      omegaRootPath,
+      _projectsRootName,
+      _meetingsFolderName,
+      parsedDate.year.toString(),
+      _monthFolderName(parsedDate),
+      _buildMeetingFolderName(
+        input.date,
+        existingMeeting.project,
+        existingMeeting.personOrGroup,
+        input.time,
+        input.timezoneOffsetMinutes,
+      ),
+    );
+
+    if (path.normalize(existingMeeting.folderPath) !=
+        path.normalize(newFolderPath)) {
+      await Directory(path.dirname(newFolderPath)).create(recursive: true);
+      if (await oldFolder.exists()) {
+        await oldFolder.rename(newFolderPath);
+      } else {
+        await Directory(newFolderPath).create(recursive: true);
+      }
+    }
+
+    final updatedMeeting = existingMeeting.copyWith(
+      date: input.date,
+      time: input.time,
+      timezoneLabel: input.timezoneLabel,
+      timezoneOffsetMinutes: input.timezoneOffsetMinutes,
+      durationMinutes: input.durationMinutes,
+      folderPath: newFolderPath,
+      agendaPath: path.join(newFolderPath, _agendaTemplateFileName),
+      notesPath: path.join(newFolderPath, _notesTemplateFileName),
+      actionsPath: path.join(newFolderPath, _actionsTemplateFileName),
+      decisionsPath: path.join(newFolderPath, _decisionsTemplateFileName),
+      followUpPath: path.join(newFolderPath, _followUpTemplateFileName),
+      updatedAt: DateTime.now().toIso8601String().split('.').first,
+    );
+
+    final updatedMeetings = <MeetingRecord>[];
+    for (final meeting in existingMeetings) {
+      if (meeting.id == existingMeeting.id) {
+        updatedMeetings.add(updatedMeeting);
+      } else {
+        updatedMeetings.add(meeting);
+      }
+    }
+
+    await _writeMeetingIndex(omegaRootPath, updatedMeetings);
+    await _writeMeetingMasterLog(omegaRootPath, updatedMeetings);
+    return updatedMeeting;
   }
 
   Future<String> exportMeetingSummary(String meetingId) async {
@@ -1769,6 +2363,173 @@ class MeetingFolderService {
     }
 
     return importedPaths;
+  }
+
+  Future<List<MeetingAttachmentRecord>> listTranscriptFiles(
+    String meetingId,
+  ) async {
+    final detail = await readMeeting(meetingId);
+    final folder = Directory(detail.transcriptsFolderPath);
+    if (!await folder.exists()) {
+      return <MeetingAttachmentRecord>[];
+    }
+
+    final transcripts = <MeetingAttachmentRecord>[];
+    for (final entity in folder.listSync().whereType<File>()) {
+      final stat = await entity.stat();
+      final extension = path.extension(entity.path).toLowerCase();
+      transcripts.add(
+        MeetingAttachmentRecord(
+          path: entity.path,
+          fileName: path.basename(entity.path),
+          extension: extension,
+          sizeBytes: stat.size,
+          modifiedAt: stat.modified,
+          preview: await _attachmentPreview(entity, extension),
+          canPreviewInline: _isInlinePreviewExtension(extension),
+        ),
+      );
+    }
+
+    transcripts.sort((a, b) {
+      final modifiedCompare = b.modifiedAt.compareTo(a.modifiedAt);
+      if (modifiedCompare != 0) {
+        return modifiedCompare;
+      }
+      return a.fileName.toLowerCase().compareTo(b.fileName.toLowerCase());
+    });
+
+    return transcripts;
+  }
+
+  Future<MeetingRecordingImportResult> importLatestRecordingFromFolder(
+    String folderPath,
+    {
+    void Function(String status)? onStatus,
+    bool Function()? isCancelled,
+  }
+  ) async {
+    onStatus?.call('Scanning recording folder...');
+    if (isCancelled?.call() == true) {
+      throw StateError('Import cancelled.');
+    }
+    final folder = Directory(folderPath.trim());
+    if (!await folder.exists()) {
+      throw StateError('The selected recording folder does not exist.');
+    }
+
+    final candidates = await _listRecordingFiles(folder);
+    if (candidates.isEmpty) {
+      throw StateError(
+        'No supported audio or video files were found in the selected folder.',
+      );
+    }
+
+    onStatus?.call('Matching recording to the closest meeting...');
+    if (isCancelled?.call() == true) {
+      throw StateError('Import cancelled.');
+    }
+    return importRecordingFile(
+      candidates.first.path,
+      onStatus: onStatus,
+      isCancelled: isCancelled,
+    );
+  }
+
+  Future<MeetingRecordingImportResult> importRecordingFile(
+    String sourceFilePath,
+    {
+    void Function(String status)? onStatus,
+    bool Function()? isCancelled,
+  }
+  ) async {
+    onStatus?.call('Reading meeting schedule...');
+    if (isCancelled?.call() == true) {
+      throw StateError('Import cancelled.');
+    }
+    final sourceFile = File(sourceFilePath.trim());
+    if (!await sourceFile.exists()) {
+      throw StateError('The selected recording file does not exist.');
+    }
+
+    final workspace = await loadWorkspace();
+    final omegaRootPath = workspace.omegaRootPath;
+    if (omegaRootPath == null) {
+      throw StateError('Omega OS root path is not configured.');
+    }
+
+    final meetings = await _readMeetingsFromRoot(omegaRootPath);
+    final recordingStat = await sourceFile.stat();
+    final recordingModifiedAt = recordingStat.modified.toLocal();
+    final match = _matchRecordingToMeeting(meetings, recordingModifiedAt);
+    if (match == null) {
+      throw StateError(
+        'No meeting could be matched to the selected recording timestamp.',
+      );
+    }
+
+    onStatus?.call('Transcribing recording with Whisper...');
+    if (isCancelled?.call() == true) {
+      throw StateError('Import cancelled.');
+    }
+    final transcript = await _recordingTranscriber.transcribeFile(
+      sourceFile.path,
+    );
+    final cleanedTranscript = transcript?.trim() ?? '';
+    if (cleanedTranscript.isEmpty) {
+      throw StateError('The recording could not be transcribed.');
+    }
+    if (isCancelled?.call() == true) {
+      throw StateError('Import cancelled.');
+    }
+
+    onStatus?.call('Saving transcript into the meeting folder...');
+    if (isCancelled?.call() == true) {
+      throw StateError('Import cancelled.');
+    }
+    final detail = await readMeeting(match.meeting.id);
+    final transcriptsFolder = Directory(detail.transcriptsFolderPath);
+    await transcriptsFolder.create(recursive: true);
+
+    final stamp = _timestampSlug(recordingModifiedAt);
+    final sourceName = _folderPart(path.basenameWithoutExtension(sourceFile.path));
+    final extension = path.extension(sourceFile.path).toLowerCase();
+    final recordingTargetPath = path.join(
+      transcriptsFolder.path,
+      '$stamp' '_' '$sourceName$extension',
+    );
+    await sourceFile.copy(recordingTargetPath);
+
+    final transcriptTargetPath = path.join(
+      transcriptsFolder.path,
+      '$stamp' '_' '$sourceName' '_transcript.md',
+    );
+    final transcriptMarkdown = _renderImportedRecordingTranscript(
+      meeting: match.meeting,
+      sourcePath: sourceFile.path,
+      storedRecordingPath: recordingTargetPath,
+      recordingModifiedAt: recordingModifiedAt,
+      minutesFromScheduledWindow: match.minutesFromScheduledWindow,
+      transcript: cleanedTranscript,
+    );
+    await File(transcriptTargetPath).writeAsString(
+      transcriptMarkdown,
+      flush: true,
+    );
+
+    await _touchMeeting(match.meeting);
+
+    return MeetingRecordingImportResult(
+      meeting: match.meeting,
+      recordingSourcePath: sourceFile.path,
+      recordingStoredPath: recordingTargetPath,
+      transcriptPath: transcriptTargetPath,
+      recordingModifiedAt: recordingModifiedAt,
+      minutesFromScheduledWindow: match.minutesFromScheduledWindow,
+      matchConfidenceLabel: match.matchConfidenceLabel,
+      matchExplanation: match.matchExplanation,
+      transcriptLength: cleanedTranscript.length,
+    );
   }
 
   Future<List<MeetingAttachmentRecord>> listAttachmentFiles(
@@ -2190,18 +2951,44 @@ class MeetingFolderService {
         return <MeetingActionRecord>[];
       }
 
-      return decoded
-          .whereType<Map>()
-          .map(
-            (item) =>
-                MeetingActionRecord.fromJson(Map<String, dynamic>.from(item)),
-          )
-          .toList();
+      return _dedupeActions(
+        decoded
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  MeetingActionRecord.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList(),
+      );
     } on FormatException {
       return <MeetingActionRecord>[];
     } on FileSystemException {
       return <MeetingActionRecord>[];
     }
+  }
+
+  List<MeetingActionRecord> _dedupeActions(List<MeetingActionRecord> actions) {
+    if (actions.length < 2) {
+      return actions;
+    }
+
+    final bySignature = <String, MeetingActionRecord>{};
+    for (final action in actions) {
+      final signature = _actionSignature(action);
+      final existing = bySignature[signature];
+      if (existing == null) {
+        bySignature[signature] = action;
+        continue;
+      }
+
+      if (_isNewerAction(action, existing)) {
+        bySignature[signature] = action;
+      }
+    }
+
+    final deduped = bySignature.values.toList(growable: false);
+    deduped.sort(_sortActionsAsc);
+    return deduped;
   }
 
   Future<List<MeetingDecisionRecord>> _readDecisionsIndex(File file) async {
@@ -2701,19 +3488,19 @@ $statusRow
 
   String _renderMeetingMasterLog(List<MeetingRecord> meetings) {
     final rows = meetings.isEmpty
-        ? '|  |  |  |  |  |  |  |'
+        ? '|  |  |  |  |  |  |  |  |  |'
         : meetings
               .map(
                 (meeting) =>
-                    '| ${meeting.date} | ${meeting.project} | ${meeting.title} | ${meeting.personOrGroup} | ${meeting.status} | ${meeting.folderPath} | 0 | ${meeting.purpose.isEmpty ? 'Open' : 'Open'} |',
+                    '| ${meeting.date} | ${meeting.time.isEmpty ? '—' : meeting.time} | ${meeting.timezoneDisplayLabel} | ${meeting.project} | ${meeting.title} | ${meeting.personOrGroup} | ${meeting.status} | ${meeting.folderPath} | 0 | ${meeting.purpose.isEmpty ? 'Open' : 'Open'} |',
               )
               .join('\n');
 
     return '''
 # Meeting Master Index
 
-| Date | Project | Title | Person / Group | Status | Folder | Actions | Follow-up |
-|---|---|---|---|---|---|---|---|
+| Date | Time | Timezone | Project | Title | Person / Group | Status | Folder | Actions | Follow-up |
+|---|---|---|---|---|---|---|---|---|---|
 $rows
 ''';
   }
@@ -2784,6 +3571,11 @@ $rows
       ..writeln('| Field | Details |')
       ..writeln('|---|---|')
       ..writeln('| Date | ${detail.meeting.date} |')
+      ..writeln(
+        '| Time | ${detail.meeting.time.isEmpty ? 'Not scheduled' : detail.meeting.time} |',
+      )
+      ..writeln('| Timezone | ${detail.meeting.timezoneDisplayLabel} |')
+      ..writeln('| Duration | ${detail.meeting.durationMinutes} min |')
       ..writeln('| Project | ${detail.meeting.project} |')
       ..writeln('| Person / Group | ${detail.meeting.personOrGroup} |')
       ..writeln('| Meeting Type | ${detail.meeting.meetingType} |')
@@ -2840,6 +3632,11 @@ $rows
       ..writeln('|---|---|')
       ..writeln('| Meeting | ${meeting.title} |')
       ..writeln('| Date | ${meeting.date} |')
+      ..writeln(
+        '| Time | ${meeting.time.isEmpty ? 'Not scheduled' : meeting.time} |',
+      )
+      ..writeln('| Timezone | ${meeting.timezoneDisplayLabel} |')
+      ..writeln('| Duration | ${meeting.durationMinutes} min |')
       ..writeln('| Project | ${meeting.project} |')
       ..writeln('| Person / Group | ${meeting.personOrGroup} |')
       ..writeln('| Bundle folder | $bundleFolderPath |')
@@ -2857,6 +3654,237 @@ $rows
       'This bundle keeps the meeting export readable in Omega OS without moving the source meeting files.',
     );
     return buffer.toString();
+  }
+
+  Future<List<_RecordingFileCandidate>> _listRecordingFiles(
+    Directory folder,
+  ) async {
+    final candidates = <_RecordingFileCandidate>[];
+
+    try {
+      await for (final entity in folder.list(recursive: true, followLinks: false)) {
+        if (entity is! File) {
+          continue;
+        }
+
+        if (!_isSupportedRecordingFile(entity.path)) {
+          continue;
+        }
+
+        final stat = await entity.stat();
+        candidates.add(
+          _RecordingFileCandidate(
+            path: entity.path,
+            modifiedAt: stat.modified.toLocal(),
+          ),
+        );
+      }
+    } on FileSystemException {
+      return <_RecordingFileCandidate>[];
+    }
+
+    candidates.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
+    return candidates;
+  }
+
+  bool _isSupportedRecordingFile(String filePath) {
+    return _supportedRecordingExtensions.contains(
+      path.extension(filePath).toLowerCase(),
+    );
+  }
+
+  _MeetingRecordingMatchCandidate? _matchRecordingToMeeting(
+    List<MeetingRecord> meetings,
+    DateTime recordingModifiedAt,
+  ) {
+    final recordingDay = DateTime(
+      recordingModifiedAt.year,
+      recordingModifiedAt.month,
+      recordingModifiedAt.day,
+    );
+
+    final candidates = <_MeetingRecordingMatchCandidate>[];
+    for (final meeting in meetings) {
+      final meetingStartLocal = meeting.scheduledStartUtc?.toLocal();
+      final meetingEndLocal = meeting.scheduledEndUtc?.toLocal();
+      if (meetingStartLocal == null || meetingEndLocal == null) {
+        continue;
+      }
+
+      final meetingDay = DateTime(
+        meetingStartLocal.year,
+        meetingStartLocal.month,
+        meetingStartLocal.day,
+      );
+      final dayDistance = recordingDay.difference(meetingDay).inDays.abs();
+      if (dayDistance > 1) {
+        continue;
+      }
+
+      candidates.add(
+        _MeetingRecordingMatchCandidate(
+          meeting: meeting,
+          meetingStartLocal: meetingStartLocal,
+          meetingEndLocal: meetingEndLocal,
+          minutesFromScheduledWindow: _minutesFromWindow(
+            recordingModifiedAt,
+            meetingStartLocal,
+            meetingEndLocal,
+          ),
+          matchConfidenceLabel: _matchConfidenceLabel(
+            recordingModifiedAt,
+            meetingStartLocal,
+            meetingEndLocal,
+          ),
+          matchExplanation: _matchConfidenceExplanation(
+            recordingModifiedAt,
+            meetingStartLocal,
+            meetingEndLocal,
+          ),
+        ),
+      );
+    }
+
+    if (candidates.isEmpty) {
+      return null;
+    }
+
+    candidates.sort((a, b) {
+      final windowCompare = a.minutesFromScheduledWindow.compareTo(
+        b.minutesFromScheduledWindow,
+      );
+      if (windowCompare != 0) {
+        return windowCompare;
+      }
+
+      final aStartDistance = _absoluteDuration(
+        recordingModifiedAt.difference(a.meetingStartLocal!),
+      );
+      final bStartDistance = _absoluteDuration(
+        recordingModifiedAt.difference(b.meetingStartLocal!),
+      );
+      final startCompare = aStartDistance.compareTo(bStartDistance);
+      if (startCompare != 0) {
+        return startCompare;
+      }
+
+      return _parseDate(b.meeting.date).compareTo(_parseDate(a.meeting.date));
+    });
+
+    return candidates.first;
+  }
+
+  String _matchConfidenceLabel(
+    DateTime recordingModifiedAt,
+    DateTime windowStart,
+    DateTime windowEnd,
+  ) {
+    final minutesFromWindow = _minutesFromWindow(
+      recordingModifiedAt,
+      windowStart,
+      windowEnd,
+    );
+    if (minutesFromWindow == 0) {
+      return 'High';
+    }
+    if (minutesFromWindow <= 20) {
+      return 'Medium';
+    }
+    return 'Low';
+  }
+
+  String _matchConfidenceExplanation(
+    DateTime recordingModifiedAt,
+    DateTime windowStart,
+    DateTime windowEnd,
+  ) {
+    final minutesFromWindow = _minutesFromWindow(
+      recordingModifiedAt,
+      windowStart,
+      windowEnd,
+    );
+    if (minutesFromWindow == 0) {
+      return 'The recording timestamp lands inside the scheduled meeting window.';
+    }
+    if (minutesFromWindow <= 20) {
+      return 'The recording timestamp is close to the scheduled window.';
+    }
+    return 'The recording timestamp is farther from the meeting window, so review the match before relying on it.';
+  }
+
+  int _minutesFromWindow(
+    DateTime recordingModifiedAt,
+    DateTime windowStart,
+    DateTime windowEnd,
+  ) {
+    if (!recordingModifiedAt.isBefore(windowStart) &&
+        !recordingModifiedAt.isAfter(windowEnd)) {
+      return 0;
+    }
+
+    final distance = recordingModifiedAt.isBefore(windowStart)
+        ? windowStart.difference(recordingModifiedAt)
+        : recordingModifiedAt.difference(windowEnd);
+    return distance.inMinutes.abs();
+  }
+
+  Duration _absoluteDuration(Duration duration) {
+    return Duration(milliseconds: duration.inMilliseconds.abs());
+  }
+
+  String _renderImportedRecordingTranscript({
+    required MeetingRecord meeting,
+    required String sourcePath,
+    required String storedRecordingPath,
+    required DateTime recordingModifiedAt,
+    required int minutesFromScheduledWindow,
+    required String transcript,
+  }) {
+    final buffer = StringBuffer()
+      ..writeln('# Imported Recording Transcript')
+      ..writeln()
+      ..writeln('| Field | Value |')
+      ..writeln('|---|---|')
+      ..writeln('| Meeting | ${meeting.title} |')
+      ..writeln('| Date | ${meeting.date} |')
+      ..writeln(
+        '| Time | ${meeting.time.isEmpty ? 'Not scheduled' : meeting.time} |',
+      )
+      ..writeln('| Project | ${meeting.project} |')
+      ..writeln('| Person / Group | ${meeting.personOrGroup} |')
+      ..writeln('| Source file | $sourcePath |')
+      ..writeln('| Stored recording | $storedRecordingPath |')
+      ..writeln(
+        '| File modified | ${_formatTimestampLabel(recordingModifiedAt)} |',
+      )
+      ..writeln('| Distance from window | $minutesFromScheduledWindow min |')
+      ..writeln()
+      ..writeln('## Transcript')
+      ..writeln()
+      ..writeln(transcript.trim());
+    return buffer.toString().replaceFirst(RegExp(r'\s+$'), '\n');
+  }
+
+  String _formatTimestampLabel(DateTime value) {
+    final local = value.toLocal();
+    final year = local.year.toString().padLeft(4, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    final second = local.second.toString().padLeft(2, '0');
+    return '$year-$month-$day $hour:$minute:$second';
+  }
+
+  String _timestampSlug(DateTime value) {
+    final local = value.toLocal();
+    final year = local.year.toString().padLeft(4, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    final second = local.second.toString().padLeft(2, '0');
+    return '$year$month$day-$hour$minute$second';
   }
 
   String _templateAgendaPlaceholder() {
@@ -2974,16 +4002,44 @@ Peter
     String date,
     String project,
     String personOrGroup,
+    String time,
+    int timezoneOffsetMinutes,
   ) {
-    return '${date}_${_folderPart(project)}_${_folderPart(personOrGroup)}';
+    final timePart = time.replaceAll(':', '');
+    final offsetPart = _folderPart(formatUtcOffsetLabel(timezoneOffsetMinutes));
+    return '${date}_${_folderPart(project)}_${_folderPart(personOrGroup)}_${timePart}_$offsetPart';
   }
 
   String _buildBundleFolderName(MeetingRecord meeting) {
-    return '${meeting.date}_${_folderPart(meeting.project)}_${_folderPart(meeting.personOrGroup)}_${_folderPart(meeting.title)}_bundle';
+    final timePart = meeting.time.replaceAll(':', '');
+    final offsetPart = _folderPart(
+      formatUtcOffsetLabel(meeting.timezoneOffsetMinutes),
+    );
+    return '${meeting.date}_${_folderPart(meeting.project)}_${_folderPart(meeting.personOrGroup)}_${timePart}_${offsetPart}_${_folderPart(meeting.title)}_bundle';
   }
 
-  String _buildMeetingId(String date, String project, String personOrGroup) {
-    return 'meet_${date.replaceAll('-', '_')}_${_folderPart(project).toLowerCase()}_${_folderPart(personOrGroup).toLowerCase()}';
+  String _buildMeetingId(
+    String date,
+    String project,
+    String personOrGroup,
+    String time,
+    int timezoneOffsetMinutes,
+  ) {
+    final timePart = time.replaceAll(':', '_');
+    final offsetPart = _folderPart(
+      formatUtcOffsetLabel(timezoneOffsetMinutes),
+    ).toLowerCase();
+    final datePart = date.replaceAll('-', '_');
+    final projectPart = _folderPart(project).toLowerCase();
+    final personPart = _folderPart(personOrGroup).toLowerCase();
+    return <String>[
+      'meet',
+      datePart,
+      projectPart,
+      personPart,
+      timePart,
+      offsetPart,
+    ].join('_');
   }
 
   String _monthFolderName(DateTime date) {
@@ -3043,12 +4099,120 @@ Peter
     return date.year == now.year && date.month == now.month;
   }
 
+  List<MeetingNotificationRecord> _buildMeetingNotifications(
+    List<MeetingRecord> meetings,
+    DateTime now,
+  ) {
+    final nowUtc = now.toUtc();
+    final notifications = <MeetingNotificationRecord>[];
+
+    for (final meeting in meetings) {
+      final start = meeting.scheduledStartUtc;
+      if (start == null) {
+        notifications.add(
+          MeetingNotificationRecord(
+            id: 'missing_${meeting.id}',
+            meetingId: meeting.id,
+            title: 'Add a time',
+            message: '${meeting.title} still needs a start time and timezone.',
+            severity: 'warning',
+            meetingDate: meeting.date,
+            meetingTime: 'TBD',
+            myTimeLabel: 'TBD',
+            timezoneLabel: meeting.timezoneDisplayLabel,
+            createdAt: now.toIso8601String(),
+            actionLabel: 'Open meeting',
+          ),
+        );
+        continue;
+      }
+
+      final minutesUntil = start.difference(nowUtc).inMinutes;
+      if (minutesUntil <= 0 && minutesUntil > -30) {
+        notifications.add(
+          MeetingNotificationRecord(
+            id: 'starting_${meeting.id}',
+            meetingId: meeting.id,
+            title: 'Meeting starting now',
+            message: '${meeting.title} is happening now.',
+            severity: 'high',
+            meetingDate: meeting.date,
+            meetingTime: meeting.time,
+            myTimeLabel: _formatClock(start.toLocal()),
+            timezoneLabel: meeting.timezoneDisplayLabel,
+            createdAt: now.toIso8601String(),
+            actionLabel: 'Open meeting',
+          ),
+        );
+        continue;
+      }
+
+      if (minutesUntil > 0 && minutesUntil <= 60) {
+        notifications.add(
+          MeetingNotificationRecord(
+            id: 'soon_${meeting.id}',
+            meetingId: meeting.id,
+            title: 'Meeting in $minutesUntil min',
+            message:
+                '${meeting.title} starts at ${meeting.time} ${meeting.timezoneDisplayLabel}.',
+            severity: minutesUntil <= 15 ? 'high' : 'info',
+            meetingDate: meeting.date,
+            meetingTime: meeting.time,
+            myTimeLabel: _formatClock(start.toLocal()),
+            timezoneLabel: meeting.timezoneDisplayLabel,
+            createdAt: now.toIso8601String(),
+            actionLabel: 'Open meeting',
+          ),
+        );
+      }
+    }
+
+    notifications.sort((a, b) => a.severity.compareTo(b.severity));
+    return notifications;
+  }
+
   int _sortMeetingsDesc(MeetingRecord a, MeetingRecord b) {
+    final aStart = a.scheduledStartUtc;
+    final bStart = b.scheduledStartUtc;
+
+    if (aStart != null && bStart != null) {
+      final scheduleCompare = bStart.compareTo(aStart);
+      if (scheduleCompare != 0) {
+        return scheduleCompare;
+      }
+    } else if (aStart != null) {
+      return -1;
+    } else if (bStart != null) {
+      return 1;
+    }
+
     final dateCompare = _parseDate(b.date).compareTo(_parseDate(a.date));
     if (dateCompare != 0) {
       return dateCompare;
     }
     return _parseDate(b.updatedAt).compareTo(_parseDate(a.updatedAt));
+  }
+
+  int _sortMeetingsAscBySchedule(MeetingRecord a, MeetingRecord b) {
+    final aStart = a.scheduledStartUtc;
+    final bStart = b.scheduledStartUtc;
+
+    if (aStart != null && bStart != null) {
+      final scheduleCompare = aStart.compareTo(bStart);
+      if (scheduleCompare != 0) {
+        return scheduleCompare;
+      }
+    } else if (aStart != null) {
+      return -1;
+    } else if (bStart != null) {
+      return 1;
+    }
+
+    final dateCompare = _parseDate(a.date).compareTo(_parseDate(b.date));
+    if (dateCompare != 0) {
+      return dateCompare;
+    }
+    return _parseDate(a.updatedAt).compareTo(_parseDate(b.updatedAt));
   }
 
   int _sortActionsAsc(MeetingActionRecord a, MeetingActionRecord b) {
@@ -3057,6 +4221,46 @@ Peter
       return dueCompare;
     }
     return _parseDate(b.updatedAt).compareTo(_parseDate(a.updatedAt));
+  }
+
+  bool _isDuplicateAction(
+    MeetingActionRecord existing, {
+    required String action,
+    required String owner,
+  }) {
+    return _normalizeActionKey(existing.action) ==
+            _normalizeActionKey(action) &&
+        _normalizeActionKey(existing.owner) == _normalizeActionKey(owner);
+  }
+
+  bool _isNewerAction(
+    MeetingActionRecord candidate,
+    MeetingActionRecord current,
+  ) {
+    final candidateUpdated = DateTime.tryParse(candidate.updatedAt);
+    final currentUpdated = DateTime.tryParse(current.updatedAt);
+    if (candidateUpdated != null && currentUpdated != null) {
+      return candidateUpdated.isAfter(currentUpdated);
+    }
+    if (candidateUpdated != null) {
+      return true;
+    }
+    if (currentUpdated != null) {
+      return false;
+    }
+    return candidate.id.compareTo(current.id) > 0;
+  }
+
+  String _actionSignature(MeetingActionRecord action) {
+    return [
+      action.meetingId.trim().toLowerCase(),
+      _normalizeActionKey(action.action),
+      _normalizeActionKey(action.owner),
+    ].join('|');
+  }
+
+  String _normalizeActionKey(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
   int _sortDecisionsDesc(MeetingDecisionRecord a, MeetingDecisionRecord b) {
@@ -3142,6 +4346,22 @@ class MeetingFollowUpInput {
   final String messageDraft;
 }
 
+class MeetingScheduleInput {
+  const MeetingScheduleInput({
+    required this.date,
+    required this.time,
+    required this.timezoneLabel,
+    required this.timezoneOffsetMinutes,
+    required this.durationMinutes,
+  });
+
+  final String date;
+  final String time;
+  final String timezoneLabel;
+  final int timezoneOffsetMinutes;
+  final int durationMinutes;
+}
+
 class _ConfigLoadResult {
   const _ConfigLoadResult({
     required this.configPath,
@@ -3159,6 +4379,22 @@ String _stringValue(dynamic value) {
     return value;
   }
   return '';
+}
+
+int _intValue(dynamic value, {int fallback = 0}) {
+  if (value is int) {
+    return value;
+  }
+  if (value is double) {
+    return value.round();
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  if (value is String) {
+    return int.tryParse(value.trim()) ?? fallback;
+  }
+  return fallback;
 }
 
 bool _boolValue(dynamic value) {
@@ -3180,6 +4416,70 @@ List<String> _stringListValue(dynamic value) {
     return value.whereType<String>().toList(growable: false);
   }
   return <String>[];
+}
+
+String formatUtcOffsetLabel(int offsetMinutes) {
+  final totalMinutes = offsetMinutes.abs();
+  final hours = totalMinutes ~/ 60;
+  final minutes = totalMinutes % 60;
+  final sign = offsetMinutes >= 0 ? '+' : '-';
+  final minuteText = minutes.toString().padLeft(2, '0');
+  return 'UTC$sign${hours.toString().padLeft(2, '0')}:$minuteText';
+}
+
+String _formatClock(DateTime dateTime) {
+  final hours = dateTime.hour.toString().padLeft(2, '0');
+  final minutes = dateTime.minute.toString().padLeft(2, '0');
+  return '$hours:$minutes';
+}
+
+DateTime? _parseScheduledStartUtc({
+  required String date,
+  required String time,
+  required int timezoneOffsetMinutes,
+}) {
+  final parsedDate = DateTime.tryParse(date);
+  final parsedTime = _parseClockValue(time);
+  if (parsedDate == null || parsedTime == null) {
+    return null;
+  }
+
+  final utcDateTime = DateTime.utc(
+    parsedDate.year,
+    parsedDate.month,
+    parsedDate.day,
+    parsedTime.hour,
+    parsedTime.minute,
+  );
+  return utcDateTime.subtract(Duration(minutes: timezoneOffsetMinutes));
+}
+
+DateTime? _parseScheduledEndUtc(MeetingRecord meeting) {
+  final start = _parseScheduledStartUtc(
+    date: meeting.date,
+    time: meeting.time,
+    timezoneOffsetMinutes: meeting.timezoneOffsetMinutes,
+  );
+  if (start == null) {
+    return null;
+  }
+  final minutes = meeting.durationMinutes <= 0 ? 60 : meeting.durationMinutes;
+  return start.add(Duration(minutes: minutes));
+}
+
+DateTime? _parseClockValue(String value) {
+  final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(value.trim());
+  if (match == null) {
+    return null;
+  }
+
+  final hour = int.tryParse(match.group(1)!);
+  final minute = int.tryParse(match.group(2)!);
+  if (hour == null || minute == null || hour > 23 || minute > 59) {
+    return null;
+  }
+
+  return DateTime(1970, 1, 1, hour, minute);
 }
 
 String _firstNonEmpty(List<String> values) {
