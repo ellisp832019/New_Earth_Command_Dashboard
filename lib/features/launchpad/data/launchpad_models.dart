@@ -727,6 +727,14 @@ String launchpadCampaignSectionLabel(String section) {
       return 'Timeline Planner';
     case 'analytics':
       return 'Analytics';
+    case 'launch-checklist':
+      return 'Launch Checklist';
+    case 'backer-updates':
+      return 'Backer Updates';
+    case 'fulfilment-tracker':
+      return 'Fulfilment Tracker';
+    case 'impact-tracker':
+      return 'Impact Tracker';
     case 'archive':
       return 'Archive';
     default:

@@ -115,6 +115,34 @@ List<RouteBase> buildLaunchpadRoutes() {
               ),
             ),
             GoRoute(
+              path: 'launch-checklist',
+              builder: (context, state) => LaunchpadCampaignScreen(
+                campaignId: state.pathParameters['campaignId']!,
+                section: 'launch-checklist',
+              ),
+            ),
+            GoRoute(
+              path: 'backer-updates',
+              builder: (context, state) => LaunchpadCampaignScreen(
+                campaignId: state.pathParameters['campaignId']!,
+                section: 'backer-updates',
+              ),
+            ),
+            GoRoute(
+              path: 'fulfilment-tracker',
+              builder: (context, state) => LaunchpadCampaignScreen(
+                campaignId: state.pathParameters['campaignId']!,
+                section: 'fulfilment-tracker',
+              ),
+            ),
+            GoRoute(
+              path: 'impact-tracker',
+              builder: (context, state) => LaunchpadCampaignScreen(
+                campaignId: state.pathParameters['campaignId']!,
+                section: 'impact-tracker',
+              ),
+            ),
+            GoRoute(
               path: 'archive',
               builder: (context, state) => LaunchpadCampaignScreen(
                 campaignId: state.pathParameters['campaignId']!,

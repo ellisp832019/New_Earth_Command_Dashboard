@@ -1478,6 +1478,30 @@ List<_LaunchpadSectionSpec> _launchpadSections(String campaignId) {
       selectedIcon: Icons.query_stats,
     ),
     _LaunchpadSectionSpec(
+      routeSegment: 'launch-checklist',
+      label: 'Checklist',
+      icon: Icons.fact_check_outlined,
+      selectedIcon: Icons.fact_check,
+    ),
+    _LaunchpadSectionSpec(
+      routeSegment: 'backer-updates',
+      label: 'Updates',
+      icon: Icons.campaign_outlined,
+      selectedIcon: Icons.campaign,
+    ),
+    _LaunchpadSectionSpec(
+      routeSegment: 'fulfilment-tracker',
+      label: 'Fulfilment',
+      icon: Icons.local_shipping_outlined,
+      selectedIcon: Icons.local_shipping,
+    ),
+    _LaunchpadSectionSpec(
+      routeSegment: 'impact-tracker',
+      label: 'Impact',
+      icon: Icons.insights_outlined,
+      selectedIcon: Icons.insights,
+    ),
+    _LaunchpadSectionSpec(
       routeSegment: 'archive',
       label: 'Archive',
       icon: Icons.archive_outlined,

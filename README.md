@@ -36,7 +36,7 @@ V0.1 foundation is live:
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
 - On Windows, Gaia now waits for a connected headset or headset microphone before the main dashboard loads
 - Meeting System phase 1 is live with dashboard, meeting index, wizard, detail, and trackers
-- Launchpad module phase 1 is live with campaign manager, rewards, story builder, readiness tracker, finance modeller, and JSON seed import; phase 2 now adds media, grants, investors, partners, manufacturing, community, timeline, and analytics records
+- Launchpad module phase 1 is live with campaign manager, rewards, story builder, readiness tracker, finance modeller, and JSON seed import; phase 2 now adds media, grants, investors, partners, manufacturing, community, timeline, and analytics records; the next polish pass adds launch checklist, backer updates, fulfilment, and impact tracking
 - If you move the repo to a new folder, clear `build/windows/x64` and `.dart_tool`, then run `flutter clean` and `flutter pub get` before building Windows again
 
 ## Documentation

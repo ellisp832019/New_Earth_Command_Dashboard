@@ -94,5 +94,53 @@
     "secondary_value": "Track weekly",
     "notes": "Keep the dashboard focused on action, not noise.",
     "order": 0
+  },
+  {
+    "id": "launch-checklist-topline",
+    "section": "launch-checklist",
+    "title": "Pre-launch checklist",
+    "status": "Draft",
+    "primary_label": "Area",
+    "primary_value": "Readiness and assets",
+    "secondary_label": "Due",
+    "secondary_value": "Before go-live",
+    "notes": "Confirm story, rewards, proof, and finance are all reviewed.",
+    "order": 0
+  },
+  {
+    "id": "backer-update-1",
+    "section": "backer-updates",
+    "title": "Launch preparation update",
+    "status": "Draft",
+    "primary_label": "Audience",
+    "primary_value": "Early supporters",
+    "secondary_label": "Tone",
+    "secondary_value": "Calm and transparent",
+    "notes": "Use this to keep backers informed before the campaign opens.",
+    "order": 0
+  },
+  {
+    "id": "fulfilment-first-batch",
+    "section": "fulfilment-tracker",
+    "title": "First fulfilment batch",
+    "status": "Draft",
+    "primary_label": "Batch",
+    "primary_value": "MicroGrow starter kits",
+    "secondary_label": "Status",
+    "secondary_value": "Planning",
+    "notes": "Map the first shipment wave and keep the volume realistic.",
+    "order": 0
+  },
+  {
+    "id": "impact-baseline",
+    "section": "impact-tracker",
+    "title": "Impact baseline",
+    "status": "Draft",
+    "primary_label": "Measure",
+    "primary_value": "Community resilience",
+    "secondary_label": "Review",
+    "secondary_value": "Post-campaign",
+    "notes": "Capture the mission outcome we want to report back on later.",
+    "order": 0
   }
 ]

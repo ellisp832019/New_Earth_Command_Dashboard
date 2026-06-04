@@ -167,6 +167,18 @@ class _LaunchpadAnalyticsPanel extends StatelessWidget {
       'Timeline': campaign.phase2Records
           .where((record) => record.section == 'timeline-planner')
           .length,
+      'Checklist': campaign.phase2Records
+          .where((record) => record.section == 'launch-checklist')
+          .length,
+      'Updates': campaign.phase2Records
+          .where((record) => record.section == 'backer-updates')
+          .length,
+      'Fulfilment': campaign.phase2Records
+          .where((record) => record.section == 'fulfilment-tracker')
+          .length,
+      'Impact': campaign.phase2Records
+          .where((record) => record.section == 'impact-tracker')
+          .length,
     };
 
     return Column(
@@ -655,6 +667,46 @@ _Phase2SectionSpec _sectionSpec(String section) {
         icon: Icons.query_stats,
         primaryLabel: 'Metric',
         secondaryLabel: 'Trend',
+      );
+    case 'launch-checklist':
+      return const _Phase2SectionSpec(
+        title: 'Launch Checklist',
+        subtitle: 'Keep the pre-launch tasks visible so nothing important is missed.',
+        singularLabel: 'Task',
+        pluralLabel: 'Tasks',
+        icon: Icons.fact_check,
+        primaryLabel: 'Area',
+        secondaryLabel: 'Due',
+      );
+    case 'backer-updates':
+      return const _Phase2SectionSpec(
+        title: 'Backer Updates',
+        subtitle: 'Draft the messages that keep supporters informed and confident.',
+        singularLabel: 'Update',
+        pluralLabel: 'Updates',
+        icon: Icons.campaign,
+        primaryLabel: 'Audience',
+        secondaryLabel: 'Tone',
+      );
+    case 'fulfilment-tracker':
+      return const _Phase2SectionSpec(
+        title: 'Fulfilment Tracker',
+        subtitle: 'Track batches, shipments, and the delivery path with care.',
+        singularLabel: 'Batch',
+        pluralLabel: 'Batches',
+        icon: Icons.local_shipping,
+        primaryLabel: 'Batch',
+        secondaryLabel: 'Status',
+      );
+    case 'impact-tracker':
+      return const _Phase2SectionSpec(
+        title: 'Impact Tracker',
+        subtitle: 'Hold the mission outcome in view after the campaign is delivered.',
+        singularLabel: 'Metric',
+        pluralLabel: 'Metrics',
+        icon: Icons.insights,
+        primaryLabel: 'Measure',
+        secondaryLabel: 'Review',
       );
     default:
       return const _Phase2SectionSpec(
