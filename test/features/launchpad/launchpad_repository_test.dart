@@ -70,6 +70,31 @@ void main() {
     expect(manifest, contains('Phase 2 Sections'));
   });
 
+  test('loadWorkspace merges missing Phase 2 seed records into runtime state', () async {
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'launchpad_merge_test_',
+    );
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    await _writeLaunchpadSeedPack(tempRoot);
+    await _writeRuntimeStateWithoutPhase2(tempRoot);
+
+    final repository = LaunchpadRepository(workingDirectory: tempRoot);
+    final workspace = await repository.loadWorkspace();
+    final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
+
+    expect(campaign, isNotNull);
+    expect(campaign!.phase2Records, isNotEmpty);
+    expect(
+      campaign.phase2Records.any((record) => record.section == 'launch-checklist'),
+      isTrue,
+    );
+  });
+
   test('financial and readiness calculators return calm launch summaries', () {
     final campaign = LaunchpadCampaignRecord(
       id: 'MICROGROW_KICKSTARTER_2026',
@@ -281,6 +306,105 @@ Marketing,3-5 minute demo video,Todo,Kickstarter proof asset
         'notes': 'Keep a shortlist of suitable local and mission-led grants.',
         'order': 0,
       },
+      {
+        'id': 'launch-checklist-topline',
+        'section': 'launch-checklist',
+        'title': 'Pre-launch checklist',
+        'status': 'Draft',
+        'primary_label': 'Area',
+        'primary_value': 'Readiness and assets',
+        'secondary_label': 'Due',
+        'secondary_value': 'Before go-live',
+        'notes': 'Confirm story, rewards, proof, and finance are all reviewed.',
+        'order': 0,
+      },
+      {
+        'id': 'backer-update-1',
+        'section': 'backer-updates',
+        'title': 'Launch preparation update',
+        'status': 'Draft',
+        'primary_label': 'Audience',
+        'primary_value': 'Early supporters',
+        'secondary_label': 'Tone',
+        'secondary_value': 'Calm and transparent',
+        'notes': 'Use this to keep backers informed before the campaign opens.',
+        'order': 0,
+      },
+      {
+        'id': 'fulfilment-first-batch',
+        'section': 'fulfilment-tracker',
+        'title': 'First fulfilment batch',
+        'status': 'Draft',
+        'primary_label': 'Batch',
+        'primary_value': 'MicroGrow starter kits',
+        'secondary_label': 'Status',
+        'secondary_value': 'Planning',
+        'notes': 'Map the first shipment wave and keep the volume realistic.',
+        'order': 0,
+      },
+      {
+        'id': 'impact-baseline',
+        'section': 'impact-tracker',
+        'title': 'Impact baseline',
+        'status': 'Draft',
+        'primary_label': 'Measure',
+        'primary_value': 'Community resilience',
+        'secondary_label': 'Review',
+        'secondary_value': 'Post-campaign',
+        'notes': 'Capture the mission outcome we want to report back on later.',
+        'order': 0,
+      },
     ]),
+  );
+}
+
+Future<void> _writeRuntimeStateWithoutPhase2(Directory root) async {
+  final runtimeFile = File(
+    p.join(
+      root.path,
+      'modules',
+      'new_earth_launchpad_module',
+      'dashboard_module',
+      'data',
+      'runtime',
+      'launchpad_state.json',
+    ),
+  );
+  await runtimeFile.parent.create(recursive: true);
+  await runtimeFile.writeAsString(
+    jsonEncode({
+      'updated_at': '2026-06-04T19:09:02.389296',
+      'campaigns': [
+        {
+          'id': 'MICROGROW_KICKSTARTER_2026',
+          'name': 'MicroGrow Kickstarter 2026',
+          'project': 'MicroGrow',
+          'type': 'kickstarter',
+          'status': 'Prototype',
+          'funding_goal_gbp': 35000,
+          'launch_date': null,
+          'owner': 'Peter Ellis',
+          'summary':
+              'Local-first grow automation ecosystem using ESP32 nodes, sensors, relay control, a hub architecture, and Flutter app.',
+          'created_at': '2026-06-04T00:00:00.000',
+          'updated_at': '2026-06-04T00:00:00.000',
+          'progress_percentage': 28,
+          'rewards': [],
+          'story_blocks': [],
+          'readiness_items': [],
+          'risks': [],
+          'finance': {
+            'funding_goal_gbp': 35000.0,
+            'manufacturing_costs_gbp': 15000.0,
+            'shipping_gbp': 7000.0,
+            'vat_percent': 20.0,
+            'kickstarter_fee_percent': 5.0,
+            'payment_fee_percent': 3.0,
+            'contingency_percent': 12.0,
+            'fixed_costs_gbp': 0.0,
+          },
+        },
+      ],
+    }),
   );
 }

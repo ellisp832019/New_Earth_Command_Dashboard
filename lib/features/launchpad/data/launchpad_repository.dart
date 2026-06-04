@@ -585,12 +585,21 @@ class LaunchpadRepository {
     LaunchpadCampaignRecord runtimeCampaign,
     LaunchpadCampaignRecord seedCampaign,
   ) {
-    if (runtimeCampaign.phase2Records.isNotEmpty ||
-        seedCampaign.phase2Records.isEmpty) {
+    if (seedCampaign.phase2Records.isEmpty) {
       return runtimeCampaign;
     }
 
-    return runtimeCampaign.copyWith(phase2Records: seedCampaign.phase2Records);
+    final runtimeIds = runtimeCampaign.phase2Records
+        .map((record) => record.id)
+        .toSet();
+    final mergedPhase2Records = [
+      ...runtimeCampaign.phase2Records,
+      ...seedCampaign.phase2Records.where(
+        (record) => !runtimeIds.contains(record.id),
+      ),
+    ]..sort((a, b) => a.order.compareTo(b.order));
+
+    return runtimeCampaign.copyWith(phase2Records: mergedPhase2Records);
   }
 
   LaunchpadCampaignRecord _defaultCampaign() {
