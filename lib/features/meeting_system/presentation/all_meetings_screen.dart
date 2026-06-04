@@ -72,7 +72,7 @@ class _AllMeetingsScreenState extends ConsumerState<AllMeetingsScreen> {
         ),
         data: (rows) {
           final filtered = rows.where(_matchesFilter).toList(growable: false)
-            ..sort((a, b) => b.meeting.date.compareTo(a.meeting.date));
+            ..sort(_compareRowsByScheduleDesc);
 
           return SafeArea(
             child: ListView(
@@ -238,6 +238,7 @@ class _AllMeetingsScreenState extends ConsumerState<AllMeetingsScreen> {
                               ),
                               columns: const [
                                 DataColumn(label: Text('Date')),
+                                DataColumn(label: Text('Time')),
                                 DataColumn(label: Text('Project')),
                                 DataColumn(label: Text('Title')),
                                 DataColumn(label: Text('Person')),
@@ -282,6 +283,21 @@ class _AllMeetingsScreenState extends ConsumerState<AllMeetingsScreen> {
     );
   }
 
+  int _compareRowsByScheduleDesc(MeetingListRow a, MeetingListRow b) {
+    final aStart = a.meeting.scheduledStartUtc;
+    final bStart = b.meeting.scheduledStartUtc;
+    if (aStart != null && bStart != null) {
+      return bStart.compareTo(aStart);
+    }
+    if (aStart != null) {
+      return -1;
+    }
+    if (bStart != null) {
+      return 1;
+    }
+    return b.meeting.date.compareTo(a.meeting.date);
+  }
+
   bool _matchesFilter(MeetingListRow row) {
     final search = _searchController.text.trim().toLowerCase();
     final project = _projectController.text.trim().toLowerCase();
@@ -290,7 +306,7 @@ class _AllMeetingsScreenState extends ConsumerState<AllMeetingsScreen> {
     final meeting = row.meeting;
 
     final haystack =
-        '${meeting.title} ${meeting.project} ${meeting.personOrGroup} ${meeting.status} ${meeting.folderPath}'
+        '${meeting.title} ${meeting.project} ${meeting.personOrGroup} ${meeting.status} ${meeting.folderPath} ${meeting.date} ${meeting.time} ${meeting.timezoneDisplayLabel}'
             .toLowerCase();
 
     if (search.isNotEmpty && !haystack.contains(search)) {
@@ -315,10 +331,12 @@ class _AllMeetingsScreenState extends ConsumerState<AllMeetingsScreen> {
     final formattedDate = date == null
         ? row.meeting.date
         : DateFormat('d MMM y').format(date);
+    final timeText = row.meeting.time.isEmpty ? 'TBD' : row.meeting.time;
 
     return DataRow(
       cells: [
         DataCell(Text(formattedDate)),
+        DataCell(Text(timeText)),
         DataCell(Text(row.meeting.project)),
         DataCell(
           SizedBox(
@@ -410,6 +428,7 @@ class _MeetingListCard extends StatelessWidget {
     final formattedDate = date == null
         ? row.meeting.date
         : DateFormat('d MMM y').format(date);
+    final timeText = row.meeting.time.isEmpty ? 'TBD' : row.meeting.time;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -432,7 +451,7 @@ class _MeetingListCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${row.meeting.project}  •  ${row.meeting.personOrGroup}  •  $formattedDate',
+            '${row.meeting.project}  •  ${row.meeting.personOrGroup}  •  $formattedDate  •  $timeText',
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColours.darkMutedText,
             ),
