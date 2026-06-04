@@ -5,6 +5,7 @@ import 'core/database/app_database.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/application/settings_controller.dart';
+import 'features/meeting_system/presentation/meeting_notification_bridge.dart';
 import 'features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'features/voice_assistant/voice_startup_gate_service.dart';
 import 'features/voice_assistant/voice_startup_gate_screen.dart';
@@ -22,50 +23,48 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
     final settingsSnapshot = ref.watch(settingsSnapshotProvider);
 
     Widget buildAppRouter() {
-      return MaterialApp.router(
-        title: 'Gaia',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: themeMode,
-        routerConfig: appRouter,
-        builder: (context, child) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              VoiceHandsfreeLayer(
-                child: child ?? const SizedBox.shrink(),
-              ),
-              const Positioned(
-                top: 16,
-                right: 16,
-                child: SafeArea(
-                  child: IgnorePointer(
-                    child: VoicePresenceChip(),
+      return MeetingNotificationBridge(
+        child: MaterialApp.router(
+          title: 'Gaia',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          routerConfig: appRouter,
+          builder: (context, child) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                VoiceHandsfreeLayer(child: child ?? const SizedBox.shrink()),
+                const Positioned(
+                  top: 16,
+                  right: 16,
+                  child: SafeArea(
+                    child: IgnorePointer(child: VoicePresenceChip()),
                   ),
                 ),
-              ),
-              const Positioned(
-                right: 0,
-                bottom: 0,
-                child: SafeArea(
-                  child: VoiceConversationDock(),
+                const Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: SafeArea(child: VoiceConversationDock()),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       );
     }
 
     Widget buildGateScreen(VoiceStartupGateResult result) {
-      return MaterialApp(
-        title: 'Gaia',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: themeMode,
-        home: VoiceStartupGateScreen(result: result),
+      return MeetingNotificationBridge(
+        child: MaterialApp(
+          title: 'Gaia',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          home: VoiceStartupGateScreen(result: result),
+        ),
       );
     }
 

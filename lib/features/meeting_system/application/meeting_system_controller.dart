@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/meeting_folder_service.dart';
+import 'meeting_notification_service.dart';
 
 final meetingFolderServiceProvider = Provider<MeetingFolderService>((ref) {
   return MeetingFolderService();
 });
+
+final meetingNotificationServiceProvider = Provider<MeetingNotificationService>(
+  (ref) {
+    return MeetingNotificationService();
+  },
+);
 
 final meetingWorkspaceProvider = FutureProvider<MeetingWorkspaceSnapshot>((
   ref,
@@ -23,6 +30,12 @@ final meetingListRowsProvider = FutureProvider<List<MeetingListRow>>((ref) {
   final service = ref.watch(meetingFolderServiceProvider);
   return service.listMeetingRows();
 });
+
+final meetingNotificationsProvider =
+    FutureProvider<List<MeetingNotificationRecord>>((ref) {
+      final service = ref.watch(meetingFolderServiceProvider);
+      return service.listNotifications();
+    });
 
 final meetingMeetingsProvider = FutureProvider<List<MeetingRecord>>((ref) {
   final service = ref.watch(meetingFolderServiceProvider);
@@ -100,4 +113,10 @@ final meetingAttachmentsProvider =
     ) {
       final service = ref.watch(meetingFolderServiceProvider);
       return service.listAttachmentFiles(meetingId);
+    });
+
+final meetingTranscriptFilesProvider =
+    FutureProvider.family<List<MeetingAttachmentRecord>, String>((ref, meetingId) {
+      final service = ref.watch(meetingFolderServiceProvider);
+      return service.listTranscriptFiles(meetingId);
     });

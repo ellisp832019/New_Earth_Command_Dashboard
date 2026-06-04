@@ -345,6 +345,10 @@ final appRouter = GoRouter(
                       path: ':meetingId',
                       builder: (context, state) => MeetingDetailScreen(
                         meetingId: state.pathParameters['meetingId']!,
+                        initialTabIndex:
+                            state.uri.queryParameters['tab'] == 'transcripts'
+                            ? 5
+                            : 0,
                       ),
                     ),
                   ],
