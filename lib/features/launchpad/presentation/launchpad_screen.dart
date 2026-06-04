@@ -65,6 +65,16 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
                   context: context,
                   ref: ref,
                 ),
+                onExportPack: () async {
+                  final path = await ref
+                      .read(launchpadRepositoryProvider)
+                      .exportCampaignPack(activeCampaign.id);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Exported campaign pack to $path')),
+                    );
+                  }
+                },
               ),
               const SizedBox(height: 16),
               _SectionHeader(
@@ -381,6 +391,7 @@ class _OverviewHero extends StatelessWidget {
     required this.readiness,
     required this.finance,
     required this.onCreateCampaign,
+    required this.onExportPack,
   });
 
   final LaunchpadWorkspace workspace;
@@ -388,6 +399,7 @@ class _OverviewHero extends StatelessWidget {
   final LaunchpadReadinessSummary readiness;
   final LaunchpadFinancialSummary finance;
   final VoidCallback onCreateCampaign;
+  final Future<void> Function() onExportPack;
 
   @override
   Widget build(BuildContext context) {
@@ -477,6 +489,11 @@ class _OverviewHero extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open MicroGrow'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onExportPack,
+                icon: const Icon(Icons.file_download_outlined),
+                label: const Text('Export Pack'),
               ),
             ],
           );

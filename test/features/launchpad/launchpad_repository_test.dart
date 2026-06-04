@@ -38,6 +38,38 @@ void main() {
     expect(exportText, contains('Campaign Summary'));
   });
 
+  test('exportCampaignPack writes a complete campaign pack', () async {
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'launchpad_pack_test_',
+    );
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    await _writeLaunchpadSeedPack(tempRoot);
+
+    final repository = LaunchpadRepository(workingDirectory: tempRoot);
+    final packPath = await repository.exportCampaignPack(
+      'MICROGROW_KICKSTARTER_2026',
+    );
+
+    final packDir = Directory(packPath);
+    expect(await packDir.exists(), isTrue);
+    expect(await File(p.join(packPath, 'campaign.json')).exists(), isTrue);
+    expect(await File(p.join(packPath, 'story.md')).exists(), isTrue);
+    expect(await File(p.join(packPath, 'rewards.json')).exists(), isTrue);
+    expect(await File(p.join(packPath, 'readiness.json')).exists(), isTrue);
+    expect(await File(p.join(packPath, 'risks.json')).exists(), isTrue);
+    expect(await File(p.join(packPath, 'phase2.json')).exists(), isTrue);
+    expect(await File(p.join(packPath, 'finance.json')).exists(), isTrue);
+
+    final manifest = await File(p.join(packPath, 'pack-manifest.md')).readAsString();
+    expect(manifest, contains('MicroGrow Kickstarter 2026 Pack'));
+    expect(manifest, contains('Phase 2 Sections'));
+  });
+
   test('financial and readiness calculators return calm launch summaries', () {
     final campaign = LaunchpadCampaignRecord(
       id: 'MICROGROW_KICKSTARTER_2026',

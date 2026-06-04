@@ -34,6 +34,7 @@ This module is designed to manage projects such as MicroGrow, BioCalm, New Earth
 Suggested starting funding target: `GBP 35,000`
 
 Seed data now includes a `phase2.json` file alongside rewards and readiness so the extra Launchpad sections open with working example records.
+Launchpad can also export a local campaign pack with JSON, markdown, and manifest files into the module export folder.
 
 ## Quick Start
 

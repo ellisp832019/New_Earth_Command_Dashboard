@@ -257,6 +257,69 @@ class LaunchpadRepository {
     return exportFile.path;
   }
 
+  Future<String> exportCampaignPack(String campaignId) async {
+    final workspace = await loadWorkspace();
+    final campaign = workspace.campaignById(campaignId);
+    if (campaign == null) {
+      throw StateError('Campaign not found: $campaignId');
+    }
+
+    final exportDir = Directory(
+      path.join(
+        workspace.exportRootPath,
+        '${_safeFileName(campaignId)}_pack',
+      ),
+    );
+    await exportDir.create(recursive: true);
+
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'campaign.json')),
+      const JsonEncoder.withIndent('  ').convert(campaign.toJson()),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'story.md')),
+      buildCampaignStoryMarkdown(campaign),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'rewards.json')),
+      const JsonEncoder.withIndent('  ').convert(
+        campaign.rewards.map((reward) => reward.toJson()).toList(growable: false),
+      ),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'readiness.json')),
+      const JsonEncoder.withIndent('  ').convert(
+        campaign.readinessItems
+            .map((item) => item.toJson())
+            .toList(growable: false),
+      ),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'risks.json')),
+      const JsonEncoder.withIndent('  ').convert(
+        campaign.risks.map((risk) => risk.toJson()).toList(growable: false),
+      ),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'phase2.json')),
+      const JsonEncoder.withIndent('  ').convert(
+        campaign.phase2Records
+            .map((record) => record.toJson())
+            .toList(growable: false),
+      ),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'finance.json')),
+      const JsonEncoder.withIndent('  ').convert(campaign.finance.toJson()),
+    );
+    await _writeTextFileWithBackup(
+      File(path.join(exportDir.path, 'pack-manifest.md')),
+      buildCampaignPackMarkdown(campaign),
+    );
+
+    return exportDir.path;
+  }
+
   String buildCampaignStoryMarkdown(LaunchpadCampaignRecord campaign) {
     final blocks = [...campaign.storyBlocks]
       ..sort((a, b) => a.order.compareTo(b.order));
@@ -276,6 +339,55 @@ class LaunchpadRepository {
         ..writeln(block.body.trim())
         ..writeln();
     }
+
+    return buffer.toString().trimRight();
+  }
+
+  String buildCampaignPackMarkdown(LaunchpadCampaignRecord campaign) {
+    final readiness = campaign.readinessItems.length;
+    final rewards = campaign.rewards.length;
+    final risks = campaign.risks.length;
+    final phase2Records = campaign.phase2Records.length;
+    final sections = <String, int>{};
+    for (final record in campaign.phase2Records) {
+      sections.update(record.section, (count) => count + 1, ifAbsent: () => 1);
+    }
+
+    final buffer = StringBuffer()
+      ..writeln('# ${campaign.name} Pack')
+      ..writeln()
+      ..writeln('## Overview')
+      ..writeln('- Campaign ID: ${campaign.id}')
+      ..writeln('- Project: ${campaign.project}')
+      ..writeln('- Status: ${campaign.status.label}')
+      ..writeln('- Funding goal: GBP ${campaign.fundingGoalGbp.toStringAsFixed(0)}')
+      ..writeln('- Rewards: $rewards')
+      ..writeln('- Readiness items: $readiness')
+      ..writeln('- Risks: $risks')
+      ..writeln('- Phase 2 records: $phase2Records')
+      ..writeln()
+      ..writeln('## Phase 2 Sections');
+
+    if (sections.isEmpty) {
+      buffer.writeln('- None yet');
+    } else {
+      for (final entry in sections.entries) {
+        buffer.writeln('- ${launchpadCampaignSectionLabel(entry.key)}: ${entry.value}');
+      }
+    }
+
+    buffer
+      ..writeln()
+      ..writeln('## Story Export')
+      ..writeln('See `story.md` for the full narrative export.')
+      ..writeln()
+      ..writeln('## Data Files')
+      ..writeln('- `campaign.json`')
+      ..writeln('- `rewards.json`')
+      ..writeln('- `readiness.json`')
+      ..writeln('- `risks.json`')
+      ..writeln('- `phase2.json`')
+      ..writeln('- `finance.json`');
 
     return buffer.toString().trimRight();
   }
