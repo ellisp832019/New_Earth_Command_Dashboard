@@ -247,6 +247,7 @@ The `Planner` screen is the daily planning and review area.
 - `Learning`
 - `Content`
 - `Business`
+- `Meeting System`
 - `Wellbeing`
 - `Inbox`
 - `Voice Assistant`
@@ -260,9 +261,29 @@ The `Planner` screen is the daily planning and review area.
    - `Learning` for learning ideas
    - `Content` for content planning
    - `Business` for opportunities and leads
+   - `Meeting System` for meeting schedules, notes, actions, decisions, and local recording imports
    - `Wellbeing` for daily checkins
    - `Inbox` for loosely captured items
    - `Voice Assistant` for voice-driven input
+
+### Meeting System
+
+The Meeting System keeps scheduled meetings and their local folders together.
+
+### What it does
+
+- Lists meetings, actions, decisions, follow-ups, and notes
+- Keeps meeting folders, attachments, and transcripts in Omega OS
+- Lets you import a recording from a local folder, match it to the closest scheduled meeting by timestamp, transcribe it locally, and save the transcript into that meeting's transcript folder
+
+### How to use it
+
+1. Open `More`.
+2. Open `Meeting System`.
+3. Use `Import recording` from the Meeting Dashboard.
+4. Choose the folder that contains the recording.
+5. Review the matched meeting and the imported transcript.
+6. Open the meeting if you want to inspect the saved transcript or recording.
 
 ---
 

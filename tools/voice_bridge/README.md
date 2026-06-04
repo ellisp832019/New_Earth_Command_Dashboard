@@ -8,8 +8,9 @@ The bridge can:
 
 1. Capture one desktop microphone utterance.
 2. Transcribe it locally with Whisper.
-3. Format a transcript as a Codex-safe prompt.
-4. Save the result to `logs/voice_commands.log`.
+3. Transcribe a local audio or video file with Whisper.
+4. Format a transcript as a Codex-safe prompt.
+5. Save the result to `logs/voice_commands.log`.
 
 ## Setup
 
@@ -27,6 +28,12 @@ From the dashboard repo root:
 
 ```bash
 python tools/voice_bridge/voice_bridge.py listen-once --json
+```
+
+To transcribe a recording file:
+
+```bash
+python tools/voice_bridge/voice_bridge.py transcribe-file --json path/to/recording.mp4
 ```
 
 For a prompt-only run:
