@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
+import 'package:xml/xml.dart';
 
 import '../../../core/constants/omega_os_folder_registry.dart';
 import '../../../core/utils/folder_bootstrap_result.dart';
@@ -65,6 +67,26 @@ class MeetingBundleReviewSnapshot {
   final String manifestPath;
   final int fileCount;
   final bool exists;
+}
+
+class MeetingAttachmentRecord {
+  const MeetingAttachmentRecord({
+    required this.path,
+    required this.fileName,
+    required this.extension,
+    required this.sizeBytes,
+    required this.modifiedAt,
+    required this.preview,
+    required this.canPreviewInline,
+  });
+
+  final String path;
+  final String fileName;
+  final String extension;
+  final int sizeBytes;
+  final DateTime modifiedAt;
+  final String? preview;
+  final bool canPreviewInline;
 }
 
 class MeetingRecord {
@@ -1242,9 +1264,15 @@ class MeetingFolderService {
     final agendaMarkdown = await _readTextFile(
       File(path.join(meetingDir.path, _agendaTemplateFileName)),
     );
-    final notesMarkdown = await _readTextFile(
-      File(path.join(meetingDir.path, _notesTemplateFileName)),
+    final notesFile = File(path.join(meetingDir.path, _notesTemplateFileName));
+    final notesMarkdown = await _readTextFile(notesFile);
+    final normalizedNotesMarkdown = _ensureQuestionsForAttendeeSection(
+      notesMarkdown,
     );
+    if (normalizedNotesMarkdown != notesMarkdown) {
+      await notesFile.writeAsString(normalizedNotesMarkdown, flush: true);
+      await _touchMeeting(meeting);
+    }
 
     final actions =
         (await _readActionsFromRoot(omegaRootPath))
@@ -1273,7 +1301,7 @@ class MeetingFolderService {
     return MeetingDetailSnapshot(
       meeting: meeting,
       agendaMarkdown: agendaMarkdown,
-      notesMarkdown: notesMarkdown,
+      notesMarkdown: normalizedNotesMarkdown,
       actions: actions,
       decisions: decisions,
       followUp: followUp,
@@ -1282,6 +1310,37 @@ class MeetingFolderService {
       exportsFolderPath: exportsFolderPath,
       summaryPath: summaryPath,
     );
+  }
+
+  String _ensureQuestionsForAttendeeSection(String markdown) {
+    if (markdown.contains('## Questions for attendee')) {
+      return markdown;
+    }
+
+    final normalized = markdown.replaceAll('\r\n', '\n');
+    final lines = normalized.split('\n');
+    final summaryIndex = lines.indexWhere(
+      (line) => line.trim() == '## Summary',
+    );
+
+    final sectionLines = <String>[
+      '',
+      '## Questions for attendee',
+      '',
+      '- ',
+      '',
+    ];
+
+    if (summaryIndex == -1) {
+      return '$normalized\n\n## Questions for attendee\n\n- \n';
+    }
+
+    final updated = <String>[
+      ...lines.take(summaryIndex),
+      ...sectionLines,
+      ...lines.skip(summaryIndex),
+    ];
+    return updated.join('\n').replaceFirst(RegExp(r'\n+$'), '\n');
   }
 
   Future<MeetingCreateResult> createMeeting(
@@ -1670,23 +1729,104 @@ class MeetingFolderService {
     return importedPaths;
   }
 
+  Future<List<String>> importAttachmentFiles(
+    String meetingId,
+    List<String> sourceFilePaths,
+  ) async {
+    final detail = await readMeeting(meetingId);
+    final folder = Directory(detail.attachmentsFolderPath);
+    await folder.create(recursive: true);
+
+    final importedPaths = <String>[];
+    final stamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '')
+        .replaceAll('.', '')
+        .replaceAll('-', '');
+
+    for (var index = 0; index < sourceFilePaths.length; index++) {
+      final sourcePath = sourceFilePaths[index].trim();
+      if (sourcePath.isEmpty) {
+        continue;
+      }
+
+      final sourceFile = File(sourcePath);
+      if (!await sourceFile.exists()) {
+        continue;
+      }
+
+      final extension = path.extension(sourcePath);
+      final fileName = path.basenameWithoutExtension(sourcePath);
+      final targetName =
+          '${stamp}_${index + 1}_${_folderPart(fileName)}$extension';
+      final targetPath = path.join(folder.path, targetName);
+      await sourceFile.copy(targetPath);
+      importedPaths.add(targetPath);
+    }
+
+    if (importedPaths.isNotEmpty) {
+      await _touchMeeting(detail.meeting);
+    }
+
+    return importedPaths;
+  }
+
+  Future<List<MeetingAttachmentRecord>> listAttachmentFiles(
+    String meetingId,
+  ) async {
+    final detail = await readMeeting(meetingId);
+    final folder = Directory(detail.attachmentsFolderPath);
+    if (!await folder.exists()) {
+      return <MeetingAttachmentRecord>[];
+    }
+
+    final attachments = <MeetingAttachmentRecord>[];
+    for (final entity in folder.listSync().whereType<File>()) {
+      final stat = await entity.stat();
+      final extension = path.extension(entity.path).toLowerCase();
+      attachments.add(
+        MeetingAttachmentRecord(
+          path: entity.path,
+          fileName: path.basename(entity.path),
+          extension: extension,
+          sizeBytes: stat.size,
+          modifiedAt: stat.modified,
+          preview: await _attachmentPreview(entity, extension),
+          canPreviewInline: _isInlinePreviewExtension(extension),
+        ),
+      );
+    }
+
+    attachments.sort((a, b) {
+      final modifiedCompare = b.modifiedAt.compareTo(a.modifiedAt);
+      if (modifiedCompare != 0) {
+        return modifiedCompare;
+      }
+      return a.fileName.toLowerCase().compareTo(b.fileName.toLowerCase());
+    });
+
+    return attachments;
+  }
+
   Future<void> openFolder(String folderPath) async {
     if (folderPath.trim().isEmpty) {
       return;
     }
 
+    final normalizedPath = path.normalize(folderPath.trim());
+
     if (Platform.isWindows) {
-      await Process.start('explorer.exe', [folderPath]);
+      await Process.start('explorer.exe', [normalizedPath]);
       return;
     }
 
     if (Platform.isMacOS) {
-      await Process.start('open', [folderPath]);
+      await Process.start('open', [normalizedPath]);
       return;
     }
 
     if (Platform.isLinux) {
-      await Process.start('xdg-open', [folderPath]);
+      await Process.start('xdg-open', [normalizedPath]);
     }
   }
 
@@ -1695,19 +1835,120 @@ class MeetingFolderService {
       return;
     }
 
+    final normalizedPath = path.normalize(filePath.trim());
+
     if (Platform.isWindows) {
-      await Process.start('cmd.exe', ['/c', 'start', '', filePath]);
+      await Process.start('cmd.exe', ['/c', 'start', '', normalizedPath]);
       return;
     }
 
     if (Platform.isMacOS) {
-      await Process.start('open', [filePath]);
+      await Process.start('open', [normalizedPath]);
       return;
     }
 
     if (Platform.isLinux) {
-      await Process.start('xdg-open', [filePath]);
+      await Process.start('xdg-open', [normalizedPath]);
     }
+  }
+
+  Future<String?> _attachmentPreview(File file, String extension) async {
+    if (_isDocxExtension(extension)) {
+      return _docxPreview(file);
+    }
+
+    if (_isInlinePreviewExtension(extension)) {
+      try {
+        final content = await file.readAsString();
+        final lines = content
+            .replaceAll('\r\n', '\n')
+            .split('\n')
+            .map((line) => line.trimRight())
+            .where((line) => line.trim().isNotEmpty)
+            .toList(growable: false);
+        if (lines.isEmpty) {
+          return 'No text preview available yet.';
+        }
+
+        final previewLines = lines.take(12).toList(growable: false);
+        final preview = previewLines.join('\n');
+        if (preview.length <= 600) {
+          return preview;
+        }
+        return '${preview.substring(0, 597)}...';
+      } on FileSystemException {
+        return null;
+      } on FormatException {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  Future<String?> _docxPreview(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes);
+      final documentEntry = archive.findFile('word/document.xml');
+      if (documentEntry == null) {
+        return null;
+      }
+
+      final documentBytes = documentEntry.content as List<int>;
+
+      final xml = XmlDocument.parse(utf8.decode(documentBytes));
+      final paragraphs = xml.descendants
+          .whereType<XmlElement>()
+          .where((element) => element.name.local == 'p')
+          .map((paragraph) {
+            final text = paragraph.descendants
+                .whereType<XmlElement>()
+                .where((element) => element.name.local == 't')
+                .map((node) => node.innerText)
+                .join();
+            return text.trim();
+          })
+          .where((line) => line.isNotEmpty)
+          .toList(growable: false);
+
+      if (paragraphs.isEmpty) {
+        return null;
+      }
+
+      final preview = paragraphs.take(12).join('\n\n');
+      if (preview.length <= 600) {
+        return preview;
+      }
+      return '${preview.substring(0, 597)}...';
+    } on FileSystemException {
+      return null;
+    } on ArchiveException {
+      return null;
+    } on FormatException {
+      return null;
+    } on XmlException {
+      return null;
+    }
+  }
+
+  bool _isInlinePreviewExtension(String extension) {
+    switch (extension.toLowerCase()) {
+      case '.txt':
+      case '.md':
+      case '.csv':
+      case '.json':
+      case '.log':
+      case '.yaml':
+      case '.yml':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  bool _isDocxExtension(String extension) {
+    return extension.toLowerCase() == '.docx';
   }
 
   Future<FolderBootstrapCreationResult> createMissingRequiredStructure() async {
@@ -1780,7 +2021,7 @@ class MeetingFolderService {
       if (decoded is Map<String, dynamic>) {
         final value = decoded[_omegaRootKey];
         if (value is String && value.trim().isNotEmpty) {
-          omegaRootPath = value.trim();
+          omegaRootPath = path.normalize(value.trim());
         } else {
           issues.add('omega_os_root is missing from config/local_paths.json.');
         }
@@ -1930,7 +2171,7 @@ class MeetingFolderService {
           .map(
             (item) => MeetingRecord.fromJson(Map<String, dynamic>.from(item)),
           )
-          .toList(growable: false);
+          .toList();
     } on FormatException {
       return <MeetingRecord>[];
     } on FileSystemException {
@@ -1955,7 +2196,7 @@ class MeetingFolderService {
             (item) =>
                 MeetingActionRecord.fromJson(Map<String, dynamic>.from(item)),
           )
-          .toList(growable: false);
+          .toList();
     } on FormatException {
       return <MeetingActionRecord>[];
     } on FileSystemException {
@@ -1980,7 +2221,7 @@ class MeetingFolderService {
             (item) =>
                 MeetingDecisionRecord.fromJson(Map<String, dynamic>.from(item)),
           )
-          .toList(growable: false);
+          .toList();
     } on FormatException {
       return <MeetingDecisionRecord>[];
     } on FileSystemException {
@@ -2005,7 +2246,7 @@ class MeetingFolderService {
             (item) =>
                 MeetingFollowUpRecord.fromJson(Map<String, dynamic>.from(item)),
           )
-          .toList(growable: false);
+          .toList();
     } on FormatException {
       return <MeetingFollowUpRecord>[];
     } on FileSystemException {
@@ -2345,6 +2586,10 @@ ${meeting.purpose.isEmpty ? '' : meeting.purpose}
 
 - ${meeting.personOrGroup}
 
+## Questions for attendee
+
+- 
+
 ## Summary
 
 
@@ -2647,6 +2892,10 @@ $rows
 ## Attendees
 
 - Peter
+- 
+
+## Questions for attendee
+
 - 
 
 ## Summary

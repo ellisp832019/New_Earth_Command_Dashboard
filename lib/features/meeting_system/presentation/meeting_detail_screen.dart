@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
@@ -1267,78 +1270,213 @@ class _MeetingAttachmentsTab extends ConsumerStatefulWidget {
 class _MeetingAttachmentsTabState
     extends ConsumerState<_MeetingAttachmentsTab> {
   bool _isImporting = false;
+  String? _selectedAttachmentPath;
 
   @override
   Widget build(BuildContext context) {
     final service = ref.read(meetingFolderServiceProvider);
+    final attachmentsAsync = ref.watch(
+      meetingAttachmentsProvider(widget.detail.meeting.id),
+    );
 
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: meetingPanelDecoration(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const MeetingSectionHeader(
-                title: 'Attachments',
-                subtitle:
-                    'Drop PDFs, screenshots, audio files, or reference docs here.',
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
+    return attachmentsAsync.when(
+      loading: () => ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: meetingPanelDecoration(),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Loading attachments...'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      error: (error, stackTrace) => ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: meetingPanelDecoration(),
+            child: Text(
+              'Attachments could not load right now.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ),
+          ),
+        ],
+      ),
+      data: (attachments) {
+        MeetingAttachmentRecord? selected;
+        if (_selectedAttachmentPath != null) {
+          for (final attachment in attachments) {
+            if (attachment.path == _selectedAttachmentPath) {
+              selected = attachment;
+              break;
+            }
+          }
+        }
+        selected ??= attachments.isEmpty ? null : attachments.first;
+
+        if (attachments.isNotEmpty &&
+            selected != null &&
+            selected.path != _selectedAttachmentPath) {
+          final selectedPath = selected.path;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _selectedAttachmentPath = selectedPath;
+            });
+          });
+        }
+
+        final selectedAttachment = selected;
+
+        return ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: meetingPanelDecoration(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FilledButton.tonalIcon(
-                    onPressed: _isImporting
-                        ? null
-                        : () => _pickTranscriptFiles(),
-                    icon: _isImporting
-                        ? const SizedBox(
-                            height: 16,
-                            width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.upload_file_outlined),
-                    label: const Text('Import transcript'),
+                  const MeetingSectionHeader(
+                    title: 'Attachments',
+                    subtitle:
+                        'Store PDFs, Word docs, screenshots, and other reference files here.',
                   ),
-                  TextButton.icon(
-                    onPressed: () =>
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _isImporting
+                            ? null
+                            : () => _pickAttachmentFiles(),
+                        icon: _isImporting
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.upload_file_outlined),
+                        label: const Text('Import documents'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => service.openFolder(
+                          widget.detail.attachmentsFolderPath,
+                        ),
+                        icon: const Icon(Icons.folder_open_outlined),
+                        label: const Text('Open attachments folder'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => service.openFolder(
+                          widget.detail.transcriptsFolderPath,
+                        ),
+                        icon: const Icon(Icons.folder_open_outlined),
+                        label: const Text('Open transcript folder'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _FileLinkRow(
+                    label: 'Attachments folder',
+                    path: widget.detail.attachmentsFolderPath,
+                    onOpen: () =>
+                        service.openFolder(widget.detail.attachmentsFolderPath),
+                  ),
+                  _FileLinkRow(
+                    label: 'Audio or transcripts',
+                    path: widget.detail.transcriptsFolderPath,
+                    onOpen: () =>
                         service.openFolder(widget.detail.transcriptsFolderPath),
-                    icon: const Icon(Icons.folder_open_outlined),
-                    label: const Text('Open transcript folder'),
+                  ),
+                  _FileLinkRow(
+                    label: 'Exports folder',
+                    path: widget.detail.exportsFolderPath,
+                    onOpen: () =>
+                        service.openFolder(widget.detail.exportsFolderPath),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              _FileLinkRow(
-                label: 'Attachments folder',
-                path: widget.detail.attachmentsFolderPath,
-                onOpen: () =>
-                    service.openFolder(widget.detail.attachmentsFolderPath),
+            ),
+            const SizedBox(height: 16),
+            if (attachments.isEmpty)
+              MeetingEmptyPanel(
+                title: 'No attachments yet',
+                message:
+                    'Import PDFs, Word docs, screenshots, or reference files for this meeting. They will stay local in the attachments folder.',
+                icon: Icons.folder_copy_outlined,
+                action: FilledButton.tonalIcon(
+                  onPressed: _isImporting ? null : _pickAttachmentFiles,
+                  icon: const Icon(Icons.upload_file_outlined),
+                  label: const Text('Import documents'),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 920;
+                  final list = _AttachmentListPanel(
+                    attachments: attachments,
+                    selectedPath: selected?.path,
+                    onSelect: (path) {
+                      setState(() {
+                        _selectedAttachmentPath = path;
+                      });
+                    },
+                    onOpen: (path) => service.openFile(path),
+                  );
+                  final preview = _AttachmentPreviewPanel(
+                    attachment: selectedAttachment,
+                    onOpenFile: selectedAttachment == null
+                        ? null
+                        : () => service.openFile(selectedAttachment.path),
+                    onOpenFolder: selectedAttachment == null
+                        ? null
+                        : () => service.openFolder(
+                            widget.detail.attachmentsFolderPath,
+                          ),
+                  );
+
+                  if (!wide) {
+                    return Column(
+                      children: [list, const SizedBox(height: 16), preview],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 5, child: list),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 7, child: preview),
+                    ],
+                  );
+                },
               ),
-              _FileLinkRow(
-                label: 'Audio or transcripts',
-                path: widget.detail.transcriptsFolderPath,
-                onOpen: () =>
-                    service.openFolder(widget.detail.transcriptsFolderPath),
-              ),
-              _FileLinkRow(
-                label: 'Exports folder',
-                path: widget.detail.exportsFolderPath,
-                onOpen: () =>
-                    service.openFolder(widget.detail.exportsFolderPath),
-              ),
-            ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  Future<void> _pickTranscriptFiles() async {
+  Future<void> _pickAttachmentFiles() async {
     if (_isImporting) {
       return;
     }
@@ -1347,17 +1485,15 @@ class _MeetingAttachmentsTabState
       type: FileType.custom,
       allowMultiple: true,
       allowedExtensions: <String>[
+        'pdf',
         'txt',
         'md',
         'doc',
         'docx',
-        'srt',
-        'vtt',
-        'wav',
-        'mp3',
-        'm4a',
-        'mp4',
-        'aac',
+        'png',
+        'jpg',
+        'jpeg',
+        'webp',
       ],
       withData: false,
     );
@@ -1379,7 +1515,8 @@ class _MeetingAttachmentsTabState
     try {
       final imported = await ref
           .read(meetingFolderServiceProvider)
-          .importTranscriptFiles(widget.detail.meeting.id, paths);
+          .importAttachmentFiles(widget.detail.meeting.id, paths);
+      ref.invalidate(meetingAttachmentsProvider(widget.detail.meeting.id));
       ref.invalidate(meetingDetailProvider(widget.detail.meeting.id));
       ref.invalidate(meetingDashboardSnapshotProvider);
       ref.invalidate(meetingWorkspaceProvider);
@@ -1391,8 +1528,8 @@ class _MeetingAttachmentsTabState
         SnackBar(
           content: Text(
             imported.isEmpty
-                ? 'No transcript files were imported.'
-                : 'Imported ${imported.length} transcript file${imported.length == 1 ? '' : 's'}.',
+                ? 'No documents were imported.'
+                : 'Imported ${imported.length} document${imported.length == 1 ? '' : 's'}.',
           ),
         ),
       );
@@ -1404,6 +1541,401 @@ class _MeetingAttachmentsTabState
       }
     }
   }
+}
+
+class _AttachmentListPanel extends StatelessWidget {
+  const _AttachmentListPanel({
+    required this.attachments,
+    required this.selectedPath,
+    required this.onSelect,
+    required this.onOpen,
+  });
+
+  final List<MeetingAttachmentRecord> attachments;
+  final String? selectedPath;
+  final ValueChanged<String> onSelect;
+  final ValueChanged<String> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: meetingPanelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const MeetingSectionHeader(
+            title: 'Attachment list',
+            subtitle: 'Choose a file to preview it here.',
+          ),
+          const SizedBox(height: 12),
+          ...attachments.map((attachment) {
+            final selected = attachment.path == selectedPath;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: () => onSelect(attachment.path),
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColours.darkSurfaceRaised.withValues(alpha: 0.95)
+                        : AppColours.darkSurface.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: selected
+                          ? AppColours.darkPrimary.withValues(alpha: 0.5)
+                          : AppColours.darkOutline.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      _AttachmentTypeIcon(extension: attachment.extension),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              attachment.fileName,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: AppColours.darkText,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_formatBytes(attachment.sizeBytes)}  •  ${attachment.extension.isEmpty ? 'file' : attachment.extension.substring(1).toUpperCase()}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColours.darkMutedText),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _AttachmentBadge(
+                                  label: attachment.canPreviewInline
+                                      ? 'Previewable'
+                                      : 'Open in app',
+                                  accentColor: attachment.canPreviewInline
+                                      ? AppColours.darkSuccess
+                                      : AppColours.darkMutedText,
+                                ),
+                                if (_isPdfExtension(attachment.extension))
+                                  const _AttachmentBadge(
+                                    label: 'PDF',
+                                    accentColor: AppColours.darkAmber,
+                                  ),
+                                if (attachment.extension.toLowerCase() ==
+                                    '.docx')
+                                  const _AttachmentBadge(
+                                    label: 'DOCX',
+                                    accentColor: AppColours.darkPrimary,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => onOpen(attachment.path),
+                        child: const Text('Open'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentPreviewPanel extends StatelessWidget {
+  const _AttachmentPreviewPanel({
+    required this.attachment,
+    required this.onOpenFile,
+    required this.onOpenFolder,
+  });
+
+  final MeetingAttachmentRecord? attachment;
+  final VoidCallback? onOpenFile;
+  final VoidCallback? onOpenFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: meetingPanelDecoration(highlighted: true),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const MeetingSectionHeader(
+            title: 'Preview window',
+            subtitle: 'This stays local and only shows the selected file.',
+          ),
+          const SizedBox(height: 12),
+          if (attachment == null)
+            const MeetingEmptyPanel(
+              title: 'No attachment selected',
+              message: 'Select a file from the list to preview it here.',
+              icon: Icons.preview_outlined,
+            )
+          else ...[
+            Text(
+              attachment!.fileName,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_formatBytes(attachment!.sizeBytes)}  •  ${attachment!.modifiedAt.toLocal()}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _AttachmentBadge(
+                  label: attachment!.canPreviewInline
+                      ? 'Previewable'
+                      : 'Open in app',
+                  accentColor: attachment!.canPreviewInline
+                      ? AppColours.darkSuccess
+                      : AppColours.darkMutedText,
+                ),
+                if (_isPdfExtension(attachment!.extension))
+                  const _AttachmentBadge(
+                    label: 'PDF',
+                    accentColor: AppColours.darkAmber,
+                  ),
+                if (attachment!.extension.toLowerCase() == '.docx')
+                  const _AttachmentBadge(
+                    label: 'DOCX',
+                    accentColor: AppColours.darkPrimary,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 280),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColours.darkSurfaceRaised.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColours.darkOutline.withValues(alpha: 0.8),
+                ),
+              ),
+              child: _buildPreviewBody(context, attachment!),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: onOpenFile,
+                  icon: const Icon(Icons.open_in_new_outlined),
+                  label: const Text('Open file'),
+                ),
+                TextButton.icon(
+                  onPressed: onOpenFolder,
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: const Text('Open folder'),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewBody(
+    BuildContext context,
+    MeetingAttachmentRecord attachment,
+  ) {
+    if (_isImageExtension(attachment.extension)) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.file(
+          File(attachment.path),
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) =>
+              _PreviewText(text: 'This image could not be loaded for preview.'),
+        ),
+      );
+    }
+
+    if (_isPdfExtension(attachment.extension)) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 520,
+          child: PdfViewer.file(
+            attachment.path,
+            params: const PdfViewerParams(),
+          ),
+        ),
+      );
+    }
+
+    final preview = attachment.preview;
+    if (preview != null && preview.trim().isNotEmpty) {
+      return SingleChildScrollView(
+        child: SelectableText(
+          preview,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColours.darkText,
+            height: 1.4,
+          ),
+        ),
+      );
+    }
+
+    return _PreviewText(
+      text:
+          'No inline preview is available for this file type yet. Use Open file to view it in the default app.',
+    );
+  }
+}
+
+class _AttachmentTypeIcon extends StatelessWidget {
+  const _AttachmentTypeIcon({required this.extension});
+
+  final String extension;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _isImageExtension(extension)
+        ? AppColours.darkSuccess
+        : extension == '.pdf'
+        ? AppColours.darkAmber
+        : AppColours.darkPrimary;
+
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Icon(_attachmentIcon(extension), color: color),
+    );
+  }
+}
+
+class _AttachmentBadge extends StatelessWidget {
+  const _AttachmentBadge({required this.label, required this.accentColor});
+
+  final String label;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accentColor.withValues(alpha: 0.24)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: accentColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewText extends StatelessWidget {
+  const _PreviewText({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          text,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+IconData _attachmentIcon(String extension) {
+  switch (extension.toLowerCase()) {
+    case '.pdf':
+      return Icons.picture_as_pdf_outlined;
+    case '.doc':
+    case '.docx':
+      return Icons.description_outlined;
+    case '.png':
+    case '.jpg':
+    case '.jpeg':
+    case '.webp':
+      return Icons.image_outlined;
+    case '.txt':
+    case '.md':
+      return Icons.notes_outlined;
+    default:
+      return Icons.insert_drive_file_outlined;
+  }
+}
+
+bool _isImageExtension(String extension) {
+  switch (extension.toLowerCase()) {
+    case '.png':
+    case '.jpg':
+    case '.jpeg':
+    case '.webp':
+    case '.gif':
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool _isPdfExtension(String extension) {
+  switch (extension.toLowerCase()) {
+    case '.pdf':
+      return true;
+    default:
+      return false;
+  }
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) {
+    return '$bytes B';
+  }
+  if (bytes < 1024 * 1024) {
+    return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  }
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
 }
 
 class _MeetingLinksTab extends ConsumerWidget {

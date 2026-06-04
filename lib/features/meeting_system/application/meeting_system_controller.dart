@@ -92,3 +92,12 @@ final meetingDetailProvider =
       final service = ref.watch(meetingFolderServiceProvider);
       return service.readMeeting(meetingId);
     });
+
+final meetingAttachmentsProvider =
+    FutureProvider.family<List<MeetingAttachmentRecord>, String>((
+      ref,
+      meetingId,
+    ) {
+      final service = ref.watch(meetingFolderServiceProvider);
+      return service.listAttachmentFiles(meetingId);
+    });
