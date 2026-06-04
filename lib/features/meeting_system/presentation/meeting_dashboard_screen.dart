@@ -789,6 +789,7 @@ class _MeetingDashboardScreenState
       _importingRecordingStatus = 'Cancelling import...';
       _importingRecordingIndeterminate = false;
     });
+    ref.read(meetingFolderServiceProvider).cancelActiveRecordingImport();
     _stopWhisperAnimation();
   }
 

@@ -17,6 +17,7 @@ class _FakeMeetingRecordingTranscriber
   @override
   Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
     String sourcePath,
+    {String? draftOutputPath}
   ) async {
     lastSourcePath = sourcePath;
     return MeetingRecordingTranscriptionJob(

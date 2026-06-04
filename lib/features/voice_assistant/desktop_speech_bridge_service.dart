@@ -66,14 +66,20 @@ class DesktopSpeechBridgeService {
   Future<DesktopSpeechBridgeCapture?> transcribeFile(
     String sourcePath, {
     Duration timeout = const Duration(minutes: 30),
+    String? draftOutputPath,
   }) async {
-    final job = await startTranscribeFile(sourcePath, timeout: timeout);
+    final job = await startTranscribeFile(
+      sourcePath,
+      timeout: timeout,
+      draftOutputPath: draftOutputPath,
+    );
     return job.result;
   }
 
   Future<DesktopSpeechBridgeJob> startTranscribeFile(
     String sourcePath, {
     Duration timeout = const Duration(minutes: 30),
+    String? draftOutputPath,
   }) async {
     final trimmedPath = sourcePath.trim();
     if (trimmedPath.isEmpty) {
@@ -88,6 +94,10 @@ class DesktopSpeechBridgeService {
         'transcribe-file',
         '--json',
         trimmedPath,
+        if (draftOutputPath != null && draftOutputPath.trim().isNotEmpty)
+          '--draft-output',
+        if (draftOutputPath != null && draftOutputPath.trim().isNotEmpty)
+          draftOutputPath.trim(),
       ],
       timeout: timeout,
     );

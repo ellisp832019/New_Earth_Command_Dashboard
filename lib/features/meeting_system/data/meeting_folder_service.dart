@@ -112,6 +112,7 @@ class MeetingRecordingImportResult {
 abstract interface class MeetingRecordingTranscriber {
   Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
     String sourcePath,
+    {String? draftOutputPath}
   );
 }
 
@@ -136,8 +137,12 @@ class DesktopMeetingRecordingTranscriber
   @override
   Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
     String sourcePath,
+    {String? draftOutputPath}
   ) async {
-    final bridgeJob = await _bridgeService.startTranscribeFile(sourcePath);
+    final bridgeJob = await _bridgeService.startTranscribeFile(
+      sourcePath,
+      draftOutputPath: draftOutputPath,
+    );
     return MeetingRecordingTranscriptionJob(
       result: bridgeJob.result.then((capture) {
         final transcript = capture?.transcript.trim() ?? '';
@@ -2527,12 +2532,30 @@ class MeetingFolderService {
       );
     }
 
+    final detail = await readMeeting(match.meeting.id);
+    final transcriptsFolder = Directory(detail.transcriptsFolderPath);
+    await transcriptsFolder.create(recursive: true);
+
+    final stamp = _timestampSlug(recordingModifiedAt);
+    final sourceName = _folderPart(path.basenameWithoutExtension(sourceFile.path));
+    final extension = path.extension(sourceFile.path).toLowerCase();
+    final recordingTargetPath = path.join(
+      transcriptsFolder.path,
+      '$stamp' '_' '$sourceName$extension',
+    );
+    final transcriptTargetPath = path.join(
+      transcriptsFolder.path,
+      '$stamp' '_' '$sourceName' '_transcript.md',
+    );
+    final draftTranscriptPath = '$transcriptTargetPath.draft.md';
+
     onStatus?.call('Transcribing recording with Whisper...');
     if (isCancelled?.call() == true) {
       throw StateError('Import cancelled.');
     }
     final transcriptionJob = await _recordingTranscriber.startTranscribeFile(
       sourceFile.path,
+      draftOutputPath: draftTranscriptPath,
     );
     _activeRecordingTranscriptionJob = transcriptionJob;
     String? transcript;
@@ -2553,23 +2576,7 @@ class MeetingFolderService {
     if (isCancelled?.call() == true) {
       throw StateError('Import cancelled.');
     }
-    final detail = await readMeeting(match.meeting.id);
-    final transcriptsFolder = Directory(detail.transcriptsFolderPath);
-    await transcriptsFolder.create(recursive: true);
-
-    final stamp = _timestampSlug(recordingModifiedAt);
-    final sourceName = _folderPart(path.basenameWithoutExtension(sourceFile.path));
-    final extension = path.extension(sourceFile.path).toLowerCase();
-    final recordingTargetPath = path.join(
-      transcriptsFolder.path,
-      '$stamp' '_' '$sourceName$extension',
-    );
     await sourceFile.copy(recordingTargetPath);
-
-    final transcriptTargetPath = path.join(
-      transcriptsFolder.path,
-      '$stamp' '_' '$sourceName' '_transcript.md',
-    );
     final transcriptMarkdown = _renderImportedRecordingTranscript(
       meeting: match.meeting,
       sourcePath: sourceFile.path,

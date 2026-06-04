@@ -138,6 +138,7 @@ def transcribe_file(
     *,
     model_name: str | None = None,
     language: str = "en",
+    draft_output_path: str | None = None,
 ) -> CaptureResult:
     _, _, WhisperModel = _load_transcription_stack()
     media_path = Path(source_path)
@@ -150,6 +151,11 @@ def transcribe_file(
         device=os.environ.get("VOICE_BRIDGE_DEVICE", "cpu"),
         compute_type=os.environ.get("VOICE_BRIDGE_COMPUTE_TYPE", "int8"),
     )
+    draft_path = Path(draft_output_path).expanduser() if draft_output_path else None
+    if draft_path is not None:
+        draft_path.parent.mkdir(parents=True, exist_ok=True)
+        if draft_path.exists():
+            draft_path.unlink()
     segments, _info = model.transcribe(
         str(media_path),
         language=language,
@@ -171,6 +177,8 @@ def transcribe_file(
                 "text": text,
             }
         )
+        if draft_path is not None:
+            _write_draft_transcript(draft_path, segment_payloads)
     transcript = " ".join(transcript_parts).strip()
     return CaptureResult(
         transcript=transcript,
@@ -179,6 +187,25 @@ def transcribe_file(
         sampled_seconds=0.0,
         segments=segment_payloads,
     )
+
+
+def _write_draft_transcript(draft_path: Path, segments: list[dict[str, Any]]) -> None:
+    lines = ["# Draft Transcript", ""]
+    for segment in segments:
+        start = _format_timestamp_segment(segment["start"])
+        end = _format_timestamp_segment(segment["end"])
+        lines.append(f"[{start} - {end}] {segment['text']}")
+    draft_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def _format_timestamp_segment(seconds: Any) -> str:
+    try:
+        total_seconds = max(0, int(float(seconds)))
+    except Exception:
+        total_seconds = 0
+    minutes = total_seconds // 60
+    remaining_seconds = total_seconds % 60
+    return f"{minutes:02d}:{remaining_seconds:02d}"
 
 
 def _print_json(payload: dict[str, Any]) -> None:
@@ -202,6 +229,12 @@ def main() -> int:
     file_parser.add_argument("source_path", help="Path to the audio or video file")
     file_parser.add_argument("--model", type=str, default=None, help="Whisper model name")
     file_parser.add_argument("--language", type=str, default="en", help="Language code")
+    file_parser.add_argument(
+        "--draft-output",
+        type=str,
+        default=None,
+        help="Optional path to a draft transcript file that updates while Whisper runs",
+    )
     file_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
 
     prompt_parser = subparsers.add_parser("prompt", help="Format a transcript as a Codex prompt")
@@ -257,6 +290,7 @@ def main() -> int:
                 args.source_path,
                 model_name=args.model,
                 language=args.language,
+                draft_output_path=args.draft_output,
             )
         except Exception as exc:
             if args.json:
