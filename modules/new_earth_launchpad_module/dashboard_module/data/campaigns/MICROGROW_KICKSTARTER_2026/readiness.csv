@@ -1,0 +1,13 @@
+category,title,status,notes
+Hardware,One ESP32 node demo,In Progress,Frankenstein prototype box
+Hardware,Sensors integrated,In Progress,Temperature/humidity first
+Hardware,Relay control demo,In Progress,Low-voltage demo only
+Firmware,Live /data endpoint,Done,Current firmware foundation
+Firmware,POST /relay control,Done,Current firmware foundation
+App,Flutter dashboard reads node,Done,Existing app foundation
+App,Manual relay control,Done,Existing app foundation
+Automation,One working grow profile,Todo,Seedling/herbs demo
+Media,3-5 minute demo video,Todo,Kickstarter proof asset
+Finance,Reward COGS model,Draft,Use financial model
+Manufacturing,PCB V0.1 plan,Draft,Low-voltage dev-board carrier
+Compliance,Risk disclosure drafted,Todo,Especially delivery/certification

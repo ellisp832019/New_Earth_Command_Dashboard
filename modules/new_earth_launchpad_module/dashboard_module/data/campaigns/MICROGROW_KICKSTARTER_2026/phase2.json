@@ -1,0 +1,98 @@
+[
+  {
+    "id": "media-hero-image",
+    "section": "media-studio",
+    "title": "Hero image set",
+    "status": "Draft",
+    "primary_label": "Asset type",
+    "primary_value": "Graphic",
+    "secondary_label": "Source",
+    "secondary_value": "Omega OS export pending",
+    "notes": "Hero image, product shot, and banner crop set.",
+    "order": 0
+  },
+  {
+    "id": "media-demo-video",
+    "section": "media-studio",
+    "title": "Demo video outline",
+    "status": "In Progress",
+    "primary_label": "Asset type",
+    "primary_value": "Video",
+    "secondary_label": "Length",
+    "secondary_value": "3-5 minutes",
+    "notes": "Show the node, app, and relay loop calmly.",
+    "order": 1
+  },
+  {
+    "id": "grant-shortlist",
+    "section": "grant-centre",
+    "title": "Grant shortlist",
+    "status": "Research",
+    "primary_label": "Funder",
+    "primary_value": "Innovation grants",
+    "secondary_label": "Deadline",
+    "secondary_value": "Rolling",
+    "notes": "Keep a shortlist of suitable local and mission-led grants.",
+    "order": 0
+  },
+  {
+    "id": "investor-intros",
+    "section": "investor-crm",
+    "title": "Warm investor intros",
+    "status": "Draft",
+    "primary_label": "Organisation",
+    "primary_value": "Mission-aligned angels",
+    "secondary_label": "Target",
+    "secondary_value": "Initial outreach",
+    "notes": "Track introductions and follow-up timing gently.",
+    "order": 0
+  },
+  {
+    "id": "partner-pilots",
+    "section": "partner-crm",
+    "title": "Partner pilot circles",
+    "status": "Draft",
+    "primary_label": "Partner type",
+    "primary_value": "Community pilot",
+    "secondary_label": "Next step",
+    "secondary_value": "Start small",
+    "notes": "Keep early partners visible and easy to revisit.",
+    "order": 0
+  },
+  {
+    "id": "manufacturing-quote",
+    "section": "manufacturing-planner",
+    "title": "PCB quote request",
+    "status": "Draft",
+    "primary_label": "Supplier",
+    "primary_value": "Prototype board house",
+    "secondary_label": "Lead time",
+    "secondary_value": "2-3 weeks",
+    "notes": "Compare sample order, panelisation, and shipping.",
+    "order": 0
+  },
+  {
+    "id": "timeline-launch-window",
+    "section": "timeline-planner",
+    "title": "Launch window",
+    "status": "Draft",
+    "primary_label": "Phase",
+    "primary_value": "Prototype freeze",
+    "secondary_label": "Target",
+    "secondary_value": "Before launch page goes live",
+    "notes": "Use this to anchor the campaign preparation sequence.",
+    "order": 0
+  },
+  {
+    "id": "analytics-baseline",
+    "section": "analytics",
+    "title": "Baseline signals",
+    "status": "Draft",
+    "primary_label": "Metric",
+    "primary_value": "Readiness and margin",
+    "secondary_label": "Trend",
+    "secondary_value": "Track weekly",
+    "notes": "Keep the dashboard focused on action, not noise.",
+    "order": 0
+  }
+]

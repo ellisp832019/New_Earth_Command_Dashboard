@@ -1,5 +1,108 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+
+function(_ne_select_latest_file out_var version_regex)
+  set(_ne_best_file "")
+  set(_ne_best_version "")
+  foreach(_ne_candidate IN LISTS ARGN)
+    string(REGEX MATCH "${version_regex}" _ne_version_match "${_ne_candidate}")
+    if(CMAKE_MATCH_1)
+      set(_ne_candidate_version "${CMAKE_MATCH_1}")
+      if(_ne_best_file STREQUAL "" OR _ne_candidate_version VERSION_GREATER _ne_best_version)
+        set(_ne_best_file "${_ne_candidate}")
+        set(_ne_best_version "${_ne_candidate_version}")
+      endif()
+    endif()
+  endforeach()
+  set(${out_var} "${_ne_best_file}" PARENT_SCOPE)
+endfunction()
+
+# Newer CMake/MSVC combinations can fail during Windows resource compilation
+# if the manifest tool or compiler is not on PATH. Resolve both dynamically
+# before project() runs so configure stays stable across toolset updates.
+if(NOT CMAKE_MT OR CMAKE_MT STREQUAL "CMAKE_MT-NOTFOUND")
+  set(_ne_windows_kits_roots)
+  set(_ne_windows_sdk_dir "$ENV{WindowsSdkDir}")
+  if(NOT _ne_windows_sdk_dir STREQUAL "")
+    list(APPEND _ne_windows_kits_roots "${_ne_windows_sdk_dir}")
+  endif()
+  set(_ne_program_files_x86 "$ENV{ProgramFiles(x86)}")
+  if(NOT _ne_program_files_x86 STREQUAL "")
+    list(APPEND _ne_windows_kits_roots "${_ne_program_files_x86}/Windows Kits/10")
+  endif()
+  set(_ne_program_files "$ENV{ProgramFiles}")
+  if(NOT _ne_program_files STREQUAL "")
+    list(APPEND _ne_windows_kits_roots "${_ne_program_files}/Windows Kits/10")
+  endif()
+
+  set(_ne_mt_candidates)
+  foreach(_ne_windows_kits_root IN LISTS _ne_windows_kits_roots)
+    if(EXISTS "${_ne_windows_kits_root}")
+      file(GLOB _ne_mt_candidates_for_root
+        "${_ne_windows_kits_root}/bin/*/x64/mt.exe"
+        "${_ne_windows_kits_root}/bin/*/x86/mt.exe"
+        "${_ne_windows_kits_root}/bin/*/arm64/mt.exe"
+      )
+      list(APPEND _ne_mt_candidates ${_ne_mt_candidates_for_root})
+    endif()
+  endforeach()
+  _ne_select_latest_file(_NE_MT_EXE "Windows Kits/10/bin/([^/]+)/" ${_ne_mt_candidates})
+  if(_NE_MT_EXE)
+    set(CMAKE_MT "${_NE_MT_EXE}" CACHE FILEPATH "Windows manifest tool" FORCE)
+  endif()
+endif()
+
+if(NOT CMAKE_C_COMPILER OR CMAKE_C_COMPILER STREQUAL "CMAKE_C_COMPILER-NOTFOUND")
+  set(_ne_vswhere_candidates)
+  set(_ne_program_files_x86 "$ENV{ProgramFiles(x86)}")
+  if(NOT _ne_program_files_x86 STREQUAL "")
+    list(APPEND _ne_vswhere_candidates "${_ne_program_files_x86}/Microsoft Visual Studio/Installer/vswhere.exe")
+  endif()
+  set(_ne_program_files "$ENV{ProgramFiles}")
+  if(NOT _ne_program_files STREQUAL "")
+    list(APPEND _ne_vswhere_candidates "${_ne_program_files}/Microsoft Visual Studio/Installer/vswhere.exe")
+  endif()
+
+  set(_ne_vswhere_exe "")
+  foreach(_ne_vswhere_candidate IN LISTS _ne_vswhere_candidates)
+    if(EXISTS "${_ne_vswhere_candidate}")
+      set(_ne_vswhere_exe "${_ne_vswhere_candidate}")
+      break()
+    endif()
+  endforeach()
+
+  if(_ne_vswhere_exe)
+    execute_process(
+      COMMAND "${_ne_vswhere_exe}"
+        -latest
+        -products *
+        -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+        -property installationPath
+        -format value
+      OUTPUT_VARIABLE _ne_vs_installation_path
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+    if(_ne_vs_installation_path)
+      file(GLOB _ne_cl_candidates
+        "${_ne_vs_installation_path}/VC/Tools/MSVC/*/bin/Hostx64/x64/cl.exe"
+        "${_ne_vs_installation_path}/VC/Tools/MSVC/*/bin/Hostx86/x64/cl.exe"
+        "${_ne_vs_installation_path}/VC/Tools/MSVC/*/bin/Hostx64/x86/cl.exe"
+      )
+      _ne_select_latest_file(_NE_CL_EXE "VC/Tools/MSVC/([^/]+)/bin/" ${_ne_cl_candidates})
+      if(_NE_CL_EXE)
+        set(CMAKE_C_COMPILER "${_NE_CL_EXE}" CACHE FILEPATH "C compiler" FORCE)
+      endif()
+    endif()
+  endif()
+endif()
+
+if(NOT CMAKE_CXX_COMPILER OR CMAKE_CXX_COMPILER STREQUAL "CMAKE_CXX_COMPILER-NOTFOUND")
+  if(DEFINED _NE_CL_EXE AND _NE_CL_EXE)
+    set(CMAKE_CXX_COMPILER "${_NE_CL_EXE}" CACHE FILEPATH "C++ compiler" FORCE)
+  endif()
+endif()
+
 project(new_earth_command_dashboard LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change

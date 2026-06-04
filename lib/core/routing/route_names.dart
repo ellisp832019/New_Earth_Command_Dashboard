@@ -35,6 +35,8 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const launchpad = '/launchpad';
+  static const launchpadCampaigns = '/launchpad/campaigns';
   static const meetingDashboard = '/more/meetings';
   static const meetingAll = '/more/meetings/all';
   static const meetingNew = '/more/meetings/new';
@@ -63,6 +65,17 @@ abstract final class RouteNames {
   static const settings = '/settings';
   static const voiceAssistant = '/voice-assistant';
   static const calmUiDemo = '/dashboard/calm-ui-demo';
+
+  static String launchpadCampaign(String campaignId) {
+    return '/launchpad/campaigns/$campaignId';
+  }
+
+  static String launchpadCampaignSection(
+    String campaignId,
+    String section,
+  ) {
+    return '/launchpad/campaigns/$campaignId/$section';
+  }
 
   static String projectDetail(String projectId) => '/projects/$projectId';
 

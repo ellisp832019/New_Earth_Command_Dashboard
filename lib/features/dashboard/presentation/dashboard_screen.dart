@@ -14,6 +14,10 @@ import '../../assets/application/assets_controller.dart';
 import '../../assets/data/qr_label_printing_service.dart';
 import '../../inbox/application/inbox_controller.dart';
 import '../../knowledge_library/data/knowledge_library_repository.dart';
+import '../../launchpad/application/launchpad_controller.dart';
+import '../../launchpad/data/launchpad_calculator.dart';
+import '../../launchpad/data/launchpad_phase2_models.dart';
+import '../../launchpad/data/launchpad_models.dart';
 import '../../meeting_system/application/meeting_system_controller.dart';
 import '../../meeting_system/data/meeting_folder_service.dart';
 import '../../meeting_system/presentation/meeting_system_widgets.dart';
@@ -692,6 +696,8 @@ class _SupportModuleGrid extends StatelessWidget {
 
         return Column(
           children: [
+            const LaunchpadDashboardCard(),
+            const SizedBox(height: 14),
             const MeetingSystemDashboardCard(),
             const SizedBox(height: 14),
             const KnowledgeLibraryDashboardCard(),
@@ -712,6 +718,231 @@ class _SupportModuleGrid extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class LaunchpadDashboardCard extends ConsumerWidget {
+  const LaunchpadDashboardCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(launchpadWorkspaceProvider);
+
+    return snapshot.when(
+      loading: () => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: _panelDecoration(context),
+        child: Row(
+          children: [
+            const Icon(Icons.campaign_outlined, color: AppColours.darkSecondary),
+            const SizedBox(width: 12),
+            Text(
+              'Launchpad is loading quietly.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: _panelDecoration(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Launchpad',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Launchpad could not load right now.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(launchpadWorkspaceProvider),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (workspace) {
+        final activeCampaign = workspace.campaigns.firstWhere(
+          (campaign) => campaign.status != LaunchpadCampaignStatus.archived,
+          orElse: () => workspace.campaigns.isEmpty
+              ? _launchpadFallbackCampaign()
+              : workspace.campaigns.first,
+        );
+        final readiness = calculateLaunchpadReadinessSummary(
+          activeCampaign.readinessItems,
+        );
+        final finance = calculateLaunchpadFinancialSummary(activeCampaign);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: _panelDecoration(context, highlighted: true),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 980;
+              final summary = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.campaign_outlined,
+                        color: AppColours.darkSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Launchpad',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColours.darkText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Campaign operations centre for crowdfunding, readiness, and launch planning.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _DashboardMetricChip(
+                        label: 'Campaigns',
+                        value: '${workspace.campaigns.length}',
+                      ),
+                      _DashboardMetricChip(
+                        label: 'Readiness',
+                        value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                        accentColor: AppColours.darkSuccess,
+                      ),
+                      _DashboardMetricChip(
+                        label: 'Net Funds',
+                        value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                        accentColor: finance.netAvailableFundsGbp >= 0
+                            ? AppColours.darkSuccess
+                            : AppColours.darkAmber,
+                      ),
+                      _DashboardMetricChip(
+                        label: 'Status',
+                        value: activeCampaign.status.label,
+                        accentColor: AppColours.darkPrimary,
+                      ),
+                    ],
+                  ),
+                ],
+              );
+
+              final actions = Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: wide ? WrapAlignment.end : WrapAlignment.start,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => context.go(RouteNames.launchpad),
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Open Launchpad'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => context.go(
+                      RouteNames.launchpadCampaign(activeCampaign.id),
+                    ),
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('Open MicroGrow'),
+                  ),
+                ],
+              );
+
+              if (!wide) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    summary,
+                    const SizedBox(height: 16),
+                    actions,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: summary),
+                  const SizedBox(width: 20),
+                  SizedBox(width: 280, child: actions),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DashboardMetricChip extends StatelessWidget {
+  const _DashboardMetricChip({
+    required this.label,
+    required this.value,
+    this.accentColor = AppColours.darkSecondary,
+  });
+
+  final String label;
+  final String value;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: accentColor,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2981,6 +3212,39 @@ class _DashboardError extends StatelessWidget {
       ),
     );
   }
+}
+
+LaunchpadCampaignRecord _launchpadFallbackCampaign() {
+  final now = DateTime.now();
+  return LaunchpadCampaignRecord(
+    id: '',
+    name: 'No campaigns',
+    project: '',
+    type: 'other',
+    status: LaunchpadCampaignStatus.idea,
+    fundingGoalGbp: 0,
+    launchDate: null,
+    owner: '',
+    summary: '',
+    createdAt: now,
+    updatedAt: now,
+    progressPercentage: 0,
+    rewards: const <LaunchpadRewardTier>[],
+    storyBlocks: const <LaunchpadStoryBlock>[],
+    readinessItems: const <LaunchpadReadinessItem>[],
+    risks: const <LaunchpadRiskRecord>[],
+    phase2Records: const <LaunchpadPhase2Record>[],
+    finance: const LaunchpadCampaignFinanceModel(
+      fundingGoalGbp: 0,
+      manufacturingCostsGbp: 0,
+      shippingGbp: 0,
+      vatPercent: 0,
+      kickstarterFeePercent: 0,
+      paymentFeePercent: 0,
+      contingencyPercent: 0,
+      fixedCostsGbp: 0,
+    ),
+  );
 }
 
 BoxDecoration _panelDecoration(

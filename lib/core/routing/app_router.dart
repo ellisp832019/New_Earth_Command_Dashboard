@@ -34,6 +34,7 @@ import '../../features/journal/presentation/add_edit_journal_entry_screen.dart';
 import '../../features/journal/presentation/journal_screen.dart';
 import '../../features/learning/presentation/add_learning_item_screen.dart';
 import '../../features/learning/presentation/learning_screen.dart';
+import '../../features/launchpad/presentation/launchpad_routes.dart';
 import '../../features/more/presentation/more_screen.dart';
 import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
 import '../../features/meeting_system/presentation/all_meetings_screen.dart';
@@ -373,6 +374,7 @@ final appRouter = GoRouter(
         ),
       ],
     ),
+    ...buildLaunchpadRoutes(),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.projectsIntelligenceLegacy,

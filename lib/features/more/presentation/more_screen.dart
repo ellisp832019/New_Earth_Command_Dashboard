@@ -30,6 +30,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.projectsIntelligence,
     ),
     _MoreItem(
+      title: 'Launchpad',
+      description:
+          'Manage crowdfunding campaigns, rewards, readiness, finance, and launch risk.',
+      icon: Icons.campaign_outlined,
+      route: RouteNames.launchpad,
+    ),
+    _MoreItem(
       title: 'Journal',
       description:
           'Capture build progress, lessons, decisions, and reflections.',

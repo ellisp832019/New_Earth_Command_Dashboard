@@ -1,0 +1,302 @@
+{
+  "updated_at": "2026-06-04T19:09:02.389296",
+  "campaigns": [
+    {
+      "id": "MICROGROW_KICKSTARTER_2026",
+      "name": "MicroGrow Kickstarter 2026",
+      "project": "MicroGrow",
+      "type": "kickstarter",
+      "status": "idea",
+      "funding_goal_gbp": 35000.0,
+      "launch_date": null,
+      "owner": "Peter Ellis",
+      "summary": "Local-first grow automation ecosystem using ESP32/ESP32-S3 nodes, sensors, relay control, hub architecture, and Flutter app.",
+      "created_at": "2026-06-04T00:00:00.000",
+      "updated_at": "2026-06-04T19:09:02.389296",
+      "progress_percentage": 0,
+      "rewards": [
+        {
+          "id": "SUPPORTER_10",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "name": "Supporter",
+          "price_gbp": 10.0,
+          "quantity_limit": null,
+          "estimated_cogs_gbp": 0.0,
+          "estimated_shipping_gbp": 0.0,
+          "delivery_estimate": "",
+          "notes": "Digital thank you and campaign updates."
+        },
+        {
+          "id": "FOUNDER_25",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "name": "Founding Supporter",
+          "price_gbp": 25.0,
+          "quantity_limit": 500,
+          "estimated_cogs_gbp": 2.0,
+          "estimated_shipping_gbp": 0.0,
+          "delivery_estimate": "",
+          "notes": "Name on founder wall / website."
+        },
+        {
+          "id": "COMMUNITY_50",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "name": "Early Community Access",
+          "price_gbp": 50.0,
+          "quantity_limit": 300,
+          "estimated_cogs_gbp": 5.0,
+          "estimated_shipping_gbp": 0.0,
+          "delivery_estimate": "",
+          "notes": "Private build updates, voting on grow profiles, early docs."
+        },
+        {
+          "id": "DEV_KIT_149",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "name": "MicroGrow Developer Kit",
+          "price_gbp": 149.0,
+          "quantity_limit": 100,
+          "estimated_cogs_gbp": 65.0,
+          "estimated_shipping_gbp": 8.0,
+          "delivery_estimate": "",
+          "notes": "ESP32 dev kit, sensor bundle, low-voltage relay board, docs."
+        },
+        {
+          "id": "STARTER_299",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "name": "MicroGrow Starter Kit",
+          "price_gbp": 299.0,
+          "quantity_limit": 75,
+          "estimated_cogs_gbp": 145.0,
+          "estimated_shipping_gbp": 15.0,
+          "delivery_estimate": "",
+          "notes": "Pre-assembled starter prototype kit subject to final scope."
+        },
+        {
+          "id": "PARTNER_499",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "name": "Founding Partner Edition",
+          "price_gbp": 499.0,
+          "quantity_limit": 25,
+          "estimated_cogs_gbp": 220.0,
+          "estimated_shipping_gbp": 20.0,
+          "delivery_estimate": "",
+          "notes": "Limited founding edition, deeper onboarding and recognition."
+        }
+      ],
+      "story_blocks": [
+        {
+          "id": "vision",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Vision",
+          "title": "What we are building",
+          "body": "Local-first grow automation ecosystem using ESP32/ESP32-S3 nodes, sensors, relay control, hub architecture, and Flutter app.",
+          "order": 0
+        },
+        {
+          "id": "problem",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Problem",
+          "title": "Why this matters",
+          "body": "Growing food consistently is still fragile, time-consuming, and hard to monitor without the right low-cost tools.",
+          "order": 1
+        },
+        {
+          "id": "solution",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Solution",
+          "title": "How MicroGrow helps",
+          "body": "A local-first system with ESP32 nodes, sensors, relay control, and a Flutter dashboard keeps the loop simple and visible.",
+          "order": 2
+        },
+        {
+          "id": "founder_story",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Founder Story",
+          "title": "Why Peter is building this",
+          "body": "MicroGrow reflects a calm, mission-driven approach to rebuilding resilience through practical tools that people can actually use.",
+          "order": 3
+        },
+        {
+          "id": "prototype",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Prototype",
+          "title": "What already exists",
+          "body": "The current prototype includes live sensor data, relay control, and a working dashboard foundation.",
+          "order": 4
+        },
+        {
+          "id": "roadmap",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Roadmap",
+          "title": "What comes next",
+          "body": "Funding supports PCB refinement, packaging, media, manufacturing preparation, and a careful launch plan.",
+          "order": 5
+        },
+        {
+          "id": "risks",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Risks",
+          "title": "Risks to be honest about",
+          "body": "Delivery timing, certification, and fulfilment cost need to stay visible so the campaign stays realistic.",
+          "order": 6
+        },
+        {
+          "id": "rewards",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "section": "Rewards",
+          "title": "Why supporters can back it",
+          "body": "Reward tiers are designed to start simple, keep margins visible, and avoid overpromising on physical fulfilment.",
+          "order": 7
+        }
+      ],
+      "readiness_items": [
+        {
+          "id": "hardware-one-esp32-node-demo",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Hardware",
+          "title": "One ESP32 node demo",
+          "status": "In Progress",
+          "proof_link": "",
+          "notes": "Frankenstein prototype box"
+        },
+        {
+          "id": "hardware-sensors-integrated",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Hardware",
+          "title": "Sensors integrated",
+          "status": "In Progress",
+          "proof_link": "",
+          "notes": "Temperature/humidity first"
+        },
+        {
+          "id": "hardware-relay-control-demo",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Hardware",
+          "title": "Relay control demo",
+          "status": "In Progress",
+          "proof_link": "",
+          "notes": "Low-voltage demo only"
+        },
+        {
+          "id": "firmware-live-data-endpoint",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Firmware",
+          "title": "Live /data endpoint",
+          "status": "Done",
+          "proof_link": "",
+          "notes": "Current firmware foundation"
+        },
+        {
+          "id": "firmware-post-relay-control",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Firmware",
+          "title": "POST /relay control",
+          "status": "Done",
+          "proof_link": "",
+          "notes": "Current firmware foundation"
+        },
+        {
+          "id": "app-flutter-dashboard-reads-node",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "App",
+          "title": "Flutter dashboard reads node",
+          "status": "Done",
+          "proof_link": "",
+          "notes": "Existing app foundation"
+        },
+        {
+          "id": "app-manual-relay-control",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "App",
+          "title": "Manual relay control",
+          "status": "Done",
+          "proof_link": "",
+          "notes": "Existing app foundation"
+        },
+        {
+          "id": "automation-one-working-grow-profile",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Automation",
+          "title": "One working grow profile",
+          "status": "Todo",
+          "proof_link": "",
+          "notes": "Seedling/herbs demo"
+        },
+        {
+          "id": "media-3-5-minute-demo-video",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Media",
+          "title": "3-5 minute demo video",
+          "status": "Todo",
+          "proof_link": "",
+          "notes": "Kickstarter proof asset"
+        },
+        {
+          "id": "finance-reward-cogs-model",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Finance",
+          "title": "Reward COGS model",
+          "status": "Draft",
+          "proof_link": "",
+          "notes": "Use financial model"
+        },
+        {
+          "id": "manufacturing-pcb-v0-1-plan",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Manufacturing",
+          "title": "PCB V0.1 plan",
+          "status": "Draft",
+          "proof_link": "",
+          "notes": "Low-voltage dev-board carrier"
+        },
+        {
+          "id": "compliance-risk-disclosure-drafted",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "category": "Compliance",
+          "title": "Risk disclosure drafted",
+          "status": "Todo",
+          "proof_link": "",
+          "notes": "Especially delivery/certification"
+        }
+      ],
+      "risks": [
+        {
+          "id": "certification-delay",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "title": "Certification preparation may take longer than expected",
+          "severity": "Medium",
+          "likelihood": "Medium",
+          "mitigation": "Keep V1 low-voltage and avoid mains switching inside the product.",
+          "public_note": "MicroGrow will launch with a careful, low-risk scope."
+        },
+        {
+          "id": "fulfilment-costs",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "title": "Shipping and fulfilment can damage margins",
+          "severity": "High",
+          "likelihood": "Medium",
+          "mitigation": "Keep physical rewards limited and check shipping assumptions early.",
+          "public_note": "Reward delivery costs are tracked in the finance model."
+        },
+        {
+          "id": "scope-creep",
+          "campaign_id": "MICROGROW_KICKSTARTER_2026",
+          "title": "The campaign could promise too much too soon",
+          "severity": "High",
+          "likelihood": "Medium",
+          "mitigation": "Separate working prototype proof from future vision clearly in the story.",
+          "public_note": "The launch plan keeps future ideas parked, not promised."
+        }
+      ],
+      "finance": {
+        "funding_goal_gbp": 35000.0,
+        "manufacturing_costs_gbp": 15000.0,
+        "shipping_gbp": 7000.0,
+        "vat_percent": 20.0,
+        "kickstarter_fee_percent": 5.0,
+        "payment_fee_percent": 3.0,
+        "contingency_percent": 12.0,
+        "fixed_costs_gbp": 0.0
+      }
+    }
+  ]
+}
