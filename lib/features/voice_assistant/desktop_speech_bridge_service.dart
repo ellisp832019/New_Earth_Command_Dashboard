@@ -10,11 +10,25 @@ class DesktopSpeechBridgeCapture {
     required this.transcript,
     this.model,
     this.durationSeconds,
+    this.segments = const <DesktopSpeechBridgeSegment>[],
   });
 
   final String transcript;
   final String? model;
   final int? durationSeconds;
+  final List<DesktopSpeechBridgeSegment> segments;
+}
+
+class DesktopSpeechBridgeSegment {
+  const DesktopSpeechBridgeSegment({
+    required this.startSeconds,
+    required this.endSeconds,
+    required this.text,
+  });
+
+  final double startSeconds;
+  final double endSeconds;
+  final String text;
 }
 
 class DesktopSpeechBridgeService {
@@ -26,6 +40,40 @@ class DesktopSpeechBridgeService {
   Future<DesktopSpeechBridgeCapture?> captureOnce({
     Duration timeout = const Duration(seconds: 120),
     int durationSeconds = 8,
+  }) async {
+    return _runBridgeCapture(
+      [
+        'listen-once',
+        '--json',
+        '--duration',
+        durationSeconds.toString(),
+      ],
+      timeout: timeout,
+    );
+  }
+
+  Future<DesktopSpeechBridgeCapture?> transcribeFile(
+    String sourcePath, {
+    Duration timeout = const Duration(minutes: 30),
+  }) async {
+    final trimmedPath = sourcePath.trim();
+    if (trimmedPath.isEmpty) {
+      return null;
+    }
+
+    return _runBridgeCapture(
+      [
+        'transcribe-file',
+        '--json',
+        trimmedPath,
+      ],
+      timeout: timeout,
+    );
+  }
+
+  Future<DesktopSpeechBridgeCapture?> _runBridgeCapture(
+    List<String> commandArgs, {
+    required Duration timeout,
   }) async {
     if (!isSupported) {
       return null;
@@ -44,10 +92,7 @@ class DesktopSpeechBridgeService {
     final args = <String>[
       ...python.args,
       script.path,
-      'listen-once',
-      '--json',
-      '--duration',
-      durationSeconds.toString(),
+      ...commandArgs,
     ];
 
     try {
@@ -99,11 +144,40 @@ class DesktopSpeechBridgeService {
       return DesktopSpeechBridgeCapture(
         transcript: transcript,
         model: decoded['model']?.toString(),
-        durationSeconds: int.tryParse(decoded['duration_seconds']?.toString() ?? ''),
+        durationSeconds:
+            int.tryParse(decoded['duration_seconds']?.toString() ?? ''),
+        segments: _parseSegments(decoded['segments']),
       );
     } catch (_) {
       return null;
     }
+  }
+
+  List<DesktopSpeechBridgeSegment> _parseSegments(dynamic rawSegments) {
+    if (rawSegments is! List) {
+      return const <DesktopSpeechBridgeSegment>[];
+    }
+
+    final segments = <DesktopSpeechBridgeSegment>[];
+    for (final rawSegment in rawSegments) {
+      if (rawSegment is! Map) {
+        continue;
+      }
+      final start = double.tryParse(rawSegment['start']?.toString() ?? '');
+      final end = double.tryParse(rawSegment['end']?.toString() ?? '');
+      final text = rawSegment['text']?.toString().trim() ?? '';
+      if (start == null || end == null || text.isEmpty) {
+        continue;
+      }
+      segments.add(
+        DesktopSpeechBridgeSegment(
+          startSeconds: start,
+          endSeconds: end,
+          text: text,
+        ),
+      );
+    }
+    return segments;
   }
 
   Future<_PythonCommand?> _resolvePythonCommand() async {

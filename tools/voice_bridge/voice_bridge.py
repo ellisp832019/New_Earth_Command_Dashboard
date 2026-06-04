@@ -37,6 +37,7 @@ class CaptureResult:
     model: str
     duration_seconds: int
     sampled_seconds: float
+    segments: list[dict[str, Any]]
 
 
 def format_codex_prompt(transcript: str) -> str:
@@ -97,7 +98,7 @@ def transcribe_once(
     np, _, WhisperModel = _load_transcription_stack()
     audio = _record_audio(duration_seconds)
     if audio is None or getattr(audio, "size", 0) == 0:
-        return CaptureResult("", model_name or "unknown", duration_seconds, 0.0)
+        return CaptureResult("", model_name or "unknown", duration_seconds, 0.0, [])
 
     normalized_audio = np.asarray(audio, dtype="float32")
     model_label = model_name or os.environ.get("VOICE_BRIDGE_MODEL", "base.en")
@@ -120,6 +121,63 @@ def transcribe_once(
         model=model_label,
         duration_seconds=duration_seconds,
         sampled_seconds=float(normalized_audio.shape[0]) / 16000.0,
+        segments=[
+            {
+                "start": round(float(segment.start), 2),
+                "end": round(float(segment.end), 2),
+                "text": segment.text.strip(),
+            }
+            for segment in segments
+            if segment.text.strip()
+        ],
+    )
+
+
+def transcribe_file(
+    source_path: str,
+    *,
+    model_name: str | None = None,
+    language: str = "en",
+) -> CaptureResult:
+    _, _, WhisperModel = _load_transcription_stack()
+    media_path = Path(source_path)
+    if not media_path.exists():
+        raise FileNotFoundError(f"Source file not found: {source_path}")
+
+    model_label = model_name or os.environ.get("VOICE_BRIDGE_MODEL", "base.en")
+    model = WhisperModel(
+        model_label,
+        device=os.environ.get("VOICE_BRIDGE_DEVICE", "cpu"),
+        compute_type=os.environ.get("VOICE_BRIDGE_COMPUTE_TYPE", "int8"),
+    )
+    segments, _info = model.transcribe(
+        str(media_path),
+        language=language,
+        vad_filter=True,
+        beam_size=5,
+    )
+
+    segment_payloads = []
+    transcript_parts = []
+    for segment in segments:
+        text = segment.text.strip()
+        if not text:
+            continue
+        transcript_parts.append(text)
+        segment_payloads.append(
+            {
+                "start": round(float(segment.start), 2),
+                "end": round(float(segment.end), 2),
+                "text": text,
+            }
+        )
+    transcript = " ".join(transcript_parts).strip()
+    return CaptureResult(
+        transcript=transcript,
+        model=model_label,
+        duration_seconds=0,
+        sampled_seconds=0.0,
+        segments=segment_payloads,
     )
 
 
@@ -136,6 +194,15 @@ def main() -> int:
     listen_parser.add_argument("--model", type=str, default=None, help="Whisper model name")
     listen_parser.add_argument("--language", type=str, default="en", help="Language code")
     listen_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+
+    file_parser = subparsers.add_parser(
+        "transcribe-file",
+        help="Transcribe a local audio or video file with Whisper",
+    )
+    file_parser.add_argument("source_path", help="Path to the audio or video file")
+    file_parser.add_argument("--model", type=str, default=None, help="Whisper model name")
+    file_parser.add_argument("--language", type=str, default="en", help="Language code")
+    file_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
 
     prompt_parser = subparsers.add_parser("prompt", help="Format a transcript as a Codex prompt")
     prompt_parser.add_argument("transcript", nargs="?", default="", help="Transcript text")
@@ -165,6 +232,7 @@ def main() -> int:
             "model": capture.model,
             "duration_seconds": capture.duration_seconds,
             "sampled_seconds": round(capture.sampled_seconds, 2),
+            "segments": capture.segments,
         }
         if args.json:
             _print_json(payload)
@@ -181,6 +249,37 @@ def main() -> int:
         output_text = format_codex_prompt(transcript)
         print(output_text)
         save_log(transcript, output_text)
+        return 0
+
+    if args.command == "transcribe-file":
+        try:
+            capture = transcribe_file(
+                args.source_path,
+                model_name=args.model,
+                language=args.language,
+            )
+        except Exception as exc:
+            if args.json:
+                _print_json({
+                    "ok": False,
+                    "error": str(exc),
+                })
+            else:
+                print(f"File transcription failed: {exc}", file=sys.stderr)
+            return 1
+
+        payload = {
+            "ok": True,
+            "transcript": capture.transcript,
+            "model": capture.model,
+            "duration_seconds": capture.duration_seconds,
+            "sampled_seconds": round(capture.sampled_seconds, 2),
+            "segments": capture.segments,
+        }
+        if args.json:
+            _print_json(payload)
+        else:
+            print(capture.transcript)
         return 0
 
     print("New Earth Dashboard Voice Bridge")

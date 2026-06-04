@@ -121,7 +121,35 @@ class DesktopMeetingRecordingTranscriber
     if (transcript.isEmpty) {
       return null;
     }
-    return transcript;
+    if (capture == null || capture.segments.isEmpty) {
+      return transcript;
+    }
+    return _renderTimestampedTranscript(capture.segments, transcript);
+  }
+
+  String _renderTimestampedTranscript(
+    List<DesktopSpeechBridgeSegment> segments,
+    String transcript,
+  ) {
+    final buffer = StringBuffer()
+      ..writeln('## Timestamped Transcript')
+      ..writeln();
+    for (final segment in segments) {
+      final startLabel = _formatTranscriptTimestamp(segment.startSeconds);
+      final endLabel = _formatTranscriptTimestamp(segment.endSeconds);
+      buffer.writeln('[$startLabel - $endLabel] ${segment.text}');
+    }
+    if (buffer.isEmpty) {
+      return transcript;
+    }
+    return buffer.toString().trimRight();
+  }
+
+  String _formatTranscriptTimestamp(double seconds) {
+    final totalSeconds = seconds.isFinite && seconds > 0 ? seconds.floor() : 0;
+    final minutes = totalSeconds ~/ 60;
+    final remainingSeconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 }
 
