@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 import 'package:xml/xml.dart';
@@ -109,7 +110,19 @@ class MeetingRecordingImportResult {
 }
 
 abstract interface class MeetingRecordingTranscriber {
-  Future<String?> transcribeFile(String sourcePath);
+  Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
+    String sourcePath,
+  );
+}
+
+class MeetingRecordingTranscriptionJob {
+  const MeetingRecordingTranscriptionJob({
+    required this.result,
+    required this.cancel,
+  });
+
+  final Future<String?> result;
+  final VoidCallback cancel;
 }
 
 class DesktopMeetingRecordingTranscriber
@@ -121,16 +134,23 @@ class DesktopMeetingRecordingTranscriber
   final DesktopSpeechBridgeService _bridgeService;
 
   @override
-  Future<String?> transcribeFile(String sourcePath) async {
-    final capture = await _bridgeService.transcribeFile(sourcePath);
-    final transcript = capture?.transcript.trim() ?? '';
-    if (transcript.isEmpty) {
-      return null;
-    }
-    if (capture == null || capture.segments.isEmpty) {
-      return transcript;
-    }
-    return _renderTimestampedTranscript(capture.segments, transcript);
+  Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
+    String sourcePath,
+  ) async {
+    final bridgeJob = await _bridgeService.startTranscribeFile(sourcePath);
+    return MeetingRecordingTranscriptionJob(
+      result: bridgeJob.result.then((capture) {
+        final transcript = capture?.transcript.trim() ?? '';
+        if (transcript.isEmpty) {
+          return null;
+        }
+        if (capture == null || capture.segments.isEmpty) {
+          return transcript;
+        }
+        return _renderTimestampedTranscript(capture.segments, transcript);
+      }),
+      cancel: bridgeJob.cancel,
+    );
   }
 
   String _renderTimestampedTranscript(
@@ -1002,6 +1022,7 @@ class MeetingFolderService {
 
   final Directory _workingDirectory;
   final MeetingRecordingTranscriber _recordingTranscriber;
+  MeetingRecordingTranscriptionJob? _activeRecordingTranscriptionJob;
 
   Future<MeetingWorkspaceSnapshot> loadWorkspace() async {
     final config = await _loadOmegaRootPath();
@@ -2470,6 +2491,10 @@ class MeetingFolderService {
     );
   }
 
+  void cancelActiveRecordingImport() {
+    _activeRecordingTranscriptionJob?.cancel();
+  }
+
   Future<MeetingRecordingImportResult> importRecordingFile(
     String sourceFilePath,
     {
@@ -2506,9 +2531,16 @@ class MeetingFolderService {
     if (isCancelled?.call() == true) {
       throw StateError('Import cancelled.');
     }
-    final transcript = await _recordingTranscriber.transcribeFile(
+    final transcriptionJob = await _recordingTranscriber.startTranscribeFile(
       sourceFile.path,
     );
+    _activeRecordingTranscriptionJob = transcriptionJob;
+    String? transcript;
+    try {
+      transcript = await transcriptionJob?.result;
+    } finally {
+      _activeRecordingTranscriptionJob = null;
+    }
     final cleanedTranscript = transcript?.trim() ?? '';
     if (cleanedTranscript.isEmpty) {
       throw StateError('The recording could not be transcribed.');

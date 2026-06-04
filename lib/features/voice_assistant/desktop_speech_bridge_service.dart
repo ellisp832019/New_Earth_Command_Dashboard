@@ -19,6 +19,16 @@ class DesktopSpeechBridgeCapture {
   final List<DesktopSpeechBridgeSegment> segments;
 }
 
+class DesktopSpeechBridgeJob {
+  const DesktopSpeechBridgeJob({
+    required this.result,
+    required this.cancel,
+  });
+
+  final Future<DesktopSpeechBridgeCapture?> result;
+  final VoidCallback cancel;
+}
+
 class DesktopSpeechBridgeSegment {
   const DesktopSpeechBridgeSegment({
     required this.startSeconds,
@@ -41,7 +51,7 @@ class DesktopSpeechBridgeService {
     Duration timeout = const Duration(seconds: 120),
     int durationSeconds = 8,
   }) async {
-    return _runBridgeCapture(
+    final job = await _startBridgeCapture(
       [
         'listen-once',
         '--json',
@@ -50,18 +60,30 @@ class DesktopSpeechBridgeService {
       ],
       timeout: timeout,
     );
+    return job.result;
   }
 
   Future<DesktopSpeechBridgeCapture?> transcribeFile(
     String sourcePath, {
     Duration timeout = const Duration(minutes: 30),
   }) async {
+    final job = await startTranscribeFile(sourcePath, timeout: timeout);
+    return job.result;
+  }
+
+  Future<DesktopSpeechBridgeJob> startTranscribeFile(
+    String sourcePath, {
+    Duration timeout = const Duration(minutes: 30),
+  }) async {
     final trimmedPath = sourcePath.trim();
     if (trimmedPath.isEmpty) {
-      return null;
+      return DesktopSpeechBridgeJob(
+        result: Future<DesktopSpeechBridgeCapture?>.value(null),
+        cancel: () {},
+      );
     }
 
-    return _runBridgeCapture(
+    return _startBridgeCapture(
       [
         'transcribe-file',
         '--json',
@@ -71,22 +93,31 @@ class DesktopSpeechBridgeService {
     );
   }
 
-  Future<DesktopSpeechBridgeCapture?> _runBridgeCapture(
+  Future<DesktopSpeechBridgeJob> _startBridgeCapture(
     List<String> commandArgs, {
     required Duration timeout,
   }) async {
     if (!isSupported) {
-      return null;
+      return DesktopSpeechBridgeJob(
+        result: Future<DesktopSpeechBridgeCapture?>.value(null),
+        cancel: () {},
+      );
     }
 
     final script = _locateBridgeScript();
     if (script == null) {
-      return null;
+      return DesktopSpeechBridgeJob(
+        result: Future<DesktopSpeechBridgeCapture?>.value(null),
+        cancel: () {},
+      );
     }
 
     final python = await _resolvePythonCommand();
     if (python == null) {
-      return null;
+      return DesktopSpeechBridgeJob(
+        result: Future<DesktopSpeechBridgeCapture?>.value(null),
+        cancel: () {},
+      );
     }
 
     final args = <String>[
@@ -95,62 +126,75 @@ class DesktopSpeechBridgeService {
       ...commandArgs,
     ];
 
-    try {
-      final process = await Process.start(
-        python.command,
-        args,
-        runInShell: true,
-      );
+    final stdoutBuffer = StringBuffer();
+    final stderrBuffer = StringBuffer();
+    var cancelled = false;
+    Process? process;
 
-      final stdoutBuffer = StringBuffer();
-      final stderrBuffer = StringBuffer();
+    Future<DesktopSpeechBridgeCapture?> resultFuture() async {
+      try {
+        process = await Process.start(
+          python.command,
+          args,
+          runInShell: true,
+        );
 
-      final stdoutDone = process.stdout
-          .transform(utf8.decoder)
-          .listen(stdoutBuffer.write).asFuture<void>();
-      final stderrDone = process.stderr
-          .transform(utf8.decoder)
-          .listen(stderrBuffer.write).asFuture<void>();
+        final stdoutDone = process!.stdout
+            .transform(utf8.decoder)
+            .listen(stdoutBuffer.write).asFuture<void>();
+        final stderrDone = process!.stderr
+            .transform(utf8.decoder)
+            .listen(stderrBuffer.write).asFuture<void>();
 
-      final exitCode = await process.exitCode.timeout(
-        timeout,
-        onTimeout: () {
-          process.kill(ProcessSignal.sigterm);
-          return -1;
-        },
-      );
+        final exitCode = await process!.exitCode.timeout(
+          timeout,
+          onTimeout: () {
+            cancelled = true;
+            process?.kill(ProcessSignal.sigterm);
+            return -1;
+          },
+        );
 
-      await Future.wait([stdoutDone, stderrDone]);
+        await Future.wait([stdoutDone, stderrDone]);
 
-      if (exitCode != 0) {
+        if (cancelled || exitCode != 0) {
+          return null;
+        }
+
+        final payload = stdoutBuffer.toString().trim();
+        if (payload.isEmpty) {
+          return null;
+        }
+
+        final decoded = jsonDecode(payload);
+        if (decoded is! Map<String, dynamic>) {
+          return null;
+        }
+
+        final transcript = (decoded['transcript'] ?? '').toString().trim();
+        if (transcript.isEmpty) {
+          return null;
+        }
+
+        return DesktopSpeechBridgeCapture(
+          transcript: transcript,
+          model: decoded['model']?.toString(),
+          durationSeconds:
+              int.tryParse(decoded['duration_seconds']?.toString() ?? ''),
+          segments: _parseSegments(decoded['segments']),
+        );
+      } catch (_) {
         return null;
       }
-
-      final payload = stdoutBuffer.toString().trim();
-      if (payload.isEmpty) {
-        return null;
-      }
-
-      final decoded = jsonDecode(payload);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
-
-      final transcript = (decoded['transcript'] ?? '').toString().trim();
-      if (transcript.isEmpty) {
-        return null;
-      }
-
-      return DesktopSpeechBridgeCapture(
-        transcript: transcript,
-        model: decoded['model']?.toString(),
-        durationSeconds:
-            int.tryParse(decoded['duration_seconds']?.toString() ?? ''),
-        segments: _parseSegments(decoded['segments']),
-      );
-    } catch (_) {
-      return null;
     }
+
+    return DesktopSpeechBridgeJob(
+      result: resultFuture(),
+      cancel: () {
+        cancelled = true;
+        process?.kill(ProcessSignal.sigterm);
+      },
+    );
   }
 
   List<DesktopSpeechBridgeSegment> _parseSegments(dynamic rawSegments) {
