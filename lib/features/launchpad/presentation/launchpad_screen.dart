@@ -386,10 +386,10 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
           section: widget.section,
         );
       default:
-        return _PhaseTwoPlaceholder(
+      return _PhaseTwoPlaceholder(
           title: launchpadCampaignSectionLabel(widget.section),
           body:
-              'This section is reserved for Phase 2. The route is present so the module navigation already feels complete.',
+              'This section is not implemented in the current build yet. The route is present so the module navigation stays complete.',
         );
     }
   }
@@ -1448,8 +1448,8 @@ class _PhaseTwoPlaceholder extends StatelessWidget {
       body: body,
       children: const [
         _InlineStat(label: 'Phase', value: '2'),
-        _InlineStat(label: 'Status', value: 'Planned'),
-        _InlineStat(label: 'Purpose', value: 'Reserved for future build work'),
+        _InlineStat(label: 'Status', value: 'Not built'),
+        _InlineStat(label: 'Purpose', value: 'Reserved for a later phase'),
       ],
     );
   }

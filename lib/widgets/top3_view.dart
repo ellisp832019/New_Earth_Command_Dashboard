@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'calm_card.dart';
 import '../core/theme/spacing.dart';
 
-/// Lightweight Top-3 placeholder view. Replace data wiring as needed.
+/// Compact Top-3 stack for dashboard summaries.
 class Top3View extends StatelessWidget {
   final List<Widget> items;
 
