@@ -4,6 +4,8 @@
 
 New Earth Launchpad is the campaign and venture operating system for taking New Earth projects into the world.
 
+The current dashboard surface uses compact overview cards, tighter campaign layouts, confirmation-driven archive actions, and working Phase 2 launch-operations sections so the module stays calm at desktop scale.
+
 It is intentionally separate from MicroGrow so it can later support:
 
 - MicroGrow Kickstarter

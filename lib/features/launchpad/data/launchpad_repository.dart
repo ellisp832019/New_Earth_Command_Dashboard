@@ -9,7 +9,7 @@ import 'launchpad_models.dart';
 
 class LaunchpadRepository {
   LaunchpadRepository({Directory? workingDirectory})
-    : _workingDirectory = workingDirectory ?? Directory.current;
+    : _workingDirectory = workingDirectory ?? _workspaceRootDirectory();
 
   static const _runtimeStateRelativePath =
       'modules/new_earth_launchpad_module/dashboard_module/data/runtime/launchpad_state.json';
@@ -20,6 +20,30 @@ class LaunchpadRepository {
 
   final Directory _workingDirectory;
   final Uuid _uuid = const Uuid();
+
+  static Directory _workspaceRootDirectory() {
+    var directory = Directory.current;
+
+    while (true) {
+      final candidate = Directory(
+        path.join(
+          directory.path,
+          'modules',
+          'new_earth_launchpad_module',
+        ),
+      );
+      if (candidate.existsSync()) {
+        return directory;
+      }
+
+      final parent = directory.parent;
+      if (parent.path == directory.path) {
+        return Directory.current;
+      }
+
+      directory = parent;
+    }
+  }
 
   Future<LaunchpadWorkspace> loadWorkspace() async {
     final runtimeFile = File(

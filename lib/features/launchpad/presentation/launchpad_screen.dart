@@ -71,7 +71,11 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
                       .exportCampaignPack(activeCampaign.id);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Exported campaign pack to $path')),
+                      SnackBar(
+                        content: Text(
+                          'Exported ${activeCampaign.name} pack to $path',
+                        ),
+                      ),
                     );
                   }
                 },
@@ -104,12 +108,11 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
                       ),
                       onArchive: campaign.status == LaunchpadCampaignStatus.archived
                           ? null
-                          : () async {
-                              await ref
-                                  .read(launchpadRepositoryProvider)
-                                  .archiveCampaign(campaign.id);
-                              ref.invalidate(launchpadWorkspaceProvider);
-                            },
+                          : () => _archiveCampaignWithConfirmation(
+                              context: context,
+                              ref: ref,
+                              campaign: campaign,
+                            ),
                     ),
                   ),
                 ),
@@ -227,7 +230,12 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
                   children: [
                     SizedBox(width: 260, child: navigation),
                     const SizedBox(width: 18),
-                    Expanded(child: content),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(right: 4, bottom: 24),
+                        child: content,
+                      ),
+                    ),
                   ],
                 );
               }
@@ -268,12 +276,12 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
           ),
           onArchive: campaign.status == LaunchpadCampaignStatus.archived
               ? null
-              : () async {
-                  await ref.read(launchpadRepositoryProvider).archiveCampaign(
-                    campaign.id,
-                  );
-                  ref.invalidate(launchpadWorkspaceProvider);
-                },
+              : () => _archiveCampaignWithConfirmation(
+                  context: context,
+                  ref: ref,
+                  campaign: campaign,
+                  returnToLaunchpad: true,
+                ),
           onDelete: () async {
             await ref.read(launchpadRepositoryProvider).deleteCampaign(
               campaign.id,
@@ -311,7 +319,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
                 .exportStoryMarkdown(campaign.id);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Exported to $path')),
+                SnackBar(
+                  content: Text('Exported ${campaign.name} story to $path'),
+                ),
               );
             }
           },
@@ -354,11 +364,12 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
       case 'archive':
         return _ArchiveSection(
           workspace: workspace,
-          onRestore: (campaignId) async {
-            await ref.read(launchpadRepositoryProvider).restoreCampaign(
-              campaignId,
+          onRestore: (campaign) async {
+            await _restoreArchivedCampaign(
+              context: context,
+              ref: ref,
+              campaign: campaign,
             );
-            ref.invalidate(launchpadWorkspaceProvider);
           },
         );
       case 'media-studio':
@@ -404,16 +415,14 @@ class _OverviewHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final launchDateLabel = activeCampaign.launchDate == null
-        ? 'Launch date not set'
-        : DateFormat('d MMM y').format(activeCampaign.launchDate!.toLocal());
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: _panelDecoration(context, highlighted: true),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 960;
+          final summaryWidth = wide ? 246.0 : constraints.maxWidth;
 
           final textBlock = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,43 +449,16 @@ class _OverviewHero extends StatelessWidget {
                   'Keep each campaign grounded in proof, cost, risk, and a clear next step. The MicroGrow seed is ready as the first working example.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: AppColours.darkMutedText,
-                    height: 1.35,
+                    height: 1.2,
                   ),
                 ),
               ),
             ],
           );
 
-          final chips = Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _MetricChip(label: 'Campaigns', value: '${workspace.campaigns.length}'),
-              _MetricChip(
-                label: 'Active',
-                value: '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
-                accent: AppColours.darkSuccess,
-              ),
-              _MetricChip(
-                label: 'Readiness',
-                value: '${readiness.overallPercent.toStringAsFixed(0)}%',
-                accent: AppColours.darkPrimary,
-              ),
-              _MetricChip(
-                label: 'Net Funds',
-                value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
-                accent: finance.netAvailableFundsGbp >= 0
-                    ? AppColours.darkSuccess
-                    : AppColours.darkAmber,
-              ),
-              _MetricChip(label: 'Status', value: activeCampaign.status.label),
-              _MetricChip(label: 'Launch', value: launchDateLabel),
-            ],
-          );
-
           final actions = Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               FilledButton.icon(
                 onPressed: onCreateCampaign,
@@ -504,7 +486,46 @@ class _OverviewHero extends StatelessWidget {
               children: [
                 textBlock,
                 const SizedBox(height: 18),
-                chips,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    SizedBox(
+                      width: summaryWidth,
+                      child: _SummaryCard(
+                        title: 'Campaigns',
+                        value: '${workspace.campaigns.length}',
+                        accent: AppColours.darkSecondary,
+                      ),
+                    ),
+                    SizedBox(
+                      width: summaryWidth,
+                      child: _SummaryCard(
+                        title: 'Active',
+                        value: '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
+                        accent: AppColours.darkSuccess,
+                      ),
+                    ),
+                    SizedBox(
+                      width: summaryWidth,
+                      child: _SummaryCard(
+                        title: 'Readiness',
+                        value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                        accent: AppColours.darkPrimary,
+                      ),
+                    ),
+                    SizedBox(
+                      width: summaryWidth,
+                      child: _SummaryCard(
+                        title: 'Net Funds',
+                        value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                        accent: finance.netAvailableFundsGbp >= 0
+                            ? AppColours.darkSuccess
+                            : AppColours.darkAmber,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 18),
                 actions,
               ],
@@ -517,11 +538,51 @@ class _OverviewHero extends StatelessWidget {
               Expanded(child: textBlock),
               const SizedBox(width: 20),
               SizedBox(
-                width: 520,
+                width: 500,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    chips,
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        SizedBox(
+                          width: summaryWidth,
+                          child: _SummaryCard(
+                            title: 'Campaigns',
+                        value: '${workspace.campaigns.length}',
+                            accent: AppColours.darkSecondary,
+                          ),
+                        ),
+                        SizedBox(
+                          width: summaryWidth,
+                          child: _SummaryCard(
+                            title: 'Active',
+                        value: '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
+                            accent: AppColours.darkSuccess,
+                          ),
+                        ),
+                        SizedBox(
+                          width: summaryWidth,
+                          child: _SummaryCard(
+                            title: 'Readiness',
+                        value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                            accent: AppColours.darkPrimary,
+                          ),
+                        ),
+                        SizedBox(
+                          width: summaryWidth,
+                          child: _SummaryCard(
+                            title: 'Net Funds',
+                        value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                            accent: finance.netAvailableFundsGbp >= 0
+                                ? AppColours.darkSuccess
+                                : AppColours.darkAmber,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 18),
                     actions,
                   ],
@@ -533,6 +594,7 @@ class _OverviewHero extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class _WorkspaceSummaryGrid extends StatelessWidget {
@@ -552,7 +614,7 @@ class _WorkspaceSummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth >= 1080
+          final crossAxisCount = constraints.maxWidth >= 1080
             ? 4
             : constraints.maxWidth >= 720
             ? 2
@@ -563,8 +625,8 @@ class _WorkspaceSummaryGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: crossAxisCount == 1 ? 2.9 : 2.15,
+          mainAxisSpacing: 12,
+          childAspectRatio: crossAxisCount == 1 ? 2.8 : 2.0,
           children: [
             _SummaryCard(
               title: 'Hardware',
@@ -583,7 +645,7 @@ class _WorkspaceSummaryGrid extends StatelessWidget {
             ),
             _SummaryCard(
               title: 'Financial Model',
-              value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+              value: 'Â£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
               accent: finance.netAvailableFundsGbp >= 0
                   ? AppColours.darkSuccess
                   : AppColours.darkAmber,
@@ -636,7 +698,7 @@ class _CampaignCard extends StatelessWidget {
         : DateFormat('d MMM y').format(campaign.launchDate!.toLocal());
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: _panelDecoration(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -658,21 +720,21 @@ class _CampaignCard extends StatelessWidget {
                   _StatusTag(label: campaign.status.label),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 campaign.summary,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColours.darkMutedText,
-                  height: 1.35,
+                  height: 1.2,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   _Tag(label: campaign.project, accent: AppColours.darkSecondary),
-                  _Tag(label: 'Goal £${campaign.fundingGoalGbp.toStringAsFixed(0)}'),
+                  _Tag(label: 'Goal Â£${campaign.fundingGoalGbp.toStringAsFixed(0)}'),
                   _Tag(
                     label: 'Readiness ${readiness.overallPercent.toStringAsFixed(0)}%',
                     accent: AppColours.darkSuccess,
@@ -680,7 +742,7 @@ class _CampaignCard extends StatelessWidget {
                   _Tag(label: launchLabel, accent: AppColours.darkPrimary),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               LinearProgressIndicator(
                 minHeight: 7,
                 value: campaign.progressPercentage.clamp(0, 100) / 100,
@@ -689,7 +751,7 @@ class _CampaignCard extends StatelessWidget {
                   AppColours.darkSecondary,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 _nextActionLabel(campaign),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -700,25 +762,39 @@ class _CampaignCard extends StatelessWidget {
           );
 
           final actions = Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 8,
             alignment: wide ? WrapAlignment.end : WrapAlignment.start,
             children: [
               FilledButton.tonalIcon(
                 onPressed: onOpen,
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  visualDensity: VisualDensity.compact,
+                ),
               ),
               TextButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit),
                 label: const Text('Edit'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
               if (onArchive != null)
                 TextButton.icon(
                   onPressed: onArchive,
                   icon: const Icon(Icons.archive_outlined),
                   label: const Text('Archive'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
             ],
           );
@@ -772,12 +848,12 @@ class _CampaignManagerSection extends StatelessWidget {
         : DateFormat('d MMM y').format(campaign.launchDate!.toLocal());
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
           title: 'Campaign Manager',
-          subtitle:
-              'Manage the core record: status, funding target, launch date, and progress.',
+          subtitle: 'Manage the core record: status, funding target, launch date, and progress.',
           actions: [
             TextButton.icon(
               onPressed: onEdit,
@@ -796,6 +872,55 @@ class _CampaignManagerSection extends StatelessWidget {
               label: const Text('Delete'),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final summaryColumns = constraints.maxWidth >= 700 ? 2 : 1;
+            final summaryWidth = summaryColumns == 2
+                ? (constraints.maxWidth - 12) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: summaryWidth,
+                  child: _SummaryCard(
+                    title: 'Readiness',
+                    value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                    accent: AppColours.darkSuccess,
+                  ),
+                ),
+                SizedBox(
+                  width: summaryWidth,
+                  child: _SummaryCard(
+                    title: 'Net Funds',
+                    value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                    accent: finance.netAvailableFundsGbp >= 0
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                  ),
+                ),
+                SizedBox(
+                  width: summaryWidth,
+                  child: _SummaryCard(
+                    title: 'Break-even',
+                    value: '${finance.breakEvenBackers} backers',
+                    accent: AppColours.darkSecondary,
+                  ),
+                ),
+                SizedBox(
+                  width: summaryWidth,
+                  child: _SummaryCard(
+                    title: 'Margin',
+                    value: '${finance.profitMarginPercent.toStringAsFixed(1)}%',
+                    accent: AppColours.darkPrimary,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 12),
         _DetailPanel(
@@ -818,6 +943,7 @@ class _CampaignManagerSection extends StatelessWidget {
       ],
     );
   }
+
 }
 
 class _RewardManagerSection extends StatelessWidget {
@@ -835,6 +961,7 @@ class _RewardManagerSection extends StatelessWidget {
       ..sort((a, b) => a.priceGbp.compareTo(b.priceGbp));
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
@@ -940,6 +1067,7 @@ class _StoryBuilderSectionState extends State<_StoryBuilderSection> {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
@@ -1017,6 +1145,7 @@ class _ReadinessSectionState extends State<_ReadinessSection> {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
@@ -1157,6 +1286,7 @@ class _FinancialModellerSectionState extends State<_FinancialModellerSection> {
     final draftSummary = calculateLaunchpadFinancialSummary(draftCampaign);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
@@ -1206,6 +1336,7 @@ class _RiskRegisterSection extends StatelessWidget {
     final risks = campaign.risks;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
@@ -1263,7 +1394,7 @@ class _ArchiveSection extends StatelessWidget {
   });
 
   final LaunchpadWorkspace workspace;
-  final ValueChanged<String> onRestore;
+  final ValueChanged<LaunchpadCampaignRecord> onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -1291,7 +1422,7 @@ class _ArchiveSection extends StatelessWidget {
               child: _CampaignCard(
                 campaign: campaign,
                 onOpen: () => context.go(RouteNames.launchpadCampaign(campaign.id)),
-                onEdit: () => onRestore(campaign.id),
+                onEdit: () => onRestore(campaign),
                 onArchive: null,
               ),
             ),
@@ -1583,6 +1714,69 @@ Future<LaunchpadRiskRecord?> _showRiskDialog(
   );
 }
 
+Future<void> _archiveCampaignWithConfirmation({
+  required BuildContext context,
+  required WidgetRef ref,
+  required LaunchpadCampaignRecord campaign,
+  bool returnToLaunchpad = false,
+}) async {
+  final shouldArchive = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Archive Campaign'),
+      content: Text(
+        'Archive ${campaign.name}? You can restore it later from the archive.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Archive'),
+        ),
+      ],
+    ),
+  );
+
+  if (shouldArchive != true || !context.mounted) {
+    return;
+  }
+
+  await ref.read(launchpadRepositoryProvider).archiveCampaign(campaign.id);
+  ref.invalidate(launchpadWorkspaceProvider);
+
+  if (!context.mounted) {
+    return;
+  }
+
+  if (returnToLaunchpad) {
+    context.go(RouteNames.launchpad);
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('${campaign.name} archived.')),
+  );
+}
+
+Future<void> _restoreArchivedCampaign({
+  required BuildContext context,
+  required WidgetRef ref,
+  required LaunchpadCampaignRecord campaign,
+}) async {
+  await ref.read(launchpadRepositoryProvider).restoreCampaign(campaign.id);
+  ref.invalidate(launchpadWorkspaceProvider);
+
+  if (!context.mounted) {
+    return;
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('${campaign.name} restored.')),
+  );
+}
+
 class _CampaignEditDialog extends StatefulWidget {
   const _CampaignEditDialog({
     required this.onSave,
@@ -1677,7 +1871,7 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _fundingGoalController,
-                  decoration: const InputDecoration(labelText: 'Funding target (£)'),
+                  decoration: const InputDecoration(labelText: 'Funding target (Â£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -1730,7 +1924,15 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _summaryController,
-                  decoration: const InputDecoration(labelText: 'Summary'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    height: 1.2,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Summary',
+                    alignLabelWithHint: true,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
                   maxLines: 4,
                 ),
               ],
@@ -1883,7 +2085,7 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _priceController,
-                  decoration: const InputDecoration(labelText: 'Price (£)'),
+                  decoration: const InputDecoration(labelText: 'Price (Â£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -1895,13 +2097,13 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _cogsController,
-                  decoration: const InputDecoration(labelText: 'COGS (£)'),
+                  decoration: const InputDecoration(labelText: 'COGS (Â£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _shippingController,
-                  decoration: const InputDecoration(labelText: 'Shipping (£)'),
+                  decoration: const InputDecoration(labelText: 'Shipping (Â£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -1912,7 +2114,15 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    height: 1.2,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                    alignLabelWithHint: true,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
                   maxLines: 3,
                 ),
               ],
@@ -2035,13 +2245,29 @@ class _RiskEditDialogState extends State<_RiskEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _mitigationController,
-                  decoration: const InputDecoration(labelText: 'Mitigation'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    height: 1.2,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Mitigation',
+                    alignLabelWithHint: true,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _publicNoteController,
-                  decoration: const InputDecoration(labelText: 'Public note'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    height: 1.2,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Public note',
+                    alignLabelWithHint: true,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
                   maxLines: 3,
                 ),
               ],
@@ -2107,14 +2333,14 @@ class _FinancialInputGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fields = [
-      _numberField('Funding goal (£)', fundingGoalController),
-      _numberField('Manufacturing (£)', manufacturingController),
-      _numberField('Shipping (£)', shippingController),
+      _numberField('Funding goal (Â£)', fundingGoalController),
+      _numberField('Manufacturing (Â£)', manufacturingController),
+      _numberField('Shipping (Â£)', shippingController),
       _numberField('VAT (%)', vatController),
       _numberField('Kickstarter fee (%)', kickstarterFeeController),
       _numberField('Payment fee (%)', paymentFeeController),
       _numberField('Contingency (%)', contingencyController),
-      _numberField('Fixed costs (£)', fixedCostsController),
+      _numberField('Fixed costs (Â£)', fixedCostsController),
     ];
 
     return LayoutBuilder(
@@ -2162,15 +2388,15 @@ class _FinancialOutputPanel extends StatelessWidget {
       title: 'Financial Output',
       body: 'The finance model turns launch costs into a calm operating view.',
       children: [
-        _InlineStat(label: 'Gross funding', value: '£${summary.grossFundingGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Platform fees', value: '£${summary.platformFeesGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Payment fees', value: '£${summary.paymentFeesGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'VAT reserve', value: '£${summary.vatReserveGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Contingency', value: '£${summary.contingencyReserveGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Manufacturing', value: '£${summary.manufacturingCostsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Shipping', value: '£${summary.shippingGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Fixed costs', value: '£${summary.fixedCostsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Net available', value: '£${summary.netAvailableFundsGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Gross funding', value: 'Â£${summary.grossFundingGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Platform fees', value: 'Â£${summary.platformFeesGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Payment fees', value: 'Â£${summary.paymentFeesGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'VAT reserve', value: 'Â£${summary.vatReserveGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Contingency', value: 'Â£${summary.contingencyReserveGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Manufacturing', value: 'Â£${summary.manufacturingCostsGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Shipping', value: 'Â£${summary.shippingGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Fixed costs', value: 'Â£${summary.fixedCostsGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Net available', value: 'Â£${summary.netAvailableFundsGbp.toStringAsFixed(0)}'),
         _InlineStat(label: 'Profit margin', value: '${summary.profitMarginPercent.toStringAsFixed(1)}%'),
         _InlineStat(label: 'Break-even', value: '${summary.breakEvenBackers} backers'),
       ],
@@ -2215,7 +2441,7 @@ class _ReadinessItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: _panelDecoration(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -2327,11 +2553,17 @@ class _StoryBlockCard extends StatelessWidget {
           const SizedBox(height: 10),
           TextField(
             controller: controller,
-            minLines: 4,
+            minLines: 3,
             maxLines: 8,
+            textAlignVertical: TextAlignVertical.top,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.2,
+            ),
             decoration: const InputDecoration(
               labelText: 'Body',
               alignLabelWithHint: true,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
           ),
         ],
@@ -2371,47 +2603,58 @@ class _RewardCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '£${reward.priceGbp.toStringAsFixed(0)}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                'Â£${reward.priceGbp.toStringAsFixed(0)}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColours.darkSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               _Tag(label: reward.quantityLimit == null ? 'Unlimited' : 'Limit ${reward.quantityLimit}', accent: AppColours.darkPrimary),
-              _Tag(label: 'COGS £${reward.estimatedCogsGbp.toStringAsFixed(0)}'),
-              _Tag(label: 'Ship £${reward.estimatedShippingGbp.toStringAsFixed(0)}'),
+              _Tag(label: 'COGS Â£${reward.estimatedCogsGbp.toStringAsFixed(0)}'),
+              _Tag(label: 'Ship Â£${reward.estimatedShippingGbp.toStringAsFixed(0)}'),
               _Tag(label: reward.deliveryEstimate, accent: AppColours.darkSuccess),
             ],
           ),
           if (reward.notes.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               reward.notes,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColours.darkMutedText,
+                height: 1.2,
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Wrap(
-            spacing: 8,
+            spacing: 6,
             children: [
               TextButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit),
                 label: const Text('Edit'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
               TextButton.icon(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline),
                 label: const Text('Delete'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ],
           ),
@@ -2532,7 +2775,7 @@ class _DetailPanel extends StatelessWidget {
             body,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
-              height: 1.35,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 14),
@@ -2557,10 +2800,10 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: accent.withValues(alpha: 0.24)),
       ),
       child: Column(
@@ -2574,7 +2817,7 @@ class _SummaryCard extends StatelessWidget {
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -2661,7 +2904,7 @@ class _RiskIndicatorsPanel extends StatelessWidget {
               (risk) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  '• $risk',
+                  'â€¢ $risk',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColours.darkMutedText,
                   ),
@@ -2728,52 +2971,6 @@ class _Tag extends StatelessWidget {
   }
 }
 
-class _MetricChip extends StatelessWidget {
-  const _MetricChip({
-    required this.label,
-    required this.value,
-    this.accent = AppColours.darkSecondary,
-  });
-
-  final String label;
-  final String value;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 128),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkText,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
     required this.title,
@@ -2805,7 +3002,7 @@ class _SectionHeader extends StatelessWidget {
               subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColours.darkMutedText,
-                height: 1.35,
+                height: 1.2,
               ),
             ),
           ],
@@ -3037,3 +3234,4 @@ String _slugify(String value) {
       .replaceAll(RegExp(r'-+'), '-')
       .replaceAll(RegExp(r'^-|-$'), '');
 }
+

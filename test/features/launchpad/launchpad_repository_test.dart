@@ -95,6 +95,66 @@ void main() {
     );
   });
 
+  test('repository resolves the workspace root instead of the current folder', () async {
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'launchpad_root_test_',
+    );
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    await _writeLaunchpadSeedPack(tempRoot);
+
+    final nestedWorkingDir = Directory(
+      p.join(
+        tempRoot.path,
+        'apps',
+        'launchpad',
+        'scratch',
+      ),
+    );
+    await nestedWorkingDir.create(recursive: true);
+
+    final previousCurrent = Directory.current;
+    Directory.current = nestedWorkingDir;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+    });
+
+    final repository = LaunchpadRepository();
+    final workspace = await repository.loadWorkspace();
+    final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
+    expect(campaign, isNotNull);
+
+    await repository.updateCampaign(
+      campaign!.copyWith(
+        fundingGoalGbp: 50000,
+        finance: campaign.finance.copyWith(fundingGoalGbp: 50000),
+      ),
+    );
+
+    final runtimePath = p.join(
+      tempRoot.path,
+      'modules',
+      'new_earth_launchpad_module',
+      'dashboard_module',
+      'data',
+      'runtime',
+      'launchpad_state.json',
+    );
+    expect(await File(runtimePath).exists(), isTrue);
+
+    final runtimeJson = jsonDecode(await File(runtimePath).readAsString()) as Map<String, dynamic>;
+    final savedCampaigns = (runtimeJson['campaigns'] as List).cast<Map>();
+    final savedCampaign = savedCampaigns.cast<Map<String, dynamic>>().firstWhere(
+      (entry) => entry['id'] == 'MICROGROW_KICKSTARTER_2026',
+    );
+    expect(savedCampaign['funding_goal_gbp'], 50000);
+    expect(savedCampaign['finance']['funding_goal_gbp'], 50000);
+  });
+
   test('financial and readiness calculators return calm launch summaries', () {
     final campaign = LaunchpadCampaignRecord(
       id: 'MICROGROW_KICKSTARTER_2026',

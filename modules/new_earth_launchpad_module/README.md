@@ -15,8 +15,8 @@ This module is designed to manage projects such as MicroGrow, BioCalm, New Earth
 - Tracks reward tiers and fulfilment risk
 - Stores media assets, launch checklists, and backer updates
 - Tracks grants, partners, investors, and pilot opportunities
-- Phase 2 adds local-first media, grant, investor, partner, manufacturing, community, timeline, and analytics records
-- Phase 3 adds launch checklist, backer updates, fulfilment, and impact tracking
+- Phase 2 adds local-first media, grant, investor, partner, manufacturing, community, timeline, analytics, launch checklist, backer updates, fulfilment, and impact records
+- Phase 3 focuses on overview polish, denser cards, confirmation-driven archive flow, compact summary cards, and release hardening
 - Integrates with the New Earth Dashboard and Omega OS folder system
 
 ## Recommended Dashboard Route
@@ -35,13 +35,15 @@ Suggested starting funding target: `GBP 35,000`
 
 Seed data now includes a `phase2.json` file alongside rewards and readiness so the extra Launchpad sections open with working example records.
 Launchpad can also export a local campaign pack with JSON, markdown, and manifest files into the module export folder.
+The Launchpad overview, campaign manager, reward manager, story builder, readiness tracker, and archive flow are tuned for a calmer, more compact desktop layout.
+Launchpad Phase 2 now has working launch checklist, backer updates, fulfilment tracker, and impact tracker sections built on the same local record store.
 
 ## Quick Start
 
 1. Copy this module into your dashboard repo under `modules/new_earth_launchpad` or similar.
 2. Copy `omega_os/24_NEW_EARTH_LAUNCHPAD` into your Omega OS pack.
 3. Give `codex/CODEX_BUILD_PROMPT.md` to Codex.
-4. Start by implementing the campaign list, campaign detail page, reward manager, readiness tracker, finance model, Phase 2 section views, and the Phase 3 operations layer.
+4. Start by implementing the campaign list, campaign detail page, reward manager, readiness tracker, finance model, Phase 2 section views, and the Phase 3 operations and polish layer.
 5. Use the seeded MicroGrow campaign data as the first working example.
 
 ## Core Principle
