@@ -386,7 +386,7 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
           section: widget.section,
         );
       default:
-      return _PhaseTwoPlaceholder(
+        return _PhaseTwoPlaceholder(
           title: launchpadCampaignSectionLabel(widget.section),
           body:
               'This section is not implemented in the current build yet. The route is present so the module navigation stays complete.',
