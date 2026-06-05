@@ -90,7 +90,7 @@ LaunchpadFinancialSummary calculateLaunchpadFinancialSummary(
     if (finance.contingencyPercent < 10)
       'Contingency is below the safer 10% buffer.',
     if (finance.vatPercent <= 0)
-      'VAT reserve is still a placeholder and should be confirmed.',
+      'VAT reserve has not been configured yet.',
     if (averageContribution > 0 && averageContribution < 20)
       'Average reward margin is thin.',
     if (breakEvenBackers > 500)

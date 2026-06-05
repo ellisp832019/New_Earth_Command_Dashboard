@@ -645,7 +645,7 @@ class _WorkspaceSummaryGrid extends StatelessWidget {
             ),
             _SummaryCard(
               title: 'Financial Model',
-              value: 'Â£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+              value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
               accent: finance.netAvailableFundsGbp >= 0
                   ? AppColours.darkSuccess
                   : AppColours.darkAmber,
@@ -734,7 +734,7 @@ class _CampaignCard extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   _Tag(label: campaign.project, accent: AppColours.darkSecondary),
-                  _Tag(label: 'Goal Â£${campaign.fundingGoalGbp.toStringAsFixed(0)}'),
+                  _Tag(label: 'Goal £${campaign.fundingGoalGbp.toStringAsFixed(0)}'),
                   _Tag(
                     label: 'Readiness ${readiness.overallPercent.toStringAsFixed(0)}%',
                     accent: AppColours.darkSuccess,
@@ -1871,7 +1871,7 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _fundingGoalController,
-                  decoration: const InputDecoration(labelText: 'Funding target (Â£)'),
+                  decoration: const InputDecoration(labelText: 'Funding target (£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -2085,7 +2085,7 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _priceController,
-                  decoration: const InputDecoration(labelText: 'Price (Â£)'),
+                  decoration: const InputDecoration(labelText: 'Price (£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -2097,13 +2097,13 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _cogsController,
-                  decoration: const InputDecoration(labelText: 'COGS (Â£)'),
+                  decoration: const InputDecoration(labelText: 'COGS (£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _shippingController,
-                  decoration: const InputDecoration(labelText: 'Shipping (Â£)'),
+                  decoration: const InputDecoration(labelText: 'Shipping (£)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -2333,14 +2333,14 @@ class _FinancialInputGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fields = [
-      _numberField('Funding goal (Â£)', fundingGoalController),
-      _numberField('Manufacturing (Â£)', manufacturingController),
-      _numberField('Shipping (Â£)', shippingController),
+      _numberField('Funding goal (£)', fundingGoalController),
+      _numberField('Manufacturing (£)', manufacturingController),
+      _numberField('Shipping (£)', shippingController),
       _numberField('VAT (%)', vatController),
       _numberField('Kickstarter fee (%)', kickstarterFeeController),
       _numberField('Payment fee (%)', paymentFeeController),
       _numberField('Contingency (%)', contingencyController),
-      _numberField('Fixed costs (Â£)', fixedCostsController),
+      _numberField('Fixed costs (£)', fixedCostsController),
     ];
 
     return LayoutBuilder(
@@ -2388,15 +2388,15 @@ class _FinancialOutputPanel extends StatelessWidget {
       title: 'Financial Output',
       body: 'The finance model turns launch costs into a calm operating view.',
       children: [
-        _InlineStat(label: 'Gross funding', value: 'Â£${summary.grossFundingGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Platform fees', value: 'Â£${summary.platformFeesGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Payment fees', value: 'Â£${summary.paymentFeesGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'VAT reserve', value: 'Â£${summary.vatReserveGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Contingency', value: 'Â£${summary.contingencyReserveGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Manufacturing', value: 'Â£${summary.manufacturingCostsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Shipping', value: 'Â£${summary.shippingGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Fixed costs', value: 'Â£${summary.fixedCostsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Net available', value: 'Â£${summary.netAvailableFundsGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Gross funding', value: '£${summary.grossFundingGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Platform fees', value: '£${summary.platformFeesGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Payment fees', value: '£${summary.paymentFeesGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'VAT reserve', value: '£${summary.vatReserveGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Contingency', value: '£${summary.contingencyReserveGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Manufacturing', value: '£${summary.manufacturingCostsGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Shipping', value: '£${summary.shippingGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Fixed costs', value: '£${summary.fixedCostsGbp.toStringAsFixed(0)}'),
+        _InlineStat(label: 'Net available', value: '£${summary.netAvailableFundsGbp.toStringAsFixed(0)}'),
         _InlineStat(label: 'Profit margin', value: '${summary.profitMarginPercent.toStringAsFixed(1)}%'),
         _InlineStat(label: 'Break-even', value: '${summary.breakEvenBackers} backers'),
       ],
@@ -2603,7 +2603,7 @@ class _RewardCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Â£${reward.priceGbp.toStringAsFixed(0)}',
+                '£${reward.priceGbp.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColours.darkSecondary,
                   fontWeight: FontWeight.w700,
@@ -2617,8 +2617,8 @@ class _RewardCard extends StatelessWidget {
             runSpacing: 6,
             children: [
               _Tag(label: reward.quantityLimit == null ? 'Unlimited' : 'Limit ${reward.quantityLimit}', accent: AppColours.darkPrimary),
-              _Tag(label: 'COGS Â£${reward.estimatedCogsGbp.toStringAsFixed(0)}'),
-              _Tag(label: 'Ship Â£${reward.estimatedShippingGbp.toStringAsFixed(0)}'),
+              _Tag(label: 'COGS £${reward.estimatedCogsGbp.toStringAsFixed(0)}'),
+              _Tag(label: 'Ship £${reward.estimatedShippingGbp.toStringAsFixed(0)}'),
               _Tag(label: reward.deliveryEstimate, accent: AppColours.darkSuccess),
             ],
           ),
