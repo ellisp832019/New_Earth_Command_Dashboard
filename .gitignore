@@ -95,6 +95,9 @@ exports_temp/
 reports_temp/
 obsidian_sync/.sync_state.json
 
+# Launchpad runtime state
+modules/new_earth_launchpad_module/dashboard_module/data/runtime/
+
 # Personal / sensitive data
 private_receipts/
 sensitive_images/

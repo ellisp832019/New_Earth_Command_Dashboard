@@ -37,6 +37,7 @@ Seed data now includes a `phase2.json` file alongside rewards and readiness so t
 Launchpad can also export a local campaign pack with JSON, markdown, and manifest files into the module export folder.
 The Launchpad overview, campaign manager, reward manager, story builder, readiness tracker, and archive flow are tuned for a calmer, more compact desktop layout.
 Launchpad Phase 2 now has working launch checklist, backer updates, fulfilment tracker, and impact tracker sections built on the same local record store.
+Launchpad runtime state is generated locally under `dashboard_module/data/runtime/` and should stay out of version control.
 
 ## Quick Start
 

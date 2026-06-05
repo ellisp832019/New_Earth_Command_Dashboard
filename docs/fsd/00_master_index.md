@@ -1,4 +1,4 @@
-# New Earth Command Dashboard — FSD Master Index
+# New Earth Command Dashboard - FSD Master Index
 
 This folder contains the full Functional Specification Document for the New Earth Command Dashboard.
 
