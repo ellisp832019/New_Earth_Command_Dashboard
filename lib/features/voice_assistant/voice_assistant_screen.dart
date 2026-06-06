@@ -2028,21 +2028,21 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Review briefing', style: theme.textTheme.titleSmall),
+                    Text(
+                      'Briefing snapshot',
+                      style: theme.textTheme.titleSmall,
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      'Read the captured command, review the suggested path, then save it locally.',
+                      'Read the snapshot, review the next move, then save it locally.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 6),
-                    Text('Captured command', style: theme.textTheme.labelSmall),
+                    Text('What Gaia heard', style: theme.textTheme.labelSmall),
                     const SizedBox(height: 4),
                     Text(briefing.summary, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 6),
-                    Text(
-                      'Recommended next step',
-                      style: theme.textTheme.labelSmall,
-                    ),
+                    Text('Best next move', style: theme.textTheme.labelSmall),
                     const SizedBox(height: 4),
                     Text(briefing.nextStep, style: theme.textTheme.bodySmall),
                     if (briefing.projectContext != null ||
@@ -2061,10 +2061,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     if (briefing.memorySummary != null ||
                         briefing.memoryHighlights.isNotEmpty) ...[
                       const SizedBox(height: 10),
-                      Text(
-                        'Remembered thread',
-                        style: theme.textTheme.labelSmall,
-                      ),
+                      Text('Thread memory', style: theme.textTheme.labelSmall),
                       const SizedBox(height: 4),
                       Text(
                         briefing.memorySummary ??

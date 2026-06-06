@@ -987,7 +987,7 @@ class VoiceCommandService {
     );
 
     return VoiceCommandBriefing(
-      summary: _briefingLine(assistantResponse.summary),
+      summary: _briefingHeadline(assistantResponse.summary),
       nextStep: _briefingLine(assistantResponse.nextStep),
       projectContext: assistantResponse.projectContext,
       threadContext: assistantResponse.threadContext,
@@ -1432,6 +1432,42 @@ Rules:
     }
     if (trimmed.startsWith('I am ')) {
       return trimmed.replaceFirst('I am ', '').trim();
+    }
+
+    return trimmed;
+  }
+
+  String _briefingHeadline(String text) {
+    final trimmed = text.trim();
+    final mappings = <String, String>{
+      'Wake phrase heard. I am here.': 'Wake phrase heard. Gaia is ready.',
+      'I am here with you.': 'Gaia is here with you.',
+      'This sounds like a daily review.': 'Daily review captured.',
+      'This sounds like a next-step request.': 'Next step captured.',
+      'This reads like a task. I can open Tasks, preload the task template, or send it toward Planner.':
+          'Task captured. Tasks is ready.',
+      'This sounds like a project. I can open Projects, preload the project template, or help shape a project record.':
+          'Project captured. Projects is ready.',
+      'This sounds like a journal entry. I can open Journal or reload the reflection template.':
+          'Journal entry captured. Journal is ready.',
+      'This looks like a content idea. I can open Content, preload the draft template, or jump to Projects.':
+          'Content idea captured. Content is ready.',
+      'This sounds like a business lead. I can open Business, preload the opportunity template, or move to Projects.':
+          'Business lead captured. Business is ready.',
+      'I heard a build-day command. I can open Planner or preload the build-day template.':
+          'Build day captured. Planner is ready.',
+      'I do not have a strong type yet. I can still help by opening the right area, loading a starter, or shaping a safe prompt.':
+          'Draft captured. Gaia can still help shape it.',
+    };
+
+    for (final entry in mappings.entries) {
+      if (trimmed == entry.key) {
+        return entry.value;
+      }
+    }
+
+    if (trimmed.startsWith('I can help with tasks')) {
+      return 'Help overview captured. Gaia can guide the next move.';
     }
 
     return trimmed;

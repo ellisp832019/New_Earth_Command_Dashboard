@@ -159,7 +159,7 @@ void main() {
       suggestion: suggestion,
     );
 
-    expect(briefing.summary, contains('build-day command'));
+    expect(briefing.summary, contains('Build day captured'));
     expect(briefing.nextStep, contains('Planner'));
     expect(briefing.actions, isNotEmpty);
     expect(briefing.actions.first.label, contains('Dashboard'));
@@ -318,7 +318,7 @@ void main() {
       selectedType: VoiceCommandType.project,
     );
 
-    expect(briefing.summary, contains('project'));
+    expect(briefing.summary, contains('Project captured'));
     expect(briefing.nextStep, contains('first next action'));
     expect(prompt, contains('status, priority, vision, or next action'));
   });
