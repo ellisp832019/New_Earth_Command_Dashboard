@@ -12,6 +12,8 @@ enum CommandDeckCommandType {
   unknown,
 }
 
+enum CommandDeckPathStatus { ready, placeholder, missing }
+
 class CommandDeckCommand {
   const CommandDeckCommand({
     required this.id,
@@ -81,10 +83,7 @@ class CommandDeckCommand {
 }
 
 class CommandDeckCommandGroup {
-  const CommandDeckCommandGroup({
-    required this.name,
-    required this.commands,
-  });
+  const CommandDeckCommandGroup({required this.name, required this.commands});
 
   final String name;
   final List<CommandDeckCommand> commands;
@@ -103,7 +102,8 @@ class CommandDeckActionLogEntry {
 
   factory CommandDeckActionLogEntry.fromJson(Map<String, dynamic> json) {
     return CommandDeckActionLogEntry(
-      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+      timestamp:
+          DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       commandId: json['command_id']?.toString() ?? '',
       label: json['label']?.toString() ?? '',
@@ -130,6 +130,32 @@ class CommandDeckActionLogEntry {
     final paddedMinute = date.minute.toString().padLeft(2, '0');
     return '${date.year}-$paddedMonth-$paddedDay $paddedHour:$paddedMinute';
   }
+}
+
+class CommandDeckPathReadiness {
+  const CommandDeckPathReadiness({
+    required this.key,
+    required this.label,
+    required this.value,
+    required this.status,
+    required this.detail,
+  });
+
+  final String key;
+  final String label;
+  final String value;
+  final CommandDeckPathStatus status;
+  final String detail;
+
+  bool get isReady => status == CommandDeckPathStatus.ready;
+  bool get isPlaceholder => status == CommandDeckPathStatus.placeholder;
+  bool get isMissing => status == CommandDeckPathStatus.missing;
+
+  String get statusLabel => switch (status) {
+    CommandDeckPathStatus.ready => 'Ready',
+    CommandDeckPathStatus.placeholder => 'Placeholder',
+    CommandDeckPathStatus.missing => 'Missing',
+  };
 }
 
 class CommandDeckConfig {
@@ -233,9 +259,7 @@ class CommandDeckRegistry {
   List<CommandDeckCommandGroup> get groupedCommands {
     final map = <String, List<CommandDeckCommand>>{};
     for (final command in commands) {
-      map.putIfAbsent(command.group, () => <CommandDeckCommand>[]).add(
-        command,
-      );
+      map.putIfAbsent(command.group, () => <CommandDeckCommand>[]).add(command);
     }
 
     return map.entries
@@ -256,6 +280,7 @@ class CommandDeckWorkspace {
     required this.registry,
     required this.configPath,
     required this.registryPath,
+    required this.pathReadiness,
     required this.validationIssues,
     required this.actionLog,
   });
@@ -265,6 +290,7 @@ class CommandDeckWorkspace {
   final CommandDeckRegistry registry;
   final String configPath;
   final String registryPath;
+  final List<CommandDeckPathReadiness> pathReadiness;
   final List<String> validationIssues;
   final List<CommandDeckActionLogEntry> actionLog;
 }
@@ -330,6 +356,7 @@ class CommandDeckService {
       registryFile.existsSync() ? registryFile.path : registryExampleFile.path,
     );
     final validationIssues = validateRegistry(registry);
+    final pathReadiness = buildPathReadiness(config, moduleRoot);
     final actionLog = await _readRecentActionLog(moduleRoot);
 
     return CommandDeckWorkspace(
@@ -342,15 +369,65 @@ class CommandDeckService {
       registryPath: registryFile.existsSync()
           ? registryFile.path
           : registryExampleFile.path,
+      pathReadiness: pathReadiness,
       validationIssues: validationIssues,
       actionLog: actionLog,
     );
   }
 
+  List<CommandDeckPathReadiness> buildPathReadiness(
+    CommandDeckConfig config,
+    Directory moduleRoot,
+  ) {
+    final items = <CommandDeckPathReadiness>[
+      _buildUrlReadiness('dashboard_url', 'Dashboard URL', config.dashboardUrl),
+      _buildPathReadiness(
+        'omega_os_root',
+        'Omega OS root',
+        config.omegaOsRoot,
+        moduleRoot,
+      ),
+      _buildPathReadiness(
+        'obsidian_vault_path',
+        'Obsidian vault',
+        config.obsidianVaultPath,
+        moduleRoot,
+      ),
+      _buildPathReadiness(
+        'meetings_path',
+        'Meetings',
+        config.meetingsPath,
+        moduleRoot,
+      ),
+      _buildPathReadiness(
+        'command_deck_path',
+        'Command Deck',
+        config.commandDeckPath,
+        moduleRoot,
+      ),
+    ];
+
+    final sortedProjects = config.projects.entries.toList()
+      ..sort((left, right) => left.key.compareTo(right.key));
+    for (final entry in sortedProjects) {
+      items.add(
+        _buildPathReadiness(
+          'projects.${entry.key}',
+          _projectLabel(entry.key),
+          entry.value,
+          moduleRoot,
+        ),
+      );
+    }
+
+    return List<CommandDeckPathReadiness>.unmodifiable(items);
+  }
+
   Future<void> executeCommand(
     CommandDeckCommand command,
-    CommandDeckConfig config,
-    {Future<void> Function(String route)? onNavigate}) async {
+    CommandDeckConfig config, {
+    Future<void> Function(String route)? onNavigate,
+  }) async {
     switch (command.type) {
       case CommandDeckCommandType.openUrl:
         await _openUrl(command.target);
@@ -457,6 +534,87 @@ class CommandDeckService {
     }
 
     return issues;
+  }
+
+  CommandDeckPathReadiness _buildUrlReadiness(
+    String key,
+    String label,
+    String value,
+  ) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || _looksLikePlaceholder(trimmed)) {
+      return CommandDeckPathReadiness(
+        key: key,
+        label: label,
+        value: trimmed,
+        status: CommandDeckPathStatus.placeholder,
+        detail: 'This value still looks like an example or placeholder.',
+      );
+    }
+
+    return CommandDeckPathReadiness(
+      key: key,
+      label: label,
+      value: trimmed,
+      status: CommandDeckPathStatus.ready,
+      detail: 'Configured locally. Reachability is not checked here.',
+    );
+  }
+
+  CommandDeckPathReadiness _buildPathReadiness(
+    String key,
+    String label,
+    String value,
+    Directory moduleRoot,
+  ) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || _looksLikePlaceholder(trimmed)) {
+      return CommandDeckPathReadiness(
+        key: key,
+        label: label,
+        value: trimmed,
+        status: CommandDeckPathStatus.placeholder,
+        detail: 'This path still looks like an example or placeholder.',
+      );
+    }
+
+    final resolved = path.isAbsolute(trimmed)
+        ? path.normalize(trimmed)
+        : path.normalize(path.join(moduleRoot.path, trimmed));
+    final exists =
+        Directory(resolved).existsSync() || File(resolved).existsSync();
+
+    return CommandDeckPathReadiness(
+      key: key,
+      label: label,
+      value: trimmed,
+      status: exists
+          ? CommandDeckPathStatus.ready
+          : CommandDeckPathStatus.missing,
+      detail: exists
+          ? 'Found on disk.'
+          : 'Configured, but the path does not exist on this machine.',
+    );
+  }
+
+  bool _looksLikePlaceholder(String value) {
+    final normalized = value.toLowerCase();
+    return normalized.contains('path/to') ||
+        normalized.contains('todo') ||
+        normalized.contains('example') ||
+        normalized.contains('placeholder') ||
+        normalized.contains('insert') ||
+        normalized.contains('replace me');
+  }
+
+  String _projectLabel(String key) {
+    return switch (key) {
+      'microgrow' => 'MicroGrow',
+      'new_earth_dashboard' => 'New Earth Dashboard',
+      'new_earth_living' => 'New Earth Living',
+      'biocalm' => 'BioCalm',
+      _ => key,
+    };
   }
 
   Future<void> _openUrl(String url) async {

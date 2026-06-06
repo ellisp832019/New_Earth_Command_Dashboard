@@ -141,7 +141,9 @@ class _CommandDeckScreenState extends State<CommandDeckScreen> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -172,6 +174,8 @@ class _CommandDeckScreenState extends State<CommandDeckScreen> {
                 _CommandDeckHero(workspace: workspace),
                 const SizedBox(height: 16),
                 _CommandDeckReadinessStrip(workspace: workspace),
+                const SizedBox(height: 16),
+                _PathReadinessPanel(workspace: workspace),
                 const SizedBox(height: 16),
                 const _CommandLegendCard(),
                 if (workspace.validationIssues.isNotEmpty) ...[
@@ -217,6 +221,184 @@ class _CommandDeckScreenState extends State<CommandDeckScreen> {
   }
 }
 
+class _PathReadinessPanel extends StatelessWidget {
+  const _PathReadinessPanel({required this.workspace});
+
+  final CommandDeckWorkspace workspace;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = workspace.pathReadiness;
+    final readyCount = items.where((item) => item.isReady).length;
+    final placeholderCount = items.where((item) => item.isPlaceholder).length;
+    final missingCount = items.where((item) => item.isMissing).length;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.route_outlined, color: AppColours.darkSecondary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Path readiness',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
+                ),
+              ),
+              _Pill(
+                label: '$readyCount ready',
+                accent: AppColours.darkSuccess,
+                compact: true,
+              ),
+              const SizedBox(width: 8),
+              _Pill(
+                label: '$placeholderCount placeholders',
+                accent: AppColours.darkAmber,
+                compact: true,
+              ),
+              const SizedBox(width: 8),
+              _Pill(
+                label: '$missingCount missing',
+                accent: AppColours.darkPurple,
+                compact: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'This checks the local config values you will eventually wire on your machine. Placeholders are example values, missing means the path is configured but not found here yet, and ready means the target exists on disk.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth >= 1100
+                  ? (constraints.maxWidth - 24) / 3
+                  : constraints.maxWidth >= 760
+                  ? (constraints.maxWidth - 12) / 2
+                  : constraints.maxWidth;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final item in items)
+                    SizedBox(
+                      width: width,
+                      child: _PathReadinessCard(item: item),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PathReadinessCard extends StatelessWidget {
+  const _PathReadinessCard({required this.item});
+
+  final CommandDeckPathReadiness item;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _pathReadinessAccent(item.status);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accent.withValues(alpha: 0.2)),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  _pathReadinessIcon(item.status),
+                  color: accent,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _Pill(label: item.statusLabel, accent: accent, compact: true),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item.key,
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Tooltip(
+            message: item.value.isEmpty ? '(empty)' : item.value,
+            triggerMode: TooltipTriggerMode.tap,
+            child: Text(
+              item.value.isEmpty ? '(empty)' : item.value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            item.detail,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CommandDeckReadinessStrip extends StatelessWidget {
   const _CommandDeckReadinessStrip({required this.workspace});
 
@@ -246,7 +428,9 @@ class _CommandDeckReadinessStrip extends StatelessWidget {
             ? 'The command registry validated successfully.'
             : '${workspace.validationIssues.length} issue${workspace.validationIssues.length == 1 ? '' : 's'} need attention.',
         accent: registryReady ? AppColours.darkSuccess : AppColours.darkAmber,
-        icon: registryReady ? Icons.verified_outlined : Icons.warning_amber_outlined,
+        icon: registryReady
+            ? Icons.verified_outlined
+            : Icons.warning_amber_outlined,
       ),
       _ReadinessCard(
         label: 'Action log',
@@ -254,8 +438,12 @@ class _CommandDeckReadinessStrip extends StatelessWidget {
         detail: actionsReady
             ? '${workspace.actionLog.length} recent action${workspace.actionLog.length == 1 ? '' : 's'} logged locally.'
             : 'The log will fill once you run a command.',
-        accent: actionsReady ? AppColours.darkSecondary : AppColours.darkMutedText,
-        icon: actionsReady ? Icons.receipt_long_outlined : Icons.hourglass_empty,
+        accent: actionsReady
+            ? AppColours.darkSecondary
+            : AppColours.darkMutedText,
+        icon: actionsReady
+            ? Icons.receipt_long_outlined
+            : Icons.hourglass_empty,
       ),
     ];
 
@@ -266,10 +454,7 @@ class _CommandDeckReadinessStrip extends StatelessWidget {
         if (crossAxisCount == 1) {
           return Column(
             children: [
-              for (final card in cards) ...[
-                card,
-                const SizedBox(height: 12),
-              ],
+              for (final card in cards) ...[card, const SizedBox(height: 12)],
             ],
           );
         }
@@ -400,9 +585,9 @@ class _CommandLegendCard extends StatelessWidget {
         children: [
           Text(
             'Command legend',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 10),
           Text(
@@ -442,7 +627,8 @@ class _CommandLegendCard extends StatelessWidget {
                   mainAxisSpacing: 12,
                   childAspectRatio: 1.9,
                 ),
-                itemBuilder: (context, index) => _LegendCard(item: items[index]),
+                itemBuilder: (context, index) =>
+                    _LegendCard(item: items[index]),
               );
             },
           ),
@@ -520,6 +706,22 @@ class _LegendItem {
   final String description;
   final IconData icon;
   final Color accent;
+}
+
+Color _pathReadinessAccent(CommandDeckPathStatus status) {
+  return switch (status) {
+    CommandDeckPathStatus.ready => AppColours.darkSuccess,
+    CommandDeckPathStatus.placeholder => AppColours.darkAmber,
+    CommandDeckPathStatus.missing => AppColours.darkPurple,
+  };
+}
+
+IconData _pathReadinessIcon(CommandDeckPathStatus status) {
+  return switch (status) {
+    CommandDeckPathStatus.ready => Icons.check_circle_outline,
+    CommandDeckPathStatus.placeholder => Icons.edit_outlined,
+    CommandDeckPathStatus.missing => Icons.folder_off_outlined,
+  };
 }
 
 class _CommandDeckHero extends StatelessWidget {
@@ -616,15 +818,9 @@ class _CommandDeckHero extends StatelessWidget {
           final metadata = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _InfoLine(
-                label: 'Config',
-                value: workspace.configPath,
-              ),
+              _InfoLine(label: 'Config', value: workspace.configPath),
               const SizedBox(height: 8),
-              _InfoLine(
-                label: 'Registry',
-                value: workspace.registryPath,
-              ),
+              _InfoLine(label: 'Registry', value: workspace.registryPath),
               const SizedBox(height: 8),
               _InfoLine(
                 label: 'OBS',
@@ -693,9 +889,9 @@ class _CommandGroupSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   group.name,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColours.darkText,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
                 ),
               ),
               _Pill(label: '${group.commands.length} cards', accent: accent),
@@ -814,9 +1010,9 @@ class _CommandActionCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               command.label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
             ),
             const SizedBox(height: 8),
             Text(
@@ -876,13 +1072,16 @@ class _RecentActionsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.receipt_long_outlined, color: AppColours.darkSecondary),
+              const Icon(
+                Icons.receipt_long_outlined,
+                color: AppColours.darkSecondary,
+              ),
               const SizedBox(width: 10),
               Text(
                 'Recent actions',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColours.darkText,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
               ),
             ],
           ),
@@ -905,7 +1104,9 @@ class _RecentActionsCard extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.88),
+                        color: AppColours.darkSurfaceRaised.withValues(
+                          alpha: 0.88,
+                        ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: AppColours.darkOutline.withValues(alpha: 0.9),
@@ -926,18 +1127,14 @@ class _RecentActionsCard extends StatelessWidget {
                               children: [
                                 Text(
                                   entry.label,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium?.copyWith(
-                                        color: AppColours.darkText,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(color: AppColours.darkText),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${entry.timestampLabel} · ${entry.type} · ${entry.group}',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
                                         color: AppColours.darkMutedText,
                                       ),
                                 ),
@@ -1014,9 +1211,9 @@ class _ModulePackCard extends StatelessWidget {
         children: [
           Text(
             'Module pack',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 10),
           Text(
@@ -1082,9 +1279,9 @@ class _SupportFileCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1123,13 +1320,16 @@ class _ValidationIssuesCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber_outlined, color: AppColours.darkAmber),
+              const Icon(
+                Icons.warning_amber_outlined,
+                color: AppColours.darkAmber,
+              ),
               const SizedBox(width: 10),
               Text(
                 'Registry notes',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColours.darkText,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
               ),
             ],
           ),
@@ -1164,9 +1364,9 @@ class _SetupNotesCard extends StatelessWidget {
         children: [
           Text(
             'Setup notes',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 10),
           Text(
@@ -1186,10 +1386,7 @@ class _SetupNotesCard extends StatelessWidget {
 }
 
 class _FooterCard extends StatelessWidget {
-  const _FooterCard({
-    required this.configPath,
-    required this.registryPath,
-  });
+  const _FooterCard({required this.configPath, required this.registryPath});
 
   final String configPath;
   final String registryPath;
@@ -1204,9 +1401,9 @@ class _FooterCard extends StatelessWidget {
         children: [
           Text(
             'Source files',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 8),
           _InfoLine(label: 'Config', value: configPath),
@@ -1234,9 +1431,9 @@ class _EmptyStateCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColours.darkText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1338,9 +1535,9 @@ class _CommandDeckError extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 'Command Deck could not load.',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColours.darkText,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
               ),
               const SizedBox(height: 8),
               Text(
@@ -1572,22 +1769,21 @@ String _commandSubtitle(CommandDeckCommand command, String? resolvedPath) {
 
   return switch (command.type) {
     CommandDeckCommandType.openRoute => 'Opens ${command.target}.',
-    CommandDeckCommandType.openFolder => resolvedPath == null
-        ? 'Needs a configured local path.'
-        : 'Opens the local folder at $resolvedPath.',
+    CommandDeckCommandType.openFolder =>
+      resolvedPath == null
+          ? 'Needs a configured local path.'
+          : 'Opens the local folder at $resolvedPath.',
     CommandDeckCommandType.openUrl => 'Opens the configured local link.',
-    CommandDeckCommandType.script => resolvedPath == null
-        ? 'Needs a script path.'
-        : 'Runs the local helper script at $resolvedPath.',
+    CommandDeckCommandType.script =>
+      resolvedPath == null
+          ? 'Needs a script path.'
+          : 'Runs the local helper script at $resolvedPath.',
     CommandDeckCommandType.info => 'Shows the local setup details.',
     CommandDeckCommandType.unknown => 'Command type is not supported yet.',
   };
 }
 
-String _displayTargetLabel(
-  CommandDeckCommand command,
-  String resolvedPath,
-) {
+String _displayTargetLabel(CommandDeckCommand command, String resolvedPath) {
   if (command.type == CommandDeckCommandType.script ||
       command.type == CommandDeckCommandType.openFolder) {
     return path.basename(resolvedPath);
@@ -1603,7 +1799,8 @@ bool _isAvailable(CommandDeckCommand command, String? resolvedPath) {
     CommandDeckCommandType.openUrl => command.target.trim().isNotEmpty,
     CommandDeckCommandType.openFolder =>
       resolvedPath != null &&
-      (Directory(resolvedPath).existsSync() || File(resolvedPath).existsSync()),
+          (Directory(resolvedPath).existsSync() ||
+              File(resolvedPath).existsSync()),
     CommandDeckCommandType.script =>
       resolvedPath != null && File(resolvedPath).existsSync(),
     CommandDeckCommandType.unknown => false,
