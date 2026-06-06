@@ -1845,6 +1845,14 @@ void main() {
     await tester.tap(find.byKey(const Key('voiceGuidePdfButton')));
     await pumpUntilIdle(tester);
     expect(find.text('Voice Guide PDF'), findsAtLeastNWidgets(1));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceMoreCaptureToolsTile')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('voiceMoreCaptureToolsTile')));
+    await pumpUntilIdle(tester);
     expect(find.text('Use Mock Transcript'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Related Project'),
@@ -2092,6 +2100,14 @@ void main() {
     appRouter.go('/voice-assistant');
     await pumpUntilIdle(tester);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceMoreCaptureToolsTile')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('voiceMoreCaptureToolsTile')));
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
     await pumpUntilIdle(tester);
 
@@ -2103,6 +2119,15 @@ void main() {
     await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
+    await pumpUntilIdle(tester);
+
+    await tester.scrollUntilVisible(
+      find.text(
+        'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.',
+      ),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await pumpUntilIdle(tester);
 
     await tester.tap(
@@ -2141,6 +2166,14 @@ void main() {
     appRouter.go('/voice-assistant');
     await pumpUntilIdle(tester);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceMoreCaptureToolsTile')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('voiceMoreCaptureToolsTile')));
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
     await pumpUntilIdle(tester);
 

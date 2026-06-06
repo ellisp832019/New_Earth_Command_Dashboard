@@ -2042,7 +2042,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           Text(
             _mode == _VoiceInteractionMode.wizard
                 ? 'Answer one question at a time and let the wizard assemble the draft for review.'
-                : 'Speak naturally or press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
+                : 'Capture first, then review the transcript, then speak or save when it feels right.',
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 14),
@@ -2056,7 +2056,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                   Text('Start here', style: theme.textTheme.titleSmall),
                   const SizedBox(height: 4),
                   Text(
-                    'The simplest path is Capture, Review, then Save. The more advanced tools stay lower on the page.',
+                    'The simplest path is Capture, Review, then Speak or Save. Whisper is tried first on Windows, then the local recognizer, and the extra tools stay lower on the page.',
                     style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 10),
@@ -2084,26 +2084,6 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          SegmentedButton<_VoiceInteractionMode>(
-            key: const Key('voiceInteractionModeSegmentedButton'),
-            segments: const [
-              ButtonSegment(
-                value: _VoiceInteractionMode.quick,
-                label: Text('Quick Capture'),
-                icon: Icon(Icons.flash_on_outlined),
-              ),
-              ButtonSegment(
-                value: _VoiceInteractionMode.wizard,
-                label: Text('Wizard'),
-                icon: Icon(Icons.auto_fix_high_outlined),
-              ),
-            ],
-            selected: {_mode},
-            onSelectionChanged: (selection) {
-              _setVoiceMode(selection.first);
-            },
-          ),
-          const SizedBox(height: 20),
           if (conversationContext != null) ...[
             VoiceConversationThreadCard(
               conversationContext: conversationContext,
@@ -2149,7 +2129,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         label: Text(
                           _isInitializingSpeech
                               ? 'Preparing'
-                              : 'Start Listening',
+                              : 'Capture Speech',
                         ),
                       ),
                       FilledButton.tonalIcon(
@@ -2166,25 +2146,6 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    key: const Key('voiceMockTranscriptButton'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.secondaryContainer,
-                      foregroundColor: theme.colorScheme.onSecondaryContainer,
-                    ),
-                    onPressed: _mockRecordCommand,
-                    icon: const Icon(Icons.graphic_eq),
-                    label: const Text('Use Mock Transcript'),
-                  ),
-                  const SizedBox(height: 10),
-                  FilledButton.tonalIcon(
-                    key: const Key('voicePasteTranscriptButton'),
-                    onPressed: _pasteFromClipboard,
-                    icon: const Icon(Icons.content_paste),
-                    label: const Text('Paste Transcript'),
-                  ),
-                  const SizedBox(height: 10),
                   Text(
                     _speechStatus,
                     style: theme.textTheme.bodySmall,
@@ -2208,9 +2169,87 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ],
+                  const SizedBox(height: 12),
+                  ExpansionTile(
+                    key: const Key('voiceMoreCaptureToolsTile'),
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    title: Text(
+                      'More capture tools',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    subtitle: Text(
+                      'Use these if you want a different capture path.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    children: [
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          FilledButton.icon(
+                            key: const Key('voiceMockTranscriptButton'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor:
+                                  theme.colorScheme.secondaryContainer,
+                              foregroundColor:
+                                  theme.colorScheme.onSecondaryContainer,
+                            ),
+                            onPressed: _mockRecordCommand,
+                            icon: const Icon(Icons.graphic_eq),
+                            label: const Text('Use Mock Transcript'),
+                          ),
+                          FilledButton.tonalIcon(
+                            key: const Key('voicePasteTranscriptButton'),
+                            onPressed: _pasteFromClipboard,
+                            icon: const Icon(Icons.content_paste),
+                            label: const Text('Paste Transcript'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          ExpansionTile(
+            key: const Key('voiceAdvancedModesTile'),
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: EdgeInsets.zero,
+            title: Text(
+              'Advanced voice modes',
+              style: theme.textTheme.titleMedium,
+            ),
+            subtitle: Text(
+              'Wizard mode stays here so quick capture stays the default path.',
+              style: theme.textTheme.bodySmall,
+            ),
+            children: [
+              const SizedBox(height: 12),
+              SegmentedButton<_VoiceInteractionMode>(
+                key: const Key('voiceInteractionModeSegmentedButton'),
+                segments: const [
+                  ButtonSegment(
+                    value: _VoiceInteractionMode.quick,
+                    label: Text('Quick'),
+                    icon: Icon(Icons.flash_on_outlined),
+                  ),
+                  ButtonSegment(
+                    value: _VoiceInteractionMode.wizard,
+                    label: Text('Wizard'),
+                    icon: Icon(Icons.auto_fix_high_outlined),
+                  ),
+                ],
+                selected: {_mode},
+                onSelectionChanged: (selection) {
+                  _setVoiceMode(selection.first);
+                },
+              ),
+            ],
           ),
           if (_mode == _VoiceInteractionMode.wizard) ...[
             const SizedBox(height: 16),
