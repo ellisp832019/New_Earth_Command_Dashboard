@@ -75,7 +75,7 @@ Asset or QR action
 - `flutter_riverpod`
 - `go_router`
 - `drift`
-- `sqlite3_flutter_libs`
+- `sqlite3`
 - `path_provider`
 - `path`
 - `speech_to_text`

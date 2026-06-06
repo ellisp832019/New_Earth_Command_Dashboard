@@ -859,7 +859,7 @@ For MVP:
 flutter_riverpod
 go_router
 drift
-sqlite3_flutter_libs
+sqlite3
 path_provider
 path
 uuid
@@ -878,7 +878,7 @@ Package	Purpose
 flutter_riverpod	State management
 go_router	Navigation and routes
 drift	Local SQLite database
-sqlite3_flutter_libs	SQLite support
+sqlite3	SQLite support. On Windows the app uses the system `winsqlite3.dll`.
 path_provider	Find local storage path
 path	Build database file path
 uuid	Generate unique IDs
