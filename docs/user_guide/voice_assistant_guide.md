@@ -38,7 +38,7 @@ That review step matters. It keeps the system trustworthy and easy to use.
 
 If you just want to use Voice Assistant right now:
 
-1. Open `Voice Assistant` from `Dashboard` or `More`
+1. Open `Voice Assistant` from `Dashboard`
 2. Choose one starting point:
    - speak live with `Start Listening`
    - paste a transcript
@@ -96,12 +96,7 @@ It does not:
 
 ## Where To Open It
 
-You can open `Voice Assistant` from:
-
-- `Dashboard` quick capture
-- `More`
-
-Use whichever path is closer to the work you are already doing.
+You can open `Voice Assistant` from `Dashboard` quick capture.
 
 The printable guide is also available from the `Voice Guide PDF` button at the top of the Voice Assistant screen.
 

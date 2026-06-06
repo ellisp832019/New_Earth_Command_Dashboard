@@ -44,133 +44,66 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
     ),
     build: (_) {
       return pw.Container(
-        color: const PdfColor(0.97, 0.965, 0.94),
-        child: pw.Stack(
-          children: [
-            pw.Positioned(
-              right: -60,
-              top: -60,
-              child: pw.Container(
-                width: 220,
-                height: 220,
-                decoration: const pw.BoxDecoration(
-                  shape: pw.BoxShape.circle,
-                  color: PdfColor(0.89, 0.94, 0.93),
+        color: const PdfColor(0.976, 0.972, 0.962),
+        child: pw.Padding(
+          padding: const pw.EdgeInsets.fromLTRB(56, 70, 56, 54),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'New Earth User Guide',
+                style: pw.TextStyle(
+                  fontSize: 9.8,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: PdfColors.grey600,
                 ),
               ),
-            ),
-            pw.Positioned(
-              left: -80,
-              bottom: -60,
-              child: pw.Container(
-                width: 260,
-                height: 260,
-                decoration: const pw.BoxDecoration(
-                  shape: pw.BoxShape.circle,
-                  color: PdfColor(0.91, 0.92, 0.97),
+              pw.SizedBox(height: 12),
+              pw.Container(width: 96, height: 1, color: const PdfColor(0.7, 0.72, 0.7)),
+              pw.SizedBox(height: 18),
+              pw.Text(
+                guide.title,
+                style: pw.TextStyle(
+                  fontSize: 25,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.grey900,
+                  height: 1.08,
                 ),
               ),
-            ),
-            pw.Padding(
-              padding: pw.EdgeInsets.fromLTRB(54, 64, 54, 54),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+              pw.SizedBox(height: 10),
+              pw.ConstrainedBox(
+                constraints: const pw.BoxConstraints(maxWidth: 380),
+                child: pw.Text(
+                  guide.description,
+                  style: const pw.TextStyle(
+                    fontSize: 10.4,
+                    height: 1.45,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 26),
+              pw.Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  _buildCoverLabel('New Earth User Guide'),
-                  pw.SizedBox(height: 16),
-                  pw.Container(
-                    width: 58,
-                    height: 3,
-                    decoration: pw.BoxDecoration(
-                      color: const PdfColor(0.37, 0.56, 0.5),
-                      borderRadius: pw.BorderRadius.circular(999),
-                    ),
-                  ),
-                  pw.SizedBox(height: 14),
-                  pw.Text(
-                    guide.title,
-                    style: pw.TextStyle(
-                      fontSize: 26,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.grey900,
-                      height: 1.06,
-                    ),
-                  ),
-                  pw.SizedBox(height: 10),
-                  pw.ConstrainedBox(
-                    constraints: const pw.BoxConstraints(maxWidth: 360),
-                    child: pw.Text(
-                      guide.description,
-                      style: const pw.TextStyle(
-                        fontSize: 11.2,
-                        height: 1.5,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                  ),
-                  pw.SizedBox(height: 24),
-                  pw.Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _buildPill('Review first'),
-                      _buildPill('Local-first'),
-                      _buildPill('Calm capture'),
-                      _buildPill('Printable copy'),
-                    ],
-                  ),
-                  pw.Spacer(),
-                  pw.Container(
-                    padding: const pw.EdgeInsets.all(18),
-                    decoration: pw.BoxDecoration(
-                      color: PdfColors.white,
-                      borderRadius: pw.BorderRadius.circular(18),
-                      border: pw.Border.all(
-                        color: const PdfColor(0.84, 0.86, 0.83),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'What this guide covers',
-                          style: pw.TextStyle(
-                            fontSize: 11.2,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.grey800,
-                          ),
-                        ),
-                        pw.SizedBox(height: 8),
-                        ...guide.coverBullets.map(
-                          (line) => pw.Padding(
-                            padding: const pw.EdgeInsets.only(bottom: 4),
-                            child: pw.Text(
-                              '• $line',
-                              style: const pw.TextStyle(
-                                fontSize: 9.8,
-                                height: 1.35,
-                                color: PdfColors.grey700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  pw.SizedBox(height: 18),
-                  pw.Text(
-                    'Open the printable guide from Voice Assistant with the button at the top of the screen.',
-                    style: const pw.TextStyle(
-                      fontSize: 9.6,
-                      height: 1.35,
-                      color: PdfColors.grey600,
-                    ),
-                  ),
+                  _buildPill('Review first'),
+                  _buildPill('Local-first'),
+                  _buildPill('Printable'),
                 ],
               ),
-            ),
-          ],
+              pw.Spacer(),
+              pw.Text(
+                'Open the printable guide from the Voice Assistant button at the top of the screen.',
+                style: const pw.TextStyle(
+                  fontSize: 8.8,
+                  height: 1.4,
+                  color: PdfColors.grey600,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     },
@@ -181,7 +114,7 @@ pw.MultiPage _buildContentPages(_GuideDoc guide) {
   return pw.MultiPage(
     pageTheme: pw.PageTheme(
       pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(36, 26, 36, 36),
+      margin: const pw.EdgeInsets.fromLTRB(36, 24, 36, 34),
       theme: pw.ThemeData.withFont(
         base: pw.Font.times(),
         bold: pw.Font.timesBold(),
@@ -191,7 +124,6 @@ pw.MultiPage _buildContentPages(_GuideDoc guide) {
       padding: const pw.EdgeInsets.only(bottom: 8),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: pw.CrossAxisAlignment.end,
         children: [
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -199,24 +131,20 @@ pw.MultiPage _buildContentPages(_GuideDoc guide) {
               pw.Text(
                 'Voice Assistant Guide',
                 style: pw.TextStyle(
-                  fontSize: 10.4,
+                  fontSize: 9.6,
                   fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 0.6,
+                  letterSpacing: 0.5,
                   color: PdfColors.grey900,
                 ),
               ),
               pw.SizedBox(height: 2),
-              pw.Container(
-                width: 112,
-                height: 1,
-                color: const PdfColor(0.63, 0.68, 0.65),
-              ),
+              pw.Container(width: 110, height: 1, color: const PdfColor(0.72, 0.74, 0.72)),
             ],
           ),
           pw.Text(
             'Printable reference',
             style: const pw.TextStyle(
-              fontSize: 8.2,
+              fontSize: 7.8,
               color: PdfColors.grey600,
             ),
           ),
@@ -229,7 +157,7 @@ pw.MultiPage _buildContentPages(_GuideDoc guide) {
       child: pw.Text(
         'Page ${context.pageNumber} of ${context.pagesCount}',
         style: const pw.TextStyle(
-          fontSize: 8.2,
+          fontSize: 7.8,
           color: PdfColors.grey600,
         ),
       ),
@@ -244,44 +172,28 @@ List<pw.Widget> _buildBodyWidgets(_GuideDoc guide) {
   for (final section in guide.sections) {
     widgets.add(
       pw.Container(
-        margin: const pw.EdgeInsets.only(bottom: 14),
-        padding: const pw.EdgeInsets.fromLTRB(18, 16, 18, 16),
+        margin: const pw.EdgeInsets.only(bottom: 12),
+        padding: const pw.EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: pw.BoxDecoration(
           color: PdfColors.white,
-          borderRadius: pw.BorderRadius.circular(18),
+          borderRadius: pw.BorderRadius.circular(16),
           border: pw.Border.all(
             color: const PdfColor(0.88, 0.89, 0.87),
-            width: 0.8,
+            width: 0.7,
           ),
         ),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Container(
-                  width: 7,
-                  height: 7,
-                  margin: const pw.EdgeInsets.only(top: 6, right: 10),
-                  decoration: const pw.BoxDecoration(
-                    shape: pw.BoxShape.circle,
-                    color: PdfColor(0.34, 0.52, 0.47),
-                  ),
-                ),
-                pw.Expanded(
-                  child: pw.Text(
-                    section.title,
-                    style: pw.TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.grey900,
-                    ),
-                  ),
-                ),
-              ],
+            pw.Text(
+              section.title,
+              style: pw.TextStyle(
+                fontSize: 11.8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.grey900,
+              ),
             ),
-            pw.SizedBox(height: 10),
+            pw.SizedBox(height: 8),
             ...section.blocks.map(_buildBlockWidget),
           ],
         ),
@@ -295,42 +207,42 @@ List<pw.Widget> _buildBodyWidgets(_GuideDoc guide) {
 pw.Widget _buildBlockWidget(_GuideBlock block) {
   return switch (block) {
     _ParagraphBlock(:final parts) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 8),
+        padding: const pw.EdgeInsets.only(bottom: 7),
         child: pw.Text(
           parts.join(' '),
           style: const pw.TextStyle(
-            fontSize: 10.2,
-            height: 1.45,
+            fontSize: 9.4,
+            height: 1.42,
             color: PdfColors.grey800,
           ),
         ),
       ),
     _BulletListBlock(:final items) => pw.Padding(
-        padding: const pw.EdgeInsets.only(left: 2, bottom: 8),
+        padding: const pw.EdgeInsets.only(bottom: 7),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: items
               .map(
                 (item) => pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 5),
+                  padding: const pw.EdgeInsets.only(bottom: 4),
                   child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
                         '•',
                         style: const pw.TextStyle(
-                          fontSize: 10.2,
-                          height: 1.45,
+                          fontSize: 9.4,
+                          height: 1.42,
                           color: PdfColors.grey600,
                         ),
                       ),
-                      pw.SizedBox(width: 8),
+                      pw.SizedBox(width: 7),
                       pw.Expanded(
                         child: pw.Text(
                           item,
                           style: const pw.TextStyle(
-                            fontSize: 10.2,
-                            height: 1.45,
+                            fontSize: 9.4,
+                            height: 1.42,
                             color: PdfColors.grey800,
                           ),
                         ),
@@ -343,32 +255,32 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
         ),
       ),
     _NumberedListBlock(:final items) => pw.Padding(
-        padding: const pw.EdgeInsets.only(left: 2, bottom: 8),
+        padding: const pw.EdgeInsets.only(bottom: 7),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: items.asMap().entries.map((entry) {
             final index = entry.key + 1;
             final item = entry.value;
             return pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 5),
+              padding: const pw.EdgeInsets.only(bottom: 4),
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
                     '$index.',
                     style: const pw.TextStyle(
-                      fontSize: 10.2,
-                      height: 1.45,
+                      fontSize: 9.2,
+                      height: 1.42,
                       color: PdfColors.grey600,
                     ),
                   ),
-                  pw.SizedBox(width: 8),
+                  pw.SizedBox(width: 7),
                   pw.Expanded(
                     child: pw.Text(
                       item,
                       style: const pw.TextStyle(
-                        fontSize: 10.2,
-                        height: 1.45,
+                        fontSize: 9.4,
+                        height: 1.42,
                         color: PdfColors.grey800,
                       ),
                     ),
@@ -382,19 +294,19 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
     _DividerBlock() => pw.Padding(
         padding: const pw.EdgeInsets.symmetric(vertical: 4),
         child: pw.Divider(
-          thickness: 0.7,
-          color: const PdfColor(0.85, 0.86, 0.84),
+          thickness: 0.6,
+          color: const PdfColor(0.86, 0.87, 0.85),
         ),
       ),
     _HeadingBlock(:final text, :final level) => pw.Padding(
         padding: pw.EdgeInsets.only(
-          top: level == 2 ? 10 : 4,
-          bottom: 6,
+          top: level == 2 ? 8 : 3,
+          bottom: 5,
         ),
         child: pw.Text(
           text,
           style: pw.TextStyle(
-            fontSize: level == 2 ? 12.5 : 10.5,
+            fontSize: level == 2 ? 11.0 : 9.6,
             fontWeight: pw.FontWeight.bold,
             color: level == 2 ? PdfColors.grey900 : PdfColors.grey800,
           ),
@@ -403,36 +315,18 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
   };
 }
 
-pw.Widget _buildCoverLabel(String text) {
+pw.Widget _buildPill(String text) {
   return pw.Container(
     padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: pw.BoxDecoration(
-      color: const PdfColor(0.86, 0.92, 0.9),
-      borderRadius: pw.BorderRadius.circular(999),
-    ),
-    child: pw.Text(
-      text.toUpperCase(),
-      style: const pw.TextStyle(
-        fontSize: 8.2,
-        letterSpacing: 0.8,
-        color: PdfColors.grey700,
-      ),
-    ),
-  );
-}
-
-pw.Widget _buildPill(String text) {
-  return pw.Container(
-    padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-    decoration: pw.BoxDecoration(
       color: PdfColors.white,
       borderRadius: pw.BorderRadius.circular(999),
-      border: pw.Border.all(color: const PdfColor(0.85, 0.88, 0.86)),
+      border: pw.Border.all(color: const PdfColor(0.85, 0.88, 0.86), width: 0.7),
     ),
     child: pw.Text(
       text,
       style: const pw.TextStyle(
-        fontSize: 9.3,
+        fontSize: 8.2,
         color: PdfColors.grey700,
       ),
     ),
@@ -447,7 +341,7 @@ _GuideDoc _parseGuide(String markdown) {
   final sections = <_GuideSection>[];
   _GuideSection? currentSection;
   _GuideBlock? currentBlock;
-  bool coverCopyCaptured = false;
+  bool seenBody = false;
 
   void flushSection() {
     if (currentSection != null) {
@@ -477,19 +371,20 @@ _GuideDoc _parseGuide(String markdown) {
       continue;
     }
 
-    if (!coverCopyCaptured && title.isNotEmpty && !trimmed.startsWith('## ')) {
+    if (!seenBody && title.isNotEmpty && !trimmed.startsWith('## ')) {
       final text = _cleanInlineText(trimmed);
       if (text.isNotEmpty) {
         if (description.length < 2) {
           description.add(text);
-        } else {
-          coverCopyCaptured = true;
+          continue;
         }
+        coverBullets.add(text);
+        continue;
       }
-      continue;
     }
 
     if (trimmed.startsWith('## ')) {
+      seenBody = true;
       ensureSection(_cleanInlineText(trimmed.substring(3)));
       continue;
     }
@@ -503,6 +398,7 @@ _GuideDoc _parseGuide(String markdown) {
 
     final headingMatch = RegExp(r'^(#{1,3})\s+(.*)$').firstMatch(trimmed);
     if (headingMatch != null) {
+      seenBody = true;
       final level = headingMatch.group(1)!.length;
       final text = _cleanInlineText(headingMatch.group(2)!);
       if (currentSection != null) {
@@ -514,11 +410,11 @@ _GuideDoc _parseGuide(String markdown) {
 
     final bulletMatch = RegExp(r'^-\s+(.*)$').firstMatch(trimmed);
     if (bulletMatch != null) {
+      seenBody = true;
       final text = _cleanInlineText(bulletMatch.group(1)!);
-      if (!coverCopyCaptured && currentSection == null) {
+      if (currentSection == null) {
         coverBullets.add(text);
       } else {
-        ensureSection(currentSection?.title ?? 'Guide');
         currentBlock = _appendBullet(currentSection!, currentBlock, text);
       }
       continue;
@@ -526,6 +422,7 @@ _GuideDoc _parseGuide(String markdown) {
 
     final numberedMatch = RegExp(r'^\d+\.\s+(.*)$').firstMatch(trimmed);
     if (numberedMatch != null) {
+      seenBody = true;
       ensureSection(currentSection?.title ?? 'Guide');
       currentBlock = _appendNumbered(
         currentSection!,
@@ -535,6 +432,7 @@ _GuideDoc _parseGuide(String markdown) {
       continue;
     }
 
+    seenBody = true;
     ensureSection(currentSection?.title ?? 'Guide');
     currentBlock = _appendParagraph(
       currentSection!,
@@ -556,7 +454,7 @@ _GuideDoc _parseGuide(String markdown) {
             'Use the briefing card and AI preview as a guide, not a decision.',
             'Open the printable PDF from Voice Assistant when you want the clean reading copy.',
           ]
-        : coverBullets.take(4).toList(),
+        : coverBullets.take(3).toList(),
     sections: sections,
   );
 }
