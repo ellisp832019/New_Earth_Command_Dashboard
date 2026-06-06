@@ -48,6 +48,7 @@ abstract final class RouteNames {
   static const projectsIntelligence = '/projects-intelligence';
   static const projectsIntelligenceLegacy = '/more/projects-intelligence';
   static const knowledgeLibrary = '/more/knowledge-library';
+  static const commandDeck = '/more/command-deck';
   static const omegaOsFolderHealth = '/more/omega-os-health';
   static const journal = '/journal';
   static const newJournal = '/journal/new';
@@ -70,10 +71,7 @@ abstract final class RouteNames {
     return '/launchpad/campaigns/$campaignId';
   }
 
-  static String launchpadCampaignSection(
-    String campaignId,
-    String section,
-  ) {
+  static String launchpadCampaignSection(String campaignId, String section) {
     return '/launchpad/campaigns/$campaignId/$section';
   }
 

@@ -37,6 +37,7 @@ import '../../features/learning/presentation/learning_screen.dart';
 import '../../features/launchpad/presentation/launchpad_routes.dart';
 import '../../features/more/presentation/more_screen.dart';
 import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
+import '../../features/command_deck/presentation/command_deck_screen.dart';
 import '../../features/meeting_system/presentation/all_meetings_screen.dart';
 import '../../features/meeting_system/presentation/meeting_actions_screen.dart';
 import '../../features/meeting_system/presentation/meeting_dashboard_screen.dart';
@@ -305,6 +306,10 @@ final appRouter = GoRouter(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
               routes: [
+                GoRoute(
+                  path: 'command-deck',
+                  builder: (context, state) => const CommandDeckScreen(),
+                ),
                 GoRoute(
                   path: 'meetings',
                   builder: (context, state) => const MeetingDashboardScreen(),

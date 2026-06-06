@@ -9,6 +9,13 @@ class MoreScreen extends StatelessWidget {
 
   static const _items = [
     _MoreItem(
+      title: 'Command Deck',
+      description:
+          'Run the local command centre for Stream Deck workflows, scripts, and setup.',
+      icon: Icons.space_dashboard_outlined,
+      route: RouteNames.commandDeck,
+    ),
+    _MoreItem(
       title: 'Meeting System',
       description:
           'Plan meetings, capture actions, track decisions, and keep follow-ups in Omega OS.',

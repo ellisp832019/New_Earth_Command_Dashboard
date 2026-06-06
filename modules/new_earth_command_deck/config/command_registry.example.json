@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "id": "open_dashboard",
+      "label": "Dashboard Home",
+      "type": "open_url",
+      "target": "http://localhost:3000"
+    },
+    {
+      "id": "start_meeting",
+      "label": "Start Meeting",
+      "type": "script",
+      "target": "scripts/create_meeting.py"
+    },
+    {
+      "id": "start_build_session",
+      "label": "Start Build Session",
+      "type": "script",
+      "target": "scripts/create_build_session.py"
+    },
+    {
+      "id": "create_codex_handoff",
+      "label": "Create Codex Handoff",
+      "type": "script",
+      "target": "scripts/create_codex_handoff.py"
+    },
+    {
+      "id": "open_microgrow",
+      "label": "MicroGrow",
+      "type": "open_folder",
+      "target_key": "projects.microgrow"
+    },
+    {
+      "id": "open_obsidian",
+      "label": "Obsidian Vault",
+      "type": "open_folder",
+      "target_key": "obsidian_vault_path"
+    }
+  ]
+}

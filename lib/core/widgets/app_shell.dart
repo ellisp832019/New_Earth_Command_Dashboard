@@ -210,6 +210,11 @@ class _Sidebar extends StatelessWidget {
               icon: Icons.inbox_outlined,
               route: RouteNames.inbox,
             ),
+            _SidebarLink(
+              label: 'Command Deck',
+              icon: Icons.space_dashboard_outlined,
+              route: RouteNames.commandDeck,
+            ),
             const SizedBox(height: 16),
             Text(
               'Local-first',

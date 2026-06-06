@@ -1,0 +1,8 @@
+{
+  "module_id": "new_earth_command_deck",
+  "name": "New Earth Command Deck",
+  "version": "0.1.0",
+  "route": "/more/command-deck",
+  "omega_os_path": "D:/NEW_EARTH_OMEGA_OS_PACK/23_AI_AND_AUTOMATION/COMMAND_DECK",
+  "description": "Local-first Stream Deck and command workflow module for the New Earth Dashboard."
+}

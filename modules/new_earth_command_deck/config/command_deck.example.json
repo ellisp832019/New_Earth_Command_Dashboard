@@ -1,0 +1,18 @@
+{
+  "dashboard_url": "http://localhost:3000",
+  "omega_os_root": "D:/NEW_EARTH_OMEGA_OS_PACK",
+  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN",
+  "meetings_path": "D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS",
+  "command_deck_path": "D:/NEW_EARTH_OMEGA_OS_PACK/23_AI_AND_AUTOMATION/COMMAND_DECK",
+  "projects": {
+    "microgrow": "D:/PATH/TO/MicroGrow",
+    "new_earth_dashboard": "D:/PATH/TO/new-earth-dashboard",
+    "new_earth_living": "D:/PATH/TO/new_earth_living",
+    "biocalm": "D:/PATH/TO/biocalm"
+  },
+  "obs": {
+    "enabled": true,
+    "start_recording_hotkey": "Ctrl+Alt+R",
+    "stop_recording_hotkey": "Ctrl+Alt+S"
+  }
+}

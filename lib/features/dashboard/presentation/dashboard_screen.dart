@@ -696,6 +696,8 @@ class _SupportModuleGrid extends StatelessWidget {
 
         return Column(
           children: [
+            const CommandDeckDashboardCard(),
+            const SizedBox(height: 14),
             const LaunchpadDashboardCard(),
             const SizedBox(height: 14),
             const MeetingSystemDashboardCard(),
@@ -722,6 +724,125 @@ class _SupportModuleGrid extends StatelessWidget {
   }
 }
 
+class CommandDeckDashboardCard extends StatelessWidget {
+  const CommandDeckDashboardCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context, highlighted: true),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 980;
+
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.space_dashboard_outlined,
+                    color: AppColours.darkSecondary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Command Deck',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  _InlineTag(
+                    label: 'Local-first',
+                    accent: AppColours.darkSuccess,
+                    foreground: AppColours.darkSuccess,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Software control centre for the Stream Deck pack, local scripts, meeting automation, and the future hardware bridge.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: const [
+                  _InlineTag(
+                    label: 'Registry',
+                    accent: AppColours.darkSecondary,
+                  ),
+                  _InlineTag(
+                    label: 'Meeting starter',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  _InlineTag(
+                    label: 'Build session',
+                    accent: AppColours.darkAmber,
+                  ),
+                  _InlineTag(
+                    label: 'Codex handoff',
+                    accent: AppColours.darkPurple,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'TODO: load the command registry from `modules/new_earth_command_deck/config/command_registry.example.json` and add persistent action logs.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: isWide ? WrapAlignment.end : WrapAlignment.start,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.push(RouteNames.commandDeck),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open Command Deck'),
+              ),
+              TextButton.icon(
+                onPressed: () => context.push(RouteNames.meetingDashboard),
+                icon: const Icon(Icons.event_note_outlined),
+                label: const Text('Meeting System'),
+              ),
+            ],
+          );
+
+          if (!isWide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [content, const SizedBox(height: 16), actions],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: content),
+              const SizedBox(width: 20),
+              SizedBox(width: 260, child: actions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 class LaunchpadDashboardCard extends ConsumerWidget {
   const LaunchpadDashboardCard({super.key});
 
@@ -736,13 +857,16 @@ class LaunchpadDashboardCard extends ConsumerWidget {
         decoration: _panelDecoration(context),
         child: Row(
           children: [
-            const Icon(Icons.campaign_outlined, color: AppColours.darkSecondary),
+            const Icon(
+              Icons.campaign_outlined,
+              color: AppColours.darkSecondary,
+            ),
             const SizedBox(width: 12),
             Text(
               'Launchpad is loading quietly.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ],
         ),
@@ -764,9 +888,9 @@ class LaunchpadDashboardCard extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'Launchpad could not load right now.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
             const SizedBox(height: 10),
             TextButton.icon(
@@ -834,12 +958,14 @@ class LaunchpadDashboardCard extends ConsumerWidget {
                       ),
                       _DashboardMetricChip(
                         label: 'Readiness',
-                        value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                        value:
+                            '${readiness.overallPercent.toStringAsFixed(0)}%',
                         accentColor: AppColours.darkSuccess,
                       ),
                       _DashboardMetricChip(
                         label: 'Net Funds',
-                        value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                        value:
+                            '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
                         accentColor: finance.netAvailableFundsGbp >= 0
                             ? AppColours.darkSuccess
                             : AppColours.darkAmber,
@@ -877,11 +1003,7 @@ class LaunchpadDashboardCard extends ConsumerWidget {
               if (!wide) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    summary,
-                    const SizedBox(height: 16),
-                    actions,
-                  ],
+                  children: [summary, const SizedBox(height: 16), actions],
                 );
               }
 
