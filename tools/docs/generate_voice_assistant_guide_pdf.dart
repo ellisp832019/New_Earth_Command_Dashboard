@@ -24,30 +24,7 @@ void main(List<String> args) async {
   final pdf = pw.Document();
 
   pdf.addPage(_buildCoverPage(guide));
-  pdf.addPage(
-    pw.MultiPage(
-      pageTheme: pw.PageTheme(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.fromLTRB(36, 28, 36, 36),
-        theme: pw.ThemeData.withFont(
-          base: pw.Font.times(),
-          bold: pw.Font.timesBold(),
-        ),
-      ),
-      footer: (context) => pw.Container(
-        alignment: pw.Alignment.centerRight,
-        padding: const pw.EdgeInsets.only(top: 8),
-        child: pw.Text(
-          'Page ${context.pageNumber} of ${context.pagesCount}',
-          style: const pw.TextStyle(
-            fontSize: 8.5,
-            color: PdfColors.grey600,
-          ),
-        ),
-      ),
-      build: (_) => _buildBodyWidgets(guide),
-    ),
-  );
+  pdf.addPage(_buildContentPages(guide));
 
   final outputFile = File(outputPath);
   await outputFile.parent.create(recursive: true);
@@ -65,7 +42,7 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
         bold: pw.Font.timesBold(),
       ),
     ),
-    build: (context) {
+    build: (_) {
       return pw.Container(
         color: const PdfColor(0.97, 0.965, 0.94),
         child: pw.Stack(
@@ -95,28 +72,37 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
               ),
             ),
             pw.Padding(
-              padding: pw.EdgeInsets.fromLTRB(54, 72, 54, 54),
+              padding: pw.EdgeInsets.fromLTRB(54, 64, 54, 54),
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   _buildCoverLabel('New Earth User Guide'),
-                    pw.SizedBox(height: 18),
+                  pw.SizedBox(height: 16),
+                  pw.Container(
+                    width: 58,
+                    height: 3,
+                    decoration: pw.BoxDecoration(
+                      color: const PdfColor(0.37, 0.56, 0.5),
+                      borderRadius: pw.BorderRadius.circular(999),
+                    ),
+                  ),
+                  pw.SizedBox(height: 14),
                   pw.Text(
                     guide.title,
                     style: pw.TextStyle(
-                      fontSize: 30,
+                      fontSize: 26,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.grey900,
-                      height: 1.05,
+                      height: 1.06,
                     ),
                   ),
-                  pw.SizedBox(height: 12),
+                  pw.SizedBox(height: 10),
                   pw.ConstrainedBox(
                     constraints: const pw.BoxConstraints(maxWidth: 360),
                     child: pw.Text(
                       guide.description,
                       style: const pw.TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 11.2,
                         height: 1.5,
                         color: PdfColors.grey700,
                       ),
@@ -150,7 +136,7 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
                         pw.Text(
                           'What this guide covers',
                           style: pw.TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 11.2,
                             fontWeight: pw.FontWeight.bold,
                             color: PdfColors.grey800,
                           ),
@@ -162,7 +148,7 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
                             child: pw.Text(
                               '• $line',
                               style: const pw.TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 9.8,
                                 height: 1.35,
                                 color: PdfColors.grey700,
                               ),
@@ -176,7 +162,7 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
                   pw.Text(
                     'Open the printable guide from Voice Assistant with the button at the top of the screen.',
                     style: const pw.TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 9.6,
                       height: 1.35,
                       color: PdfColors.grey600,
                     ),
@@ -188,6 +174,67 @@ pw.Page _buildCoverPage(_GuideDoc guide) {
         ),
       );
     },
+  );
+}
+
+pw.MultiPage _buildContentPages(_GuideDoc guide) {
+  return pw.MultiPage(
+    pageTheme: pw.PageTheme(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.fromLTRB(36, 26, 36, 36),
+      theme: pw.ThemeData.withFont(
+        base: pw.Font.times(),
+        bold: pw.Font.timesBold(),
+      ),
+    ),
+    header: (_) => pw.Container(
+      padding: const pw.EdgeInsets.only(bottom: 8),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Voice Assistant Guide',
+                style: pw.TextStyle(
+                  fontSize: 10.4,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.6,
+                  color: PdfColors.grey900,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Container(
+                width: 112,
+                height: 1,
+                color: const PdfColor(0.63, 0.68, 0.65),
+              ),
+            ],
+          ),
+          pw.Text(
+            'Printable reference',
+            style: const pw.TextStyle(
+              fontSize: 8.2,
+              color: PdfColors.grey600,
+            ),
+          ),
+        ],
+      ),
+    ),
+    footer: (context) => pw.Container(
+      alignment: pw.Alignment.centerRight,
+      padding: const pw.EdgeInsets.only(top: 8),
+      child: pw.Text(
+        'Page ${context.pageNumber} of ${context.pagesCount}',
+        style: const pw.TextStyle(
+          fontSize: 8.2,
+          color: PdfColors.grey600,
+        ),
+      ),
+    ),
+    build: (_) => _buildBodyWidgets(guide),
   );
 }
 
@@ -226,7 +273,7 @@ List<pw.Widget> _buildBodyWidgets(_GuideDoc guide) {
                   child: pw.Text(
                     section.title,
                     style: pw.TextStyle(
-                      fontSize: 16,
+                      fontSize: 12.5,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.grey900,
                     ),
@@ -247,13 +294,13 @@ List<pw.Widget> _buildBodyWidgets(_GuideDoc guide) {
 
 pw.Widget _buildBlockWidget(_GuideBlock block) {
   return switch (block) {
-    _ParagraphBlock(:final text) => pw.Padding(
+    _ParagraphBlock(:final parts) => pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 8),
         child: pw.Text(
-          text,
+          parts.join(' '),
           style: const pw.TextStyle(
-            fontSize: 11.2,
-            height: 1.5,
+            fontSize: 10.2,
+            height: 1.45,
             color: PdfColors.grey800,
           ),
         ),
@@ -272,8 +319,8 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
                       pw.Text(
                         '•',
                         style: const pw.TextStyle(
-                          fontSize: 11,
-                          height: 1.5,
+                          fontSize: 10.2,
+                          height: 1.45,
                           color: PdfColors.grey600,
                         ),
                       ),
@@ -282,8 +329,8 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
                         child: pw.Text(
                           item,
                           style: const pw.TextStyle(
-                            fontSize: 11.2,
-                            height: 1.5,
+                            fontSize: 10.2,
+                            height: 1.45,
                             color: PdfColors.grey800,
                           ),
                         ),
@@ -310,8 +357,8 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
                   pw.Text(
                     '$index.',
                     style: const pw.TextStyle(
-                      fontSize: 11,
-                      height: 1.5,
+                      fontSize: 10.2,
+                      height: 1.45,
                       color: PdfColors.grey600,
                     ),
                   ),
@@ -320,8 +367,8 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
                     child: pw.Text(
                       item,
                       style: const pw.TextStyle(
-                        fontSize: 11.2,
-                        height: 1.5,
+                        fontSize: 10.2,
+                        height: 1.45,
                         color: PdfColors.grey800,
                       ),
                     ),
@@ -347,7 +394,7 @@ pw.Widget _buildBlockWidget(_GuideBlock block) {
         child: pw.Text(
           text,
           style: pw.TextStyle(
-            fontSize: level == 2 ? 13.5 : 11.5,
+            fontSize: level == 2 ? 12.5 : 10.5,
             fontWeight: pw.FontWeight.bold,
             color: level == 2 ? PdfColors.grey900 : PdfColors.grey800,
           ),
@@ -366,7 +413,7 @@ pw.Widget _buildCoverLabel(String text) {
     child: pw.Text(
       text.toUpperCase(),
       style: const pw.TextStyle(
-        fontSize: 9,
+        fontSize: 8.2,
         letterSpacing: 0.8,
         color: PdfColors.grey700,
       ),
@@ -385,7 +432,7 @@ pw.Widget _buildPill(String text) {
     child: pw.Text(
       text,
       style: const pw.TextStyle(
-        fontSize: 10.5,
+        fontSize: 9.3,
         color: PdfColors.grey700,
       ),
     ),
@@ -400,6 +447,7 @@ _GuideDoc _parseGuide(String markdown) {
   final sections = <_GuideSection>[];
   _GuideSection? currentSection;
   _GuideBlock? currentBlock;
+  bool coverCopyCaptured = false;
 
   void flushSection() {
     if (currentSection != null) {
@@ -429,11 +477,13 @@ _GuideDoc _parseGuide(String markdown) {
       continue;
     }
 
-    if (title.isNotEmpty && currentSection == null && !trimmed.startsWith('## ')) {
+    if (!coverCopyCaptured && title.isNotEmpty && !trimmed.startsWith('## ')) {
       final text = _cleanInlineText(trimmed);
       if (text.isNotEmpty) {
         if (description.length < 2) {
           description.add(text);
+        } else {
+          coverCopyCaptured = true;
         }
       }
       continue;
@@ -464,44 +514,49 @@ _GuideDoc _parseGuide(String markdown) {
 
     final bulletMatch = RegExp(r'^-\s+(.*)$').firstMatch(trimmed);
     if (bulletMatch != null) {
-      ensureSection(currentSection?.title ?? 'Guide');
-      currentBlock = _appendBullet(currentSection!, currentBlock, _cleanInlineText(bulletMatch.group(1)!));
+      final text = _cleanInlineText(bulletMatch.group(1)!);
+      if (!coverCopyCaptured && currentSection == null) {
+        coverBullets.add(text);
+      } else {
+        ensureSection(currentSection?.title ?? 'Guide');
+        currentBlock = _appendBullet(currentSection!, currentBlock, text);
+      }
       continue;
     }
 
     final numberedMatch = RegExp(r'^\d+\.\s+(.*)$').firstMatch(trimmed);
     if (numberedMatch != null) {
       ensureSection(currentSection?.title ?? 'Guide');
-      currentBlock = _appendNumbered(currentSection!, currentBlock, _cleanInlineText(numberedMatch.group(1)!));
+      currentBlock = _appendNumbered(
+        currentSection!,
+        currentBlock,
+        _cleanInlineText(numberedMatch.group(1)!),
+      );
       continue;
     }
 
     ensureSection(currentSection?.title ?? 'Guide');
-    currentBlock = _appendParagraph(currentSection!, currentBlock, _cleanInlineText(trimmed));
-    if (currentSection == null) {
-      coverBullets.add(_cleanInlineText(trimmed));
-    }
+    currentBlock = _appendParagraph(
+      currentSection!,
+      currentBlock,
+      _cleanInlineText(trimmed),
+    );
   }
 
   flushSection();
 
-  final safeTitle = title.isEmpty ? 'Voice Assistant Guide' : title.first;
-  final safeDescription = description.isEmpty
-      ? 'A calm local-first guide to the Voice Assistant.'
-      : description.join(' ');
-
-  final fallbackCoverBullets = coverBullets.isEmpty
-      ? [
-          'Speak, review, and save with a calm local-first flow.',
-          'Use the briefing card and AI preview as a guide, not a decision.',
-          'Open the printable PDF from Voice Assistant when you want the clean reading copy.',
-        ]
-      : coverBullets;
-
   return _GuideDoc(
-    title: safeTitle,
-    description: safeDescription,
-    coverBullets: fallbackCoverBullets.take(4).toList(),
+    title: title.isEmpty ? 'Voice Assistant Guide' : title.first,
+    description: description.isEmpty
+        ? 'A calm local-first guide to the Voice Assistant.'
+        : description.join(' '),
+    coverBullets: coverBullets.isEmpty
+        ? const [
+            'Speak, review, and save with a calm local-first flow.',
+            'Use the briefing card and AI preview as a guide, not a decision.',
+            'Open the printable PDF from Voice Assistant when you want the clean reading copy.',
+          ]
+        : coverBullets.take(4).toList(),
     sections: sections,
   );
 }
@@ -592,7 +647,6 @@ class _ParagraphBlock extends _GuideBlock {
   _ParagraphBlock({required this.parts});
 
   final List<String> parts;
-  String get text => parts.join(' ');
 }
 
 class _BulletListBlock extends _GuideBlock {
