@@ -149,6 +149,7 @@ class _ProjectsIntelligenceScreenState
                               label: const Text('Open bridge folder'),
                             ),
                             TextButton.icon(
+                              key: const Key('projectsHubOpenWorkspaceButton'),
                               onPressed: () =>
                                   context.go(RouteNames.projectsWorkspace),
                               icon: const Icon(Icons.work_outline),
@@ -313,6 +314,7 @@ class _WorkspaceSnapshotSection extends StatelessWidget {
                 label: Text(isExpanded ? 'Collapse' : 'Expand'),
               ),
               TextButton(
+                key: const Key('projectsWorkspaceOpenWorkspaceButton'),
                 onPressed: () => context.go(RouteNames.projectsWorkspace),
                 child: const Text('Open workspace'),
               ),

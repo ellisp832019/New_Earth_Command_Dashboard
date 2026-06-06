@@ -389,7 +389,7 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.projects,
       redirect: (context, state) => Uri(
-        path: RouteNames.projectsWorkspace,
+        path: RouteNames.projectsIntelligence,
         queryParameters: state.uri.queryParameters,
       ).toString(),
     ),

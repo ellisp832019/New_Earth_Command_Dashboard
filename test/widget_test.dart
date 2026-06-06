@@ -616,6 +616,19 @@ void main() {
     expect(find.text('Next Action'), findsWidgets);
   });
 
+  testWidgets('projects route opens the projects hub', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    appRouter.go('/projects');
+    await pumpUntilFound(tester, find.text('Projects Hub'));
+
+    expect(find.text('Projects Hub'), findsOneWidget);
+    expect(find.byTooltip('Back to Dashboard'), findsOneWidget);
+  });
+
   testWidgets('tasks screen shows local task cards', (
     WidgetTester tester,
   ) async {
