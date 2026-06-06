@@ -99,7 +99,7 @@ class VoiceStartupGateService {
       return false;
     }
 
-    return Platform.environment['FLUTTER_TEST'] != 'true';
+    return !const bool.fromEnvironment('FLUTTER_TEST');
   }
 
   Future<VoiceStartupGateResult> checkReady() async {

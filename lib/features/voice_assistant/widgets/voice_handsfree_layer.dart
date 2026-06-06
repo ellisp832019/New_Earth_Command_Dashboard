@@ -16,6 +16,7 @@ import '../voice_command_model.dart';
 import '../voice_speech_service.dart';
 import '../voice_command_service.dart';
 import '../windows_voice_typing_service.dart';
+import '../voice_test_mode.dart';
 
 class VoiceHandsfreeLayer extends ConsumerStatefulWidget {
   const VoiceHandsfreeLayer({required this.child, super.key});
@@ -201,6 +202,10 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
   }
 
   Future<void> _runStartupGreetingAndArm() async {
+    if (isRunningUnderTest()) {
+      return;
+    }
+
     if (_startupGreetingCompleted || !mounted) {
       return;
     }
@@ -481,6 +486,10 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
     final voiceAssistantEnabled =
         settingsSnapshot?.settings.voiceAssistantEnabled ?? true;
+
+    if (isRunningUnderTest()) {
+      return widget.child;
+    }
 
     if (!voiceAssistantEnabled) {
       if (_isStarted) {
