@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../data/knowledge_library_repository.dart';
+import 'knowledge_engine_launcher_io.dart';
 
 enum KnowledgeLibraryFilter {
   all,
@@ -64,6 +66,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
 
   Timer? _searchDebounce;
   int _requestSerial = 0;
+  bool _hasAttemptedAutoStart = false;
   KnowledgeLibraryPage? _page;
   KnowledgeLibrarySearchResult? _searchResult;
   KnowledgeLibraryStats? _stats;
@@ -79,7 +82,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshAll();
+    unawaited(_bootstrapKnowledgeLibrary());
   }
 
   @override
@@ -196,7 +199,11 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
               if (stats != null) const SizedBox(height: 16),
               Expanded(
                 child: _error != null
-                    ? _ErrorPanel(error: _error!, onRetry: _refreshAll)
+                    ? _ErrorPanel(
+                        error: _error!,
+                        onRetry: _refreshAll,
+                        onStartBackend: _startKnowledgeEngine,
+                      )
                     : LayoutBuilder(
                         builder: (context, constraints) {
                           final useWideLayout =
@@ -320,6 +327,98 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
       });
     }
   }
+
+  Future<void> _bootstrapKnowledgeLibrary() async {
+    if (_isRunningUnderTest) {
+      await _refreshAll();
+      return;
+    }
+
+    if (_hasAttemptedAutoStart) {
+      return;
+    }
+    _hasAttemptedAutoStart = true;
+
+    if (mounted) {
+      setState(() {
+        _status = 'Checking whether the Knowledge Engine is already running...';
+      });
+    }
+
+    final alreadyRunning = await isKnowledgeEngineRunning();
+    if (alreadyRunning) {
+      if (mounted) {
+        setState(() {
+          _status = 'Knowledge Engine is ready. Loading the library...';
+        });
+      }
+      await _refreshAll();
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _status =
+            'Starting the Knowledge Engine and waiting for the local health check...';
+      });
+    }
+
+    final message = await launchKnowledgeEngine();
+    if (!mounted) {
+      return;
+    }
+
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      await _refreshAll();
+      return;
+    }
+
+    setState(() {
+      _status =
+          'Knowledge Engine launch request sent. Waiting for the local health check...';
+    });
+
+    await _waitForKnowledgeEngineReady();
+    if (mounted) {
+      await _refreshAll();
+    }
+  }
+
+  Future<void> _waitForKnowledgeEngineReady() async {
+    const attempts = 30;
+    for (var i = 0; i < attempts; i += 1) {
+      if (await isKnowledgeEngineRunning()) {
+        if (mounted) {
+          setState(() {
+            _status = 'Knowledge Engine is ready. Loading the library...';
+          });
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _status =
+              'Waiting for the Knowledge Engine health check... attempt ${i + 1} of $attempts';
+        });
+      }
+
+      await Future<void>.delayed(const Duration(seconds: 2));
+    }
+
+    if (mounted) {
+      setState(() {
+        _status =
+            'The Knowledge Engine did not report healthy yet. You can retry or start the local API again.';
+      });
+    }
+  }
+
+  bool get _isRunningUnderTest =>
+      Platform.environment.containsKey('FLUTTER_TEST');
 
   Future<void> _loadMore() async {
     final page = _page;
@@ -646,6 +745,33 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not open the folder: $error')),
       );
+    }
+  }
+
+  Future<void> _startKnowledgeEngine() async {
+    final message = await launchKnowledgeEngine();
+    if (!mounted) {
+      return;
+    }
+
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Starting the Knowledge Engine. Try Refresh again in a few seconds.',
+        ),
+      ),
+    );
+
+    await Future<void>.delayed(const Duration(seconds: 4));
+    if (mounted) {
+      await _refreshAll();
     }
   }
 
@@ -1927,10 +2053,15 @@ class _EmptyListState extends StatelessWidget {
 }
 
 class _ErrorPanel extends StatelessWidget {
-  const _ErrorPanel({required this.error, required this.onRetry});
+  const _ErrorPanel({
+    required this.error,
+    required this.onRetry,
+    required this.onStartBackend,
+  });
 
   final Object error;
   final VoidCallback onRetry;
+  final VoidCallback onStartBackend;
 
   @override
   Widget build(BuildContext context) {
@@ -1978,6 +2109,12 @@ class _ErrorPanel extends StatelessWidget {
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Retry'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: onStartBackend,
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text('Start local API'),
               ),
             ],
           ),
