@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'dart:async';
 
@@ -1902,6 +1902,34 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 ? 'Answer one question at a time and let the wizard assemble the draft for review.'
                 : 'Speak naturally or press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
             style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 14),
+          Card(
+            key: const Key('voiceFlowGuideCard'),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Start here', style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  Text(
+                    'The simplest path is Capture, Review, then Save. The more advanced tools stay lower on the page.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: const [
+                      Chip(label: Text('Capture')),
+                      Chip(label: Text('Review')),
+                      Chip(label: Text('Save')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 14),
           Align(

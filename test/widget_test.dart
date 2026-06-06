@@ -1886,6 +1886,22 @@ void main() {
     expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
   });
 
+  testWidgets('voice assistant shows a simple start here guide', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    appRouter.go('/voice-assistant');
+    await pumpUntilIdle(tester);
+
+    expect(find.byKey(const Key('voiceFlowGuideCard')), findsOneWidget);
+    expect(find.text('Start here'), findsOneWidget);
+    expect(find.text('Capture'), findsOneWidget);
+    expect(find.text('Review'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
+  });
+
   testWidgets('voice assistant starter deck loads a smart command', (
     WidgetTester tester,
   ) async {
