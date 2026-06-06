@@ -226,6 +226,38 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   bool _wakeAutoListenQueued = false;
   bool _handsfreeSessionActive = false;
 
+  String get _speechStateLabel {
+    if (_isInitializingSpeech) {
+      return 'Preparing';
+    }
+    if (_isListening) {
+      return 'Listening';
+    }
+    if (_speechError != null) {
+      return 'Needs attention';
+    }
+    if (_speechStatus.toLowerCase().contains('review')) {
+      return 'Review';
+    }
+    return 'Ready';
+  }
+
+  Color _speechStateColor(ThemeData theme) {
+    if (_isInitializingSpeech) {
+      return theme.colorScheme.tertiary;
+    }
+    if (_isListening) {
+      return theme.colorScheme.error;
+    }
+    if (_speechError != null) {
+      return theme.colorScheme.errorContainer;
+    }
+    if (_speechStatus.toLowerCase().contains('review')) {
+      return theme.colorScheme.secondary;
+    }
+    return theme.colorScheme.primary;
+  }
+
   Future<void> _openVoiceGuidePdf() async {
     final file = File(_voiceGuidePdfPath);
     if (!await file.exists()) {
@@ -2146,10 +2178,60 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       ),
                     ],
                   ),
-                  Text(
-                    _speechStatus,
-                    style: theme.textTheme.bodySmall,
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _speechStateColor(theme).withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Chip(
+                              label: Text(_speechStateLabel),
+                              side: BorderSide.none,
+                              backgroundColor:
+                                  _speechStateColor(theme).withValues(alpha: 0.16),
+                            ),
+                            if (_usingWindowsVoiceTyping)
+                              Chip(
+                                label: const Text('Windows dictation'),
+                                side: BorderSide.none,
+                                backgroundColor: theme.colorScheme.secondaryContainer
+                                    .withValues(alpha: 0.72),
+                              ),
+                            if (!_usingWindowsVoiceTyping &&
+                                !_isInitializingSpeech &&
+                                !_isListening)
+                              Chip(
+                                label: const Text('Review mode'),
+                                side: BorderSide.none,
+                                backgroundColor: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.72),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _speechStatus,
+                          style: theme.textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                   if (_speechError != null) ...[
                     const SizedBox(height: 8),
