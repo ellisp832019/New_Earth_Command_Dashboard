@@ -2,39 +2,170 @@
   "commands": [
     {
       "id": "open_dashboard",
+      "group": "Core Flow",
       "label": "Dashboard Home",
-      "type": "open_url",
-      "target": "http://localhost:3000"
+      "description": "Return to the main dashboard shell.",
+      "type": "open_route",
+      "target": "/dashboard"
     },
     {
       "id": "start_meeting",
+      "group": "Core Flow",
       "label": "Start Meeting",
+      "description": "Create the meeting folder and notes bundle.",
       "type": "script",
       "target": "scripts/create_meeting.py"
     },
     {
       "id": "start_build_session",
+      "group": "Core Flow",
       "label": "Start Build Session",
+      "description": "Create today's build log inside the module pack.",
       "type": "script",
       "target": "scripts/create_build_session.py"
     },
     {
       "id": "create_codex_handoff",
+      "group": "Core Flow",
       "label": "Create Codex Handoff",
+      "description": "Generate a fresh handoff markdown file for Codex.",
       "type": "script",
       "target": "scripts/create_codex_handoff.py"
     },
     {
       "id": "open_microgrow",
+      "group": "Project Shortcuts",
       "label": "MicroGrow",
+      "description": "Open the MicroGrow repo or working folder.",
       "type": "open_folder",
       "target_key": "projects.microgrow"
     },
     {
+      "id": "open_biocalm",
+      "group": "Project Shortcuts",
+      "label": "BioCalm",
+      "description": "Open the BioCalm repo or working folder.",
+      "type": "open_folder",
+      "target_key": "projects.biocalm"
+    },
+    {
+      "id": "open_new_earth_living",
+      "group": "Project Shortcuts",
+      "label": "New Earth Living",
+      "description": "Open the New Earth Living app working folder.",
+      "type": "open_folder",
+      "target_key": "projects.new_earth_living"
+    },
+    {
+      "id": "open_launchpad",
+      "group": "Project Shortcuts",
+      "label": "Launchpad",
+      "description": "Open the crowdfunding workspace in the dashboard.",
+      "type": "open_route",
+      "target": "/launchpad"
+    },
+    {
+      "id": "open_projects",
+      "group": "Dashboard Pages",
+      "label": "Projects",
+      "description": "Open the project intelligence workspace.",
+      "type": "open_route",
+      "target": "/projects-intelligence"
+    },
+    {
+      "id": "open_meetings",
+      "group": "Dashboard Pages",
+      "label": "Meetings",
+      "description": "Open the meeting dashboard.",
+      "type": "open_route",
+      "target": "/more/meetings"
+    },
+    {
+      "id": "open_planner",
+      "group": "Dashboard Pages",
+      "label": "Planner",
+      "description": "Open the daily planning area.",
+      "type": "open_route",
+      "target": "/planner"
+    },
+    {
+      "id": "open_journal",
+      "group": "Dashboard Pages",
+      "label": "Journal",
+      "description": "Open the build journal.",
+      "type": "open_route",
+      "target": "/journal"
+    },
+    {
+      "id": "knowledge_search",
+      "group": "Research & Ops",
+      "label": "Knowledge Search",
+      "description": "Open the local knowledge library and search tools.",
+      "type": "open_route",
+      "target": "/more/knowledge-library"
+    },
+    {
+      "id": "finance",
+      "group": "Research & Ops",
+      "label": "Finance",
+      "description": "Open the Treasury dashboard.",
+      "type": "open_route",
+      "target": "/treasury"
+    },
+    {
+      "id": "assets",
+      "group": "Research & Ops",
+      "label": "Assets",
+      "description": "Open the asset intelligence workspace.",
+      "type": "open_route",
+      "target": "/assets"
+    },
+    {
+      "id": "obs_recording",
+      "group": "Recording",
+      "label": "OBS Recording",
+      "description": "Shows the configured start and stop hotkeys for OBS.",
+      "type": "info"
+    },
+    {
       "id": "open_obsidian",
+      "group": "Setup",
       "label": "Obsidian Vault",
+      "description": "Open the local Obsidian vault folder.",
       "type": "open_folder",
       "target_key": "obsidian_vault_path"
+    },
+    {
+      "id": "open_command_deck_pack",
+      "group": "Setup",
+      "label": "Command Pack",
+      "description": "Open the module pack folder that holds scripts and docs.",
+      "type": "open_folder",
+      "target_key": "command_deck_path"
+    },
+    {
+      "id": "open_settings",
+      "group": "Setup",
+      "label": "Settings",
+      "description": "Open the local paths and integration settings.",
+      "type": "open_route",
+      "target": "/settings"
+    },
+    {
+      "id": "open_config_folder",
+      "group": "Setup",
+      "label": "Config Folder",
+      "description": "Open the Command Deck config folder for review.",
+      "type": "open_folder",
+      "target_key": "config"
+    },
+    {
+      "id": "open_voice_assistant",
+      "group": "Dashboard Pages",
+      "label": "Voice Assistant",
+      "description": "Open the voice assistant entry point.",
+      "type": "open_route",
+      "target": "/voice-assistant"
     }
   ]
 }

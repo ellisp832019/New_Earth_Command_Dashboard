@@ -3,7 +3,14 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
-enum CommandDeckCommandType { openUrl, openFolder, script, unknown }
+enum CommandDeckCommandType {
+  openUrl,
+  openFolder,
+  openRoute,
+  script,
+  info,
+  unknown,
+}
 
 class CommandDeckCommand {
   const CommandDeckCommand({
@@ -12,7 +19,9 @@ class CommandDeckCommand {
     required this.type,
     required this.target,
     required this.source,
+    required this.group,
     this.targetKey,
+    this.description,
     this.requiresConfirmation = false,
   });
 
@@ -21,17 +30,25 @@ class CommandDeckCommand {
     String source,
   ) {
     final typeValue = json['type']?.toString().trim().toLowerCase() ?? '';
+    final rawGroup = json['group']?.toString().trim();
+    final rawDescription = json['description']?.toString().trim();
+    final rawTargetKey = json['target_key']?.toString().trim();
+    final group = rawGroup == null || rawGroup.isEmpty ? 'General' : rawGroup;
     return CommandDeckCommand(
       id: json['id']?.toString().trim() ?? '',
       label: json['label']?.toString().trim() ?? 'Untitled command',
       type: switch (typeValue) {
         'open_url' => CommandDeckCommandType.openUrl,
         'open_folder' => CommandDeckCommandType.openFolder,
+        'open_route' => CommandDeckCommandType.openRoute,
         'script' => CommandDeckCommandType.script,
+        'info' => CommandDeckCommandType.info,
         _ => CommandDeckCommandType.unknown,
       },
       target: json['target']?.toString().trim() ?? '',
-      targetKey: json['target_key']?.toString().trim(),
+      targetKey: rawTargetKey?.isNotEmpty == true ? rawTargetKey : null,
+      description: rawDescription?.isNotEmpty == true ? rawDescription : null,
+      group: group,
       requiresConfirmation: json['requires_confirmation'] == true,
       source: source,
     );
@@ -42,17 +59,77 @@ class CommandDeckCommand {
   final CommandDeckCommandType type;
   final String target;
   final String? targetKey;
+  final String group;
+  final String? description;
   final bool requiresConfirmation;
   final String source;
 
-  bool get isSafe => !requiresConfirmation;
+  bool get isSafe =>
+      !requiresConfirmation && type != CommandDeckCommandType.unknown;
+
+  bool get hasTarget =>
+      target.trim().isNotEmpty || targetKey?.trim().isNotEmpty == true;
 
   String get typeLabel => switch (type) {
     CommandDeckCommandType.openUrl => 'Open URL',
     CommandDeckCommandType.openFolder => 'Open folder',
+    CommandDeckCommandType.openRoute => 'Open page',
     CommandDeckCommandType.script => 'Run script',
+    CommandDeckCommandType.info => 'Info card',
     CommandDeckCommandType.unknown => 'Unknown',
   };
+}
+
+class CommandDeckCommandGroup {
+  const CommandDeckCommandGroup({
+    required this.name,
+    required this.commands,
+  });
+
+  final String name;
+  final List<CommandDeckCommand> commands;
+}
+
+class CommandDeckActionLogEntry {
+  const CommandDeckActionLogEntry({
+    required this.timestamp,
+    required this.commandId,
+    required this.label,
+    required this.type,
+    required this.group,
+    required this.source,
+    required this.configSource,
+  });
+
+  factory CommandDeckActionLogEntry.fromJson(Map<String, dynamic> json) {
+    return CommandDeckActionLogEntry(
+      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      commandId: json['command_id']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      group: json['group']?.toString() ?? 'General',
+      source: json['source']?.toString() ?? '',
+      configSource: json['config_source']?.toString() ?? '',
+    );
+  }
+
+  final DateTime timestamp;
+  final String commandId;
+  final String label;
+  final String type;
+  final String group;
+  final String source;
+  final String configSource;
+
+  String get timestampLabel {
+    final date = timestamp.toLocal();
+    final paddedMonth = date.month.toString().padLeft(2, '0');
+    final paddedDay = date.day.toString().padLeft(2, '0');
+    final paddedHour = date.hour.toString().padLeft(2, '0');
+    final paddedMinute = date.minute.toString().padLeft(2, '0');
+    return '${date.year}-$paddedMonth-$paddedDay $paddedHour:$paddedMinute';
+  }
 }
 
 class CommandDeckConfig {
@@ -152,6 +229,24 @@ class CommandDeckRegistry {
 
   final List<CommandDeckCommand> commands;
   final String source;
+
+  List<CommandDeckCommandGroup> get groupedCommands {
+    final map = <String, List<CommandDeckCommand>>{};
+    for (final command in commands) {
+      map.putIfAbsent(command.group, () => <CommandDeckCommand>[]).add(
+        command,
+      );
+    }
+
+    return map.entries
+        .map(
+          (entry) => CommandDeckCommandGroup(
+            name: entry.key,
+            commands: List<CommandDeckCommand>.unmodifiable(entry.value),
+          ),
+        )
+        .toList(growable: false);
+  }
 }
 
 class CommandDeckWorkspace {
@@ -161,6 +256,8 @@ class CommandDeckWorkspace {
     required this.registry,
     required this.configPath,
     required this.registryPath,
+    required this.validationIssues,
+    required this.actionLog,
   });
 
   final Directory moduleRoot;
@@ -168,6 +265,8 @@ class CommandDeckWorkspace {
   final CommandDeckRegistry registry;
   final String configPath;
   final String registryPath;
+  final List<String> validationIssues;
+  final List<CommandDeckActionLogEntry> actionLog;
 }
 
 class CommandDeckService {
@@ -230,6 +329,8 @@ class CommandDeckService {
       jsonDecode(registrySource) as Map<String, dynamic>,
       registryFile.existsSync() ? registryFile.path : registryExampleFile.path,
     );
+    final validationIssues = validateRegistry(registry);
+    final actionLog = await _readRecentActionLog(moduleRoot);
 
     return CommandDeckWorkspace(
       moduleRoot: moduleRoot,
@@ -241,13 +342,15 @@ class CommandDeckService {
       registryPath: registryFile.existsSync()
           ? registryFile.path
           : registryExampleFile.path,
+      validationIssues: validationIssues,
+      actionLog: actionLog,
     );
   }
 
   Future<void> executeCommand(
     CommandDeckCommand command,
     CommandDeckConfig config,
-  ) async {
+    {Future<void> Function(String route)? onNavigate}) async {
     switch (command.type) {
       case CommandDeckCommandType.openUrl:
         await _openUrl(command.target);
@@ -255,8 +358,16 @@ class CommandDeckService {
       case CommandDeckCommandType.openFolder:
         await _openFolder(_resolveTarget(command, config));
         break;
+      case CommandDeckCommandType.openRoute:
+        if (onNavigate == null) {
+          throw StateError('A route callback is required for page commands.');
+        }
+        await onNavigate(command.target);
+        break;
       case CommandDeckCommandType.script:
         await _runScript(command, config);
+        break;
+      case CommandDeckCommandType.info:
         break;
       case CommandDeckCommandType.unknown:
         throw UnsupportedError('Unsupported command type: ${command.type}');
@@ -317,6 +428,35 @@ class CommandDeckService {
     }
 
     return null;
+  }
+
+  List<String> validateRegistry(CommandDeckRegistry registry) {
+    final issues = <String>[];
+    final seenIds = <String>{};
+
+    for (final command in registry.commands) {
+      if (command.id.trim().isEmpty) {
+        issues.add('A command is missing an id.');
+      } else if (!seenIds.add(command.id)) {
+        issues.add('Duplicate command id: ${command.id}');
+      }
+
+      if (command.label.trim().isEmpty) {
+        issues.add('Command ${command.id} is missing a label.');
+      }
+
+      if (command.type == CommandDeckCommandType.unknown) {
+        issues.add('Command ${command.id} has an unsupported type.');
+      }
+
+      if (command.type != CommandDeckCommandType.info &&
+          !command.hasTarget &&
+          command.type != CommandDeckCommandType.unknown) {
+        issues.add('Command ${command.id} does not have a target.');
+      }
+    }
+
+    return issues;
   }
 
   Future<void> _openUrl(String url) async {
@@ -407,6 +547,7 @@ class CommandDeckService {
       'command_id': command.id,
       'label': command.label,
       'type': command.type.name,
+      'group': command.group,
       'source': command.source,
       'config_source': config.source,
     };
@@ -415,5 +556,47 @@ class CommandDeckService {
       mode: FileMode.append,
       flush: true,
     );
+  }
+
+  Future<List<CommandDeckActionLogEntry>> _readRecentActionLog(
+    Directory moduleRoot, {
+    int limit = 6,
+  }) async {
+    final logFile = File(
+      path.join(
+        moduleRoot.path,
+        'dashboard_module',
+        'data',
+        'runtime',
+        'command_deck_action_log.jsonl',
+      ),
+    );
+    if (!await logFile.exists()) {
+      return const [];
+    }
+
+    final lines = await logFile.readAsLines();
+    final entries = <CommandDeckActionLogEntry>[];
+    for (final line in lines.reversed) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is Map<String, dynamic>) {
+          entries.add(CommandDeckActionLogEntry.fromJson(decoded));
+        }
+      } catch (_) {
+        // Ignore malformed log lines and keep the recent history view usable.
+      }
+
+      if (entries.length == limit) {
+        break;
+      }
+    }
+
+    return entries;
   }
 }

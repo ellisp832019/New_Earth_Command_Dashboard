@@ -24,6 +24,12 @@ config/command_deck.json
 
 Edit paths for your machine.
 
+Recommended first edit:
+
+- replace the placeholder `projects.*` paths with your actual repo folders
+- confirm `meetings_path`, `obsidian_vault_path`, and `command_deck_path`
+- leave `dashboard_url` on the local dashboard address unless you run it elsewhere
+
 ## 3. Test scripts
 
 ```bash
@@ -47,6 +53,15 @@ The dashboard page lives at:
 ```text
 /more/command-deck
 ```
+
+## 4a. Check the virtual deck first
+
+Before wiring Stream Deck hardware, open the Command Deck page and confirm:
+
+- grouped command cards render
+- the setup cards point to local paths
+- the OBS card shows the configured hotkeys
+- recent actions appear after a command runs
 
 ## 5. Give Codex the handoff
 

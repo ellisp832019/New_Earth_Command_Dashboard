@@ -4,6 +4,8 @@ A full repo module for building a physical and software command deck for the New
 
 The goal is to turn a Stream Deck, keyboard shortcuts, OBS, Google Meet, Omega OS, MicroGrow, Codex, and future custom ESP32-S3 hardware into one calm, local-first mission-control system.
 
+The first working version is the virtual Command Deck page inside the dashboard at `/more/command-deck`.
+
 ## What this repo gives you
 
 - Full project vision and architecture
@@ -20,6 +22,7 @@ The goal is to turn a Stream Deck, keyboard shortcuts, OBS, Google Meet, Omega O
 - Custom ESP32-S3 Command Core roadmap
 - Scripts and config templates
 - Codex build instructions
+- A virtual command deck page that can group local routes, folders, and scripts
 
 ## Recommended repo location
 
@@ -65,3 +68,11 @@ Build a software-only version first:
 - Codex handoff files are generated
 
 Then add physical hardware.
+
+## Setup flow
+
+1. Copy `config/command_deck.example.json` to `config/command_deck.json`.
+2. Replace placeholder paths with your local machine paths.
+3. Review `config/command_registry.example.json` to see the grouped virtual deck.
+4. Open `/more/command-deck` in the dashboard and confirm the cards show up.
+5. Keep private paths out of git and store only safe examples in the repo.
