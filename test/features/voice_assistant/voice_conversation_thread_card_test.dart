@@ -21,7 +21,8 @@ void main() {
               type: VoiceCommandType.project,
               projectName: 'MicroGrow',
               title: 'Dashboard voice workflow',
-              transcript: 'Project: Create a project for the dashboard voice workflow',
+              transcript:
+                  'Project: Create a project for the dashboard voice workflow',
               entryCount: 2,
             ),
             onResumeThread: () {
@@ -38,15 +39,16 @@ void main() {
 
     expect(find.text('Remembered thread'), findsOneWidget);
     expect(find.text('Saved entries: 2'), findsOneWidget);
-    expect(find.text('Latest capture'), findsOneWidget);
+    expect(find.text('Latest saved step'), findsOneWidget);
     expect(find.text('Dashboard voice workflow'), findsOneWidget);
+    expect(find.text('Thread: MicroGrow · Project'), findsOneWidget);
     expect(find.text('Type: Project'), findsOneWidget);
     expect(find.text('Project: MicroGrow'), findsOneWidget);
-    expect(find.text('Resume thread'), findsOneWidget);
+    expect(find.text('Continue thread'), findsOneWidget);
     expect(find.text('Copy summary'), findsOneWidget);
     expect(find.text('Start fresh'), findsOneWidget);
 
-    await tester.tap(find.text('Resume thread'));
+    await tester.tap(find.text('Continue thread'));
     await tester.pumpAndSettle();
     expect(resumed, isTrue);
 

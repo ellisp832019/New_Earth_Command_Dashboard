@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import sys
+import shutil
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -63,6 +64,7 @@ def save_log(transcript: str, output_text: str) -> Path:
 
 
 def _load_transcription_stack() -> tuple[Any, Any, Any]:
+    _ensure_ffmpeg_on_path()
     try:
         import numpy as np  # type: ignore
         import sounddevice as sd  # type: ignore
@@ -74,6 +76,35 @@ def _load_transcription_stack() -> tuple[Any, Any, Any]:
         ) from exc
 
     return np, sd, WhisperModel
+
+
+def _ensure_ffmpeg_on_path() -> None:
+    if shutil.which("ffmpeg") is not None:
+        return
+
+    candidates = [
+        Path(os.environ.get("LOCALAPPDATA", ""))
+        / "Microsoft"
+        / "WinGet"
+        / "Links"
+        / "ffmpeg.exe",
+        Path(os.environ.get("ProgramData", ""))
+        / "chocolatey"
+        / "bin"
+        / "ffmpeg.exe",
+        Path(os.environ.get("ProgramFiles", "")) / "ffmpeg" / "bin" / "ffmpeg.exe",
+        Path(os.environ.get("ProgramFiles(x86)", ""))
+        / "ffmpeg"
+        / "bin"
+        / "ffmpeg.exe",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            os.environ["PATH"] = (
+                str(candidate.parent) + os.pathsep + os.environ.get("PATH", "")
+            )
+            return
 
 
 def _record_audio(duration_seconds: int, samplerate: int = 16000):

@@ -47,7 +47,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Pick up the latest saved step, copy the thread summary, or start a fresh thread.',
+              'Pick up the remembered thread, copy the summary, or start fresh when you need a clean slate.',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -63,7 +63,9 @@ class VoiceConversationThreadCard extends StatelessWidget {
                 Chip(
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  label: Text('Thread: ${conversationContext.label}'),
+                  label: Text(
+                    'Thread: ${conversationContext.threadScopeLabel}',
+                  ),
                 ),
                 Chip(
                   visualDensity: VisualDensity.compact,
@@ -77,15 +79,13 @@ class VoiceConversationThreadCard extends StatelessWidget {
                   Chip(
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    label: Text(
-                      'Project: ${conversationContext.projectName}',
-                    ),
+                    label: Text('Project: ${conversationContext.projectName}'),
                   ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
-              'Latest capture',
+              'Latest saved step',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
@@ -93,9 +93,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              conversationContext.title?.isNotEmpty == true
-                  ? conversationContext.title!
-                  : conversationContext.label,
+              conversationContext.latestEntryLabel,
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 10),
@@ -107,7 +105,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
                   key: const Key('voiceContinueThreadButton'),
                   onPressed: onResumeThread,
                   icon: const Icon(Icons.play_arrow_outlined),
-                  label: const Text('Resume thread'),
+                  label: const Text('Continue thread'),
                 ),
                 OutlinedButton.icon(
                   key: const Key('voiceCopyThreadSummaryButton'),

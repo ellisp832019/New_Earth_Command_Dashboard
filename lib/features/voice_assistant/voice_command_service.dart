@@ -1443,15 +1443,11 @@ Rules:
       return null;
     }
 
-    final parts = <String>[
-      if (conversationContext.projectName != null &&
-          conversationContext.projectName!.isNotEmpty)
-        conversationContext.projectName!,
-      conversationContext.type?.label ?? conversationContext.label,
-      if (conversationContext.title != null &&
-          conversationContext.title!.isNotEmpty)
-        conversationContext.title!,
-    ];
+    final parts = <String>[conversationContext.threadScopeLabel];
+    final latestEntry = conversationContext.latestEntryLabel.trim();
+    if (latestEntry.isNotEmpty) {
+      parts.add(latestEntry);
+    }
 
     return parts.join(' · ');
   }
@@ -1464,7 +1460,7 @@ Rules:
         if (conversationContext.projectName != null &&
             conversationContext.projectName!.isNotEmpty)
           'project ${conversationContext.projectName}',
-        'thread ${conversationContext.label}',
+        'thread ${conversationContext.threadScopeLabel}',
         if (conversationContext.entryCount > 0)
           '${conversationContext.entryCount} entry${conversationContext.entryCount == 1 ? '' : 's'}',
       ];
@@ -1489,7 +1485,7 @@ Rules:
     final highlights = <String>[];
 
     if (conversationContext != null && conversationContext.hasMemory) {
-      highlights.add('Thread: ${conversationContext.label}');
+      highlights.add('Thread: ${conversationContext.threadScopeLabel}');
       if (conversationContext.projectName != null &&
           conversationContext.projectName!.isNotEmpty) {
         highlights.add('Project: ${conversationContext.projectName}');

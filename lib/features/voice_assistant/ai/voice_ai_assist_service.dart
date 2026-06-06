@@ -100,7 +100,7 @@ class NoOpVoiceAiAssistService implements VoiceAiAssistService {
           ? 'AI assist is not connected yet. Review the transcript manually before saving.'
           : 'AI assist is not connected yet.',
       nextStep: hasTranscript
-          ? 'Use the current review flow to confirm the type, title, and project.'
+          ? 'Use the current review flow to confirm the type, title, and project before saving it locally.'
           : 'Capture a transcript first, then review it here.',
       suggestedTitle: fallbackTitle,
       suggestedType: request.selectedType ?? request.conversationContext?.type,
@@ -126,7 +126,7 @@ class NoOpVoiceAiAssistService implements VoiceAiAssistService {
           ? 'AI assist is not connected yet. Keep answering the wizard manually.'
           : 'AI assist is not connected yet.',
       nextStep: cleanedTranscript.isNotEmpty
-          ? 'Continue the manual wizard with the current answer.'
+          ? 'Continue the manual wizard with the current answer, then review the assembled draft.'
           : 'Answer the current wizard question manually.',
       suggestedTitle: _buildFallbackTitle(cleanedTranscript),
       suggestedType: request.selectedType,
@@ -151,7 +151,7 @@ class NoOpVoiceAiAssistService implements VoiceAiAssistService {
           ? 'AI assist is not connected yet, but the current thread can still be reviewed manually.'
           : 'AI assist is not connected yet.',
       nextStep: hasMemory
-          ? 'Use the remembered thread and review the next manual action.'
+          ? 'Use the remembered thread, review the next manual action, and keep it local.'
           : 'Start a new capture or choose a starter template.',
       suggestedTitle: _buildFallbackTitle(request.transcript),
       suggestedType: request.selectedType ?? request.conversationContext?.type,

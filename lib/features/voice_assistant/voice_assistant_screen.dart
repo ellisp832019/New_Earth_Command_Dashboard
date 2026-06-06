@@ -1471,14 +1471,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     final parts = <String>[
-      'Thread: ${conversationContext.label}',
+      'Thread: ${conversationContext.threadScopeLabel}',
       'Summary: ${conversationContext.summary}',
       if (conversationContext.projectName != null &&
           conversationContext.projectName!.isNotEmpty)
         'Project: ${conversationContext.projectName}',
-      if (conversationContext.title != null &&
-          conversationContext.title!.isNotEmpty)
-        'Latest: ${conversationContext.title}',
+      'Latest: ${conversationContext.latestEntryLabel}',
     ];
 
     await Clipboard.setData(ClipboardData(text: parts.join('\n')));
@@ -2030,13 +2028,21 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Briefing', style: theme.textTheme.titleSmall),
+                    Text('Review briefing', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Read the captured command, review the suggested path, then save it locally.',
+                      style: theme.textTheme.bodySmall,
+                    ),
                     const SizedBox(height: 6),
-                    Text('What I heard', style: theme.textTheme.labelSmall),
+                    Text('Captured command', style: theme.textTheme.labelSmall),
                     const SizedBox(height: 4),
                     Text(briefing.summary, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 6),
-                    Text('Next step', style: theme.textTheme.labelSmall),
+                    Text(
+                      'Recommended next step',
+                      style: theme.textTheme.labelSmall,
+                    ),
                     const SizedBox(height: 4),
                     Text(briefing.nextStep, style: theme.textTheme.bodySmall),
                     if (briefing.projectContext != null ||
@@ -2056,6 +2062,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         briefing.memoryHighlights.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
+                        'Remembered thread',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
                         briefing.memorySummary ??
                             'Gaia is building memory from the current thread.',
                         style: theme.textTheme.bodySmall,
@@ -2074,6 +2085,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     if (briefing.plannerSummary != null ||
                         briefing.plannerSteps.isNotEmpty) ...[
                       const SizedBox(height: 10),
+                      Text(
+                        'Suggested sequence',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         briefing.plannerSummary ??
                             'Gaia is ready to suggest the next useful move.',
@@ -2096,7 +2112,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     ],
                     const SizedBox(height: 10),
                     Text(
-                      'AI Assist',
+                      'AI Assist preview',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.secondary,
                         fontWeight: FontWeight.w700,

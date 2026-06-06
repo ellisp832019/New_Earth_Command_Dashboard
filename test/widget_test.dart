@@ -1955,10 +1955,11 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     appRouter.go('/voice-assistant');
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     final transcriptField = tester.widget<TextField>(
       find.byKey(const Key('voiceTranscriptField')),
@@ -1969,10 +1970,10 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(
       transcriptField.controller?.text,
@@ -1983,16 +1984,16 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
-    expect(find.text('Briefing'), findsOneWidget);
-    expect(find.text('AI Assist'), findsOneWidget);
+    expect(find.text('Review briefing'), findsOneWidget);
+    expect(find.text('AI Assist preview'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       findsOneWidget,

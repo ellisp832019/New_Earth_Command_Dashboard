@@ -332,6 +332,29 @@ class VoiceConversationContext {
   final String? transcript;
   final int entryCount;
 
+  String get threadScopeLabel {
+    final parts = <String>[
+      if (projectName != null && projectName!.isNotEmpty) projectName!,
+      type?.label ?? label,
+    ];
+
+    return parts.join(' · ');
+  }
+
+  String get latestEntryLabel {
+    final latestTitle = title?.trim();
+    if (latestTitle != null && latestTitle.isNotEmpty) {
+      return latestTitle;
+    }
+
+    final latestTranscript = transcript?.trim();
+    if (latestTranscript != null && latestTranscript.isNotEmpty) {
+      return latestTranscript;
+    }
+
+    return label;
+  }
+
   bool get hasMemory =>
       type != null || projectId != null || projectName != null || title != null;
 }
