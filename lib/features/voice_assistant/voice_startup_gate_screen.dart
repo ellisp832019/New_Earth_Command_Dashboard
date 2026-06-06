@@ -61,97 +61,113 @@ class _VoiceStartupGateScreenState
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Gaia is waiting for your headset',
-                    style: theme.textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(widget.result.message, style: theme.textTheme.bodyLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Gaia keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 20),
-                  if (widget.result.devices.isNotEmpty) ...[
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Detected audio inputs',
-                      style: theme.textTheme.titleMedium,
+                      'Gaia is waiting for your headset',
+                      style: theme.textTheme.headlineMedium,
                     ),
+                    const SizedBox(height: 12),
+                    Text(widget.result.message, style: theme.textTheme.bodyLarge),
                     const SizedBox(height: 8),
-                    ...widget.result.devices.map(
-                      (device) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            device.isHeadsetLike
-                                ? Icons.headphones_outlined
-                                : Icons.mic_outlined,
+                    Text(
+                      'Gaia keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 20),
+                    if (widget.result.devices.isNotEmpty) ...[
+                      Text(
+                        'Detected audio inputs',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      ...widget.result.devices.map(
+                        (device) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              device.isHeadsetLike
+                                  ? Icons.headphones_outlined
+                                  : Icons.mic_outlined,
+                            ),
+                            title: Text(device.name),
+                            subtitle: device.identifier.isEmpty
+                                ? null
+                                : Text(device.identifier),
                           ),
-                          title: Text(device.name),
-                          subtitle: device.identifier.isEmpty
-                              ? null
-                              : Text(device.identifier),
                         ),
                       ),
+                    ],
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () {
+                            ref.invalidate(voiceStartupGateProvider);
+                          },
+                          icon: const Icon(Icons.refresh_outlined),
+                          label: const Text('Retry'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            ref.invalidate(voiceStartupGateProvider);
+                          },
+                          icon: const Icon(Icons.headset_outlined),
+                          label: const Text('Check again'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            ref
+                                .read(voiceStartupGateBypassProvider.notifier)
+                                .allowBypass();
+                          },
+                          icon: const Icon(Icons.headset_mic_outlined),
+                          label: const Text('Use headset anyway'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            ref
+                                .read(settingsControllerProvider)
+                                .setVoicePreferences(
+                                  voiceAssistantEnabled: false,
+                                );
+                          },
+                          icon: const Icon(Icons.volume_off_outlined),
+                          label: const Text('Continue without Voice'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Gaia will continue only after it sees a connected headset or headset microphone, but it keeps rechecking while this screen is open.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'If your headset shows up as a plain microphone, you can still open Gaia and use it as the input device.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'If you prefer, disable the voice assistant now and re-enable it later in Settings.',
+                      style: theme.textTheme.bodySmall,
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      FilledButton.icon(
-                        onPressed: () {
-                          ref.invalidate(voiceStartupGateProvider);
-                        },
-                        icon: const Icon(Icons.refresh_outlined),
-                        label: const Text('Retry'),
-                      ),
-                      TextButton.icon(
-                        onPressed: () {
-                          ref.invalidate(voiceStartupGateProvider);
-                        },
-                        icon: const Icon(Icons.headset_outlined),
-                        label: const Text('Check again'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          ref
-                              .read(settingsControllerProvider)
-                              .setVoicePreferences(
-                                voiceAssistantEnabled: false,
-                              );
-                        },
-                        icon: const Icon(Icons.volume_off_outlined),
-                        label: const Text('Continue without Voice'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Gaia will continue only after it sees a connected headset or headset microphone, but it keeps rechecking while this screen is open.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'If you prefer, disable the voice assistant now and re-enable it later in Settings.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

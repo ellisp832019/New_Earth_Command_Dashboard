@@ -45,5 +45,12 @@ void main() {
       ).isHeadsetLike,
       isFalse,
     );
+    expect(
+      const VoiceInputDevice(
+        name: 'USB Audio Headphones',
+        identifier: '',
+      ).isHeadsetLike,
+      isTrue,
+    );
   });
 }

@@ -24,13 +24,20 @@ class VoiceInputDevice {
     final lowerId = identifier.toLowerCase();
     const keywords = <String>[
       'headset',
+      'headphone',
+      'headphones',
       'bluetooth',
       'hands-free',
       'hands free',
       'airpods',
       'earbud',
       'earbuds',
+      'earphone',
+      'earphones',
+      'buds',
+      'pod',
       'wireless',
+      'usb audio',
       'bt ',
       'bthenum',
     ];

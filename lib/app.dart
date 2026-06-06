@@ -79,7 +79,39 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
     }
 
     return settingsSnapshot.when(
+      data: (snapshot) {
+        if (ref.watch(voiceStartupGateBypassProvider)) {
+          return buildAppRouter();
+        }
+
+        if (!snapshot.settings.voiceAssistantEnabled) {
+          return buildAppRouter();
+        }
+
+        final startupGate = ref.watch(voiceStartupGateProvider);
+        return startupGate.when(
+          loading: buildDefaultGate,
+          error: (error, stackTrace) => buildGateScreen(
+            const VoiceStartupGateResult(
+              isReady: false,
+              message:
+                  'Gaia could not check the headset connection right now. Retry once the device is connected.',
+              devices: <VoiceInputDevice>[],
+            ),
+          ),
+          data: (VoiceStartupGateResult result) {
+            if (!result.isReady) {
+              return buildGateScreen(result);
+            }
+            return buildAppRouter();
+          },
+        );
+      },
       loading: () {
+        if (ref.watch(voiceStartupGateBypassProvider)) {
+          return buildAppRouter();
+        }
+
         final startupGate = ref.watch(voiceStartupGateProvider);
         return startupGate.when(
           loading: buildDefaultGate,
@@ -100,27 +132,7 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
         );
       },
       error: (error, stackTrace) {
-        final startupGate = ref.watch(voiceStartupGateProvider);
-        return startupGate.when(
-          loading: buildDefaultGate,
-          error: (error, stackTrace) => buildGateScreen(
-            const VoiceStartupGateResult(
-              isReady: false,
-              message:
-                  'Gaia could not check the headset connection right now. Retry once the device is connected.',
-              devices: <VoiceInputDevice>[],
-            ),
-          ),
-          data: (VoiceStartupGateResult result) {
-            if (!result.isReady) {
-              return buildGateScreen(result);
-            }
-            return buildAppRouter();
-          },
-        );
-      },
-      data: (snapshot) {
-        if (!snapshot.settings.voiceAssistantEnabled) {
+        if (ref.watch(voiceStartupGateBypassProvider)) {
           return buildAppRouter();
         }
 

@@ -81,17 +81,23 @@ void main() {
     }).toList();
   }
 
-  Widget buildTestApp({Widget? child}) {
+  Widget buildTestApp({
+    Widget? child,
+    VoiceStartupGateResult? startupGateResult,
+    bool voiceAssistantEnabled = false,
+  }) {
     return ProviderScope(
       overrides: [
         databaseReadyProvider.overrideWith((ref) async {}),
         appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
         voiceStartupGateProvider.overrideWith(
-          (ref) async => const VoiceStartupGateResult(
-            isReady: true,
-            message: 'Test harness bypasses the voice startup gate.',
-            devices: <VoiceInputDevice>[],
-          ),
+          (ref) async =>
+              startupGateResult ??
+              const VoiceStartupGateResult(
+                isReady: true,
+                message: 'Test harness bypasses the voice startup gate.',
+                devices: <VoiceInputDevice>[],
+              ),
         ),
         dashboardSnapshotProvider.overrideWith(
           (ref) async => DashboardSnapshot(
@@ -308,7 +314,7 @@ void main() {
               showProjectsWorkspaceSnapshot: true,
               dailyTopTaskLimit: 3,
               voiceRepliesEnabled: false,
-              voiceAssistantEnabled: false,
+              voiceAssistantEnabled: voiceAssistantEnabled,
               preferredTtsVoiceName: null,
               preferredTtsVoiceLocale: null,
               preferredTtsVoiceGender: null,
@@ -1848,6 +1854,36 @@ void main() {
     await pumpUntilIdle(tester);
     expect(find.text('Related Project'), findsOneWidget);
     expect(find.text('No project selected'), findsOneWidget);
+  });
+
+  testWidgets('voice startup gate can be bypassed for a headset-like device', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        startupGateResult: const VoiceStartupGateResult(
+          isReady: false,
+          message: 'Checking for a connected headset...',
+          devices: <VoiceInputDevice>[
+            VoiceInputDevice(
+              name: 'USB Audio Device',
+              identifier: 'USB\\ROOT',
+            ),
+          ],
+        ),
+        voiceAssistantEnabled: true,
+      ),
+    );
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Gaia is waiting for your headset'), findsOneWidget);
+    expect(find.text('Use headset anyway'), findsOneWidget);
+
+    await tester.tap(find.text('Use headset anyway'));
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Dashboard'), findsWidgets);
+    expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('voice assistant starter deck loads a smart command', (
