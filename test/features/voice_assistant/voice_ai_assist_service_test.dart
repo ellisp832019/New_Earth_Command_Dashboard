@@ -47,14 +47,61 @@ class _FakeVoiceAiAssistService implements VoiceAiAssistService {
   }
 }
 
+class _FakeVoiceAiAssistAdapter implements VoiceAiAssistAdapter {
+  _FakeVoiceAiAssistAdapter(this.response);
+
+  final VoiceAiAssistResponse response;
+
+  @override
+  Future<VoiceAiAssistResponse> guideWizard(
+    VoiceAiAssistRequest request,
+  ) async {
+    return response;
+  }
+
+  @override
+  Future<VoiceAiAssistResponse> reviewTranscript(
+    VoiceAiAssistRequest request,
+  ) async {
+    return response;
+  }
+
+  @override
+  Future<VoiceAiAssistResponse> summarizeMemory(
+    VoiceAiAssistRequest request,
+  ) async {
+    return response;
+  }
+}
+
 void main() {
   test('voice ai assist provider returns the local adapter stub', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
+    final adapter = container.read(voiceAiAssistAdapterProvider);
     final service = container.read(voiceAiAssistServiceProvider);
 
+    expect(adapter, isA<LocalVoiceAiAssistService>());
     expect(service, isA<LocalVoiceAiAssistService>());
+  });
+
+  test('voice ai assist adapter provider can be swapped independently', () {
+    final fakeAdapter = _FakeVoiceAiAssistAdapter(
+      const VoiceAiAssistResponse(
+        summary: 'adapter summary',
+        nextStep: 'adapter next',
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        voiceAiAssistAdapterProvider.overrideWithValue(fakeAdapter),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(voiceAiAssistAdapterProvider), fakeAdapter);
+    expect(container.read(voiceAiAssistServiceProvider), isA<LocalVoiceAiAssistService>());
   });
 
   test('voice ai assist stub returns tuned review guidance', () async {
@@ -148,7 +195,7 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
-          voiceAiAssistServiceProvider.overrideWithValue(fakeService),
+          voiceAiAssistAdapterProvider.overrideWithValue(fakeService),
         ],
       );
       addTearDown(container.dispose);
