@@ -91,4 +91,33 @@ void main() {
       VoiceSessionPhase.awaitingFollowUp,
     );
   });
+
+  test('voice session controller hands off ownership without going idle', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final session = container.read(voiceSessionProvider.notifier);
+
+    session.beginSpeaking(
+      owner: VoiceSessionOwner.handsfree,
+      label: 'Gaia speaking',
+      detail: 'Reading back the response',
+    );
+
+    final handoff = session.handoff(
+      from: VoiceSessionOwner.handsfree,
+      to: VoiceSessionOwner.assistant,
+      phase: VoiceSessionPhase.awaitingFollowUp,
+      label: 'Gaia ready',
+      detail: 'Review before saving',
+    );
+
+    expect(handoff, isTrue);
+    expect(container.read(voiceSessionProvider).owner, VoiceSessionOwner.assistant);
+    expect(
+      container.read(voiceSessionProvider).phase,
+      VoiceSessionPhase.awaitingFollowUp,
+    );
+    expect(container.read(voicePresenceProvider).label, 'Gaia ready');
+  });
 }

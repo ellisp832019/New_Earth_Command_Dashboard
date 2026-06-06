@@ -179,6 +179,32 @@ class VoiceSessionNotifier extends Notifier<VoiceSessionState> {
     );
   }
 
+  bool handoff({
+    required VoiceSessionOwner from,
+    required VoiceSessionOwner to,
+    required VoiceSessionPhase phase,
+    required String label,
+    required String detail,
+    double opacity = 0.64,
+    bool isActive = true,
+  }) {
+    if (state.owner != from) {
+      return false;
+    }
+
+    _commit(
+      state.copyWith(
+        owner: to,
+        phase: phase,
+        label: label,
+        detail: detail,
+        isActive: isActive,
+        opacity: opacity,
+      ),
+    );
+    return true;
+  }
+
   void updatePresence({
     required String label,
     required String detail,

@@ -320,14 +320,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         return;
       }
       _wakeOnlyRouteConsumed = true;
-      ref
-          .read(voiceSessionProvider.notifier)
-          .beginAwaitingFollowUp(
-            owner: VoiceSessionOwner.assistant,
-            label: 'Gaia wake',
-            detail: 'Opening Voice Assistant',
-            opacity: 0.82,
-          );
+      ref.read(voiceSessionProvider.notifier).handoff(
+        from: VoiceSessionOwner.handsfree,
+        to: VoiceSessionOwner.assistant,
+        phase: VoiceSessionPhase.awaitingFollowUp,
+        label: 'Gaia wake',
+        detail: 'Opening Voice Assistant',
+        opacity: 0.82,
+      );
       context.go(
         Uri(
           path: RouteNames.voiceAssistant,
@@ -346,14 +346,14 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
 
     _wakeOnlyRouteConsumed = false;
     _lastDispatchedTranscript = transcriptToOpen;
-    ref
-        .read(voiceSessionProvider.notifier)
-        .beginAwaitingFollowUp(
-          owner: VoiceSessionOwner.assistant,
-          label: 'Gaia captured',
-          detail: 'Conversation dock visible',
-          opacity: 0.82,
-        );
+    ref.read(voiceSessionProvider.notifier).handoff(
+      from: VoiceSessionOwner.handsfree,
+      to: VoiceSessionOwner.assistant,
+      phase: VoiceSessionPhase.awaitingFollowUp,
+      label: 'Gaia captured',
+      detail: 'Conversation dock visible',
+      opacity: 0.82,
+    );
     final route = Uri(
       path: RouteNames.voiceAssistant,
       queryParameters: {'transcript': transcriptToOpen},
