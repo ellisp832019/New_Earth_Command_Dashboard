@@ -225,6 +225,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     final formattedDate = DateFormat('EEEE d MMMM y').format(plan.date);
 
     return ListView(
+      key: const Key('plannerScrollView'),
       controller: _scrollController,
       padding: const EdgeInsets.all(20),
       children: [

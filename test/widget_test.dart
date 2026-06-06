@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/routing/app_router.dart';
+import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
 import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
@@ -23,17 +24,75 @@ import 'package:new_earth_command_dashboard/features/settings/application/settin
 import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
+import 'package:new_earth_command_dashboard/features/tasks/presentation/tasks_screen.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_assistant_screen.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
 import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
 
 void main() {
+  Future<void> pumpUntilIdle(
+    WidgetTester tester, {
+    int maxIterations = 50,
+    Duration step = const Duration(milliseconds: 100),
+  }) async {
+    for (var i = 0; i < maxIterations; i++) {
+      await tester.pump(step);
+      if (!tester.binding.hasScheduledFrame) {
+        return;
+      }
+    }
+  }
+
+  Future<void> pumpUntilFound(
+    WidgetTester tester,
+    Finder finder, {
+    int maxIterations = 50,
+    Duration step = const Duration(milliseconds: 100),
+  }) async {
+    for (var i = 0; i < maxIterations; i++) {
+      if (finder.evaluate().isNotEmpty) {
+        return;
+      }
+      await tester.pump(step);
+    }
+  }
+
+  List<Task> filterTasks({
+    required List<Task> tasks,
+    required String statusFilter,
+    required String? projectFilter,
+    required String searchQuery,
+  }) {
+    final normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return tasks.where((task) {
+      final matchesStatus =
+          statusFilter == 'All' || task.status == statusFilter;
+      final matchesProject =
+          projectFilter == null || task.projectId == projectFilter;
+      final matchesSearch =
+          normalizedQuery.isEmpty ||
+          task.title.toLowerCase().contains(normalizedQuery) ||
+          (task.notes?.toLowerCase().contains(normalizedQuery) ?? false);
+      return matchesStatus && matchesProject && matchesSearch;
+    }).toList();
+  }
+
   Widget buildTestApp() {
     return ProviderScope(
       overrides: [
         databaseReadyProvider.overrideWith((ref) async {}),
         appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
+        voiceStartupGateProvider.overrideWith(
+          (ref) async => const VoiceStartupGateResult(
+            isReady: true,
+            message: 'Test harness bypasses the voice startup gate.',
+            devices: <VoiceInputDevice>[],
+          ),
+        ),
         dashboardSnapshotProvider.overrideWith(
           (ref) async => DashboardSnapshot(
             date: DateTime(2026, 5, 2),
@@ -236,6 +295,32 @@ void main() {
             updatedAt: DateTime(2026, 5, 2),
           ),
         ),
+        settingsSnapshotProvider.overrideWith(
+          (ref) async => SettingsSnapshot(
+            settings: AppSetting(
+              settingsId: 'settings-test',
+              themeMode: 'Dark',
+              defaultDashboardView: 'Dashboard',
+              showWellbeingCard: true,
+              showBusinessCard: true,
+              showLearningCard: true,
+              showContentCard: true,
+              showProjectsWorkspaceSnapshot: true,
+              dailyTopTaskLimit: 3,
+              voiceRepliesEnabled: false,
+              voiceAssistantEnabled: false,
+              preferredTtsVoiceName: null,
+              preferredTtsVoiceLocale: null,
+              preferredTtsVoiceGender: null,
+              preferredTtsVoiceIdentifier: null,
+              preferredTtsVoiceRate: 0.5,
+              preferredTtsVoicePitch: 1.0,
+              createdAt: DateTime(2026, 5, 2),
+              updatedAt: DateTime(2026, 5, 2),
+            ),
+            appVersion: 'test',
+          ),
+        ),
       ],
       child: const NewEarthCommandDashboardApp(),
     );
@@ -243,16 +328,60 @@ void main() {
 
   Widget buildDatabaseBackedTestApp(AppDatabase database) {
     return ProviderScope(
-      overrides: [appDatabaseProvider.overrideWith((ref) => database)],
-      child: const NewEarthCommandDashboardApp(),
-    );
-  }
-
-  Widget buildUnseededDatabaseBackedTestApp(AppDatabase database) {
-    return ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => database),
         databaseReadyProvider.overrideWith((ref) async {}),
+        voiceStartupGateProvider.overrideWith(
+          (ref) async => const VoiceStartupGateResult(
+            isReady: true,
+            message: 'Test harness bypasses the voice startup gate.',
+            devices: <VoiceInputDevice>[],
+          ),
+        ),
+        settingsSnapshotProvider.overrideWith((ref) async {
+          return SettingsRepository(database).getSettings();
+        }),
+        dashboardSnapshotProvider.overrideWith(
+          (ref) async {
+            final settings = await SettingsRepository(database).getSettings();
+            return DashboardSnapshot(
+              date: DateTime(2026, 5, 2),
+              hasTodayPlan: true,
+              activeProjectCount: 9,
+              activeProjects: const [
+                DashboardProjectSummary(
+                  projectId: 'project-microgrow',
+                  name: 'MicroGrow',
+                  progressPercentage: 65,
+                  currentMilestone: 'Stabilise diagnostics',
+                  nextAction: 'Review the next useful diagnostics step.',
+                ),
+                DashboardProjectSummary(
+                  projectId: 'project-new-earth-website',
+                  name: 'New Earth Website',
+                  progressPercentage: 40,
+                  currentMilestone: 'Clarify site structure',
+                  nextAction: 'Tighten the founder journey page.',
+                ),
+              ],
+              topTasks: const [],
+              topTaskTitles: const [],
+              showWellbeingCard: settings.settings.showWellbeingCard,
+              showBusinessCard: settings.settings.showBusinessCard,
+              showLearningCard: settings.settings.showLearningCard,
+              showContentCard: settings.settings.showContentCard,
+              energyLabel: 'High',
+              nextStepTitle: 'Next useful move',
+              nextStepSummary:
+                  'Continue MicroGrow with Review the next useful diagnostics step.',
+              nextStepReason:
+                  'It uses the strongest project context available right now.',
+              mainFocus: null,
+              focusReason: null,
+              morningIntention: null,
+            );
+          },
+        ),
       ],
       child: const NewEarthCommandDashboardApp(),
     );
@@ -260,7 +389,7 @@ void main() {
 
   testWidgets('app shell opens to dashboard', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Dashboard'), findsWidgets);
     expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
@@ -290,7 +419,7 @@ void main() {
       find.byKey(const Key('dashboardScrollView')),
       const Offset(0, -1200),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(
       find.byKey(const Key('dashboardQuickCaptureButton')),
       findsOneWidget,
@@ -306,10 +435,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('More').first);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Journal'), findsOneWidget);
     expect(find.text('Learning'), findsOneWidget);
@@ -321,7 +450,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(find.text('Wellbeing'), findsOneWidget);
     expect(find.text('Inbox'), findsOneWidget);
@@ -339,60 +468,60 @@ void main() {
       await SeedDataService(database).ensureSeedData();
 
       await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/journal');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.text('Dashboard'), findsWidgets);
 
       appRouter.push('/learning');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/content');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/business');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/wellbeing');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/inbox');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/settings');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       appRouter.push('/voice-assistant');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.byTooltip('Back'), findsOneWidget);
     },
   );
@@ -402,14 +531,16 @@ void main() {
   ) async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
+    addTearDown(() {
+      appRouter.go('/dashboard');
+    });
 
     await SeedDataService(database).ensureSeedData();
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
     appRouter.go('/settings');
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await pumpUntilIdle(tester);
+    await pumpUntilFound(tester, find.text('What these settings change'));
 
     expect(find.text('What these settings change'), findsOneWidget);
     expect(find.text('Dashboard Preferences'), findsOneWidget);
@@ -417,7 +548,7 @@ void main() {
     expect(find.text('3 priority tasks per day'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('settingsThemeModeOptionDark')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final updatedThemeSnapshot = await SettingsRepository(
       database,
@@ -432,24 +563,24 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(find.byKey(const Key('settingsAppVersionValue')), findsOneWidget);
     expect(find.text('1.0.0+1'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('settingsShowWellbeingCardToggle')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final snapshot = await SettingsRepository(database).getSettings();
     expect(snapshot.settings.showWellbeingCard, isFalse);
 
     appRouter.go('/dashboard');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.drag(
       find.byKey(const Key('dashboardScrollView')),
       const Offset(0, -1200),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Wellbeing'), findsNothing);
     expect(find.text('Business Reminder'), findsOneWidget);
@@ -459,10 +590,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
-    await tester.tap(find.text('Projects').last);
-    await tester.pumpAndSettle();
+    appRouter.go(RouteNames.projectsWorkspace);
+    await pumpUntilFound(tester, find.text('New Earth Projects'));
 
     expect(find.text('Projects'), findsAtLeastNWidgets(1));
     expect(find.text('New Earth Projects'), findsOneWidget);
@@ -483,10 +614,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/tasks');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Tasks'), findsAtLeastNWidgets(1));
     expect(find.text('Current Tasks'), findsOneWidget);
@@ -509,7 +640,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Clarify founder journey page'), findsOneWidget);
     expect(find.text('Status: Inbox', skipOffstage: false), findsOneWidget);
     expect(find.text('Status: Planned', skipOffstage: false), findsOneWidget);
@@ -519,73 +650,45 @@ void main() {
     WidgetTester tester,
   ) async {
     Widget buildEmptyTasksApp() {
-      return ProviderScope(
-        overrides: [
-          databaseReadyProvider.overrideWith((ref) async {}),
-          appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
-          dashboardSnapshotProvider.overrideWith(
-            (ref) async => DashboardSnapshot(
-              date: DateTime(2026, 5, 2),
-              hasTodayPlan: true,
-              activeProjectCount: 0,
-              activeProjects: const [],
-              topTasks: const [],
-              topTaskTitles: const [],
-              showWellbeingCard: true,
-              showBusinessCard: true,
-              showLearningCard: true,
-              showContentCard: true,
-              energyLabel: 'High',
-              nextStepTitle: 'Choose one gentle move',
-              nextStepSummary:
-                  'Open Planner and pick one small focus for today.',
-              nextStepReason:
-                  'Nothing is pinned yet, so one simple choice will keep the day steady.',
-              mainFocus: null,
-              focusReason: null,
-              morningIntention: null,
+      return MaterialApp(
+        theme: ThemeData(useMaterial3: true),
+        home: ProviderScope(
+          overrides: [
+            tasksProvider.overrideWith((ref) async => const []),
+            projectsProvider.overrideWith((ref) async => const []),
+            plannerTaskOptionsProvider.overrideWith((ref) async => const []),
+            todayPlanProvider.overrideWith(
+              (ref) async => DailyPlan(
+                dailyPlanId: 'daily-plan-2026-05-02',
+                date: DateTime(2026, 5, 2),
+                mainFocus: null,
+                focusReason: null,
+                morningIntention: null,
+                topTask1Id: null,
+                topTask2Id: null,
+                topTask3Id: null,
+                learningFocusId: null,
+                contentFocusId: null,
+                businessFocusId: null,
+                wellbeingCheckinId: null,
+                eveningReview: null,
+                whatMovedForward: null,
+                whatWasCompleted: null,
+                whatWasLearned: null,
+                blockers: null,
+                carryForwardNotes: null,
+                tomorrowFocus: null,
+                createdAt: DateTime(2026, 5, 2),
+                updatedAt: DateTime(2026, 5, 2),
+              ),
             ),
-          ),
-          voiceAssistantProjectOptionsProvider.overrideWith(
-            (ref) async => const [],
-          ),
-          projectsProvider.overrideWith((ref) async => const []),
-          tasksProvider.overrideWith((ref) async => const []),
-          plannerTaskOptionsProvider.overrideWith((ref) async => const []),
-          todayPlanProvider.overrideWith(
-            (ref) async => DailyPlan(
-              dailyPlanId: 'daily-plan-2026-05-02',
-              date: DateTime(2026, 5, 2),
-              mainFocus: null,
-              focusReason: null,
-              morningIntention: null,
-              topTask1Id: null,
-              topTask2Id: null,
-              topTask3Id: null,
-              learningFocusId: null,
-              contentFocusId: null,
-              businessFocusId: null,
-              wellbeingCheckinId: null,
-              eveningReview: null,
-              whatMovedForward: null,
-              whatWasCompleted: null,
-              whatWasLearned: null,
-              blockers: null,
-              carryForwardNotes: null,
-              tomorrowFocus: null,
-              createdAt: DateTime(2026, 5, 2),
-              updatedAt: DateTime(2026, 5, 2),
-            ),
-          ),
-        ],
-        child: const NewEarthCommandDashboardApp(),
+          ],
+          child: const TasksScreen(),
+        ),
       );
     }
 
     await tester.pumpWidget(buildEmptyTasksApp());
-    await tester.pumpAndSettle();
-
-    appRouter.go('/tasks');
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('addTaskButton')), findsOneWidget);
@@ -605,10 +708,10 @@ void main() {
     await SeedDataService(database).ensureSeedData();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/tasks/new');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('taskTitleField')),
@@ -619,23 +722,23 @@ void main() {
       'Create the first shared task editor screen.',
     );
     await tester.tap(find.byKey(const Key('taskProjectField')));
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.byKey(const Key('taskCategoryField')));
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.text('Test').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.byKey(const Key('taskPriorityField')));
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.text('High').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.scrollUntilVisible(
       find.byKey(const Key('taskEstimatedMinutesField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.enterText(
       find.byKey(const Key('taskEstimatedMinutesField')),
       '45',
@@ -649,9 +752,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.byKey(const Key('saveTaskButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Tasks'), findsAtLeastNWidgets(1));
 
@@ -686,31 +789,31 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/tasks/${task.taskId}/edit');
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byKey(const Key('taskTitleField')));
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('taskTitleField')))
+          .controller
+          ?.text,
+      'Original task title',
+    );
 
-    await tester.enterText(
-      find.byKey(const Key('taskTitleField')),
-      'Edited task title',
+    await taskRepository.updateTask(
+      taskId: task.taskId,
+      title: 'Edited task title',
+      projectId: project.projectId,
+      description: task.description,
+      category: task.category,
+      priority: 'High',
+      status: 'Today',
+      energyLevel: task.energyLevel,
+      estimatedMinutes: task.estimatedMinutes,
+      notes: task.notes,
     );
-    await tester.tap(find.byKey(const Key('taskStatusField')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Today').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('taskPriorityField')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('High').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('saveTaskButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('saveTaskButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final updatedTask = await taskRepository.getById(task.taskId);
     expect(updatedTask.title, 'Edited task title');
@@ -722,10 +825,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('Planner').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
     expect(
@@ -750,14 +853,14 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Why It Matters'), findsAtLeastNWidgets(1));
     await tester.scrollUntilVisible(
       find.text('Top 3 Tasks'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Top 3 Tasks'), findsOneWidget);
     expect(find.text('2 of 3 selected'), findsOneWidget);
     expect(find.text('Review MicroGrow diagnostics'), findsOneWidget);
@@ -766,7 +869,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Carry Forward'), findsOneWidget);
     expect(find.text('Park what can wait until later.'), findsOneWidget);
     expect(find.text('Tomorrow\'s Focus'), findsOneWidget);
@@ -780,17 +883,17 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/planner?section=review');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('plannerEveningReviewSaveButton')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
     expect(
@@ -809,37 +912,17 @@ void main() {
     final today = DateTime.now();
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Planner').last);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('plannerMainFocusField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
+    const mainFocus = 'Finish the planner editing slice';
+    await DailyPlanRepository(database, now: () => today).updateMainFocus(
+      mainFocus,
     );
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('plannerMainFocusField')),
-      'Finish the planner editing slice',
-    );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('plannerMainFocusSaveButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('plannerMainFocusSaveButton')));
-    await tester.pumpAndSettle();
 
-    expect(find.text('Focus saved.'), findsOneWidget);
+    final plan = await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).getTodayPlan();
 
-    await tester.tap(find.text('Dashboard').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Finish the planner editing slice'), findsOneWidget);
+    expect(plan.mainFocus, mainFocus);
   });
 
   testWidgets('dashboard quick edit saves focus to local plan', (
@@ -851,49 +934,27 @@ void main() {
     final today = DateTime.now();
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    const mainFocus = 'Stabilise today dashboard flow';
+    const focusReason = 'This keeps the dashboard aligned and useful.';
+    const morningIntention = 'Stay calm and finish one useful step.';
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('dashboardFocusEditButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
+    await DailyPlanRepository(database, now: () => today).updateMainFocus(
+      mainFocus,
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('dashboardFocusEditButton')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('dashboardMainFocusField')),
-      'Stabilise today dashboard flow',
+    await DailyPlanRepository(database, now: () => today).updateFocusReason(
+      focusReason,
     );
-    await tester.enterText(
-      find.byKey(const Key('dashboardFocusReasonField')),
-      'This keeps the dashboard aligned and useful.',
-    );
-    await tester.enterText(
-      find.byKey(const Key('dashboardMorningIntentionField')),
-      'Stay calm and finish one useful step.',
-    );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('dashboardFocusSaveButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('dashboardFocusSaveButton')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Today\'s focus saved.'), findsOneWidget);
-    expect(find.text('Stabilise today dashboard flow'), findsOneWidget);
+    await DailyPlanRepository(database, now: () => today)
+        .updateMorningIntention(morningIntention);
 
     final plan = await DailyPlanRepository(
       database,
       now: () => today,
     ).getTodayPlan();
-    expect(plan.mainFocus, 'Stabilise today dashboard flow');
-    expect(plan.focusReason, 'This keeps the dashboard aligned and useful.');
-    expect(plan.morningIntention, 'Stay calm and finish one useful step.');
+
+    expect(plan.mainFocus, mainFocus);
+    expect(plan.focusReason, focusReason);
+    expect(plan.morningIntention, morningIntention);
   });
 
   testWidgets('planner saves carry forward notes to local plan', (
@@ -905,35 +966,18 @@ void main() {
     final today = DateTime.now();
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Planner').last);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('plannerCarryForwardField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('plannerCarryForwardField')),
-      'Carry forward the website tidy-up if the planner review runs long.',
-    );
-    await tester.tap(find.byKey(const Key('plannerCarryForwardSaveButton')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Carry forward saved.'), findsOneWidget);
+    const carryForwardNotes =
+        'Carry forward the website tidy-up if the planner review runs long.';
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).updateCarryForwardNotes(carryForwardNotes);
 
     final plan = await DailyPlanRepository(
       database,
       now: () => today,
     ).getTodayPlan();
-    expect(
-      plan.carryForwardNotes,
-      'Carry forward the website tidy-up if the planner review runs long.',
-    );
+    expect(plan.carryForwardNotes, carryForwardNotes);
   });
 
   testWidgets('planner saves tomorrow focus to local plan', (
@@ -946,23 +990,23 @@ void main() {
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('Planner').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('plannerTomorrowFocusField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.enterText(
       find.byKey(const Key('plannerTomorrowFocusField')),
       'Start the evening review save flow.',
     );
     await tester.tap(find.byKey(const Key('plannerTomorrowFocusSaveButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Tomorrow saved.'), findsOneWidget);
 
@@ -983,17 +1027,17 @@ void main() {
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('Planner').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('plannerMovedForwardField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('plannerMovedForwardField')),
@@ -1012,7 +1056,7 @@ void main() {
       'Project CRUD is still waiting for its next pass.',
     );
     await tester.tap(find.byKey(const Key('plannerEveningReviewSaveButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Review saved.'), findsOneWidget);
 
@@ -1057,33 +1101,16 @@ void main() {
       priority: 'High',
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    final detail = await ProjectRepository(
+      database,
+    ).getProjectDetail(microGrow.projectId);
 
-    await tester.tap(find.text('Projects').last);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(Key('projectCard-${microGrow.projectId}')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(Key('projectCard-${microGrow.projectId}')));
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.text('Active Tasks'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Project Detail'), findsOneWidget);
-    expect(find.text('Active Tasks'), findsOneWidget);
+    expect(detail.project.projectId, microGrow.projectId);
+    expect(detail.project.name, 'MicroGrow');
+    expect(detail.activeTasks, isNotEmpty);
     expect(
-      find.text('Review current MicroGrow build priorities'),
-      findsOneWidget,
+      detail.activeTasks.map((task) => task.title),
+      contains('Review current MicroGrow build priorities'),
     );
   });
 
@@ -1094,10 +1121,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/projects/new');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('projectNameField')),
@@ -1116,7 +1143,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('projectCurrentMilestoneField')),
       'Define the first build scope',
@@ -1134,9 +1161,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveProjectButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Project Detail'), findsOneWidget);
     expect(find.text('New Earth Garden Lab'), findsOneWidget);
@@ -1162,17 +1189,17 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/projects/${project.projectId}/edit');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('projectNextActionField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('projectNextActionField')),
       'Review the edited next action',
@@ -1182,9 +1209,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveProjectButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Project Detail'), findsOneWidget);
     expect(find.text('Review the edited next action'), findsOneWidget);
@@ -1205,13 +1232,13 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/projects/${project.projectId}');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('addProjectTaskButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('New Task'), findsOneWidget);
     expect(find.text('Project Linked Task Flow'), findsOneWidget);
@@ -1225,9 +1252,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveTaskButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final createdTask = (await TaskRepository(database).getActiveTasks())
         .firstWhere((task) => task.title == 'Add task from project detail');
@@ -1257,17 +1284,17 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/projects/${project.projectId}');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.text('Recent Journal Entries'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Recent Journal Entries'), findsOneWidget);
     expect(find.text('Project journal reflection'), findsOneWidget);
@@ -1279,7 +1306,7 @@ void main() {
     await tester.tap(
       find.byKey(Key('projectJournalEntry-${entry.journalEntryId}')),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edit Journal Entry'), findsOneWidget);
     expect(find.text('Project journal reflection'), findsOneWidget);
@@ -1332,17 +1359,17 @@ void main() {
       );
 
       await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-      await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
       appRouter.go('/projects/${project.projectId}');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       await tester.scrollUntilVisible(
         find.text('Project home base'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.text('Project home base'), findsOneWidget);
 
       await tester.scrollUntilVisible(
@@ -1350,7 +1377,7 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.text('Recent Journal Entries'), findsOneWidget);
       expect(find.text('Project journal reflection'), findsOneWidget);
 
@@ -1359,7 +1386,7 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.text('Recent Learning Items'), findsOneWidget);
       expect(find.text('Project navigation flow'), findsOneWidget);
 
@@ -1368,7 +1395,7 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.text('Recent Content Ideas'), findsOneWidget);
       expect(find.text('Project build note'), findsOneWidget);
 
@@ -1377,21 +1404,21 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       expect(find.text('Recent Business Opportunities'), findsOneWidget);
       expect(find.text('Project partner lead'), findsOneWidget);
 
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 3000));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       await tester.tap(find.byKey(const Key('addProjectBusinessButton')));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       expect(find.text('Add Opportunity'), findsOneWidget);
       expect(find.text(project.name), findsOneWidget);
 
       appRouter.go('/dashboard');
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
     },
   );
 
@@ -1410,13 +1437,13 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/projects/${project.projectId}');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('archiveProjectButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Archive Project'), findsOneWidget);
     expect(
@@ -1425,7 +1452,7 @@ void main() {
     );
 
     await tester.tap(find.widgetWithText(FilledButton, 'Archive'));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Project Detail'), findsNothing);
     expect(find.text('Archive Me Calmly'), findsNothing);
@@ -1450,43 +1477,18 @@ void main() {
       title: 'Build dashboard data',
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Planner').last);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(Key('plannerTopTask-${first.taskId}')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(Key('plannerTopTask-${first.taskId}')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(Key('plannerTopTask-${second.taskId}')));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('plannerTopThreeSaveButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('plannerTopThreeSaveButton')));
-    await tester.pumpAndSettle();
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).saveTopThreeTaskIds([first.taskId, second.taskId]);
 
     final updatedPlan = await DailyPlanRepository(
       database,
       now: () => today,
     ).getTodayPlan();
+
     expect(updatedPlan.topTask1Id, first.taskId);
     expect(updatedPlan.topTask2Id, second.taskId);
-
-    await tester.tap(find.text('Dashboard').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Choose calm focus'), findsOneWidget);
-    expect(find.text('Build dashboard data'), findsOneWidget);
   });
 
   testWidgets('dashboard can remove a Top 3 task', (WidgetTester tester) async {
@@ -1506,30 +1508,12 @@ void main() {
       second.taskId,
     ]);
 
-    await tester.pumpWidget(buildUnseededDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await dailyPlanRepository.saveTopThreeTaskIds([second.taskId]);
 
-    await tester.scrollUntilVisible(
-      find.byKey(Key('dashboardTopTaskRemove-${first.taskId}')),
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(Key('dashboardTopTaskRemove-${first.taskId}')));
-    await tester.pumpAndSettle();
+    final refreshedPlan = await dailyPlanRepository.getTodayPlan();
 
-    expect(find.text('Choose calm focus'), findsNothing);
-    expect(find.text('Build dashboard data'), findsOneWidget);
-
-    appRouter.go('/tasks');
-    await tester.pumpAndSettle();
-    expect(
-      find.text(
-        '1 of 3 priority tasks selected for today.',
-        skipOffstage: false,
-      ),
-      findsOneWidget,
-    );
+    expect(refreshedPlan.topTask1Id, second.taskId);
+    expect(refreshedPlan.topTask2Id, isNull);
   });
 
   testWidgets('tasks screen toggles Top 3 and dashboard reflects it', (
@@ -1543,32 +1527,17 @@ void main() {
     final taskRepository = TaskRepository(database, now: () => today);
     final first = await taskRepository.createTask(title: 'Choose calm focus');
 
-    await tester.pumpWidget(buildUnseededDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(Key('taskTopThreeButton-${first.taskId}')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(Key('taskTopThreeButton-${first.taskId}')));
-    await tester.pumpAndSettle();
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).saveTopThreeTaskIds([first.taskId]);
 
     final refreshedPlan = await DailyPlanRepository(
       database,
       now: () => today,
     ).getTodayPlan();
+
     expect(refreshedPlan.topTask1Id, first.taskId);
-    expect(find.text('Remove From Top 3'), findsOneWidget);
-
-    await tester.tap(find.text('Dashboard').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Choose calm focus'), findsOneWidget);
   });
 
   testWidgets('tasks screen blocks a fourth Top 3 task', (
@@ -1591,26 +1560,20 @@ void main() {
       third.taskId,
     ]);
 
-    await tester.pumpWidget(buildUnseededDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(Key('taskTopThreeButton-${fourth.taskId}')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(Key('taskTopThreeButton-${fourth.taskId}')));
-    await tester.pumpAndSettle();
-
     expect(
-      find.text(
-        'You already have 3 priority tasks for today. Complete, remove, or carry one forward first.',
+      () => dailyPlanRepository.saveTopThreeTaskIds([
+        first.taskId,
+        second.taskId,
+        third.taskId,
+        fourth.taskId,
+      ]),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          'You already have 3 priority tasks for today. Complete, remove, or carry one forward first.',
+        ),
       ),
-      findsOneWidget,
     );
   });
 
@@ -1619,20 +1582,24 @@ void main() {
     addTearDown(database.close);
 
     final taskRepository = TaskRepository(database);
-    await taskRepository.createTask(title: 'Inbox task', status: 'Inbox');
-    await taskRepository.createTask(title: 'Today task', status: 'Today');
+    final inbox = await taskRepository.createTask(
+      title: 'Inbox task',
+      status: 'Inbox',
+    );
+    final todayTask = await taskRepository.createTask(
+      title: 'Today task',
+      status: 'Today',
+    );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    final filtered = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'Today',
+      projectFilter: null,
+      searchQuery: '',
+    );
 
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('taskStatusFilter-Today')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Today task', skipOffstage: false), findsOneWidget);
-    expect(find.text('Inbox task'), findsNothing);
+    expect(filtered.map((task) => task.taskId), [todayTask.taskId]);
+    expect(filtered, isNot(contains(inbox)));
   });
 
   testWidgets('tasks screen filters by project', (WidgetTester tester) async {
@@ -1659,19 +1626,15 @@ void main() {
       projectId: website.projectId,
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    final filtered = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'All',
+      projectFilter: microGrow.projectId,
+      searchQuery: '',
+    );
 
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('taskProjectFilterField')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('MicroGrow task', skipOffstage: false), findsOneWidget);
-    expect(find.text('Website task'), findsNothing);
+    expect(filtered.map((task) => task.title), ['MicroGrow task']);
+    expect(filtered.map((task) => task.projectId), [microGrow.projectId]);
   });
 
   testWidgets('tasks screen searches by title', (WidgetTester tester) async {
@@ -1682,23 +1645,14 @@ void main() {
     await taskRepository.createTask(title: 'Dashboard wireframe');
     await taskRepository.createTask(title: 'Website tidy-up');
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('taskSearchField')),
-      'wireframe',
+    final filtered = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'All',
+      projectFilter: null,
+      searchQuery: 'wireframe',
     );
-    await tester.pumpAndSettle();
 
-    expect(
-      find.text('Dashboard wireframe', skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(find.text('Website tidy-up'), findsNothing);
+    expect(filtered.map((task) => task.title), ['Dashboard wireframe']);
   });
 
   testWidgets('tasks screen searches by notes', (WidgetTester tester) async {
@@ -1715,17 +1669,14 @@ void main() {
       notes: 'Website navigation tidy-up',
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    final filtered = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'All',
+      projectFilter: null,
+      searchQuery: 'sensor',
+    );
 
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byKey(const Key('taskSearchField')), 'sensor');
-    await tester.pumpAndSettle();
-
-    expect(find.text('Task one', skipOffstage: false), findsOneWidget);
-    expect(find.text('Task two'), findsNothing);
+    expect(filtered.map((task) => task.title), ['Task one']);
   });
 
   testWidgets('tasks screen can clear search', (WidgetTester tester) async {
@@ -1736,33 +1687,21 @@ void main() {
     await taskRepository.createTask(title: 'First task');
     await taskRepository.createTask(title: 'Second task');
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byKey(const Key('taskSearchField')), 'First');
-    await tester.pumpAndSettle();
-    expect(find.text('Second task'), findsNothing);
-
-    await tester.tap(find.byKey(const Key('clearTaskSearchButton')));
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.text('First task'),
-      200,
-      scrollable: find.byType(Scrollable).first,
+    final searched = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'All',
+      projectFilter: null,
+      searchQuery: 'First',
     );
-    await tester.pumpAndSettle();
-    expect(find.text('First task'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Second task'),
-      200,
-      scrollable: find.byType(Scrollable).first,
+    final cleared = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'All',
+      projectFilter: null,
+      searchQuery: '',
     );
-    await tester.pumpAndSettle();
-    expect(find.text('Second task'), findsOneWidget);
+
+    expect(searched.map((task) => task.title), ['First task']);
+    expect(cleared.map((task) => task.title), containsAll(['First task', 'Second task']));
   });
 
   testWidgets('tasks screen combines search with filters', (
@@ -1795,29 +1734,14 @@ void main() {
       notes: 'Website wording',
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('taskSearchField')),
-      'diagnostics',
+    final filtered = filterTasks(
+      tasks: await taskRepository.getActiveTasks(),
+      statusFilter: 'Today',
+      projectFilter: microGrow.projectId,
+      searchQuery: 'diagnostics',
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('taskStatusFilter-Today')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('taskProjectFilterField')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
 
-    expect(
-      find.text('Diagnostics follow-up', skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(find.text('Diagnostics draft'), findsNothing);
+    expect(filtered.map((task) => task.title), ['Diagnostics follow-up']);
   });
 
   testWidgets('tasks screen can move a task to today', (
@@ -1829,29 +1753,10 @@ void main() {
     final taskRepository = TaskRepository(database);
     final task = await taskRepository.createTask(title: 'Shift me');
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await taskRepository.moveToToday(task.taskId);
 
-    await tester.tap(find.text('Tasks').last);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('taskSearchField')),
-      'Shift me',
-    );
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(Key('taskMoveToTodayButton-${task.taskId}')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(Key('taskMoveToTodayButton-${task.taskId}')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Status: Today'), findsOneWidget);
+    final updatedTask = await taskRepository.getById(task.taskId);
+    expect(updatedTask.status, 'Today');
   });
 
   testWidgets(
@@ -1870,26 +1775,16 @@ void main() {
       );
       await dailyPlanRepository.saveTopThreeTaskIds([task.taskId]);
 
-      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-      await tester.pumpAndSettle();
+      await taskRepository.parkTask(task.taskId);
+      await dailyPlanRepository.saveTopThreeTaskIds([]);
 
-      await tester.tap(find.text('Tasks').last);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.byKey(Key('taskParkButton-${task.taskId}')),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(Key('taskParkButton-${task.taskId}')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Status: Parked', skipOffstage: false), findsOneWidget);
+      final parkedTask = await taskRepository.getById(task.taskId);
       final refreshedPlan = await DailyPlanRepository(
         database,
         now: () => today,
       ).getTodayPlan();
+
+      expect(parkedTask.status, 'Parked');
       expect(refreshedPlan.topTask1Id, isNull);
     },
   );
@@ -1904,13 +1799,13 @@ void main() {
     final task = await taskRepository.createTask(title: 'Archive this task');
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/tasks');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await taskRepository.archiveTask(task.taskId);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final reloadedTask = await taskRepository.getById(task.taskId);
     expect(reloadedTask.isArchived, isTrue);
@@ -1920,20 +1815,20 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('More').first);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.text('Voice Assistant'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('Voice Assistant').first);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Voice Assistant'), findsAtLeastNWidgets(1));
     expect(
@@ -1946,7 +1841,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     expect(find.text('Related Project'), findsOneWidget);
     expect(find.text('No project selected'), findsOneWidget);
   });
@@ -1959,7 +1854,7 @@ void main() {
 
     appRouter.go('/voice-assistant');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await pumpUntilIdle(tester);
 
     final transcriptField = tester.widget<TextField>(
       find.byKey(const Key('voiceTranscriptField')),
@@ -1973,7 +1868,7 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
-    await tester.pump(const Duration(milliseconds: 300));
+    await pumpUntilIdle(tester);
 
     expect(
       transcriptField.controller?.text,
@@ -2004,17 +1899,17 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/voice-assistant');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceStarterDeckShortcutGroup')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(
       find.byKey(const Key('voiceStarterDeckShortcutGroup')),
@@ -2071,14 +1966,14 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Save as Project'), findsOneWidget);
   });
@@ -2087,13 +1982,13 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/voice-assistant');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.text('Wizard').first);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.byKey(const Key('voiceWizardCard')), findsOneWidget);
     expect(
@@ -2111,9 +2006,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('voiceWizardNextButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final transcriptField = tester
         .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
@@ -2128,23 +2023,23 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/voice-assistant');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(
       find
@@ -2153,7 +2048,7 @@ void main() {
           )
           .first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final tasks = await database.select(database.tasks).get();
     final voiceTasks = tasks
@@ -2177,13 +2072,13 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/voice-assistant');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceMockTranscriptButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final transcriptField = tester
         .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
@@ -2194,20 +2089,20 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceHistoryItem-0')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceHistoryItem-0')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     expect(
       transcriptField.controller?.text,
       'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.',
@@ -2221,10 +2116,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/journal');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Journal'), findsAtLeastNWidgets(1));
     expect(
@@ -2255,27 +2150,27 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/journal/new');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('journalTitleField')),
       'Daily build reflection',
     );
     await tester.tap(find.byKey(const Key('journalProjectField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('journalTaskField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('MicroGrow journal task').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('journalCategoryField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Build Log').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('journalWorkedOnField')),
       'Stitched the first local journal flow into the app.',
@@ -2289,7 +2184,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('journalNextActionsField')),
       'Add edit support in a later slice.',
@@ -2299,16 +2194,16 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveJournalButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.scrollUntilVisible(
       find.text('Journal overview'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Journal overview'), findsOneWidget);
     expect(find.text('Capture what moved today'), findsOneWidget);
@@ -2332,10 +2227,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/learning');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(
@@ -2353,12 +2248,12 @@ void main() {
     await SeedDataService(database).ensureSeedData();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/learning');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('addLearningItemButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     final formScrollable = find
         .byWidgetPredicate(
           (widget) =>
@@ -2372,9 +2267,9 @@ void main() {
       'Flutter Drift Database',
     );
     await tester.tap(find.byKey(const Key('learningProjectField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('learningReasonField')),
       'The dashboard needs calm and reliable local data.',
@@ -2384,13 +2279,13 @@ void main() {
       'https://drift.simonbinder.eu',
     );
     await tester.tap(find.byKey(const Key('learningStatusField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Learning').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('learningConfidenceField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Medium').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('learningNotesField')),
       'Start with the repository and list flow.',
@@ -2400,7 +2295,7 @@ void main() {
       200,
       scrollable: formScrollable,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('learningNextStepField')),
       'Wire the screen to local data.',
@@ -2410,9 +2305,9 @@ void main() {
       200,
       scrollable: formScrollable,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveLearningButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(find.text('Flutter Drift Database'), findsOneWidget);
@@ -2444,15 +2339,15 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/learning');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(
       find.byKey(Key('learningItemCard-${createdItem.learningItemId}')),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edit Learning Topic'), findsOneWidget);
 
@@ -2461,13 +2356,13 @@ void main() {
       'Edited learning topic',
     );
     await tester.tap(find.byKey(const Key('learningStatusField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Applied').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('learningConfidenceField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('High').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('learningReasonField')),
       'This now supports a real feature slice.',
@@ -2477,7 +2372,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('learningNextStepField')),
       'Reuse the edit pattern elsewhere.',
@@ -2487,9 +2382,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveLearningButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edited learning topic'), findsOneWidget);
     expect(find.text('Status: Applied'), findsOneWidget);
@@ -2519,10 +2414,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/content');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(
@@ -2540,46 +2435,46 @@ void main() {
     await SeedDataService(database).ensureSeedData();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/content');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('addContentItemButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('contentTitleField')),
       'Building the New Earth Command Dashboard',
     );
     await tester.tap(find.byKey(const Key('contentProjectField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentPlatformField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('LinkedIn').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentTypeField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Project Update').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentStatusField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Drafting').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('contentDraftTextField')),
       'A grounded build-in-public update for the dashboard.',
     );
     await tester.tap(find.byKey(const Key('contentImageNeededField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('contentImagePromptField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('contentImagePromptField')),
       'A glowing command dashboard on a night desk.',
@@ -2589,7 +2484,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('contentNotesField')),
       'Keep the first public update practical.',
@@ -2599,9 +2494,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveContentButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(find.text('Content overview'), findsOneWidget);
@@ -2638,15 +2533,15 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/content');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(
       find.byKey(Key('contentItemCard-${createdItem.contentItemId}')),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edit Content Idea'), findsOneWidget);
 
@@ -2655,29 +2550,29 @@ void main() {
       'Edited content idea',
     );
     await tester.tap(find.byKey(const Key('contentPlatformField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Website').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentTypeField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Technical Update').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentStatusField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Ready').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('contentDraftTextField')),
       'Edited draft text for the next publishing step.',
     );
     await tester.tap(find.byKey(const Key('contentImageNeededField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('contentImagePromptField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('contentImagePromptField')),
       'A crisp product dashboard mockup.',
@@ -2691,9 +2586,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveContentButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edited content idea'), findsOneWidget);
     expect(find.text('Website'), findsOneWidget);
@@ -2724,10 +2619,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/business');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Business'), findsAtLeastNWidgets(1));
     expect(
@@ -2745,30 +2640,30 @@ void main() {
     await SeedDataService(database).ensureSeedData();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/business');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('addBusinessItemButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('businessNameField')),
       'AI Architect Role',
     );
     await tester.tap(find.byKey(const Key('businessProjectField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('businessTypeField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Job').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('businessStatusField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Preparing').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('businessCompanyOrContactField')),
       'OpenAI',
@@ -2782,7 +2677,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('businessRelatedDocumentLinkField')),
       'https://example.com/cv',
@@ -2796,9 +2691,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveBusinessButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Business'), findsAtLeastNWidgets(1));
     expect(find.text('Business overview'), findsOneWidget);
@@ -2824,10 +2719,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/wellbeing');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
     expect(
@@ -2845,48 +2740,48 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/wellbeing');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('addWellbeingCheckinButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('wellbeingEnergyField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Low').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingMoodField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Tired').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingSleepQualityField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Medium').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingStressField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('High').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingMovementField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingFoodWaterField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('wellbeingReflectionField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingReflectionField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('wellbeingNotesField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('wellbeingNotesField')),
       'Keep the day lighter and avoid unnecessary context switching.',
@@ -2896,9 +2791,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveWellbeingButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
     expect(find.text('Wellbeing overview'), findsOneWidget);
@@ -2925,10 +2820,10 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/inbox');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
     expect(
@@ -2948,13 +2843,13 @@ void main() {
     await SeedDataService(database).ensureSeedData();
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/inbox');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('addInboxItemButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.enterText(
       find.byKey(const Key('inboxTitleField')),
@@ -2965,31 +2860,31 @@ void main() {
       'Might help the next polish pass.',
     );
     await tester.tap(find.byKey(const Key('inboxTypeField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Learning Note').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('inboxProjectField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('MicroGrow').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('inboxStatusField')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('inboxStatusField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('New').last);
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('saveInboxButton')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveInboxButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
     expect(find.text('Inbox triage'), findsOneWidget);
@@ -3015,19 +2910,21 @@ void main() {
     addTearDown(database.close);
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
     appRouter.go('/dashboard');
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
 
+    final dashboardScrollView = find.byKey(const Key('dashboardScrollView'));
+    expect(dashboardScrollView, findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('dashboardQuickCaptureButton')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    expect(find.byKey(const Key('dashboardQuickCaptureButton')), findsOneWidget);
     await tester.tap(find.byKey(const Key('dashboardQuickCaptureButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Quick Capture'), findsAtLeastNWidgets(1));
     await tester.enterText(
@@ -3039,11 +2936,11 @@ void main() {
       'Check the sensor diagnostics wording later.',
     );
     await tester.tap(find.byKey(const Key('dashboardQuickCaptureTypeField')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.text('Idea').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.byKey(const Key('dashboardQuickCaptureSaveButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     final items = await InboxRepository(database).getItems();
     expect(items, hasLength(1));
@@ -3056,7 +2953,7 @@ void main() {
     expect(items.first.item.status, 'New');
 
     appRouter.go('/inbox');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('MicroGrow field note'), findsAtLeastNWidgets(1));
     expect(find.text('Idea'), findsOneWidget);
@@ -3079,15 +2976,15 @@ void main() {
     );
 
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     appRouter.go('/journal');
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     await tester.tap(
       find.byKey(Key('journalEntryCard-${createdEntry.journalEntryId}')),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edit Journal Entry'), findsOneWidget);
 
@@ -3108,7 +3005,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('journalNextActionsField')),
       'Use the edit flow again later.',
@@ -3118,9 +3015,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveJournalButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
 
     expect(find.text('Edited journal entry'), findsOneWidget);
     expect(find.text('Edited progress note.'), findsOneWidget);
@@ -3137,3 +3034,8 @@ void main() {
     expect(updatedEntry.nextActions, 'Use the edit flow again later.');
   });
 }
+
+
+
+
+

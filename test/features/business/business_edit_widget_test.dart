@@ -6,14 +6,47 @@ import 'package:new_earth_command_dashboard/app.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
 import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
+import 'package:new_earth_command_dashboard/features/settings/application/settings_controller.dart';
+import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 // seed data service not required here
 import 'package:new_earth_command_dashboard/core/routing/app_router.dart';
 
 Widget buildDatabaseBackedTestApp(AppDatabase database) {
   return ProviderScope(
-    overrides: [appDatabaseProvider.overrideWith((ref) => database)],
+    overrides: [
+      appDatabaseProvider.overrideWith((ref) => database),
+      databaseReadyProvider.overrideWith((ref) async {}),
+      settingsSnapshotProvider.overrideWith((ref) async => _testSettings()),
+    ],
     child: const NewEarthCommandDashboardApp(),
+  );
+}
+
+SettingsSnapshot _testSettings() {
+  return SettingsSnapshot(
+    settings: AppSetting(
+      settingsId: 'settings-test',
+      themeMode: 'Dark',
+      defaultDashboardView: 'Dashboard',
+      showWellbeingCard: true,
+      showBusinessCard: true,
+      showLearningCard: true,
+      showContentCard: true,
+      showProjectsWorkspaceSnapshot: true,
+      dailyTopTaskLimit: 3,
+      voiceRepliesEnabled: false,
+      voiceAssistantEnabled: false,
+      preferredTtsVoiceName: null,
+      preferredTtsVoiceLocale: null,
+      preferredTtsVoiceGender: null,
+      preferredTtsVoiceIdentifier: null,
+      preferredTtsVoiceRate: 0.5,
+      preferredTtsVoicePitch: 1.0,
+      createdAt: DateTime(2026, 5, 9),
+      updatedAt: DateTime(2026, 5, 9),
+    ),
+    appVersion: 'test',
   );
 }
 
@@ -41,10 +74,8 @@ void main() {
       nextAction: 'Do initial',
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
     appRouter.go(RouteNames.editBusiness(created.businessOpportunityId));
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
     await tester.pumpAndSettle();
 
     // Should be on edit screen with prefilled name and save button
@@ -98,10 +129,8 @@ void main() {
       nextAction: 'Follow up',
     );
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
-
     appRouter.go(RouteNames.editBusiness(created.businessOpportunityId));
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
     await tester.pumpAndSettle();
 
     expect(find.text('Edit Opportunity'), findsOneWidget);
@@ -126,10 +155,8 @@ void main() {
         progressPercentage: 1,
       );
 
-      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-      await tester.pumpAndSettle();
-
       appRouter.go(RouteNames.newBusiness);
+      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
       await tester.pumpAndSettle();
 
       expect(find.text('Add Opportunity'), findsOneWidget);

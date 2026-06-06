@@ -33,6 +33,7 @@ class ProjectsScreen extends ConsumerWidget {
           }
 
           return ListView.separated(
+            key: const Key('projectsScrollView'),
             padding: const EdgeInsets.all(20),
             itemCount: items.length + 1,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
