@@ -2132,12 +2132,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 children: [
                   Icon(
                     _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                    size: 40,
+                    size: 32,
                     color: _isListening
                         ? theme.colorScheme.error
                         : theme.colorScheme.primary,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
@@ -2185,10 +2185,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest
                           .withValues(alpha: 0.55),
