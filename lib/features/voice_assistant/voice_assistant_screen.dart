@@ -207,6 +207,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   String? _contentTypeValue;
   String? _businessTypeValue;
   String? _businessStatusValue;
+  VoiceAiAssistResponse? _acceptedAiBriefing;
   String _speechStatus = 'Ready when you are.';
   String? _speechError;
   bool _isSaving = false;
@@ -441,6 +442,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       setState(() {
         _presetType = null;
         _suggestion = null;
+        _acceptedAiBriefing = null;
         _selectedType = VoiceCommandType.task;
         _selectedProjectId = null;
         _taskCategoryValue = null;
@@ -483,6 +485,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _suggestion = suggestion;
+      _acceptedAiBriefing = null;
       _selectedType = _presetType ?? suggestion.suggestedType;
       _selectedProjectId = suggestion.suggestedProjectId;
       _titleController.text = suggestion.suggestedTitle;
@@ -589,6 +592,24 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       if (mode == _VoiceInteractionMode.wizard) {
         _resetWizardDraft(keepMode: true);
       }
+    });
+  }
+
+  void _applyAiBriefingDraft(VoiceAiAssistResponse aiAssist) {
+    setState(() {
+      _acceptedAiBriefing = aiAssist;
+      _speechStatus = 'AI briefing wording applied. Review it before saving.';
+    });
+  }
+
+  void _clearAiBriefingDraft() {
+    if (_acceptedAiBriefing == null) {
+      return;
+    }
+
+    setState(() {
+      _acceptedAiBriefing = null;
+      _speechStatus = 'Using the manual briefing wording again.';
     });
   }
 
@@ -1774,6 +1795,21 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final aiAssistAsync = ref.watch(
       voiceAiBriefingAssistProvider(aiAssistRequest),
     );
+    final VoiceAiAssistResponse? aiAssistDraft = aiAssistAsync.maybeWhen(
+      data: (aiAssist) => aiAssist,
+      orElse: () => null,
+    );
+    final VoiceAiAssistResponse? appliedAiBriefing =
+        _acceptedAiBriefing ?? aiAssistDraft;
+    final briefingSummary = appliedAiBriefing?.summary ?? briefing?.summary ?? '';
+    final briefingNextStep =
+        appliedAiBriefing?.nextStep ?? briefing?.nextStep ?? '';
+    final briefingReason =
+        appliedAiBriefing != null
+            ? 'AI wording is ready to review. Accept it or keep the manual draft.'
+            : briefing?.projectContext ??
+                  briefing?.threadContext ??
+                  'It keeps the thread moving without adding noise.';
 
     return Scaffold(
       appBar: AppBar(
@@ -2075,12 +2111,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           if (briefing != null) ...[
             CalmGuidanceCard(
               sectionLabel: 'Briefing',
-              title: briefing.summary,
-              summary: briefing.nextStep,
-              reason:
-                  briefing.projectContext ??
-                  briefing.threadContext ??
-                  'It keeps the thread moving without adding noise.',
+              title: briefingSummary,
+              summary: briefingNextStep,
+              reason: briefingReason,
             ),
             const SizedBox(height: 16),
             Card(
@@ -2096,7 +2129,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Read the snapshot, review the next move, then save it locally.',
+                      appliedAiBriefing != null
+                          ? 'Read the AI wording, compare it with the manual draft, then keep whichever version feels clearest.'
+                          : 'Read the snapshot, review the next move, then save it locally.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 6),
@@ -2106,7 +2141,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     const SizedBox(height: 6),
                     Text('Best next move', style: theme.textTheme.labelSmall),
                     const SizedBox(height: 4),
-                    Text(briefing.nextStep, style: theme.textTheme.bodySmall),
+                    Text(briefingNextStep, style: theme.textTheme.bodySmall),
                     if (briefing.projectContext != null ||
                         briefing.threadContext != null) ...[
                       const SizedBox(height: 8),
@@ -2237,6 +2272,27 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                                     .toList(),
                               ),
                             ],
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilledButton.tonalIcon(
+                                  key: const Key('voiceApplyAiBriefingButton'),
+                                  onPressed: () => _applyAiBriefingDraft(aiAssist),
+                                  icon: const Icon(Icons.auto_fix_high_outlined),
+                                  label: const Text('Use AI wording'),
+                                ),
+                                TextButton.icon(
+                                  key: const Key('voiceKeepManualBriefingButton'),
+                                  onPressed: _acceptedAiBriefing == null
+                                      ? null
+                                      : _clearAiBriefingDraft,
+                                  icon: const Icon(Icons.edit_outlined),
+                                  label: const Text('Keep manual wording'),
+                                ),
+                              ],
+                            ),
                           ],
                         );
                       },

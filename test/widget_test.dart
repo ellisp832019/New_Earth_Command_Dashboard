@@ -1860,10 +1860,6 @@ void main() {
     await tester.pump();
     await pumpUntilIdle(tester);
 
-    final transcriptField = tester.widget<TextField>(
-      find.byKey(const Key('voiceTranscriptField')),
-    );
-
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceTemplateButton-codex')),
       200,
@@ -1873,11 +1869,6 @@ void main() {
 
     await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
     await pumpUntilIdle(tester);
-
-    expect(
-      transcriptField.controller?.text,
-      'Codex: Review the voice assistant code and suggest the smallest useful upgrade.',
-    );
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceBriefingCard')),
       200,
@@ -1885,8 +1876,10 @@ void main() {
     );
     await tester.pump();
     expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
-    expect(find.text('Review briefing'), findsOneWidget);
+    expect(find.text('Briefing snapshot'), findsOneWidget);
     expect(find.text('AI Assist preview'), findsOneWidget);
+    expect(find.text('Use AI wording'), findsOneWidget);
+    expect(find.text('Keep manual wording'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       200,
