@@ -96,6 +96,16 @@ class VoiceConversationThreadCard extends StatelessWidget {
               conversationContext.latestEntryLabel,
               style: theme.textTheme.bodySmall,
             ),
+            if (conversationContext.latestEntryPreview !=
+                conversationContext.latestEntryLabel) ...[
+              const SizedBox(height: 4),
+              Text(
+                conversationContext.latestEntryPreview,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,

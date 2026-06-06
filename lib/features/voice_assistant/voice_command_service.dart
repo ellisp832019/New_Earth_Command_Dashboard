@@ -1111,9 +1111,10 @@ class VoiceCommandService {
     final label = entryParts.join(' · ');
     final previousLabel = previous?.label;
     final entryCount = (previous?.entryCount ?? 0) + 1;
+    final latestEntry = normalizedTitle ?? transcript.trim();
     final summary = previousLabel == null
-        ? 'Starting a new thread around $contextLabel.'
-        : 'Continuing the $contextLabel thread. Latest entry: ${normalizedTitle ?? label}.';
+        ? 'Starting a new thread around $contextLabel. Latest entry: $latestEntry.'
+        : 'Continuing the $contextLabel thread. Latest entry: $latestEntry.';
 
     return VoiceConversationContext(
       label: label,
@@ -1464,12 +1465,18 @@ Rules:
         if (conversationContext.entryCount > 0)
           '${conversationContext.entryCount} entry${conversationContext.entryCount == 1 ? '' : 's'}',
       ];
+      final latestEntry = conversationContext.latestEntryLabel.trim();
+      final latestLine = latestEntry.isNotEmpty
+          ? 'Latest entry: $latestEntry.'
+          : '';
 
       if (history.isNotEmpty) {
-        return 'Gaia remembers ${memoryBits.join(', ')}. Recent captures are ready to reuse as well.';
+        return 'Gaia remembers ${memoryBits.join(', ')}. $latestLine Recent captures are ready to reuse as well.';
       }
 
-      return 'Gaia remembers ${memoryBits.join(', ')}.';
+      return latestLine.isEmpty
+          ? 'Gaia remembers ${memoryBits.join(', ')}.'
+          : 'Gaia remembers ${memoryBits.join(', ')}. $latestLine';
     }
 
     if (history.isNotEmpty) {
@@ -1492,6 +1499,10 @@ Rules:
       }
       if (conversationContext.entryCount > 0) {
         highlights.add('Entries: ${conversationContext.entryCount}');
+      }
+      final latestEntry = conversationContext.latestEntryLabel.trim();
+      if (latestEntry.isNotEmpty) {
+        highlights.add('Latest: $latestEntry');
       }
     }
 

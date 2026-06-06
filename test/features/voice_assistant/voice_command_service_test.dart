@@ -217,9 +217,17 @@ void main() {
       ),
       isTrue,
     );
+    expect(
+      briefing.memoryHighlights,
+      contains('Latest: Dashboard voice workflow'),
+    );
     expect(briefing.plannerSummary, contains('project'));
     expect(briefing.plannerSteps, contains('Open Projects'));
     expect(response.summary, contains('remember'));
+    expect(
+      briefing.memorySummary,
+      contains('Latest entry: Dashboard voice workflow.'),
+    );
   });
 
   test('voice command service builds wizard prompts and transcript pieces', () {

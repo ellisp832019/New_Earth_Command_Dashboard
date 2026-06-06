@@ -355,6 +355,31 @@ class VoiceConversationContext {
     return label;
   }
 
+  String get latestEntryPreview {
+    final latestTranscript = transcript?.trim();
+    if (latestTranscript == null || latestTranscript.isEmpty) {
+      return latestEntryLabel;
+    }
+
+    final normalizedTranscript = latestTranscript.replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    );
+    if (normalizedTranscript == latestEntryLabel) {
+      return latestEntryLabel;
+    }
+
+    if (normalizedTranscript.length <= 96) {
+      return normalizedTranscript;
+    }
+
+    return '${normalizedTranscript.substring(0, 93).trimRight()}...';
+  }
+
+  String get entryCountLabel {
+    return '$entryCount saved entry${entryCount == 1 ? '' : 's'}';
+  }
+
   bool get hasMemory =>
       type != null || projectId != null || projectName != null || title != null;
 }

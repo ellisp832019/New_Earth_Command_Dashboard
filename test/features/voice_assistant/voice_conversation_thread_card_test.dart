@@ -41,7 +41,11 @@ void main() {
     expect(find.text('Saved entries: 2'), findsOneWidget);
     expect(find.text('Latest saved step'), findsOneWidget);
     expect(find.text('Dashboard voice workflow'), findsOneWidget);
-    expect(find.text('Thread: MicroGrow · Project'), findsOneWidget);
+    expect(
+      find.textContaining('Create a project for the dashboard voice workflow'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Thread: MicroGrow'), findsOneWidget);
     expect(find.text('Type: Project'), findsOneWidget);
     expect(find.text('Project: MicroGrow'), findsOneWidget);
     expect(find.text('Continue thread'), findsOneWidget);
