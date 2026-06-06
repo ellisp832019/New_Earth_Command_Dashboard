@@ -48,31 +48,42 @@ class _FakeVoiceAiAssistService implements VoiceAiAssistService {
 }
 
 void main() {
-  test('voice ai assist provider returns the safe local stub', () {
+  test('voice ai assist provider returns the local adapter stub', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
     final service = container.read(voiceAiAssistServiceProvider);
 
-    expect(service, isA<NoOpVoiceAiAssistService>());
+    expect(service, isA<LocalVoiceAiAssistService>());
   });
 
-  test('voice ai assist stub returns calm fallback guidance', () async {
+  test('voice ai assist stub returns tuned review guidance', () async {
     const service = NoOpVoiceAiAssistService();
 
     final response = await service.reviewTranscript(
       const VoiceAiAssistRequest(
         transcript: 'Review the dashboard cards and tighten the wording.',
         selectedType: VoiceCommandType.task,
-        wizardStep: VoiceWizardStep.review,
+        conversationContext: VoiceConversationContext(
+          label: 'Project',
+          summary: 'Dashboard voice workflow',
+          type: VoiceCommandType.task,
+          projectName: 'MicroGrow',
+          title: 'Dashboard cards',
+          transcript: 'Review the dashboard cards and tighten the wording.',
+          entryCount: 2,
+        ),
       ),
     );
 
-    expect(response.summary, contains('not connected yet'));
-    expect(response.nextStep, contains('confirm the type, title, and project'));
-    expect(response.suggestedTitle, 'Review the dashboard cards and tighten');
+    expect(response.summary, contains('task stays connected'));
+    expect(response.summary, contains('remembered thread'));
+    expect(response.nextStep, contains('Confirm the category, priority, and owner'));
+    expect(response.suggestedTitle, 'Dashboard cards');
     expect(response.suggestedType, VoiceCommandType.task);
-    expect(response.hints, contains('Wizard step: Review'));
+    expect(response.hints, contains('Local AI adapter active.'));
+    expect(response.hints, contains('Review-first mode.'));
+    expect(response.hints, contains('Inferred type: Task'));
   });
 
   test(
@@ -96,14 +107,25 @@ void main() {
             summary: 'Dashboard voice workflow',
             type: VoiceCommandType.project,
             projectName: 'MicroGrow',
+            title: 'Dashboard voice workflow',
+            transcript: 'Follow up with the dashboard voice workflow.',
+            entryCount: 3,
           ),
         ),
       );
 
-      expect(wizardResponse.summary, contains('not connected yet'));
+      expect(wizardResponse.summary, contains('detail step'));
+      expect(wizardResponse.summary, contains('project'));
+      expect(wizardResponse.nextStep, contains('Answer with only the details needed'));
+      expect(wizardResponse.suggestedTitle, 'create the first milestone');
+      expect(wizardResponse.hints, contains('Local AI adapter active.'));
       expect(wizardResponse.hints, contains('Current step: Details'));
-      expect(memoryResponse.summary, contains('thread can still be reviewed'));
-      expect(memoryResponse.hints, contains('Thread memory is available.'));
+      expect(memoryResponse.summary, contains('MicroGrow'));
+      expect(memoryResponse.summary, contains('Latest entry'));
+      expect(memoryResponse.nextStep, contains('Reopen the project flow'));
+      expect(memoryResponse.hints, contains('Remembered thread is available.'));
+      expect(memoryResponse.hints, contains('3 saved entries'));
+      expect(memoryResponse.hints, contains('Latest entry: Follow up with the dashboard voice workflow.'));
     },
   );
 

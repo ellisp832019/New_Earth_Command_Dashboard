@@ -377,7 +377,7 @@ class VoiceConversationContext {
   }
 
   String get entryCountLabel {
-    return '$entryCount saved entry${entryCount == 1 ? '' : 's'}';
+    return '$entryCount saved entr${entryCount == 1 ? 'y' : 'ies'}';
   }
 
   bool get hasMemory =>
