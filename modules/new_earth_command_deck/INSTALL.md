@@ -24,6 +24,14 @@ config/command_deck.json
 
 Edit paths for your machine.
 
+You can also run:
+
+```bash
+python scripts/create_local_config.py
+```
+
+Use `--force` only if you want to overwrite an existing local config file.
+
 Recommended first edit:
 
 - replace the placeholder `projects.*` paths with your actual repo folders

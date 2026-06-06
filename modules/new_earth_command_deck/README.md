@@ -21,6 +21,7 @@ The first working version is the virtual Command Deck page inside the dashboard 
 - AI/Codex handoff templates
 - Custom ESP32-S3 Command Core roadmap
 - Scripts and config templates
+- A bootstrap helper that creates your local config from the bundled example
 - Codex build instructions
 - A virtual command deck page that can group local routes, folders, and scripts
 
@@ -72,7 +73,8 @@ Then add physical hardware.
 ## Setup flow
 
 1. Copy `config/command_deck.example.json` to `config/command_deck.json`.
-2. Replace placeholder paths with your local machine paths.
-3. Review `config/command_registry.example.json` to see the grouped virtual deck.
-4. Open `/more/command-deck` in the dashboard and confirm the cards show up.
-5. Keep private paths out of git and store only safe examples in the repo.
+2. Or run `python scripts/create_local_config.py` to create the local file for you.
+3. Replace placeholder paths with your local machine paths.
+4. Review `config/command_registry.example.json` to see the grouped virtual deck.
+5. Open `/more/command-deck` in the dashboard and confirm the cards show up.
+6. Keep private paths out of git and store only safe examples in the repo.
