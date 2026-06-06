@@ -48,26 +48,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
     final suggestion = dock.transcript.trim().isEmpty
         ? null
         : voiceService.suggestCommand(transcript: dock.transcript);
-    final quickActions = dock.transcript.trim().isEmpty
-        ? const <VoiceCommandQuickAction>[]
-        : voiceService
-              .suggestQuickActions(
-                transcript: dock.transcript,
-                suggestion: suggestion,
-              )
-              .take(4)
-              .toList();
-    final followUpActions = _buildFollowUpActions(
+    final quickFollowUpChips = voiceService.buildQuickFollowUpChips(
+      conversationContext: dock.conversationContext,
+      suggestion: suggestion,
+    );
+    final macroActions = _buildMacroActions(
       dock: dock,
       voiceService: voiceService,
-      suggestion: suggestion,
-      primaryActions: quickActions,
     );
-    final macroActions = voiceService
-        .buildMacroActions(conversationContext: dock.conversationContext)
-        .where((action) => action.id != 'continue-thread')
-        .take(5)
-        .toList();
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),
@@ -304,10 +292,10 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
                         color: AppColours.darkMutedText,
                       ),
                     ),
-                    if (followUpActions.isNotEmpty) ...[
+                    if (quickFollowUpChips.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Text(
-                        'Quick follow-up',
+                        'Quick follow-up chips',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColours.darkSecondary,
                           fontWeight: FontWeight.w700,
@@ -317,7 +305,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: followUpActions
+                        children: quickFollowUpChips
                             .map(
                               (action) => ActionChip(
                                 avatar: Icon(
@@ -412,46 +400,15 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
     );
   }
 
-  List<VoiceCommandQuickAction> _buildFollowUpActions({
+  List<VoiceCommandQuickAction> _buildMacroActions({
     required VoiceConversationDockState dock,
     required VoiceCommandService voiceService,
-    required VoiceCommandSuggestion? suggestion,
-    required List<VoiceCommandQuickAction> primaryActions,
   }) {
-    final contextualTranscript = [
-      dock.transcript,
-      dock.summary,
-      dock.nextStep,
-    ].where((part) => part.trim().isNotEmpty).join(' ');
-
-    final contextActions = contextualTranscript.isEmpty
-        ? const <VoiceCommandQuickAction>[]
-        : voiceService
-              .suggestQuickActions(
-                transcript: contextualTranscript,
-                suggestion: suggestion,
-                conversationContext: dock.conversationContext,
-              )
-              .take(4)
-              .toList();
-
-    final actions = <VoiceCommandQuickAction>[
-      if (dock.conversationContext != null)
-        const VoiceCommandQuickAction(
-          id: 'continue-thread',
-          label: 'Continue Thread',
-          description: 'Pick up the current thread from the dock.',
-        ),
-      ...primaryActions,
-      ...contextActions,
-    ];
-
-    final deduped = <String, VoiceCommandQuickAction>{};
-    for (final action in actions) {
-      deduped.putIfAbsent(action.id, () => action);
-    }
-
-    return deduped.values.take(5).toList();
+    return voiceService
+        .buildMacroActions(conversationContext: dock.conversationContext)
+        .where((action) => action.id != 'continue-thread')
+        .take(5)
+        .toList();
   }
 
   void _handleDockAction(
@@ -707,9 +664,11 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         return Icons.alt_route_outlined;
       case 'summarize-today':
       case 'load-summarize-today':
+      case 'quick-review':
         return Icons.summarize_outlined;
       case 'open-journal':
       case 'load-journal':
+      case 'meeting-notes':
         return Icons.menu_book_outlined;
       case 'open-content':
       case 'load-content':
@@ -719,8 +678,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         return Icons.work_outline;
       case 'open-inbox':
         return Icons.inbox_outlined;
+      case 'plan-day':
+        return Icons.alt_route_outlined;
+      case 'carry-forward':
       case 'continue-thread':
         return Icons.play_arrow_outlined;
+      case 'recall-thread':
+      case 'prepare-codex':
+        return Icons.history_outlined;
       default:
         return Icons.arrow_forward_outlined;
     }

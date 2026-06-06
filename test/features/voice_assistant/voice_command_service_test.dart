@@ -230,6 +230,27 @@ void main() {
     );
   });
 
+  test('voice command service builds quick follow-up chips from memory', () {
+    final service = VoiceCommandService();
+    final chips = service.buildQuickFollowUpChips(
+      conversationContext: const VoiceConversationContext(
+        label: 'Project Â· Dashboard voice workflow',
+        summary: 'Continuing the dashboard voice workflow thread.',
+        type: VoiceCommandType.project,
+        projectName: 'MicroGrow',
+        title: 'Dashboard voice workflow',
+        transcript:
+            'Project: Create a project for the dashboard voice workflow.',
+        entryCount: 2,
+      ),
+    );
+
+    expect(chips.map((chip) => chip.id), contains('continue-thread'));
+    expect(chips.map((chip) => chip.label), contains('Project Draft'));
+    expect(chips.map((chip) => chip.label), contains('Plan Day'));
+    expect(chips.map((chip) => chip.label), contains('Recall Memory'));
+  });
+
   test('voice command service builds wizard prompts and transcript pieces', () {
     final service = VoiceCommandService();
 

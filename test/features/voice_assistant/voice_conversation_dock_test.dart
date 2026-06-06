@@ -100,9 +100,10 @@ void main() {
         );
     await tester.pumpAndSettle();
 
-    expect(find.text('Quick follow-up'), findsOneWidget);
-    expect(find.text('Load Project'), findsOneWidget);
-    expect(find.text('Open Projects'), findsOneWidget);
+    expect(find.text('Quick follow-up chips'), findsOneWidget);
+    expect(find.text('Project Draft'), findsOneWidget);
+    expect(find.text('Plan Day'), findsWidgets);
+    expect(find.text('Recall Memory'), findsWidgets);
     expect(find.text('Continue Thread'), findsOneWidget);
     expect(find.text('Open Assistant'), findsOneWidget);
   });

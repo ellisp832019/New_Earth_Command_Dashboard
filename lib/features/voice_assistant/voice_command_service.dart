@@ -216,6 +216,190 @@ class VoiceCommandService {
     return dedupedMacros.values.toList();
   }
 
+  List<VoiceCommandQuickAction> buildQuickFollowUpChips({
+    VoiceConversationContext? conversationContext,
+    VoiceCommandSuggestion? suggestion,
+  }) {
+    final chips = <VoiceCommandQuickAction>[
+      if (conversationContext != null && conversationContext.hasMemory)
+        const VoiceCommandQuickAction(
+          id: 'continue-thread',
+          label: 'Continue Thread',
+          description:
+              'Reopen the assistant with the current remembered thread.',
+        ),
+    ];
+
+    final chipType = conversationContext?.type ?? suggestion?.suggestedType;
+
+    switch (chipType) {
+      case VoiceCommandType.project:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'load-project',
+            label: 'Project Draft',
+            description: 'Reopen the assistant with the project template.',
+            templateId: 'project',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'plan-day',
+            label: 'Plan Day',
+            description: 'Reopen the assistant with a short planning flow.',
+            templateId: 'plan-day',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'recall-thread',
+            label: 'Recall Memory',
+            description: 'Reopen the assistant with the memory prompt.',
+            templateId: 'recall-thread',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.task:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'load-task',
+            label: 'Task Draft',
+            description: 'Reopen the assistant with the task template.',
+            templateId: 'task',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'start-build-day',
+            label: 'Build Day',
+            description: 'Reopen the assistant with the build-day flow.',
+            templateId: 'build-day',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'carry-forward',
+            label: 'Carry Forward',
+            description: 'Reopen the assistant with the carry-forward flow.',
+            templateId: 'carry-forward',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.journalEntry:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'load-summarize-today',
+            label: 'Summarize Today',
+            description: 'Reopen the assistant with the day-review prompt.',
+            templateId: 'summarize-today',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'quick-review',
+            label: 'Quick Review',
+            description: 'Reopen the assistant with the quick review prompt.',
+            templateId: 'quick-review',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'meeting-notes',
+            label: 'Meeting Notes',
+            description: 'Reopen the assistant with the meeting notes flow.',
+            templateId: 'meeting-notes',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.businessOpportunity:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'load-business',
+            label: 'Business Lead',
+            description:
+                'Reopen the assistant with the business follow-up flow.',
+            templateId: 'business-follow-up',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'plan-day',
+            label: 'Plan Day',
+            description: 'Reopen the assistant with a short planning flow.',
+            templateId: 'plan-day',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'recall-thread',
+            label: 'Recall Memory',
+            description: 'Reopen the assistant with the memory prompt.',
+            templateId: 'recall-thread',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.contentIdea:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'load-content',
+            label: 'Content Draft',
+            description: 'Reopen the assistant with the content draft flow.',
+            templateId: 'content',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'plan-day',
+            label: 'Plan Day',
+            description: 'Reopen the assistant with a short planning flow.',
+            templateId: 'plan-day',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'recall-thread',
+            label: 'Recall Memory',
+            description: 'Reopen the assistant with the memory prompt.',
+            templateId: 'recall-thread',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.codexPrompt:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'prepare-codex',
+            label: 'Prepare Codex',
+            description:
+                'Reopen the assistant with the Codex-safe prompt flow.',
+            templateId: 'codex',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'whats-next',
+            label: "What's Next",
+            description: 'Reopen the assistant with the next-step prompt.',
+            templateId: 'whats-next',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'recall-thread',
+            label: 'Recall Memory',
+            description: 'Reopen the assistant with the memory prompt.',
+            templateId: 'recall-thread',
+          ),
+        ]);
+        break;
+      case VoiceCommandType.idea:
+      case null:
+        chips.addAll([
+          const VoiceCommandQuickAction(
+            id: 'start-build-day',
+            label: 'Build Day',
+            description: 'Reopen the assistant with the build-day flow.',
+            templateId: 'build-day',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'whats-next',
+            label: "What's Next",
+            description: 'Reopen the assistant with the next-step prompt.',
+            templateId: 'whats-next',
+          ),
+          const VoiceCommandQuickAction(
+            id: 'recall-thread',
+            label: 'Recall Memory',
+            description: 'Reopen the assistant with the memory prompt.',
+            templateId: 'recall-thread',
+          ),
+        ]);
+        break;
+    }
+
+    final dedupedChips = <String, VoiceCommandQuickAction>{};
+    for (final chip in chips) {
+      dedupedChips.putIfAbsent(chip.id, () => chip);
+    }
+
+    return dedupedChips.values.take(4).toList();
+  }
+
   VoiceCommandQuickAction? resolveFollowUpAction({
     required String transcript,
     VoiceConversationContext? conversationContext,
