@@ -461,6 +461,7 @@ Inbox is the capture area for ideas, thoughts, and unprocessed items.
 The voice assistant screen supports reviewed voice capture for local dashboard actions.
 
 For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guide.md) or the [clean PDF](voice_assistant_guide.pdf).
+The Voice Assistant screen also has a `Voice Guide PDF` button at the top so you can open the printable guide without leaving the screen.
 
 ### How to use it
 

@@ -45,11 +45,12 @@ If you just want to use Voice Assistant right now:
    - use a mock transcript
    - tap a starter template
    - reuse a recent command from history
-3. Read the transcript back carefully
-4. Check the assistant reply and the `AI Assist preview`
-5. Decide whether the capture should be a task, project, journal entry, business lead, content idea, or Codex prompt
-6. Edit anything that feels off
-7. Save it locally when it reads cleanly
+3. If you want the printable guide, tap `Voice Guide PDF` at the top of the Voice Assistant screen
+4. Read the transcript back carefully
+5. Check the assistant reply and the `AI Assist preview`
+6. Decide whether the capture should be a task, project, journal entry, business lead, content idea, or Codex prompt
+7. Edit anything that feels off
+8. Save it locally when it reads cleanly
 
 If you are on Windows, the voice path can also listen, speak brief replies, and show the dashboard conversation dock when wake capture lands there.
 
@@ -101,6 +102,8 @@ You can open `Voice Assistant` from:
 - `More`
 
 Use whichever path is closer to the work you are already doing.
+
+The printable guide is also available from the `Voice Guide PDF` button at the top of the Voice Assistant screen.
 
 If Gaia hears the wake phrase while you are on the dashboard, the conversation dock can appear in the bottom-right corner with the summary, next step, and captured transcript, and Gaia can speak that captured response back through the configured voice output. The dock also offers quick follow-up chips so you can keep the conversation moving into a task, project, journal entry, or another next step. Use `Open Assistant` if you want to jump into the full Voice Assistant screen from there.
 

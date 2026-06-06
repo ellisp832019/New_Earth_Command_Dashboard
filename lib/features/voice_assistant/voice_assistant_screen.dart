@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -135,7 +138,30 @@ class VoiceAssistantScreen extends ConsumerStatefulWidget {
       _VoiceAssistantScreenState();
 }
 
+class _VoiceGuidePdfScreen extends StatelessWidget {
+  const _VoiceGuidePdfScreen({required this.pdfPath});
+
+  final String pdfPath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text('Voice Guide PDF'),
+      ),
+      body: PdfViewer.file(
+        pdfPath,
+        params: const PdfViewerParams(),
+      ),
+    );
+  }
+}
+
 class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
+  static const _voiceGuidePdfPath =
+      'docs/user_guide/voice_assistant_guide.pdf';
+
   final VoiceCommandService _service = VoiceCommandService();
   final DesktopSpeechBridgeService _desktopSpeechBridgeService =
       DesktopSpeechBridgeService();
@@ -192,6 +218,32 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   bool _wakeAcknowledgeSpoken = false;
   bool _wakeAutoListenQueued = false;
   bool _handsfreeSessionActive = false;
+
+  Future<void> _openVoiceGuidePdf() async {
+    final file = File(_voiceGuidePdfPath);
+    if (!await file.exists()) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Voice guide PDF not found at ${file.path}'),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _VoiceGuidePdfScreen(pdfPath: file.path),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -1748,6 +1800,16 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 ? 'Answer one question at a time and let the wizard assemble the draft for review.'
                 : 'Speak naturally or press Start Listening, review the transcript, then choose where it belongs before anything is saved.',
             style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.tonalIcon(
+              key: const Key('voiceGuidePdfButton'),
+              onPressed: _openVoiceGuidePdf,
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('Voice Guide PDF'),
+            ),
           ),
           const SizedBox(height: 24),
           SegmentedButton<_VoiceInteractionMode>(

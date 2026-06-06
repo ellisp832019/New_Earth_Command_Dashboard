@@ -1835,6 +1835,10 @@ void main() {
       find.text('Speak, review, and turn your words into dashboard actions.'),
       findsOneWidget,
     );
+    expect(find.text('Voice Guide PDF'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('voiceGuidePdfButton')));
+    await pumpUntilIdle(tester);
+    expect(find.text('Voice Guide PDF'), findsAtLeastNWidgets(1));
     expect(find.text('Use Mock Transcript'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Related Project'),
