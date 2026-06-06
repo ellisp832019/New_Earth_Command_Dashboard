@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -64,6 +66,7 @@ class VoiceAssistantSpeechService {
   static const String _channelName = 'new_earth/windows_voice_speech';
 
   final MethodChannel _channel;
+  Process? _fallbackSpeechProcess;
 
   bool get _isVoiceOutputSupported {
     if (kIsWeb) {
@@ -98,10 +101,12 @@ class VoiceAssistantSpeechService {
           }
           return a.name.compareTo(b.name);
         });
+    } on MissingPluginException {
+      return await _loadVoicesWithPowerShell();
     } on PlatformException catch (_) {
-      return const <VoiceTtsVoiceOption>[];
+      return await _loadVoicesWithPowerShell();
     } catch (_) {
-      return const <VoiceTtsVoiceOption>[];
+      return await _loadVoicesWithPowerShell();
     }
   }
 
@@ -123,12 +128,37 @@ class VoiceAssistantSpeechService {
         'pitch': pitch.clamp(0.5, 2.0),
         'voice': voice?.toVoiceMap(),
       });
+      return;
+    } on MissingPluginException {
+      await _speakWithPowerShellFallback(
+        text.trim(),
+        rate: rate,
+        pitch: pitch,
+        voiceName: voice?.name,
+      );
+    } on PlatformException {
+      await _speakWithPowerShellFallback(
+        text.trim(),
+        rate: rate,
+        pitch: pitch,
+        voiceName: voice?.name,
+      );
     } catch (_) {
-      // Best-effort only. Voice output should never block the workflow.
+      await _speakWithPowerShellFallback(
+        text.trim(),
+        rate: rate,
+        pitch: pitch,
+        voiceName: voice?.name,
+      );
     }
   }
 
   Future<void> stop() async {
+    if (_fallbackSpeechProcess != null) {
+      _fallbackSpeechProcess!.kill(ProcessSignal.sigterm);
+      _fallbackSpeechProcess = null;
+    }
+
     if (!_isVoiceOutputSupported) {
       return;
     }
@@ -141,6 +171,165 @@ class VoiceAssistantSpeechService {
   }
 
   void dispose() {}
+
+  Future<List<VoiceTtsVoiceOption>> _loadVoicesWithPowerShell() async {
+    if (!Platform.isWindows) {
+      return const <VoiceTtsVoiceOption>[];
+    }
+
+    try {
+      final script = <String>[
+        'Add-Type -AssemblyName System.Speech',
+        r'$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer',
+        r'$voices = $synth.GetInstalledVoices() | ForEach-Object {',
+        r'  $info = $_.VoiceInfo',
+        r'  [PSCustomObject]@{',
+        r'    name = $info.Name',
+        r'    locale = $info.Culture.Name',
+        r'    gender = $info.Gender.ToString()',
+        r'    identifier = $info.Name',
+        r'  }',
+        r'}',
+        r'$voices | ConvertTo-Json -Compress',
+      ].join('\n');
+
+      final output = await Process.run(
+        'powershell',
+        <String>[
+          '-NoLogo',
+          '-NoProfile',
+          '-NonInteractive',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-EncodedCommand',
+          _encodePowerShellCommand(script),
+        ],
+        runInShell: true,
+      );
+
+      if (output.exitCode != 0) {
+        return const <VoiceTtsVoiceOption>[];
+      }
+
+      final payload = output.stdout.toString().trim();
+      if (payload.isEmpty) {
+        return const <VoiceTtsVoiceOption>[];
+      }
+
+      final decoded = jsonDecode(payload);
+      final rawVoices = decoded is List
+          ? decoded
+          : decoded is Map<String, dynamic>
+          ? <dynamic>[decoded]
+          : const <dynamic>[];
+
+      return rawVoices
+          .whereType<Map>()
+          .map(
+            (voice) => VoiceTtsVoiceOption(
+              name: voice['name']?.toString() ?? 'Unknown voice',
+              locale: voice['locale']?.toString() ?? 'unknown',
+              gender: voice['gender']?.toString(),
+              identifier: voice['identifier']?.toString(),
+            ),
+          )
+          .toList()
+        ..sort((a, b) {
+          final localeCompare = a.locale.compareTo(b.locale);
+          if (localeCompare != 0) {
+            return localeCompare;
+          }
+          return a.name.compareTo(b.name);
+        });
+    } catch (_) {
+      return const <VoiceTtsVoiceOption>[];
+    }
+  }
+
+  Future<void> _speakWithPowerShellFallback(
+    String text, {
+    required double rate,
+    required double pitch,
+    String? voiceName,
+  }) async {
+    if (!Platform.isWindows || text.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      await stop();
+      final script = _buildPowerShellSpeechScript(
+        text: text.trim(),
+        rate: rate,
+        voiceName: voiceName,
+      );
+      final process = await Process.start(
+        'powershell',
+        <String>[
+          '-NoLogo',
+          '-NoProfile',
+          '-NonInteractive',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-EncodedCommand',
+          _encodePowerShellCommand(script),
+        ],
+        runInShell: true,
+      );
+      _fallbackSpeechProcess = process;
+      unawaited(process.exitCode.then((_) {
+        if (identical(_fallbackSpeechProcess, process)) {
+          _fallbackSpeechProcess = null;
+        }
+      }));
+    } catch (_) {
+      // Best-effort only. Voice output should never block the workflow.
+    }
+  }
+
+  String _buildPowerShellSpeechScript({
+    required String text,
+    required double rate,
+    String? voiceName,
+  }) {
+    final normalizedText = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final safeText = _escapePowerShellSingleQuoted(normalizedText);
+    final safeVoiceName = _escapePowerShellSingleQuoted(voiceName ?? '');
+    final rateValue = ((rate.clamp(0.0, 1.0) - 0.5) * 20).round();
+
+    final buffer = StringBuffer()
+      ..writeln('Add-Type -AssemblyName System.Speech')
+      ..writeln(r'$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer')
+      ..writeln(r'try {');
+
+    if (safeVoiceName.isNotEmpty) {
+      buffer.writeln(
+        "  try { \$synth.SelectVoice('$safeVoiceName') } catch {}",
+      );
+    }
+
+    buffer
+      ..writeln('  \$synth.Rate = $rateValue')
+      ..writeln("  \$synth.Speak('$safeText')")
+      ..writeln(r'} finally {')
+      ..writeln(r'  $synth.Dispose()')
+      ..writeln(r'}');
+
+    return buffer.toString();
+  }
+
+  String _escapePowerShellSingleQuoted(String value) {
+    return value.replaceAll("'", "''");
+  }
+
+  String _encodePowerShellCommand(String script) {
+    final bytes = <int>[];
+    for (final codeUnit in script.codeUnits) {
+      bytes.add(codeUnit & 0xFF);
+      bytes.add((codeUnit >> 8) & 0xFF);
+    }
+    return base64Encode(bytes);
+  }
 }
 
 VoiceTtsVoiceOption? resolveConfiguredVoiceOption({

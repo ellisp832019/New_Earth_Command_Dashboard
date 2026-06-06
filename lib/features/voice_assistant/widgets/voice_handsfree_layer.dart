@@ -119,14 +119,44 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       }
 
       if (!available) {
-        ref
-            .read(voiceSessionProvider.notifier)
-            .release(
-              owner: VoiceSessionOwner.handsfree,
-              label: 'Gaia idle',
-              detail: 'Mic not available',
-            );
-        _scheduleRearm();
+        final speechAvailable = await _speech.initialize(
+          onError: _onSpeechError,
+          onStatus: _onSpeechStatus,
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (!speechAvailable) {
+          ref
+              .read(voiceSessionProvider.notifier)
+              .release(
+                owner: VoiceSessionOwner.handsfree,
+                label: 'Gaia idle',
+                detail: 'Mic not available',
+              );
+          _scheduleRearm();
+          return;
+        }
+
+        await _speech.listen(
+          onResult: _onSpeechResult,
+          listenFor: const Duration(minutes: 30),
+          pauseFor: const Duration(seconds: 5),
+          listenOptions: SpeechListenOptions(
+            listenMode: ListenMode.confirmation,
+            partialResults: true,
+            cancelOnError: true,
+            autoPunctuation: true,
+          ),
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        _captureFocusNode.requestFocus();
       } else {
         _captureFocusNode.requestFocus();
       }

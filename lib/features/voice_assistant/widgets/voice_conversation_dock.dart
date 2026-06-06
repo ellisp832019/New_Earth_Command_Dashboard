@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_recognition_error.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,6 +28,7 @@ class VoiceConversationDock extends ConsumerStatefulWidget {
 class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
   final DesktopSpeechBridgeService _desktopSpeechBridgeService =
       DesktopSpeechBridgeService();
+  final SpeechToText _speech = SpeechToText();
   final TextEditingController _followUpController = TextEditingController();
   final FocusNode _followUpFocusNode = FocusNode();
   bool _isCapturingFollowUp = false;
@@ -32,6 +36,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
 
   @override
   void dispose() {
+    _speech.cancel();
     _followUpController.dispose();
     _followUpFocusNode.dispose();
     super.dispose();
@@ -544,14 +549,17 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
       }
       await ref.read(voiceAssistantSpeechServiceProvider).stop();
       await Future<void>.delayed(const Duration(milliseconds: 120));
-      final capture = await _desktopSpeechBridgeService.captureOnce(
-        durationSeconds: 6,
-      );
-      if (!mounted) {
-        return;
-      }
+    final capture = await _desktopSpeechBridgeService.captureOnce(
+      durationSeconds: 6,
+    );
+    if (!mounted) {
+      return;
+    }
 
-      final transcript = capture?.transcript.trim() ?? '';
+      var transcript = capture?.transcript.trim() ?? '';
+      if (transcript.isEmpty) {
+        transcript = (await _captureFollowUpWithSpeechToText())?.trim() ?? '';
+      }
       if (transcript.isEmpty) {
         setState(() {
           _followUpStatus = 'No follow-up heard. Try again or type it.';
@@ -589,6 +597,61 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
           _isCapturingFollowUp = false;
         });
       }
+    }
+  }
+
+  Future<String?> _captureFollowUpWithSpeechToText() async {
+    String latestTranscript = '';
+    final completer = Completer<String?>();
+
+    final available = await _speech.initialize(
+      onError: (SpeechRecognitionError error) {
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+      },
+      onStatus: (String status) {
+        if (status == 'done' && !completer.isCompleted) {
+          completer.complete(
+            latestTranscript.trim().isEmpty ? null : latestTranscript.trim(),
+          );
+        }
+      },
+    );
+
+    if (!available) {
+      return null;
+    }
+
+    try {
+      await _speech.listen(
+        onResult: (SpeechRecognitionResult result) {
+          latestTranscript = result.recognizedWords;
+          if (result.finalResult && !completer.isCompleted) {
+            completer.complete(
+              latestTranscript.trim().isEmpty
+                  ? null
+                  : latestTranscript.trim(),
+            );
+          }
+        },
+        listenFor: const Duration(seconds: 6),
+        pauseFor: const Duration(seconds: 2),
+        listenOptions: SpeechListenOptions(
+          listenMode: ListenMode.confirmation,
+          partialResults: true,
+          cancelOnError: true,
+          autoPunctuation: true,
+        ),
+      );
+
+      return await completer.future.timeout(
+        const Duration(seconds: 8),
+        onTimeout: () =>
+            latestTranscript.trim().isEmpty ? null : latestTranscript.trim(),
+      );
+    } finally {
+      await _speech.stop();
     }
   }
 

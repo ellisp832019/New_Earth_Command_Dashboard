@@ -219,6 +219,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   bool _speechAvailable = false;
   bool _isInitializingSpeech = false;
   bool _isListening = false;
+  bool _usingWindowsVoiceTyping = false;
   bool _wakeAcknowledgeQueued = false;
   bool _wakeAcknowledgePending = false;
   bool _wakeAcknowledgeSpoken = false;
@@ -926,12 +927,13 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _speechAvailable = available;
         _isInitializingSpeech = false;
         _isListening = available;
+        _usingWindowsVoiceTyping = available;
         _speechStatus = available
             ? 'Microphone armed. Speak your next command.'
-            : 'Desktop speech bridge could not capture a transcript right now.';
+            : 'Windows voice typing is unavailable, so Gaia is using the local speech recognizer.';
         _speechError = available
             ? null
-            : 'Try Win + H, or use Paste Transcript if Windows dictation is unavailable.';
+            : 'Gaia is falling back to the local recognizer. You can still use Paste Transcript if needed.';
       });
       if (available) {
         session.beginListening(
@@ -941,10 +943,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           opacity: 0.82,
         );
       } else {
-        session.release(
-          owner: VoiceSessionOwner.assistant,
-          label: 'Gaia idle',
-          detail: 'Mic not available',
+        return await _startWindowsSpeechToTextCapture(
+          preparingStatus: 'Windows voice typing is unavailable, so Gaia is using the local speech recognizer.',
+          unavailableStatus: 'Microphone speech capture is not available here.',
+          unavailableError:
+              'Check microphone permission or use Paste Transcript if speech capture remains quiet.',
         );
       }
 
@@ -996,6 +999,76 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
   }
 
+  Future<bool> _startWindowsSpeechToTextCapture({
+    required String preparingStatus,
+    required String unavailableStatus,
+    required String unavailableError,
+  }) async {
+    final session = ref.read(voiceSessionProvider.notifier);
+
+    setState(() {
+      _speechError = null;
+      _isInitializingSpeech = true;
+      _speechStatus = preparingStatus;
+    });
+
+    final available = await _speech.initialize(
+      onError: _onSpeechError,
+      onStatus: _onSpeechStatus,
+    );
+
+    if (!mounted) {
+      return false;
+    }
+
+    setState(() {
+      _speechAvailable = available;
+      _isInitializingSpeech = false;
+      _usingWindowsVoiceTyping = false;
+    });
+
+    if (!available) {
+      setState(() {
+        _speechStatus = unavailableStatus;
+        _speechError = unavailableError;
+      });
+      session.release(
+        owner: VoiceSessionOwner.assistant,
+        label: 'Gaia idle',
+        detail: 'Microphone unavailable',
+      );
+      return false;
+    }
+
+    await _speech.listen(
+      onResult: _onSpeechResult,
+      listenFor: const Duration(seconds: 45),
+      pauseFor: const Duration(seconds: 5),
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.confirmation,
+        partialResults: true,
+        cancelOnError: true,
+        autoPunctuation: true,
+      ),
+    );
+
+    if (!mounted) {
+      return false;
+    }
+
+    setState(() {
+      _isListening = true;
+      _speechStatus = 'Listening...';
+    });
+    _setVoicePresence(
+      label: 'Gaia listening',
+      detail: 'Speak your next command',
+      isActive: true,
+      opacity: 0.84,
+    );
+    return true;
+  }
+
   Future<void> _startHandsfreeConversationSession() async {
     if (_handsfreeSessionActive || !mounted) {
       return;
@@ -1036,7 +1109,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         break;
       }
 
-      final transcript = capture?.transcript.trim() ?? '';
+      var transcript = capture?.transcript.trim() ?? '';
+      if (transcript.isEmpty) {
+        transcript = (await _captureHandsfreeTranscriptWithSpeechToText())
+                ?.trim() ??
+            '';
+      }
       if (transcript.isEmpty) {
         session.beginListening(
           owner: VoiceSessionOwner.assistant,
@@ -1081,9 +1159,69 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     );
   }
 
+  Future<String?> _captureHandsfreeTranscriptWithSpeechToText() async {
+    String latestTranscript = '';
+    final completer = Completer<String?>();
+
+    setState(() {
+      _speechStatus = 'Handsfree mode is using the local microphone recognizer.';
+      _speechError = null;
+    });
+
+    final available = await _speech.initialize(
+      onError: (SpeechRecognitionError error) {
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+      },
+      onStatus: (String status) {
+        if (status == 'done' && !completer.isCompleted) {
+          completer.complete(
+            latestTranscript.trim().isEmpty ? null : latestTranscript.trim(),
+          );
+        }
+      },
+    );
+
+    if (!available) {
+      return null;
+    }
+
+    try {
+      await _speech.listen(
+        onResult: (SpeechRecognitionResult result) {
+          latestTranscript = result.recognizedWords;
+          if (result.finalResult && !completer.isCompleted) {
+            completer.complete(
+              latestTranscript.trim().isEmpty
+                  ? null
+                  : latestTranscript.trim(),
+            );
+          }
+        },
+        listenFor: const Duration(seconds: 8),
+        pauseFor: const Duration(seconds: 3),
+        listenOptions: SpeechListenOptions(
+          listenMode: ListenMode.confirmation,
+          partialResults: true,
+          cancelOnError: true,
+          autoPunctuation: true,
+        ),
+      );
+
+      return await completer.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () =>
+            latestTranscript.trim().isEmpty ? null : latestTranscript.trim(),
+      );
+    } finally {
+      await _speech.stop();
+    }
+  }
+
   Future<void> _stopListening() async {
     _handsfreeSessionActive = false;
-    if (WindowsVoiceTypingService.isSupported) {
+    if (WindowsVoiceTypingService.isSupported && _usingWindowsVoiceTyping) {
       _activeSpeechFocusNode.requestFocus();
       if (!mounted) {
         return;
@@ -1100,7 +1238,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             owner: VoiceSessionOwner.assistant,
             label: 'Gaia idle',
             detail: 'Reviewing dictation',
-          );
+        );
+      _usingWindowsVoiceTyping = false;
       return;
     }
 
@@ -1120,11 +1259,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           label: 'Gaia idle',
           detail: 'Stopped listening',
         );
+    _usingWindowsVoiceTyping = false;
   }
 
   Future<void> _cancelListening() async {
     _handsfreeSessionActive = false;
-    if (WindowsVoiceTypingService.isSupported) {
+    if (WindowsVoiceTypingService.isSupported && _usingWindowsVoiceTyping) {
       _activeSpeechFocusNode.requestFocus();
       if (!mounted) {
         return;
@@ -1140,7 +1280,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         detail: 'Listening cancelled',
         isActive: false,
         opacity: 0.28,
-      );
+        );
+      _usingWindowsVoiceTyping = false;
       return;
     }
 
@@ -1160,6 +1301,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           label: 'Gaia idle',
           detail: 'Capture cancelled',
         );
+    _usingWindowsVoiceTyping = false;
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
