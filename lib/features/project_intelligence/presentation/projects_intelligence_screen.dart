@@ -85,6 +85,7 @@ class _ProjectsIntelligenceScreenState
           final summary = _ProjectsIntelligenceSummary.fromBundle(bundle);
 
           return ListView(
+            key: const Key('projectsHubScrollView'),
             padding: const EdgeInsets.all(20),
             children: [
               Container(
@@ -109,20 +110,29 @@ class _ProjectsIntelligenceScreenState
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'A single space for read-only intelligence and the live workspace snapshot.',
+                              'Read-only project intelligence, with the live workspace tucked quietly underneath.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: AppColours.darkMutedText,
                                     height: 1.35,
                                   ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: const [
+                                _HubCrumb(label: 'Dashboard'),
+                                _HubCrumb(label: 'Projects Hub'),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
                             Text(
-                              'Intelligence + workspace snapshot.',
+                              'Hub first. Workspace inside.',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                    color: AppColours.darkSecondary,
-                                    fontWeight: FontWeight.w600,
+                                    color: AppColours.darkMutedText,
+                                    letterSpacing: 0.15,
                                   ),
                             ),
                           ],
@@ -157,7 +167,9 @@ class _ProjectsIntelligenceScreenState
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                ref.invalidate(projectIntelligenceBundleProvider);
+                                ref.invalidate(
+                                  projectIntelligenceBundleProvider,
+                                );
                                 ref.invalidate(projectsProvider);
                               },
                               icon: const Icon(Icons.sync_outlined),
@@ -241,15 +253,15 @@ class _ProjectsIntelligenceScreenState
                     ),
                   ],
                 ),
-                  ),
+              ),
               const SizedBox(height: 16),
               _WorkspaceSnapshotSection(
                 workspaceSnapshot: workspaceSnapshot,
                 isExpanded: showWorkspaceSnapshot,
                 onToggle: () {
-                  ref.read(settingsControllerProvider).setShowProjectsWorkspaceSnapshot(
-                    !showWorkspaceSnapshot,
-                  );
+                  ref
+                      .read(settingsControllerProvider)
+                      .setShowProjectsWorkspaceSnapshot(!showWorkspaceSnapshot);
                 },
               ),
               const SizedBox(height: 16),
@@ -308,9 +320,7 @@ class _WorkspaceSnapshotSection extends StatelessWidget {
               ),
               TextButton.icon(
                 onPressed: onToggle,
-                icon: Icon(
-                  isExpanded ? Icons.expand_less : Icons.expand_more,
-                ),
+                icon: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
                 label: Text(isExpanded ? 'Collapse' : 'Expand'),
               ),
               TextButton(
@@ -322,7 +332,7 @@ class _WorkspaceSnapshotSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'A quick read-only look at the live projects table. Open the workspace if you want to add or edit records.',
+            'The workspace preview is saved locally and can stay collapsed for a quieter view.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.35,
@@ -351,27 +361,30 @@ class _WorkspaceSnapshotSection extends StatelessWidget {
                   );
                 }
 
-                final visibleProjects = projects.take(4).toList(growable: false);
+                final visibleProjects = projects
+                    .take(4)
+                    .toList(growable: false);
                 return Column(
                   children: [
-                    for (var index = 0; index < visibleProjects.length; index++)
-                      ...[
-                        _WorkspaceProjectCard(
-                          project: visibleProjects[index],
-                        ),
-                        if (index != visibleProjects.length - 1)
-                          const SizedBox(height: 12),
-                      ],
+                    for (
+                      var index = 0;
+                      index < visibleProjects.length;
+                      index++
+                    ) ...[
+                      _WorkspaceProjectCard(project: visibleProjects[index]),
+                      if (index != visibleProjects.length - 1)
+                        const SizedBox(height: 12),
+                    ],
                   ],
                 );
               },
             )
           else
             Text(
-              'Workspace snapshot collapsed. Expand it when you want the live project table preview.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              'Workspace snapshot is collapsed. Expand it for the live project table preview.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
         ],
       ),
@@ -449,10 +462,7 @@ class _WorkspaceProjectCard extends StatelessWidget {
                 label: 'Progress',
                 value: '${project.progressPercentage}%',
               ),
-              _IntelligenceChip(
-                label: 'Project ID',
-                value: project.projectId,
-              ),
+              _IntelligenceChip(label: 'Project ID', value: project.projectId),
             ],
           ),
           if ((project.currentMilestone ?? '').trim().isNotEmpty) ...[
@@ -467,9 +477,9 @@ class _WorkspaceProjectCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               project.currentMilestone!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkText),
             ),
           ],
           if ((project.nextAction ?? '').trim().isNotEmpty) ...[
@@ -484,16 +494,17 @@ class _WorkspaceProjectCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               project.nextAction!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ],
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
-              onPressed: () => context.push(RouteNames.projectDetail(project.projectId)),
+              onPressed: () =>
+                  context.push(RouteNames.projectDetail(project.projectId)),
               icon: const Icon(Icons.open_in_new),
               label: const Text('Open detail'),
             ),
@@ -714,6 +725,32 @@ class _ProjectsIntelligenceSummary {
   final int dirtyRepoCount;
   final int docsFoundCount;
   final int todoCount;
+}
+
+class _HubCrumb extends StatelessWidget {
+  const _HubCrumb({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
 }
 
 class _IntelligenceChip extends StatelessWidget {

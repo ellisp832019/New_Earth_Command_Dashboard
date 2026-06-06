@@ -347,47 +347,45 @@ void main() {
         settingsSnapshotProvider.overrideWith((ref) async {
           return SettingsRepository(database).getSettings();
         }),
-        dashboardSnapshotProvider.overrideWith(
-          (ref) async {
-            final settings = await SettingsRepository(database).getSettings();
-            return DashboardSnapshot(
-              date: DateTime(2026, 5, 2),
-              hasTodayPlan: true,
-              activeProjectCount: 9,
-              activeProjects: const [
-                DashboardProjectSummary(
-                  projectId: 'project-microgrow',
-                  name: 'MicroGrow',
-                  progressPercentage: 65,
-                  currentMilestone: 'Stabilise diagnostics',
-                  nextAction: 'Review the next useful diagnostics step.',
-                ),
-                DashboardProjectSummary(
-                  projectId: 'project-new-earth-website',
-                  name: 'New Earth Website',
-                  progressPercentage: 40,
-                  currentMilestone: 'Clarify site structure',
-                  nextAction: 'Tighten the founder journey page.',
-                ),
-              ],
-              topTasks: const [],
-              topTaskTitles: const [],
-              showWellbeingCard: settings.settings.showWellbeingCard,
-              showBusinessCard: settings.settings.showBusinessCard,
-              showLearningCard: settings.settings.showLearningCard,
-              showContentCard: settings.settings.showContentCard,
-              energyLabel: 'High',
-              nextStepTitle: 'Next useful move',
-              nextStepSummary:
-                  'Continue MicroGrow with Review the next useful diagnostics step.',
-              nextStepReason:
-                  'It uses the strongest project context available right now.',
-              mainFocus: null,
-              focusReason: null,
-              morningIntention: null,
-            );
-          },
-        ),
+        dashboardSnapshotProvider.overrideWith((ref) async {
+          final settings = await SettingsRepository(database).getSettings();
+          return DashboardSnapshot(
+            date: DateTime(2026, 5, 2),
+            hasTodayPlan: true,
+            activeProjectCount: 9,
+            activeProjects: const [
+              DashboardProjectSummary(
+                projectId: 'project-microgrow',
+                name: 'MicroGrow',
+                progressPercentage: 65,
+                currentMilestone: 'Stabilise diagnostics',
+                nextAction: 'Review the next useful diagnostics step.',
+              ),
+              DashboardProjectSummary(
+                projectId: 'project-new-earth-website',
+                name: 'New Earth Website',
+                progressPercentage: 40,
+                currentMilestone: 'Clarify site structure',
+                nextAction: 'Tighten the founder journey page.',
+              ),
+            ],
+            topTasks: const [],
+            topTaskTitles: const [],
+            showWellbeingCard: settings.settings.showWellbeingCard,
+            showBusinessCard: settings.settings.showBusinessCard,
+            showLearningCard: settings.settings.showLearningCard,
+            showContentCard: settings.settings.showContentCard,
+            energyLabel: 'High',
+            nextStepTitle: 'Next useful move',
+            nextStepSummary:
+                'Continue MicroGrow with Review the next useful diagnostics step.',
+            nextStepReason:
+                'It uses the strongest project context available right now.',
+            mainFocus: null,
+            focusReason: null,
+            morningIntention: null,
+          );
+        }),
       ],
       child: const NewEarthCommandDashboardApp(),
     );
@@ -627,6 +625,30 @@ void main() {
 
     expect(find.text('Projects Hub'), findsOneWidget);
     expect(find.byTooltip('Back to Dashboard'), findsOneWidget);
+  });
+
+  testWidgets('projects hub workspace snapshot persists collapse state', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+
+    final initialSettings = await SettingsRepository(database).getSettings();
+    expect(initialSettings.settings.showProjectsWorkspaceSnapshot, isTrue);
+
+    await SettingsRepository(
+      database,
+    ).updateDashboardCardVisibility(showProjectsWorkspaceSnapshot: false);
+
+    final snapshotAfterCollapse = await SettingsRepository(
+      database,
+    ).getSettings();
+    expect(
+      snapshotAfterCollapse.settings.showProjectsWorkspaceSnapshot,
+      isFalse,
+    );
   });
 
   testWidgets('tasks screen shows local task cards', (
@@ -932,9 +954,10 @@ void main() {
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
     const mainFocus = 'Finish the planner editing slice';
-    await DailyPlanRepository(database, now: () => today).updateMainFocus(
-      mainFocus,
-    );
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).updateMainFocus(mainFocus);
 
     final plan = await DailyPlanRepository(
       database,
@@ -957,14 +980,18 @@ void main() {
     const focusReason = 'This keeps the dashboard aligned and useful.';
     const morningIntention = 'Stay calm and finish one useful step.';
 
-    await DailyPlanRepository(database, now: () => today).updateMainFocus(
-      mainFocus,
-    );
-    await DailyPlanRepository(database, now: () => today).updateFocusReason(
-      focusReason,
-    );
-    await DailyPlanRepository(database, now: () => today)
-        .updateMorningIntention(morningIntention);
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).updateMainFocus(mainFocus);
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).updateFocusReason(focusReason);
+    await DailyPlanRepository(
+      database,
+      now: () => today,
+    ).updateMorningIntention(morningIntention);
 
     final plan = await DailyPlanRepository(
       database,
@@ -1378,7 +1405,7 @@ void main() {
       );
 
       await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await pumpUntilIdle(tester);
+      await pumpUntilIdle(tester);
 
       appRouter.go('/projects/${project.projectId}');
       await pumpUntilIdle(tester);
@@ -1720,7 +1747,10 @@ void main() {
     );
 
     expect(searched.map((task) => task.title), ['First task']);
-    expect(cleared.map((task) => task.title), containsAll(['First task', 'Second task']));
+    expect(
+      cleared.map((task) => task.title),
+      containsAll(['First task', 'Second task']),
+    );
   });
 
   testWidgets('tasks screen combines search with filters', (
@@ -1886,10 +1916,7 @@ void main() {
           isReady: false,
           message: 'Checking for a connected headset...',
           devices: <VoiceInputDevice>[
-            VoiceInputDevice(
-              name: 'USB Audio Device',
-              identifier: 'USB\\ROOT',
-            ),
+            VoiceInputDevice(name: 'USB Audio Device', identifier: 'USB\\ROOT'),
           ],
         ),
         voiceAssistantEnabled: true,
@@ -3032,7 +3059,10 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pump();
-    expect(find.byKey(const Key('dashboardQuickCaptureButton')), findsOneWidget);
+    expect(
+      find.byKey(const Key('dashboardQuickCaptureButton')),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const Key('dashboardQuickCaptureButton')));
     await pumpUntilIdle(tester);
 
@@ -3144,8 +3174,3 @@ void main() {
     expect(updatedEntry.nextActions, 'Use the edit flow again later.');
   });
 }
-
-
-
-
-
