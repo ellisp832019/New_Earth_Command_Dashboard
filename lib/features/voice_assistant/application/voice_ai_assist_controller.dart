@@ -2,8 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../ai/voice_ai_assist_service.dart';
 
-final voiceAiAssistAdapterProvider = Provider<VoiceAiAssistAdapter>((ref) {
+final voiceAiLocalStubProvider = Provider<VoiceAiAssistService>((ref) {
   return const LocalVoiceAiAssistService();
+});
+
+final voiceAiAssistAdapterProvider = Provider<VoiceAiAssistAdapter>((ref) {
+  return ref.read(voiceAiLocalStubProvider);
 });
 
 final voiceAiAssistServiceProvider = Provider<VoiceAiAssistService>((ref) {
@@ -11,7 +15,7 @@ final voiceAiAssistServiceProvider = Provider<VoiceAiAssistService>((ref) {
   if (adapter is VoiceAiAssistService) {
     return adapter;
   }
-  return const LocalVoiceAiAssistService();
+  return ref.read(voiceAiLocalStubProvider);
 });
 
 final voiceAiBriefingAssistProvider = FutureProvider.autoDispose

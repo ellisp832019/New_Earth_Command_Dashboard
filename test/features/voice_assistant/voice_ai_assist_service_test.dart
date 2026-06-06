@@ -104,6 +104,20 @@ void main() {
     expect(container.read(voiceAiAssistServiceProvider), isA<LocalVoiceAiAssistService>());
   });
 
+  test('voice ai local stub provider can be swapped independently', () {
+    const fakeStub = NoOpVoiceAiAssistService();
+    final container = ProviderContainer(
+      overrides: [
+        voiceAiLocalStubProvider.overrideWithValue(fakeStub),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(voiceAiLocalStubProvider), fakeStub);
+    expect(container.read(voiceAiAssistAdapterProvider), fakeStub);
+    expect(container.read(voiceAiAssistServiceProvider), fakeStub);
+  });
+
   test('voice ai assist stub returns tuned review guidance', () async {
     const service = NoOpVoiceAiAssistService();
 
