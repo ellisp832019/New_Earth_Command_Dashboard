@@ -5,6 +5,8 @@ It is designed to help you speak something once, review it calmly, and then turn
 
 This guide is a living page. It will grow as the voice layer gets smarter.
 
+Clean PDF: [voice_assistant_guide.pdf](voice_assistant_guide.pdf)
+
 ---
 
 ## What This Is For
@@ -32,6 +34,27 @@ That review step matters. It keeps the system trustworthy and easy to use.
 
 ---
 
+## Quick Start
+
+If you just want to use Voice Assistant right now:
+
+1. Open `Voice Assistant` from `Dashboard` or `More`
+2. Choose one starting point:
+   - speak live with `Start Listening`
+   - paste a transcript
+   - use a mock transcript
+   - tap a starter template
+   - reuse a recent command from history
+3. Read the transcript back carefully
+4. Check the assistant reply and the `AI Assist preview`
+5. Decide whether the capture should be a task, project, journal entry, business lead, content idea, or Codex prompt
+6. Edit anything that feels off
+7. Save it locally when it reads cleanly
+
+If you are on Windows, the voice path can also listen, speak brief replies, and show the dashboard conversation dock when wake capture lands there.
+
+---
+
 ## What It Does Today
 
 The current Voice Assistant can:
@@ -55,6 +78,8 @@ The current Voice Assistant can:
 - greet once at startup on Windows when voice replies are enabled, so you know Gaia is ready before you speak
 - speak the captured wake response back through the headset when the dashboard conversation dock appears
 - surface quick follow-up chips in the dashboard dock so you can continue the conversation into a task, project, journal entry, or another assistant step without leaving the dashboard
+- show an AI draft preview in the voice briefing card so you can see a local, review-first suggestion before you save
+- use a local AI adapter stub for the briefing layer while the deeper AI path stays optional and off by default
 - use shortcut templates for carry-forward, meeting notes, project checkpoints, quick reviews, and business follow-ups
 - run action macros such as `Start Build Day`, `Plan Day`, `Summarize Today`, `Recall Memory`, `What's Next`, and `Continue Thread`
 - keep the wake layer, dashboard dock, and full assistant aligned through one shared voice session so only one path owns speaking or listening at a time
@@ -116,6 +141,7 @@ Think of it as a small intake desk:
 - the controls gather the raw thought
 - the transcript shows you what the app heard
 - the assistant reply gives you a plain-language read on what the command seems to be
+- the briefing card gives you a local AI draft of the likely shape, next step, and suggested title before you save
 - the router helps you decide what to do next
 - history lets you reuse good phrasing later
 - a small dashboard conversation dock can surface the wake response on the dashboard if the route handoff is still settling
@@ -366,6 +392,27 @@ Common examples:
 - business commands may guide you toward Business and the opportunity template
 - idea commands may guide you toward Inbox and a future-idea shape
 - if the assistant has thread memory, the briefing will also point back to the current thread so you can continue it quickly
+
+### AI Assist Preview
+
+The `AI Assist preview` area shows the current local AI draft for the briefing card.
+
+Right now, this AI layer is intentionally conservative:
+
+- it uses a local adapter stub
+- it stays review-first
+- it suggests wording instead of making decisions
+- it only helps with the briefing card for now
+
+The preview can show:
+
+- a short AI draft summary
+- the next recommended step
+- a suggested title
+- a suggested type
+- lightweight hints that explain why the reply looks that way
+
+Use the preview as a helper, not an authority. The final save decision still belongs to you.
 
 ---
 
@@ -643,12 +690,69 @@ Use `Paste Transcript` and continue the same review flow.
 
 Tap it from history and adjust it instead of starting over.
 
+### The AI preview looks too generic
+
+That usually means the current capture is still too broad or the local adapter only has a small amount of context.
+
+Try:
+
+- adding a clearer title
+- choosing the most likely type first
+- continuing the current thread if it belongs to an existing conversation
+- adding one or two extra words that explain the next action
+
+The preview is designed to guide the review, not to replace it.
+
+### The voice assistant does not sound like a real AI assistant yet
+
+That is intentional for now.
+
+The current AI layer is a local adapter stub. It helps with drafting and guidance, but it still keeps the final decision review-first and manual.
+
+---
+
+## AI FAQ
+
+### Is the AI live and fully connected?
+
+Not yet. The current implementation uses a local adapter stub so the app can show AI-style guidance without depending on an external service.
+
+### What does the AI preview do today?
+
+It helps draft:
+
+- a short summary
+- the next suggested step
+- a suggested title
+- a suggested type
+- lightweight hints that explain the suggestion
+
+### Can AI save things automatically?
+
+No. The voice flow still stays review-first. You decide whether the transcript, title, and destination are correct before saving.
+
+### Does AI work everywhere in Voice Assistant?
+
+Not yet. Right now it only helps the `Voice Briefing` card.
+
+### What is coming next?
+
+The next AI slices are planned for:
+
+- wizard prompts
+- follow-up chips
+- richer command drafting
+- a real optional provider behind the adapter contract
+
 ---
 
 ## What Is Coming Next
 
 The next steps for this guide are likely to include:
 
+- a real optional AI provider behind the local adapter contract
+- AI guidance for wizard prompts
+- AI guidance for quick follow-up chips
 - voice replies or assistant-style confirmations
 - stronger command routing from natural phrases
 - quicker project-aware voice actions

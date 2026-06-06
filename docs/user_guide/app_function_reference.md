@@ -460,7 +460,7 @@ Inbox is the capture area for ideas, thoughts, and unprocessed items.
 
 The voice assistant screen supports reviewed voice capture for local dashboard actions.
 
-For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guide.md).
+For a step-by-step walkthrough, see [Voice Assistant Guide](voice_assistant_guide.md) or the [clean PDF](voice_assistant_guide.pdf).
 
 ### How to use it
 

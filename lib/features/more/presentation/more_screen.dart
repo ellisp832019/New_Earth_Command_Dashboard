@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -90,6 +92,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.voiceAssistant,
     ),
     _MoreItem(
+      title: 'Voice Guide PDF',
+      description:
+          'Open the clean, printable Voice Assistant guide PDF from the docs folder.',
+      icon: Icons.picture_as_pdf_outlined,
+      filePath: 'docs/user_guide/voice_assistant_guide.pdf',
+    ),
+    _MoreItem(
       title: 'Settings',
       description: 'Configure the dashboard.',
       icon: Icons.settings_outlined,
@@ -168,7 +177,14 @@ class MoreScreen extends StatelessWidget {
                   final item = _items[index];
                   return InkWell(
                     borderRadius: BorderRadius.circular(24),
-                    onTap: () => context.push(item.route),
+                    onTap: () async {
+                      if (item.filePath != null) {
+                        await _openLocalPdf(context, item.filePath!);
+                        return;
+                      }
+
+                      context.push(item.route!);
+                    },
                     child: Ink(
                       decoration: _morePanelDecoration(),
                       padding: const EdgeInsets.all(18),
@@ -250,11 +266,55 @@ class _MoreItem {
     required this.title,
     required this.description,
     required this.icon,
-    required this.route,
+    this.route,
+    this.filePath,
   });
 
   final String title;
   final String description;
   final IconData icon;
-  final String route;
+  final String? route;
+  final String? filePath;
+}
+
+Future<void> _openLocalPdf(BuildContext context, String relativePath) async {
+  final file = File('${Directory.current.path}${Platform.pathSeparator}$relativePath');
+  if (!await file.exists()) {
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Voice guide PDF not found at ${file.path}'),
+      ),
+    );
+    return;
+  }
+
+  try {
+    if (Platform.isWindows) {
+      await Process.start(
+        'explorer.exe',
+        [file.path],
+        mode: ProcessStartMode.detached,
+      );
+    } else if (Platform.isMacOS) {
+      await Process.start('open', [file.path], mode: ProcessStartMode.detached);
+    } else if (Platform.isLinux) {
+      await Process.start('xdg-open', [file.path], mode: ProcessStartMode.detached);
+    } else {
+      throw UnsupportedError('No file opener is configured for this platform.');
+    }
+  } catch (error) {
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Could not open the voice guide PDF: $error'),
+      ),
+    );
+  }
 }
