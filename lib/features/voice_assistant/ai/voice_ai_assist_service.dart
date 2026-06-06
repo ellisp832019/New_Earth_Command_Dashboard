@@ -40,6 +40,7 @@ class VoiceAiAssistResponse {
     required this.summary,
     required this.nextStep,
     this.suggestedTitle,
+    this.suggestedSummary,
     this.suggestedType,
     this.hints = const <String>[],
   });
@@ -48,12 +49,14 @@ class VoiceAiAssistResponse {
     : summary = 'AI assist is not connected yet.',
       nextStep = 'Review the transcript manually before saving.',
       suggestedTitle = null,
+      suggestedSummary = null,
       suggestedType = null,
       hints = const <String>[];
 
   final String summary;
   final String nextStep;
   final String? suggestedTitle;
+  final String? suggestedSummary;
   final VoiceCommandType? suggestedType;
   final List<String> hints;
 
@@ -61,6 +64,7 @@ class VoiceAiAssistResponse {
     String? summary,
     String? nextStep,
     String? suggestedTitle,
+    String? suggestedSummary,
     VoiceCommandType? suggestedType,
     List<String>? hints,
   }) {
@@ -68,6 +72,7 @@ class VoiceAiAssistResponse {
       summary: summary ?? this.summary,
       nextStep: nextStep ?? this.nextStep,
       suggestedTitle: suggestedTitle ?? this.suggestedTitle,
+      suggestedSummary: suggestedSummary ?? this.suggestedSummary,
       suggestedType: suggestedType ?? this.suggestedType,
       hints: hints ?? this.hints,
     );
@@ -108,6 +113,7 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
           ? _reviewNextStepFor(inferredType)
           : 'Capture the reply, then review the type, title, and next move.',
       suggestedTitle: _suggestedTitle(request, transcript),
+      suggestedSummary: _suggestedSummary(request, transcript),
       suggestedType: inferredType,
       hints: _buildReviewHints(
         request: request,
@@ -132,6 +138,10 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
           : 'AI draft: the wizard is waiting for the next prompt.',
       nextStep: _wizardNextStepFor(request.wizardStep, inferredType),
       suggestedTitle: _suggestedTitle(request, transcript.isNotEmpty ? transcript : prompt),
+      suggestedSummary: _suggestedSummary(
+        request,
+        transcript.isNotEmpty ? transcript : prompt,
+      ),
       suggestedType: inferredType,
       hints: _buildWizardHints(
         request: request,
@@ -159,6 +169,7 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
           ? _memoryNextStepFor(context, inferredType)
           : 'Start a new capture or choose a starter template.',
       suggestedTitle: _suggestedTitle(request, transcript),
+      suggestedSummary: _suggestedSummary(request, transcript),
       suggestedType: inferredType,
       hints: _buildMemoryHints(
         request: request,
@@ -211,6 +222,39 @@ String _suggestedTitle(VoiceAiAssistRequest request, String transcript) {
   }
 
   return _buildFallbackTitle(transcript);
+}
+
+String _suggestedSummary(VoiceAiAssistRequest request, String transcript) {
+  final cleanedTranscript = _normalizeText(transcript);
+  if (cleanedTranscript.isNotEmpty) {
+    return _buildFallbackSummary(cleanedTranscript);
+  }
+
+  final latestEntry = _normalizeText(
+    request.conversationContext?.latestEntryPreview ?? '',
+  );
+  if (latestEntry.isNotEmpty) {
+    return _buildFallbackSummary(latestEntry);
+  }
+
+  return 'Short summary will appear here after a transcript is captured.';
+}
+
+String _buildFallbackSummary(String transcript) {
+  final stripped = _normalizeText(transcript).replaceAll(
+    RegExp(r'[.!?]+$'),
+    '',
+  );
+  if (stripped.isEmpty) {
+    return 'Short summary will appear here after a transcript is captured.';
+  }
+
+  final words = stripped.split(' ').where((word) => word.isNotEmpty).toList();
+  if (words.length <= 14) {
+    return stripped;
+  }
+
+  return '${words.take(14).join(' ')}...';
 }
 
 String _keywordLabel(VoiceCommandType? type) {

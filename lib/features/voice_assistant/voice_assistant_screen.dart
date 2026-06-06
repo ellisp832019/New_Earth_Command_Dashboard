@@ -208,6 +208,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   String? _businessTypeValue;
   String? _businessStatusValue;
   VoiceAiAssistResponse? _acceptedAiBriefing;
+  String? _acceptedAiTranscriptSummary;
   String _speechStatus = 'Ready when you are.';
   String? _speechError;
   bool _isSaving = false;
@@ -443,6 +444,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _presetType = null;
         _suggestion = null;
         _acceptedAiBriefing = null;
+        _acceptedAiTranscriptSummary = null;
         _selectedType = VoiceCommandType.task;
         _selectedProjectId = null;
         _taskCategoryValue = null;
@@ -486,6 +488,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     setState(() {
       _suggestion = suggestion;
       _acceptedAiBriefing = null;
+      _acceptedAiTranscriptSummary = null;
       _selectedType = _presetType ?? suggestion.suggestedType;
       _selectedProjectId = suggestion.suggestedProjectId;
       _titleController.text = suggestion.suggestedTitle;
@@ -610,6 +613,24 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     setState(() {
       _acceptedAiBriefing = null;
       _speechStatus = 'Using the manual briefing wording again.';
+    });
+  }
+
+  void _applyAiTranscriptSummary(String summary) {
+    setState(() {
+      _acceptedAiTranscriptSummary = summary;
+      _speechStatus = 'AI transcript summary applied. Review before saving.';
+    });
+  }
+
+  void _clearAiTranscriptSummary() {
+    if (_acceptedAiTranscriptSummary == null) {
+      return;
+    }
+
+    setState(() {
+      _acceptedAiTranscriptSummary = null;
+      _speechStatus = 'Using the manual transcript wording again.';
     });
   }
 
@@ -1801,6 +1822,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     );
     final VoiceAiAssistResponse? appliedAiBriefing =
         _acceptedAiBriefing ?? aiAssistDraft;
+    final String? transcriptCleanupSummary =
+        _acceptedAiTranscriptSummary ?? aiAssistDraft?.suggestedSummary;
     final briefingSummary = appliedAiBriefing?.summary ?? briefing?.summary ?? '';
     final briefingNextStep =
         appliedAiBriefing?.nextStep ?? briefing?.nextStep ?? '';
@@ -2040,6 +2063,43 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             ),
           ],
           const SizedBox(height: 24),
+          if (transcriptCleanupSummary != null) ...[
+            Card(
+              key: const Key('voiceTranscriptCleanupCard'),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Transcript cleanup',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'The raw transcript stays untouched. This is only a shorter review note to make the capture easier to scan.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      transcriptCleanupSummary,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    if (_acceptedAiTranscriptSummary != null) ...[
+                      const SizedBox(height: 10),
+                      TextButton.icon(
+                        key: const Key('voiceKeepManualSummaryButtonInline'),
+                        onPressed: _clearAiTranscriptSummary,
+                        icon: const Icon(Icons.undo_outlined),
+                        label: const Text('Keep manual summary'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           TranscriptPreviewCard(
             controller: _transcriptController,
             focusNode: _transcriptFocusNode,
@@ -2227,11 +2287,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                               aiAssist.nextStep,
                               style: theme.textTheme.bodySmall,
                             ),
-                            if (aiAssist.suggestedType != null ||
-                                aiAssist.suggestedTitle != null) ...[
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
+                    if (aiAssist.suggestedType != null ||
+                        aiAssist.suggestedTitle != null) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
                                 runSpacing: 6,
                                 children: [
                                   if (aiAssist.suggestedType != null)
@@ -2250,6 +2310,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                                           MaterialTapTargetSize.shrinkWrap,
                                       label: Text(
                                         'AI title: ${aiAssist.suggestedTitle}',
+                                      ),
+                                    ),
+                                  if (aiAssist.suggestedSummary != null)
+                                    Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      label: Text(
+                                        'AI summary: ${aiAssist.suggestedSummary}',
                                       ),
                                     ),
                                 ],
@@ -2291,6 +2360,40 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                                   icon: const Icon(Icons.edit_outlined),
                                   label: const Text('Keep manual wording'),
                                 ),
+                                if (aiAssist.suggestedTitle != null)
+                                  OutlinedButton.icon(
+                                    key: const Key('voiceApplyAiTitleButton'),
+                                    onPressed: () {
+                                      setState(() {
+                                        _titleController.text =
+                                            aiAssist.suggestedTitle!;
+                                        _titleController.selection =
+                                            TextSelection.collapsed(
+                                          offset: _titleController.text.length,
+                                        );
+                                        _speechStatus =
+                                            'AI title applied. Review it before saving.';
+                                      });
+                                    },
+                                    icon: const Icon(Icons.title_outlined),
+                                    label: const Text('Use AI title'),
+                                  ),
+                                if (aiAssist.suggestedSummary != null)
+                                  OutlinedButton.icon(
+                                    key: const Key('voiceApplyAiSummaryButton'),
+                                    onPressed: () => _applyAiTranscriptSummary(
+                                      aiAssist.suggestedSummary!,
+                                    ),
+                                    icon: const Icon(Icons.short_text_outlined),
+                                    label: const Text('Use AI summary'),
+                                  ),
+                                if (_acceptedAiTranscriptSummary != null)
+                                  TextButton.icon(
+                                    key: const Key('voiceKeepManualSummaryButton'),
+                                    onPressed: _clearAiTranscriptSummary,
+                                    icon: const Icon(Icons.undo_outlined),
+                                    label: const Text('Keep manual summary'),
+                                  ),
                               ],
                             ),
                           ],

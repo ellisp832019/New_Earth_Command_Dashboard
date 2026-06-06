@@ -1869,6 +1869,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
     await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceBriefingCard')),
       200,

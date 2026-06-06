@@ -141,6 +141,7 @@ void main() {
     expect(response.summary, contains('remembered thread'));
     expect(response.nextStep, contains('Confirm the category, priority, and owner'));
     expect(response.suggestedTitle, 'Dashboard cards');
+    expect(response.suggestedSummary, contains('Review the dashboard cards'));
     expect(response.suggestedType, VoiceCommandType.task);
     expect(response.hints, contains('Local AI adapter active.'));
     expect(response.hints, contains('Review-first mode.'));
@@ -179,11 +180,13 @@ void main() {
       expect(wizardResponse.summary, contains('project'));
       expect(wizardResponse.nextStep, contains('Answer with only the details needed'));
       expect(wizardResponse.suggestedTitle, 'create the first milestone');
+      expect(wizardResponse.suggestedSummary, contains('Project: create the first milestone'));
       expect(wizardResponse.hints, contains('Local AI adapter active.'));
       expect(wizardResponse.hints, contains('Current step: Details'));
       expect(memoryResponse.summary, contains('MicroGrow'));
       expect(memoryResponse.summary, contains('Latest entry'));
       expect(memoryResponse.nextStep, contains('Reopen the project flow'));
+      expect(memoryResponse.suggestedSummary, contains('Follow up with the dashboard voice workflow'));
       expect(memoryResponse.hints, contains('Remembered thread is available.'));
       expect(memoryResponse.hints, contains('3 saved entries'));
       expect(memoryResponse.hints, contains('Latest entry: Follow up with the dashboard voice workflow.'));
