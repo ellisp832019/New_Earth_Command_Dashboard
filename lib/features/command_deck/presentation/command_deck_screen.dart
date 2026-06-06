@@ -232,6 +232,7 @@ class _PathReadinessPanel extends StatelessWidget {
     final readyCount = items.where((item) => item.isReady).length;
     final placeholderCount = items.where((item) => item.isPlaceholder).length;
     final missingCount = items.where((item) => item.isMissing).length;
+    final externalCount = items.where((item) => item.isExternal).length;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -268,11 +269,19 @@ class _PathReadinessPanel extends StatelessWidget {
                 accent: AppColours.darkPurple,
                 compact: true,
               ),
+              if (externalCount > 0) ...[
+                const SizedBox(width: 8),
+                _Pill(
+                  label: '$externalCount external',
+                  accent: AppColours.darkSecondary,
+                  compact: true,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            'This checks the local config values you will eventually wire on your machine. Placeholders are example values, missing means the path is configured but not found here yet, and ready means the target exists on disk.',
+            'This checks the local config values you will eventually wire on your machine. Placeholders are example values, missing means the path is configured but not found here yet, external means the path lives on another drive or in your Linux install, and ready means the target exists on disk.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.4,
@@ -312,7 +321,7 @@ class _PathReadinessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = _pathReadinessAccent(item.status);
+    final accent = _pathReadinessAccent(item);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -335,11 +344,7 @@ class _PathReadinessCard extends StatelessWidget {
                   border: Border.all(color: accent.withValues(alpha: 0.2)),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  _pathReadinessIcon(item.status),
-                  color: accent,
-                  size: 17,
-                ),
+                child: Icon(_pathReadinessIcon(item), color: accent, size: 17),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -387,7 +392,7 @@ class _PathReadinessCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            item.detail,
+            item.displayDetail,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.35,
@@ -708,19 +713,21 @@ class _LegendItem {
   final Color accent;
 }
 
-Color _pathReadinessAccent(CommandDeckPathStatus status) {
-  return switch (status) {
+Color _pathReadinessAccent(CommandDeckPathReadiness item) {
+  return switch (item.status) {
     CommandDeckPathStatus.ready => AppColours.darkSuccess,
     CommandDeckPathStatus.placeholder => AppColours.darkAmber,
-    CommandDeckPathStatus.missing => AppColours.darkPurple,
+    CommandDeckPathStatus.missing =>
+      item.isExternal ? AppColours.darkSecondary : AppColours.darkPurple,
   };
 }
 
-IconData _pathReadinessIcon(CommandDeckPathStatus status) {
-  return switch (status) {
+IconData _pathReadinessIcon(CommandDeckPathReadiness item) {
+  return switch (item.status) {
     CommandDeckPathStatus.ready => Icons.check_circle_outline,
     CommandDeckPathStatus.placeholder => Icons.edit_outlined,
-    CommandDeckPathStatus.missing => Icons.folder_off_outlined,
+    CommandDeckPathStatus.missing =>
+      item.isExternal ? Icons.swap_horiz_outlined : Icons.folder_off_outlined,
   };
 }
 

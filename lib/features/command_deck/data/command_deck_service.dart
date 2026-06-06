@@ -139,6 +139,7 @@ class CommandDeckPathReadiness {
     required this.value,
     required this.status,
     required this.detail,
+    required this.isProjectPath,
   });
 
   final String key;
@@ -146,15 +147,26 @@ class CommandDeckPathReadiness {
   final String value;
   final CommandDeckPathStatus status;
   final String detail;
+  final bool isProjectPath;
 
   bool get isReady => status == CommandDeckPathStatus.ready;
   bool get isPlaceholder => status == CommandDeckPathStatus.placeholder;
   bool get isMissing => status == CommandDeckPathStatus.missing;
+  bool get isExternal => isProjectPath && isMissing;
 
   String get statusLabel => switch (status) {
     CommandDeckPathStatus.ready => 'Ready',
     CommandDeckPathStatus.placeholder => 'Placeholder',
-    CommandDeckPathStatus.missing => 'Missing',
+    CommandDeckPathStatus.missing => isExternal ? 'External' : 'Missing',
+  };
+
+  String get displayDetail => switch (status) {
+    CommandDeckPathStatus.ready => detail,
+    CommandDeckPathStatus.placeholder => detail,
+    CommandDeckPathStatus.missing =>
+      isExternal
+          ? 'This project lives on another drive or in the Linux install. Update the path once Windows can see it.'
+          : detail,
   };
 }
 
@@ -416,6 +428,7 @@ class CommandDeckService {
           _projectLabel(entry.key),
           entry.value,
           moduleRoot,
+          isProjectPath: true,
         ),
       );
     }
@@ -539,8 +552,9 @@ class CommandDeckService {
   CommandDeckPathReadiness _buildUrlReadiness(
     String key,
     String label,
-    String value,
-  ) {
+    String value, {
+    bool isProjectPath = false,
+  }) {
     final trimmed = value.trim();
     if (trimmed.isEmpty || _looksLikePlaceholder(trimmed)) {
       return CommandDeckPathReadiness(
@@ -549,6 +563,7 @@ class CommandDeckService {
         value: trimmed,
         status: CommandDeckPathStatus.placeholder,
         detail: 'This value still looks like an example or placeholder.',
+        isProjectPath: isProjectPath,
       );
     }
 
@@ -558,6 +573,7 @@ class CommandDeckService {
       value: trimmed,
       status: CommandDeckPathStatus.ready,
       detail: 'Configured locally. Reachability is not checked here.',
+      isProjectPath: isProjectPath,
     );
   }
 
@@ -565,8 +581,9 @@ class CommandDeckService {
     String key,
     String label,
     String value,
-    Directory moduleRoot,
-  ) {
+    Directory moduleRoot, {
+    bool isProjectPath = false,
+  }) {
     final trimmed = value.trim();
     if (trimmed.isEmpty || _looksLikePlaceholder(trimmed)) {
       return CommandDeckPathReadiness(
@@ -575,6 +592,7 @@ class CommandDeckService {
         value: trimmed,
         status: CommandDeckPathStatus.placeholder,
         detail: 'This path still looks like an example or placeholder.',
+        isProjectPath: isProjectPath,
       );
     }
 
@@ -594,6 +612,7 @@ class CommandDeckService {
       detail: exists
           ? 'Found on disk.'
           : 'Configured, but the path does not exist on this machine.',
+      isProjectPath: isProjectPath,
     );
   }
 
