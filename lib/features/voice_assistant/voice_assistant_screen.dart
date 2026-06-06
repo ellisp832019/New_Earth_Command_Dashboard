@@ -2138,32 +2138,36 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         : theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const Key('voiceStartListeningButton'),
+                      onPressed:
+                          _isSaving || _isListening || _isInitializingSpeech
+                          ? null
+                          : _startListening,
+                      icon: _isInitializingSpeech
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.mic_rounded),
+                      label: Text(
+                        _isInitializingSpeech
+                            ? 'Preparing'
+                            : 'Capture Speech',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Wrap(
                     alignment: WrapAlignment.center,
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      FilledButton.icon(
-                        key: const Key('voiceStartListeningButton'),
-                        onPressed:
-                            _isSaving || _isListening || _isInitializingSpeech
-                            ? null
-                            : _startListening,
-                        icon: _isInitializingSpeech
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.mic_rounded),
-                        label: Text(
-                          _isInitializingSpeech
-                              ? 'Preparing'
-                              : 'Capture Speech',
-                        ),
-                      ),
                       FilledButton.tonalIcon(
                         key: const Key('voiceStopListeningButton'),
                         onPressed: _isListening ? _stopListening : null,
