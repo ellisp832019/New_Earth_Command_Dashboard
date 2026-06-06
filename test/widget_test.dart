@@ -81,7 +81,7 @@ void main() {
     }).toList();
   }
 
-  Widget buildTestApp() {
+  Widget buildTestApp({Widget? child}) {
     return ProviderScope(
       overrides: [
         databaseReadyProvider.overrideWith((ref) async {}),
@@ -322,7 +322,7 @@ void main() {
           ),
         ),
       ],
-      child: const NewEarthCommandDashboardApp(),
+      child: child ?? const NewEarthCommandDashboardApp(),
     );
   }
 
@@ -1979,22 +1979,36 @@ void main() {
   testWidgets('voice assistant wizard mode asks one question at a time', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(buildTestApp());
+    await tester.pumpWidget(
+      buildTestApp(
+        child: const MaterialApp(
+          home: VoiceAssistantScreen(startInWizardMode: true),
+        ),
+      ),
+    );
     await pumpUntilIdle(tester);
 
-    appRouter.go('/voice-assistant');
-    await pumpUntilIdle(tester);
-
-    await tester.tap(find.text('Wizard').first);
-    await pumpUntilIdle(tester);
-
-    expect(find.byKey(const Key('voiceWizardCard')), findsOneWidget);
     expect(
-      find.textContaining('What kind of entry do you want to create?'),
+      find.byKey(const Key('voiceWizardCard'), skipOffstage: false),
       findsOneWidget,
     );
+    expect(
+      find.textContaining(
+        'What kind of entry do you want to create?',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('AI wizard assist', skipOffstage: false), findsOneWidget);
+    expect(find.text('Use AI answer', skipOffstage: false), findsOneWidget);
     expect(find.text('Current Thread'), findsNothing);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceWizardAnswerField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('voiceWizardAnswerField')),
       'Task',

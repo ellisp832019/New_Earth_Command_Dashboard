@@ -560,6 +560,7 @@ final appRouter = GoRouter(
       builder: (context, state) => VoiceAssistantScreen(
         initialTranscript: state.uri.queryParameters['transcript'],
         initialType: state.uri.queryParameters['type'],
+        startInWizardMode: state.uri.queryParameters['mode'] == 'wizard',
         wakeTriggered: state.uri.queryParameters['wake'] == '1',
         handsfreeTriggered: state.uri.queryParameters['handsfree'] == '1',
       ),

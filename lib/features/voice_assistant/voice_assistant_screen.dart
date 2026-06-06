@@ -124,12 +124,14 @@ class VoiceAssistantScreen extends ConsumerStatefulWidget {
     super.key,
     this.initialTranscript,
     this.initialType,
+    this.startInWizardMode = false,
     this.wakeTriggered = false,
     this.handsfreeTriggered = false,
   });
 
   final String? initialTranscript;
   final String? initialType;
+  final bool startInWizardMode;
   final bool wakeTriggered;
   final bool handsfreeTriggered;
 
@@ -188,7 +190,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   final FocusNode _wizardAnswerFocusNode = FocusNode();
   late final VoiceSessionNotifier _voiceSessionNotifier;
 
-  _VoiceInteractionMode _mode = _VoiceInteractionMode.quick;
+  late _VoiceInteractionMode _mode;
   VoiceWizardStep _wizardStep = VoiceWizardStep.type;
   final List<_VoiceWizardTurn> _wizardTurns = [];
   VoiceConversationContext? _conversationContext;
@@ -209,6 +211,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   String? _businessStatusValue;
   VoiceAiAssistResponse? _acceptedAiBriefing;
   String? _acceptedAiTranscriptSummary;
+  String? _acceptedAiWizardAnswer;
+  String? _manualWizardAnswerBeforeAi;
   String _speechStatus = 'Ready when you are.';
   String? _speechError;
   bool _isSaving = false;
@@ -250,6 +254,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   @override
   void initState() {
     super.initState();
+    _mode = widget.startInWizardMode
+        ? _VoiceInteractionMode.wizard
+        : _VoiceInteractionMode.quick;
     _voiceSessionNotifier = ref.read(voiceSessionProvider.notifier);
     _history = _service.getHistory();
     _transcriptController.addListener(_handleTranscriptChanged);
@@ -445,6 +452,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _suggestion = null;
         _acceptedAiBriefing = null;
         _acceptedAiTranscriptSummary = null;
+        _acceptedAiWizardAnswer = null;
+        _manualWizardAnswerBeforeAi = null;
         _selectedType = VoiceCommandType.task;
         _selectedProjectId = null;
         _taskCategoryValue = null;
@@ -489,6 +498,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _suggestion = suggestion;
       _acceptedAiBriefing = null;
       _acceptedAiTranscriptSummary = null;
+      _acceptedAiWizardAnswer = null;
+      _manualWizardAnswerBeforeAi = null;
       _selectedType = _presetType ?? suggestion.suggestedType;
       _selectedProjectId = suggestion.suggestedProjectId;
       _titleController.text = suggestion.suggestedTitle;
@@ -634,6 +645,34 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
   }
 
+  void _applyAiWizardAnswer(String answer) {
+    setState(() {
+      _manualWizardAnswerBeforeAi ??= _wizardAnswerController.text.trim();
+      _acceptedAiWizardAnswer = answer;
+      _wizardAnswerController.text = answer;
+      _wizardAnswerController.selection = TextSelection.collapsed(
+        offset: _wizardAnswerController.text.length,
+      );
+      _speechStatus = 'AI wizard answer applied. Review it before continuing.';
+    });
+  }
+
+  void _clearAiWizardAnswer() {
+    if (_acceptedAiWizardAnswer == null) {
+      return;
+    }
+
+    setState(() {
+      _acceptedAiWizardAnswer = null;
+      _wizardAnswerController.text = _manualWizardAnswerBeforeAi ?? '';
+      _wizardAnswerController.selection = TextSelection.collapsed(
+        offset: _wizardAnswerController.text.length,
+      );
+      _manualWizardAnswerBeforeAi = null;
+      _speechStatus = 'Using the manual wizard answer again.';
+    });
+  }
+
   void _resetWizardDraft({required bool keepMode, bool preserveThread = true}) {
     _wizardTurns.clear();
     if (!preserveThread) {
@@ -655,6 +694,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _suggestion = null;
     _transcriptController.clear();
     _wizardAnswerController.clear();
+    _acceptedAiWizardAnswer = null;
+    _manualWizardAnswerBeforeAi = null;
     _speechStatus = hasThreadMemory
         ? 'Wizard reset. Continuing the current thread.'
         : 'Wizard reset. Ready for a new guided exchange.';
@@ -1824,6 +1865,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _acceptedAiBriefing ?? aiAssistDraft;
     final String? transcriptCleanupSummary =
         _acceptedAiTranscriptSummary ?? aiAssistDraft?.suggestedSummary;
+    final String? wizardAiAnswer =
+        _acceptedAiWizardAnswer ?? aiAssistDraft?.suggestedWizardAnswer;
     final briefingSummary = appliedAiBriefing?.summary ?? briefing?.summary ?? '';
     final briefingNextStep =
         appliedAiBriefing?.nextStep ?? briefing?.nextStep ?? '';
@@ -1872,6 +1915,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
           const SizedBox(height: 24),
           SegmentedButton<_VoiceInteractionMode>(
+            key: const Key('voiceInteractionModeSegmentedButton'),
             segments: const [
               ButtonSegment(
                 value: _VoiceInteractionMode.quick,
@@ -2056,6 +2100,43 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       Text('Conversation', style: theme.textTheme.titleSmall),
                       const SizedBox(height: 8),
                       Text(wizardSummary, style: theme.textTheme.bodySmall),
+                    ],
+                    if (wizardAiAnswer != null) ...[
+                      const SizedBox(height: 12),
+                      Text('AI wizard assist', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Use the suggestion or keep your own answer. The raw prompt stays review-first.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        wizardAiAnswer,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.tonalIcon(
+                            key: const Key('voiceApplyAiWizardAnswerButton'),
+                            onPressed: () => _applyAiWizardAnswer(
+                              wizardAiAnswer,
+                            ),
+                            icon: const Icon(Icons.auto_fix_high_outlined),
+                            label: const Text('Use AI answer'),
+                          ),
+                          TextButton.icon(
+                            key: const Key('voiceKeepManualWizardAnswerButton'),
+                            onPressed: _acceptedAiWizardAnswer == null
+                                ? null
+                                : _clearAiWizardAnswer,
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Keep manual answer'),
+                          ),
+                        ],
+                      ),
                     ],
                   ],
                 ),

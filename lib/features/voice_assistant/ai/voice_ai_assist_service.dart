@@ -41,6 +41,7 @@ class VoiceAiAssistResponse {
     required this.nextStep,
     this.suggestedTitle,
     this.suggestedSummary,
+    this.suggestedWizardAnswer,
     this.suggestedType,
     this.hints = const <String>[],
   });
@@ -50,6 +51,7 @@ class VoiceAiAssistResponse {
       nextStep = 'Review the transcript manually before saving.',
       suggestedTitle = null,
       suggestedSummary = null,
+      suggestedWizardAnswer = null,
       suggestedType = null,
       hints = const <String>[];
 
@@ -57,6 +59,7 @@ class VoiceAiAssistResponse {
   final String nextStep;
   final String? suggestedTitle;
   final String? suggestedSummary;
+  final String? suggestedWizardAnswer;
   final VoiceCommandType? suggestedType;
   final List<String> hints;
 
@@ -65,6 +68,7 @@ class VoiceAiAssistResponse {
     String? nextStep,
     String? suggestedTitle,
     String? suggestedSummary,
+    String? suggestedWizardAnswer,
     VoiceCommandType? suggestedType,
     List<String>? hints,
   }) {
@@ -73,6 +77,7 @@ class VoiceAiAssistResponse {
       nextStep: nextStep ?? this.nextStep,
       suggestedTitle: suggestedTitle ?? this.suggestedTitle,
       suggestedSummary: suggestedSummary ?? this.suggestedSummary,
+      suggestedWizardAnswer: suggestedWizardAnswer ?? this.suggestedWizardAnswer,
       suggestedType: suggestedType ?? this.suggestedType,
       hints: hints ?? this.hints,
     );
@@ -141,6 +146,12 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
       suggestedSummary: _suggestedSummary(
         request,
         transcript.isNotEmpty ? transcript : prompt,
+      ),
+      suggestedWizardAnswer: _suggestedWizardAnswer(
+        request: request,
+        transcript: transcript,
+        prompt: prompt,
+        inferredType: inferredType,
       ),
       suggestedType: inferredType,
       hints: _buildWizardHints(
@@ -238,6 +249,51 @@ String _suggestedSummary(VoiceAiAssistRequest request, String transcript) {
   }
 
   return 'Short summary will appear here after a transcript is captured.';
+}
+
+String _suggestedWizardAnswer({
+  required VoiceAiAssistRequest request,
+  required String transcript,
+  required String prompt,
+  required VoiceCommandType? inferredType,
+}) {
+  final existingAnswer = _normalizeText(transcript);
+  if (existingAnswer.isNotEmpty) {
+    return _buildFallbackSummary(existingAnswer);
+  }
+
+  final step = request.wizardStep;
+  final threadName = _normalizeText(request.conversationContext?.projectName ?? '');
+
+  return switch (step) {
+    VoiceWizardStep.type =>
+      inferredType?.label ?? 'Task',
+    VoiceWizardStep.title =>
+      _buildFallbackTitle(prompt),
+    VoiceWizardStep.project =>
+      threadName.isNotEmpty ? threadName : 'MicroGrow',
+    VoiceWizardStep.details => switch (inferredType) {
+      VoiceCommandType.task =>
+        'Category: Planning. Priority: Medium.',
+      VoiceCommandType.project =>
+        'Status: Active. Vision: Keep the thread calm and practical.',
+      VoiceCommandType.journalEntry =>
+        'Worked on the current thread, learned the main lesson, and noted the next action.',
+      VoiceCommandType.contentIdea =>
+        'Platform: LinkedIn. Type: Project Update.',
+      VoiceCommandType.businessOpportunity =>
+        'Contact: add the person or organisation. Next action: send a short follow-up.',
+      VoiceCommandType.codexPrompt =>
+        'Review the repo change request and keep the prompt manual-review only.',
+      VoiceCommandType.idea =>
+        'Remember the idea, keep it light, and revisit it later.',
+      null =>
+        _buildFallbackSummary(prompt),
+    },
+    VoiceWizardStep.review =>
+      'Review the assembled draft, then save it locally when it feels right.',
+    null => _buildFallbackSummary(prompt),
+  };
 }
 
 String _buildFallbackSummary(String transcript) {

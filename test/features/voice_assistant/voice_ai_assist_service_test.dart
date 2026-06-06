@@ -181,6 +181,7 @@ void main() {
       expect(wizardResponse.nextStep, contains('Answer with only the details needed'));
       expect(wizardResponse.suggestedTitle, 'create the first milestone');
       expect(wizardResponse.suggestedSummary, contains('Project: create the first milestone'));
+      expect(wizardResponse.suggestedWizardAnswer, contains('create the first milestone'));
       expect(wizardResponse.hints, contains('Local AI adapter active.'));
       expect(wizardResponse.hints, contains('Current step: Details'));
       expect(memoryResponse.summary, contains('MicroGrow'));
