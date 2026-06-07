@@ -222,6 +222,11 @@ class _QrLabelHeader extends StatelessWidget {
                 icon: const Icon(Icons.checklist_rtl_outlined),
                 label: const Text('Inventory Session'),
               ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(RouteNames.assetQrLifecycle),
+                icon: const Icon(Icons.timeline_outlined),
+                label: const Text('Lifecycle'),
+              ),
               FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.assetQrLabelStudio),
                 icon: const Icon(Icons.print_outlined),

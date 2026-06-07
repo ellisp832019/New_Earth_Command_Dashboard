@@ -7,6 +7,7 @@ import '../../features/assets/presentation/low_stock_screen.dart';
 import '../../features/assets/presentation/location_register_screen.dart';
 import '../../features/assets/presentation/evidence_library_screen.dart';
 import '../../features/assets/presentation/bin_map_screen.dart';
+import '../../features/assets/presentation/qr_label_lifecycle_screen.dart';
 import '../../features/assets/presentation/project_summary_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/maintenance_log_screen.dart';
@@ -138,6 +139,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'bin-map',
                   builder: (context, state) => const BinMapScreen(),
+                ),
+                GoRoute(
+                  path: 'qr-lifecycle',
+                  builder: (context, state) => const QrLabelLifecycleScreen(),
                 ),
                 GoRoute(
                   path: 'evidence',

@@ -47,6 +47,7 @@ void main() {
     expect(find.text('NE-EQ-0001'), findsOneWidget);
     expect(find.text('NE-EQ-0001-QR'), findsOneWidget);
     expect(find.text('Missing codes'), findsOneWidget);
+    expect(find.text('Lifecycle'), findsOneWidget);
   });
 
   testWidgets('qr label register supports an empty state', (tester) async {
@@ -89,7 +90,8 @@ _QrFixture _fixture({bool empty = false}) {
   return _QrFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: AssetFolderService.requiredFolders,
@@ -108,10 +110,7 @@ _QrFixture _fixture({bool empty = false}) {
 }
 
 class _QrFixture {
-  const _QrFixture({
-    required this.snapshot,
-    required this.table,
-  });
+  const _QrFixture({required this.snapshot, required this.table});
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetCsvTable table;

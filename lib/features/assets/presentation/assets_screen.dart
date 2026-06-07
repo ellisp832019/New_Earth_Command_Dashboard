@@ -175,6 +175,8 @@ class _AssetsContent extends StatelessWidget {
                       onOpenLocationRegister: () =>
                           context.push(RouteNames.assetLocationRegister),
                       onOpenBinMap: () => context.push(RouteNames.assetBinMap),
+                      onOpenQrLifecycle: () =>
+                          context.push(RouteNames.assetQrLifecycle),
                       onOpenEvidenceLibrary: () =>
                           context.push(RouteNames.assetEvidenceLibrary),
                       onOpenSupplierRegister: () =>
@@ -1726,6 +1728,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenProjectSummary,
     required this.onOpenLocationRegister,
     required this.onOpenBinMap,
+    required this.onOpenQrLifecycle,
     required this.onOpenEvidenceLibrary,
     required this.onOpenSupplierRegister,
     required this.onOpenMaintenanceLog,
@@ -1747,6 +1750,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenProjectSummary;
   final VoidCallback onOpenLocationRegister;
   final VoidCallback onOpenBinMap;
+  final VoidCallback onOpenQrLifecycle;
   final VoidCallback onOpenEvidenceLibrary;
   final VoidCallback onOpenSupplierRegister;
   final VoidCallback onOpenMaintenanceLog;
@@ -1818,6 +1822,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenBinMap,
                 icon: const Icon(Icons.map_outlined),
                 label: const Text('Bin Map'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrLifecycle,
+                icon: const Icon(Icons.timeline_outlined),
+                label: const Text('QR Lifecycle'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenEvidenceLibrary,
