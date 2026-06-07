@@ -1227,6 +1227,8 @@ class _MeetingActionsTabState extends ConsumerState<_MeetingActionsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final projectsAsync = ref.watch(projectsProvider);
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -1314,6 +1316,23 @@ class _MeetingActionsTabState extends ConsumerState<_MeetingActionsTab> {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        _MeetingProjectTaskLinksCard(
+          projectsAsync: projectsAsync,
+          meeting: widget.detail.meeting,
+          title: 'Action links',
+          subtitle:
+              'Keep the matching project record close and spin up a task when the action is ready to move.',
+          matchCopy:
+              'Matched project records make this action easier to move into a live task.',
+          noMatchCopy:
+              'No exact project match yet. Open the Projects Hub to resolve the live project record, then come back to create a task.',
+          taskTitlePrefix: 'Action follow-up',
+          createTaskDescription: _meetingTaskDescription(widget.detail.meeting),
+          createTaskNotes: _meetingTaskNotes(widget.detail.meeting),
+          onOpenProjectsHub: () => context.go(RouteNames.projectsIntelligence),
+          onOpenTasks: () => context.push(RouteNames.tasks),
         ),
         const SizedBox(height: 16),
         Container(
@@ -1721,6 +1740,8 @@ class _MeetingDecisionsTabState extends ConsumerState<_MeetingDecisionsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final projectsAsync = ref.watch(projectsProvider);
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -1784,6 +1805,23 @@ class _MeetingDecisionsTabState extends ConsumerState<_MeetingDecisionsTab> {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        _MeetingProjectTaskLinksCard(
+          projectsAsync: projectsAsync,
+          meeting: widget.detail.meeting,
+          title: 'Decision links',
+          subtitle:
+              'Keep the matching project close and turn the decision into a tracked task when it needs follow-through.',
+          matchCopy:
+              'Matched project records make this decision easier to turn into a task.',
+          noMatchCopy:
+              'No exact project match yet. Open the Projects Hub to resolve the live project record, then come back to create a task.',
+          taskTitlePrefix: 'Decision follow-up',
+          createTaskDescription: _meetingTaskDescription(widget.detail.meeting),
+          createTaskNotes: _meetingTaskNotes(widget.detail.meeting),
+          onOpenProjectsHub: () => context.go(RouteNames.projectsIntelligence),
+          onOpenTasks: () => context.push(RouteNames.tasks),
         ),
         const SizedBox(height: 16),
         Container(
@@ -2159,6 +2197,7 @@ class _MeetingFollowUpTabState extends ConsumerState<_MeetingFollowUpTab> {
   @override
   Widget build(BuildContext context) {
     final followUp = widget.detail.followUp;
+    final projectsAsync = ref.watch(projectsProvider);
 
     return ListView(
       controller: _scrollController,
@@ -2256,6 +2295,23 @@ class _MeetingFollowUpTabState extends ConsumerState<_MeetingFollowUpTab> {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        _MeetingProjectTaskLinksCard(
+          projectsAsync: projectsAsync,
+          meeting: widget.detail.meeting,
+          title: 'Follow-up links',
+          subtitle:
+              'Keep the meeting follow-up pointed at the matching project and the task list.',
+          matchCopy:
+              'Matched project records make the follow-up easy to turn into a task.',
+          noMatchCopy:
+              'No exact project match yet. Open the Projects Hub to resolve the live project record, then come back to create a task.',
+          taskTitlePrefix: 'Follow-up work',
+          createTaskDescription: _meetingTaskDescription(widget.detail.meeting),
+          createTaskNotes: _meetingTaskNotes(widget.detail.meeting),
+          onOpenProjectsHub: () => context.go(RouteNames.projectsIntelligence),
+          onOpenTasks: () => context.push(RouteNames.tasks),
         ),
         const SizedBox(height: 16),
         Container(
@@ -3381,156 +3437,225 @@ class _MeetingLinksTab extends ConsumerWidget {
                     'Useful places to connect this meeting to other Omega OS records.',
               ),
               const SizedBox(height: 12),
-              projectsAsync.when(
-                loading: () => const Row(
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 10),
-                    Text('Checking for a matching project...'),
-                  ],
+              _MeetingProjectTaskLinksCard(
+                projectsAsync: projectsAsync,
+                meeting: detail.meeting,
+                title: 'Project record',
+                subtitle:
+                    'Use the live project record or spin up a task from this meeting when it needs follow-through.',
+                matchCopy:
+                    'Matched project records make it easier to move this meeting into the live project or task list.',
+                noMatchCopy:
+                    'No exact project match was found. Keep the meeting as archive source-of-truth text, then use the Projects Hub to resolve the live project record if needed.',
+                taskTitlePrefix: 'Meeting follow-up',
+                createTaskDescription: _meetingTaskDescription(detail.meeting),
+                createTaskNotes: _meetingTaskNotes(detail.meeting),
+                onOpenProjectsHub: () =>
+                    context.go(RouteNames.projectsIntelligence),
+                onOpenTasks: () => context.push(RouteNames.tasks),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Linked visuals',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
                 ),
-                error: (error, stackTrace) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Project links are available once the workspace loads.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColours.darkMutedText,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextButton.icon(
-                      onPressed: () =>
-                          context.go(RouteNames.projectsIntelligence),
-                      icon: const Icon(Icons.folder_open_outlined),
-                      label: const Text('Open Projects Hub'),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Store screenshots, diagrams, and supporting captures in 19_VISUAL_RECORDS_AND_CAPTURE, then link them from the meeting folder.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
                 ),
-                data: (projects) {
-                  final linkedProject = _resolveLinkedProject(
-                    projects,
-                    detail.meeting.project,
-                  );
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Project record',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: AppColours.darkSecondary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        detail.meeting.project,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColours.darkText,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        linkedProject == null
-                            ? 'No exact project match was found. Keep the meeting as archive source-of-truth text, then use the Projects Hub to resolve the live project record if needed.'
-                            : 'Matched project: ${linkedProject.name} (${linkedProject.projectId}). Use the live project record or spin up a task from this meeting.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColours.darkMutedText,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          if (linkedProject != null) ...[
-                            FilledButton.tonalIcon(
-                              onPressed: () => context.push(
-                                RouteNames.projectDetail(
-                                  linkedProject.projectId,
-                                ),
-                              ),
-                              icon: const Icon(Icons.folder_open_outlined),
-                              label: const Text('Open project'),
-                            ),
-                            FilledButton.icon(
-                              onPressed: () => context.push(
-                                RouteNames.newTaskWithContext(
-                                  projectId: linkedProject.projectId,
-                                  title: 'Follow-up: ${detail.meeting.title}',
-                                  description: _meetingTaskDescription(
-                                    detail.meeting,
-                                  ),
-                                  notes: _meetingTaskNotes(detail.meeting),
-                                ),
-                              ),
-                              icon: const Icon(Icons.add_task_outlined),
-                              label: const Text('Create task'),
-                            ),
-                          ] else ...[
-                            FilledButton.tonalIcon(
-                              onPressed: () =>
-                                  context.go(RouteNames.projectsIntelligence),
-                              icon: const Icon(Icons.folder_open_outlined),
-                              label: const Text('Open Projects Hub'),
-                            ),
-                          ],
-                          TextButton.icon(
-                            onPressed: () => context.push(RouteNames.tasks),
-                            icon: const Icon(Icons.task_outlined),
-                            label: const Text('Open Tasks'),
-                          ),
-                          TextButton.icon(
-                            onPressed: () =>
-                                context.push(RouteNames.meetingAll),
-                            icon: const Icon(Icons.table_chart_outlined),
-                            label: const Text('All Meetings'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Linked visuals',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: AppColours.darkSecondary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Store screenshots, diagrams, and supporting captures in 19_VISUAL_RECORDS_AND_CAPTURE, then link them from the meeting folder.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColours.darkMutedText,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Linked project docs',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: AppColours.darkSecondary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Project-specific context should stay in Omega OS under 21_PROJECTS_AND_PROGRAMMES and linked from here rather than duplicated.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColours.darkMutedText,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Linked project docs',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Project-specific context should stay in Omega OS under 21_PROJECTS_AND_PROGRAMMES and linked from here rather than duplicated.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MeetingProjectTaskLinksCard extends StatelessWidget {
+  const _MeetingProjectTaskLinksCard({
+    required this.projectsAsync,
+    required this.meeting,
+    required this.title,
+    required this.subtitle,
+    required this.matchCopy,
+    required this.noMatchCopy,
+    required this.taskTitlePrefix,
+    required this.createTaskDescription,
+    required this.createTaskNotes,
+    required this.onOpenProjectsHub,
+    required this.onOpenTasks,
+  });
+
+  final AsyncValue<List<Project>> projectsAsync;
+  final MeetingRecord meeting;
+  final String title;
+  final String subtitle;
+  final String matchCopy;
+  final String noMatchCopy;
+  final String taskTitlePrefix;
+  final String createTaskDescription;
+  final String createTaskNotes;
+  final VoidCallback onOpenProjectsHub;
+  final VoidCallback onOpenTasks;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return projectsAsync.when(
+      loading: () => Container(
+        padding: const EdgeInsets.all(18),
+        decoration: meetingPanelDecoration(),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text('Checking for a matching project...'),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        padding: const EdgeInsets.all(18),
+        decoration: meetingPanelDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MeetingSectionHeader(
+              title: title,
+              subtitle: subtitle,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Project links are available once the workspace loads.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: onOpenProjectsHub,
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: const Text('Open Projects Hub'),
+                ),
+                TextButton.icon(
+                  onPressed: onOpenTasks,
+                  icon: const Icon(Icons.task_outlined),
+                  label: const Text('Open Tasks'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      data: (projects) {
+        final linkedProject = _resolveLinkedProject(projects, meeting.project);
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: meetingPanelDecoration(highlighted: linkedProject != null),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MeetingSectionHeader(
+                title: title,
+                subtitle: subtitle,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                meeting.project,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                linkedProject == null ? noMatchCopy : matchCopy,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+              if (linkedProject != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Matched project: ${linkedProject.name} (${linkedProject.projectId})',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  if (linkedProject != null) ...[
+                    FilledButton.tonalIcon(
+                      onPressed: () => context.push(
+                        RouteNames.projectDetail(linkedProject.projectId),
+                      ),
+                      icon: const Icon(Icons.folder_open_outlined),
+                      label: const Text('Open project'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => context.push(
+                        RouteNames.newTaskWithContext(
+                          projectId: linkedProject.projectId,
+                          title: '$taskTitlePrefix: ${meeting.title}',
+                          description: createTaskDescription,
+                          notes: createTaskNotes,
+                        ),
+                      ),
+                      icon: const Icon(Icons.add_task_outlined),
+                      label: const Text('Create task'),
+                    ),
+                  ] else ...[
+                    FilledButton.tonalIcon(
+                      onPressed: onOpenProjectsHub,
+                      icon: const Icon(Icons.folder_open_outlined),
+                      label: const Text('Open Projects Hub'),
+                    ),
+                  ],
+                  TextButton.icon(
+                    onPressed: onOpenTasks,
+                    icon: const Icon(Icons.task_outlined),
+                    label: const Text('Open Tasks'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
