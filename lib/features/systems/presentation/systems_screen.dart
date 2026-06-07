@@ -113,6 +113,64 @@ class SystemsScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 14),
+            Text(
+              'Planned systems',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= 900;
+                final cards = const [
+                  _PlannedSystemCard(
+                    icon: Icons.monitor_heart_outlined,
+                    title: 'Drive Health',
+                    description:
+                        'Check source drive space, backup drive presence, and simple recovery signals.',
+                    tags: ['Planned', 'Health checks'],
+                  ),
+                  _PlannedSystemCard(
+                    icon: Icons.restore_outlined,
+                    title: 'Restore Lab',
+                    description:
+                        'Stage safe restore drills and review restore notes without touching live files.',
+                    tags: ['Planned', 'Dry run only'],
+                  ),
+                  _PlannedSystemCard(
+                    icon: Icons.devices_outlined,
+                    title: 'Device Health',
+                    description:
+                        'Watch connected devices, printer readiness, and other local hardware signals.',
+                    tags: ['Planned', 'Hardware'],
+                  ),
+                ];
+
+                if (!wide) {
+                  return Column(
+                    children: [
+                      for (final card in cards) ...[
+                        card,
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: cards.first),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards[1]),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards.last),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -120,6 +178,87 @@ class SystemsScreen extends StatelessWidget {
   }
 
   BoxDecoration _panelDecoration() {
+    return BoxDecoration(
+      color: AppColours.darkSurface.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.85)),
+    );
+  }
+}
+
+class _PlannedSystemCard extends StatelessWidget {
+  const _PlannedSystemCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.tags,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, color: AppColours.darkAmber),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppColours.darkText,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColours.darkMutedText,
+                            height: 1.4,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final tag in tags) _InlineTag(label: tag),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: AppColours.darkSurface.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(24),
@@ -152,4 +291,3 @@ class _InlineTag extends StatelessWidget {
     );
   }
 }
-

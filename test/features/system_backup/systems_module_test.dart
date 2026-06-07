@@ -30,6 +30,10 @@ void main() {
     expect(find.text('Backup Guardian'), findsOneWidget);
     expect(find.text('Manual V1'), findsOneWidget);
     expect(find.text('Restore dry run'), findsOneWidget);
+    expect(find.text('Planned systems'), findsOneWidget);
+    expect(find.text('Drive Health'), findsOneWidget);
+    expect(find.text('Restore Lab'), findsOneWidget);
+    expect(find.text('Device Health'), findsOneWidget);
   });
 
   testWidgets('backup guardian screen shows status and roadmap', (tester) async {
@@ -86,4 +90,3 @@ void main() {
     expect(find.text('V3 planned'), findsOneWidget);
   });
 }
-

@@ -49,6 +49,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                           snapshot: snapshot,
                           statusMessage: _statusMessage,
                           onBackToSystems: () => context.go(RouteNames.systems),
+                          onBackToMore: () => context.go(RouteNames.more),
                         ),
                         const SizedBox(height: 20),
                         _ActionCard(
@@ -136,11 +137,13 @@ class _HeroCard extends StatelessWidget {
   const _HeroCard({
     required this.snapshot,
     required this.onBackToSystems,
+    required this.onBackToMore,
     required this.statusMessage,
   });
 
   final BackupGuardianSnapshot snapshot;
   final VoidCallback onBackToSystems;
+  final VoidCallback onBackToMore;
   final String? statusMessage;
 
   @override
@@ -199,6 +202,12 @@ class _HeroCard extends StatelessWidget {
                 onPressed: onBackToSystems,
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back to Systems'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: onBackToMore,
+                icon: const Icon(Icons.apps_outlined),
+                label: const Text('Back to More'),
               ),
               const SizedBox(height: 16),
               Wrap(
