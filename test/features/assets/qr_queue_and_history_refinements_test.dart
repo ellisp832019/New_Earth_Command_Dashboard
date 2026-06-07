@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -151,4 +153,113 @@ void main() {
     expect(find.textContaining(' |  Applied: '), findsOneWidget);
     expect(find.text('Print Queue'), findsOneWidget);
   });
+
+  testWidgets('qr label history can edit and delete register entries', (
+    tester,
+  ) async {
+    final service = _FakeQrLabelPrintService();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith(
+            (ref) async => const AssetWorkspaceSnapshot(
+              configPath: 'config/local_paths.json',
+              assetsRootPath:
+                  'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+              isReady: true,
+              issues: <String>[],
+              requiredFolders: AssetFolderService.requiredFolders,
+              missingFolders: <String>[],
+              missingFiles: <String>[],
+              summaryCards: <AssetSummaryCard>[],
+              equipmentCount: 1,
+              partsCount: 0,
+              guidanceNote: 'Connected.',
+            ),
+          ),
+          assetQrLabelPrintServiceProvider.overrideWithValue(service),
+          assetQrLabelTemplateRegisterProvider.overrideWith(
+            (ref) async => AssetCsvTable(
+              headers: QrLabelPrintService.labelRegisterHeaders,
+              rows: const [
+                {
+                  'label_id': 'label-001',
+                  'asset_id': 'NE-EQ-0001',
+                  'label_type': 'Asset label',
+                  'label_size': '50 x 30 mm',
+                  'print_status': 'printed',
+                  'generated_file': 'D:/history/generated/label-001.pdf',
+                  'manifest_file': 'D:/history/generated/label-001.json',
+                  'printed_date': '2026-05-28',
+                  'applied_date': '2026-05-29',
+                  'location': 'Desk',
+                  'notes': 'Ready for file.',
+                },
+              ],
+            ),
+          ),
+          assetQrPrintQueueProvider.overrideWith(
+            (ref) async => AssetCsvTable(
+              headers: QrLabelPrintService.queueHeaders,
+              rows: const [],
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: QrLabelHistoryScreen()),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.scrollUntilVisible(
+      find.text('Edit'),
+      400.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(find.text('Edit'), findsWidgets);
+    expect(find.text('Delete'), findsWidgets);
+
+    await tester.tap(find.text('Edit').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit label entry'), findsOneWidget);
+    expect(find.text('Save changes'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete label entry?'), findsOneWidget);
+    expect(find.text('Delete entry'), findsOneWidget);
+  });
+}
+
+class _FakeQrLabelPrintService extends QrLabelPrintService {
+  _FakeQrLabelPrintService()
+      : super(csvService: AssetCsvService(), workingDirectory: Directory.current);
+
+  String? updatedLabelId;
+  String? deletedLabelId;
+
+  @override
+  Future<void> updateLabelRegisterEntry(
+    String assetsRootPath,
+    QrLabelRegisterEntry entry,
+  ) async {
+    updatedLabelId = entry.labelId;
+  }
+
+  @override
+  Future<void> deleteLabelRegisterEntry(
+    String assetsRootPath,
+    String labelId,
+  ) async {
+    deletedLabelId = labelId;
+  }
 }

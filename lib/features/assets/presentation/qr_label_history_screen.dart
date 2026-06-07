@@ -12,6 +12,7 @@ import 'package:printing/printing.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
+import '../data/qr_label_printing_service.dart';
 
 class QrLabelHistoryScreen extends ConsumerWidget {
   const QrLabelHistoryScreen({super.key});
@@ -145,6 +146,18 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                                       workspace.assetsRootPath!,
                                       row['label_id'] ?? '',
                                     ),
+                                    onEdit: () => _editLabelEntry(
+                                      context,
+                                      ref,
+                                      workspace.assetsRootPath!,
+                                      row,
+                                    ),
+                                    onDelete: () => _deleteLabelEntry(
+                                      context,
+                                      ref,
+                                      workspace.assetsRootPath!,
+                                      row,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 20),
@@ -244,6 +257,70 @@ class QrLabelHistoryScreen extends ConsumerWidget {
     await ref
         .read(assetQrLabelPrintServiceProvider)
         .markLabelApplied(assetsRootPath, labelId);
+    ref.invalidate(assetQrLabelTemplateRegisterProvider);
+  }
+
+  Future<void> _editLabelEntry(
+    BuildContext context,
+    WidgetRef ref,
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    final entry = await showDialog<QrLabelRegisterEntry>(
+      context: context,
+      builder: (dialogContext) => _EditLabelEntryDialog(row: row),
+    );
+    if (entry == null) {
+      return;
+    }
+
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .updateLabelRegisterEntry(assetsRootPath, entry);
+    ref.invalidate(assetQrLabelTemplateRegisterProvider);
+  }
+
+  Future<void> _deleteLabelEntry(
+    BuildContext context,
+    WidgetRef ref,
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    final labelId = (row['label_id'] ?? '').trim();
+    if (labelId.isEmpty) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete label entry?'),
+          content: Text(
+            'Remove $labelId from the label register? This keeps the generated files and manifest on disk.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete entry'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .deleteLabelRegisterEntry(assetsRootPath, labelId);
     ref.invalidate(assetQrLabelTemplateRegisterProvider);
   }
 
@@ -671,6 +748,8 @@ class _LabelRecordCard extends StatelessWidget {
     required this.onCopyPath,
     required this.onMarkPrinted,
     required this.onMarkApplied,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final Map<String, String> row;
@@ -680,6 +759,8 @@ class _LabelRecordCard extends StatelessWidget {
   final VoidCallback onCopyPath;
   final VoidCallback onMarkPrinted;
   final VoidCallback onMarkApplied;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -775,6 +856,14 @@ class _LabelRecordCard extends StatelessWidget {
               TextButton(
                 onPressed: onMarkApplied,
                 child: const Text('Mark applied'),
+              ),
+              TextButton(
+                onPressed: onEdit,
+                child: const Text('Edit'),
+              ),
+              TextButton(
+                onPressed: onDelete,
+                child: const Text('Delete'),
               ),
             ],
           ),
@@ -937,6 +1026,186 @@ class _MiniChip extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+class _EditLabelEntryDialog extends StatefulWidget {
+  const _EditLabelEntryDialog({required this.row});
+
+  final Map<String, String> row;
+
+  @override
+  State<_EditLabelEntryDialog> createState() => _EditLabelEntryDialogState();
+}
+
+class _EditLabelEntryDialogState extends State<_EditLabelEntryDialog> {
+  late final TextEditingController _assetIdController;
+  late final TextEditingController _labelTypeController;
+  late final TextEditingController _labelSizeController;
+  late final TextEditingController _labelTextController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _printStatusController;
+  late final TextEditingController _printedDateController;
+  late final TextEditingController _appliedDateController;
+
+  @override
+  void initState() {
+    super.initState();
+    _assetIdController = TextEditingController(
+      text: widget.row['asset_id'] ?? '',
+    );
+    _labelTypeController = TextEditingController(
+      text: widget.row['label_type'] ?? '',
+    );
+    _labelSizeController = TextEditingController(
+      text: widget.row['label_size'] ?? '',
+    );
+    _labelTextController = TextEditingController(
+      text: widget.row['label_text'] ?? '',
+    );
+    _locationController = TextEditingController(
+      text: widget.row['location'] ?? '',
+    );
+    _notesController = TextEditingController(text: widget.row['notes'] ?? '');
+    _printStatusController = TextEditingController(
+      text: widget.row['print_status'] ?? '',
+    );
+    _printedDateController = TextEditingController(
+      text: widget.row['printed_date'] ?? '',
+    );
+    _appliedDateController = TextEditingController(
+      text: widget.row['applied_date'] ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _assetIdController.dispose();
+    _labelTypeController.dispose();
+    _labelSizeController.dispose();
+    _labelTextController.dispose();
+    _locationController.dispose();
+    _notesController.dispose();
+    _printStatusController.dispose();
+    _printedDateController.dispose();
+    _appliedDateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit label entry'),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: 560,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _assetIdController,
+                decoration: const InputDecoration(labelText: 'Asset ID'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _labelTypeController,
+                      decoration: const InputDecoration(labelText: 'Label type'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _labelSizeController,
+                      decoration: const InputDecoration(labelText: 'Label size'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _labelTextController,
+                decoration: const InputDecoration(labelText: 'Label text'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _locationController,
+                decoration: const InputDecoration(labelText: 'Location / project'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Notes',
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _printStatusController,
+                      decoration: const InputDecoration(labelText: 'Print status'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _printedDateController,
+                      decoration: const InputDecoration(labelText: 'Printed date'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _appliedDateController,
+                decoration: const InputDecoration(labelText: 'Applied date'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: () {
+            final labelId = (widget.row['label_id'] ?? '').trim();
+            if (labelId.isEmpty) {
+              Navigator.of(context).pop();
+              return;
+            }
+            Navigator.of(context).pop(
+              QrLabelRegisterEntry(
+                labelId: labelId,
+                assetId: _assetIdController.text,
+                labelType: _labelTypeController.text,
+                labelSize: _labelSizeController.text,
+                qrPayload: widget.row['qr_payload'] ?? '',
+                labelText: _labelTextController.text,
+                generatedFile: widget.row['generated_file'] ?? '',
+                manifestFile: widget.row['manifest_file'] ?? '',
+                printStatus: _printStatusController.text,
+                printedDate: _printedDateController.text,
+                appliedDate: _appliedDateController.text,
+                location: _locationController.text,
+                notes: _notesController.text,
+              ),
+            );
+          },
+          icon: const Icon(Icons.save_outlined),
+          label: const Text('Save changes'),
+        ),
+      ],
     );
   }
 }
