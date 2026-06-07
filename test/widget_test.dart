@@ -712,7 +712,8 @@ void main() {
                   createdAt: DateTime(2026, 5, 2, 9),
                   updatedAt: DateTime(2026, 5, 2, 9),
                   completedAt: null,
-                  notes: 'Carry forward the website tidy-up if the day runs long.',
+                  notes:
+                      'Carry forward the website tidy-up if the day runs long.',
                   isTopThree: false,
                   isArchived: false,
                 ),
@@ -764,9 +765,7 @@ void main() {
     expect(find.text('Carry-forward'), findsOneWidget);
     expect(find.text('Review Parked'), findsOneWidget);
     expect(
-      find.text(
-        'Carry forward the website tidy-up if the day runs long.',
-      ),
+      find.text('Carry forward the website tidy-up if the day runs long.'),
       findsOneWidget,
     );
   });
@@ -1364,7 +1363,7 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Project Detail'), findsOneWidget);
-    expect(find.text('Review the edited next action'), findsOneWidget);
+    expect(find.text('Review the edited next action'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('project detail can open task form with project preselected', (
@@ -1515,6 +1514,17 @@ void main() {
       await pumpUntilIdle(tester);
 
       await tester.scrollUntilVisible(
+        find.text('Workflow snapshot'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await pumpUntilIdle(tester);
+      expect(find.text('Workflow snapshot'), findsOneWidget);
+      expect(find.text('Plan'), findsOneWidget);
+      expect(find.text('Capture'), findsOneWidget);
+      expect(find.text('Review'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
         find.text('Project home base'),
         200,
         scrollable: find.byType(Scrollable).first,
@@ -1592,6 +1602,12 @@ void main() {
     appRouter.go('/projects/${project.projectId}');
     await pumpUntilIdle(tester);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('archiveProjectButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('archiveProjectButton')));
     await pumpUntilIdle(tester);
 

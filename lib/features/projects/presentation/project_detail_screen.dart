@@ -69,85 +69,110 @@ class ProjectDetailScreen extends ConsumerWidget {
                           ],
                         );
 
+                        final workflowLanes = Column(
+                          children: [
+                            _ProjectWorkflowLane(
+                              title: 'Plan',
+                              description:
+                                  'Shape the next move and keep the project focused.',
+                              buttons: [
+                                TextButton.icon(
+                                  key: const Key('openProjectTasksButton'),
+                                  onPressed: () =>
+                                      context.push(RouteNames.tasks),
+                                  icon: const Icon(Icons.task_outlined),
+                                  label: const Text('Open Tasks'),
+                                ),
+                                TextButton.icon(
+                                  key: const Key('openProjectPlannerButton'),
+                                  onPressed: () =>
+                                      context.push(RouteNames.planner),
+                                  icon: const Icon(
+                                    Icons.calendar_month_outlined,
+                                  ),
+                                  label: const Text('Open Planner'),
+                                ),
+                                FilledButton.icon(
+                                  key: const Key('addProjectTaskButton'),
+                                  onPressed: () => context.push(
+                                    RouteNames.newTaskForProject(projectId),
+                                  ),
+                                  icon: const Icon(Icons.add_task_outlined),
+                                  label: const Text('Add Task'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            _ProjectWorkflowLane(
+                              title: 'Capture',
+                              description:
+                                  'Record notes, learning, content, and business leads.',
+                              buttons: [
+                                OutlinedButton.icon(
+                                  key: const Key('addProjectJournalButton'),
+                                  onPressed: () => context.push(
+                                    RouteNames.newJournalForProject(projectId),
+                                  ),
+                                  icon: const Icon(Icons.menu_book_outlined),
+                                  label: const Text('Add Journal'),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key('addProjectLearningButton'),
+                                  onPressed: () => context.push(
+                                    RouteNames.newLearningForProject(projectId),
+                                  ),
+                                  icon: const Icon(Icons.school_outlined),
+                                  label: const Text('Add Learning'),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key('addProjectContentButton'),
+                                  onPressed: () => context.push(
+                                    RouteNames.newContentForProject(projectId),
+                                  ),
+                                  icon: const Icon(Icons.article_outlined),
+                                  label: const Text('Add Content'),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key('addProjectBusinessButton'),
+                                  onPressed: () => context.push(
+                                    RouteNames.newBusinessForProject(projectId),
+                                  ),
+                                  icon: const Icon(Icons.work_outline),
+                                  label: const Text('Add Business'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            _ProjectWorkflowLane(
+                              title: 'Review',
+                              description:
+                                  'Check the current state, then edit or archive if needed.',
+                              buttons: [
+                                OutlinedButton.icon(
+                                  key: const Key('editProjectButton'),
+                                  onPressed: () => context.push(
+                                    RouteNames.editProject(projectId),
+                                  ),
+                                  icon: const Icon(Icons.edit_outlined),
+                                  label: const Text('Edit'),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key('archiveProjectButton'),
+                                  onPressed: () =>
+                                      _confirmArchive(context, ref, project),
+                                  icon: const Icon(Icons.archive_outlined),
+                                  label: const Text('Archive'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+
                         final actions = ConstrainedBox(
                           constraints: BoxConstraints(
-                            maxWidth: compactHeader ? double.infinity : 330,
+                            maxWidth: compactHeader ? double.infinity : 360,
                           ),
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.start,
-                            children: [
-                              OutlinedButton.icon(
-                                key: const Key('archiveProjectButton'),
-                                onPressed: () =>
-                                    _confirmArchive(context, ref, project),
-                                icon: const Icon(Icons.archive_outlined),
-                                label: const Text('Archive'),
-                              ),
-                              TextButton.icon(
-                                key: const Key('openProjectTasksButton'),
-                                onPressed: () => context.push(RouteNames.tasks),
-                                icon: const Icon(Icons.task_outlined),
-                                label: const Text('Open Tasks'),
-                              ),
-                              TextButton.icon(
-                                key: const Key('openProjectPlannerButton'),
-                                onPressed: () =>
-                                    context.push(RouteNames.planner),
-                                icon: const Icon(Icons.calendar_month_outlined),
-                                label: const Text('Open Planner'),
-                              ),
-                              FilledButton.icon(
-                                key: const Key('addProjectTaskButton'),
-                                onPressed: () => context.push(
-                                  RouteNames.newTaskForProject(projectId),
-                                ),
-                                icon: const Icon(Icons.add_task_outlined),
-                                label: const Text('Add Task'),
-                              ),
-                              OutlinedButton.icon(
-                                key: const Key('addProjectJournalButton'),
-                                onPressed: () => context.push(
-                                  RouteNames.newJournalForProject(projectId),
-                                ),
-                                icon: const Icon(Icons.menu_book_outlined),
-                                label: const Text('Add Journal'),
-                              ),
-                              OutlinedButton.icon(
-                                key: const Key('addProjectLearningButton'),
-                                onPressed: () => context.push(
-                                  RouteNames.newLearningForProject(projectId),
-                                ),
-                                icon: const Icon(Icons.school_outlined),
-                                label: const Text('Add Learning'),
-                              ),
-                              OutlinedButton.icon(
-                                key: const Key('addProjectContentButton'),
-                                onPressed: () => context.push(
-                                  RouteNames.newContentForProject(projectId),
-                                ),
-                                icon: const Icon(Icons.article_outlined),
-                                label: const Text('Add Content'),
-                              ),
-                              OutlinedButton.icon(
-                                key: const Key('addProjectBusinessButton'),
-                                onPressed: () => context.push(
-                                  RouteNames.newBusinessForProject(projectId),
-                                ),
-                                icon: const Icon(Icons.work_outline),
-                                label: const Text('Add Business'),
-                              ),
-                              OutlinedButton.icon(
-                                key: const Key('editProjectButton'),
-                                onPressed: () => context.push(
-                                  RouteNames.editProject(projectId),
-                                ),
-                                icon: const Icon(Icons.edit_outlined),
-                                label: const Text('Edit'),
-                              ),
-                            ],
-                          ),
+                          child: workflowLanes,
                         );
 
                         if (compactHeader) {
@@ -184,6 +209,11 @@ class ProjectDetailScreen extends ConsumerWidget {
                           label: 'Progress: ${project.progressPercentage}%',
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 14),
+                    _ProjectWorkflowSummaryCard(
+                      project: project,
+                      detail: detail,
                     ),
                     const SizedBox(height: 14),
                     Text(
@@ -725,6 +755,151 @@ class _ProjectInfoChip extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProjectWorkflowSummaryCard extends StatelessWidget {
+  const _ProjectWorkflowSummaryCard({
+    required this.project,
+    required this.detail,
+  });
+
+  final Project project;
+  final ProjectDetailSnapshot detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final nextAction = project.nextAction?.trim();
+    final milestone = project.currentMilestone?.trim();
+
+    return Card(
+      color: AppColours.darkSurfaceRaised.withValues(alpha: 0.95),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Workflow snapshot',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppColours.darkText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Plan the next move, capture useful detail, then review the project state.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _ProjectInfoChip(
+                  label: 'Active tasks: ${detail.activeTasks.length}',
+                ),
+                _ProjectInfoChip(
+                  label: 'Blocked tasks: ${detail.blockedTasks.length}',
+                ),
+                _ProjectInfoChip(label: 'Journal: ${detail.journalEntryCount}'),
+                _ProjectInfoChip(
+                  label: 'Learning: ${detail.learningItemCount}',
+                ),
+                _ProjectInfoChip(label: 'Content: ${detail.contentItemCount}'),
+                _ProjectInfoChip(
+                  label: 'Business: ${detail.businessOpportunityCount}',
+                ),
+              ],
+            ),
+            if (nextAction != null && nextAction.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Next action',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                nextAction,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+            ],
+            if (milestone != null && milestone.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Current milestone',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                milestone,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectWorkflowLane extends StatelessWidget {
+  const _ProjectWorkflowLane({
+    required this.title,
+    required this.description,
+    required this.buttons,
+  });
+
+  final String title;
+  final String description;
+  final List<Widget> buttons;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(spacing: 8, runSpacing: 8, children: buttons),
+        ],
       ),
     );
   }
