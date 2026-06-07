@@ -27,7 +27,9 @@ void main() {
     expect(rows.first['location_name'], 'Office Shelf A');
   });
 
-  testWidgets('location register shows location cards and route', (tester) async {
+  testWidgets('location register shows location cards and route', (
+    tester,
+  ) async {
     final fixture = _locationFixture();
     final router = GoRouter(
       initialLocation: RouteNames.assetLocationRegister,
@@ -137,7 +139,9 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    final overview = await container.read(assetValuationOverviewProvider.future);
+    final overview = await container.read(
+      assetValuationOverviewProvider.future,
+    );
 
     expect(overview.valuationRowCount, 2);
     expect(overview.purchaseCostTotal, 370);
@@ -148,7 +152,9 @@ void main() {
     expect(overview.projectTotals.first.projectName, 'MicroGrow');
   });
 
-  testWidgets('valuation summary shows totals and routes cleanly', (tester) async {
+  testWidgets('valuation summary shows totals and routes cleanly', (
+    tester,
+  ) async {
     final fixture = _valuationFixture();
     final router = GoRouter(
       initialLocation: RouteNames.assetValuationSummary,
@@ -180,10 +186,12 @@ void main() {
 
     expect(find.text('Valuation Summary'), findsOneWidget);
     expect(find.text('Purchase cost'), findsOneWidget);
+    expect(find.text('Insurance review'), findsOneWidget);
     expect(find.text('Evidence check'), findsOneWidget);
     expect(find.text('1 linked'), findsOneWidget);
     expect(find.text('Asset value by project'), findsOneWidget);
     expect(find.text('Field scanner'), findsOneWidget);
+    expect(find.text('Open Evidence Library'), findsOneWidget);
   });
 }
 
@@ -211,7 +219,8 @@ _LocationFixture _locationFixture() {
   return _LocationFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: AssetFolderService.requiredFolders,
@@ -292,7 +301,8 @@ _ValuationFixture _valuationFixture() {
   return _ValuationFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: AssetFolderService.requiredFolders,
@@ -315,10 +325,7 @@ _ValuationFixture _valuationFixture() {
 }
 
 class _LocationFixture {
-  const _LocationFixture({
-    required this.snapshot,
-    required this.table,
-  });
+  const _LocationFixture({required this.snapshot, required this.table});
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetCsvTable table;

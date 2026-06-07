@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/routing/route_names.dart';
 import '../application/assets_controller.dart';
 
 class ValuationSummaryScreen extends ConsumerWidget {
@@ -16,17 +18,15 @@ class ValuationSummaryScreen extends ConsumerWidget {
     final overview = ref.watch(assetValuationOverviewProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _ValuationError(
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _ValuationError(
             onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
           ),
@@ -44,7 +44,8 @@ class ValuationSummaryScreen extends ConsumerWidget {
                     body: Center(child: CircularProgressIndicator()),
                   ),
                   error: (error, stackTrace) => _ValuationError(
-                    onReload: () => ref.invalidate(assetValuationOverviewProvider),
+                    onReload: () =>
+                        ref.invalidate(assetValuationOverviewProvider),
                   ),
                   data: (overviewData) {
                     final moneyFormatter = NumberFormat.currency(
@@ -65,7 +66,8 @@ class ValuationSummaryScreen extends ConsumerWidget {
                                   children: [
                                     _ValuationHeader(
                                       assetPath: workspaceData.assetsRootPath,
-                                      valuationCount: valuationTable.rows.length,
+                                      valuationCount:
+                                          valuationTable.rows.length,
                                       purchaseCostTotal:
                                           overviewData.purchaseCostTotal,
                                       replacementValueTotal:
@@ -79,10 +81,24 @@ class ValuationSummaryScreen extends ConsumerWidget {
                                           overviewData.purchaseCostTotal,
                                       replacementValueTotal:
                                           overviewData.replacementValueTotal,
-                                      currentEstimatedValueTotal:
-                                          overviewData.currentEstimatedValueTotal,
+                                      currentEstimatedValueTotal: overviewData
+                                          .currentEstimatedValueTotal,
                                       brokenLostValueTotal:
                                           overviewData.brokenLostValueTotal,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _InsuranceReviewCard(
+                                      valuationRows: valuationTable.rows,
+                                      equipmentRows: equipmentTable.rows,
+                                      onOpenEvidenceLibrary: () => context.push(
+                                        RouteNames.assetEvidenceLibrary,
+                                      ),
+                                      onOpenEquipmentRegister: () => context
+                                          .push(RouteNames.assetEquipment),
+                                      onOpenSupplierRegister: () =>
+                                          context.push(
+                                            RouteNames.assetSupplierRegister,
+                                          ),
                                     ),
                                     const SizedBox(height: 20),
                                     _ValuationEvidenceCard(
@@ -175,7 +191,8 @@ class _ValuationHeader extends StatelessWidget {
               _InfoChip(label: assetPath ?? 'Asset folder not linked'),
               _InfoChip(label: '$valuationCount valuation rows'),
               _InfoChip(
-                label: 'Cost ${NumberFormat.currency(symbol: '£', decimalDigits: 2).format(purchaseCostTotal)}',
+                label:
+                    'Cost ${NumberFormat.currency(symbol: '£', decimalDigits: 2).format(purchaseCostTotal)}',
               ),
             ],
           );
@@ -194,10 +211,7 @@ class _ValuationHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -222,10 +236,7 @@ class _ValuationSummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final moneyFormatter = NumberFormat.currency(
-      symbol: '£',
-      decimalDigits: 2,
-    );
+    final moneyFormatter = NumberFormat.currency(symbol: '£', decimalDigits: 2);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -291,10 +302,16 @@ class _ValuationEvidenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final evidenceLinkedCount = _countNonEmptyValues(valuationRows, 'evidence_link');
+    final evidenceLinkedCount = _countNonEmptyValues(
+      valuationRows,
+      'evidence_link',
+    );
     final linkedAssetCount = _countNonEmptyValues(valuationRows, 'asset_id');
     final missingEvidenceCount = valuationRows.length - evidenceLinkedCount;
-    final brokenLinkedCount = _countBrokenLinkedEntries(valuationRows, equipmentRows);
+    final brokenLinkedCount = _countBrokenLinkedEntries(
+      valuationRows,
+      equipmentRows,
+    );
     final theme = Theme.of(context);
 
     return Container(
@@ -327,6 +344,133 @@ class _ValuationEvidenceCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InsuranceReviewCard extends StatelessWidget {
+  const _InsuranceReviewCard({
+    required this.valuationRows,
+    required this.equipmentRows,
+    required this.onOpenEvidenceLibrary,
+    required this.onOpenEquipmentRegister,
+    required this.onOpenSupplierRegister,
+  });
+
+  final List<Map<String, String>> valuationRows;
+  final List<Map<String, String>> equipmentRows;
+  final VoidCallback onOpenEvidenceLibrary;
+  final VoidCallback onOpenEquipmentRegister;
+  final VoidCallback onOpenSupplierRegister;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final claimReadyCount = _countInsuranceReadyEntries(valuationRows);
+    final evidenceLinkedCount = _countNonEmptyValues(
+      valuationRows,
+      'evidence_link',
+    );
+    final receiptLinkedCount = _countNonEmptyValues(
+      equipmentRows,
+      'receipt_link',
+    );
+    final warrantyDatedCount = _countNonEmptyValues(
+      equipmentRows,
+      'warranty_until',
+    );
+    final missingEvidenceCount = valuationRows.length - evidenceLinkedCount;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 880;
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelTitle(
+                title: 'Insurance review',
+                icon: Icons.shield_outlined,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Use this calm review strip to check which assets already have a value, a linked trail, and enough paper evidence to support cover or a claim.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          final chips = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _InfoChip(label: '$claimReadyCount claim-ready'),
+              _InfoChip(label: '$evidenceLinkedCount evidence-linked'),
+              _InfoChip(label: '$receiptLinkedCount receipt-linked'),
+              _InfoChip(label: '$warrantyDatedCount warranty dated'),
+              _InfoChip(label: '$missingEvidenceCount gaps'),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenEvidenceLibrary,
+                icon: const Icon(Icons.folder_copy_outlined),
+                label: const Text('Open Evidence Library'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenEquipmentRegister,
+                icon: const Icon(Icons.precision_manufacturing_outlined),
+                label: const Text('Open Equipment'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenSupplierRegister,
+                icon: const Icon(Icons.storefront_outlined),
+                label: const Text('Open Suppliers'),
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 14),
+                chips,
+                const SizedBox(height: 14),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Align(alignment: Alignment.centerRight, child: chips),
+                    const SizedBox(height: 14),
+                    Align(alignment: Alignment.centerRight, child: actions),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -393,7 +537,9 @@ class _ProjectValuationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasBrokenValue = total.brokenLostValueTotal > 0;
-    final accent = hasBrokenValue ? const Color(0xFFE26B6B) : AppColours.darkSuccess;
+    final accent = hasBrokenValue
+        ? const Color(0xFFE26B6B)
+        : AppColours.darkSuccess;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -411,9 +557,9 @@ class _ProjectValuationRow extends StatelessWidget {
                 child: Text(
                   total.projectName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
@@ -427,11 +573,22 @@ class _ProjectValuationRow extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _InfoChip(label: 'Cost ${moneyFormatter.format(total.purchaseCostTotal)}'),
-              _InfoChip(label: 'Value ${moneyFormatter.format(total.currentEstimatedValueTotal)}'),
-              _InfoChip(label: 'Replacement ${moneyFormatter.format(total.replacementValueTotal)}'),
+              _InfoChip(
+                label: 'Cost ${moneyFormatter.format(total.purchaseCostTotal)}',
+              ),
+              _InfoChip(
+                label:
+                    'Value ${moneyFormatter.format(total.currentEstimatedValueTotal)}',
+              ),
+              _InfoChip(
+                label:
+                    'Replacement ${moneyFormatter.format(total.replacementValueTotal)}',
+              ),
               if (hasBrokenValue)
-                _InfoChip(label: 'Broken ${moneyFormatter.format(total.brokenLostValueTotal)}'),
+                _InfoChip(
+                  label:
+                      'Broken ${moneyFormatter.format(total.brokenLostValueTotal)}',
+                ),
             ],
           ),
         ],
@@ -475,9 +632,9 @@ class _ValuationEntriesCard extends StatelessWidget {
           if (valuationRows.isEmpty)
             Text(
               'No valuation rows have been logged yet.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -485,7 +642,10 @@ class _ValuationEntriesCard extends StatelessWidget {
                 for (var index = 0; index < valuationRows.length; index++) ...[
                   _ValuationEntryCard(
                     row: valuationRows[index],
-                    equipment: equipmentById[valuationRows[index]['asset_id']?.trim() ?? ''],
+                    equipment:
+                        equipmentById[valuationRows[index]['asset_id']
+                                ?.trim() ??
+                            ''],
                     moneyFormatter: moneyFormatter,
                   ),
                   if (index != valuationRows.length - 1)
@@ -518,13 +678,18 @@ class _ValuationEntryCard extends StatelessWidget {
     final project = (equipment?['project'] ?? '').trim().isNotEmpty
         ? equipment!['project']!.trim()
         : 'Unassigned';
-    final currentValue = double.tryParse((row['current_estimated_value'] ?? '').trim()) ??
+    final currentValue =
+        double.tryParse((row['current_estimated_value'] ?? '').trim()) ??
         double.tryParse((row['replacement_value'] ?? '').trim()) ??
         0;
-    final purchaseCost = double.tryParse((row['purchase_cost'] ?? '').trim()) ?? 0;
-    final isBroken = (equipment?['status'] ?? '').trim().toLowerCase() == 'broken' ||
+    final purchaseCost =
+        double.tryParse((row['purchase_cost'] ?? '').trim()) ?? 0;
+    final isBroken =
+        (equipment?['status'] ?? '').trim().toLowerCase() == 'broken' ||
         (equipment?['condition'] ?? '').trim().toLowerCase() == 'broken';
-    final accent = isBroken ? const Color(0xFFE26B6B) : AppColours.darkSecondary;
+    final accent = isBroken
+        ? const Color(0xFFE26B6B)
+        : AppColours.darkSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -544,9 +709,9 @@ class _ValuationEntryCard extends StatelessWidget {
                       ? row['item']!.trim()
                       : 'Unnamed asset',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
@@ -572,9 +737,9 @@ class _ValuationEntryCard extends StatelessWidget {
                 ? row['valuation_reason']!.trim()
                 : 'No valuation note yet.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -582,10 +747,7 @@ class _ValuationEntryCard extends StatelessWidget {
   }
 }
 
-int _countNonEmptyValues(
-  List<Map<String, String>> rows,
-  String key,
-) {
+int _countNonEmptyValues(List<Map<String, String>> rows, String key) {
   var count = 0;
   for (final row in rows) {
     if ((row[key] ?? '').trim().isNotEmpty) {
@@ -611,9 +773,26 @@ int _countBrokenLinkedEntries(
   for (final row in valuationRows) {
     final assetId = (row['asset_id'] ?? '').trim();
     final equipment = equipmentById[assetId];
-    final isBroken = (equipment?['status'] ?? '').trim().toLowerCase() == 'broken' ||
+    final isBroken =
+        (equipment?['status'] ?? '').trim().toLowerCase() == 'broken' ||
         (equipment?['condition'] ?? '').trim().toLowerCase() == 'broken';
     if (assetId.isNotEmpty && isBroken) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+int _countInsuranceReadyEntries(List<Map<String, String>> valuationRows) {
+  var count = 0;
+  for (final row in valuationRows) {
+    final assetId = (row['asset_id'] ?? '').trim();
+    final evidenceLink = (row['evidence_link'] ?? '').trim();
+    final value =
+        double.tryParse((row['replacement_value'] ?? '').trim()) ??
+        double.tryParse((row['current_estimated_value'] ?? '').trim()) ??
+        0;
+    if (assetId.isNotEmpty && evidenceLink.isNotEmpty && value > 0) {
       count += 1;
     }
   }
@@ -632,7 +811,9 @@ class _ValuationFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Row(
         children: [
@@ -641,9 +822,9 @@ class _ValuationFooter extends StatelessWidget {
           Expanded(
             child: Text(
               '$itemCount valuation rows are in the current register. Keep the evidence calm and easy to review.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ),
         ],
@@ -708,17 +889,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -741,9 +922,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -767,9 +948,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -793,15 +974,18 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceAlt.withValues(alpha: 0.96)
