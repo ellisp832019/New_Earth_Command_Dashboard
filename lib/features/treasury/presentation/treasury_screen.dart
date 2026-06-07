@@ -784,6 +784,11 @@ class _MonthlySummaryPreviewCard extends ConsumerWidget {
                         label: 'Top project $topProject',
                         accent: AppColours.darkSecondary,
                       ),
+                      _StatusPill(
+                        label:
+                            'Recent decisions ${summary.recentDecisions.length}',
+                        accent: AppColours.darkPurple,
+                      ),
                     ],
                   ),
                 ],
@@ -810,6 +815,17 @@ class _MonthlySummaryPreviewCard extends ConsumerWidget {
                         ? summary.weeklyReviewNote!
                         : 'The weekly note will show once the ritual has been saved.',
                     accent: AppColours.darkSecondary,
+                  ),
+                  const SizedBox(height: 12),
+                  _HeroMetricCard(
+                    label: 'Latest decision',
+                    value: summary.recentDecisions.isEmpty
+                        ? 'No decisions yet'
+                        : summary.recentDecisions.first.decisionNeeded,
+                    note: summary.recentDecisions.isNotEmpty
+                        ? '${summary.recentDecisions.first.date} • ${summary.recentDecisions.first.status}'
+                        : 'The next decision will appear here after it is saved.',
+                    accent: AppColours.darkPurple,
                   ),
                   const SizedBox(height: 14),
                   Align(
@@ -1035,7 +1051,7 @@ class _DecisionReviewCard extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'A small, calm scan of the latest finance decisions so the monthly picture and the next choice stay close together.',
+                'A compact scan of the latest finance decisions so the next choice stays easy to see.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.4,
@@ -1056,6 +1072,52 @@ class _DecisionReviewCard extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (recentDecisions.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColours.darkOutline),
+                  ),
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Latest decision',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        recentDecisions.first.decisionNeeded,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _StatusPill(
+                            label: recentDecisions.first.date,
+                            accent: AppColours.darkSecondary,
+                          ),
+                          _StatusPill(
+                            label: recentDecisions.first.status,
+                            accent: AppColours.darkPurple,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 14),
               if (recentDecisions.isEmpty)
                 Text(

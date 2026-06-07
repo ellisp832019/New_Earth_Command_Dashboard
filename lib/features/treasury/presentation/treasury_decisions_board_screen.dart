@@ -127,12 +127,12 @@ class _DecisionsSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Calm decisions', style: theme.textTheme.titleMedium),
+            Text('Decision queue', style: theme.textTheme.titleMedium),
             const SizedBox(height: 6),
             Text(
               count == 1
-                  ? '1 decision is waiting in the register.'
-                  : '$count decisions are waiting in the register.',
+                  ? '1 decision is ready for review in the register.'
+                  : '$count decisions are ready for review in the register.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 8),
@@ -173,6 +173,12 @@ class _DecisionsActionCard extends StatelessWidget {
               onPressed: onAddDecision,
               icon: const Icon(Icons.edit_note_outlined),
               label: const Text('Open entry form'),
+            ),
+            TextButton.icon(
+              onPressed: () =>
+                  context.push(RouteNames.treasuryMonthlySummary),
+              icon: const Icon(Icons.assessment_outlined),
+              label: const Text('Open monthly summary'),
             ),
           ],
         ),
