@@ -2053,7 +2053,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         appliedAiBriefing?.nextStep ?? briefing?.nextStep ?? '';
     final briefingReason =
         appliedAiBriefing != null
-            ? 'AI wording is ready to review. Accept it or keep the manual draft.'
+            ? 'AI wording is ready to review. Keep it only if it makes the next move clearer.'
             : briefing?.projectContext ??
                   briefing?.threadContext ??
                   'It keeps the thread moving without adding noise.';
@@ -2571,8 +2571,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     const SizedBox(height: 4),
                     Text(
                       appliedAiBriefing != null
-                          ? 'Read the AI wording, compare it with the manual draft, then keep whichever version feels clearest.'
-                          : 'Read the snapshot, review the next move, then save it locally.',
+                          ? 'Read the AI wording, compare it with the manual draft, then keep whichever version makes the next move clearest.'
+                          : 'Read the snapshot, check the next move, then save it locally.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 6),
@@ -2580,7 +2580,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     const SizedBox(height: 4),
                     Text(briefing.summary, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 6),
-                    Text('Best next move', style: theme.textTheme.labelSmall),
+                    Text('Next move', style: theme.textTheme.labelSmall),
                     const SizedBox(height: 4),
                     Text(briefingNextStep, style: theme.textTheme.bodySmall),
                     if (briefing.projectContext != null ||
@@ -2621,7 +2621,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         briefing.plannerSteps.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
-                        'Suggested sequence',
+                        'Suggested path',
                         style: theme.textTheme.labelSmall,
                       ),
                       const SizedBox(height: 4),
