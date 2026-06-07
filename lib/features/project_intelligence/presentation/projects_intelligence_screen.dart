@@ -255,6 +255,12 @@ class _ProjectsIntelligenceScreenState
                 ),
               ),
               const SizedBox(height: 16),
+              if (projects.isNotEmpty) ...[
+                _ProjectWorkflowSpotlightCard(
+                  project: _spotlightProject(projects),
+                ),
+                const SizedBox(height: 16),
+              ],
               _WorkspaceSnapshotSection(
                 workspaceSnapshot: workspaceSnapshot,
                 isExpanded: showWorkspaceSnapshot,
@@ -682,6 +688,274 @@ class _ProjectIntelligenceCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProjectWorkflowSpotlightCard extends StatelessWidget {
+  const _ProjectWorkflowSpotlightCard({required this.project});
+
+  final UnifiedProjectRecord project;
+
+  @override
+  Widget build(BuildContext context) {
+    final latest = project.latestRepoStatus;
+    final theme = Theme.of(context);
+    final nextActions = project.nextActions.take(3).toList(growable: false);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(highlighted: true),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 900;
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.timeline_outlined,
+                    color: AppColours.darkSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Project workflow spotlight',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Use the strongest current project to move from overview into the next useful action without losing the calm hub view.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                project.name,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                project.dashboardDescription?.isNotEmpty == true
+                    ? project.dashboardDescription!
+                    : 'No project description is set yet.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _IntelligenceChip(
+                    label: 'Status',
+                    value: project.dashboardStatus,
+                    accentColor: AppColours.darkSuccess,
+                  ),
+                  _IntelligenceChip(
+                    label: 'Tasks',
+                    value: '${project.dashboardTasks.length}',
+                  ),
+                  _IntelligenceChip(
+                    label: 'Phase',
+                    value: project.currentPhase ?? 'No phase',
+                    accentColor: AppColours.darkSecondary,
+                  ),
+                  _IntelligenceChip(
+                    label: 'Codex',
+                    value: project.codexHandoffReady ? 'Ready' : 'Parked',
+                    accentColor: project.codexHandoffReady
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                  ),
+                  if (latest != null) ...[
+                    _IntelligenceChip(
+                      label: 'Branch',
+                      value: latest.branch ?? 'No branch',
+                      accentColor: AppColours.darkSecondary,
+                    ),
+                    _IntelligenceChip(
+                      label: 'Dirty',
+                      value: '${latest.dirtyFiles.length}',
+                      accentColor: AppColours.darkAmber,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: () =>
+                    context.push(RouteNames.projectDetail(project.projectId)),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open detail'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(
+                  RouteNames.newTaskForProject(project.projectId),
+                ),
+                icon: const Icon(Icons.add_task_outlined),
+                label: const Text('Add task'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(
+                  RouteNames.newJournalForProject(project.projectId),
+                ),
+                icon: const Icon(Icons.menu_book_outlined),
+                label: const Text('Add journal'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(
+                  RouteNames.newLearningForProject(project.projectId),
+                ),
+                icon: const Icon(Icons.school_outlined),
+                label: const Text('Add learning'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push(
+                  RouteNames.newContentForProject(project.projectId),
+                ),
+                icon: const Icon(Icons.article_outlined),
+                label: const Text('Add content'),
+              ),
+            ],
+          );
+
+          final nextActionsBlock = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Next actions',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (nextActions.isEmpty)
+                Text(
+                  'No next actions are set yet. The project detail page can help shape the next move.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final action in nextActions) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          '• $action',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColours.darkMutedText,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _IntelligenceChip(
+                    label: 'Repo',
+                    value: project.repoLinked ? 'linked' : 'not linked',
+                    accentColor: project.repoLinked
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                  ),
+                  _IntelligenceChip(
+                    label: 'Tasks',
+                    value: '${project.dashboardTasks.length}',
+                  ),
+                  _IntelligenceChip(
+                    label: 'Handoff',
+                    value: project.codexHandoffReady ? 'ready' : 'parked',
+                    accentColor: project.codexHandoffReady
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 16),
+                actions,
+                const SizedBox(height: 16),
+                nextActionsBlock,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 18),
+              SizedBox(
+                width: 440,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    actions,
+                    const SizedBox(height: 16),
+                    nextActionsBlock,
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+UnifiedProjectRecord _spotlightProject(List<UnifiedProjectRecord> projects) {
+  final handoffReady = projects
+      .where((project) => project.codexHandoffReady)
+      .toList(growable: false);
+  if (handoffReady.isNotEmpty) {
+    return handoffReady.first;
+  }
+
+  final withActions = projects
+      .where((project) => project.nextActions.isNotEmpty)
+      .toList(growable: false);
+  if (withActions.isNotEmpty) {
+    return withActions.first;
+  }
+
+  return projects.first;
 }
 
 class _ProjectsIntelligenceSummary {
