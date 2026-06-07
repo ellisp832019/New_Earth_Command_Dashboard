@@ -34,6 +34,10 @@ void main() {
     expect(find.text('Priority focus'), findsOneWidget);
     expect(find.text('Low stock needs attention'), findsOneWidget);
     expect(find.text('1. Capture fast'), findsOneWidget);
+    expect(find.text('Dashboard / Assets'), findsOneWidget);
+    expect(find.text('LOW STOCK'), findsOneWidget);
+    expect(find.text('REPAIR'), findsOneWidget);
+    expect(find.text('PROJECTS'), findsOneWidget);
     expect(find.text('Open Low Stock / Reorder'), findsOneWidget);
     expect(find.text('Decision bridge'), findsOneWidget);
     expect(find.text('Asset sync'), findsOneWidget);

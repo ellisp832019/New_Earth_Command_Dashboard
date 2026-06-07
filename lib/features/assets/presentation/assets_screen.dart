@@ -225,6 +225,12 @@ class _AssetHero extends StatelessWidget {
     final supportingCopy = snapshot.isReady
         ? 'Use this tab to keep equipment, parts, locations, and repair decisions clear without turning it into warehouse software.'
         : 'This tab stays local-first and only becomes fully useful once the external Omega OS assets folder is connected.';
+    final lowStockCount = _summaryCount(snapshot, AssetSummaryKind.lowStock);
+    final brokenCount = _summaryCount(snapshot, AssetSummaryKind.brokenRepair);
+    final projectSummaryCount = _summaryCount(
+      snapshot,
+      AssetSummaryKind.projectSummary,
+    );
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -244,6 +250,14 @@ class _AssetHero extends StatelessWidget {
                     color: AppColours.darkSecondary,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Dashboard / Assets',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -281,6 +295,21 @@ class _AssetHero extends StatelessWidget {
                 value: '${snapshot.partsCount}',
                 accentColor: AppColours.darkSecondary,
               ),
+              _HeaderChip(
+                label: 'Low stock',
+                value: '$lowStockCount',
+                accentColor: AppColours.darkAmber,
+              ),
+              _HeaderChip(
+                label: 'Repair',
+                value: '$brokenCount',
+                accentColor: AppColours.darkAmber,
+              ),
+              _HeaderChip(
+                label: 'Projects',
+                value: '$projectSummaryCount',
+                accentColor: AppColours.darkPurple,
+              ),
             ],
           );
 
@@ -305,6 +334,15 @@ class _AssetHero extends StatelessWidget {
         },
       ),
     );
+  }
+
+  int _summaryCount(AssetWorkspaceSnapshot snapshot, AssetSummaryKind kind) {
+    for (final card in snapshot.summaryCards) {
+      if (card.kind == kind) {
+        return card.count;
+      }
+    }
+    return 0;
   }
 }
 
