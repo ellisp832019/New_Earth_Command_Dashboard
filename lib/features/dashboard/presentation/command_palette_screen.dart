@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../command_deck/data/command_deck_service.dart';
+import '../application/dashboard_controller.dart';
 import '../../projects/application/projects_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 
@@ -41,6 +43,7 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
   Widget build(BuildContext context) {
     final projectsAsync = ref.watch(projectsProvider);
     final tasksAsync = ref.watch(tasksProvider);
+    final recentActions = ref.watch(commandPaletteRecentActionsProvider);
     final query = _searchController.text.trim().toLowerCase();
 
     final projects = projectsAsync.maybeWhen(
@@ -135,6 +138,12 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
               ),
             ),
             const SizedBox(height: 18),
+            if (query.isEmpty)
+              _RecentActionsCard(
+                recentActions: recentActions,
+                onOpenCommandDeck: () => context.go(RouteNames.commandDeck),
+              ),
+            if (query.isEmpty) const SizedBox(height: 18),
             if (groupedEntries.isEmpty)
               _PaletteEmptyState(query: query)
             else
@@ -713,6 +722,110 @@ class _PaletteEmptyState extends StatelessWidget {
         style: Theme.of(
           context,
         ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+      ),
+    );
+  }
+}
+
+class _RecentActionsCard extends StatelessWidget {
+  const _RecentActionsCard({
+    required this.recentActions,
+    required this.onOpenCommandDeck,
+  });
+
+  final List<CommandDeckActionLogEntry> recentActions;
+  final VoidCallback onOpenCommandDeck;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Recent actions',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onOpenCommandDeck,
+                icon: const Icon(Icons.space_dashboard_outlined),
+                label: const Text('Open Command Deck'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            recentActions.isEmpty
+                ? 'No commands have been logged yet.'
+                : 'The latest commands you ran in the Command Deck.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          if (recentActions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: recentActions
+                  .map((entry) {
+                    return _RecentActionChip(entry: entry);
+                  })
+                  .toList(growable: false),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentActionChip extends StatelessWidget {
+  const _RecentActionChip({required this.entry});
+
+  final CommandDeckActionLogEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              entry.label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${entry.group} • ${entry.type} • ${entry.timestampLabel}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            ),
+          ],
+        ),
       ),
     );
   }

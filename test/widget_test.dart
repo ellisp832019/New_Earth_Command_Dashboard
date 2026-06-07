@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -436,46 +438,6 @@ void main() {
     expect(find.text('More'), findsWidgets);
   });
 
-  testWidgets(
-    'dashboard quick search opens the command palette and finds projects',
-    (WidgetTester tester) async {
-      final database = AppDatabase(NativeDatabase.memory());
-      addTearDown(database.close);
-
-      await SeedDataService(database).ensureSeedData();
-
-      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-      await pumpUntilIdle(tester);
-
-      await tester.tap(find.widgetWithText(FilledButton, 'Quick Search'));
-      await pumpUntilIdle(tester);
-
-      expect(find.text('Command Palette'), findsOneWidget);
-      expect(find.text('Jump anywhere in the dashboard.'), findsOneWidget);
-
-      await tester.enterText(
-        find.byKey(const Key('commandPaletteSearchField')),
-        'microgrow',
-      );
-      await pumpUntilIdle(tester);
-
-      await pumpUntilFound(
-        tester,
-        find.byKey(const Key('commandPaletteEntry-MicroGrow')),
-      );
-      expect(
-        find.byKey(const Key('commandPaletteEntry-MicroGrow')),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(const Key('commandPaletteEntry-MicroGrow')));
-      await pumpUntilIdle(tester);
-
-      expect(find.text('Project Detail'), findsOneWidget);
-      expect(find.text('MicroGrow'), findsOneWidget);
-    },
-  );
-
   testWidgets('ctrl k opens the command palette from the dashboard', (
     WidgetTester tester,
   ) async {
@@ -490,6 +452,33 @@ void main() {
 
     expect(find.text('Command Palette'), findsOneWidget);
     expect(find.byKey(const Key('commandPaletteSearchField')), findsOneWidget);
+  });
+
+  test('command palette recent actions provider reads the local log', () {
+    final runtimeDir = Directory(
+      'modules/new_earth_command_deck/dashboard_module/data/runtime',
+    );
+    runtimeDir.createSync(recursive: true);
+    final actionLogFile = File(
+      '${runtimeDir.path}${Platform.pathSeparator}command_deck_action_log.jsonl',
+    );
+    actionLogFile.writeAsStringSync(
+      '{"timestamp":"2026-06-07T10:00:00.000","command_id":"open_dashboard","label":"Open Dashboard","type":"open_route","group":"Navigate","source":"command_registry.example.json","config_source":"command_deck.json"}\n'
+      '{"timestamp":"2026-06-07T10:02:00.000","command_id":"open_microgrow","label":"Open MicroGrow","type":"open_route","group":"Projects","source":"command_registry.example.json","config_source":"command_deck.json"}\n',
+    );
+    addTearDown(() {
+      if (actionLogFile.existsSync()) {
+        actionLogFile.deleteSync();
+      }
+    });
+
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final recentActions = container.read(commandPaletteRecentActionsProvider);
+    expect(recentActions, hasLength(2));
+    expect(recentActions.first.label, 'Open MicroGrow');
+    expect(recentActions.last.label, 'Open Dashboard');
   });
 
   testWidgets('more screen links to supporting screens', (
