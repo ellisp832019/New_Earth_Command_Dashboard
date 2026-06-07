@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -52,7 +52,9 @@ extension KnowledgeLibraryFilterLabel on KnowledgeLibraryFilter {
 }
 
 class KnowledgeLibraryScreen extends StatefulWidget {
-  const KnowledgeLibraryScreen({super.key});
+  const KnowledgeLibraryScreen({super.key, this.repository});
+
+  final KnowledgeLibraryRepository? repository;
 
   @override
   State<KnowledgeLibraryScreen> createState() => _KnowledgeLibraryScreenState();
@@ -61,7 +63,8 @@ class KnowledgeLibraryScreen extends StatefulWidget {
 class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   static const int _pageSize = 100;
 
-  final KnowledgeLibraryRepository _repository = KnowledgeLibraryRepository();
+  late final KnowledgeLibraryRepository _repository =
+      widget.repository ?? KnowledgeLibraryRepository();
   final TextEditingController _searchController = TextEditingController();
 
   Timer? _searchDebounce;
@@ -74,6 +77,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   KnowledgeLibraryItem? _selectedItem;
   KnowledgeLibraryFilter _filter = KnowledgeLibraryFilter.all;
   String? _sourceSectionFilter;
+  String? _categoryFilter;
   String _query = '';
   String _status = 'Loading the Omega OS library catalogue...';
   bool _isLoadingMore = false;
@@ -94,7 +98,10 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   }
 
   List<KnowledgeLibraryItem> get _items =>
-      _currentItems.where(_filter.matches).toList(growable: false);
+      _currentItems
+          .where(_filter.matches)
+          .where(_matchesCategory)
+          .toList(growable: false);
 
   List<KnowledgeLibraryItem> get _visibleItems =>
       _items.where(_matchesSourceSection).toList(growable: false);
@@ -119,6 +126,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     final hasActiveFilters =
         _query.trim().isNotEmpty ||
         _filter != KnowledgeLibraryFilter.all ||
+        _categoryFilter != null ||
         _sourceSectionFilter != null;
 
     return Scaffold(
@@ -145,6 +153,14 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                 onChanged: _scheduleSearch,
                 onSubmitted: _runSearchImmediately,
                 onClear: _clearSearch,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Search reaches across titles, filenames, tags, folders, and extracted text.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.3,
+                ),
               ),
               const SizedBox(height: 14),
               _FilterStrip(
@@ -180,6 +196,26 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                       : () {
                           setState(() {
                             _sourceSectionFilter = null;
+                            _ensureSelectionStillVisible();
+                          });
+                      },
+                ),
+              if (stats != null) const SizedBox(height: 14),
+              if (stats != null)
+                _CategoryStrip(
+                  categories: stats.byCategory,
+                  selected: _categoryFilter,
+                  onSelected: (value) {
+                    setState(() {
+                      _categoryFilter = value;
+                      _ensureSelectionStillVisible();
+                    });
+                  },
+                  onClear: _categoryFilter == null
+                      ? null
+                      : () {
+                          setState(() {
+                            _categoryFilter = null;
                             _ensureSelectionStillVisible();
                           });
                         },
@@ -546,6 +582,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
       _query = '';
       _filter = KnowledgeLibraryFilter.all;
       _sourceSectionFilter = null;
+      _categoryFilter = null;
     });
     unawaited(_refreshAll());
   }
@@ -593,6 +630,15 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     }
 
     return item.sourceSection == filter;
+  }
+
+  bool _matchesCategory(KnowledgeLibraryItem item) {
+    final filter = _categoryFilter;
+    if (filter == null || filter.trim().isEmpty) {
+      return true;
+    }
+
+    return item.category == filter;
   }
 
   KnowledgeLibraryItem? _findItemById(
@@ -1227,6 +1273,99 @@ class _SourceSectionStrip extends StatelessWidget {
               side: BorderSide(
                 color: selected == null
                     ? AppColours.darkPrimary
+                    : AppColours.darkOutline,
+              ),
+            ),
+            ...entries.map(
+              (entry) => ChoiceChip(
+                selected: entry.key == selected,
+                label: Text('${entry.key} (${entry.value})'),
+                onSelected: (_) => onSelected(entry.key),
+                labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: entry.key == selected
+                      ? AppColours.darkBackground
+                      : AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+                selectedColor: AppColours.darkSecondary,
+                backgroundColor: AppColours.darkSurfaceAlt.withValues(
+                  alpha: 0.9,
+                ),
+                side: BorderSide(
+                  color: entry.key == selected
+                      ? AppColours.darkSecondary
+                      : AppColours.darkOutline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryStrip extends StatelessWidget {
+  const _CategoryStrip({
+    required this.categories,
+    required this.selected,
+    required this.onSelected,
+    this.onClear,
+  });
+
+  final Map<String, int> categories;
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = categories.entries.toList()
+      ..sort((left, right) {
+        final countCompare = right.value.compareTo(left.value);
+        if (countCompare != 0) {
+          return countCompare;
+        }
+
+        return left.key.toLowerCase().compareTo(right.key.toLowerCase());
+      });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Category',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: AppColours.darkText),
+            ),
+            const Spacer(),
+            if (onClear != null)
+              TextButton(onPressed: onClear, child: const Text('Clear')),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              selected: selected == null,
+              label: const Text('All categories'),
+              onSelected: (_) => onSelected(null),
+              labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: selected == null
+                    ? AppColours.darkBackground
+                    : AppColours.darkText,
+                fontWeight: FontWeight.w600,
+              ),
+              selectedColor: AppColours.darkPurple,
+              backgroundColor: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+              side: BorderSide(
+                color: selected == null
+                    ? AppColours.darkPurple
                     : AppColours.darkOutline,
               ),
             ),
