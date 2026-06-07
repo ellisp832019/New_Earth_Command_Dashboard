@@ -656,6 +656,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
   }
 
   Future<void> _speakResponse(VoiceCommandAssistantResponse response) async {
+    final voiceService = VoiceCommandService();
     final settingsSnapshot = ref
         .read(settingsSnapshotProvider)
         .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
@@ -679,7 +680,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
       await ref
           .read(voiceAssistantSpeechServiceProvider)
           .speak(
-            '${response.summary} ${response.nextStep}',
+            voiceService.buildSpokenReply(response),
             enabled: true,
             rate: settingsSnapshot.settings.preferredTtsVoiceRate,
             pitch: settingsSnapshot.settings.preferredTtsVoicePitch,

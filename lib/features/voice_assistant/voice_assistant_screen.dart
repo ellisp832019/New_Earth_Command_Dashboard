@@ -437,9 +437,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         return;
       }
 
-      _wakeAcknowledgeSpoken = true;
-      await _speakWakeAcknowledge();
-    }());
+    _wakeAcknowledgeSpoken = true;
+    await _speakWakeAcknowledge();
+  }());
   }
 
   Future<void> _speakWakeAcknowledge() async {
@@ -447,12 +447,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         .read(voiceSessionProvider.notifier)
         .beginSpeaking(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia speaking',
-          detail: 'Answering the wake phrase',
-          opacity: 0.72,
-        );
+        label: 'Gaia speaking',
+        detail: 'Answering the wake phrase',
+        opacity: 0.72,
+      );
     await _speakWithCurrentVoice(
-      "I'm here. You can ask me what I can do, or say create a task, create a project, summarize today, or continue the thread.",
+      "I'm here. Say task, project, summary, or continue thread.",
     );
 
     if (!mounted ||
@@ -1465,8 +1465,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _businessContactController.clear();
         _businessNextActionController.clear();
         _transcriptController.clear();
-        _speechStatus =
-            'Saved. Ready for another capture. The current thread is still available.';
+        _speechStatus = 'Saved. Ready for the next one.';
       });
       _setVoicePresence(
         label: 'Gaia ready',
@@ -1477,7 +1476,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
       unawaited(
         _speakWithCurrentVoice(
-          'Saved as ${_currentType.label}. Ready for another capture.',
+          'Saved as ${_currentType.label}. Ready for the next one.',
         ),
       );
 
@@ -1753,7 +1752,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _wizardAnswerFocusNode.requestFocus();
     unawaited(
       _speakWithCurrentVoice(
-        'Continuing the current thread. ${conversationContext.summary}',
+        'Continuing this thread. ${conversationContext.summary}',
       ),
     );
   }

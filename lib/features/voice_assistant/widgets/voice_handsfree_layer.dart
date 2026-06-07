@@ -498,7 +498,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       await ref
           .read(voiceAssistantSpeechServiceProvider)
           .speak(
-            '${response.summary} ${response.nextStep}',
+            VoiceCommandService().buildSpokenReply(response),
             enabled: true,
             rate: settingsSnapshot.settings.preferredTtsVoiceRate,
             pitch: settingsSnapshot.settings.preferredTtsVoicePitch,

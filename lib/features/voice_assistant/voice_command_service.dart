@@ -1149,8 +1149,18 @@ class VoiceCommandService {
               'Pick a starter deck option or let the router guide the next move.',
           projectContext: projectContext,
           threadContext: threadContext,
-        );
+      );
     }
+  }
+
+  String buildSpokenReply(VoiceCommandAssistantResponse response) {
+    final summary = _spokenSentence(response.summary);
+
+    if (summary.isEmpty) {
+      return _spokenSentence(response.nextStep);
+    }
+
+    return summary;
   }
 
   VoiceCommandBriefing buildBriefing({
@@ -1655,6 +1665,23 @@ Rules:
     }
 
     return trimmed;
+  }
+
+  String _spokenSentence(String text) {
+    final trimmed = text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (trimmed.isEmpty) {
+      return '';
+    }
+
+    final sentence = trimmed.split(RegExp(r'(?<=[.!?])\s+')).first.trim();
+    final lead = sentence.replaceFirst(
+      RegExp(
+        r'^(Gaia|I can|I am|This sounds like|This reads like|This looks like|The plan is to|I heard|I do not have a strong type yet\.)\s+',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    return lead.isEmpty ? sentence : lead;
   }
 
   String? _buildThreadContextLine(
