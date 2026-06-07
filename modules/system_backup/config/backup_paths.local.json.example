@@ -1,0 +1,16 @@
+{
+  "source_drive": "D:/",
+  "backup_target": "E:/NEW_EARTH_BACKUP",
+  "mirror_folder": "E:/NEW_EARTH_BACKUP/mirror",
+  "reports_folder": "E:/NEW_EARTH_BACKUP/reports",
+  "manifests_folder": "E:/NEW_EARTH_BACKUP/manifests",
+  "restore_test_folder": "D:/_RESTORE_TEST_AREA",
+  "verify_after_backup": true,
+  "create_manifest": true,
+  "mode": "mirror",
+  "retention": {
+    "daily_keep": 7,
+    "weekly_keep": 4,
+    "monthly_keep": 12
+  }
+}

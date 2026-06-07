@@ -35,6 +35,8 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const systems = '/more/systems';
+  static const backupGuardian = '/more/systems/backup-guardian';
   static const launchpad = '/launchpad';
   static const launchpadCampaigns = '/launchpad/campaigns';
   static const meetingDashboard = '/more/meetings';

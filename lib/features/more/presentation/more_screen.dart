@@ -16,6 +16,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.commandDeck,
     ),
     _MoreItem(
+      title: 'Systems',
+      description:
+          'Protect the full D: drive, review backup status, and keep recovery tools calm.',
+      icon: Icons.shield_outlined,
+      route: RouteNames.systems,
+    ),
+    _MoreItem(
       title: 'Meeting System',
       description:
           'Plan meetings, capture actions, track decisions, and keep follow-ups in Omega OS.',
@@ -142,7 +149,7 @@ class MoreScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Journal, learning, content, business, wellbeing, inbox, voice, settings, projects intelligence, and active system links all live here.',
+                  'Journal, learning, content, business, wellbeing, inbox, voice, settings, projects intelligence, systems, and active system links all live here.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                   ),
