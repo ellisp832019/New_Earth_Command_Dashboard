@@ -96,7 +96,7 @@ void main() {
     expect(snapshot.errors, isEmpty);
   });
 
-  test('backup guardian load snapshot warns when the backup drive is missing', () async {
+  test('backup guardian load snapshot waits when the backup drive is missing', () async {
     final tempRoot = await Directory.systemTemp.createTemp(
       'backup_guardian_red_',
     );
@@ -133,11 +133,11 @@ void main() {
 
     final snapshot = await BackupGuardianService(moduleRoot: moduleRoot).loadSnapshot();
 
-    expect(snapshot.healthState, BackupGuardianHealthState.red);
+    expect(snapshot.healthState, BackupGuardianHealthState.amber);
     expect(
-      snapshot.errors,
-      contains('Backup target drive not found: ${backupTargetDir.path}'),
+      snapshot.warnings,
+      contains('Waiting for the external backup drive to appear.'),
     );
+    expect(snapshot.errors, isEmpty);
   });
 }
-

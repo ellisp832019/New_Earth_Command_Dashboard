@@ -231,8 +231,12 @@ class _HeroCard extends StatelessWidget {
                     accent: AppColours.darkSecondary,
                   ),
                   _Badge(
-                    label: snapshot.backupTarget,
-                    accent: AppColours.darkPurple,
+                    label: snapshot.backupDriveExists
+                        ? snapshot.backupTarget
+                        : 'Waiting for external drive',
+                    accent: snapshot.backupDriveExists
+                        ? AppColours.darkPurple
+                        : AppColours.darkAmber,
                   ),
                 ],
               ),
@@ -334,7 +338,7 @@ class _StatusGrid extends StatelessWidget {
         value: snapshot.backupTarget,
         detail: snapshot.backupDriveExists
             ? 'External drive visible'
-            : 'External drive missing',
+            : 'Waiting for external drive',
         accent: snapshot.backupDriveExists ? AppColours.darkSuccess : AppColours.darkAmber,
       ),
       _StatusTile(
@@ -437,7 +441,7 @@ class _WarningsCard extends StatelessWidget {
           else ...[
             if (snapshot.warnings.isNotEmpty) ...[
               Text(
-                'Warnings',
+                snapshot.backupDriveExists ? 'Warnings' : 'Waiting',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: AppColours.darkText,
                       fontWeight: FontWeight.w700,

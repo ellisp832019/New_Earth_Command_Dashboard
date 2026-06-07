@@ -163,14 +163,12 @@ class BackupGuardianService {
       if (!status.exists)
         'No status file found yet. Run Dry Run or Backup Now to create one.',
       if (sourceExists && !backupDriveExists)
-        'The external backup drive is not visible yet.',
+        'Waiting for the external backup drive to appear.',
     ];
 
     final errors = <String>[
       ...status.errors,
       if (!sourceExists) 'Source drive not found: ${config.sourceDrive}',
-      if (!backupDriveExists)
-        'Backup target drive not found: ${config.backupTarget}',
     ];
 
     final lastBackupAt = status.lastBackupAt ??
@@ -187,7 +185,9 @@ class BackupGuardianService {
 
     final healthSummary = switch (healthState) {
       BackupGuardianHealthState.green => 'Latest backup verified',
-      BackupGuardianHealthState.amber => 'Backup exists but still needs review',
+      BackupGuardianHealthState.amber => sourceExists && !backupDriveExists
+          ? 'Waiting for the external backup drive'
+          : 'Backup exists but still needs review',
       BackupGuardianHealthState.red => 'Backup failed or target missing',
       BackupGuardianHealthState.grey => 'No backup run yet',
     };
@@ -321,7 +321,7 @@ class BackupGuardianService {
     required DateTime? lastBackupAt,
     required DateTime? lastVerificationAt,
   }) {
-    if (!sourceExists || !backupDriveExists) {
+    if (!sourceExists) {
       return BackupGuardianHealthState.red;
     }
 
@@ -338,6 +338,10 @@ class BackupGuardianService {
       if (lastVerificationAt == null || lastBackupAt.isAfter(lastVerificationAt)) {
         return BackupGuardianHealthState.amber;
       }
+    }
+
+    if (!backupDriveExists) {
+      return BackupGuardianHealthState.amber;
     }
 
     if (state == 'green') {
