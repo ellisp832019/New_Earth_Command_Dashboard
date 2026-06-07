@@ -340,6 +340,20 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> deletePartRecord(
+    String assetsRootPath,
+    String partId,
+  ) async {
+    final table = await readPartsInventory(assetsRootPath);
+    return _removeRowByKey(
+      file: _partsFile(assetsRootPath),
+      headers: partsHeaders,
+      rows: table.rows,
+      keyColumn: 'part_id',
+      keyValue: partId,
+    );
+  }
+
   Future<AssetCsvTable> appendOrderRecord(
     String assetsRootPath,
     Map<String, String> row,

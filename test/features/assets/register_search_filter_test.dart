@@ -110,6 +110,39 @@ void main() {
     expect(repository.lastDeletedEquipmentId, 'NE-EQ-0001');
   });
 
+  testWidgets('parts inventory deletes a row', (tester) async {
+    final fixture = _fixture();
+    final repository = _RecordingAssetRegisterRepository();
+    await tester.binding.setSurfaceSize(const Size(1400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetPartsRegisterProvider.overrideWith(
+            (ref) async => fixture.partsTable,
+          ),
+          assetRegisterRepositoryProvider.overrideWith((ref) => repository),
+        ],
+        child: const MaterialApp(home: PartsInventoryScreen()),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byTooltip('Delete part').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete part entry?'), findsOneWidget);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.lastDeletedPartId, 'NE-PART-0001');
+  });
+
   testWidgets('parts inventory filters by low stock chip', (tester) async {
     final fixture = _fixture();
 
@@ -289,6 +322,7 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
   Map<String, String>? lastEquipmentRow;
   String? lastDeletedEquipmentId;
   Map<String, String>? lastPartRow;
+  String? lastDeletedPartId;
 
   @override
   Future<AssetCsvTable> updateEquipmentRecord(
@@ -323,6 +357,18 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
     return AssetCsvTable(
       headers: AssetRegisterRepository.partsHeaders,
       rows: [updatedRow],
+    );
+  }
+
+  @override
+  Future<AssetCsvTable> deletePartRecord(
+    String assetsRootPath,
+    String partId,
+  ) async {
+    lastDeletedPartId = partId;
+    return AssetCsvTable(
+      headers: AssetRegisterRepository.partsHeaders,
+      rows: <Map<String, String>>[],
     );
   }
 }

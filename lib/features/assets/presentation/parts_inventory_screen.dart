@@ -178,6 +178,13 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                                             workspaceData.assetsRootPath!,
                                             row,
                                           ),
+                                    onDelete:
+                                        workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _deleteRecord(
+                                            workspaceData.assetsRootPath!,
+                                            row,
+                                          ),
                                   );
                                 },
                               ),
@@ -255,6 +262,67 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Part updated.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _deleteRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final partId = (row['part_id'] ?? '').trim();
+    final label = (row['name'] ?? '').trim().isNotEmpty == true
+        ? row['name']!.trim()
+        : partId.isEmpty
+        ? 'this part'
+        : partId;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete part entry?'),
+        content: Text(
+          'Remove $label from the register? This only deletes the row from the local CSV file.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColours.darkAmber,
+              foregroundColor: AppColours.darkText,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .deletePartRecord(assetsRootPath, partId);
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(assetPartsRegisterProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$label removed from the register.')),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -357,10 +425,11 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
 }
 
 class _PartCard extends StatelessWidget {
-  const _PartCard({required this.row, this.onEdit});
+  const _PartCard({required this.row, this.onEdit, this.onDelete});
 
   final Map<String, String> row;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -404,6 +473,14 @@ class _PartCard extends StatelessWidget {
                   onPressed: onEdit,
                   tooltip: 'Edit part',
                   icon: const Icon(Icons.edit_outlined),
+                ),
+              ],
+              if (onDelete != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: onDelete,
+                  tooltip: 'Delete part',
+                  icon: const Icon(Icons.delete_outline),
                 ),
               ],
             ],
