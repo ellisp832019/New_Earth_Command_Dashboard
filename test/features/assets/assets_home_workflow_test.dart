@@ -33,12 +33,17 @@ void main() {
 
     expect(find.text('Priority focus'), findsOneWidget);
     expect(find.text('Low stock needs attention'), findsOneWidget);
-    expect(find.text('1. Capture fast'), findsOneWidget);
+    expect(find.text('Top 3 focus'), findsOneWidget);
+    expect(find.text('1. Open Equipment Register'), findsOneWidget);
+    expect(find.text('2. Open Parts Inventory'), findsOneWidget);
+    expect(
+      find.textContaining('Open Low Stock / Reorder'),
+      findsWidgets,
+    );
     expect(find.text('Dashboard / Assets'), findsOneWidget);
     expect(find.text('LOW STOCK'), findsOneWidget);
     expect(find.text('REPAIR'), findsOneWidget);
     expect(find.text('PROJECTS'), findsOneWidget);
-    expect(find.text('Open Low Stock / Reorder'), findsOneWidget);
     expect(find.text('Decision bridge'), findsOneWidget);
     expect(find.text('Asset sync'), findsOneWidget);
     expect(find.text('Journal active'), findsOneWidget);
@@ -99,6 +104,7 @@ void main() {
     expect(find.text('2 folders missing'), findsOneWidget);
     expect(find.text('1 file missing'), findsOneWidget);
     expect(find.text('Finish setup first'), findsOneWidget);
+    expect(find.text('3. Create starter files'), findsOneWidget);
   });
 }
 

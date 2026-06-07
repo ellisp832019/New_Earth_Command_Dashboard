@@ -616,20 +616,63 @@ class _AssetPriorityCard extends StatelessWidget {
         ? '$needsDecisionCount item${needsDecisionCount == 1 ? '' : 's'} are waiting for a decision.'
         : 'Use the registers below to keep the workflow moving without clutter.';
 
-    final primaryLabel = hasSetupWork
-        ? 'Create starter files'
-        : lowStockCount > 0
-        ? 'Open Low Stock / Reorder'
-        : brokenCount > 0
-        ? 'Open Broken / Repair'
-        : 'Open Equipment Register';
-    final primaryAction = hasSetupWork
-        ? onOpenEquipment
-        : lowStockCount > 0
-        ? onOpenLowStock
-        : brokenCount > 0
-        ? onOpenRepairSummary
-        : onOpenEquipment;
+    final topThreeActions = [
+      _PriorityAction(
+        label: '1. Open Equipment Register',
+        detail: hasSetupWork
+            ? 'Set up the starter files before reviewing equipment.'
+            : 'Start with the main register so the asset list stays current.',
+        icon: Icons.precision_manufacturing_outlined,
+        onPressed: onOpenEquipment,
+        accent: AppColours.darkSuccess,
+      ),
+      _PriorityAction(
+        label: '2. Open Parts Inventory',
+        detail: hasSetupWork
+            ? 'Parts tracking becomes easier once the source folder is ready.'
+            : 'Check stock and part links before anything gets crowded.',
+        icon: Icons.inventory_2_outlined,
+        onPressed: onOpenParts,
+        accent: AppColours.darkSecondary,
+      ),
+      _PriorityAction(
+        label: hasSetupWork
+            ? '3. Create starter files'
+            : lowStockCount > 0
+            ? '3. Open Low Stock / Reorder'
+            : brokenCount > 0
+            ? '3. Open Broken / Repair'
+            : '3. Open QR Labels',
+        detail: hasSetupWork
+            ? 'Finish the setup structure first, then move into tracking.'
+            : lowStockCount > 0
+            ? '$lowStockCount part${lowStockCount == 1 ? '' : 's'} are waiting for a reorder check.'
+            : brokenCount > 0
+            ? '$brokenCount equipment item${brokenCount == 1 ? '' : 's'} need a repair or replacement check.'
+            : 'Labels are ready if you want to tag items without leaving the home page.',
+        icon: hasSetupWork
+            ? Icons.build_outlined
+            : lowStockCount > 0
+            ? Icons.trending_down_outlined
+            : brokenCount > 0
+            ? Icons.build_circle_outlined
+            : Icons.qr_code_2_outlined,
+        onPressed: hasSetupWork
+            ? onOpenEquipment
+            : lowStockCount > 0
+            ? onOpenLowStock
+            : brokenCount > 0
+            ? onOpenRepairSummary
+            : onOpenQrLabels,
+        accent: hasSetupWork
+            ? AppColours.darkAmber
+            : lowStockCount > 0
+            ? AppColours.darkAmber
+            : brokenCount > 0
+            ? const Color(0xFFE26B6B)
+            : AppColours.darkPurple,
+      ),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -662,21 +705,11 @@ class _AssetPriorityCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              _QuickStartStrip(
-                steps: const [
-                  _QuickStartStep(
-                    label: '1. Capture fast',
-                    detail: 'Use Quick Capture first when something arrives.',
-                  ),
-                  _QuickStartStep(
-                    label: '2. Check stock',
-                    detail: 'Open Parts or Low Stock to see what needs buying.',
-                  ),
-                  _QuickStartStep(
-                    label: '3. Review repair',
-                    detail: 'Open Broken / Repair before a spend decision.',
-                  ),
-                ],
+              _PriorityActionStrip(
+                title: 'Top 3 focus',
+                subtitle:
+                    'Keep the first pass short: equipment, parts, then the next pressure point.',
+                actions: topThreeActions,
               ),
             ],
           );
@@ -695,16 +728,6 @@ class _AssetPriorityCard extends StatelessWidget {
                 onPressed: onOpenVisualCapture,
                 icon: const Icon(Icons.photo_library_outlined),
                 label: const Text('Visual Capture'),
-              ),
-              OutlinedButton.icon(
-                onPressed: primaryAction,
-                icon: const Icon(Icons.arrow_forward_outlined),
-                label: Text(primaryLabel),
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenParts,
-                icon: const Icon(Icons.inventory_2_outlined),
-                label: const Text('Open Parts'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenQrLabels,
@@ -1459,10 +1482,16 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _QuickStartStrip extends StatelessWidget {
-  const _QuickStartStrip({required this.steps});
+class _PriorityActionStrip extends StatelessWidget {
+  const _PriorityActionStrip({
+    required this.title,
+    required this.subtitle,
+    required this.actions,
+  });
 
-  final List<_QuickStartStep> steps;
+  final String title;
+  final String subtitle;
+  final List<_PriorityAction> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -1470,25 +1499,49 @@ class _QuickStartStrip extends StatelessWidget {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 860;
 
-        if (wide) {
-          return Row(
-            children: [
-              Expanded(child: _QuickStartCard(step: steps[0])),
-              const SizedBox(width: 10),
-              Expanded(child: _QuickStartCard(step: steps[1])),
-              const SizedBox(width: 10),
-              Expanded(child: _QuickStartCard(step: steps[2])),
-            ],
-          );
-        }
+        final strip = [
+          for (final action in actions) _PriorityActionCard(action: action),
+        ];
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _QuickStartCard(step: steps[0]),
-            const SizedBox(height: 10),
-            _QuickStartCard(step: steps[1]),
-            const SizedBox(height: 10),
-            _QuickStartCard(step: steps[2]),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (wide)
+              Row(
+                children: [
+                  Expanded(child: strip[0]),
+                  const SizedBox(width: 10),
+                  Expanded(child: strip[1]),
+                  const SizedBox(width: 10),
+                  Expanded(child: strip[2]),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  strip[0],
+                  const SizedBox(height: 10),
+                  strip[1],
+                  const SizedBox(height: 10),
+                  strip[2],
+                ],
+              ),
           ],
         );
       },
@@ -1496,48 +1549,81 @@ class _QuickStartStrip extends StatelessWidget {
   }
 }
 
-class _QuickStartStep {
-  const _QuickStartStep({required this.label, required this.detail});
+class _PriorityAction {
+  const _PriorityAction({
+    required this.label,
+    required this.detail,
+    required this.icon,
+    required this.onPressed,
+    required this.accent,
+  });
 
   final String label;
   final String detail;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color accent;
 }
 
-class _QuickStartCard extends StatelessWidget {
-  const _QuickStartCard({required this.step});
+class _PriorityActionCard extends StatelessWidget {
+  const _PriorityActionCard({required this.action});
 
-  final _QuickStartStep step;
+  final _PriorityAction action;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.95),
+    return Material(
+      color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColours.darkOutline.withValues(alpha: 0.85),
+        onTap: action.onPressed,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: action.accent.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: action.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(action.icon, color: action.accent, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      action.label,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      action.detail,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right, color: action.accent),
+            ],
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            step.label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkText,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            step.detail,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              height: 1.35,
-            ),
-          ),
-        ],
       ),
     );
   }
