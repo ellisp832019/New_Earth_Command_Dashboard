@@ -36,10 +36,7 @@ void main() {
     expect(find.text('Top 3 focus'), findsOneWidget);
     expect(find.text('1. Open Equipment Register'), findsOneWidget);
     expect(find.text('2. Open Parts Inventory'), findsOneWidget);
-    expect(
-      find.textContaining('Open Low Stock / Reorder'),
-      findsWidgets,
-    );
+    expect(find.textContaining('Open Low Stock / Reorder'), findsWidgets);
     expect(find.text('Dashboard / Assets'), findsOneWidget);
     expect(find.text('LOW STOCK'), findsOneWidget);
     expect(find.text('REPAIR'), findsOneWidget);
@@ -52,6 +49,7 @@ void main() {
     expect(find.text('Refresh journal'), findsOneWidget);
     expect(find.text('Export summary report'), findsOneWidget);
     expect(find.text('Receipts / Warranties / Manuals'), findsOneWidget);
+    expect(find.text('Bin Map'), findsOneWidget);
     expect(find.text('Open QR Labels'), findsOneWidget);
     expect(find.text('Open QR Studio'), findsOneWidget);
   });

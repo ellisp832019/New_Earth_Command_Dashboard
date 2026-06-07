@@ -8,6 +8,7 @@ import 'package:new_earth_command_dashboard/features/assets/application/assets_c
 import 'package:new_earth_command_dashboard/features/assets/data/asset_csv_service.dart';
 import 'package:new_earth_command_dashboard/features/assets/data/asset_register_repository.dart';
 import 'package:new_earth_command_dashboard/features/assets/data/assets_folder_service.dart';
+import 'package:new_earth_command_dashboard/features/assets/presentation/bin_map_screen.dart';
 import 'package:new_earth_command_dashboard/features/assets/presentation/location_register_screen.dart';
 import 'package:new_earth_command_dashboard/features/assets/presentation/valuation_summary_screen.dart';
 
@@ -60,6 +61,41 @@ void main() {
     expect(find.text('Office Shelf A'), findsOneWidget);
     expect(find.text('NE-EQ-0001'), findsOneWidget);
     expect(find.text('Photo links'), findsOneWidget);
+    expect(find.text('Open Bin Map'), findsOneWidget);
+  });
+
+  testWidgets('bin map shows grouped location bins and route', (tester) async {
+    final fixture = _locationFixture();
+    final router = GoRouter(
+      initialLocation: RouteNames.assetBinMap,
+      routes: [
+        GoRoute(
+          path: RouteNames.assetBinMap,
+          builder: (context, state) => const BinMapScreen(),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetLocationRegisterProvider.overrideWith(
+            (ref) async => fixture.table,
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('Location / Bin Map'), findsOneWidget);
+    expect(find.text('Open Location Register'), findsOneWidget);
+    expect(find.text('Office Shelf A'), findsOneWidget);
+    expect(find.text('Electronics Drawer 2'), findsOneWidget);
+    expect(find.text('2 bins'), findsOneWidget);
   });
 
   test('valuation overview groups totals by project', () async {

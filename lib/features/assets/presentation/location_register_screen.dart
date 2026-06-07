@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
@@ -12,7 +14,8 @@ class LocationRegisterScreen extends ConsumerStatefulWidget {
       _LocationRegisterScreenState();
 }
 
-class _LocationRegisterScreenState extends ConsumerState<LocationRegisterScreen> {
+class _LocationRegisterScreenState
+    extends ConsumerState<LocationRegisterScreen> {
   bool _isSaving = false;
 
   @override
@@ -21,23 +24,24 @@ class _LocationRegisterScreenState extends ConsumerState<LocationRegisterScreen>
     final locations = ref.watch(assetLocationRegisterProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _LocationRegisterError(
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return locations.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _LocationRegisterError(
             onReload: () => ref.invalidate(assetLocationRegisterProvider),
           ),
           data: (table) {
             final uniqueAssets = _distinctValues(table.rows, 'asset_id');
-            final uniqueLocations = _distinctValues(table.rows, 'location_name');
+            final uniqueLocations = _distinctValues(
+              table.rows,
+              'location_name',
+            );
             final photoLinkedCount = _countWithValue(table.rows, 'photo_link');
 
             return Scaffold(
@@ -77,11 +81,22 @@ class _LocationRegisterScreenState extends ConsumerState<LocationRegisterScreen>
                               photoLinkedCount: photoLinkedCount,
                             ),
                             const SizedBox(height: 20),
+                            _LocationActionStrip(
+                              onOpenBinMap: () =>
+                                  context.push(RouteNames.assetBinMap),
+                              onOpenEvidenceLibrary: () =>
+                                  context.push(RouteNames.assetEvidenceLibrary),
+                              onOpenEquipmentRegister: () =>
+                                  context.push(RouteNames.assetEquipment),
+                            ),
+                            const SizedBox(height: 20),
                             if (table.rows.isEmpty)
                               _EmptyLocationState(
                                 onAdd: workspaceData.assetsRootPath == null
                                     ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
+                                    : () => _addRecord(
+                                        workspaceData.assetsRootPath!,
+                                      ),
                               )
                             else
                               ListView.separated(
@@ -123,17 +138,16 @@ class _LocationRegisterScreenState extends ConsumerState<LocationRegisterScreen>
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendLocationRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendLocationRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetLocationRegisterProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Location saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -207,10 +221,7 @@ class _LocationHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -307,7 +318,9 @@ class _LocationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,9 +331,9 @@ class _LocationCard extends StatelessWidget {
                 child: Text(
                   locationName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(label: assetId, accent: AppColours.darkSecondary),
@@ -332,7 +345,11 @@ class _LocationCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _InfoChip(label: row['description'] ?? 'No description'),
-              _InfoChip(label: row['photo_link']?.trim().isNotEmpty == true ? 'Photo linked' : 'No photo link'),
+              _InfoChip(
+                label: row['photo_link']?.trim().isNotEmpty == true
+                    ? 'Photo linked'
+                    : 'No photo link',
+              ),
             ],
           ),
           if ((row['notes'] ?? '').trim().isNotEmpty) ...[
@@ -340,9 +357,9 @@ class _LocationCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -372,9 +389,9 @@ class _EmptyLocationState extends StatelessWidget {
           Text(
             'Add a friendly location so items are easier to find and keep tidy.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -385,6 +402,106 @@ class _EmptyLocationState extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _LocationActionStrip extends StatelessWidget {
+  const _LocationActionStrip({
+    required this.onOpenBinMap,
+    required this.onOpenEvidenceLibrary,
+    required this.onOpenEquipmentRegister,
+  });
+
+  final VoidCallback onOpenBinMap;
+  final VoidCallback onOpenEvidenceLibrary;
+  final VoidCallback onOpenEquipmentRegister;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 860;
+          final actions = [
+            FilledButton.icon(
+              onPressed: onOpenBinMap,
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('Open Bin Map'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onOpenEvidenceLibrary,
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('Open Evidence Library'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onOpenEquipmentRegister,
+              icon: const Icon(Icons.precision_manufacturing_outlined),
+              label: const Text('Open Equipment'),
+            ),
+          ];
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.place_outlined,
+                    color: AppColours.darkSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Quick links',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Move between the calm location list, the bin map, and the source evidence without hunting around.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 14),
+                Wrap(spacing: 10, runSpacing: 10, children: actions),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 520,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(spacing: 10, runSpacing: 10, children: actions),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -562,17 +679,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '$value',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -595,9 +712,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -621,9 +738,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -647,15 +764,18 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceAlt.withValues(alpha: 0.96)

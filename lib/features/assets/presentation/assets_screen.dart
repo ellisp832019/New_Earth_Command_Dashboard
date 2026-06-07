@@ -174,6 +174,7 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetProjectSummary),
                       onOpenLocationRegister: () =>
                           context.push(RouteNames.assetLocationRegister),
+                      onOpenBinMap: () => context.push(RouteNames.assetBinMap),
                       onOpenEvidenceLibrary: () =>
                           context.push(RouteNames.assetEvidenceLibrary),
                       onOpenSupplierRegister: () =>
@@ -1724,6 +1725,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenRepairSummary,
     required this.onOpenProjectSummary,
     required this.onOpenLocationRegister,
+    required this.onOpenBinMap,
     required this.onOpenEvidenceLibrary,
     required this.onOpenSupplierRegister,
     required this.onOpenMaintenanceLog,
@@ -1744,6 +1746,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenRepairSummary;
   final VoidCallback onOpenProjectSummary;
   final VoidCallback onOpenLocationRegister;
+  final VoidCallback onOpenBinMap;
   final VoidCallback onOpenEvidenceLibrary;
   final VoidCallback onOpenSupplierRegister;
   final VoidCallback onOpenMaintenanceLog;
@@ -1810,6 +1813,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenLocationRegister,
                 icon: const Icon(Icons.place_outlined),
                 label: const Text('Location Register'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenBinMap,
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Bin Map'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenEvidenceLibrary,
