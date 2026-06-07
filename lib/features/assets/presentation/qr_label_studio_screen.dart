@@ -364,6 +364,9 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               printers: availablePrinters,
                                               printingInfo: printingInfo,
                                               selectedPrinter: selectedPrinter,
+                                              selectedPrinterProfile:
+                                                  selectedPrinterProfile,
+                                              hasPm260Preset: hasPm260Preset,
                                               onPrinterChanged: (printer) {
                                                 setState(() {
                                                   _selectedPrinterUrl =
@@ -1872,6 +1875,8 @@ class _PrinterConnectionCard extends StatelessWidget {
     required this.printers,
     required this.printingInfo,
     required this.selectedPrinter,
+    required this.selectedPrinterProfile,
+    required this.hasPm260Preset,
     required this.onPrinterChanged,
     required this.onPrintSelected,
   });
@@ -1879,6 +1884,8 @@ class _PrinterConnectionCard extends StatelessWidget {
   final List<Printer> printers;
   final PrintingInfo? printingInfo;
   final Printer? selectedPrinter;
+  final String selectedPrinterProfile;
+  final bool hasPm260Preset;
   final ValueChanged<Printer?> onPrinterChanged;
   final VoidCallback? onPrintSelected;
 
@@ -1926,7 +1933,33 @@ class _PrinterConnectionCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+              Chip(
+                label: Text(_pm260ProfileChipLabel()),
+                backgroundColor:
+                    _pm260ProfileColour().withValues(alpha: 0.15),
+                labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Chip(
+                label: Text(_pm260DeviceChipLabel()),
+                backgroundColor:
+                    _pm260DeviceColour().withValues(alpha: 0.15),
+                labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _pm260MatchMessage(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           if (printers.isEmpty) ...[
             const SizedBox(height: 10),
@@ -2063,6 +2096,65 @@ class _PrinterConnectionCard extends StatelessWidget {
       return 'Windows note: ${printer.comment!.trim()}';
     }
     return 'Selected printer is ready to receive labels from Windows.';
+  }
+
+  bool _pm260ProfileSelected() {
+    return selectedPrinterProfile.trim().toLowerCase().contains('pm260');
+  }
+
+  bool _pm260DetectedOnWindows() {
+    for (final printer in printers) {
+      final name = printer.name.trim().toLowerCase();
+      final location = printer.location?.trim().toLowerCase() ?? '';
+      final comment = printer.comment?.trim().toLowerCase() ?? '';
+      if (name.contains('pm260') ||
+          location.contains('pm260') ||
+          comment.contains('pm260')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _pm260ProfileChipLabel() {
+    if (!_pm260ProfileSelected()) {
+      return hasPm260Preset ? 'PM260 profile ready' : 'PM260 profile missing';
+    }
+    return 'PM260 profile selected';
+  }
+
+  Color _pm260ProfileColour() {
+    if (_pm260ProfileSelected() || hasPm260Preset) {
+      return AppColours.darkSuccess;
+    }
+    return AppColours.darkAmber;
+  }
+
+  String _pm260DeviceChipLabel() {
+    return _pm260DetectedOnWindows()
+        ? 'PM260 printer detected'
+        : 'PM260 printer not detected';
+  }
+
+  Color _pm260DeviceColour() {
+    return _pm260DetectedOnWindows()
+        ? AppColours.darkSuccess
+        : AppColours.darkAmber;
+  }
+
+  String _pm260MatchMessage() {
+    final profileSelected = _pm260ProfileSelected();
+    final deviceDetected = _pm260DetectedOnWindows();
+    if (profileSelected && deviceDetected) {
+      return 'The PM260 profile and the Windows printer both match, so direct print should be ready.';
+    }
+    if (profileSelected && !deviceDetected) {
+      return 'PM260 is selected in the label builder, but Windows is not currently detecting the PM260 printer.';
+    }
+    if (!profileSelected && deviceDetected) {
+      return 'Windows can see a PM260 printer, but the label builder is using a different printer profile.';
+    }
+    return 'The PM260 profile is parked, and Windows is not currently detecting a PM260 printer.';
   }
 }
 

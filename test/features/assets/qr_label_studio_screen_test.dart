@@ -70,7 +70,16 @@ void main() {
           assetQrPrinterProfilesProvider.overrideWith(
             (ref) async => AssetCsvTable(
               headers: QrLabelPrintService.printerProfileHeaders,
-              rows: const [],
+              rows: const [
+                {
+                  'profile_id': 'pm260_default',
+                  'printer_name': 'ETIKEZ PM260',
+                  'driver_name': 'Labelnice-compatible Bluetooth',
+                  'paper_size': '50 x 30 mm',
+                  'dpi': '203',
+                  'notes': '',
+                },
+              ],
             ),
           ),
           assetQrBulkTemplatesProvider.overrideWith(
@@ -91,6 +100,13 @@ void main() {
                 isDefault: true,
                 isAvailable: true,
               ),
+              Printer(
+                url: 'network://xp-3200',
+                name: 'XP-3200 Series(Network)',
+                location: 'Office',
+                isDefault: false,
+                isAvailable: true,
+              ),
             ],
           ),
         ],
@@ -104,6 +120,14 @@ void main() {
     expect(find.text('Connected printer'), findsOneWidget);
     expect(find.text('Windows sees printers'), findsOneWidget);
     expect(find.text('ETIKEZ PM260 (Default)'), findsOneWidget);
+    expect(find.text('PM260 profile selected'), findsOneWidget);
+    expect(find.text('PM260 printer detected'), findsOneWidget);
+    expect(
+      find.text(
+        'The PM260 profile and the Windows printer both match, so direct print should be ready.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Print to printer'), findsOneWidget);
   });
 }
