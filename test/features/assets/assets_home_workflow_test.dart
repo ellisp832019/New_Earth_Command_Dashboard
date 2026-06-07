@@ -51,6 +51,7 @@ void main() {
     expect(find.text('Review Conflicts'), findsOneWidget);
     expect(find.text('Refresh journal'), findsOneWidget);
     expect(find.text('Export summary report'), findsOneWidget);
+    expect(find.text('Receipts / Warranties / Manuals'), findsOneWidget);
     expect(find.text('Open QR Labels'), findsOneWidget);
     expect(find.text('Open QR Studio'), findsOneWidget);
   });

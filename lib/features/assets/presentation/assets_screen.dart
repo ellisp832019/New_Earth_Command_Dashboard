@@ -174,6 +174,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetProjectSummary),
                       onOpenLocationRegister: () =>
                           context.push(RouteNames.assetLocationRegister),
+                      onOpenEvidenceLibrary: () =>
+                          context.push(RouteNames.assetEvidenceLibrary),
                       onOpenSupplierRegister: () =>
                           context.push(RouteNames.assetSupplierRegister),
                       onOpenMaintenanceLog: () =>
@@ -1722,6 +1724,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
     required this.onOpenRepairSummary,
     required this.onOpenProjectSummary,
     required this.onOpenLocationRegister,
+    required this.onOpenEvidenceLibrary,
     required this.onOpenSupplierRegister,
     required this.onOpenMaintenanceLog,
     required this.onOpenReorderList,
@@ -1741,6 +1744,7 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
   final VoidCallback onOpenRepairSummary;
   final VoidCallback onOpenProjectSummary;
   final VoidCallback onOpenLocationRegister;
+  final VoidCallback onOpenEvidenceLibrary;
   final VoidCallback onOpenSupplierRegister;
   final VoidCallback onOpenMaintenanceLog;
   final VoidCallback onOpenReorderList;
@@ -1806,6 +1810,11 @@ class _AssetRegisterLaunchCard extends StatelessWidget {
                 onPressed: onOpenLocationRegister,
                 icon: const Icon(Icons.place_outlined),
                 label: const Text('Location Register'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenEvidenceLibrary,
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Receipts / Warranties / Manuals'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenSupplierRegister,

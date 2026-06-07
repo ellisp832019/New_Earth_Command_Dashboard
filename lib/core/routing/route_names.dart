@@ -7,6 +7,7 @@ abstract final class RouteNames {
   static const assetRepairSummary = '/assets/repair-summary';
   static const assetProjectSummary = '/assets/project-summary';
   static const assetLocationRegister = '/assets/locations';
+  static const assetEvidenceLibrary = '/assets/evidence';
   static const assetValuationSummary = '/assets/valuation';
   static const assetQrLabelRegister = '/assets/qr-labels';
   static const assetQrLabelStudio = '/assets/qr-studio';

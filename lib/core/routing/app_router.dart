@@ -5,6 +5,7 @@ import '../../features/assets/presentation/assets_screen.dart';
 import '../../features/assets/presentation/equipment_register_screen.dart';
 import '../../features/assets/presentation/low_stock_screen.dart';
 import '../../features/assets/presentation/location_register_screen.dart';
+import '../../features/assets/presentation/evidence_library_screen.dart';
 import '../../features/assets/presentation/project_summary_screen.dart';
 import '../../features/assets/presentation/parts_inventory_screen.dart';
 import '../../features/assets/presentation/maintenance_log_screen.dart';
@@ -132,6 +133,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'locations',
                   builder: (context, state) => const LocationRegisterScreen(),
+                ),
+                GoRoute(
+                  path: 'evidence',
+                  builder: (context, state) => const EvidenceLibraryScreen(),
                 ),
                 GoRoute(
                   path: 'valuation',
