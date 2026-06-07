@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/database/app_database.dart';
 import 'core/routing/app_router.dart';
+import 'core/routing/route_names.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/application/settings_controller.dart';
 import 'features/meeting_system/presentation/meeting_notification_bridge.dart';
@@ -12,6 +14,14 @@ import 'features/voice_assistant/voice_startup_gate_screen.dart';
 import 'features/voice_assistant/widgets/voice_conversation_dock.dart';
 import 'features/voice_assistant/widgets/voice_handsfree_layer.dart';
 import 'features/voice_assistant/widgets/voice_presence_chip.dart';
+
+class OpenCommandPaletteIntent extends Intent {
+  const OpenCommandPaletteIntent();
+}
+
+class CloseCommandPaletteIntent extends Intent {
+  const CloseCommandPaletteIntent();
+}
 
 class NewEarthCommandDashboardApp extends ConsumerWidget {
   const NewEarthCommandDashboardApp({super.key});
@@ -32,10 +42,40 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
           themeMode: themeMode,
           routerConfig: appRouter,
           builder: (context, child) {
+            final routedChild = Shortcuts(
+              shortcuts: const {
+                SingleActivator(LogicalKeyboardKey.keyK, control: true):
+                    OpenCommandPaletteIntent(),
+                SingleActivator(LogicalKeyboardKey.escape):
+                    CloseCommandPaletteIntent(),
+              },
+              child: Actions(
+                actions: {
+                  OpenCommandPaletteIntent:
+                      CallbackAction<OpenCommandPaletteIntent>(
+                        onInvoke: (intent) {
+                          appRouter.go(RouteNames.commandPalette);
+                          return null;
+                        },
+                      ),
+                  CloseCommandPaletteIntent:
+                      CallbackAction<CloseCommandPaletteIntent>(
+                        onInvoke: (intent) {
+                          if (appRouter.canPop()) {
+                            appRouter.pop();
+                          }
+                          return null;
+                        },
+                      ),
+                },
+                child: child ?? const SizedBox.shrink(),
+              ),
+            );
+
             return Stack(
               fit: StackFit.expand,
               children: [
-                VoiceHandsfreeLayer(child: child ?? const SizedBox.shrink()),
+                VoiceHandsfreeLayer(child: routedChild),
                 const Positioned(
                   top: 16,
                   right: 16,

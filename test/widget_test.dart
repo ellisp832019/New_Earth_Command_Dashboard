@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -474,6 +475,22 @@ void main() {
       expect(find.text('MicroGrow'), findsOneWidget);
     },
   );
+
+  testWidgets('ctrl k opens the command palette from the dashboard', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await pumpUntilIdle(tester);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Command Palette'), findsOneWidget);
+    expect(find.byKey(const Key('commandPaletteSearchField')), findsOneWidget);
+  });
 
   testWidgets('more screen links to supporting screens', (
     WidgetTester tester,
