@@ -92,9 +92,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                                     );
                                     ref.invalidate(assetQrPrintQueueProvider);
                                   },
-                                  onOpenExportFolder: () => _openExportFolder(
-                                    workspace.assetsRootPath!,
-                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                _HistoryExportCard(
                                   onExportRecent: () => _exportRecentHistory(
                                     context,
                                     ref,
@@ -103,6 +103,9 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                                   onPrintRecent: () => _printRecentHistory(
                                     context,
                                     ref,
+                                    workspace.assetsRootPath!,
+                                  ),
+                                  onOpenExportFolder: () => _openExportFolder(
                                     workspace.assetsRootPath!,
                                   ),
                                 ),
@@ -407,9 +410,6 @@ class _HistoryHero extends StatelessWidget {
     required this.onBackToRegister,
     required this.onOpenQueue,
     required this.onRefresh,
-    required this.onOpenExportFolder,
-    required this.onExportRecent,
-    required this.onPrintRecent,
   });
 
   final String? workspacePath;
@@ -422,9 +422,6 @@ class _HistoryHero extends StatelessWidget {
   final VoidCallback onBackToRegister;
   final VoidCallback onOpenQueue;
   final VoidCallback onRefresh;
-  final VoidCallback onOpenExportFolder;
-  final VoidCallback onExportRecent;
-  final VoidCallback onPrintRecent;
 
   @override
   Widget build(BuildContext context) {
@@ -509,21 +506,6 @@ class _HistoryHero extends StatelessWidget {
                 onPressed: onOpenQueue,
                 icon: const Icon(Icons.playlist_add_check),
                 label: const Text('Print Queue'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onExportRecent,
-                icon: const Icon(Icons.download_outlined),
-                label: const Text('Export recent'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onPrintRecent,
-                icon: const Icon(Icons.print_outlined),
-                label: const Text('Print recent'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenExportFolder,
-                icon: const Icon(Icons.folder_open_outlined),
-                label: const Text('Open export folder'),
               ),
               TextButton.icon(
                 onPressed: onRefresh,
@@ -621,6 +603,65 @@ class _HistorySection extends StatelessWidget {
   }
 }
 
+class _HistoryExportCard extends StatelessWidget {
+  const _HistoryExportCard({
+    required this.onExportRecent,
+    required this.onPrintRecent,
+    required this.onOpenExportFolder,
+  });
+
+  final VoidCallback onExportRecent;
+  final VoidCallback onPrintRecent;
+  final VoidCallback onOpenExportFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'History exports',
+            icon: Icons.download_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Keep the printable history exports together so the recent trail is easy to review or file locally.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onExportRecent,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Export recent'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onPrintRecent,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Print recent'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenExportFolder,
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Open export folder'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LabelRecordCard extends StatelessWidget {
   const _LabelRecordCard({
     required this.row,
@@ -687,7 +728,7 @@ class _LabelRecordCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Printed: ${_formatDate(row['printed_date'])}  •  Applied: ${_formatDate(row['applied_date'])}',
+            'Printed: ${_formatDate(row['printed_date'])}  |  Applied: ${_formatDate(row['applied_date'])}',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
@@ -793,7 +834,7 @@ class _RetryQueueCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${row['label_type'] ?? ''} • ${row['label_size'] ?? ''} • ${path.basename(row['generated_file'] ?? '')}',
+            '${row['label_type'] ?? ''} | ${row['label_size'] ?? ''} | ${path.basename(row['generated_file'] ?? '')}',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),

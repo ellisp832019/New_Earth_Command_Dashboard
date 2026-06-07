@@ -60,8 +60,14 @@ class QrPrintQueueScreen extends ConsumerWidget {
                                   context.go(RouteNames.assetQrLabelStudio),
                               onBackToAssets: () =>
                                   context.go(RouteNames.assets),
+                              onOpenHistory: () =>
+                                  context.push(RouteNames.assetQrLabelHistory),
                               onRefresh: () =>
                                   ref.invalidate(assetQrPrintQueueProvider),
+                              readyCount: readyRows.length,
+                              retryCount: retryRows.length,
+                              printedCount: printedRows.length,
+                              appliedCount: appliedRows.length,
                               onExportReadyQueue: () => _exportReadyQueue(
                                 context,
                                 ref,
@@ -101,11 +107,6 @@ class QrPrintQueueScreen extends ConsumerWidget {
                               ),
                               onOpenManifest: (queueId) =>
                                   _openManifest(context, queueId, readyRows),
-                              onRetry: (queueId) => _retryQueue(
-                                ref,
-                                workspace.assetsRootPath!,
-                                queueId,
-                              ),
                             ),
                             const SizedBox(height: 20),
                             _QueueSection(
@@ -139,6 +140,7 @@ class QrPrintQueueScreen extends ConsumerWidget {
                                 workspace.assetsRootPath!,
                                 queueId,
                               ),
+                              showRetryButton: true,
                             ),
                             const SizedBox(height: 20),
                             _QueueSection(
@@ -167,11 +169,6 @@ class QrPrintQueueScreen extends ConsumerWidget {
                               ),
                               onOpenManifest: (queueId) =>
                                   _openManifest(context, queueId, printedRows),
-                              onRetry: (queueId) => _retryQueue(
-                                ref,
-                                workspace.assetsRootPath!,
-                                queueId,
-                              ),
                             ),
                             const SizedBox(height: 20),
                             _QueueSection(
@@ -200,11 +197,6 @@ class QrPrintQueueScreen extends ConsumerWidget {
                               ),
                               onOpenManifest: (queueId) =>
                                   _openManifest(context, queueId, appliedRows),
-                              onRetry: (queueId) => _retryQueue(
-                                ref,
-                                workspace.assetsRootPath!,
-                                queueId,
-                              ),
                             ),
                           ],
                         ),
@@ -302,7 +294,12 @@ class _HeroCard extends StatelessWidget {
   const _HeroCard({
     required this.onBackToStudio,
     required this.onBackToAssets,
+    required this.onOpenHistory,
     required this.onRefresh,
+    required this.readyCount,
+    required this.retryCount,
+    required this.printedCount,
+    required this.appliedCount,
     required this.onExportReadyQueue,
     required this.onPrintReadyQueue,
     required this.workspacePath,
@@ -310,7 +307,12 @@ class _HeroCard extends StatelessWidget {
 
   final VoidCallback onBackToStudio;
   final VoidCallback onBackToAssets;
+  final VoidCallback onOpenHistory;
   final VoidCallback onRefresh;
+  final int readyCount;
+  final int retryCount;
+  final int printedCount;
+  final int appliedCount;
   final VoidCallback onExportReadyQueue;
   final VoidCallback onPrintReadyQueue;
   final String? workspacePath;
@@ -353,6 +355,11 @@ class _HeroCard extends StatelessWidget {
                 icon: const Icon(Icons.print_outlined),
                 label: const Text('Print ready'),
               ),
+              OutlinedButton.icon(
+                onPressed: onOpenHistory,
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('Open History'),
+              ),
             ],
           );
 
@@ -380,6 +387,33 @@ class _HeroCard extends StatelessWidget {
                   color: AppColours.darkSecondary,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _InlineBadge(
+                    count: readyCount,
+                    accent: AppColours.darkSuccess,
+                    label: 'Ready',
+                  ),
+                  _InlineBadge(
+                    count: retryCount,
+                    accent: const Color(0xFFE26B6B),
+                    label: 'Retry',
+                  ),
+                  _InlineBadge(
+                    count: printedCount,
+                    accent: AppColours.darkAmber,
+                    label: 'Printed',
+                  ),
+                  _InlineBadge(
+                    count: appliedCount,
+                    accent: AppColours.darkSecondary,
+                    label: 'Applied',
+                  ),
+                ],
               ),
             ],
           );
@@ -418,7 +452,8 @@ class _QueueSection extends StatelessWidget {
     required this.onMarkApplied,
     required this.onMarkReprintNeeded,
     required this.onOpenManifest,
-    required this.onRetry,
+    this.onRetry,
+    this.showRetryButton = false,
   });
 
   final String title;
@@ -429,7 +464,8 @@ class _QueueSection extends StatelessWidget {
   final Future<void> Function(String queueId) onMarkApplied;
   final Future<void> Function(String queueId) onMarkReprintNeeded;
   final Future<void> Function(String queueId) onOpenManifest;
-  final Future<void> Function(String queueId) onRetry;
+  final Future<void> Function(String queueId)? onRetry;
+  final bool showRetryButton;
 
   @override
   Widget build(BuildContext context) {
@@ -481,7 +517,9 @@ class _QueueSection extends StatelessWidget {
                           onMarkReprintNeeded(row['queue_id'] ?? ''),
                       onOpenManifest: () =>
                           onOpenManifest(row['queue_id'] ?? ''),
-                      onRetry: () => onRetry(row['queue_id'] ?? ''),
+                      onRetry: showRetryButton && onRetry != null
+                          ? () => onRetry!(row['queue_id'] ?? '')
+                          : null,
                     ),
                   ),
               ],
@@ -507,7 +545,7 @@ class _QueueItemCard extends StatelessWidget {
   final VoidCallback onMarkApplied;
   final VoidCallback onMarkReprintNeeded;
   final VoidCallback onOpenManifest;
-  final VoidCallback onRetry;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -539,7 +577,7 @@ class _QueueItemCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${row['label_type'] ?? ''} • ${row['label_size'] ?? ''} • ${path.basename(row['generated_file'] ?? '')}',
+            '${row['label_type'] ?? ''} | ${row['label_size'] ?? ''} | ${path.basename(row['generated_file'] ?? '')}',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
@@ -549,7 +587,8 @@ class _QueueItemCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              TextButton(onPressed: onRetry, child: const Text('Retry now')),
+              if (onRetry != null)
+                TextButton(onPressed: onRetry, child: const Text('Retry now')),
               TextButton(
                 onPressed: onOpenManifest,
                 child: const Text('Open manifest'),
