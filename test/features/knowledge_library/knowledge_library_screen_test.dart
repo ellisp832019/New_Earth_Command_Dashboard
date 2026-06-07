@@ -29,6 +29,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Guide One'), findsWidgets);
+    expect(find.text('Manifest review'), findsOneWidget);
+    expect(find.text('Retry extraction'), findsOneWidget);
+    expect(find.text('Open failure report'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Guides (2)'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Operations (2)'), findsOneWidget);
 
@@ -78,7 +81,7 @@ class _FakeKnowledgeLibraryRepository extends KnowledgeLibraryRepository {
       listenedStatus: 'not_started',
       notesPath: null,
       extractedTextPath: 'D:/Omega/Guide One.txt',
-      audioManifestPath: null,
+      audioManifestPath: 'D:/Omega/manifests/guide_one_manifest.json',
     ),
     KnowledgeLibraryItem(
       id: 'guide-two',
@@ -192,16 +195,16 @@ class _FakeKnowledgeLibraryRepository extends KnowledgeLibraryRepository {
 
   @override
   Future<KnowledgeLibraryExtractionStatus> loadExtractionStatus() async {
-    return const KnowledgeLibraryExtractionStatus(
+    return KnowledgeLibraryExtractionStatus(
       totalPdfs: 3,
       textExtractable: 2,
       ocrRequired: 1,
       extracted: 2,
-      failed: 0,
+      failed: 1,
       pending: 1,
-      lastRunAt: null,
-      statePath: 'state.json',
-      reportPath: 'report.json',
+      lastRunAt: DateTime(2026, 5, 30, 10, 45),
+      statePath: 'D:/Omega/library_state.json',
+      reportPath: 'D:/Omega/library_failure_report.md',
     );
   }
 

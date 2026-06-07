@@ -1477,6 +1477,25 @@ class _ExtractionStatusCard extends StatelessWidget {
               ),
             ],
           ),
+          if (status.statePath.isNotEmpty || status.reportPath.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (status.statePath.isNotEmpty)
+                  _MiniBadge(
+                    label: 'State ${_displayFileName(status.statePath)}',
+                    accent: AppColours.darkSecondary,
+                  ),
+                if (status.reportPath.isNotEmpty)
+                  _MiniBadge(
+                    label: 'Report ${_displayFileName(status.reportPath)}',
+                    accent: AppColours.darkAmber,
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           Wrap(
             spacing: 10,
@@ -1486,6 +1505,11 @@ class _ExtractionStatusCard extends StatelessWidget {
                 onPressed: onOpenReport,
                 icon: const Icon(Icons.description_outlined),
                 label: const Text('Open failure report'),
+              ),
+              FilledButton.icon(
+                onPressed: onCopyRetryCommand,
+                icon: const Icon(Icons.restart_alt_outlined),
+                label: const Text('Retry extraction'),
               ),
               TextButton.icon(
                 onPressed: onCopyRetryCommand,
@@ -1961,9 +1985,68 @@ class _DetailPanel extends StatelessWidget {
                   if (current.audioManifestPath != null &&
                       current.audioManifestPath!.trim().isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    _PathBlock(
-                      title: 'Audio manifest',
-                      value: current.audioManifestPath!,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColours.darkOutline),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.inventory_2_outlined,
+                                size: 18,
+                                color: AppColours.darkSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Manifest review',
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: AppColours.darkSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Open the generated manifest or copy the path before you retry the extraction run.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColours.darkMutedText,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _PathBlock(
+                            title: 'Audio manifest',
+                            value: current.audioManifestPath!,
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () => onCopyManifestPath(current),
+                                icon: const Icon(Icons.copy_rounded),
+                                label: const Text('Copy manifest path'),
+                              ),
+                              TextButton.icon(
+                                onPressed: () => onOpenManifest(current),
+                                icon: const Icon(
+                                  Icons.inventory_2_outlined,
+                                ),
+                                label: const Text('Open manifest'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   const SizedBox(height: 14),
@@ -2032,31 +2115,8 @@ class _DetailPanel extends StatelessWidget {
                           label: const Text('Open text'),
                         ),
                       ],
-                      if (current.audioManifestPath != null &&
-                          current.audioManifestPath!.trim().isNotEmpty) ...[
-                        OutlinedButton.icon(
-                          onPressed: () => onCopyManifestPath(current),
-                          icon: const Icon(Icons.copy_rounded),
-                          label: const Text('Copy manifest path'),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => onOpenManifest(current),
-                          icon: const Icon(Icons.inventory_2_outlined),
-                          label: const Text('Open manifest'),
-                        ),
-                      ],
                     ],
                   ),
-                  if (current.hasExtractedText) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'The text path action only appears when extracted text exists.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColours.darkMutedText,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 10),
                   Text(
                     'The Knowledge Engine never moves the source PDF. It only reads Omega OS and writes generated outputs into the reserved local folders.',
@@ -2070,6 +2130,16 @@ class _DetailPanel extends StatelessWidget {
             ),
     );
   }
+}
+
+String _displayFileName(String path) {
+  if (path.trim().isEmpty) {
+    return 'Unknown';
+  }
+
+  return File(path).uri.pathSegments.isEmpty
+      ? path
+      : File(path).uri.pathSegments.last;
 }
 
 class _PathBlock extends StatelessWidget {
