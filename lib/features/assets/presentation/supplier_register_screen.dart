@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
@@ -95,6 +97,8 @@ class _SupplierRegisterScreenState
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 20),
+                            const _SupplierActionStrip(),
                             const SizedBox(height: 20),
                             if (table.rows.isEmpty)
                               _EmptyRegisterState(
@@ -234,6 +238,98 @@ class _SupplierRegisterScreenState
 
   String _normalized(String? value) {
     return (value ?? '').trim().toLowerCase();
+  }
+}
+
+class _SupplierActionStrip extends StatelessWidget {
+  const _SupplierActionStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 860;
+          final actions = [
+            FilledButton.icon(
+              onPressed: () => context.push(RouteNames.assetOrdersTracker),
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('Open Orders Tracker'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetLowStock),
+              icon: const Icon(Icons.trending_down_outlined),
+              label: const Text('Open Low Stock / Reorder'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetRepairSummary),
+              icon: const Icon(Icons.build_circle_outlined),
+              label: const Text('Open Repair Summary'),
+            ),
+          ];
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.arrow_forward_outlined,
+                    color: AppColours.darkSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Next actions',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Use supplier details when ordering, reordering, or checking repair-related parts.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 14),
+                Wrap(spacing: 10, runSpacing: 10, children: actions),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 500,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(spacing: 10, runSpacing: 10, children: actions),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 

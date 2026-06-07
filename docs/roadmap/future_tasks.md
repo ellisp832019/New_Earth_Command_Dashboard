@@ -63,3 +63,22 @@ Allow dashboard cards to be reordered or hidden so the home screen can stay calm
 
 ## 20. Desktop Voice Hardening
 Strengthen the Windows voice path so microphone capture, focus handling, and fullscreen behavior stay smooth in daily use.
+
+## Asset Intelligence Follow-Up
+
+These are the next calm asset slices after the current register and summary work:
+
+### 1. Receipts, Warranties, and Manuals
+Make item-level evidence easier to review so receipts, warranty dates, and manuals stay linked without clutter.
+
+### 2. Location and Bin Map
+Give asset locations a clearer browse and search flow so items are easier to find in the Omega OS folders.
+
+### 3. Valuation and Insurance
+Add a calmer valuation review with evidence links, current value, and insurance-facing summary cards.
+
+### 4. QR Label Lifecycle
+Tighten label history, queue review, and print follow-up so the thermal path stays easy to trust.
+
+### 5. Repair Resolution Handoff
+Add a small repair closure flow so broken items can be moved cleanly through fix, replace, or park.
