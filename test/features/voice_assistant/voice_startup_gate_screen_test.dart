@@ -23,6 +23,11 @@ void main() {
 
     expect(find.text('Gaia is waiting for your headset'), findsOneWidget);
     expect(find.textContaining('connect the headset'), findsOneWidget);
+    expect(find.text('Capture path'), findsOneWidget);
+    expect(
+      find.textContaining('falls back to the local microphone recognizer'),
+      findsOneWidget,
+    );
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('Continue without Voice'), findsOneWidget);
     expect(find.text('Use headset anyway'), findsOneWidget);

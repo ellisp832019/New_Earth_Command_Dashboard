@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'desktop_speech_bridge_service.dart';
 import '../settings/application/settings_controller.dart';
 import 'application/voice_startup_gate_controller.dart';
 import 'voice_startup_gate_service.dart';
@@ -81,6 +82,28 @@ class _VoiceStartupGateScreenState
                     Text(
                       'Gaia keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
                       style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 14),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Capture path',
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              DesktopSpeechBridgeService.isSupported
+                                  ? 'Windows voice capture tries the local bridge first, then falls back to the local microphone recognizer.'
+                                  : 'This build falls back to the local microphone recognizer when the bridge is not available.',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     if (widget.result.devices.isNotEmpty) ...[
