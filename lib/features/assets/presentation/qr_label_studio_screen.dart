@@ -1974,33 +1974,47 @@ class _PrinterConnectionCard extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 14),
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              initialValue: selectedPrinter?.url,
-              decoration: const InputDecoration(labelText: 'Selected printer'),
-              items: printers
-                  .map(
-                    (printer) => DropdownMenuItem<String>(
-                      value: printer.url,
-                      child: Text(
-                        printer.isDefault
-                            ? '${printer.name} (Default)'
-                            : printer.name,
-                        overflow: TextOverflow.ellipsis,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _pm260DirectMatch()
+                    ? AppColours.darkSuccess.withValues(alpha: 0.08)
+                    : AppColours.darkSurfaceAlt.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: _pm260DirectMatch()
+                      ? AppColours.darkSuccess.withValues(alpha: 0.6)
+                      : AppColours.darkOutline.withValues(alpha: 0.9),
+                ),
+              ),
+              child: DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: selectedPrinter?.url,
+                decoration: const InputDecoration(labelText: 'Selected printer'),
+                items: printers
+                    .map(
+                      (printer) => DropdownMenuItem<String>(
+                        value: printer.url,
+                        child: Text(
+                          printer.isDefault
+                              ? '${printer.name} (Default)'
+                              : printer.name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  )
-                  .toList(growable: false),
-              onChanged: (value) {
-                Printer? match;
-                for (final printer in printers) {
-                  if (printer.url == value) {
-                    match = printer;
-                    break;
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  Printer? match;
+                  for (final printer in printers) {
+                    if (printer.url == value) {
+                      match = printer;
+                      break;
+                    }
                   }
-                }
-                onPrinterChanged(match);
-              },
+                  onPrinterChanged(match);
+                },
+              ),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -2028,11 +2042,29 @@ class _PrinterConnectionCard extends StatelessWidget {
             ),
             if (selectedPrinter != null) ...[
               const SizedBox(height: 12),
-              Text(
-                _selectedPrinterDetails(selectedPrinter!),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _pm260DirectMatch()
+                      ? AppColours.darkSuccess.withValues(alpha: 0.10)
+                      : AppColours.darkSurfaceAlt.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _pm260DirectMatch()
+                        ? AppColours.darkSuccess.withValues(alpha: 0.45)
+                        : AppColours.darkOutline.withValues(alpha: 0.8),
+                  ),
+                ),
+                child: Text(
+                  _selectedPrinterDetails(selectedPrinter!),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _pm260DirectMatch()
+                        ? AppColours.darkText
+                        : AppColours.darkMutedText,
+                    height: 1.35,
+                    fontWeight:
+                        _pm260DirectMatch() ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
               ),
             ],
@@ -2116,6 +2148,10 @@ class _PrinterConnectionCard extends StatelessWidget {
     return false;
   }
 
+  bool _pm260DirectMatch() {
+    return _pm260ProfileSelected() && _pm260DetectedOnWindows();
+  }
+
   String _pm260ProfileChipLabel() {
     if (!_pm260ProfileSelected()) {
       return hasPm260Preset ? 'PM260 profile ready' : 'PM260 profile missing';
@@ -2143,11 +2179,11 @@ class _PrinterConnectionCard extends StatelessWidget {
   }
 
   String _pm260MatchMessage() {
-    final profileSelected = _pm260ProfileSelected();
-    final deviceDetected = _pm260DetectedOnWindows();
-    if (profileSelected && deviceDetected) {
+    if (_pm260DirectMatch()) {
       return 'The PM260 profile and the Windows printer both match, so direct print should be ready.';
     }
+    final profileSelected = _pm260ProfileSelected();
+    final deviceDetected = _pm260DetectedOnWindows();
     if (profileSelected && !deviceDetected) {
       return 'PM260 is selected in the label builder, but Windows is not currently detecting the PM260 printer.';
     }
