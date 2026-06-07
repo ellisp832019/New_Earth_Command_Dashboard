@@ -65,6 +65,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Broken / Repair'), findsOneWidget);
+    expect(find.text('Next actions'), findsOneWidget);
+    expect(find.text('Open Equipment Register'), findsOneWidget);
+    expect(find.text('Open Orders Tracker'), findsOneWidget);
     expect(find.text('Field scanner'), findsOneWidget);
     expect(find.text('Power pack'), findsOneWidget);
     expect(find.text('Spare sensor'), findsNothing);
