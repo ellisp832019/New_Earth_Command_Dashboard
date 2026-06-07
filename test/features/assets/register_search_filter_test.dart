@@ -77,6 +77,39 @@ void main() {
     expect(repository.lastEquipmentRow!['name'], 'Cordless drill pro');
   });
 
+  testWidgets('equipment register deletes a row', (tester) async {
+    final fixture = _fixture();
+    final repository = _RecordingAssetRegisterRepository();
+    await tester.binding.setSurfaceSize(const Size(1400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetEquipmentRegisterProvider.overrideWith(
+            (ref) async => fixture.equipmentTable,
+          ),
+          assetRegisterRepositoryProvider.overrideWith((ref) => repository),
+        ],
+        child: const MaterialApp(home: EquipmentRegisterScreen()),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byTooltip('Delete equipment').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete equipment entry?'), findsOneWidget);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.lastDeletedEquipmentId, 'NE-EQ-0001');
+  });
+
   testWidgets('parts inventory filters by low stock chip', (tester) async {
     final fixture = _fixture();
 
@@ -254,6 +287,7 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
   _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastEquipmentRow;
+  String? lastDeletedEquipmentId;
   Map<String, String>? lastPartRow;
 
   @override
@@ -265,6 +299,18 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
     return AssetCsvTable(
       headers: AssetRegisterRepository.equipmentHeaders,
       rows: [updatedRow],
+    );
+  }
+
+  @override
+  Future<AssetCsvTable> deleteEquipmentRecord(
+    String assetsRootPath,
+    String assetId,
+  ) async {
+    lastDeletedEquipmentId = assetId;
+    return AssetCsvTable(
+      headers: AssetRegisterRepository.equipmentHeaders,
+      rows: <Map<String, String>>[],
     );
   }
 

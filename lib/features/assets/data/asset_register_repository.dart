@@ -300,6 +300,20 @@ class AssetRegisterRepository {
     );
   }
 
+  Future<AssetCsvTable> deleteEquipmentRecord(
+    String assetsRootPath,
+    String assetId,
+  ) async {
+    final table = await readEquipmentRegister(assetsRootPath);
+    return _removeRowByKey(
+      file: _equipmentFile(assetsRootPath),
+      headers: equipmentHeaders,
+      rows: table.rows,
+      keyColumn: 'asset_id',
+      keyValue: assetId,
+    );
+  }
+
   Future<AssetCsvTable> appendPartRecord(
     String assetsRootPath,
     Map<String, String> row,
@@ -690,6 +704,39 @@ class AssetRegisterRepository {
 
     if (!replaced) {
       updatedRows.add(updatedRow);
+    }
+
+    final table = AssetCsvTable(
+      headers: _csvServiceHeaders(headers, updatedRows),
+      rows: updatedRows,
+    );
+    await _csvService.writeTable(file, table);
+    return table;
+  }
+
+  Future<AssetCsvTable> _removeRowByKey({
+    required File file,
+    required List<String> headers,
+    required List<Map<String, String>> rows,
+    required String keyColumn,
+    required String? keyValue,
+  }) async {
+    final normalizedKey = (keyValue ?? '').trim();
+    if (normalizedKey.isEmpty) {
+      throw ArgumentError.value(
+        keyValue,
+        keyColumn,
+        'Key column cannot be empty',
+      );
+    }
+
+    final updatedRows = <Map<String, String>>[];
+    for (final row in rows) {
+      final currentKey = (row[keyColumn] ?? '').trim();
+      if (currentKey == normalizedKey) {
+        continue;
+      }
+      updatedRows.add(row);
     }
 
     final table = AssetCsvTable(
