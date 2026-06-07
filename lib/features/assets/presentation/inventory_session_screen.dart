@@ -203,21 +203,6 @@ class _InventorySessionScreenState
                                                   context.push(
                                                     RouteNames.assetLowStock,
                                                   ),
-                                              onOpenQrLabels: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrLabelRegister,
-                                                  ),
-                                              onOpenQrStudio: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrLabelStudio,
-                                                  ),
-                                              onOpenPrintQueue: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrPrintQueue,
-                                                  ),
                                             ),
                                             const SizedBox(height: 20),
                                             _InventoryPlanCard(
@@ -255,7 +240,27 @@ class _InventorySessionScreenState
                                               latestPack: _latestPack,
                                             ),
                                             const SizedBox(height: 20),
-                                            _InventoryReferenceCard(
+                                            _InventoryWorkflowCards(
+                                              onOpenQrLabels: () =>
+                                                  context.push(
+                                                    RouteNames
+                                                        .assetQrLabelRegister,
+                                                  ),
+                                              onOpenQrStudio: () =>
+                                                  context.push(
+                                                    RouteNames
+                                                        .assetQrLabelStudio,
+                                                  ),
+                                              onOpenPrintQueue: () =>
+                                                  context.push(
+                                                    RouteNames
+                                                        .assetQrPrintQueue,
+                                                  ),
+                                              onOpenQrHistory: () =>
+                                                  context.push(
+                                                    RouteNames
+                                                        .assetQrLabelHistory,
+                                                  ),
                                               onOpenChecklist: () => _openRepoFile(
                                                 path.join(
                                                   'docs',
@@ -615,9 +620,6 @@ class _InventoryHeroCard extends StatelessWidget {
     required this.onOpenEquipment,
     required this.onOpenParts,
     required this.onOpenLowStock,
-    required this.onOpenQrLabels,
-    required this.onOpenQrStudio,
-    required this.onOpenPrintQueue,
   });
 
   final String? workspacePath;
@@ -630,9 +632,6 @@ class _InventoryHeroCard extends StatelessWidget {
   final VoidCallback onOpenEquipment;
   final VoidCallback onOpenParts;
   final VoidCallback onOpenLowStock;
-  final VoidCallback onOpenQrLabels;
-  final VoidCallback onOpenQrStudio;
-  final VoidCallback onOpenPrintQueue;
 
   @override
   Widget build(BuildContext context) {
@@ -655,7 +654,7 @@ class _InventoryHeroCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Build a calm stocktake pack for you and Hayley. The session keeps the registers, QR labels, and printable checklist together for this week.',
+                'Build a calm stocktake pack for you and Hayley. The session keeps the registers, thermal print path, and paper references in separate lanes for this week.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.35,
@@ -706,21 +705,6 @@ class _InventoryHeroCard extends StatelessWidget {
                 onPressed: onOpenLowStock,
                 icon: const Icon(Icons.trending_down_outlined),
                 label: const Text('Low Stock'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenQrLabels,
-                icon: const Icon(Icons.qr_code_2_outlined),
-                label: const Text('QR Labels'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenQrStudio,
-                icon: const Icon(Icons.print_outlined),
-                label: const Text('QR Studio'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenPrintQueue,
-                icon: const Icon(Icons.playlist_add_check),
-                label: const Text('Print Queue'),
               ),
             ],
           );
@@ -874,8 +858,129 @@ class _InventoryPlanCard extends StatelessWidget {
   }
 }
 
-class _InventoryReferenceCard extends StatelessWidget {
-  const _InventoryReferenceCard({
+class _InventoryWorkflowCards extends StatelessWidget {
+  const _InventoryWorkflowCards({
+    required this.onOpenQrLabels,
+    required this.onOpenQrStudio,
+    required this.onOpenPrintQueue,
+    required this.onOpenQrHistory,
+    required this.onOpenChecklist,
+    required this.onOpenQrGuide,
+    required this.onOpenSessionsFolder,
+  });
+
+  final VoidCallback onOpenQrLabels;
+  final VoidCallback onOpenQrStudio;
+  final VoidCallback onOpenPrintQueue;
+  final VoidCallback onOpenQrHistory;
+  final VoidCallback onOpenChecklist;
+  final VoidCallback onOpenQrGuide;
+  final VoidCallback? onOpenSessionsFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 980;
+        final thermal = _ThermalPrintCard(
+          onOpenQrLabels: onOpenQrLabels,
+          onOpenQrStudio: onOpenQrStudio,
+          onOpenPrintQueue: onOpenPrintQueue,
+          onOpenQrHistory: onOpenQrHistory,
+        );
+        final paper = _PaperReferenceCard(
+          onOpenChecklist: onOpenChecklist,
+          onOpenQrGuide: onOpenQrGuide,
+          onOpenSessionsFolder: onOpenSessionsFolder,
+        );
+
+        if (!wide) {
+          return Column(
+            children: [thermal, const SizedBox(height: 20), paper],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: thermal),
+            const SizedBox(width: 20),
+            Expanded(child: paper),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ThermalPrintCard extends StatelessWidget {
+  const _ThermalPrintCard({
+    required this.onOpenQrLabels,
+    required this.onOpenQrStudio,
+    required this.onOpenPrintQueue,
+    required this.onOpenQrHistory,
+  });
+
+  final VoidCallback onOpenQrLabels;
+  final VoidCallback onOpenQrStudio;
+  final VoidCallback onOpenPrintQueue;
+  final VoidCallback onOpenQrHistory;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Thermal print path',
+            icon: Icons.print_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Keep the thermal label tools together here. QR Labels, QR Studio, Print Queue, and QR History all stay on the same print trail.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenQrLabels,
+                icon: const Icon(Icons.qr_code_2_outlined),
+                label: const Text('QR Labels'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrStudio,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('QR Studio'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenPrintQueue,
+                icon: const Icon(Icons.playlist_add_check),
+                label: const Text('Print Queue'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrHistory,
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('QR History'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaperReferenceCard extends StatelessWidget {
+  const _PaperReferenceCard({
     required this.onOpenChecklist,
     required this.onOpenQrGuide,
     required this.onOpenSessionsFolder,
@@ -894,12 +999,12 @@ class _InventoryReferenceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionTitle(
-            title: 'Session references',
+            title: 'Paper references',
             icon: Icons.menu_book_outlined,
           ),
           const SizedBox(height: 10),
           Text(
-            'Keep the printable checklist and the QR guide open when you are actually counting. They stay close to the local workflow and do not change the records.',
+            'Keep the printed checklist and the QR guide here. They support the count but do not change the records.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.4,
@@ -1241,7 +1346,7 @@ class _SessionNotesCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('•  '),
+                  const Text('-  '),
                   Expanded(
                     child: Text(
                       item,
@@ -1329,7 +1434,7 @@ class _SessionLogCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Equipment ${row['equipment_items'] ?? '0'}  •  Parts ${row['parts_items'] ?? '0'}  •  QR missing ${row['unlabeled_equipment_items'] ?? '0'}',
+                            'Equipment ${row['equipment_items'] ?? '0'}  |  Parts ${row['parts_items'] ?? '0'}  |  QR missing ${row['unlabeled_equipment_items'] ?? '0'}',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColours.darkSecondary),
                           ),
