@@ -1979,12 +1979,12 @@ class _PrinterConnectionCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: _pm260DirectMatch()
                     ? AppColours.darkSuccess.withValues(alpha: 0.08)
-                    : AppColours.darkSurfaceAlt.withValues(alpha: 0.7),
+                    : AppColours.darkAmber.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: _pm260DirectMatch()
                       ? AppColours.darkSuccess.withValues(alpha: 0.6)
-                      : AppColours.darkOutline.withValues(alpha: 0.9),
+                      : AppColours.darkAmber.withValues(alpha: 0.45),
                 ),
               ),
               child: DropdownButtonFormField<String>(
@@ -2047,12 +2047,12 @@ class _PrinterConnectionCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _pm260DirectMatch()
                       ? AppColours.darkSuccess.withValues(alpha: 0.10)
-                      : AppColours.darkSurfaceAlt.withValues(alpha: 0.72),
+                      : AppColours.darkAmber.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _pm260DirectMatch()
                         ? AppColours.darkSuccess.withValues(alpha: 0.45)
-                        : AppColours.darkOutline.withValues(alpha: 0.8),
+                        : AppColours.darkAmber.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Text(
@@ -2060,10 +2060,10 @@ class _PrinterConnectionCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: _pm260DirectMatch()
                         ? AppColours.darkText
-                        : AppColours.darkMutedText,
+                        : AppColours.darkText,
                     height: 1.35,
                     fontWeight:
-                        _pm260DirectMatch() ? FontWeight.w600 : FontWeight.w400,
+                        _pm260DirectMatch() ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),
