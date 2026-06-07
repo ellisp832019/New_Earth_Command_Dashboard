@@ -211,6 +211,11 @@ class _Sidebar extends StatelessWidget {
               route: RouteNames.inbox,
             ),
             _SidebarLink(
+              label: 'QR Studio',
+              icon: Icons.print_outlined,
+              route: RouteNames.assetQrLabelStudio,
+            ),
+            _SidebarLink(
               label: 'Command Deck',
               icon: Icons.space_dashboard_outlined,
               route: RouteNames.commandDeck,
