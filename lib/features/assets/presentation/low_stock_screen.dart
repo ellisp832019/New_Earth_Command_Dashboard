@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
@@ -73,6 +75,8 @@ class LowStockScreen extends ConsumerWidget {
                                   estimatedSpend: estimatedSpend,
                                 ),
                                 const SizedBox(height: 20),
+                                const _LowStockActionStrip(),
+                                const SizedBox(height: 20),
                                 _LowStockListCard(rows: lowStockRows),
                                 const SizedBox(height: 20),
                                 _ReorderHintsCard(rows: reorderRows),
@@ -93,6 +97,85 @@ class LowStockScreen extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _LowStockActionStrip extends StatelessWidget {
+  const _LowStockActionStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 860;
+          final actions = [
+            FilledButton.icon(
+              onPressed: () => context.push(RouteNames.assetParts),
+              icon: const Icon(Icons.inventory_2_outlined),
+              label: const Text('Open Parts Inventory'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetOrdersTracker),
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('Open Orders Tracker'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetSupplierRegister),
+              icon: const Icon(Icons.local_shipping_outlined),
+              label: const Text('Open Supplier Register'),
+            ),
+          ];
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelTitle(
+                title: 'Next actions',
+                icon: Icons.arrow_forward_outlined,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Move from stock pressure to the register or supplier view without losing the calm thread.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 14),
+                Wrap(spacing: 10, runSpacing: 10, children: actions),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 480,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(spacing: 10, runSpacing: 10, children: actions),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/assets_controller.dart';
 
@@ -102,6 +104,8 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
+                            const _OrderActionStrip(),
+                            const SizedBox(height: 20),
                             if (table.rows.isEmpty)
                               _EmptyRegisterState(
                                 title: 'No orders yet',
@@ -127,6 +131,13 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
                                     onEdit: workspaceData.assetsRootPath == null
                                         ? null
                                         : () => _editRecord(
+                                            workspaceData.assetsRootPath!,
+                                            row,
+                                          ),
+                                    onDelete:
+                                        workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _deleteRecord(
                                             workspaceData.assetsRootPath!,
                                             row,
                                           ),
@@ -216,6 +227,67 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
     }
   }
 
+  Future<void> _deleteRecord(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final orderId = (row['order_id'] ?? '').trim();
+    final label = (row['item'] ?? '').trim().isNotEmpty == true
+        ? row['item']!.trim()
+        : orderId.isEmpty
+        ? 'this order'
+        : orderId;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete order entry?'),
+        content: Text(
+          'Remove $label from the tracker? This only deletes the row from the local CSV file.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColours.darkAmber,
+              foregroundColor: AppColours.darkText,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .deleteOrderRecord(assetsRootPath, orderId);
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(assetOrdersTrackerProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$label removed from the tracker.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
   int _countStatuses(List<Map<String, String>> rows, List<String> values) {
     return rows.where((row) {
       final status = _normalized(row['status']);
@@ -249,10 +321,11 @@ class _OrdersTrackerScreenState extends ConsumerState<OrdersTrackerScreen> {
 }
 
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.row, this.onEdit});
+  const _OrderCard({required this.row, this.onEdit, this.onDelete});
 
   final Map<String, String> row;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -289,6 +362,14 @@ class _OrderCard extends StatelessWidget {
                   onPressed: onEdit,
                   tooltip: 'Edit order',
                   icon: const Icon(Icons.edit_outlined),
+                ),
+              ],
+              if (onDelete != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: onDelete,
+                  tooltip: 'Delete order',
+                  icon: const Icon(Icons.delete_outline),
                 ),
               ],
             ],
@@ -337,6 +418,93 @@ class _OrderCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _OrderActionStrip extends StatelessWidget {
+  const _OrderActionStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 860;
+          final actions = [
+            FilledButton.icon(
+              onPressed: () => context.push(RouteNames.assetSupplierRegister),
+              icon: const Icon(Icons.local_shipping_outlined),
+              label: const Text('Open Supplier Register'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetLowStock),
+              icon: const Icon(Icons.trending_down_outlined),
+              label: const Text('Open Low Stock / Reorder'),
+            ),
+          ];
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.call_split_outlined,
+                    color: AppColours.darkSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Follow-up',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Orders often need a supplier check or a low stock review next. Keep the handoff easy.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 14),
+                Wrap(spacing: 10, runSpacing: 10, children: actions),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 430,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(spacing: 10, runSpacing: 10, children: actions),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -67,6 +67,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Low Stock / Reorder'), findsOneWidget);
+    expect(find.text('Next actions'), findsOneWidget);
+    expect(find.text('Open Parts Inventory'), findsOneWidget);
+    expect(find.text('Open Orders Tracker'), findsOneWidget);
     expect(find.text('M3 screws'), findsWidgets);
     expect(find.text('Cable ties'), findsWidgets);
     expect(find.textContaining('reorder needed'), findsOneWidget);

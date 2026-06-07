@@ -37,6 +37,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Orders Tracker'), findsOneWidget);
+    expect(find.text('Follow-up'), findsOneWidget);
+    expect(find.text('Open Supplier Register'), findsOneWidget);
     expect(find.text('RS Components'), findsOneWidget);
   });
 
@@ -119,6 +121,39 @@ void main() {
     expect(repository.lastOrderRow!['order_id'], 'NE-ORDER-0001');
     expect(repository.lastOrderRow!['item'], 'M3 screws pack');
   });
+
+  testWidgets('orders tracker deletes a record', (tester) async {
+    final fixture = _fixture();
+    final repository = _RecordingAssetRegisterRepository();
+    await tester.binding.setSurfaceSize(const Size(1400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
+          assetOrdersTrackerProvider.overrideWith(
+            (ref) async => fixture.table,
+          ),
+          assetRegisterRepositoryProvider.overrideWith((ref) => repository),
+        ],
+        child: const MaterialApp(home: OrdersTrackerScreen()),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byTooltip('Delete order').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete order entry?'), findsOneWidget);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.lastDeletedOrderId, 'NE-ORDER-0001');
+  });
 }
 
 _OrdersFixture _fixture({bool empty = false}) {
@@ -174,6 +209,7 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
   _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastOrderRow;
+  String? lastDeletedOrderId;
 
   @override
   Future<AssetCsvTable> appendOrderRecord(
@@ -196,6 +232,18 @@ class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
     return AssetCsvTable(
       headers: AssetRegisterRepository.ordersHeaders,
       rows: [updatedRow],
+    );
+  }
+
+  @override
+  Future<AssetCsvTable> deleteOrderRecord(
+    String assetsRootPath,
+    String orderId,
+  ) async {
+    lastDeletedOrderId = orderId;
+    return AssetCsvTable(
+      headers: AssetRegisterRepository.ordersHeaders,
+      rows: <Map<String, String>>[],
     );
   }
 }
