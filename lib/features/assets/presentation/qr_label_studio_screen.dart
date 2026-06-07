@@ -1896,29 +1896,51 @@ class _PrinterConnectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            printingInfo?.canListPrinters == true
-                ? 'Windows can see the connected printer now. Pick the USB printer here, then send labels straight to it.'
-                : 'Windows printer listing is not available right now, so the label dialog will stay the fallback.',
+            _printerStatusMessage(),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkMutedText,
               height: 1.35,
             ),
           ),
           const SizedBox(height: 14),
-          if (printers.isEmpty)
-            Chip(
-              label: Text(
-                printingInfo?.canListPrinters == true
-                    ? 'No printers found'
-                    : 'Printer listing unavailable',
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Chip(
+                label: Text(_printerStatusChip()),
+                backgroundColor:
+                    _printerStatusChipColor(context).withValues(alpha: 0.15),
+                labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              backgroundColor: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
-              labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkText,
-                fontWeight: FontWeight.w600,
+              if (printers.isNotEmpty)
+                Chip(
+                  label: Text('${printers.length} detected'),
+                  backgroundColor:
+                      AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+                  labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+          ),
+          if (printers.isEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              printingInfo?.canListPrinters == true
+                  ? 'If the USB printer was just plugged in, give Windows a moment to finish installing the driver, then reopen this screen.'
+                  : 'The print dialog remains available until Windows can list printers on this machine.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
               ),
-            )
-          else ...[
+            ),
+          ] else ...[
+            const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               isExpanded: true,
               initialValue: selectedPrinter?.url,
@@ -1973,21 +1995,12 @@ class _PrinterConnectionCard extends StatelessWidget {
             ),
             if (selectedPrinter != null) ...[
               const SizedBox(height: 12),
-              Builder(
-                builder: (context) {
-                  final printer = selectedPrinter!;
-                  return Text(
-                    printer.location?.trim().isNotEmpty == true
-                        ? printer.location!.trim()
-                        : (printer.comment?.trim().isNotEmpty == true
-                              ? printer.comment!.trim()
-                              : 'Selected printer is ready to receive labels from Windows.'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.35,
-                    ),
-                  );
-                },
+              Text(
+                _selectedPrinterDetails(selectedPrinter!),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
               ),
             ],
           ],
@@ -2006,6 +2019,50 @@ class _PrinterConnectionCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _printerStatusMessage() {
+    if (printingInfo?.canListPrinters != true) {
+      return 'Windows printer listing is not available yet, so QR labels will fall back to the print dialog.';
+    }
+    if (printers.isEmpty) {
+      return 'Windows can list printers, but no ready printer is visible yet. If you just plugged the USB printer in, wait for the driver to finish and try again.';
+    }
+    final printer = selectedPrinter;
+    if (printer == null) {
+      return 'Windows can see the connected printer(s). Pick the USB printer here, then send labels straight to it.';
+    }
+    return 'Windows can see ${printers.length} printer(s). ${printer.name} is selected and ready to receive labels.';
+  }
+
+  String _printerStatusChip() {
+    if (printingInfo?.canListPrinters != true) {
+      return 'Printer access unavailable';
+    }
+    if (printers.isEmpty) {
+      return 'No ready printer';
+    }
+    return 'Windows sees printers';
+  }
+
+  Color _printerStatusChipColor(BuildContext context) {
+    if (printingInfo?.canListPrinters != true) {
+      return AppColours.darkAmber;
+    }
+    if (printers.isEmpty) {
+      return AppColours.darkAmber;
+    }
+    return AppColours.darkSuccess;
+  }
+
+  String _selectedPrinterDetails(Printer printer) {
+    if (printer.location?.trim().isNotEmpty == true) {
+      return 'Location: ${printer.location!.trim()}';
+    }
+    if (printer.comment?.trim().isNotEmpty == true) {
+      return 'Windows note: ${printer.comment!.trim()}';
+    }
+    return 'Selected printer is ready to receive labels from Windows.';
   }
 }
 

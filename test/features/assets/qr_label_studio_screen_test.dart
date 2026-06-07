@@ -102,6 +102,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Connected printer'), findsOneWidget);
+    expect(find.text('Windows sees printers'), findsOneWidget);
     expect(find.text('ETIKEZ PM260 (Default)'), findsOneWidget);
     expect(find.text('Print to printer'), findsOneWidget);
   });
