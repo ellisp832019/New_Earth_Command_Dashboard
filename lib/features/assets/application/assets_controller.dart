@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:printing/printing.dart';
 
 import '../data/asset_csv_service.dart';
 import '../data/asset_change_journal.dart';
@@ -21,6 +22,34 @@ final assetRegisterRepositoryProvider = Provider<AssetRegisterRepository>((
 
 final assetQrLabelPrintServiceProvider = Provider<QrLabelPrintService>((ref) {
   return QrLabelPrintService(workingDirectory: Directory.current);
+});
+
+final assetPrintingInfoProvider = FutureProvider<PrintingInfo>((ref) async {
+  return Printing.info();
+});
+
+final assetAvailablePrintersProvider = FutureProvider<List<Printer>>((
+  ref,
+) async {
+  final info = await ref.watch(assetPrintingInfoProvider.future);
+  if (!info.canListPrinters) {
+    return const <Printer>[];
+  }
+
+  final printers = await Printing.listPrinters();
+  final availablePrinters = printers
+      .where((printer) => printer.isAvailable)
+      .toList(growable: false);
+  availablePrinters.sort((a, b) {
+    if (a.isDefault) {
+      return -1;
+    }
+    if (b.isDefault) {
+      return 1;
+    }
+    return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+  });
+  return availablePrinters;
 });
 
 final assetInventorySessionServiceProvider =

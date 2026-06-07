@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as path;
+import 'package:printing/printing.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
@@ -31,6 +32,7 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
   String _labelType = QrLabelPrintService.labelTypes.first.id;
   String _labelSize = QrLabelPrintService.labelSizes[3].id;
   String _printerProfileId = '';
+  String _selectedPrinterUrl = '';
   String _priority = 'normal';
   Map<String, String>? _selectedAsset;
   QrLabelPreview? _preview;
@@ -66,6 +68,8 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     final queueAsync = ref.watch(assetQrPrintQueueProvider);
     final profilesAsync = ref.watch(assetQrPrinterProfilesProvider);
     final bulkTemplatesAsync = ref.watch(assetQrBulkTemplatesProvider);
+    final printersAsync = ref.watch(assetAvailablePrintersProvider);
+    final printingInfoAsync = ref.watch(assetPrintingInfoProvider);
 
     return workspaceAsync.when(
       loading: () =>
@@ -112,6 +116,13 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                     );
                     final assetsRootPath = workspace.assetsRootPath;
                     final printerProfiles = profilesTable.rows;
+                    final availablePrinters =
+                        printersAsync.asData?.value ?? const <Printer>[];
+                    final printingInfo = printingInfoAsync.asData?.value;
+                    final selectedPrinter = _selectedPrinter(
+                      availablePrinters,
+                      _selectedPrinterUrl,
+                    );
                     if (assetsRootPath != null &&
                         printerProfiles.isEmpty &&
                         !_didSeedPm260) {
@@ -349,6 +360,26 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
+                                            _PrinterConnectionCard(
+                                              printers: availablePrinters,
+                                              printingInfo: printingInfo,
+                                              selectedPrinter: selectedPrinter,
+                                              onPrinterChanged: (printer) {
+                                                setState(() {
+                                                  _selectedPrinterUrl =
+                                                      printer?.url ?? '';
+                                                });
+                                              },
+                                              onPrintSelected:
+                                                  assetsRootPath == null ||
+                                                      selectedPrinter == null
+                                                  ? null
+                                                  : () =>
+                                                        _printToConnectedPrinter(
+                                                          selectedPrinter,
+                                                        ),
+                                            ),
+                                            const SizedBox(height: 20),
                                             _PrinterProfilesCard(
                                               profiles: printerProfiles,
                                               onAddProfile: () =>
@@ -990,6 +1021,37 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     await Process.start('explorer.exe', [folder.path]);
   }
 
+  Future<void> _printToConnectedPrinter(Printer printer) async {
+    final draft = _buildDraft(printerProfileId: _selectedPrinterProfileId());
+    if (draft.assetId.trim().isEmpty) {
+      setState(() {
+        _statusMessage = 'Choose or enter an asset ID first.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isBusy = true;
+      _statusMessage = 'Sending the label to ${printer.name}...';
+    });
+    try {
+      await ref
+          .read(assetQrLabelPrintServiceProvider)
+          .printLabelToPrinter(draft, printer);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _statusMessage =
+            'Sent the label to ${printer.name}. Mark the queue row when done.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isBusy = false);
+      }
+    }
+  }
+
   QrLabelDraft _buildDraft({required String printerProfileId}) {
     return QrLabelDraft(
       assetId: _assetIdController.text,
@@ -1043,6 +1105,33 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       }
     }
     return 'manual';
+  }
+
+  String _selectedPrinterProfileId() {
+    return _printerProfileId.trim();
+  }
+
+  Printer? _selectedPrinter(List<Printer> printers, String selectedUrl) {
+    if (printers.isEmpty) {
+      return null;
+    }
+
+    final normalizedUrl = selectedUrl.trim();
+    if (normalizedUrl.isNotEmpty) {
+      for (final printer in printers) {
+        if (printer.url == normalizedUrl) {
+          return printer;
+        }
+      }
+    }
+
+    for (final printer in printers) {
+      if (printer.isDefault) {
+        return printer;
+      }
+    }
+
+    return printers.first;
   }
 
   List<Map<String, String>> _filteredAssets(
@@ -1500,6 +1589,7 @@ class _BuildCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: selectedPrinterProfile.isEmpty
                       ? null
                       : selectedPrinterProfile,
@@ -1509,7 +1599,10 @@ class _BuildCard extends StatelessWidget {
                   items: [
                     const DropdownMenuItem<String>(
                       value: 'manual',
-                      child: Text('Manual / Windows dialog'),
+                      child: Text(
+                        'Manual / Windows dialog',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     ...printerProfiles.map(
                       (row) => DropdownMenuItem<String>(
@@ -1518,6 +1611,7 @@ class _BuildCard extends StatelessWidget {
                           (row['printer_name'] ?? '').trim().isEmpty
                               ? (row['profile_id'] ?? '').trim()
                               : (row['printer_name'] ?? '').trim(),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -1767,6 +1861,148 @@ class _PreviewCard extends StatelessWidget {
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrinterConnectionCard extends StatelessWidget {
+  const _PrinterConnectionCard({
+    required this.printers,
+    required this.printingInfo,
+    required this.selectedPrinter,
+    required this.onPrinterChanged,
+    required this.onPrintSelected,
+  });
+
+  final List<Printer> printers;
+  final PrintingInfo? printingInfo;
+  final Printer? selectedPrinter;
+  final ValueChanged<Printer?> onPrinterChanged;
+  final VoidCallback? onPrintSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Connected printer',
+            icon: Icons.usb_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            printingInfo?.canListPrinters == true
+                ? 'Windows can see the connected printer now. Pick the USB printer here, then send labels straight to it.'
+                : 'Windows printer listing is not available right now, so the label dialog will stay the fallback.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (printers.isEmpty)
+            Chip(
+              label: Text(
+                printingInfo?.canListPrinters == true
+                    ? 'No printers found'
+                    : 'Printer listing unavailable',
+              ),
+              backgroundColor: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+              labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else ...[
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: selectedPrinter?.url,
+              decoration: const InputDecoration(labelText: 'Selected printer'),
+              items: printers
+                  .map(
+                    (printer) => DropdownMenuItem<String>(
+                      value: printer.url,
+                      child: Text(
+                        printer.isDefault
+                            ? '${printer.name} (Default)'
+                            : printer.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                Printer? match;
+                for (final printer in printers) {
+                  if (printer.url == value) {
+                    match = printer;
+                    break;
+                  }
+                }
+                onPrinterChanged(match);
+              },
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final printer in printers.take(3))
+                  Chip(
+                    label: Text(
+                      printer.isDefault
+                          ? '${printer.name} - default'
+                          : printer.name,
+                    ),
+                    backgroundColor:
+                        (printer.isDefault
+                                ? AppColours.darkSuccess
+                                : AppColours.darkSecondary)
+                            .withValues(alpha: 0.15),
+                    labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+            if (selectedPrinter != null) ...[
+              const SizedBox(height: 12),
+              Builder(
+                builder: (context) {
+                  final printer = selectedPrinter!;
+                  return Text(
+                    printer.location?.trim().isNotEmpty == true
+                        ? printer.location!.trim()
+                        : (printer.comment?.trim().isNotEmpty == true
+                              ? printer.comment!.trim()
+                              : 'Selected printer is ready to receive labels from Windows.'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onPrintSelected,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Print to printer'),
+              ),
+            ],
+          ),
         ],
       ),
     );

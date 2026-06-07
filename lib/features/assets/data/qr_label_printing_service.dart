@@ -15,8 +15,8 @@ class QrLabelPrintService {
   QrLabelPrintService({
     AssetCsvService? csvService,
     Directory? workingDirectory,
-  })  : _csvService = csvService ?? AssetCsvService(),
-        _workingDirectory = workingDirectory ?? Directory.current;
+  }) : _csvService = csvService ?? AssetCsvService(),
+       _workingDirectory = workingDirectory ?? Directory.current;
 
   static const labelTypes = <QrLabelTypeOption>[
     QrLabelTypeOption(
@@ -192,10 +192,13 @@ class QrLabelPrintService {
     QrLabelDraft draft,
   ) async {
     final normalizedDraft = draft.normalized();
-    final labelId = _buildLabelId(normalizedDraft.assetId, normalizedDraft.labelType);
-    final generatedFolder = await _generatedQrFolder(assetsRootPath).create(
-      recursive: true,
+    final labelId = _buildLabelId(
+      normalizedDraft.assetId,
+      normalizedDraft.labelType,
     );
+    final generatedFolder = await _generatedQrFolder(
+      assetsRootPath,
+    ).create(recursive: true);
     final printQueueFolder = _printQueueFolder(assetsRootPath);
     await printQueueFolder.create(recursive: true);
     final pngFile = await _uniqueFile(
@@ -273,7 +276,10 @@ class QrLabelPrintService {
         ? preview.manifestFile.path
         : _manifestFileForGeneratedFile(assetsRootPath, generatedFile).path;
     final queueEntry = QrQueueEntry(
-      queueId: _buildQueueId(normalizedDraft.assetId, normalizedDraft.labelType),
+      queueId: _buildQueueId(
+        normalizedDraft.assetId,
+        normalizedDraft.labelType,
+      ),
       dateAdded: DateTime.now(),
       assetId: normalizedDraft.assetId,
       labelType: normalizedDraft.labelType,
@@ -299,6 +305,17 @@ class QrLabelPrintService {
     final normalizedDraft = draft.normalized();
     final pdfBytes = await buildLabelPdfBytes(normalizedDraft);
     await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
+  }
+
+  Future<bool> printLabelToPrinter(QrLabelDraft draft, Printer printer) async {
+    final normalizedDraft = draft.normalized();
+    final pdfBytes = await buildLabelPdfBytes(normalizedDraft);
+    return Printing.directPrintPdf(
+      printer: printer,
+      onLayout: (_) async => pdfBytes,
+      name: normalizedDraft.assetId,
+      usePrinterSettings: true,
+    );
   }
 
   Future<AssetCsvTable> readLabelRegister(String assetsRootPath) {
@@ -406,7 +423,8 @@ class QrLabelPrintService {
     for (final preset in recommendedPrinterPresets) {
       final id = preset.profileId.trim().toLowerCase();
       final printerName = preset.printerName.trim().toLowerCase();
-      final exists = existingIds.contains(id) || existingNames.contains(printerName);
+      final exists =
+          existingIds.contains(id) || existingNames.contains(printerName);
       if (exists) {
         continue;
       }
@@ -422,10 +440,7 @@ class QrLabelPrintService {
     await _updateQueueRow(
       assetsRootPath,
       queueId,
-      (row) => {
-        ...row,
-        'status': 'printed',
-      },
+      (row) => {...row, 'status': 'printed'},
     );
   }
 
@@ -433,10 +448,7 @@ class QrLabelPrintService {
     await _updateQueueRow(
       assetsRootPath,
       queueId,
-      (row) => {
-        ...row,
-        'status': 'applied',
-      },
+      (row) => {...row, 'status': 'applied'},
     );
   }
 
@@ -447,37 +459,30 @@ class QrLabelPrintService {
     await _updateQueueRow(
       assetsRootPath,
       queueId,
-      (row) => {
-        ...row,
-        'status': 'reprint_needed',
-      },
+      (row) => {...row, 'status': 'reprint_needed'},
     );
   }
 
-  Future<void> markQueueQueued(
-    String assetsRootPath,
-    String queueId,
-  ) async {
+  Future<void> markQueueQueued(String assetsRootPath, String queueId) async {
     await _updateQueueRow(
       assetsRootPath,
       queueId,
-      (row) => {
-        ...row,
-        'status': 'queued',
-      },
+      (row) => {...row, 'status': 'queued'},
     );
   }
 
   Future<File> exportReadyQueueCsv(String assetsRootPath) async {
     final table = await readPrintQueue(assetsRootPath);
-    final readyRows = table.rows.where((row) {
-      final status = (row['status'] ?? '').trim().toLowerCase();
-      return status == 'generated' || status == 'queued';
-    }).toList(growable: false);
+    final readyRows = table.rows
+        .where((row) {
+          final status = (row['status'] ?? '').trim().toLowerCase();
+          return status == 'generated' || status == 'queued';
+        })
+        .toList(growable: false);
 
-    final exportFolder = await _historyExportsFolder(assetsRootPath).create(
-      recursive: true,
-    );
+    final exportFolder = await _historyExportsFolder(
+      assetsRootPath,
+    ).create(recursive: true);
     final file = File(
       path.join(
         exportFolder.path,
@@ -486,16 +491,16 @@ class QrLabelPrintService {
     );
     final lines = <String>[
       queueHeaders.join(','),
-      ...readyRows.map((row) => queueHeaders.map((header) => _csvCell(row[header] ?? '')).join(',')),
+      ...readyRows.map(
+        (row) =>
+            queueHeaders.map((header) => _csvCell(row[header] ?? '')).join(','),
+      ),
     ];
     await file.writeAsString('${lines.join('\n')}\n', flush: true);
     return file;
   }
 
-  Future<void> markLabelPrinted(
-    String assetsRootPath,
-    String labelId,
-  ) async {
+  Future<void> markLabelPrinted(String assetsRootPath, String labelId) async {
     await _updateLabelRow(
       assetsRootPath,
       labelId,
@@ -507,10 +512,7 @@ class QrLabelPrintService {
     );
   }
 
-  Future<void> markLabelApplied(
-    String assetsRootPath,
-    String labelId,
-  ) async {
+  Future<void> markLabelApplied(String assetsRootPath, String labelId) async {
     await _updateLabelRow(
       assetsRootPath,
       labelId,
@@ -526,13 +528,10 @@ class QrLabelPrintService {
     String assetsRootPath, {
     int limit = 12,
   }) async {
-    final rows = await _recentLabelHistoryRows(
+    final rows = await _recentLabelHistoryRows(assetsRootPath, limit: limit);
+    final exportFolder = await _historyExportsFolder(
       assetsRootPath,
-      limit: limit,
-    );
-    final exportFolder = await _historyExportsFolder(assetsRootPath).create(
-      recursive: true,
-    );
+    ).create(recursive: true);
     final file = File(
       path.join(
         exportFolder.path,
@@ -553,9 +552,7 @@ class QrLabelPrintService {
     ];
     final lines = <String>[headers.join(',')];
     for (final row in rows) {
-      lines.add(
-        headers.map((header) => _csvCell(row[header] ?? '')).join(','),
-      );
+      lines.add(headers.map((header) => _csvCell(row[header] ?? '')).join(','));
     }
     await file.writeAsString('${lines.join('\n')}\n', flush: true);
     return file;
@@ -565,13 +562,10 @@ class QrLabelPrintService {
     String assetsRootPath, {
     int limit = 12,
   }) async {
-    final rows = await _recentLabelHistoryRows(
+    final rows = await _recentLabelHistoryRows(assetsRootPath, limit: limit);
+    final exportFolder = await _historyExportsFolder(
       assetsRootPath,
-      limit: limit,
-    );
-    final exportFolder = await _historyExportsFolder(assetsRootPath).create(
-      recursive: true,
-    );
+    ).create(recursive: true);
     final file = File(
       path.join(
         exportFolder.path,
@@ -588,10 +582,7 @@ class QrLabelPrintService {
           return [
             pw.Text(
               'QR Label History',
-              style: pw.TextStyle(
-                fontSize: 20,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 8),
             pw.Text(
@@ -642,10 +633,12 @@ class QrLabelPrintService {
 
   Future<Uint8List> buildReadyQueuePdfBytes(String assetsRootPath) async {
     final queueTable = await readPrintQueue(assetsRootPath);
-    final readyRows = queueTable.rows.where((row) {
-      final status = (row['status'] ?? '').trim().toLowerCase();
-      return status == 'generated' || status == 'queued';
-    }).toList(growable: false);
+    final readyRows = queueTable.rows
+        .where((row) {
+          final status = (row['status'] ?? '').trim().toLowerCase();
+          return status == 'generated' || status == 'queued';
+        })
+        .toList(growable: false);
     if (readyRows.isEmpty) {
       return buildLabelPdfBytes(
         const QrLabelDraft(
@@ -677,7 +670,8 @@ class QrLabelPrintService {
           ? queueId.substring('queue_'.length)
           : queueId;
       final labelRow = labelRowsById[labelId];
-      final assetId = (labelRow?['asset_id'] ?? queueRow['asset_id'] ?? '').trim();
+      final assetId = (labelRow?['asset_id'] ?? queueRow['asset_id'] ?? '')
+          .trim();
       final labelText = (labelRow?['label_text'] ?? assetId).trim();
       final labelType = (queueRow['label_type'] ?? 'asset').trim();
       final labelSizeId = (queueRow['label_size'] ?? '50x30').trim();
@@ -688,7 +682,9 @@ class QrLabelPrintService {
         assetId: assetId.isEmpty ? 'Unknown asset' : assetId,
         labelType: labelType,
         labelSize: size.id,
-        labelText: labelText.isEmpty ? (assetId.isEmpty ? 'Unknown asset' : assetId) : labelText,
+        labelText: labelText.isEmpty
+            ? (assetId.isEmpty ? 'Unknown asset' : assetId)
+            : labelText,
         location: location,
         notes: notes,
         priority: (queueRow['priority'] ?? 'normal').trim(),
@@ -726,9 +722,7 @@ class QrLabelPrintService {
                   ),
                   pw.Text(
                     normalizedDraft.labelTitle,
-                    style: pw.TextStyle(
-                      fontSize: size.widthMm <= 30 ? 5 : 7,
-                    ),
+                    style: pw.TextStyle(fontSize: size.widthMm <= 30 ? 5 : 7),
                     maxLines: 1,
                   ),
                   pw.Expanded(
@@ -756,7 +750,9 @@ class QrLabelPrintService {
                       if (normalizedDraft.location.isNotEmpty)
                         pw.Text(
                           normalizedDraft.location,
-                          style: pw.TextStyle(fontSize: size.widthMm <= 30 ? 5 : 7),
+                          style: pw.TextStyle(
+                            fontSize: size.widthMm <= 30 ? 5 : 7,
+                          ),
                           maxLines: 2,
                         ),
                     ],
@@ -806,9 +802,7 @@ class QrLabelPrintService {
                 ),
                 pw.Text(
                   normalizedDraft.labelTitle,
-                  style: pw.TextStyle(
-                    fontSize: size.widthMm <= 30 ? 5 : 7,
-                  ),
+                  style: pw.TextStyle(fontSize: size.widthMm <= 30 ? 5 : 7),
                   maxLines: 1,
                 ),
                 pw.Expanded(
@@ -836,7 +830,9 @@ class QrLabelPrintService {
                     if (normalizedDraft.location.isNotEmpty)
                       pw.Text(
                         normalizedDraft.location,
-                        style: pw.TextStyle(fontSize: size.widthMm <= 30 ? 5 : 7),
+                        style: pw.TextStyle(
+                          fontSize: size.widthMm <= 30 ? 5 : 7,
+                        ),
                         maxLines: 2,
                       ),
                   ],
@@ -958,10 +954,7 @@ class QrLabelPrintService {
 
   File _printQueueFile(String assetsRootPath) {
     return File(
-      path.join(
-        _printQueueFolder(assetsRootPath).path,
-        'print_queue.csv',
-      ),
+      path.join(_printQueueFolder(assetsRootPath).path, 'print_queue.csv'),
     );
   }
 
@@ -1249,8 +1242,12 @@ class QrLabelDraft {
 
   QrLabelSizeOption get size {
     final normalizedSize = labelSize.trim();
-    final match = QrLabelPrintService.labelSizes.where((size) => size.id == normalizedSize);
-    return match.isNotEmpty ? match.first : QrLabelPrintService.labelSizes.first;
+    final match = QrLabelPrintService.labelSizes.where(
+      (size) => size.id == normalizedSize,
+    );
+    return match.isNotEmpty
+        ? match.first
+        : QrLabelPrintService.labelSizes.first;
   }
 
   String get labelTitle {
@@ -1429,7 +1426,8 @@ class QrBulkTemplate {
       printerProfileId: (row['printer_profile_id'] ?? '').trim(),
       priority: (row['priority'] ?? '').trim(),
       notes: (row['notes'] ?? '').trim(),
-      createdAt: DateTime.tryParse((row['created_at'] ?? '').trim()) ??
+      createdAt:
+          DateTime.tryParse((row['created_at'] ?? '').trim()) ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
@@ -1515,8 +1513,10 @@ class QrLabelSizeOption {
 
 String _slugify(String value) {
   final cleaned = value.trim().toLowerCase().replaceAll(
-        RegExp(r'[^a-z0-9]+'),
-        '_',
-      );
-  return cleaned.replaceAll(RegExp(r'_+'), '_').replaceAll(RegExp(r'^_|_$'), '');
+    RegExp(r'[^a-z0-9]+'),
+    '_',
+  );
+  return cleaned
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
 }
