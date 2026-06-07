@@ -31,6 +31,7 @@ import '../../features/content/presentation/add_content_item_screen.dart';
 import '../../features/dashboard/presentation/calm_ui_demo_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/dashboard/presentation/command_palette_screen.dart';
 import '../../features/inbox/presentation/add_inbox_item_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
 import '../../features/journal/presentation/add_edit_journal_entry_screen.dart';
@@ -97,6 +98,12 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.dashboard,
               builder: (context, state) => const DashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'search',
+                  builder: (context, state) => const CommandPaletteScreen(),
+                ),
+              ],
             ),
           ],
         ),

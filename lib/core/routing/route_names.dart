@@ -1,5 +1,6 @@
 abstract final class RouteNames {
   static const dashboard = '/dashboard';
+  static const commandPalette = '/dashboard/search';
   static const assets = '/assets';
   static const assetEquipment = '/assets/equipment';
   static const assetParts = '/assets/parts';

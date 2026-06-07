@@ -435,6 +435,46 @@ void main() {
     expect(find.text('More'), findsWidgets);
   });
 
+  testWidgets(
+    'dashboard quick search opens the command palette and finds projects',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      await SeedDataService(database).ensureSeedData();
+
+      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+      await pumpUntilIdle(tester);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Quick Search'));
+      await pumpUntilIdle(tester);
+
+      expect(find.text('Command Palette'), findsOneWidget);
+      expect(find.text('Jump anywhere in the dashboard.'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('commandPaletteSearchField')),
+        'microgrow',
+      );
+      await pumpUntilIdle(tester);
+
+      await pumpUntilFound(
+        tester,
+        find.byKey(const Key('commandPaletteEntry-MicroGrow')),
+      );
+      expect(
+        find.byKey(const Key('commandPaletteEntry-MicroGrow')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('commandPaletteEntry-MicroGrow')));
+      await pumpUntilIdle(tester);
+
+      expect(find.text('Project Detail'), findsOneWidget);
+      expect(find.text('MicroGrow'), findsOneWidget);
+    },
+  );
+
   testWidgets('more screen links to supporting screens', (
     WidgetTester tester,
   ) async {

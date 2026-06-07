@@ -211,6 +211,13 @@ class _Sidebar extends StatelessWidget {
               route: RouteNames.inbox,
             ),
             _SidebarLink(
+              label: 'Search',
+              icon: Icons.search,
+              route: RouteNames.commandPalette,
+              accent: AppColours.darkPrimary,
+              badge: 'Cmd',
+            ),
+            _SidebarLink(
               label: 'QR Studio',
               icon: Icons.print_outlined,
               route: RouteNames.assetQrLabelStudio,
@@ -382,11 +389,7 @@ class _SidebarLink extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: accent ?? AppColours.darkMutedText,
-                ),
+                Icon(icon, size: 16, color: accent ?? AppColours.darkMutedText),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -395,7 +398,9 @@ class _SidebarLink extends StatelessWidget {
                       fontSize: 11,
                       height: 1.15,
                       color: accent ?? AppColours.darkMutedText,
-                      fontWeight: badge != null ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: badge != null
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -407,12 +412,14 @@ class _SidebarLink extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: (accent ?? AppColours.darkSecondary)
-                          .withValues(alpha: 0.16),
+                      color: (accent ?? AppColours.darkSecondary).withValues(
+                        alpha: 0.16,
+                      ),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: (accent ?? AppColours.darkSecondary)
-                            .withValues(alpha: 0.35),
+                        color: (accent ?? AppColours.darkSecondary).withValues(
+                          alpha: 0.35,
+                        ),
                       ),
                     ),
                     child: Text(

@@ -195,6 +195,11 @@ class _DashboardHero extends StatelessWidget {
             runSpacing: 10,
             children: [
               FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.commandPalette),
+                icon: const Icon(Icons.search),
+                label: const Text('Quick Search'),
+              ),
+              FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.tasks),
                 icon: const Icon(Icons.task_alt_outlined),
                 label: const Text('Open Tasks'),
@@ -1258,13 +1263,11 @@ class _MeetingSystemDashboardCardState
                                   bundleReview: bundleReview,
                                   onExportLatestBundle: _exportingLatestBundle
                                       ? null
-                                      : () => _exportLatestBundle(
-                                          latestMeeting,
-                                        ),
-                                  onOpenBundleFolder: () =>
-                                      ref
-                                          .read(meetingFolderServiceProvider)
-                                          .openFolder(bundleReview.bundlePath),
+                                      : () =>
+                                            _exportLatestBundle(latestMeeting),
+                                  onOpenBundleFolder: () => ref
+                                      .read(meetingFolderServiceProvider)
+                                      .openFolder(bundleReview.bundlePath),
                                   onOpenSummary: () => ref
                                       .read(meetingFolderServiceProvider)
                                       .openFile(bundleReview.summaryPath),
@@ -1581,8 +1584,9 @@ class _MeetingBundleReviewCard extends StatelessWidget {
                     accent: AppColours.darkPrimary,
                   ),
                   _InlineTag(
-                    label:
-                        bundleReview.exists ? 'Bundle found' : 'Bundle missing',
+                    label: bundleReview.exists
+                        ? 'Bundle found'
+                        : 'Bundle missing',
                     accent: bundleReview.exists
                         ? AppColours.darkSuccess
                         : AppColours.darkAmber,
