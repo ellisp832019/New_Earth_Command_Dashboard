@@ -17,17 +17,15 @@ class RepairSummaryScreen extends ConsumerWidget {
     final repairItems = ref.watch(assetBrokenRepairEquipmentProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _RepairSummaryError(
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _RepairSummaryError(
             onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
           ),
@@ -37,12 +35,15 @@ class RepairSummaryScreen extends ConsumerWidget {
                 body: Center(child: CircularProgressIndicator()),
               ),
               error: (error, stackTrace) => _RepairSummaryError(
-                onReload: () => ref.invalidate(assetBrokenRepairEquipmentProvider),
+                onReload: () =>
+                    ref.invalidate(assetBrokenRepairEquipmentProvider),
               ),
               data: (rows) {
                 final brokenCount = rows.where((row) {
                   final status = (row['status'] ?? '').trim().toLowerCase();
-                  final condition = (row['condition'] ?? '').trim().toLowerCase();
+                  final condition = (row['condition'] ?? '')
+                      .trim()
+                      .toLowerCase();
                   return status == 'broken' || condition == 'broken';
                 }).length;
                 final repairingCount = rows.length - brokenCount;
@@ -74,11 +75,15 @@ class RepairSummaryScreen extends ConsumerWidget {
                                 const SizedBox(height: 20),
                                 const _RepairActionStrip(),
                                 const SizedBox(height: 20),
+                                _RepairHandoffCard(rows: rows),
+                                const SizedBox(height: 20),
                                 _RepairListCard(rows: rows),
                                 const SizedBox(height: 20),
                                 _RepairNotesCard(rows: rows),
                                 const SizedBox(height: 20),
-                                _RepairFooter(itemCount: equipmentTable.rows.length),
+                                _RepairFooter(
+                                  itemCount: equipmentTable.rows.length,
+                                ),
                               ],
                             ),
                           ),
@@ -175,6 +180,131 @@ class _RepairActionStrip extends StatelessWidget {
   }
 }
 
+class _RepairHandoffCard extends StatelessWidget {
+  const _RepairHandoffCard({required this.rows});
+
+  final List<Map<String, String>> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final brokenCount = rows.where((row) {
+      final status = (row['status'] ?? '').trim().toLowerCase();
+      final condition = (row['condition'] ?? '').trim().toLowerCase();
+      return status == 'broken' || condition == 'broken';
+    }).length;
+    final repairingCount = rows.length - brokenCount;
+    final evidenceLinkedCount = rows.where((row) {
+      return (row['receipt_link'] ?? '').trim().isNotEmpty;
+    }).length;
+    final projectCount = _distinctProjects(rows).length;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 900;
+          final actions = [
+            FilledButton.icon(
+              onPressed: () => context.push(RouteNames.assetMaintenanceLog),
+              icon: const Icon(Icons.build_outlined),
+              label: const Text('Open Maintenance Log'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetEvidenceLibrary),
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('Open Evidence Library'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetOrdersTracker),
+              icon: const Icon(Icons.receipt_outlined),
+              label: const Text('Open Orders Tracker'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetSupplierRegister),
+              icon: const Icon(Icons.local_shipping_outlined),
+              label: const Text('Open Suppliers'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push(RouteNames.assetValuationSummary),
+              icon: const Icon(Icons.assessment_outlined),
+              label: const Text('Open Valuation'),
+            ),
+          ];
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelTitle(
+                title: 'Repair resolution handoff',
+                icon: Icons.sync_alt_outlined,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Use this handoff strip when a repair needs a note, a supplier step, evidence, or a value check before the item is parked again.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          final chips = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _InfoChip(label: '$brokenCount broken'),
+              _InfoChip(label: '$repairingCount repairing'),
+              _InfoChip(label: '$evidenceLinkedCount evidence linked'),
+              _InfoChip(label: '$projectCount projects'),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 14),
+                chips,
+                const SizedBox(height: 14),
+                Wrap(spacing: 10, runSpacing: 10, children: actions),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Align(alignment: Alignment.centerRight, child: chips),
+                    const SizedBox(height: 14),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: actions,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _RepairHeader extends StatelessWidget {
   const _RepairHeader({
     required this.assetPath,
@@ -243,10 +373,7 @@ class _RepairHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -387,9 +514,9 @@ class _RepairItemCard extends StatelessWidget {
                       ? row['name']!.trim()
                       : 'Unnamed equipment',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(label: displayStatus, accent: accent),
@@ -409,18 +536,18 @@ class _RepairItemCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'Condition ${row['condition'] ?? 'unknown'} • Status ${row['status'] ?? 'unknown'}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if ((row['notes'] ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -456,10 +583,7 @@ class _RepairNotesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelTitle(
-            title: 'Repair notes',
-            icon: Icons.notes_outlined,
-          ),
+          const _PanelTitle(title: 'Repair notes', icon: Icons.notes_outlined),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -493,7 +617,9 @@ class _RepairFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Row(
         children: [
@@ -502,9 +628,9 @@ class _RepairFooter extends StatelessWidget {
           Expanded(
             child: Text(
               '$itemCount equipment items are in the current register. Keep the repair queue short, useful, and easy to act on.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ),
         ],
@@ -533,9 +659,9 @@ class _HintRow extends StatelessWidget {
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ),
       ],
@@ -565,17 +691,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             NumberFormat.decimalPattern().format(value),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -632,9 +758,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -658,9 +784,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -684,15 +810,18 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceAlt.withValues(alpha: 0.96)

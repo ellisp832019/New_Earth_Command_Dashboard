@@ -66,8 +66,11 @@ void main() {
 
     expect(find.text('Broken / Repair'), findsOneWidget);
     expect(find.text('Next actions'), findsOneWidget);
+    expect(find.text('Repair resolution handoff'), findsOneWidget);
     expect(find.text('Open Equipment Register'), findsOneWidget);
-    expect(find.text('Open Orders Tracker'), findsOneWidget);
+    expect(find.text('Open Orders Tracker'), findsWidgets);
+    expect(find.text('Open Maintenance Log'), findsOneWidget);
+    expect(find.text('Open Evidence Library'), findsOneWidget);
     expect(find.text('Field scanner'), findsOneWidget);
     expect(find.text('Power pack'), findsOneWidget);
     expect(find.text('Spare sensor'), findsNothing);
@@ -148,7 +151,8 @@ _RepairFixture _repairFixture() {
   return _RepairFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: AssetFolderService.requiredFolders,
