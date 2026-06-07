@@ -72,6 +72,18 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
     return '$day/$month $hour:$minute';
   }
 
+  VoiceCommand? get _latestCommand =>
+      widget.commands.isEmpty ? null : widget.commands.first;
+
+  void _reuseLatest() {
+    final latest = _latestCommand;
+    if (latest == null || widget.onCommandSelected == null) {
+      return;
+    }
+
+    widget.onCommandSelected!(latest);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -97,8 +109,10 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Row(
           children: [
@@ -115,6 +129,75 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
           ],
         ),
         const SizedBox(height: 12),
+        if (_latestCommand != null) ...[
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Latest capture',
+                          style: theme.textTheme.titleSmall,
+                        ),
+                      ),
+                      Chip(
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        label: Text(
+                          _formatDateTime(_latestCommand!.createdAt),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _latestCommand!.transcript,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${_latestCommand!.type.label} capture ready to reuse.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed:
+                            widget.onCommandSelected == null ? null : _reuseLatest,
+                        icon: const Icon(Icons.restart_alt_rounded),
+                        label: const Text('Reuse latest'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await _copyTranscript(_latestCommand!.transcript);
+                          if (!context.mounted) {
+                            return;
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Copied latest voice capture.'),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded),
+                        label: const Text('Copy latest'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         TextField(
           key: const Key('voiceHistorySearchField'),
           controller: _searchController,
