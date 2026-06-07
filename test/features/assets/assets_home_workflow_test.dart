@@ -47,6 +47,7 @@ void main() {
     expect(find.text('Refresh journal'), findsOneWidget);
     expect(find.text('Export summary report'), findsOneWidget);
     expect(find.text('Open QR Labels'), findsOneWidget);
+    expect(find.text('Open QR Studio'), findsOneWidget);
   });
 
   testWidgets('assets home surfaces missing setup data clearly', (

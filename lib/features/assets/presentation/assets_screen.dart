@@ -139,6 +139,8 @@ class _AssetsContent extends StatelessWidget {
                           context.push(RouteNames.assetRepairSummary),
                       onOpenQrLabels: () =>
                           context.push(RouteNames.assetQrLabelRegister),
+                      onOpenQrStudio: () =>
+                          context.push(RouteNames.assetQrLabelStudio),
                       onOpenQrHistory: () =>
                           context.push(RouteNames.assetQrLabelHistory),
                     ),
@@ -569,6 +571,7 @@ class _AssetPriorityCard extends StatelessWidget {
     required this.onOpenLowStock,
     required this.onOpenRepairSummary,
     required this.onOpenQrLabels,
+    required this.onOpenQrStudio,
     required this.onOpenQrHistory,
   });
 
@@ -580,6 +583,7 @@ class _AssetPriorityCard extends StatelessWidget {
   final VoidCallback onOpenLowStock;
   final VoidCallback onOpenRepairSummary;
   final VoidCallback onOpenQrLabels;
+  final VoidCallback onOpenQrStudio;
   final VoidCallback onOpenQrHistory;
 
   @override
@@ -706,6 +710,11 @@ class _AssetPriorityCard extends StatelessWidget {
                 onPressed: onOpenQrLabels,
                 icon: const Icon(Icons.qr_code_2_outlined),
                 label: const Text('Open QR Labels'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenQrStudio,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Open QR Studio'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenQrHistory,
