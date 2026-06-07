@@ -1974,6 +1974,26 @@ class _PrinterConnectionCard extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Selected printer',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                _PrinterStateBadge(
+                  label: _pm260DirectMatch() ? 'Matched' : 'Mismatch',
+                  accent: _pm260DirectMatch()
+                      ? AppColours.darkSuccess
+                      : AppColours.darkAmber,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -2574,6 +2594,35 @@ class _SectionTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PrinterStateBadge extends StatelessWidget {
+  const _PrinterStateBadge({
+    required this.label,
+    required this.accent,
+  });
+
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
