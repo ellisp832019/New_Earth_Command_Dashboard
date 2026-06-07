@@ -123,12 +123,7 @@ void main() {
     expect(find.text('PM260 profile selected'), findsOneWidget);
     expect(find.text('PM260 printer detected'), findsOneWidget);
     expect(find.text('Matched'), findsOneWidget);
-    expect(
-      find.text(
-        'The PM260 profile and the Windows printer both match, so direct print should be ready.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('PM260 is ready for direct print.'), findsOneWidget);
     expect(find.text('Print to printer'), findsOneWidget);
   });
 }

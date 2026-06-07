@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
@@ -48,7 +49,6 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                           snapshot: snapshot,
                           statusMessage: _statusMessage,
                           onBackToSystems: () => context.go(RouteNames.systems),
-                          onBackToMore: () => context.go(RouteNames.more),
                         ),
                         const SizedBox(height: 20),
                         _ActionCard(
@@ -136,13 +136,11 @@ class _HeroCard extends StatelessWidget {
   const _HeroCard({
     required this.snapshot,
     required this.onBackToSystems,
-    required this.onBackToMore,
     required this.statusMessage,
   });
 
   final BackupGuardianSnapshot snapshot;
   final VoidCallback onBackToSystems;
-  final VoidCallback onBackToMore;
   final String? statusMessage;
 
   @override
@@ -175,7 +173,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'A calm local-first safety layer for protecting the full D: drive onto the external backup drive.',
+                  'Local-first backup for D: to the external drive.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColours.darkMutedText,
                     height: 1.4,
@@ -202,16 +200,10 @@ class _HeroCard extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back to Systems'),
               ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: onBackToMore,
-                icon: const Icon(Icons.apps_outlined),
-                label: const Text('Back to More'),
-              ),
               const SizedBox(height: 16),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 alignment: WrapAlignment.end,
                 children: [
                   _Badge(
@@ -379,8 +371,8 @@ class _StatusGrid extends StatelessWidget {
       ),
       _StatusTile(
         label: 'Latest report path',
-        value: snapshot.latestReportPath,
-        detail: 'Open from the Reports folder',
+        value: p.basename(snapshot.latestReportPath),
+        detail: snapshot.latestReportPath,
         accent: AppColours.darkSecondary,
       ),
     ];
@@ -507,7 +499,7 @@ class _ActivityCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            snapshot.statusFilePath,
+            p.basename(snapshot.statusFilePath),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
                 ),
@@ -698,15 +690,15 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.16),
+        color: accent.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColours.darkText,
               fontWeight: FontWeight.w600,
             ),

@@ -1897,8 +1897,8 @@ class _PrinterConnectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(
-            title: 'Connected printer',
+          _SectionTitle(
+            title: _pm260DirectMatch() ? 'Connected printer' : 'Printer setup',
             icon: Icons.usb_outlined,
           ),
           const SizedBox(height: 10),
@@ -1953,14 +1953,16 @@ class _PrinterConnectionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            _pm260MatchMessage(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              height: 1.35,
+          if (!_pm260DirectMatch()) ...[
+            const SizedBox(height: 10),
+            Text(
+              _pm260MatchMessage(),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
-          ),
+          ],
           if (printers.isEmpty) ...[
             const SizedBox(height: 10),
             Text(
@@ -1986,10 +1988,11 @@ class _PrinterConnectionCard extends StatelessWidget {
                   ),
                 ),
                 _PrinterStateBadge(
-                  label: _pm260DirectMatch() ? 'Matched' : 'Mismatch',
+                  label: _pm260DirectMatch() ? 'Matched' : 'Setup needed',
                   accent: _pm260DirectMatch()
                       ? AppColours.darkSuccess
                       : AppColours.darkAmber,
+                  gentle: !_pm260DirectMatch(),
                 ),
               ],
             ),
@@ -2108,24 +2111,26 @@ class _PrinterConnectionCard extends StatelessWidget {
 
   String _printerStatusMessage() {
     if (printingInfo?.canListPrinters != true) {
-      return 'Windows printer listing is not available yet, so QR labels will fall back to the print dialog.';
+      return 'Printer access is not ready yet.';
     }
     if (printers.isEmpty) {
-      return 'Windows can list printers, but no ready printer is visible yet. If you just plugged the USB printer in, wait for the driver to finish and try again.';
+      return 'Windows can see the printer list, but no ready printer is showing yet.';
     }
     final printer = selectedPrinter;
     if (printer == null) {
-      return 'Windows can see the connected printer(s). Pick the USB printer here, then send labels straight to it.';
+      return 'Pick the USB printer here for direct print.';
     }
-    return 'Windows can see ${printers.length} printer(s). ${printer.name} is selected and ready to receive labels.';
+    return _pm260DirectMatch()
+        ? 'PM260 is ready for direct print.'
+        : 'Windows can see ${printers.length} printer(s). ${printer.name} is selected.';
   }
 
   String _printerStatusChip() {
     if (printingInfo?.canListPrinters != true) {
-      return 'Printer access unavailable';
+      return 'Printer setup paused';
     }
     if (printers.isEmpty) {
-      return 'No ready printer';
+      return 'Setup in progress';
     }
     return 'Windows sees printers';
   }
@@ -2205,12 +2210,12 @@ class _PrinterConnectionCard extends StatelessWidget {
     final profileSelected = _pm260ProfileSelected();
     final deviceDetected = _pm260DetectedOnWindows();
     if (profileSelected && !deviceDetected) {
-      return 'PM260 is selected in the label builder, but Windows is not currently detecting the PM260 printer.';
+      return 'Setup reminder: PM260 is selected in the label builder, but Windows is not seeing the PM260 printer yet.';
     }
     if (!profileSelected && deviceDetected) {
-      return 'Windows can see a PM260 printer, but the label builder is using a different printer profile.';
+      return 'Setup reminder: Windows can see a PM260 printer, but the label builder is using a different printer profile for now.';
     }
-    return 'The PM260 profile is parked, and Windows is not currently detecting a PM260 printer.';
+    return 'Setup reminder: the PM260 profile is parked for now, and Windows is not currently detecting a PM260 printer.';
   }
 }
 
@@ -2602,24 +2607,30 @@ class _PrinterStateBadge extends StatelessWidget {
   const _PrinterStateBadge({
     required this.label,
     required this.accent,
+    this.gentle = false,
   });
 
   final String label;
   final Color accent;
+  final bool gentle;
 
   @override
   Widget build(BuildContext context) {
+    final backgroundOpacity = gentle ? 0.08 : 0.12;
+    final borderOpacity = gentle ? 0.18 : 0.28;
+    final textColor = gentle ? accent.withValues(alpha: 0.9) : accent;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
+        color: accent.withValues(alpha: backgroundOpacity),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.28)),
+        border: Border.all(color: accent.withValues(alpha: borderOpacity)),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: accent,
+          color: textColor,
           fontWeight: FontWeight.w700,
         ),
       ),
