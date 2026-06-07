@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
@@ -1128,6 +1129,9 @@ class _MeetingSystemDashboardCardState
         final workspace = data.workspace;
         final latestMeeting = latestMeetingSnapshot.asData?.value;
         final statusSummary = statusSummarySnapshot.asData?.value;
+        final latestBundleReviewSnapshot = latestMeeting == null
+            ? null
+            : ref.watch(meetingLatestBundleReviewProvider(latestMeeting.id));
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -1193,6 +1197,85 @@ class _MeetingSystemDashboardCardState
                           ),
                         ],
                       ),
+                      if (latestMeeting != null) ...[
+                        const SizedBox(height: 14),
+                        latestBundleReviewSnapshot?.when(
+                              loading: () => Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: _panelDecoration(context),
+                                child: const Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Loading latest bundle review...'),
+                                  ],
+                                ),
+                              ),
+                              error: (error, stackTrace) => Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: _panelDecoration(context),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Latest bundle review',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            color: AppColours.darkSecondary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'The latest exported bundle could not be reviewed right now.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: AppColours.darkMutedText,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              data: (bundleReview) {
+                                if (bundleReview == null) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return _MeetingBundleReviewCard(
+                                  latestMeeting: latestMeeting,
+                                  bundleReview: bundleReview,
+                                  onExportLatestBundle: _exportingLatestBundle
+                                      ? null
+                                      : () => _exportLatestBundle(
+                                          latestMeeting,
+                                        ),
+                                  onOpenBundleFolder: () =>
+                                      ref
+                                          .read(meetingFolderServiceProvider)
+                                          .openFolder(bundleReview.bundlePath),
+                                  onOpenSummary: () => ref
+                                      .read(meetingFolderServiceProvider)
+                                      .openFile(bundleReview.summaryPath),
+                                  onOpenManifest: () => ref
+                                      .read(meetingFolderServiceProvider)
+                                      .openFile(bundleReview.manifestPath),
+                                );
+                              },
+                            ) ??
+                            const SizedBox.shrink(),
+                      ],
                       if (statusSummary != null) ...[
                         const SizedBox(height: 12),
                         Wrap(
@@ -1279,7 +1362,7 @@ class _MeetingSystemDashboardCardState
                                 ),
                               )
                             : const Icon(Icons.archive_outlined),
-                        label: const Text('Export latest'),
+                        label: const Text('Export latest bundle'),
                       ),
                       TextButton.icon(
                         onPressed: _bootstrapping ? null : _createStructure,
@@ -1385,6 +1468,178 @@ class _MeetingSystemDashboardCardState
         });
       }
     }
+  }
+}
+
+class _MeetingBundleReviewCard extends StatelessWidget {
+  const _MeetingBundleReviewCard({
+    required this.latestMeeting,
+    required this.bundleReview,
+    required this.onExportLatestBundle,
+    required this.onOpenBundleFolder,
+    required this.onOpenSummary,
+    required this.onOpenManifest,
+  });
+
+  final MeetingRecord latestMeeting;
+  final MeetingBundleReviewSnapshot bundleReview;
+  final VoidCallback? onExportLatestBundle;
+  final VoidCallback onOpenBundleFolder;
+  final VoidCallback onOpenSummary;
+  final VoidCallback onOpenManifest;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bundleFileName = path.basename(bundleReview.bundlePath);
+    final summaryFileName = path.basename(bundleReview.summaryPath);
+    final manifestFileName = path.basename(bundleReview.manifestPath);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 760;
+          final header = wide
+              ? Row(
+                  children: [
+                    const Icon(
+                      Icons.folder_zip_outlined,
+                      color: AppColours.darkAmber,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Latest bundle review',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColours.darkText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _InlineTag(
+                      label: bundleReview.exists ? 'Ready' : 'Needs refresh',
+                      accent: bundleReview.exists
+                          ? AppColours.darkSuccess
+                          : AppColours.darkAmber,
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.folder_zip_outlined,
+                          color: AppColours.darkAmber,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Latest bundle review',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppColours.darkText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _InlineTag(
+                      label: bundleReview.exists ? 'Ready' : 'Needs refresh',
+                      accent: bundleReview.exists
+                          ? AppColours.darkSuccess
+                          : AppColours.darkAmber,
+                    ),
+                  ],
+                );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              header,
+              const SizedBox(height: 8),
+              Text(
+                latestMeeting.title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _InlineTag(
+                    label: '${bundleReview.fileCount} files',
+                    accent: AppColours.darkPrimary,
+                  ),
+                  _InlineTag(
+                    label:
+                        bundleReview.exists ? 'Bundle found' : 'Bundle missing',
+                    accent: bundleReview.exists
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                  ),
+                  _InlineTag(
+                    label: bundleFileName,
+                    accent: AppColours.darkSecondary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Summary: $summaryFileName',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Manifest: $manifestFileName',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  if (onExportLatestBundle != null)
+                    FilledButton.tonalIcon(
+                      onPressed: onExportLatestBundle,
+                      icon: const Icon(Icons.archive_outlined),
+                      label: const Text('Export latest bundle'),
+                    ),
+                  TextButton.icon(
+                    onPressed: onOpenBundleFolder,
+                    icon: const Icon(Icons.folder_open_outlined),
+                    label: const Text('Open bundle folder'),
+                  ),
+                  TextButton.icon(
+                    onPressed: onOpenSummary,
+                    icon: const Icon(Icons.description_outlined),
+                    label: const Text('Open summary'),
+                  ),
+                  TextButton.icon(
+                    onPressed: onOpenManifest,
+                    icon: const Icon(Icons.article_outlined),
+                    label: const Text('Open manifest'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 

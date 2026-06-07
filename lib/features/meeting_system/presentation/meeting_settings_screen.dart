@@ -424,7 +424,7 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                               const MeetingSectionHeader(
                                 title: 'Master index search',
                                 subtitle:
-                                    'Search the live meeting index by project, person, title, status, or folder path.',
+                                    'Search the live meeting index by project, person, title, status, or folder path. Use the chips to narrow the list and keep the review calm.',
                               ),
                               const SizedBox(height: 12),
                               LayoutBuilder(
@@ -432,9 +432,24 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                                   final wide = constraints.maxWidth >= 980;
                                   final searchField = TextField(
                                     controller: _masterIndexSearchController,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: 'Search meetings',
                                       prefixIcon: Icon(Icons.search),
+                                      suffixIcon: _masterIndexSearchController
+                                              .text.isEmpty
+                                          ? null
+                                          : IconButton(
+                                              tooltip: 'Clear search',
+                                              onPressed: () {
+                                                _masterIndexSearchController
+                                                    .clear();
+                                                setState(() {
+                                                  _masterIndexStatusFilter =
+                                                      'All';
+                                                });
+                                              },
+                                              icon: const Icon(Icons.clear),
+                                            ),
                                     ),
                                   );
                                   final statusField =
@@ -507,6 +522,49 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(color: AppColours.darkMutedText),
                               ),
+                              if (_masterIndexSearchController.text.trim().isNotEmpty ||
+                                  _masterIndexStatusFilter != 'All') ...[
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    if (_masterIndexSearchController.text
+                                        .trim()
+                                        .isNotEmpty)
+                                      InputChip(
+                                        label: Text(
+                                          'Search: ${_masterIndexSearchController.text.trim()}',
+                                        ),
+                                        onDeleted: () {
+                                          _masterIndexSearchController.clear();
+                                          setState(() {});
+                                        },
+                                      ),
+                                    if (_masterIndexStatusFilter != 'All')
+                                      InputChip(
+                                        label: Text(
+                                          'Status: $_masterIndexStatusFilter',
+                                        ),
+                                        onDeleted: () {
+                                          setState(() {
+                                            _masterIndexStatusFilter = 'All';
+                                          });
+                                        },
+                                      ),
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        _masterIndexSearchController.clear();
+                                        setState(() {
+                                          _masterIndexStatusFilter = 'All';
+                                        });
+                                      },
+                                      icon: const Icon(Icons.clear_all),
+                                      label: const Text('Clear filters'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               const SizedBox(height: 12),
                               if (filteredRows.isEmpty)
                                 const MeetingEmptyPanel(
