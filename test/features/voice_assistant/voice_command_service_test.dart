@@ -29,7 +29,7 @@ void main() {
     final service = VoiceCommandService();
     final templates = service.getTemplates();
 
-    expect(templates, hasLength(17));
+    expect(templates, hasLength(21));
     expect(templates.first.id, 'build-day');
     expect(templates.first.type, VoiceCommandType.task);
     expect(
@@ -39,9 +39,18 @@ void main() {
     expect(templates.any((template) => template.id == 'whats-next'), isTrue);
     expect(templates.any((template) => template.id == 'recall-thread'), isTrue);
     expect(templates.any((template) => template.id == 'plan-day'), isTrue);
+    expect(templates.any((template) => template.id == 'daily-reset'), isTrue);
     expect(templates.any((template) => template.id == 'project'), isTrue);
+    expect(
+      templates.any((template) => template.id == 'project-update'),
+      isTrue,
+    );
     expect(templates.any((template) => template.id == 'carry-forward'), isTrue);
     expect(templates.any((template) => template.id == 'meeting-notes'), isTrue);
+    expect(
+      templates.any((template) => template.id == 'meeting-summary'),
+      isTrue,
+    );
     expect(
       templates.any((template) => template.id == 'project-checkpoint'),
       isTrue,
@@ -51,6 +60,7 @@ void main() {
       isTrue,
     );
     expect(templates.any((template) => template.id == 'quick-review'), isTrue);
+    expect(templates.any((template) => template.id == 'voice-review'), isTrue);
     expect(templates.any((template) => template.id == 'codex'), isTrue);
   });
 

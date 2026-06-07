@@ -2891,6 +2891,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       'whats-next',
                       'recall-thread',
                       'plan-day',
+                      'daily-reset',
                     ],
                     templateById: templateById,
                   ),
@@ -2901,6 +2902,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                     title: 'Capture',
                     templateIds: const [
                       'project',
+                      'project-update',
                       'task',
                       'journal',
                       'content',
@@ -2918,8 +2920,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       'project-checkpoint',
                       'carry-forward',
                       'meeting-notes',
+                      'meeting-summary',
                       'quick-review',
                       'business-follow-up',
+                      'voice-review',
                     ],
                     templateById: templateById,
                   ),
@@ -3151,18 +3155,26 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         return Icons.history_rounded;
       case 'plan-day':
         return Icons.calendar_month_outlined;
+      case 'daily-reset':
+        return Icons.restart_alt_outlined;
       case 'project':
         return Icons.folder_open_outlined;
+      case 'project-update':
+        return Icons.update_outlined;
       case 'carry-forward':
         return Icons.forward_outlined;
       case 'meeting-notes':
         return Icons.meeting_room_outlined;
+      case 'meeting-summary':
+        return Icons.summarize_outlined;
       case 'project-checkpoint':
         return Icons.flag_outlined;
       case 'business-follow-up':
         return Icons.phone_forwarded_outlined;
       case 'quick-review':
         return Icons.rate_review_outlined;
+      case 'voice-review':
+        return Icons.fact_check_outlined;
       case 'task':
         return Icons.task_alt_outlined;
       case 'journal':

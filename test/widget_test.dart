@@ -2121,6 +2121,31 @@ void main() {
     expect(find.text('Carry Forward'), findsOneWidget);
     expect(find.text('Meeting Notes'), findsOneWidget);
     expect(find.text('Project Checkpoint'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceStarterDeckPlanGroup')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
+    expect(find.text('Daily Reset'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceStarterDeckCaptureGroup')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
+    expect(find.text('Project Update'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceStarterDeckShortcutGroup')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
+    expect(find.text('Meeting Summary'), findsOneWidget);
+    expect(find.text('Voice Review'), findsOneWidget);
   });
 
   testWidgets('voice assistant can open with a preset type from the dock', (

@@ -47,11 +47,27 @@ class VoiceCommandService {
       type: VoiceCommandType.task,
     ),
     VoiceCommandTemplate(
+      id: 'daily-reset',
+      label: 'Daily Reset',
+      description: 'Turn a busy morning into a calmer next step.',
+      transcript:
+          'Task: Reset the day. Review the top tasks, blockers, and the first practical move.',
+      type: VoiceCommandType.task,
+    ),
+    VoiceCommandTemplate(
       id: 'project',
       label: 'Project',
       description: 'Shape a new project from the voice thread.',
       transcript:
           'Project: Create a project for the dashboard voice workflow and define the first milestone.',
+      type: VoiceCommandType.project,
+    ),
+    VoiceCommandTemplate(
+      id: 'project-update',
+      label: 'Project Update',
+      description: 'Turn project progress into a short review note.',
+      transcript:
+          'Project: Summarise the current milestone, status, and next action.',
       type: VoiceCommandType.project,
     ),
     VoiceCommandTemplate(
@@ -68,6 +84,14 @@ class VoiceCommandService {
       description: 'Turn a meeting into a summary with follow-ups.',
       transcript:
           'Journal: Turn these meeting notes into a clear summary, decisions, and follow-up actions.',
+      type: VoiceCommandType.journalEntry,
+    ),
+    VoiceCommandTemplate(
+      id: 'meeting-summary',
+      label: 'Meeting Summary',
+      description: 'Capture decisions and follow-ups from a meeting.',
+      transcript:
+          'Journal: Turn this meeting into a clear summary with decisions and follow-up actions.',
       type: VoiceCommandType.journalEntry,
     ),
     VoiceCommandTemplate(
@@ -93,6 +117,14 @@ class VoiceCommandService {
       transcript:
           'Journal: Give me a quick review of today, the blockers, and what should carry forward.',
       type: VoiceCommandType.journalEntry,
+    ),
+    VoiceCommandTemplate(
+      id: 'voice-review',
+      label: 'Voice Review',
+      description: 'Review the current voice capture before saving.',
+      transcript:
+          'Task: Review the voice capture, tighten the wording, and decide the best place to save it.',
+      type: VoiceCommandType.task,
     ),
     VoiceCommandTemplate(
       id: 'task',
@@ -1621,11 +1653,10 @@ Rules:
 
   String _briefingLine(String text) {
     final trimmed = text.trim();
-    if (trimmed.startsWith('I can ')) {
-      return trimmed.replaceFirst('I can ', '').trim();
-    }
-    if (trimmed.startsWith('I am ')) {
-      return trimmed.replaceFirst('I am ', '').trim();
+    for (final prefix in ['I can ', 'I am ', 'Try ', 'Review ', 'Choose ']) {
+      if (trimmed.startsWith(prefix)) {
+        return trimmed.replaceFirst(prefix, '').trim();
+      }
     }
 
     return trimmed;
@@ -1635,23 +1666,23 @@ Rules:
     final trimmed = text.trim();
     final mappings = <String, String>{
       'Wake phrase heard. I am here.': 'Wake phrase heard. Gaia is ready.',
-      'I am here with you.': 'Gaia is here with you.',
-      'This sounds like a daily review.': 'Daily review captured.',
-      'This sounds like a next-step request.': 'Next step captured.',
+      'I am here with you.': 'Ready to help.',
+      'This sounds like a daily review.': 'Daily review ready.',
+      'This sounds like a next-step request.': 'Next step ready.',
       'This reads like a task. I can open Tasks, preload the task template, or send it toward Planner.':
-          'Task captured. Tasks is ready.',
+          'Task captured.',
       'This sounds like a project. I can open Projects, preload the project template, or help shape a project record.':
-          'Project captured. Projects is ready.',
+          'Project captured.',
       'This sounds like a journal entry. I can open Journal or reload the reflection template.':
-          'Journal entry captured. Journal is ready.',
+          'Journal entry captured.',
       'This looks like a content idea. I can open Content, preload the draft template, or jump to Projects.':
-          'Content idea captured. Content is ready.',
+          'Content idea captured.',
       'This sounds like a business lead. I can open Business, preload the opportunity template, or move to Projects.':
-          'Business lead captured. Business is ready.',
+          'Business lead captured.',
       'I heard a build-day command. I can open Planner or preload the build-day template.':
-          'Build day captured. Planner is ready.',
+          'Build day captured.',
       'I do not have a strong type yet. I can still help by opening the right area, loading a starter, or shaping a safe prompt.':
-          'Draft captured. Gaia can still help shape it.',
+          'Draft captured.',
     };
 
     for (final entry in mappings.entries) {
@@ -1661,7 +1692,7 @@ Rules:
     }
 
     if (trimmed.startsWith('I can help with tasks')) {
-      return 'Help overview captured. Gaia can guide the next move.';
+      return 'Help overview ready.';
     }
 
     return trimmed;
