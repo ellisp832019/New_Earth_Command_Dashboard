@@ -524,6 +524,48 @@ class QrLabelPrintService {
     );
   }
 
+  Future<void> updateLabelRegisterEntry(
+    String assetsRootPath,
+    QrLabelRegisterEntry entry,
+  ) async {
+    await _updateLabelRow(
+      assetsRootPath,
+      entry.labelId,
+      (_) => entry.toCsvRow(),
+    );
+  }
+
+  Future<void> deleteLabelRegisterEntry(
+    String assetsRootPath,
+    String labelId,
+  ) async {
+    final file = _labelRegisterFile(assetsRootPath);
+    final table = await _csvService.readTable(
+      file,
+      expectedHeaders: labelRegisterHeaders,
+    );
+    final updatedRows = <Map<String, String>>[];
+    var removed = false;
+
+    for (final row in table.rows) {
+      final currentLabelId = (row['label_id'] ?? '').trim();
+      if (currentLabelId.isNotEmpty && currentLabelId == labelId) {
+        removed = true;
+        continue;
+      }
+      updatedRows.add(row);
+    }
+
+    if (!removed) {
+      throw StateError('Label $labelId was not found.');
+    }
+
+    await _csvService.writeTable(
+      file,
+      AssetCsvTable(headers: labelRegisterHeaders, rows: updatedRows),
+    );
+  }
+
   Future<File> exportRecentLabelHistory(
     String assetsRootPath, {
     int limit = 12,

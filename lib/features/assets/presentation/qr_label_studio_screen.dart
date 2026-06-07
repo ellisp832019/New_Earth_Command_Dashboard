@@ -402,6 +402,16 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                                       ?.value
                                                       .rows ??
                                                   const [],
+                                              onEditLabel: (row) =>
+                                                  _editLabelRegisterEntry(
+                                                    workspace.assetsRootPath!,
+                                                    row,
+                                                  ),
+                                              onDeleteLabel: (row) =>
+                                                  _deleteLabelRegisterEntry(
+                                                    workspace.assetsRootPath!,
+                                                    row,
+                                                  ),
                                             ),
                                             const SizedBox(height: 20),
                                             _QueueBoardCard(
@@ -978,6 +988,76 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     if (mounted) {
       setState(() {
         _statusMessage = 'Marked queue item for reprint.';
+      });
+    }
+  }
+
+  Future<void> _editLabelRegisterEntry(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    final entry = await showDialog<QrLabelRegisterEntry>(
+      context: context,
+      builder: (context) => _EditLabelRegisterDialog(row: row),
+    );
+    if (entry == null) {
+      return;
+    }
+
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .updateLabelRegisterEntry(assetsRootPath, entry);
+    ref.invalidate(assetQrLabelTemplateRegisterProvider);
+    if (mounted) {
+      setState(() {
+        _statusMessage = 'Updated label entry ${entry.labelId}.';
+      });
+    }
+  }
+
+  Future<void> _deleteLabelRegisterEntry(
+    String assetsRootPath,
+    Map<String, String> row,
+  ) async {
+    final labelId = (row['label_id'] ?? '').trim();
+    if (labelId.isEmpty) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete label entry?'),
+          content: Text(
+            'Remove $labelId from the local label register? This keeps the generated files and manifest on disk.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).pop(true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete entry'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref
+        .read(assetQrLabelPrintServiceProvider)
+        .deleteLabelRegisterEntry(assetsRootPath, labelId);
+    ref.invalidate(assetQrLabelTemplateRegisterProvider);
+    if (mounted) {
+      setState(() {
+        _statusMessage = 'Deleted label entry $labelId from the register.';
       });
     }
   }
@@ -2322,9 +2402,15 @@ class _PrinterProfilesCard extends StatelessWidget {
 }
 
 class _LabelRegisterCard extends StatelessWidget {
-  const _LabelRegisterCard({required this.labels});
+  const _LabelRegisterCard({
+    required this.labels,
+    required this.onEditLabel,
+    required this.onDeleteLabel,
+  });
 
   final List<Map<String, String>> labels;
+  final Future<void> Function(Map<String, String> row) onEditLabel;
+  final Future<void> Function(Map<String, String> row) onDeleteLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -2369,10 +2455,13 @@ class _LabelRegisterCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: _MiniRecordCard(
+                      row: row,
                       title: row['asset_id'] ?? 'Unknown asset',
                       subtitle:
                           '${row['label_type'] ?? ''} • ${row['print_status'] ?? ''}',
                       detail: path.basename(row['generated_file'] ?? ''),
+                      onEdit: () => onEditLabel(row),
+                      onDelete: () => onDeleteLabel(row),
                     ),
                   ),
               ],
@@ -2530,14 +2619,20 @@ class _QueueRowCard extends StatelessWidget {
 
 class _MiniRecordCard extends StatelessWidget {
   const _MiniRecordCard({
+    required this.row,
     required this.title,
     required this.subtitle,
     required this.detail,
+    required this.onEdit,
+    required this.onDelete,
   });
 
+  final Map<String, String> row;
   final String title;
   final String subtitle;
   final String detail;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -2572,8 +2667,218 @@ class _MiniRecordCard extends StatelessWidget {
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Tooltip(
+                message: row['label_id'] ?? 'Label entry',
+                child: TextButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Edit'),
+                ),
+              ),
+              Tooltip(
+                message: row['label_id'] ?? 'Label entry',
+                child: TextButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('Delete'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _EditLabelRegisterDialog extends StatefulWidget {
+  const _EditLabelRegisterDialog({required this.row});
+
+  final Map<String, String> row;
+
+  @override
+  State<_EditLabelRegisterDialog> createState() =>
+      _EditLabelRegisterDialogState();
+}
+
+class _EditLabelRegisterDialogState extends State<_EditLabelRegisterDialog> {
+  late final TextEditingController _assetIdController;
+  late final TextEditingController _labelTypeController;
+  late final TextEditingController _labelSizeController;
+  late final TextEditingController _labelTextController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _printStatusController;
+  late final TextEditingController _printedDateController;
+  late final TextEditingController _appliedDateController;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _assetIdController = TextEditingController(
+      text: widget.row['asset_id'] ?? '',
+    );
+    _labelTypeController = TextEditingController(
+      text: widget.row['label_type'] ?? '',
+    );
+    _labelSizeController = TextEditingController(
+      text: widget.row['label_size'] ?? '',
+    );
+    _labelTextController = TextEditingController(
+      text: widget.row['label_text'] ?? '',
+    );
+    _locationController = TextEditingController(
+      text: widget.row['location'] ?? '',
+    );
+    _notesController = TextEditingController(text: widget.row['notes'] ?? '');
+    _printStatusController = TextEditingController(
+      text: widget.row['print_status'] ?? '',
+    );
+    _printedDateController = TextEditingController(
+      text: widget.row['printed_date'] ?? '',
+    );
+    _appliedDateController = TextEditingController(
+      text: widget.row['applied_date'] ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _assetIdController.dispose();
+    _labelTypeController.dispose();
+    _labelSizeController.dispose();
+    _labelTextController.dispose();
+    _locationController.dispose();
+    _notesController.dispose();
+    _printStatusController.dispose();
+    _printedDateController.dispose();
+    _appliedDateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit label entry'),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: 560,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _assetIdController,
+                decoration: const InputDecoration(labelText: 'Asset ID'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _labelTypeController,
+                      decoration: const InputDecoration(labelText: 'Label type'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _labelSizeController,
+                      decoration: const InputDecoration(labelText: 'Label size'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _labelTextController,
+                decoration: const InputDecoration(labelText: 'Label text'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _locationController,
+                decoration: const InputDecoration(labelText: 'Location / project'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Notes',
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _printStatusController,
+                      decoration: const InputDecoration(labelText: 'Print status'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _printedDateController,
+                      decoration: const InputDecoration(labelText: 'Printed date'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _appliedDateController,
+                decoration: const InputDecoration(labelText: 'Applied date'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: _saving
+              ? null
+              : () {
+                  final labelId = (widget.row['label_id'] ?? '').trim();
+                  if (labelId.isEmpty) {
+                    Navigator.of(context).pop();
+                    return;
+                  }
+                  setState(() {
+                    _saving = true;
+                  });
+                  Navigator.of(context).pop(
+                    QrLabelRegisterEntry(
+                      labelId: labelId,
+                      assetId: _assetIdController.text,
+                      labelType: _labelTypeController.text,
+                      labelSize: _labelSizeController.text,
+                      qrPayload: widget.row['qr_payload'] ?? '',
+                      labelText: _labelTextController.text,
+                      generatedFile: widget.row['generated_file'] ?? '',
+                      manifestFile: widget.row['manifest_file'] ?? '',
+                      printStatus: _printStatusController.text,
+                      printedDate: _printedDateController.text,
+                      appliedDate: _appliedDateController.text,
+                      location: _locationController.text,
+                      notes: _notesController.text,
+                    ),
+                  );
+                },
+          icon: const Icon(Icons.save_outlined),
+          label: const Text('Save changes'),
+        ),
+      ],
     );
   }
 }
