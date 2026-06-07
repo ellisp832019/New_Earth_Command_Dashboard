@@ -214,6 +214,8 @@ class _Sidebar extends StatelessWidget {
               label: 'QR Studio',
               icon: Icons.print_outlined,
               route: RouteNames.assetQrLabelStudio,
+              accent: AppColours.darkSecondary,
+              badge: 'Print',
             ),
             _SidebarLink(
               label: 'Command Deck',
@@ -357,28 +359,75 @@ class _SidebarLink extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.route,
+    this.accent,
+    this.badge,
   });
 
   final String label;
   final IconData icon;
   final String route;
+  final Color? accent;
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
-      child: TextButton.icon(
-        onPressed: () => context.push(route),
-        icon: Icon(icon, size: 16),
-        label: Text(label),
-        style: TextButton.styleFrom(
-          foregroundColor: AppColours.darkMutedText,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          minimumSize: const Size.fromHeight(36),
-          alignment: Alignment.centerLeft,
-          textStyle: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontSize: 11, height: 1.15),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push(route),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: accent ?? AppColours.darkMutedText,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      height: 1.15,
+                      color: accent ?? AppColours.darkMutedText,
+                      fontWeight: badge != null ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (badge != null) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (accent ?? AppColours.darkSecondary)
+                          .withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: (accent ?? AppColours.darkSecondary)
+                            .withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Text(
+                      badge!,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: accent ?? AppColours.darkText,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
