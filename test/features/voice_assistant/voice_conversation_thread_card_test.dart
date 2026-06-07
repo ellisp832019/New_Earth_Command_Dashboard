@@ -9,6 +9,7 @@ void main() {
     WidgetTester tester,
   ) async {
     var resumed = false;
+    var reusedLatest = false;
     var startedFresh = false;
 
     await tester.pumpWidget(
@@ -28,6 +29,9 @@ void main() {
             onResumeThread: () {
               resumed = true;
             },
+            onReuseLatestCapture: () {
+              reusedLatest = true;
+            },
             onStartFresh: () {
               startedFresh = true;
             },
@@ -40,6 +44,7 @@ void main() {
     expect(find.text('Remembered thread'), findsOneWidget);
     expect(find.text('Saved entries: 2'), findsOneWidget);
     expect(find.text('Latest saved step'), findsOneWidget);
+    expect(find.text('Reuse latest capture'), findsOneWidget);
     expect(find.text('Dashboard voice workflow'), findsOneWidget);
     expect(
       find.textContaining('Create a project for the dashboard voice workflow'),
@@ -51,6 +56,10 @@ void main() {
     expect(find.text('Continue thread'), findsOneWidget);
     expect(find.text('Copy summary'), findsOneWidget);
     expect(find.text('Start fresh'), findsOneWidget);
+
+    await tester.tap(find.text('Reuse latest capture'));
+    await tester.pumpAndSettle();
+    expect(reusedLatest, isTrue);
 
     await tester.tap(find.text('Continue thread'));
     await tester.pumpAndSettle();

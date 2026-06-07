@@ -1663,6 +1663,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _transcriptFocusNode.requestFocus();
   }
 
+  void _restoreLatestCommandFromHistory() {
+    if (_history.isEmpty) {
+      return;
+    }
+
+    _restoreCommandFromHistory(_history.first);
+  }
+
   void _handleQuickAction(VoiceCommandQuickAction action) {
     if (action.route != null) {
       context.go(action.route!);
@@ -2119,6 +2127,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             VoiceConversationThreadCard(
               conversationContext: conversationContext,
               onResumeThread: _continueCurrentThread,
+              onReuseLatestCapture: _restoreLatestCommandFromHistory,
               onStartFresh: _startNewThread,
               onCopySummary: _copyConversationSummary,
             ),

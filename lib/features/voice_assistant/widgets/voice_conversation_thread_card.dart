@@ -7,12 +7,14 @@ class VoiceConversationThreadCard extends StatelessWidget {
     super.key,
     required this.conversationContext,
     required this.onResumeThread,
+    required this.onReuseLatestCapture,
     required this.onStartFresh,
     required this.onCopySummary,
   });
 
   final VoiceConversationContext conversationContext;
   final VoidCallback onResumeThread;
+  final VoidCallback onReuseLatestCapture;
   final VoidCallback onStartFresh;
   final VoidCallback onCopySummary;
 
@@ -47,7 +49,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Pick up the remembered thread, copy the summary, or start fresh when you need a clean slate.',
+              'Pick up the remembered thread, reuse the latest capture, copy the summary, or start fresh when you need a clean slate.',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -111,6 +113,12 @@ class VoiceConversationThreadCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                FilledButton.icon(
+                  key: const Key('voiceReuseLatestCaptureButton'),
+                  onPressed: onReuseLatestCapture,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Reuse latest capture'),
+                ),
                 FilledButton.tonalIcon(
                   key: const Key('voiceContinueThreadButton'),
                   onPressed: onResumeThread,
