@@ -42,6 +42,7 @@ class TasksScreen extends ConsumerWidget {
             data: (plan) => _TaskListView(
               tasks: taskItems,
               projects: projectItems,
+              todayPlan: plan,
               statusFilter: statusFilter,
               projectFilter: projectFilter,
               searchQuery: searchQuery,
@@ -95,6 +96,7 @@ class _TaskListView extends ConsumerWidget {
   const _TaskListView({
     required this.tasks,
     required this.projects,
+    required this.todayPlan,
     required this.statusFilter,
     required this.projectFilter,
     required this.searchQuery,
@@ -103,6 +105,7 @@ class _TaskListView extends ConsumerWidget {
 
   final List<Task> tasks;
   final List<Project> projects;
+  final DailyPlan todayPlan;
   final String statusFilter;
   final String? projectFilter;
   final String searchQuery;
@@ -130,6 +133,17 @@ class _TaskListView extends ConsumerWidget {
     final parkedCount = tasks.where((task) => task.status == 'Parked').length;
     final blockedCount = tasks.where((task) => task.status == 'Blocked').length;
     final todayCount = tasks.where((task) => task.status == 'Today').length;
+    final carryForwardNotes = todayPlan.carryForwardNotes?.trim() ?? '';
+    final showCarryForwardBanner =
+        parkedCount > 0 || carryForwardNotes.isNotEmpty;
+    final carryForwardBanner = showCarryForwardBanner
+        ? _CarryForwardBanner(
+            parkedCount: parkedCount,
+            carryForwardNotes: carryForwardNotes,
+            onReviewParked: () => _showParkedWork(ref),
+            onOpenPlanner: () => context.push('${RouteNames.planner}?section=carryForward'),
+          )
+        : null;
 
     final headerPanel = Container(
       padding: const EdgeInsets.all(22),
@@ -318,6 +332,10 @@ class _TaskListView extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         children: [
           headerPanel,
+          if (carryForwardBanner != null) ...[
+            const SizedBox(height: 12),
+            carryForwardBanner,
+          ],
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -337,6 +355,10 @@ class _TaskListView extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         children: [
           headerPanel,
+          if (carryForwardBanner != null) ...[
+            const SizedBox(height: 12),
+            carryForwardBanner,
+          ],
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -356,14 +378,19 @@ class _TaskListView extends ConsumerWidget {
     return ListView.separated(
       key: const Key('tasksScrollView'),
       padding: const EdgeInsets.all(20),
-      itemCount: filteredTasks.length + 1,
+      itemCount: filteredTasks.length + 1 + (carryForwardBanner == null ? 0 : 1),
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index == 0) {
           return headerPanel;
         }
 
-        final task = filteredTasks[index - 1];
+        if (carryForwardBanner != null && index == 1) {
+          return carryForwardBanner;
+        }
+
+        final taskIndex = index - 1 - (carryForwardBanner == null ? 0 : 1);
+        final task = filteredTasks[taskIndex];
         final taskWithTopThreeState = task.copyWith(
           isTopThree: topTaskIds.contains(task.taskId),
         );
@@ -484,6 +511,95 @@ class _TaskSummaryChip extends StatelessWidget {
               color: AppColours.darkText,
               fontWeight: FontWeight.w700,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CarryForwardBanner extends StatelessWidget {
+  const _CarryForwardBanner({
+    required this.parkedCount,
+    required this.carryForwardNotes,
+    required this.onReviewParked,
+    required this.onOpenPlanner,
+  });
+
+  final int parkedCount;
+  final String carryForwardNotes;
+  final VoidCallback onReviewParked;
+  final VoidCallback onOpenPlanner;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasNotes = carryForwardNotes.isNotEmpty;
+
+    return Container(
+      key: const Key('tasksCarryForwardBanner'),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.inventory_2_outlined, color: AppColours.darkAmber),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Carry-forward',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (parkedCount > 0)
+                _TaskSummaryChip(label: 'Parked', value: '$parkedCount'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasNotes
+                ? 'A parked task or note is waiting to be reopened.'
+                : 'Parked tasks are waiting to be reopened.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          if (hasNotes) ...[
+            const SizedBox(height: 10),
+            Text(
+              carryForwardNotes,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColours.darkText,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onReviewParked,
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Review Parked'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenPlanner,
+                icon: const Icon(Icons.event_note_outlined),
+                label: const Text('Open Planner'),
+              ),
+            ],
           ),
         ],
       ),

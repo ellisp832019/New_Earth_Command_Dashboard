@@ -687,6 +687,90 @@ void main() {
     expect(find.text('Status: Planned', skipOffstage: false), findsOneWidget);
   });
 
+  testWidgets('tasks screen surfaces carry-forward work', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(useMaterial3: true),
+        home: ProviderScope(
+          overrides: [
+            tasksProvider.overrideWith(
+              (ref) async => [
+                Task(
+                  taskId: 'task-carry-1',
+                  projectId: null,
+                  title: 'Parked website copy',
+                  description: 'Hold this until tomorrow.',
+                  category: 'Content',
+                  priority: 'Medium',
+                  status: 'Parked',
+                  dueDate: null,
+                  energyLevel: 'Low',
+                  estimatedMinutes: null,
+                  actualMinutes: null,
+                  createdAt: DateTime(2026, 5, 2, 9),
+                  updatedAt: DateTime(2026, 5, 2, 9),
+                  completedAt: null,
+                  notes: 'Carry forward the website tidy-up if the day runs long.',
+                  isTopThree: false,
+                  isArchived: false,
+                ),
+              ],
+            ),
+            projectsProvider.overrideWith((ref) async => const []),
+            plannerTaskOptionsProvider.overrideWith((ref) async => const []),
+            todayPlanProvider.overrideWith(
+              (ref) async => DailyPlan(
+                dailyPlanId: 'daily-plan-2026-05-02',
+                date: DateTime(2026, 5, 2),
+                mainFocus: null,
+                focusReason: null,
+                morningIntention: null,
+                topTask1Id: null,
+                topTask2Id: null,
+                topTask3Id: null,
+                learningFocusId: null,
+                contentFocusId: null,
+                businessFocusId: null,
+                wellbeingCheckinId: null,
+                eveningReview: null,
+                whatMovedForward: null,
+                whatWasCompleted: null,
+                whatWasLearned: null,
+                blockers: null,
+                carryForwardNotes:
+                    'Carry forward the website tidy-up if the day runs long.',
+                tomorrowFocus: null,
+                createdAt: DateTime(2026, 5, 2),
+                updatedAt: DateTime(2026, 5, 2),
+              ),
+            ),
+          ],
+          child: const TasksScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tasksCarryForwardBanner')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('tasksCarryForwardBanner')), findsOneWidget);
+    expect(find.text('Carry-forward'), findsOneWidget);
+    expect(find.text('Review Parked'), findsOneWidget);
+    expect(
+      find.text(
+        'Carry forward the website tidy-up if the day runs long.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('tasks screen shows add button in empty state', (
     WidgetTester tester,
   ) async {
@@ -918,6 +1002,26 @@ void main() {
       find.text('Note the likely first move for tomorrow.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('planner carry forward route opens the parked work section', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    appRouter.go('/planner?section=carryForward');
+    await pumpUntilIdle(tester);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('plannerCarryForwardField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(find.text('Carry Forward Review'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const Key('plannerCarryForwardField')), findsOneWidget);
   });
 
   testWidgets('planner review route opens the evening review section', (

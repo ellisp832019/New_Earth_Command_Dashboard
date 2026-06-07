@@ -102,6 +102,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
   late final TextEditingController _blockersController;
   late final ScrollController _scrollController;
   final GlobalKey _eveningReviewKey = GlobalKey();
+  final GlobalKey _carryForwardKey = GlobalKey();
 
   bool _isSavingMorningIntention = false;
   bool _isSavingMainFocus = false;
@@ -332,10 +333,13 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
           onSave: () => _saveCarryForward(context),
         ),
         const SizedBox(height: 12),
-        _CarryForwardReviewCard(
-          carryForwardNotes: plan.carryForwardNotes?.trim() ?? '',
-          onReviewParked: () => _openParkedTasks(context),
-          onOpenTasks: () => context.push(RouteNames.tasks),
+        KeyedSubtree(
+          key: _carryForwardKey,
+          child: _CarryForwardReviewCard(
+            carryForwardNotes: plan.carryForwardNotes?.trim() ?? '',
+            onReviewParked: () => _openParkedTasks(context),
+            onOpenTasks: () => context.push(RouteNames.tasks),
+          ),
         ),
         const SizedBox(height: 12),
         _EditablePlannerCard(
@@ -537,17 +541,18 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
   }
 
   void _scrollToInitialSectionIfNeeded() {
-    if (widget.initialSection != 'review') {
-      return;
-    }
+    final targetContext = switch (widget.initialSection) {
+      'review' => _eveningReviewKey.currentContext,
+      'carryForward' => _carryForwardKey.currentContext,
+      _ => null,
+    };
 
-    final reviewContext = _eveningReviewKey.currentContext;
-    if (reviewContext == null) {
+    if (targetContext == null) {
       return;
     }
 
     Scrollable.ensureVisible(
-      reviewContext,
+      targetContext,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
       alignment: 0.1,
