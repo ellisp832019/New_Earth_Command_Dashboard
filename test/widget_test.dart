@@ -15,6 +15,7 @@ import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart
 import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/application/dashboard_controller.dart';
 import 'package:new_earth_command_dashboard/features/dashboard/data/dashboard_repository.dart';
+import 'package:new_earth_command_dashboard/features/command_deck/data/command_deck_service.dart';
 import 'package:new_earth_command_dashboard/features/inbox/data/inbox_repository.dart';
 import 'package:new_earth_command_dashboard/features/journal/data/journal_repository.dart';
 import 'package:new_earth_command_dashboard/features/content/data/content_repository.dart';
@@ -88,9 +89,9 @@ void main() {
     Widget? child,
     VoiceStartupGateResult? startupGateResult,
     bool voiceAssistantEnabled = false,
+    List<CommandDeckActionLogEntry>? recentActions,
   }) {
-    return ProviderScope(
-      overrides: [
+    final overrides = [
         databaseReadyProvider.overrideWith((ref) async {}),
         appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
         voiceStartupGateProvider.overrideWith(
@@ -330,7 +331,16 @@ void main() {
             appVersion: 'test',
           ),
         ),
-      ],
+    ];
+
+    if (recentActions != null) {
+      overrides.add(
+        commandPaletteRecentActionsProvider.overrideWithValue(recentActions),
+      );
+    }
+
+    return ProviderScope(
+      overrides: overrides,
       child: child ?? const NewEarthCommandDashboardApp(),
     );
   }
@@ -441,7 +451,23 @@ void main() {
   testWidgets('ctrl k opens the command palette from the dashboard', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(buildTestApp());
+    await tester.pumpWidget(
+      buildTestApp(
+        recentActions: [
+          CommandDeckActionLogEntry(
+            timestamp: DateTime(2026, 6, 7, 10),
+            commandId: 'open_projects_hub',
+            label: 'Open Projects Hub',
+            type: 'open_route',
+            group: 'Navigate',
+            source: 'command_registry.example.json',
+            configSource: 'command_deck.json',
+            target: '/projects-intelligence',
+            resolvedTarget: '/projects-intelligence',
+          ),
+        ],
+      ),
+    );
     await pumpUntilIdle(tester);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -452,6 +478,17 @@ void main() {
 
     expect(find.text('Command Palette'), findsOneWidget);
     expect(find.byKey(const Key('commandPaletteSearchField')), findsOneWidget);
+    expect(
+      find.byKey(const Key('recentActionChip-open_projects_hub')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('recentActionChip-open_projects_hub')),
+    );
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Projects Hub'), findsWidgets);
   });
 
   test('command palette recent actions provider reads the local log', () {
@@ -463,8 +500,8 @@ void main() {
       '${runtimeDir.path}${Platform.pathSeparator}command_deck_action_log.jsonl',
     );
     actionLogFile.writeAsStringSync(
-      '{"timestamp":"2026-06-07T10:00:00.000","command_id":"open_dashboard","label":"Open Dashboard","type":"open_route","group":"Navigate","source":"command_registry.example.json","config_source":"command_deck.json"}\n'
-      '{"timestamp":"2026-06-07T10:02:00.000","command_id":"open_microgrow","label":"Open MicroGrow","type":"open_route","group":"Projects","source":"command_registry.example.json","config_source":"command_deck.json"}\n',
+      '{"timestamp":"2026-06-07T10:00:00.000","command_id":"open_dashboard","label":"Open Dashboard","type":"open_route","group":"Navigate","source":"command_registry.example.json","config_source":"command_deck.json","target":"/dashboard","resolved_target":"/dashboard"}\n'
+      '{"timestamp":"2026-06-07T10:02:00.000","command_id":"open_microgrow","label":"Open MicroGrow","type":"open_route","group":"Projects","source":"command_registry.example.json","config_source":"command_deck.json","target":"/projects/project-microgrow","resolved_target":"/projects/project-microgrow"}\n',
     );
     addTearDown(() {
       if (actionLogFile.existsSync()) {
@@ -479,6 +516,7 @@ void main() {
     expect(recentActions, hasLength(2));
     expect(recentActions.first.label, 'Open MicroGrow');
     expect(recentActions.last.label, 'Open Dashboard');
+    expect(recentActions.first.resolvedTarget, '/projects/project-microgrow');
   });
 
   testWidgets('more screen links to supporting screens', (

@@ -98,6 +98,8 @@ class CommandDeckActionLogEntry {
     required this.group,
     required this.source,
     required this.configSource,
+    required this.target,
+    required this.resolvedTarget,
   });
 
   factory CommandDeckActionLogEntry.fromJson(Map<String, dynamic> json) {
@@ -111,6 +113,8 @@ class CommandDeckActionLogEntry {
       group: json['group']?.toString() ?? 'General',
       source: json['source']?.toString() ?? '',
       configSource: json['config_source']?.toString() ?? '',
+      target: json['target']?.toString() ?? '',
+      resolvedTarget: json['resolved_target']?.toString() ?? '',
     );
   }
 
@@ -121,6 +125,8 @@ class CommandDeckActionLogEntry {
   final String group;
   final String source;
   final String configSource;
+  final String target;
+  final String resolvedTarget;
 
   String get timestampLabel {
     final date = timestamp.toLocal();
@@ -719,6 +725,15 @@ class CommandDeckService {
     final logFile = File(
       path.join(runtimeDir.path, 'command_deck_action_log.jsonl'),
     );
+    final resolvedTarget = switch (command.type) {
+      CommandDeckCommandType.openUrl => command.target,
+      CommandDeckCommandType.openFolder =>
+        _resolveTarget(command, config) ?? '',
+      CommandDeckCommandType.openRoute => command.target,
+      CommandDeckCommandType.script => _resolveTarget(command, config) ?? '',
+      CommandDeckCommandType.info => command.target,
+      CommandDeckCommandType.unknown => command.target,
+    };
     final entry = <String, Object?>{
       'timestamp': DateTime.now().toIso8601String(),
       'command_id': command.id,
@@ -727,6 +742,8 @@ class CommandDeckService {
       'group': command.group,
       'source': command.source,
       'config_source': config.source,
+      'target': command.target,
+      'resolved_target': resolvedTarget,
     };
     await logFile.writeAsString(
       '${jsonEncode(entry)}\n',

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -37,6 +39,48 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _openRecentAction(CommandDeckActionLogEntry entry) async {
+    final normalizedType = entry.type.toLowerCase().replaceAll('_', '');
+    final target = entry.resolvedTarget.trim().isNotEmpty
+        ? entry.resolvedTarget.trim()
+        : entry.target.trim();
+
+    if (target.isEmpty) {
+      _showSnackBar('No destination was recorded for this action.');
+      return;
+    }
+
+    try {
+      switch (normalizedType) {
+        case 'openroute':
+          context.push(target);
+          return;
+        case 'openurl':
+          await _openUrl(target);
+          break;
+        case 'openfolder':
+          await _openFolder(target);
+          break;
+        default:
+          _showSnackBar('That recent action cannot be reopened directly.');
+          return;
+      }
+
+      _showSnackBar('Reopened ${entry.label}.');
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showSnackBar('Could not reopen ${entry.label}: $error');
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -142,6 +186,7 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
               _RecentActionsCard(
                 recentActions: recentActions,
                 onOpenCommandDeck: () => context.go(RouteNames.commandDeck),
+                onOpenAction: _openRecentAction,
               ),
             if (query.isEmpty) const SizedBox(height: 18),
             if (groupedEntries.isEmpty)
@@ -731,10 +776,12 @@ class _RecentActionsCard extends StatelessWidget {
   const _RecentActionsCard({
     required this.recentActions,
     required this.onOpenCommandDeck,
+    required this.onOpenAction,
   });
 
   final List<CommandDeckActionLogEntry> recentActions;
   final VoidCallback onOpenCommandDeck;
+  final Future<void> Function(CommandDeckActionLogEntry entry) onOpenAction;
 
   @override
   Widget build(BuildContext context) {
@@ -780,7 +827,10 @@ class _RecentActionsCard extends StatelessWidget {
               runSpacing: 10,
               children: recentActions
                   .map((entry) {
-                    return _RecentActionChip(entry: entry);
+                    return _RecentActionChip(
+                      entry: entry,
+                      onTap: () => onOpenAction(entry),
+                    );
                   })
                   .toList(growable: false),
             ),
@@ -792,43 +842,105 @@ class _RecentActionsCard extends StatelessWidget {
 }
 
 class _RecentActionChip extends StatelessWidget {
-  const _RecentActionChip({required this.entry});
+  const _RecentActionChip({required this.entry, required this.onTap});
 
   final CommandDeckActionLogEntry entry;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+    return Material(
+      key: Key('recentActionChip-${entry.commandId}'),
+      color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColours.darkOutline),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              entry.label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkText,
-                fontWeight: FontWeight.w600,
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 260),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColours.darkOutline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                entry.label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${entry.group} • ${entry.type} • ${entry.timestampLabel}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                '${entry.group} • ${_recentActionTypeLabel(entry.type)} • ${entry.timestampLabel}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+String _recentActionTypeLabel(String type) {
+  switch (type.toLowerCase().replaceAll('_', '')) {
+    case 'openroute':
+      return 'Page';
+    case 'openurl':
+      return 'Link';
+    case 'openfolder':
+      return 'Folder';
+    case 'script':
+      return 'Script';
+    case 'info':
+      return 'Info';
+    default:
+      return 'Action';
+  }
+}
+
+Future<void> _openUrl(String url) async {
+  if (url.trim().isEmpty) {
+    return;
+  }
+
+  if (Platform.isWindows) {
+    await Process.start('cmd.exe', ['/c', 'start', '', url], runInShell: true);
+    return;
+  }
+
+  if (Platform.isMacOS) {
+    await Process.start('open', [url], runInShell: true);
+    return;
+  }
+
+  await Process.start('xdg-open', [url], runInShell: true);
+}
+
+Future<void> _openFolder(String folderPath) async {
+  final normalizedPath = folderPath.trim();
+  if (normalizedPath.isEmpty) {
+    return;
+  }
+
+  if (Platform.isWindows) {
+    await Process.start('explorer.exe', [normalizedPath]);
+    return;
+  }
+
+  if (Platform.isMacOS) {
+    await Process.start('open', [normalizedPath], runInShell: true);
+    return;
+  }
+
+  await Process.start('xdg-open', [normalizedPath], runInShell: true);
 }
 
 BoxDecoration _panelDecoration() {
