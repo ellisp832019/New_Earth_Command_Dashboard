@@ -57,6 +57,7 @@ BINARY_EXTS = {
 }
 
 IMAGE_EXTS = {".gif", ".ico", ".jpg", ".jpeg", ".png", ".svg", ".webp"}
+DIAGRAM_SOURCE_EXTS = {".drawio", ".gv", ".mmd", ".mermaid", ".dot", ".puml", ".plantuml", ".uml"}
 
 SCRIPT_EXTS = {".sh", ".ps1", ".bat", ".cmd", ".py"}
 DOC_EXTS = {".md", ".txt", ".rst", ".adoc", ".org"}
@@ -230,6 +231,7 @@ class SafeRepoScanner:
         docs: List[Dict[str, Any]] = []
         document_index: List[Dict[str, Any]] = []
         image_assets: List[Dict[str, Any]] = []
+        diagram_files: List[Dict[str, Any]] = []
         manifest_files: List[Dict[str, Any]] = []
         license_candidates: List[Dict[str, Any]] = []
         known_licenses: set[str] = set()
@@ -276,8 +278,16 @@ class SafeRepoScanner:
                     }
                 )
                 document_index.append(doc_summary)
+                if self._contains_diagram_markers(doc_text):
+                    diagram_files.append(self._index_diagram_source(record, doc_text, source_kind="embedded_markdown"))
             if self._looks_like_image_asset(p):
-                image_assets.append(self._index_image_asset(record))
+                image_asset = self._index_image_asset(record)
+                image_assets.append(image_asset)
+                if image_asset.get("asset_type") == "diagram":
+                    diagram_files.append(self._index_diagram_source(record, "", source_kind="image_asset"))
+            if self._looks_like_diagram_source(p):
+                diagram_text = self._safe_read_text(p)
+                diagram_files.append(self._index_diagram_source(record, diagram_text))
             if self._is_dependency_manifest(p):
                 manifest_files.append({"path": record.path, "suffix": record.suffix, "size_bytes": size})
             if self._looks_like_license_file(p):
@@ -315,6 +325,7 @@ class SafeRepoScanner:
             "documents": docs,
             "document_index": document_index,
             "image_assets": image_assets,
+            "diagram_files": diagram_files,
             "license_detection": license_candidates,
             "license_summary": {
                 "candidate_count": len(license_candidates),
@@ -400,9 +411,29 @@ class SafeRepoScanner:
         suffix = path.suffix.lower()
         return suffix in IMAGE_EXTS
 
+    def _looks_like_diagram_source(self, path: Path) -> bool:
+        suffix = path.suffix.lower()
+        name = path.name.lower()
+        return suffix in DIAGRAM_SOURCE_EXTS or name.endswith(".drawio.svg")
+
+    def _contains_diagram_markers(self, text: str) -> bool:
+        lowered = text.lower()
+        markers = (
+            "```mermaid",
+            "flowchart",
+            "sequencediagram",
+            "classdiagram",
+            "statediagram",
+            "erdiagram",
+            "@startuml",
+            "@enduml",
+            "<mxfile",
+            "digraph ",
+        )
+        return any(marker in lowered for marker in markers)
+
     def _index_image_asset(self, record: FileRecord) -> Dict[str, Any]:
         path = record.path.lower()
-        name = Path(record.path).name.lower()
         asset_type = "image_asset"
         if any(term in path for term in ("screenshot", "screen_capture", "screen-shot", "ui_preview", "preview")):
             asset_type = "screenshot"
@@ -432,6 +463,54 @@ class SafeRepoScanner:
             "flags": record.flags,
             "language": record.language,
             "hints": hints,
+        }
+
+    def _index_diagram_source(
+        self,
+        record: FileRecord,
+        text: str,
+        *,
+        source_kind: str = "source_file",
+    ) -> Dict[str, Any]:
+        lowered = text.lower()
+        name = Path(record.path).name.lower()
+        if source_kind == "embedded_markdown":
+            diagram_type = "embedded_markdown_diagram"
+        elif source_kind == "image_asset":
+            diagram_type = "diagram_image_asset"
+        elif record.suffix.lower() in {".mmd", ".mermaid"}:
+            diagram_type = "mermaid"
+        elif record.suffix.lower() in {".puml", ".plantuml", ".uml"}:
+            diagram_type = "plantuml"
+        elif record.suffix.lower() in {".dot", ".gv"}:
+            diagram_type = "graphviz"
+        elif record.suffix.lower() == ".drawio" or name.endswith(".drawio.svg"):
+            diagram_type = "drawio"
+        else:
+            diagram_type = "diagram"
+
+        markers = []
+        for marker, label in (
+            ("flowchart", "flowchart"),
+            ("sequenceDiagram", "sequence diagram"),
+            ("classDiagram", "class diagram"),
+            ("stateDiagram", "state diagram"),
+            ("erDiagram", "entity relationship diagram"),
+            ("@startuml", "plantuml"),
+            ("<mxfile", "drawio"),
+            ("digraph", "graphviz"),
+        ):
+            if marker.lower() in lowered:
+                markers.append(label)
+
+        return {
+            "path": record.path,
+            "diagram_type": diagram_type,
+            "source_kind": source_kind,
+            "size_bytes": record.size_bytes,
+            "flags": record.flags,
+            "language": record.language,
+            "markers": markers or [diagram_type],
         }
 
     def _detect_license_text(self, text: str) -> str:

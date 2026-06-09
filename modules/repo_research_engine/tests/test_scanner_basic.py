@@ -74,6 +74,28 @@ def test_image_asset_discovery_classifies_visual_assets(tmp_path):
     assert "diagram" in asset_types
 
 
+def test_diagram_discovery_finds_sources_and_embedded_flowcharts(tmp_path):
+    (tmp_path / "flowchart.mmd").write_text(
+        "flowchart TD\n  A --> B\n  B --> C\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "sequence.puml").write_text(
+        "@startuml\nAlice -> Bob: Hello\n@enduml\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "README.md").write_text(
+        "# Docs\n\n```mermaid\nflowchart LR\n  X --> Y\n```\n",
+        encoding="utf-8",
+    )
+
+    result = SafeRepoScanner(str(tmp_path)).scan()
+    diagram_types = {item["diagram_type"] for item in result["diagram_files"]}
+
+    assert "mermaid" in diagram_types
+    assert "plantuml" in diagram_types
+    assert "embedded_markdown_diagram" in diagram_types
+
+
 def test_scanner_detects_language_framework_and_dependencies(tmp_path):
     (tmp_path / "lib").mkdir()
     (tmp_path / "lib" / "main.dart").write_text("void main() {}", encoding="utf-8")

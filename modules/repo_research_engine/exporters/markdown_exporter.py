@@ -133,6 +133,15 @@ class MarkdownExporter:
         else:
             lines.append("- No image assets were detected.")
 
+        lines += ["", "## Diagram Discovery"]
+        diagram_files = a.get("diagram_files", [])
+        if diagram_files:
+            for item in diagram_files[:20]:
+                markers = ", ".join(item.get("markers") or []) or "diagram"
+                lines.append(f"- `{item.get('path')}` - {item.get('diagram_type')} - {markers}")
+        else:
+            lines.append("- No diagram or flowchart sources were detected.")
+
         lines += ["", "## Licences"]
         license_summary = a.get("license_summary", {})
         if license_summary:

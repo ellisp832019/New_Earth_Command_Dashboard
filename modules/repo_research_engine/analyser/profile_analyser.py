@@ -29,6 +29,7 @@ class ProfileAnalyser:
         architecture = knowledge.get("architecture_summary", "")
         file_type_drilldowns = self._file_type_drilldowns()
         image_assets = self.scan.get("image_assets", [])
+        diagram_files = self.scan.get("diagram_files", [])
 
         return {
             "profile_name": self.profile.get("profile_name"),
@@ -53,6 +54,7 @@ class ProfileAnalyser:
             "project_summary": knowledge.get("project_summary", ""),
             "file_type_drilldowns": file_type_drilldowns,
             "image_assets": image_assets,
+            "diagram_files": diagram_files,
             "learning_notes": knowledge.get("learning_notes", []),
             "implementation_ideas": knowledge.get("implementation_ideas", []),
             "reusable_components": knowledge.get("reusable_components", []),
