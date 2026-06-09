@@ -10,6 +10,7 @@ from exporters.graph_exporter import GraphExporter
 from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
 from sources import (
+    BitbucketSourceAdapter,
     GitLabSourceAdapter,
     GitHubSourceAdapter,
     LocalPdfResearchSourceAdapter,
@@ -530,6 +531,41 @@ def test_gitlab_source_adapter_loads_local_snapshot(tmp_path):
     assert snapshot.metadata["metadata"]["name"] == "living"
     assert any(file_ref.path == "src/index.py" for file_ref in snapshot.files)
     assert adapter.fetch_file_text(matches[0], "src/index.py").startswith("print")
+
+
+def test_bitbucket_source_adapter_loads_local_snapshot(tmp_path):
+    snapshot_root = tmp_path / "snapshots"
+    repo_root = snapshot_root / "bitbucket" / "new-earth" / "rehab"
+    (repo_root / ".git").mkdir(parents=True)
+    (repo_root / "snapshot.json").write_text(
+        json.dumps(
+            {
+                "provider": "Bitbucket",
+                "owner": "new-earth",
+                "name": "rehab",
+                "url": "local://bitbucket/new-earth/rehab",
+                "default_branch": "main",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (repo_root / "README.md").write_text("# Rehab\n", encoding="utf-8")
+    (repo_root / "assets").mkdir()
+    (repo_root / "assets" / "banner.svg").write_text("<svg />", encoding="utf-8")
+
+    adapter = BitbucketSourceAdapter(snapshot_root)
+    matches = adapter.search_repositories("rehab")
+
+    assert len(matches) == 1
+    assert matches[0].provider == "Bitbucket"
+    assert matches[0].owner == "new-earth"
+    assert matches[0].name == "rehab"
+
+    snapshot = adapter.fetch_repository_snapshot(matches[0])
+    assert snapshot.repository.provider == "Bitbucket"
+    assert snapshot.metadata["metadata"]["provider"] == "Bitbucket"
+    assert any(file_ref.path == "assets/banner.svg" for file_ref in snapshot.files)
+    assert adapter.fetch_file_text(matches[0], "README.md").startswith("# Rehab")
 
 
 def test_research_source_interfaces_mark_network_opt_in():

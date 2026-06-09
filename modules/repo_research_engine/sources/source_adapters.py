@@ -284,7 +284,7 @@ class GitLabSourceAdapter(_LocalSnapshotRepositorySourceAdapter):
         return "GitLab"
 
 
-class BitbucketSourceAdapter(ReadOnlyRepositorySourceAdapter):
+class BitbucketSourceAdapter(_LocalSnapshotRepositorySourceAdapter):
     @property
     def provider_name(self) -> str:
         return "Bitbucket"
