@@ -9,6 +9,7 @@ from exporters import MarkdownExporter, OmegaOsExportAdapter, PromptExporter
 from exporters.graph_exporter import GraphExporter
 from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
+from scripts.run_research import _render_comparison_markdown
 
 
 def test_scanner_finds_readme(tmp_path):
@@ -237,12 +238,15 @@ def test_comparison_and_change_tracking(tmp_path):
 
     comparison = RepoComparisonEngine(current, other).compare()
     change_tracking = ChangeTracker(current, other).track()
+    rendered = _render_comparison_markdown(comparison)
 
     assert "lib/main.dart" in comparison["files_added"]
+    assert "README.md" in comparison["files_modified"]
     assert comparison["dependency_changes"]["added"] == ["riverpod"]
     assert change_tracking["file_changes"]["added"]
     assert "README.md" in change_tracking["file_changes"]["modified"]
     assert "scripts/build.py" in change_tracking["new_risk_paths"]
+    assert "Files Modified" in rendered
 
 
 def test_graph_exporter_creates_graph_files(tmp_path):
