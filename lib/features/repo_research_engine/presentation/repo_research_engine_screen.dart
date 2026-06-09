@@ -52,6 +52,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   bool _loadingRecentRuns = true;
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
+  String _lastRunTimestampLabel = 'Not captured yet';
   String _mainReportPath = '';
   String _securityReportPath = '';
   String _comparisonReportPath = '';
@@ -342,6 +343,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 
   Widget _outputsCard(BuildContext context) {
+    final outputDirectory = _outputController.text.trim().isEmpty
+        ? _defaultOutputDirectory
+        : _outputController.text.trim();
     return _panel(
       context,
       title: 'Research Reports',
@@ -349,6 +353,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _bundleMetadataBlock(context, outputDirectory: outputDirectory),
+          const SizedBox(height: 14),
           if (_outputFiles.isEmpty)
             Text(
               'No output files loaded yet.',
@@ -371,6 +377,51 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bundleMetadataBlock(
+    BuildContext context, {
+    required String outputDirectory,
+  }) {
+    final rows = [
+      _MetadataRow(label: 'Output directory', value: outputDirectory),
+      _MetadataRow(label: 'Last run status', value: _lastRunLabel),
+      _MetadataRow(label: 'Last run time', value: _lastRunTimestampLabel),
+      _MetadataRow(
+        label: 'Loaded files',
+        value: _outputFiles.isEmpty
+            ? 'No files loaded'
+            : '${_outputFiles.length} file(s)',
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Bundle metadata',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (var index = 0; index < rows.length; index++) ...[
+            rows[index],
+            if (index != rows.length - 1) const SizedBox(height: 8),
+          ],
         ],
       ),
     );
@@ -701,6 +752,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         _lastRunLabel = result.succeeded
             ? 'Completed with exit code ${result.exitCode}'
             : 'Finished with exit code ${result.exitCode}';
+        _lastRunTimestampLabel = _formatDateTime(DateTime.now());
       });
       await _loadRecentRuns(refreshStateOnly: false);
 
@@ -713,6 +765,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       setState(() {
         _logController.text = 'Run failed:\n$error';
         _lastRunLabel = 'Failed';
+        _lastRunTimestampLabel = _formatDateTime(DateTime.now());
       });
       _setMessage('Repo Research Engine could not run: $error');
     } finally {
@@ -776,6 +829,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     if (mounted) {
       setState(() {
         _graphExport = run.graphExport;
+        _lastRunLabel = run.succeeded
+            ? 'Completed with exit code ${run.exitCode}'
+            : 'Finished with exit code ${run.exitCode}';
+        _lastRunTimestampLabel = run.parsedTimestamp == null
+            ? run.timestamp
+            : _formatDateTime(run.parsedTimestamp!);
         _mainReportPath = pathJoin(
           run.outputDirectory,
           'repo_research_report.md',
@@ -833,6 +892,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     }
   }
 
+  String _formatDateTime(DateTime dateTime) {
+    final local = dateTime.toLocal();
+    return '${local.year.toString().padLeft(4, '0')}-'
+        '${local.month.toString().padLeft(2, '0')}-'
+        '${local.day.toString().padLeft(2, '0')} '
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
+  }
+
   String pathJoin(String left, String right) {
     if (left.endsWith(Platform.pathSeparator)) {
       return '$left$right';
@@ -866,6 +934,40 @@ class _StatusChip extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+class _MetadataRow extends StatelessWidget {
+  const _MetadataRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 132,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+          ),
+        ),
+      ],
     );
   }
 }
