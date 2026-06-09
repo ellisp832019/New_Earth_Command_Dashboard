@@ -10,6 +10,7 @@ from exporters.graph_exporter import GraphExporter
 from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
 from sources import (
+    GitLabSourceAdapter,
     GitHubSourceAdapter,
     LocalPdfResearchSourceAdapter,
     RemoteFileRef,
@@ -494,6 +495,41 @@ def test_github_source_adapter_loads_local_snapshot(tmp_path):
     assert any(file_ref.path == "README.md" for file_ref in snapshot.files)
     assert any(file_ref.path == "docs/guide.md" for file_ref in file_tree)
     assert adapter.fetch_file_text(matches[0], "README.md").startswith("# Dashboard")
+
+
+def test_gitlab_source_adapter_loads_local_snapshot(tmp_path):
+    snapshot_root = tmp_path / "snapshots"
+    repo_root = snapshot_root / "gitlab" / "new-earth" / "living"
+    (repo_root / ".git").mkdir(parents=True)
+    (repo_root / "repository.json").write_text(
+        json.dumps(
+            {
+                "provider": "GitLab",
+                "owner": "new-earth",
+                "name": "living",
+                "url": "local://gitlab/new-earth/living",
+                "default_branch": "main",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (repo_root / "README.md").write_text("# Living\n", encoding="utf-8")
+    (repo_root / "src").mkdir()
+    (repo_root / "src" / "index.py").write_text("print('hello')\n", encoding="utf-8")
+
+    adapter = GitLabSourceAdapter(snapshot_root)
+    matches = adapter.search_repositories("living")
+
+    assert len(matches) == 1
+    assert matches[0].provider == "GitLab"
+    assert matches[0].owner == "new-earth"
+    assert matches[0].name == "living"
+
+    snapshot = adapter.fetch_repository_snapshot(matches[0])
+    assert snapshot.repository.provider == "GitLab"
+    assert snapshot.metadata["metadata"]["name"] == "living"
+    assert any(file_ref.path == "src/index.py" for file_ref in snapshot.files)
+    assert adapter.fetch_file_text(matches[0], "src/index.py").startswith("print")
 
 
 def test_research_source_interfaces_mark_network_opt_in():

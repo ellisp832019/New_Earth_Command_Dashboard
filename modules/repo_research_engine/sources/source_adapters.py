@@ -278,7 +278,7 @@ class GitHubSourceAdapter(_LocalSnapshotRepositorySourceAdapter):
         return "GitHub"
 
 
-class GitLabSourceAdapter(ReadOnlyRepositorySourceAdapter):
+class GitLabSourceAdapter(_LocalSnapshotRepositorySourceAdapter):
     @property
     def provider_name(self) -> str:
         return "GitLab"
