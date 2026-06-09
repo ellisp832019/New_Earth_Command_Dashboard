@@ -841,6 +841,53 @@ class _RecentRunTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 10),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 6),
+            collapsedIconColor: AppColours.darkMutedText,
+            iconColor: AppColours.darkSecondary,
+            title: Text(
+              'Details',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              'Command, flags, and generated files',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            ),
+            children: [
+              _detailRow('Command', run.command.join(' '), context),
+              _detailRow(
+                'Graph export',
+                run.graphExport ? 'Enabled' : 'Disabled',
+                context,
+              ),
+              _detailRow(
+                'Comparison',
+                [
+                  if ((run.compareWith ?? '').isNotEmpty)
+                    'Compare: ${run.compareWith}',
+                  if ((run.baselineInventory ?? '').isNotEmpty)
+                    'Baseline: ${run.baselineInventory}',
+                  if ((run.compareProfile ?? '').isNotEmpty)
+                    'Compare profile: ${run.compareProfile}',
+                ].join(' • '),
+                context,
+              ),
+              _detailRow(
+                'Reports',
+                run.reportFiles.isEmpty
+                    ? 'No report files captured yet.'
+                    : run.reportFiles.join(', '),
+                context,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -867,6 +914,31 @@ class _RecentRunTile extends StatelessWidget {
                   label: const Text('Open'),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value.isEmpty ? 'Not set' : value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
           ),
         ],
       ),
