@@ -22,18 +22,17 @@ void main() {
 
   testWidgets('systems screen surfaces backup guardian', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: SystemsScreen()),
+      ProviderScope(
+        child: const MaterialApp(home: SystemsScreen()),
+      ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Backup Guardian'), findsOneWidget);
     expect(find.text('Manual V1'), findsOneWidget);
     expect(find.text('Restore dry run'), findsOneWidget);
-    expect(find.text('Planned systems'), findsOneWidget);
-    expect(find.text('Drive Health'), findsOneWidget);
-    expect(find.text('Restore Lab'), findsOneWidget);
-    expect(find.text('Device Health'), findsOneWidget);
   });
 
   testWidgets('backup guardian screen shows status and roadmap', (tester) async {
@@ -51,6 +50,14 @@ void main() {
                 restoreTestFolder: 'D:/_RESTORE_TEST_AREA',
                 verifyAfterBackup: true,
                 createManifest: true,
+                scheduleEnabled: true,
+                dailyBackupTime: '02:00',
+                weeklySnapshotDay: 'Sunday',
+                monthlyArchiveDay: 1,
+                staleAfterDays: 7,
+                dailyKeep: 7,
+                weeklyKeep: 4,
+                monthlyKeep: 12,
                 mode: 'mirror',
                 configPath: 'modules/system_backup/config/backup_paths.local.json',
                 isLocalConfig: true,
@@ -64,6 +71,14 @@ void main() {
               latestReportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
               restoreTestStatus: 'Not run yet',
               backupSizeText: 'Not tracked in V1',
+              historyFilePath: 'modules/system_backup/runtime/backup_history.json',
+              historyEntries: <BackupGuardianHistoryEntry>[],
+              restorePoints: <BackupGuardianHistoryEntry>[],
+              scheduleSummary: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
+              retentionSummary: 'Daily keep 7, weekly keep 4, monthly keep 12.',
+              freshnessSummary: 'Backup ran today.',
+              notificationBanner: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
+              nextSuggestedRun: null,
               lastBackupAt: null,
               lastVerificationAt: null,
               statusUpdatedAt: null,

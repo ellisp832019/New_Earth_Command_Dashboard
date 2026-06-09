@@ -18,6 +18,10 @@ Systems
 - Backup Health
 - Warnings
 - Restore Test Status
+- Schedule Summary
+- Retention Summary
+- Freshness Summary
+- Restore Points
 
 ## Main actions
 
@@ -27,6 +31,10 @@ Systems
 - Restore Dry Run
 - Open Backup Folder
 - Export Report
+- Daily Backup
+- Weekly Snapshot
+- Monthly Archive
+- Refresh Status
 
 ## Activity log
 
@@ -40,6 +48,12 @@ Show:
 - files skipped
 - warnings
 - errors
+
+Also show:
+
+- latest status file
+- backup history file
+- next suggested run
 
 ## Health states
 

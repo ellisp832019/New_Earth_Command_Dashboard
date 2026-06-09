@@ -8,6 +8,9 @@ enum BackupGuardianAction {
   backupNow,
   verifyLatest,
   restoreDryRun,
+  dailyBackup,
+  weeklySnapshot,
+  monthlyArchive,
 }
 
 enum BackupGuardianHealthState { green, amber, red, grey }
@@ -22,6 +25,14 @@ class BackupGuardianConfig {
     required this.restoreTestFolder,
     required this.verifyAfterBackup,
     required this.createManifest,
+    required this.scheduleEnabled,
+    required this.dailyBackupTime,
+    required this.weeklySnapshotDay,
+    required this.monthlyArchiveDay,
+    required this.staleAfterDays,
+    required this.dailyKeep,
+    required this.weeklyKeep,
+    required this.monthlyKeep,
     required this.mode,
     required this.configPath,
     required this.isLocalConfig,
@@ -35,6 +46,14 @@ class BackupGuardianConfig {
   final String restoreTestFolder;
   final bool verifyAfterBackup;
   final bool createManifest;
+  final bool scheduleEnabled;
+  final String dailyBackupTime;
+  final String weeklySnapshotDay;
+  final int monthlyArchiveDay;
+  final int staleAfterDays;
+  final int dailyKeep;
+  final int weeklyKeep;
+  final int monthlyKeep;
   final String mode;
   final String configPath;
   final bool isLocalConfig;
@@ -60,6 +79,28 @@ class BackupGuardianConfig {
       return fallback;
     }
 
+    int readInt(String key, int fallback) {
+      final value = json[key];
+      if (value is int) {
+        return value;
+      }
+      if (value is String) {
+        return int.tryParse(value.trim()) ?? fallback;
+      }
+      return fallback;
+    }
+
+    Map<String, dynamic> readMap(String key) {
+      final value = json[key];
+      if (value is Map<String, dynamic>) {
+        return value;
+      }
+      return <String, dynamic>{};
+    }
+
+    final schedule = readMap('schedule');
+    final retention = readMap('retention');
+
     return BackupGuardianConfig(
       sourceDrive: readString('source_drive', 'D:/'),
       backupTarget: readString('backup_target', 'E:/NEW_EARTH_BACKUP'),
@@ -81,6 +122,32 @@ class BackupGuardianConfig {
       ),
       verifyAfterBackup: readBool('verify_after_backup', true),
       createManifest: readBool('create_manifest', true),
+      scheduleEnabled: (schedule['enabled'] is bool
+              ? schedule['enabled'] as bool
+              : readBool('schedule_enabled', false)),
+      dailyBackupTime: schedule['daily_time'] is String &&
+              (schedule['daily_time'] as String).trim().isNotEmpty
+          ? (schedule['daily_time'] as String).trim()
+          : readString('daily_backup_time', '02:00'),
+      weeklySnapshotDay: schedule['weekly_day'] is String &&
+              (schedule['weekly_day'] as String).trim().isNotEmpty
+          ? (schedule['weekly_day'] as String).trim()
+          : readString('weekly_snapshot_day', 'Sunday'),
+      monthlyArchiveDay: schedule['monthly_day'] is int
+          ? schedule['monthly_day'] as int
+          : readInt('monthly_archive_day', 1),
+      staleAfterDays: schedule['stale_after_days'] is int
+          ? schedule['stale_after_days'] as int
+          : readInt('stale_after_days', 2),
+      dailyKeep: retention['daily_keep'] is int
+          ? retention['daily_keep'] as int
+          : readInt('daily_keep', 7),
+      weeklyKeep: retention['weekly_keep'] is int
+          ? retention['weekly_keep'] as int
+          : readInt('weekly_keep', 4),
+      monthlyKeep: retention['monthly_keep'] is int
+          ? retention['monthly_keep'] as int
+          : readInt('monthly_keep', 12),
       mode: readString('mode', 'mirror'),
       configPath: configPath,
       isLocalConfig: isLocalConfig,
@@ -100,6 +167,14 @@ class BackupGuardianSnapshot {
     required this.latestReportPath,
     required this.restoreTestStatus,
     required this.backupSizeText,
+    required this.historyFilePath,
+    required this.historyEntries,
+    required this.restorePoints,
+    required this.scheduleSummary,
+    required this.retentionSummary,
+    required this.freshnessSummary,
+    required this.notificationBanner,
+    required this.nextSuggestedRun,
     required this.lastBackupAt,
     required this.lastVerificationAt,
     required this.statusUpdatedAt,
@@ -118,6 +193,14 @@ class BackupGuardianSnapshot {
   final String latestReportPath;
   final String restoreTestStatus;
   final String backupSizeText;
+  final String historyFilePath;
+  final List<BackupGuardianHistoryEntry> historyEntries;
+  final List<BackupGuardianHistoryEntry> restorePoints;
+  final String scheduleSummary;
+  final String retentionSummary;
+  final String freshnessSummary;
+  final String notificationBanner;
+  final DateTime? nextSuggestedRun;
   final DateTime? lastBackupAt;
   final DateTime? lastVerificationAt;
   final DateTime? statusUpdatedAt;
@@ -128,6 +211,7 @@ class BackupGuardianSnapshot {
   String get sourceDrive => config.sourceDrive;
   String get backupTarget => config.backupTarget;
   bool get isHealthy => healthState == BackupGuardianHealthState.green;
+  bool get hasHistory => historyEntries.isNotEmpty;
 }
 
 class BackupGuardianService {
@@ -147,14 +231,26 @@ class BackupGuardianService {
   File get _statusFile =>
       File(path.join(_moduleRoot.path, 'runtime', 'latest_status.json'));
 
+  File get _historyFile =>
+      File(path.join(_moduleRoot.path, 'runtime', 'backup_history.json'));
+
   Future<BackupGuardianSnapshot> loadSnapshot() async {
     final config = await _loadConfig();
     final status = await _loadStatus();
+    final history = await _loadHistory();
     final sourceExists = Directory(config.sourceDrive).existsSync();
     final backupDriveRoot = path.dirname(
       config.backupTarget.replaceAll('\\', '/').trimRight(),
     );
     final backupDriveExists = Directory(backupDriveRoot).existsSync();
+    final latestBackupHistory = _latestHistoryEntry(
+      history.entries,
+      const ['BackupNow', 'DailyBackup', 'WeeklySnapshot', 'MonthlyArchive'],
+    );
+    final latestVerificationHistory = _latestHistoryEntry(
+      history.entries,
+      const ['VerifyLatest'],
+    );
 
     final warnings = <String>[
       ...status.warnings,
@@ -164,6 +260,8 @@ class BackupGuardianService {
         'No status file found yet. Run Dry Run or Backup Now to create one.',
       if (sourceExists && !backupDriveExists)
         'Waiting for the external backup drive to appear.',
+      if (history.entries.isEmpty)
+        'No backup history has been recorded yet.',
     ];
 
     final errors = <String>[
@@ -172,25 +270,57 @@ class BackupGuardianService {
     ];
 
     final lastBackupAt = status.lastBackupAt ??
+        latestBackupHistory?.finishedAt ??
         (status.mode == 'BackupNow' ? status.updatedAt : null);
     final lastVerificationAt = status.lastVerificationAt ??
+        latestVerificationHistory?.finishedAt ??
         (status.mode == 'VerifyLatest' ? status.updatedAt : null);
+    final backupAge = _backupAgeInDays(lastBackupAt);
     final healthState = _deriveHealthState(
       status: status,
       sourceExists: sourceExists,
       backupDriveExists: backupDriveExists,
       lastBackupAt: lastBackupAt,
       lastVerificationAt: lastVerificationAt,
+      staleAfterDays: config.staleAfterDays,
     );
 
     final healthSummary = switch (healthState) {
       BackupGuardianHealthState.green => 'Latest backup verified',
       BackupGuardianHealthState.amber => sourceExists && !backupDriveExists
           ? 'Waiting for the external backup drive'
-          : 'Backup exists but still needs review',
+          : backupAge != null && backupAge >= config.staleAfterDays
+              ? 'Backup is older than the freshness threshold'
+              : 'Backup exists but still needs review',
       BackupGuardianHealthState.red => 'Backup failed or target missing',
       BackupGuardianHealthState.grey => 'No backup run yet',
     };
+
+    final freshnessSummary = lastBackupAt == null
+        ? 'No backup age recorded yet.'
+        : backupAge == null
+            ? 'Backup age is being tracked.'
+            : backupAge <= 0
+                ? 'Backup ran today.'
+                : 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old.';
+
+    final scheduleSummary = config.scheduleEnabled
+        ? 'Scheduled daily at ${config.dailyBackupTime}, weekly on ${config.weeklySnapshotDay}, monthly on day ${config.monthlyArchiveDay}.'
+        : 'Manual backups only for now.';
+
+    final retentionSummary =
+        'Daily keep ${config.dailyKeep}, weekly keep ${config.weeklyKeep}, monthly keep ${config.monthlyKeep}.';
+
+    final notificationBanner = history.entries.isEmpty
+        ? 'No backup history yet. Run a backup to start the timeline.'
+        : backupAge != null && backupAge >= config.staleAfterDays
+            ? 'Backup is older than ${config.staleAfterDays} day${config.staleAfterDays == 1 ? '' : 's'}. Run Backup Now soon.'
+            : scheduleSummary;
+
+    final nextSuggestedRun = _calculateNextSuggestedRun(
+      config: config,
+      lastBackupAt: lastBackupAt,
+    );
 
     return BackupGuardianSnapshot(
       config: config,
@@ -211,6 +341,16 @@ class BackupGuardianService {
       backupSizeText: status.backupSizeText.isNotEmpty
           ? status.backupSizeText
           : 'Not tracked in V1',
+      historyFilePath: _historyFile.path,
+      historyEntries: history.entries,
+      restorePoints: history.entries
+          .where((entry) => entry.isRestorePoint)
+          .toList(growable: false),
+      scheduleSummary: scheduleSummary,
+      retentionSummary: retentionSummary,
+      freshnessSummary: freshnessSummary,
+      notificationBanner: notificationBanner,
+      nextSuggestedRun: nextSuggestedRun,
       lastBackupAt: lastBackupAt,
       lastVerificationAt: lastVerificationAt,
       statusUpdatedAt: status.updatedAt,
@@ -227,6 +367,12 @@ class BackupGuardianService {
       BackupGuardianAction.verifyLatest => 'scripts/windows/verify_latest.bat',
       BackupGuardianAction.restoreDryRun =>
         'scripts/windows/restore_dry_run.bat',
+      BackupGuardianAction.dailyBackup =>
+        'scripts/windows/daily_backup.bat',
+      BackupGuardianAction.weeklySnapshot =>
+        'scripts/windows/weekly_snapshot.bat',
+      BackupGuardianAction.monthlyArchive =>
+        'scripts/windows/monthly_archive.bat',
     };
 
     final scriptPath = path.join(_moduleRoot.path, script);
@@ -320,6 +466,7 @@ class BackupGuardianService {
     required bool backupDriveExists,
     required DateTime? lastBackupAt,
     required DateTime? lastVerificationAt,
+    required int staleAfterDays,
   }) {
     if (!sourceExists) {
       return BackupGuardianHealthState.red;
@@ -340,6 +487,11 @@ class BackupGuardianService {
       }
     }
 
+    final backupAge = _backupAgeInDays(lastBackupAt);
+    if (backupAge != null && backupAge >= staleAfterDays) {
+      return BackupGuardianHealthState.amber;
+    }
+
     if (!backupDriveExists) {
       return BackupGuardianHealthState.amber;
     }
@@ -357,6 +509,66 @@ class BackupGuardianService {
 
   String _fallbackReportPath(BackupGuardianConfig config) {
     return path.join(config.reportsFolder, 'latest_backup_guardian_report.log');
+  }
+
+  Future<_ParsedHistory> _loadHistory() async {
+    if (!_historyFile.existsSync()) {
+      return const _ParsedHistory();
+    }
+
+    final jsonMap = await _readJsonMap(_historyFile);
+    if (jsonMap == null) {
+      return const _ParsedHistory(exists: true);
+    }
+
+    return _ParsedHistory.fromJson(jsonMap);
+  }
+
+  BackupGuardianHistoryEntry? _latestHistoryEntry(
+    List<BackupGuardianHistoryEntry> entries,
+    List<String> modes,
+  ) {
+    for (final entry in entries) {
+      if (modes.contains(entry.mode)) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  int? _backupAgeInDays(DateTime? lastBackupAt) {
+    if (lastBackupAt == null) {
+      return null;
+    }
+    return DateTime.now().difference(lastBackupAt).inDays;
+  }
+
+  DateTime? _calculateNextSuggestedRun({
+    required BackupGuardianConfig config,
+    required DateTime? lastBackupAt,
+  }) {
+    if (!config.scheduleEnabled) {
+      return null;
+    }
+
+    final timeParts = config.dailyBackupTime.split(':');
+    final hour = timeParts.isNotEmpty ? int.tryParse(timeParts.first) ?? 2 : 2;
+    final minute = timeParts.length > 1
+        ? int.tryParse(timeParts.last) ?? 0
+        : 0;
+
+    final base = lastBackupAt?.toLocal() ?? DateTime.now().toLocal();
+    var candidate = DateTime(
+      base.year,
+      base.month,
+      base.day,
+      hour,
+      minute,
+    );
+    if (!candidate.isAfter(base)) {
+      candidate = candidate.add(const Duration(days: 1));
+    }
+    return candidate;
   }
 
   Future<void> _openPath(String value) async {
@@ -483,5 +695,127 @@ class _ParsedStatus {
       return null;
     }
     return DateTime.tryParse(trimmed);
+  }
+}
+
+class BackupGuardianHistoryEntry {
+  const BackupGuardianHistoryEntry({
+    required this.action,
+    required this.mode,
+    required this.state,
+    required this.summary,
+    required this.startedAt,
+    required this.finishedAt,
+    required this.durationMs,
+    required this.filesScanned,
+    required this.filesCopied,
+    required this.filesSkipped,
+    required this.backupSizeText,
+    required this.manifestPath,
+    required this.reportPath,
+    required this.restorePointLabel,
+  });
+
+  final String action;
+  final String mode;
+  final String state;
+  final String summary;
+  final DateTime? startedAt;
+  final DateTime? finishedAt;
+  final int? durationMs;
+  final int? filesScanned;
+  final int? filesCopied;
+  final int? filesSkipped;
+  final String backupSizeText;
+  final String manifestPath;
+  final String reportPath;
+  final String restorePointLabel;
+
+  bool get isRestorePoint {
+    final lowerState = state.toLowerCase();
+    return lowerState == 'green' ||
+        mode == 'BackupNow' ||
+        mode == 'DailyBackup' ||
+        mode == 'WeeklySnapshot' ||
+        mode == 'MonthlyArchive';
+  }
+
+  Duration? get duration =>
+      durationMs == null ? null : Duration(milliseconds: durationMs!);
+
+  DateTime get sortKey => finishedAt ?? startedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+  factory BackupGuardianHistoryEntry.fromJson(Map<String, dynamic> json) {
+    String readString(String key) {
+      final value = json[key];
+      if (value is String) {
+        return value.trim();
+      }
+      return '';
+    }
+
+    int? readInt(String key) {
+      final value = json[key];
+      if (value is int) {
+        return value;
+      }
+      if (value is String) {
+        return int.tryParse(value.trim());
+      }
+      return null;
+    }
+
+    DateTime? readDate(String key) {
+      final value = readString(key);
+      if (value.isEmpty) {
+        return null;
+      }
+      return DateTime.tryParse(value);
+    }
+
+    return BackupGuardianHistoryEntry(
+      action: readString('action'),
+      mode: readString('mode'),
+      state: readString('state').isNotEmpty ? readString('state') : readString('result'),
+      summary: readString('summary'),
+      startedAt: readDate('started_at'),
+      finishedAt: readDate('finished_at'),
+      durationMs: readInt('duration_ms'),
+      filesScanned: readInt('files_scanned'),
+      filesCopied: readInt('files_copied'),
+      filesSkipped: readInt('files_skipped'),
+      backupSizeText: readString('backup_size_text'),
+      manifestPath: readString('manifest_path'),
+      reportPath: readString('report_path'),
+      restorePointLabel: readString('restore_point_label'),
+    );
+  }
+}
+
+class _ParsedHistory {
+  const _ParsedHistory({
+    this.exists = false,
+    this.entries = const <BackupGuardianHistoryEntry>[],
+  });
+
+  final bool exists;
+  final List<BackupGuardianHistoryEntry> entries;
+
+  factory _ParsedHistory.fromJson(Map<String, dynamic> json) {
+    final rawEvents = json['events'];
+    final entries = <BackupGuardianHistoryEntry>[];
+    if (rawEvents is List) {
+      for (final item in rawEvents) {
+        if (item is Map<String, dynamic>) {
+          entries.add(BackupGuardianHistoryEntry.fromJson(item));
+        }
+      }
+    }
+
+    entries.sort((a, b) => b.sortKey.compareTo(a.sortKey));
+    return _ParsedHistory(
+      exists: true,
+      entries: List<BackupGuardianHistoryEntry>.unmodifiable(entries),
+    );
   }
 }

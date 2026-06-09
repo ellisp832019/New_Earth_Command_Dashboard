@@ -52,16 +52,22 @@ Later upgrade to a 2TB SSD.
 - Restore Dry Run
 - Open Backup Folder
 - View Backup Report
+- Daily Backup
+- Weekly Snapshot
+- Monthly Archive
+- Refresh Status
 
 ## Build order
 
 1. Add this module to the dashboard repo.
 2. Copy `config/backup_paths.local.json.example` to `config/backup_paths.local.json`.
 3. Edit paths for your PC.
-4. Run dry run.
+4. Run the Windows wrapper directly from `scripts/windows/dry_run.bat`.
 5. Run first backup.
 6. Verify backup.
 7. Connect status file to dashboard UI.
+
+The Windows wrappers resolve the module root explicitly, so they can be launched without changing the current working directory first.
 
 ## Local status file
 
@@ -70,6 +76,22 @@ The dashboard should read:
 ```text
 modules/system_backup/runtime/latest_status.json
 ```
+
+## Backup history
+
+Phase 2 also writes a history file that the dashboard can use to show recent backup activity and restore points:
+
+```text
+modules/system_backup/runtime/backup_history.json
+```
+
+This history is used to surface:
+
+- recent backup events
+- backup age warnings
+- next suggested run
+- schedule and retention summaries
+- restore point entries under `E:\NEW_EARTH_BACKUP`
 
 
 ## Roadmap included
@@ -92,3 +114,15 @@ V1 = build now
 V2 = automation later
 V3 = disaster recovery later
 ```
+
+## Phase 2 now included
+
+The current module build adds the first Phase 2 automation layer:
+
+- daily backup
+- weekly snapshot
+- monthly archive
+- backup history file
+- retention settings
+- freshness warnings
+- restore point listing

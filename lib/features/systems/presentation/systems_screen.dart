@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../system_backup/application/backup_guardian_controller.dart';
 
-class SystemsScreen extends StatelessWidget {
+class SystemsScreen extends ConsumerWidget {
   const SystemsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final snapshotAsync = ref.watch(backupGuardianSnapshotProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -19,7 +22,7 @@ class SystemsScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(22),
-              decoration: _panelDecoration(),
+              decoration: _systemsPanelDecoration(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -44,74 +47,83 @@ class SystemsScreen extends StatelessWidget {
                       color: AppColours.darkMutedText,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'After launch, you can close the dashboard while the backup script continues running.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _InlineTag(
+                    label: 'Safe to close',
+                    accent: AppColours.darkSecondary,
+                    icon: Icons.lock_open_outlined,
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 14),
-            InkWell(
-              borderRadius: BorderRadius.circular(24),
-              onTap: () => context.push(RouteNames.backupGuardian),
-              child: Ink(
-                padding: const EdgeInsets.all(20),
-                decoration: _panelDecoration(),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColours.darkSurfaceRaised.withValues(
-                          alpha: 0.96,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.backup_outlined,
-                        color: AppColours.darkSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Backup Guardian',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: AppColours.darkText,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Back up the full D: drive to the external drive, view status, open the backup folder, and keep restore work dry-run only in V1.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppColours.darkMutedText,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: const [
-                              _InlineTag(label: 'Manual V1'),
-                              _InlineTag(label: 'Local-first'),
-                              _InlineTag(label: 'Reports'),
-                              _InlineTag(label: 'Restore dry run'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppColours.darkMutedText,
-                    ),
-                  ],
-                ),
+            snapshotAsync.when(
+              loading: () => _BackupGuardianCard(
+                title: 'Backup Guardian',
+                subtitle:
+                    'Back up the full D: drive to E: / NEW_EARTH_BACKUP, view status, open the backup folder, and keep restore work dry-run only in V1.',
+                statusLabel: 'Loading backup state',
+                statusAccent: AppColours.darkSecondary,
+                statusBanner: 'Checking E: / NEW_EARTH_BACKUP...',
+                stripAnimate: true,
+                tags: const [
+                  'Manual V1',
+                  'Local-first',
+                  'Reports',
+                  'Restore dry run',
+                ],
+                onTap: () => context.push(RouteNames.backupGuardian),
               ),
+              error: (error, stackTrace) => _BackupGuardianCard(
+                title: 'Backup Guardian',
+                subtitle:
+                    'Back up the full D: drive to E: / NEW_EARTH_BACKUP, view status, open the backup folder, and keep restore work dry-run only in V1.',
+                statusLabel: 'State unavailable',
+                statusAccent: AppColours.darkAmber,
+                statusBanner: 'Could not load live backup state',
+                stripAnimate: true,
+                tags: const [
+                  'Manual V1',
+                  'Local-first',
+                  'Reports',
+                  'Restore dry run',
+                ],
+                onTap: () => context.push(RouteNames.backupGuardian),
+              ),
+              data: (snapshot) {
+                final driveReady = snapshot.backupDriveExists;
+                final statusAccent = driveReady
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber;
+                return _BackupGuardianCard(
+                  title: 'Backup Guardian',
+                  subtitle:
+                      'Back up the full D: drive to E: / NEW_EARTH_BACKUP, view status, open the backup folder, and keep restore work dry-run only in V1.',
+                  statusLabel: driveReady ? 'Drive ready' : 'Waiting for drive',
+                  statusAccent: statusAccent,
+                  statusBanner: driveReady
+                      ? 'E: / NEW_EARTH_BACKUP is visible and ready.'
+                      : 'Waiting for E: / NEW_EARTH_BACKUP to connect.',
+                  stripAnimate: !driveReady,
+                  tags: [
+                    driveReady ? 'Ready' : 'Waiting',
+                    'Manual V1',
+                    'Local-first',
+                    'Reports',
+                    'Restore dry run',
+                    'Safe to close',
+                  ],
+                  onTap: () => context.push(RouteNames.backupGuardian),
+                );
+              },
             ),
             const SizedBox(height: 14),
             Text(
@@ -177,11 +189,137 @@ class SystemsScreen extends StatelessWidget {
     );
   }
 
-  BoxDecoration _panelDecoration() {
-    return BoxDecoration(
-      color: AppColours.darkSurface.withValues(alpha: 0.9),
+}
+
+class _BackupGuardianCard extends StatelessWidget {
+  const _BackupGuardianCard({
+    required this.title,
+    required this.subtitle,
+    required this.statusLabel,
+    required this.statusAccent,
+    required this.statusBanner,
+    required this.stripAnimate,
+    required this.tags,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String statusLabel;
+  final Color statusAccent;
+  final String statusBanner;
+  final bool stripAnimate;
+  final List<String> tags;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.85)),
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.all(20),
+        decoration: _systemsPanelDecoration(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _StatusPulseStrip(
+                    color: statusAccent,
+                    animate: stripAnimate,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: statusAccent.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: statusAccent.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.backup_outlined,
+                          color: statusAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: AppColours.darkText,
+                          ),
+                        ),
+                      ),
+                      _InlineTag(label: statusLabel, accent: statusAccent),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusAccent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: statusAccent.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: Text(
+                      statusBanner,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Safe to close once the action is launched.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final tag in tags) _InlineTag(label: tag),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColours.darkMutedText,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -268,26 +406,124 @@ class _PlannedSystemCard extends StatelessWidget {
 }
 
 class _InlineTag extends StatelessWidget {
-  const _InlineTag({required this.label});
+  const _InlineTag({
+    required this.label,
+    this.accent = AppColours.darkText,
+    this.icon,
+  });
 
   final String label;
+  final Color accent;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.75)),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColours.darkText,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: accent),
+            const SizedBox(width: 5),
+          ],
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+BoxDecoration _systemsPanelDecoration() {
+  return BoxDecoration(
+    color: AppColours.darkSurface.withValues(alpha: 0.9),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.85)),
+  );
+}
+
+class _StatusPulseStrip extends StatefulWidget {
+  const _StatusPulseStrip({
+    required this.color,
+    required this.animate,
+  });
+
+  final Color color;
+  final bool animate;
+
+  @override
+  State<_StatusPulseStrip> createState() => _StatusPulseStripState();
+}
+
+class _StatusPulseStripState extends State<_StatusPulseStrip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _StatusPulseStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animate && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.animate && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animation = Tween<double>(
+      begin: 0.55,
+      end: 1.0,
+    ).animate(_controller);
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final opacity = widget.animate ? animation.value : 1.0;
+        return Container(
+          height: 6,
+          decoration: BoxDecoration(
+            color: widget.color.withValues(alpha: opacity),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(alpha: opacity * 0.18),
+                blurRadius: widget.animate ? 10 : 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -52,6 +52,8 @@ scripts/windows/verify_latest.bat
 scripts/windows/restore_dry_run.bat
 ```
 
+These Windows wrappers resolve the module root internally, so they are safe to launch directly without first changing directories.
+
 ## Critical safety rules
 
 - Do not delete anything from `D:\`.
@@ -72,11 +74,23 @@ scripts/windows/restore_dry_run.bat
 - Reports are saved.
 - Missing backup drive gives a clear red warning.
 
-## Phase 2 later
+## Phase 2 now
 
-- Add scheduled backups.
-- Add retention policy.
+The current build adds the first Phase 2 automation layer:
+
+- scheduled daily backup
+- weekly snapshot
+- monthly archive
+- backup history file
+- retention settings
+- freshness warnings
+- restore point folders
+- schedule and retention summaries
+- next suggested run
+
+## Phase 3 later
+
 - Add checksum manifests.
-- Add backup history database.
 - Add drive health checks.
 - Add second/off-site drive support.
+- Add deeper restore workflows.

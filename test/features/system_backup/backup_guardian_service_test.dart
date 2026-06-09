@@ -45,11 +45,61 @@ void main() {
       'restore_test_folder': restoreDir.path,
       'verify_after_backup': true,
       'create_manifest': true,
+      'schedule': <String, Object?>{
+        'enabled': true,
+        'daily_time': '02:00',
+        'weekly_day': 'Sunday',
+        'monthly_day': 1,
+        'stale_after_days': 10,
+      },
       'mode': 'mirror',
+      'retention': <String, Object?>{
+        'daily_keep': 7,
+        'weekly_keep': 4,
+        'monthly_keep': 12,
+      },
     };
     await File(
       path.join(configDir.path, 'backup_paths.local.json'),
     ).writeAsString(jsonEncode(config));
+
+    final history = <String, Object?>{
+      'events': [
+        {
+          'action': 'Backup Now',
+          'mode': 'BackupNow',
+          'backup_kind': 'manual',
+          'state': 'green',
+          'summary': 'Latest backup verified',
+          'started_at': '2026-06-07T05:55:00Z',
+          'finished_at': '2026-06-07T06:00:00Z',
+          'duration_ms': 300000,
+          'files_scanned': 12,
+          'files_copied': 12,
+          'files_skipped': 0,
+          'backup_size_bytes': 2048,
+          'backup_size_text': '2.0 KB',
+          'manifest_path': path.join(
+            manifestsDir.path,
+            'backup_manifest_20260607_060000.json',
+          ),
+          'report_path': path.join(
+            reportsDir.path,
+            'backup_guardian_20260607_060000.log',
+          ),
+          'restore_point_label': 'Manual backup - 2026-06-07 06:00',
+          'restore_point_path': path.join(
+            backupTargetDir.path,
+            'daily',
+            '20260607_060000',
+            'restore_point.json',
+          ),
+        },
+      ],
+    };
+    await File(
+      path.join(runtimeDir.path, 'backup_history.json'),
+    ).writeAsString(jsonEncode(history));
 
     final status = <String, Object?>{
       'module': 'system_backup',
@@ -88,6 +138,9 @@ void main() {
     expect(snapshot.healthState, BackupGuardianHealthState.green);
     expect(snapshot.latestBackupStatus, 'Latest backup verified');
     expect(snapshot.restoreTestStatus, 'Not run yet');
+    expect(snapshot.hasHistory, isTrue);
+    expect(snapshot.scheduleSummary, contains('Scheduled daily'));
+    expect(snapshot.notificationBanner, contains('Scheduled daily'));
     expect(snapshot.latestReportPath, path.join(
       reportsDir.path,
       'backup_guardian_20260607_060000.log',
@@ -138,6 +191,7 @@ void main() {
       snapshot.warnings,
       contains('Waiting for the external backup drive to appear.'),
     );
+    expect(snapshot.warnings, contains('No backup history has been recorded yet.'));
     expect(snapshot.errors, isEmpty);
   });
 }

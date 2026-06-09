@@ -2,7 +2,7 @@
 
 This roadmap is part of the module so Codex understands the long-term direction.
 
-## V1 — Build Now: Safe Manual Backup
+## V1 - Build Now: Safe Manual Backup
 
 V1 is the immediate build.
 
@@ -31,7 +31,7 @@ V1 features:
 
 V1 is the priority.
 
-## V2 — Future Work: Automation and Intelligence
+## V2 - Automation and Intelligence
 
 V2 adds scheduled and smarter backup behaviour.
 
@@ -53,9 +53,16 @@ V2 features:
 - Restore point list
 - Notification banner inside dashboard
 
+Current build status:
+
+- Daily, weekly, and monthly actions are now wired.
+- Backup history is written to `modules/system_backup/runtime/backup_history.json`.
+- The dashboard now surfaces schedule, retention, freshness, and restore-point summaries.
+- Checksum manifests and deeper verification remain future work.
+
 V2 should only be started after V1 is stable.
 
-## V3 — Future Work: Disaster Recovery System
+## V3 - Disaster Recovery System
 
 V3 turns Backup Guardian into a full New Earth disaster recovery system.
 

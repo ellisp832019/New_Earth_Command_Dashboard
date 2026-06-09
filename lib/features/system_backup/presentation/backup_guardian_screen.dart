@@ -54,20 +54,47 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                         const SizedBox(height: 20),
                         _ActionCard(
                           isBusy: _isBusy,
+                          snapshot: snapshot,
                           onDryRun: () =>
-                              _runAction(BackupGuardianAction.dryRun),
+                              _runAction(BackupGuardianAction.dryRun, snapshot),
                           onBackupNow: () =>
-                              _runAction(BackupGuardianAction.backupNow),
+                              _runAction(BackupGuardianAction.backupNow, snapshot),
                           onVerifyLatest: () =>
-                              _runAction(BackupGuardianAction.verifyLatest),
+                              _runAction(
+                                BackupGuardianAction.verifyLatest,
+                                snapshot,
+                              ),
                           onRestoreDryRun: () =>
-                              _runAction(BackupGuardianAction.restoreDryRun),
+                              _runAction(
+                                BackupGuardianAction.restoreDryRun,
+                                snapshot,
+                              ),
                           onOpenBackupFolder: () => _openBackupFolder(snapshot),
                           onViewLatestReport: () =>
                               _viewLatestReport(snapshot),
+                          onRefreshStatus: _refreshStatus,
+                        ),
+                        const SizedBox(height: 20),
+                        _AutomationCard(
+                          snapshot: snapshot,
+                          isBusy: _isBusy,
+                          onDailyBackup: () => _runAction(
+                            BackupGuardianAction.dailyBackup,
+                            snapshot,
+                          ),
+                          onWeeklySnapshot: () => _runAction(
+                            BackupGuardianAction.weeklySnapshot,
+                            snapshot,
+                          ),
+                          onMonthlyArchive: () => _runAction(
+                            BackupGuardianAction.monthlyArchive,
+                            snapshot,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         _StatusGrid(snapshot: snapshot),
+                        const SizedBox(height: 20),
+                        _HistoryCard(snapshot: snapshot),
                         const SizedBox(height: 20),
                         _WarningsCard(snapshot: snapshot),
                         const SizedBox(height: 20),
@@ -86,19 +113,17 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
     );
   }
 
-  Future<void> _runAction(BackupGuardianAction action) async {
+  Future<void> _runAction(
+    BackupGuardianAction action,
+    BackupGuardianSnapshot snapshot,
+  ) async {
     if (_isBusy) {
       return;
     }
 
     setState(() {
       _isBusy = true;
-      _statusMessage = switch (action) {
-        BackupGuardianAction.dryRun => 'Launching Dry Run...',
-        BackupGuardianAction.backupNow => 'Launching Backup Now...',
-        BackupGuardianAction.verifyLatest => 'Launching Verify Latest...',
-        BackupGuardianAction.restoreDryRun => 'Launching Restore Dry Run...',
-      };
+      _statusMessage = _launchMessage(action, snapshot);
     });
 
     try {
@@ -107,9 +132,9 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
         return;
       }
       setState(() {
-        _statusMessage =
-            'Action launched. Refresh the page after the script finishes.';
+        _statusMessage = _afterLaunchMessage(action, snapshot);
       });
+      _scheduleStatusRefresh();
     } catch (_) {
       if (!mounted) {
         return;
@@ -130,6 +155,76 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
 
   Future<void> _viewLatestReport(BackupGuardianSnapshot snapshot) async {
     await ref.read(backupGuardianServiceProvider).viewLatestReport(snapshot);
+  }
+
+  void _refreshStatus() {
+    ref.invalidate(backupGuardianSnapshotProvider);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _statusMessage = 'Refreshing backup status...';
+    });
+  }
+
+  void _scheduleStatusRefresh() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(backupGuardianSnapshotProvider);
+    });
+
+    Future.delayed(const Duration(seconds: 4), () {
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(backupGuardianSnapshotProvider);
+    });
+  }
+
+  String _launchMessage(
+    BackupGuardianAction action,
+    BackupGuardianSnapshot snapshot,
+  ) {
+    return switch (action) {
+      BackupGuardianAction.dryRun =>
+        'Dry Run launching. It will compare D: with ${snapshot.backupTarget} without copying files.',
+      BackupGuardianAction.backupNow =>
+        'Backup Now launching for ${snapshot.backupTarget}.',
+      BackupGuardianAction.verifyLatest =>
+        'Verify Latest launching. Current saved result: ${snapshot.latestBackupStatus}.',
+      BackupGuardianAction.restoreDryRun =>
+        'Restore Dry Run launching into ${snapshot.config.restoreTestFolder}.',
+      BackupGuardianAction.dailyBackup =>
+        'Daily Backup launching for the scheduled V2 run.',
+      BackupGuardianAction.weeklySnapshot =>
+        'Weekly Snapshot launching for a dated restore point.',
+      BackupGuardianAction.monthlyArchive =>
+        'Monthly Archive launching for the longer-term restore set.',
+    };
+  }
+
+  String _afterLaunchMessage(
+    BackupGuardianAction action,
+    BackupGuardianSnapshot snapshot,
+  ) {
+    return switch (action) {
+      BackupGuardianAction.dryRun =>
+        'Dry Run started. The current saved status is ${snapshot.latestBackupStatus}. The page will refresh shortly.',
+      BackupGuardianAction.backupNow =>
+        'Backup Now started. Current target: ${snapshot.backupTarget}. The page will refresh shortly.',
+      BackupGuardianAction.verifyLatest =>
+        'Verify Latest started. Saved status: ${snapshot.latestBackupStatus}. Last verification: ${_formatDate(snapshot.lastVerificationAt)}. The page will refresh shortly.',
+      BackupGuardianAction.restoreDryRun =>
+        'Restore Dry Run started. Test folder: ${snapshot.config.restoreTestFolder}. The page will refresh shortly.',
+      BackupGuardianAction.dailyBackup =>
+        'Daily Backup started. The timeline will refresh shortly.',
+      BackupGuardianAction.weeklySnapshot =>
+        'Weekly Snapshot started. The timeline will refresh shortly.',
+      BackupGuardianAction.monthlyArchive =>
+        'Monthly Archive started. The timeline will refresh shortly.',
+    };
   }
 }
 
@@ -153,93 +248,104 @@ class _HeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: _panelDecoration(context, highlighted: true),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Backup Guardian',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    color: AppColours.darkText,
-                    fontSize: 28,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'More / Systems / Backup Guardian',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Local-first backup for D: to the external drive.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.4,
-                  ),
-                ),
-                if (statusMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    statusMessage!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkSecondary,
-                    ),
-                  ),
-                ],
-              ],
+          Text(
+            'Backup Guardian',
+            style: theme.textTheme.displaySmall?.copyWith(
+              color: AppColours.darkText,
+              fontSize: 28,
             ),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          const SizedBox(height: 6),
+          Text(
+            'More / Systems / Backup Guardian',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Local-first backup for D: to E: / NEW_EARTH_BACKUP.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            snapshot.notificationBanner,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'You can close the dashboard after launching an action. The backup script keeps running on its own.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              height: 1.35,
+            ),
+          ),
+          if (statusMessage != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              statusMessage!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColours.darkSecondary,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
             children: [
               FilledButton.tonalIcon(
                 onPressed: onBackToSystems,
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back to Systems'),
               ),
-              const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: onBackToMore,
                 icon: const Icon(Icons.apps_outlined),
                 label: const Text('Back to More'),
               ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                alignment: WrapAlignment.end,
-                children: [
-                  _Badge(
-                    label: snapshot.config.isLocalConfig
-                        ? 'Local config'
-                        : 'Example config',
-                    accent: snapshot.config.isLocalConfig
-                        ? AppColours.darkSuccess
-                        : AppColours.darkAmber,
-                  ),
-                  _Badge(
-                    label: _healthLabel(snapshot.healthState),
-                    accent: _healthAccent(snapshot.healthState),
-                  ),
-                  _Badge(
-                    label: snapshot.sourceDrive,
-                    accent: AppColours.darkSecondary,
-                  ),
-                  _Badge(
-                    label: snapshot.backupDriveExists
-                        ? snapshot.backupTarget
-                        : 'Waiting for external drive',
-                    accent: snapshot.backupDriveExists
-                        ? AppColours.darkPurple
-                        : AppColours.darkAmber,
-                  ),
-                ],
+              _Badge(
+                label: snapshot.config.isLocalConfig
+                    ? 'Local config'
+                    : 'Example config',
+                accent: snapshot.config.isLocalConfig
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
+              ),
+              _Badge(
+                label: _healthLabel(snapshot.healthState),
+                accent: _healthAccent(snapshot.healthState),
+              ),
+              _Badge(
+                label: snapshot.sourceDrive,
+                accent: AppColours.darkSecondary,
+              ),
+              _Badge(
+                label: snapshot.backupDriveExists
+                    ? snapshot.backupTarget
+                    : 'Waiting for E: / NEW_EARTH_BACKUP',
+                accent: snapshot.backupDriveExists
+                    ? AppColours.darkPurple
+                    : AppColours.darkAmber,
+              ),
+              _Badge(
+                label: 'Safe to close',
+                accent: AppColours.darkSecondary,
+                icon: Icons.lock_open_outlined,
+              ),
+              _Badge(
+                label: 'Scheduled V2',
+                accent: AppColours.darkSuccess,
               ),
             ],
           ),
@@ -252,24 +358,36 @@ class _HeroCard extends StatelessWidget {
 class _ActionCard extends StatelessWidget {
   const _ActionCard({
     required this.isBusy,
+    required this.snapshot,
     required this.onDryRun,
     required this.onBackupNow,
     required this.onVerifyLatest,
     required this.onRestoreDryRun,
     required this.onOpenBackupFolder,
     required this.onViewLatestReport,
+    required this.onRefreshStatus,
   });
 
   final bool isBusy;
+  final BackupGuardianSnapshot snapshot;
   final VoidCallback onDryRun;
   final VoidCallback onBackupNow;
   final VoidCallback onVerifyLatest;
   final VoidCallback onRestoreDryRun;
   final VoidCallback onOpenBackupFolder;
   final VoidCallback onViewLatestReport;
+  final VoidCallback onRefreshStatus;
 
   @override
   Widget build(BuildContext context) {
+    final hasVerification = snapshot.lastVerificationAt != null;
+    final verificationIsFresh = hasVerification &&
+        DateTime.now().difference(snapshot.lastVerificationAt!.toLocal()) <=
+            const Duration(days: 7);
+    final verifyAccent = verificationIsFresh
+        ? AppColours.darkSuccess
+        : AppColours.darkAmber;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _panelDecoration(context),
@@ -292,10 +410,37 @@ class _ActionCard extends StatelessWidget {
                 icon: const Icon(Icons.backup_outlined),
                 label: const Text('Backup Now'),
               ),
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onVerifyLatest,
-                icon: const Icon(Icons.verified_outlined),
-                label: const Text('Verify Latest'),
+              verificationIsFresh
+                  ? FilledButton.icon(
+                      onPressed: isBusy ? null : onVerifyLatest,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: verifyAccent,
+                        foregroundColor: AppColours.darkBackground,
+                      ),
+                      icon: const Icon(Icons.verified_outlined),
+                      label: const Text('Verify Latest'),
+                    )
+                  : OutlinedButton.icon(
+                      onPressed: isBusy ? null : onVerifyLatest,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: verifyAccent,
+                        side: BorderSide(
+                          color: verifyAccent.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      icon: const Icon(Icons.verified_outlined),
+                      label: const Text('Verify Latest'),
+                    ),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  !hasVerification
+                      ? 'Last verified: never'
+                      : 'Last verified: ${_formatDate(snapshot.lastVerificationAt)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: verifyAccent,
+                      ),
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: isBusy ? null : onRestoreDryRun,
@@ -312,6 +457,312 @@ class _ActionCard extends StatelessWidget {
                 icon: const Icon(Icons.article_outlined),
                 label: const Text('View Latest Report'),
               ),
+              OutlinedButton.icon(
+                onPressed: onRefreshStatus,
+                icon: const Icon(Icons.refresh_outlined),
+                label: const Text('Refresh Status'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AutomationCard extends StatelessWidget {
+  const _AutomationCard({
+    required this.snapshot,
+    required this.isBusy,
+    required this.onDailyBackup,
+    required this.onWeeklySnapshot,
+    required this.onMonthlyArchive,
+  });
+
+  final BackupGuardianSnapshot snapshot;
+  final bool isBusy;
+  final VoidCallback onDailyBackup;
+  final VoidCallback onWeeklySnapshot;
+  final VoidCallback onMonthlyArchive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Schedule and retention',
+            icon: Icons.schedule_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            snapshot.scheduleSummary,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            snapshot.retentionSummary,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  height: 1.35,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            snapshot.freshnessSummary,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  height: 1.35,
+                ),
+          ),
+          if (snapshot.nextSuggestedRun != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Next suggested run: ${_formatDate(snapshot.nextSuggestedRun)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: isBusy ? null : onDailyBackup,
+                icon: const Icon(Icons.today_outlined),
+                label: const Text('Daily Backup'),
+              ),
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : onWeeklySnapshot,
+                icon: const Icon(Icons.view_week_outlined),
+                label: const Text('Weekly Snapshot'),
+              ),
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : onMonthlyArchive,
+                icon: const Icon(Icons.calendar_month_outlined),
+                label: const Text('Monthly Archive'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryCard extends StatelessWidget {
+  const _HistoryCard({required this.snapshot});
+
+  final BackupGuardianSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Timeline and restore points',
+            icon: Icons.timeline_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            snapshot.hasHistory
+                ? 'Recent events from ${p.basename(snapshot.historyFilePath)}'
+                : 'No backup history has been recorded yet.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 880;
+              final timeline = _EventList(
+                title: 'Recent backup events',
+                emptyText: 'No events yet.',
+                entries: snapshot.historyEntries.take(5).toList(growable: false),
+              );
+              final restorePoints = _EventList(
+                title: 'Restore points',
+                emptyText: 'No restore points yet.',
+                entries: snapshot.restorePoints.take(5).toList(growable: false),
+                showRestorePointLabel: true,
+              );
+
+              if (!wide) {
+                return Column(
+                  children: [
+                    timeline,
+                    const SizedBox(height: 12),
+                    restorePoints,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: timeline),
+                  const SizedBox(width: 12),
+                  Expanded(child: restorePoints),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventList extends StatelessWidget {
+  const _EventList({
+    required this.title,
+    required this.emptyText,
+    required this.entries,
+    this.showRestorePointLabel = false,
+  });
+
+  final String title;
+  final String emptyText;
+  final List<BackupGuardianHistoryEntry> entries;
+  final bool showRestorePointLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 10),
+          if (entries.isEmpty)
+            Text(
+              emptyText,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+            )
+          else
+            Column(
+              children: [
+                for (final entry in entries) ...[
+                  _HistoryEntryTile(
+                    entry: entry,
+                    showRestorePointLabel: showRestorePointLabel,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryEntryTile extends StatelessWidget {
+  const _HistoryEntryTile({
+    required this.entry,
+    required this.showRestorePointLabel,
+  });
+
+  final BackupGuardianHistoryEntry entry;
+  final bool showRestorePointLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = switch (entry.state.toLowerCase()) {
+      'green' => AppColours.darkSuccess,
+      'amber' => AppColours.darkAmber,
+      'red' => AppColours.darkSecondary,
+      _ => AppColours.darkPurple,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurface.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  entry.action.isNotEmpty ? entry.action : entry.mode,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              _Badge(
+                label: entry.state.toUpperCase(),
+                accent: accent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            entry.summary,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Badge(
+                label: _formatDate(entry.finishedAt ?? entry.startedAt),
+                accent: AppColours.darkSecondary,
+              ),
+              if (entry.duration != null)
+                _Badge(
+                  label: _formatDuration(entry.duration!),
+                  accent: AppColours.darkSuccess,
+                ),
+              if (entry.filesCopied != null)
+                _Badge(
+                  label: '${entry.filesCopied} files',
+                  accent: AppColours.darkPurple,
+                ),
+              if (showRestorePointLabel && entry.restorePointLabel.isNotEmpty)
+                _Badge(
+                  label: entry.restorePointLabel,
+                  accent: AppColours.darkSuccess,
+                ),
             ],
           ),
         ],
@@ -339,7 +790,7 @@ class _StatusGrid extends StatelessWidget {
         value: snapshot.backupTarget,
         detail: snapshot.backupDriveExists
             ? 'External drive visible'
-            : 'Waiting for external drive',
+            : 'Waiting for E: / NEW_EARTH_BACKUP',
         accent: snapshot.backupDriveExists ? AppColours.darkSuccess : AppColours.darkAmber,
       ),
       _StatusTile(
@@ -691,10 +1142,12 @@ class _Badge extends StatelessWidget {
   const _Badge({
     required this.label,
     required this.accent,
+    this.icon,
   });
 
   final String label;
   final Color accent;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -705,12 +1158,26 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: accent.withValues(alpha: 0.28)),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkText,
-              fontWeight: FontWeight.w600,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: accent),
+            const SizedBox(width: 5),
+          ],
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
+          ),
+        ],
       ),
     );
   }
@@ -803,6 +1270,16 @@ String _formatDate(DateTime? value) {
     return 'Not recorded';
   }
   return DateFormat('d MMM yyyy, HH:mm').format(value.toLocal());
+}
+
+String _formatDuration(Duration value) {
+  if (value.inSeconds < 60) {
+    return '${value.inSeconds}s';
+  }
+  if (value.inMinutes < 60) {
+    return '${value.inMinutes}m ${value.inSeconds.remainder(60)}s';
+  }
+  return '${value.inHours}h ${value.inMinutes.remainder(60)}m';
 }
 
 String _healthLabel(BackupGuardianHealthState state) {

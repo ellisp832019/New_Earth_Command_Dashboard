@@ -17,6 +17,12 @@
 - At least one real backup has been verified.
 - Peter has confirmed the external drive workflow is comfortable.
 
+## V2 In Progress When
+
+- Daily, weekly, and monthly actions are wired.
+- `runtime/backup_history.json` is being written.
+- The dashboard shows schedule, retention, freshness, and restore-point summaries.
+
 ## V2 Done When
 
 - Scheduled backups work.
@@ -24,6 +30,7 @@
 - Retention rules are working.
 - Backup-age warnings work.
 - Verification is stronger than simple target exists check.
+- Restore point folders are being created and pruned.
 
 ## V3 Can Start When
 

@@ -7,6 +7,13 @@
   "restore_test_folder": "D:/_RESTORE_TEST_AREA",
   "verify_after_backup": true,
   "create_manifest": true,
+  "schedule": {
+    "enabled": true,
+    "daily_time": "02:00",
+    "weekly_day": "Sunday",
+    "monthly_day": 1,
+    "stale_after_days": 2
+  },
   "mode": "mirror",
   "retention": {
     "daily_keep": 7,

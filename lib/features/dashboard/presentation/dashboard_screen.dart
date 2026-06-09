@@ -24,6 +24,7 @@ import '../../meeting_system/data/meeting_folder_service.dart';
 import '../../meeting_system/presentation/meeting_system_widgets.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
+import '../../system_backup/application/backup_guardian_controller.dart';
 import '../application/dashboard_controller.dart';
 import '../data/dashboard_repository.dart';
 import '../../treasury/application/treasury_controller.dart';
@@ -710,6 +711,8 @@ class _SupportModuleGrid extends StatelessWidget {
             const SizedBox(height: 14),
             const KnowledgeLibraryDashboardCard(),
             const SizedBox(height: 14),
+            const BackupGuardianDashboardCard(),
+            const SizedBox(height: 14),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -724,6 +727,247 @@ class _SupportModuleGrid extends StatelessWidget {
                   _MiniModuleCard(state: cards[index]),
             ),
           ],
+        );
+      },
+    );
+  }
+}
+
+class BackupGuardianDashboardCard extends ConsumerWidget {
+  const BackupGuardianDashboardCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshotAsync = ref.watch(backupGuardianSnapshotProvider);
+
+    return snapshotAsync.when(
+      loading: () => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: Row(
+          children: [
+            const Icon(Icons.backup_outlined, color: AppColours.darkSecondary),
+            const SizedBox(width: 12),
+            Text(
+              'Backup Guardian is loading quietly.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: Row(
+          children: [
+            const Icon(Icons.backup_outlined, color: AppColours.darkAmber),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Backup Guardian could not load right now.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (snapshot) {
+        final targetLabel = snapshot.backupDriveExists
+            ? snapshot.backupTarget
+            : 'Waiting for E: / NEW_EARTH_BACKUP';
+        final statusLabel = snapshot.backupDriveExists
+            ? 'Drive visible'
+            : 'Drive missing';
+        final statusAccent = snapshot.backupDriveExists
+            ? AppColours.darkSuccess
+            : AppColours.darkAmber;
+        final stripColor = statusAccent.withValues(alpha: 0.9);
+        final bannerLabel = snapshot.backupDriveExists
+            ? 'Ready to run'
+            : 'Waiting for drive';
+        final bannerIcon = snapshot.backupDriveExists
+            ? Icons.check_circle_outline
+            : Icons.schedule_outlined;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: _panelDecoration(context),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useWideLayout = constraints.maxWidth >= 900;
+
+              final content = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _StatusPulseStrip(
+                    color: stripColor,
+                    animate: !snapshot.backupDriveExists,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const _PanelTitle(
+                        title: 'Backup Guardian',
+                        icon: Icons.backup_outlined,
+                      ),
+                      const Spacer(),
+                      _InlineTag(
+                        label: snapshot.healthSummary,
+                        accent: statusAccent,
+                        foreground: statusAccent,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusAccent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: statusAccent.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(bannerIcon, color: statusAccent, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '$bannerLabel: ${snapshot.backupTarget}',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                                  color: AppColours.darkText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Local-first backup path for D: to E: / NEW_EARTH_BACKUP.',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.notificationBanner,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          height: 1.35,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: Text(
+                      snapshot.backupDriveExists
+                          ? 'The backup drive is visible and ready for the next manual run.'
+                          : 'The dashboard is waiting for the external backup drive to appear.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'After you launch a backup, you can close the dashboard and let the script continue on its own.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkSecondary,
+                          height: 1.35,
+                        ),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _InlineTag(
+                        label: targetLabel,
+                        accent: statusAccent,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label: statusLabel,
+                        accent: snapshot.backupDriveExists
+                            ? AppColours.darkSuccess
+                            : AppColours.darkAmber,
+                        foreground: snapshot.backupDriveExists
+                            ? AppColours.darkSuccess
+                            : AppColours.darkAmber,
+                      ),
+                      _InlineTag(
+                        label: snapshot.config.isLocalConfig
+                            ? 'Local config'
+                            : 'Example config',
+                        accent: snapshot.config.isLocalConfig
+                            ? AppColours.darkSuccess
+                            : AppColours.darkAmber,
+                      ),
+                      _InlineTag(
+                        label: snapshot.freshnessSummary,
+                        accent: AppColours.darkSuccess,
+                      ),
+                    ],
+                  ),
+                ],
+              );
+
+              final actions = Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: useWideLayout ? WrapAlignment.end : WrapAlignment.start,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => context.push(RouteNames.backupGuardian),
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Open Backup'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.systems),
+                    icon: const Icon(Icons.apps_outlined),
+                    label: const Text('Systems'),
+                  ),
+                ],
+              );
+
+              if (!useWideLayout) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    content,
+                    const SizedBox(height: 16),
+                    actions,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: content),
+                  const SizedBox(width: 20),
+                  SizedBox(width: 220, child: actions),
+                ],
+              );
+            },
+          ),
         );
       },
     );
@@ -3456,13 +3700,18 @@ class _InlineTag extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: accent.withValues(alpha: 0.2)),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: foreground ?? accent,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.1,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: foreground ?? accent,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -3650,4 +3899,79 @@ BoxDecoration _panelDecoration(
       ),
     ],
   );
+}
+
+class _StatusPulseStrip extends StatefulWidget {
+  const _StatusPulseStrip({
+    required this.color,
+    required this.animate,
+  });
+
+  final Color color;
+  final bool animate;
+
+  @override
+  State<_StatusPulseStrip> createState() => _StatusPulseStripState();
+}
+
+class _StatusPulseStripState extends State<_StatusPulseStrip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _StatusPulseStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animate && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.animate && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animation = Tween<double>(
+      begin: 0.55,
+      end: 1.0,
+    ).animate(_controller);
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final opacity = widget.animate ? animation.value : 1.0;
+        return Container(
+          height: 6,
+          decoration: BoxDecoration(
+            color: widget.color.withValues(alpha: opacity),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(alpha: opacity * 0.18),
+                blurRadius: widget.animate ? 10 : 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

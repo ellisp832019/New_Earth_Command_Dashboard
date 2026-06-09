@@ -35,6 +35,12 @@ Add later:
 - Restore point list
 - Dashboard notifications
 
+Current module state:
+
+- Daily, weekly, and monthly actions are already implemented.
+- Backup history is written to `modules/system_backup/runtime/backup_history.json`.
+- Dashboard notifications and restore-point summaries are already visible.
+
 ## V3 Future Work
 
 Add later:
@@ -50,4 +56,4 @@ Add later:
 
 ## Instruction
 
-Add visible future-work cards or a Roadmap tab in the Backup Guardian page so Peter can see what is coming next, but keep those V2/V3 buttons disabled or marked “planned” until V1 is complete.
+Add visible future-work cards or a Roadmap tab in the Backup Guardian page so Peter can see what is coming next, but keep those V2/V3 buttons disabled or marked "planned" until V1 is complete.
