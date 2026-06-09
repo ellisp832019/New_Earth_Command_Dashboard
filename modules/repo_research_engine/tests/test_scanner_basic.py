@@ -19,6 +19,14 @@ from sources import (
     ResearchSourceRef,
     WebsiteResearchSourceAdapter,
 )
+from intelligence import (
+    AiGenerationRequest,
+    AiGenerationResponse,
+    KnowledgeChunk,
+    LocalAiProvider,
+    RagSearchHit,
+    RagSearchIndex,
+)
 from scripts.run_research import (
     _append_change_history,
     _append_export_history,
@@ -312,6 +320,52 @@ def test_research_source_interfaces_mark_network_opt_in():
     assert WebsiteResearchSourceAdapter.REQUIRES_NETWORK_OPT_IN is True
     assert document.source.title == "Example research article"
     assert document.text == "Notes"
+
+
+def test_local_ai_and_rag_interfaces_are_local_first():
+    class DummyLocalAiProvider(LocalAiProvider):
+        @property
+        def provider_name(self) -> str:
+            return "LocalTest"
+
+        def generate(self, request: AiGenerationRequest) -> AiGenerationResponse:
+            return AiGenerationResponse(text=request.prompt, provider_name=self.provider_name)
+
+        def embed(self, texts):
+            return [[float(len(text))] for text in texts]
+
+    class DummyRagIndex(RagSearchIndex):
+        def __init__(self) -> None:
+            self.chunks = []
+
+        def index_documents(self, chunks):
+            self.chunks = list(chunks)
+
+        def search(self, query: str, *, limit: int = 10):
+            return [
+                RagSearchHit(
+                    chunk_id=chunk.chunk_id,
+                    score=1.0,
+                    snippet=chunk.text[:24],
+                    source_uri=chunk.source_uri,
+                )
+                for chunk in self.chunks[:limit]
+                if query.lower() in chunk.text.lower()
+            ]
+
+        def clear(self) -> None:
+            self.chunks.clear()
+
+    provider = DummyLocalAiProvider()
+    index = DummyRagIndex()
+    chunk = KnowledgeChunk(chunk_id="1", source_uri="local://doc", text="New Earth dashboard notes")
+    index.index_documents([chunk])
+
+    assert provider.REQUIRES_NETWORK is False
+    assert index.REQUIRES_NETWORK is False
+    assert provider.generate(AiGenerationRequest(prompt="hello")).text == "hello"
+    assert provider.embed(["abc", "abcd"]) == [[3.0], [4.0]]
+    assert index.search("dashboard")[0].chunk_id == "1"
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):
