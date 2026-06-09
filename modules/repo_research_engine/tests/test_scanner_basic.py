@@ -11,9 +11,13 @@ from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
 from sources import (
     GitHubSourceAdapter,
+    LocalPdfResearchSourceAdapter,
     RemoteFileRef,
     RemoteRepositoryRef,
     RemoteRepositorySnapshot,
+    ResearchDocument,
+    ResearchSourceRef,
+    WebsiteResearchSourceAdapter,
 )
 from scripts.run_research import (
     _append_change_history,
@@ -293,6 +297,21 @@ def test_source_adapter_interfaces_are_read_only():
     assert snapshot.repository.name == "dashboard"
     assert snapshot.source_type == "read-only"
     assert adapter.fetch_repository_snapshot(repository) == snapshot
+
+
+def test_research_source_interfaces_mark_network_opt_in():
+    source = ResearchSourceRef(
+        source_kind="website",
+        identifier="example",
+        uri="https://example.invalid/research",
+        title="Example research article",
+    )
+    document = ResearchDocument(source=source, text="Notes")
+
+    assert LocalPdfResearchSourceAdapter.SOURCE_KIND == "pdf"
+    assert WebsiteResearchSourceAdapter.REQUIRES_NETWORK_OPT_IN is True
+    assert document.source.title == "Example research article"
+    assert document.text == "Notes"
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):

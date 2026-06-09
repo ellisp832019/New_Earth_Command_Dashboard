@@ -7,4 +7,12 @@ from .source_adapters import (
     RemoteRepositoryRef,
     RemoteRepositorySnapshot,
 )
-
+from .research_sources import (
+    DocumentationResearchSourceAdapter,
+    LocalPdfResearchSourceAdapter,
+    ReadOnlyResearchSourceAdapter,
+    ResearchDocument,
+    ResearchSourceRef,
+    TranscriptResearchSourceAdapter,
+    WebsiteResearchSourceAdapter,
+)
