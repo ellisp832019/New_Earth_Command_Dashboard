@@ -42,6 +42,7 @@ import '../../features/launchpad/presentation/launchpad_routes.dart';
 import '../../features/more/presentation/more_screen.dart';
 import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
 import '../../features/command_deck/presentation/command_deck_screen.dart';
+import '../../features/repo_research_engine/presentation/repo_research_engine_screen.dart';
 import '../../features/systems/presentation/systems_screen.dart';
 import '../../features/system_backup/presentation/backup_guardian_screen.dart';
 import '../../features/meeting_system/presentation/all_meetings_screen.dart';
@@ -343,6 +344,54 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'command-deck',
                   builder: (context, state) => const CommandDeckScreen(),
+                ),
+                GoRoute(
+                  path: 'repo-research-engine',
+                  builder: (context, state) => const RepoResearchEngineScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'scanner',
+                      builder: (context, state) =>
+                          const RepoResearchEngineScreen(
+                            initialSection: 'scanner',
+                          ),
+                    ),
+                    GoRoute(
+                      path: 'reports',
+                      builder: (context, state) =>
+                          const RepoResearchEngineScreen(
+                            initialSection: 'reports',
+                          ),
+                    ),
+                    GoRoute(
+                      path: 'profiles',
+                      builder: (context, state) =>
+                          const RepoResearchEngineScreen(
+                            initialSection: 'profiles',
+                          ),
+                    ),
+                    GoRoute(
+                      path: 'exports',
+                      builder: (context, state) =>
+                          const RepoResearchEngineScreen(
+                            initialSection: 'exports',
+                          ),
+                    ),
+                    GoRoute(
+                      path: 'prompts',
+                      builder: (context, state) =>
+                          const RepoResearchEngineScreen(
+                            initialSection: 'prompts',
+                          ),
+                    ),
+                    GoRoute(
+                      path: 'settings',
+                      builder: (context, state) =>
+                          const RepoResearchEngineScreen(
+                            initialSection: 'settings',
+                          ),
+                    ),
+                  ],
                 ),
                 GoRoute(
                   path: 'meetings',

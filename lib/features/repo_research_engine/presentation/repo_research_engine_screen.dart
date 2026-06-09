@@ -9,7 +9,9 @@ import '../../../core/theme/app_colours.dart';
 import '../data/repo_research_engine_service.dart';
 
 class RepoResearchEngineScreen extends StatefulWidget {
-  const RepoResearchEngineScreen({super.key});
+  const RepoResearchEngineScreen({super.key, this.initialSection = 'home'});
+
+  final String initialSection;
 
   @override
   State<RepoResearchEngineScreen> createState() =>
@@ -18,6 +20,7 @@ class RepoResearchEngineScreen extends StatefulWidget {
 
 class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   late final RepoResearchEngineService _service = RepoResearchEngineService();
+  late final ScrollController _scrollController = ScrollController();
   late final TextEditingController _repoPathController =
       TextEditingController();
   late final TextEditingController _profileController = TextEditingController(
@@ -82,6 +85,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _profileEditorStatus = 'Profile editor not loaded';
   String _profileComparisonStatus = 'Profile comparison not loaded';
   String _selectedTemplateSet = 'Generic';
+  late String _activeSection;
+
+  final GlobalKey _heroSectionKey = GlobalKey();
+  final GlobalKey _scannerSectionKey = GlobalKey();
+  final GlobalKey _reportsSectionKey = GlobalKey();
+  final GlobalKey _profilesSectionKey = GlobalKey();
+  final GlobalKey _exportsSectionKey = GlobalKey();
+  final GlobalKey _promptsSectionKey = GlobalKey();
+  final GlobalKey _settingsSectionKey = GlobalKey();
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -100,14 +112,31 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   @override
   void initState() {
     super.initState();
+    _activeSection = _normalizeSection(widget.initialSection);
     _loadRecentRuns();
     _loadExportHistory();
     _loadProfileEditor();
     _loadProfileComparison();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToActiveSection();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant RepoResearchEngineScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextSection = _normalizeSection(widget.initialSection);
+    if (nextSection != _activeSection) {
+      _activeSection = nextSection;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToActiveSection();
+      });
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _repoPathController.dispose();
     _profileController.dispose();
     _outputController.dispose();
@@ -151,6 +180,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       ),
       body: SafeArea(
         child: ListView(
+          controller: _scrollController,
           padding: EdgeInsets.all(isWide ? 24 : 16),
           children: [
             _heroCard(context),
@@ -193,6 +223,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             const SizedBox(height: 16),
             _bundlePreviewsCard(context),
             const SizedBox(height: 16),
+            _promptsCard(context),
+            const SizedBox(height: 16),
+            _settingsCard(context),
+            const SizedBox(height: 16),
             _reportHistoryCard(context),
             const SizedBox(height: 16),
             _exportHistoryCard(context),
@@ -204,12 +238,117 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  String _normalizeSection(String section) {
+    final lower = section.trim().toLowerCase();
+    return switch (lower) {
+      'scanner' => 'scanner',
+      'reports' => 'reports',
+      'profiles' => 'profiles',
+      'exports' => 'exports',
+      'prompts' => 'prompts',
+      'settings' => 'settings',
+      _ => 'home',
+    };
+  }
+
+  GlobalKey _sectionKeyFor(String section) {
+    return switch (section) {
+      'scanner' => _scannerSectionKey,
+      'reports' => _reportsSectionKey,
+      'profiles' => _profilesSectionKey,
+      'exports' => _exportsSectionKey,
+      'prompts' => _promptsSectionKey,
+      'settings' => _settingsSectionKey,
+      _ => _heroSectionKey,
+    };
+  }
+
+  void _scrollToActiveSection() {
+    final target = _sectionKeyFor(_activeSection);
+    final targetContext = target.currentContext;
+    if (targetContext == null) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      targetContext,
+      alignment: 0.05,
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _navigateToSection(String section) {
+    final normalized = _normalizeSection(section);
+    setState(() {
+      _activeSection = normalized;
+    });
+    final route = switch (normalized) {
+      'scanner' => RouteNames.repoResearchEngineScanner,
+      'reports' => RouteNames.repoResearchEngineReports,
+      'profiles' => RouteNames.repoResearchEngineProfiles,
+      'exports' => RouteNames.repoResearchEngineExports,
+      'prompts' => RouteNames.repoResearchEnginePrompts,
+      'settings' => RouteNames.repoResearchEngineSettings,
+      _ => RouteNames.repoResearchEngine,
+    };
+    context.go(route);
+  }
+
   Widget _heroCard(BuildContext context) {
     return _panel(
       context,
+      key: _heroSectionKey,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 840;
+          final sectionNav = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _sectionNavButton(
+                context,
+                'Home',
+                'home',
+                Icons.dashboard_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'Scanner',
+                'scanner',
+                Icons.travel_explore_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'Reports',
+                'reports',
+                Icons.description_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'Profiles',
+                'profiles',
+                Icons.tune_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'Exports',
+                'exports',
+                Icons.upload_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'Prompts',
+                'prompts',
+                Icons.draw_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'Settings',
+                'settings',
+                Icons.settings_outlined,
+              ),
+            ],
+          );
           final chips = Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -268,6 +407,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               ),
               const SizedBox(height: 14),
               chips,
+              const SizedBox(height: 14),
+              sectionNav,
               const SizedBox(height: 16),
               Text(
                 'Last run: $_lastRunLabel',
@@ -302,6 +443,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   Widget _scannerCard(BuildContext context) {
     return _panel(
       context,
+      key: _scannerSectionKey,
       title: 'Repository Scanner',
       subtitle:
           'Choose a local repo path and generate the safe research bundle.',
@@ -402,6 +544,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   Widget _profileEditorCard(BuildContext context) {
     return _panel(
       context,
+      key: _profilesSectionKey,
       title: 'Profile Manager',
       subtitle:
           'Load, review, and save local profile JSON without leaving the dashboard.',
@@ -482,7 +625,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                     TextButton.icon(
                       onPressed: _isRunning
                           ? null
-                          : () => _service.openFolder(_defaultProfilesDirectory),
+                          : () =>
+                                _service.openFolder(_defaultProfilesDirectory),
                       icon: const Icon(Icons.folder),
                       label: const Text('Open Profiles Folder'),
                     ),
@@ -530,7 +674,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 _field(
                   controller: _profileCompareRightPathController,
                   label: 'Right profile path',
-                  hint: pathJoin(_defaultProfilesDirectory, 'microgrow.profile.json'),
+                  hint: pathJoin(
+                    _defaultProfilesDirectory,
+                    'microgrow.profile.json',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 LayoutBuilder(
@@ -605,7 +752,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                     TextButton.icon(
                       onPressed: _isRunning
                           ? null
-                          : () => _service.openFolder(_defaultProfilesDirectory),
+                          : () =>
+                                _service.openFolder(_defaultProfilesDirectory),
                       icon: const Icon(Icons.folder),
                       label: const Text('Open Profiles Folder'),
                     ),
@@ -667,6 +815,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         : _outputController.text.trim();
     return _panel(
       context,
+      key: _exportsSectionKey,
       title: 'Research Reports',
       subtitle: 'Latest generated files inside the selected output folder.',
       child: Column(
@@ -834,6 +983,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   Widget _reportPreviewCard(BuildContext context) {
     return _panel(
       context,
+      key: _reportsSectionKey,
       title: 'Report Preview',
       subtitle: 'Quick glance at the main report after the latest run.',
       child: SizedBox(
@@ -1074,6 +1224,156 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  Widget _promptsCard(BuildContext context) {
+    final outputDirectory = _outputController.text.trim().isEmpty
+        ? _defaultOutputDirectory
+        : _outputController.text.trim();
+    final promptsDirectory = pathJoin(outputDirectory, 'generated_prompts');
+
+    return _panel(
+      context,
+      key: _promptsSectionKey,
+      title: 'Codex Prompt Generator',
+      subtitle:
+          'Prompt templates are generated alongside the latest research bundle and stay local.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Prompt families',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: const [
+              _StatusChip(label: 'Bug fixing', muted: false),
+              _StatusChip(label: 'Feature creation', muted: false),
+              _StatusChip(label: 'Architecture review', muted: false),
+              _StatusChip(label: 'Firmware review', muted: false),
+              _StatusChip(label: 'Flutter review', muted: false),
+              _StatusChip(label: 'ESP32 review', muted: false),
+              _StatusChip(label: 'Dashboard review', muted: false),
+              _StatusChip(label: 'Documentation generation', muted: false),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(label: 'Prompt output', value: promptsDirectory),
+          const SizedBox(height: 8),
+          _MetadataRow(
+            label: 'Current template set',
+            value: _selectedTemplateSet,
+          ),
+          const SizedBox(height: 8),
+          _MetadataRow(
+            label: 'Prompt status',
+            value: 'Generated from the latest local research bundle.',
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              TextButton.icon(
+                onPressed: () => _service.openFolder(promptsDirectory),
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Open Prompt Folder'),
+              ),
+              TextButton.icon(
+                onPressed: () => _service.openFolder(outputDirectory),
+                icon: const Icon(Icons.folder),
+                label: const Text('Open Reports Folder'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isRunning
+                    ? null
+                    : () => _navigateToSection('settings'),
+                icon: const Icon(Icons.settings_outlined),
+                label: const Text('Review Settings'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _settingsCard(BuildContext context) {
+    final outputDirectory = _outputController.text.trim().isEmpty
+        ? _defaultOutputDirectory
+        : _outputController.text.trim();
+    final omegaRoot = _omegaRootController.text.trim();
+    final profilesDirectory = _defaultProfilesDirectory;
+
+    return _panel(
+      context,
+      key: _settingsSectionKey,
+      title: 'Settings',
+      subtitle:
+          'Review the local paths and defaults used by this module before running a scan.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Module root',
+            value: _service.moduleRootDirectory().path,
+          ),
+          const SizedBox(height: 8),
+          _MetadataRow(label: 'Output folder', value: outputDirectory),
+          const SizedBox(height: 8),
+          _MetadataRow(label: 'Profiles folder', value: profilesDirectory),
+          const SizedBox(height: 8),
+          _MetadataRow(label: 'Omega OS export root', value: omegaRoot),
+          const SizedBox(height: 12),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: _graphExport,
+            onChanged: _isRunning
+                ? null
+                : (value) => setState(() => _graphExport = value),
+            title: const Text('Export graphs with each run'),
+            subtitle: const Text(
+              'Generates dependency and architecture graph bundles.',
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              TextButton.icon(
+                onPressed: () => _service.openFolder(outputDirectory),
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Open Reports Folder'),
+              ),
+              TextButton.icon(
+                onPressed: () => _service.openFolder(profilesDirectory),
+                icon: const Icon(Icons.folder),
+                label: const Text('Open Profiles Folder'),
+              ),
+              TextButton.icon(
+                onPressed: () => _service.openFolder(omegaRoot),
+                icon: const Icon(Icons.cloud_done_outlined),
+                label: const Text('Open Omega Root'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isRunning
+                    ? null
+                    : () => _navigateToSection('scanner'),
+                icon: const Icon(Icons.travel_explore_outlined),
+                label: const Text('Back to Scanner'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _recentRunsCard(BuildContext context) {
     final visibleRuns = _filteredRecentRuns();
     return _panel(
@@ -1159,11 +1459,13 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
   Widget _panel(
     BuildContext context, {
+    Key? key,
     String? title,
     String? subtitle,
     required Widget child,
   }) {
     return Container(
+      key: key,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.94),
@@ -1205,6 +1507,27 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         ],
       ),
     );
+  }
+
+  Widget _sectionNavButton(
+    BuildContext context,
+    String label,
+    String section,
+    IconData icon,
+  ) {
+    final selected = _activeSection == _normalizeSection(section);
+    final button = selected
+        ? FilledButton.icon(
+            onPressed: _isRunning ? null : () => _navigateToSection(section),
+            icon: Icon(icon),
+            label: Text(label),
+          )
+        : OutlinedButton.icon(
+            onPressed: _isRunning ? null : () => _navigateToSection(section),
+            icon: Icon(icon),
+            label: Text(label),
+          );
+    return button;
   }
 
   Widget _field({
@@ -1306,20 +1629,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       final exists = await file.exists();
       final text = exists
           ? await file.readAsString()
-          : jsonEncode(
-              {
-                'profile_name': 'Generic',
-                'project_type': 'generic local-first repository',
-                'priority_keywords': [],
-                'ignore_keywords': [],
-                'useful_file_patterns': [],
-                'risk_keywords': [],
-                'output_focus': [],
-                'export_targets': [],
-                'export_locations': [],
-                'report_templates': {},
-              },
-            );
+          : jsonEncode({
+              'profile_name': 'Generic',
+              'project_type': 'generic local-first repository',
+              'priority_keywords': [],
+              'ignore_keywords': [],
+              'useful_file_patterns': [],
+              'risk_keywords': [],
+              'output_focus': [],
+              'export_targets': [],
+              'export_locations': [],
+              'report_templates': {},
+            });
       final pretty = _prettyJson(text);
       if (!mounted) {
         return;
@@ -1331,7 +1652,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             ? 'Loaded profile JSON from $profilePath.'
             : 'Profile file not found, so a local template was loaded instead.';
       });
-      _setMessage(exists ? 'Profile loaded.' : 'Loaded a starter profile template.');
+      _setMessage(
+        exists ? 'Profile loaded.' : 'Loaded a starter profile template.',
+      );
     } catch (error) {
       _setMessage('Could not load profile JSON: $error');
     } finally {
@@ -1656,20 +1979,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final exists = await file.exists();
     final text = exists
         ? await file.readAsString()
-        : jsonEncode(
-            {
-              'profile_name': 'Generic',
-              'project_type': 'generic local-first repository',
-              'priority_keywords': [],
-              'ignore_keywords': [],
-              'useful_file_patterns': [],
-              'risk_keywords': [],
-              'output_focus': [],
-              'export_targets': [],
-              'export_locations': [],
-              'report_templates': {},
-            },
-          );
+        : jsonEncode({
+            'profile_name': 'Generic',
+            'project_type': 'generic local-first repository',
+            'priority_keywords': [],
+            'ignore_keywords': [],
+            'useful_file_patterns': [],
+            'risk_keywords': [],
+            'output_focus': [],
+            'export_targets': [],
+            'export_locations': [],
+            'report_templates': {},
+          });
     dynamic decoded;
     try {
       decoded = jsonDecode(text);
@@ -1690,11 +2011,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     required dynamic rightJson,
   }) {
     final differences = <String>[];
-    _collectProfileDifferences(
-      differences,
-      leftJson,
-      rightJson,
-    );
+    _collectProfileDifferences(differences, leftJson, rightJson);
     final summary = StringBuffer()
       ..writeln('Left: $leftPath')
       ..writeln('Right: $rightPath')
@@ -1826,10 +2143,7 @@ const List<_TemplateSetPreset> _templateSets = [
 ];
 
 class _TemplateSetPreset {
-  const _TemplateSetPreset({
-    required this.name,
-    required this.templates,
-  });
+  const _TemplateSetPreset({required this.name, required this.templates});
 
   final String name;
   final Map<String, String> templates;

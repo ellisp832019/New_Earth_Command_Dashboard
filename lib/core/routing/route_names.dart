@@ -41,6 +41,15 @@ abstract final class RouteNames {
   static const more = '/more';
   static const systems = '/more/systems';
   static const backupGuardian = '/more/systems/backup-guardian';
+  static const repoResearchEngine = '/more/repo-research-engine';
+  static const repoResearchEngineScanner = '/more/repo-research-engine/scanner';
+  static const repoResearchEngineReports = '/more/repo-research-engine/reports';
+  static const repoResearchEngineProfiles =
+      '/more/repo-research-engine/profiles';
+  static const repoResearchEngineExports = '/more/repo-research-engine/exports';
+  static const repoResearchEnginePrompts = '/more/repo-research-engine/prompts';
+  static const repoResearchEngineSettings =
+      '/more/repo-research-engine/settings';
   static const launchpad = '/launchpad';
   static const launchpadCampaigns = '/launchpad/campaigns';
   static const meetingDashboard = '/more/meetings';
