@@ -458,6 +458,44 @@ def test_source_adapter_interfaces_are_read_only():
     assert adapter.fetch_repository_snapshot(repository) == snapshot
 
 
+def test_github_source_adapter_loads_local_snapshot(tmp_path):
+    snapshot_root = tmp_path / "snapshots"
+    repo_root = snapshot_root / "github" / "new-earth" / "dashboard"
+    (repo_root / ".git").mkdir(parents=True)
+    (repo_root / "repo.json").write_text(
+        json.dumps(
+            {
+                "provider": "GitHub",
+                "owner": "new-earth",
+                "name": "dashboard",
+                "url": "local://github/new-earth/dashboard",
+                "default_branch": "main",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (repo_root / "README.md").write_text("# Dashboard\n\nLocal snapshot.", encoding="utf-8")
+    (repo_root / "docs").mkdir()
+    (repo_root / "docs" / "guide.md").write_text("## Guide\n", encoding="utf-8")
+
+    adapter = GitHubSourceAdapter(snapshot_root)
+    matches = adapter.search_repositories("dashboard")
+
+    assert len(matches) == 1
+    assert matches[0].provider == "GitHub"
+    assert matches[0].owner == "new-earth"
+    assert matches[0].name == "dashboard"
+
+    snapshot = adapter.fetch_repository_snapshot(matches[0])
+    file_tree = adapter.fetch_file_tree(matches[0])
+
+    assert snapshot.source_type == "local-read-only-snapshot"
+    assert snapshot.metadata["metadata"]["owner"] == "new-earth"
+    assert any(file_ref.path == "README.md" for file_ref in snapshot.files)
+    assert any(file_ref.path == "docs/guide.md" for file_ref in file_tree)
+    assert adapter.fetch_file_text(matches[0], "README.md").startswith("# Dashboard")
+
+
 def test_research_source_interfaces_mark_network_opt_in():
     source = ResearchSourceRef(
         source_kind="website",
