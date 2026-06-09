@@ -75,6 +75,51 @@ class RepoResearchRunRecord {
   String get shortStatus => succeeded ? 'Success' : 'Needs review';
 }
 
+class RepoResearchExportRecord {
+  const RepoResearchExportRecord({
+    required this.timestamp,
+    required this.exportedAt,
+    required this.profileName,
+    required this.profileFolder,
+    required this.repoName,
+    required this.repoPath,
+    required this.exportedTo,
+    required this.sourceReportDir,
+    required this.exportedFiles,
+    required this.promptFiles,
+  });
+
+  factory RepoResearchExportRecord.fromJson(Map<String, dynamic> json) {
+    return RepoResearchExportRecord(
+      timestamp: json['timestamp']?.toString() ?? '',
+      exportedAt: json['exported_at']?.toString() ?? '',
+      profileName: json['profile_name']?.toString() ?? 'Generic',
+      profileFolder: json['profile_folder']?.toString() ?? 'GENERAL',
+      repoName: json['repo_name']?.toString() ?? '',
+      repoPath: json['repo_path']?.toString() ?? '',
+      exportedTo: json['exported_to']?.toString() ?? '',
+      sourceReportDir: json['source_report_dir']?.toString() ?? '',
+      exportedFiles: (json['exported_files'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(growable: false),
+      promptFiles: (json['prompt_files'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(growable: false),
+    );
+  }
+
+  final String timestamp;
+  final String exportedAt;
+  final String profileName;
+  final String profileFolder;
+  final String repoName;
+  final String repoPath;
+  final String exportedTo;
+  final String sourceReportDir;
+  final List<String> exportedFiles;
+  final List<String> promptFiles;
+}
+
 class RepoResearchEngineService {
   RepoResearchEngineService({Directory? workingDirectory})
     : _workingDirectory = workingDirectory ?? Directory.current;
@@ -194,6 +239,37 @@ class RepoResearchEngineService {
     }
   }
 
+  Future<List<RepoResearchExportRecord>> loadExportHistory({
+    int limit = 8,
+  }) async {
+    final historyFile = _exportHistoryFile();
+    if (!await historyFile.exists()) {
+      return const <RepoResearchExportRecord>[];
+    }
+
+    try {
+      final decoded = jsonDecode(await historyFile.readAsString());
+      if (decoded is! List) {
+        return const <RepoResearchExportRecord>[];
+      }
+
+      final records = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(RepoResearchExportRecord.fromJson)
+          .toList();
+      records.sort(
+        (left, right) =>
+            (right.timestamp.isEmpty ? right.exportedAt : right.timestamp)
+                .compareTo(
+                  left.timestamp.isEmpty ? left.exportedAt : left.timestamp,
+                ),
+      );
+      return records.take(limit).toList(growable: false);
+    } catch (_) {
+      return const <RepoResearchExportRecord>[];
+    }
+  }
+
   Future<void> appendRecentRun(RepoResearchRunRecord record) async {
     final historyFile = _historyFile();
     await historyFile.parent.create(recursive: true);
@@ -290,5 +366,10 @@ class RepoResearchEngineService {
   File _historyFile() {
     final moduleRoot = moduleRootDirectory();
     return File(path.join(moduleRoot.path, 'reports', 'run_history.json'));
+  }
+
+  File _exportHistoryFile() {
+    final moduleRoot = moduleRootDirectory();
+    return File(path.join(moduleRoot.path, 'reports', 'export_history.json'));
   }
 }

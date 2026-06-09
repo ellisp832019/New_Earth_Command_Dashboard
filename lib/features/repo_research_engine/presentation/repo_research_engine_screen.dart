@@ -46,12 +46,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _reportHistorySearchController =
       TextEditingController();
+  late final TextEditingController _exportHistorySearchController =
+      TextEditingController();
 
   bool _graphExport = true;
   bool _isRunning = false;
   List<String> _outputFiles = const [];
   List<RepoResearchRunRecord> _recentRuns = const [];
+  List<RepoResearchExportRecord> _exportHistory = const [];
   bool _loadingRecentRuns = true;
+  bool _loadingExportHistory = true;
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
@@ -68,6 +72,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   void initState() {
     super.initState();
     _loadRecentRuns();
+    _loadExportHistory();
   }
 
   @override
@@ -85,6 +90,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _comparisonPreviewController.dispose();
     _recentRunsSearchController.dispose();
     _reportHistorySearchController.dispose();
+    _exportHistorySearchController.dispose();
     super.dispose();
   }
 
@@ -146,6 +152,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             _bundlePreviewsCard(context),
             const SizedBox(height: 16),
             _reportHistoryCard(context),
+            const SizedBox(height: 16),
+            _exportHistoryCard(context),
             const SizedBox(height: 16),
             _recentRunsCard(context),
           ],
@@ -627,6 +635,89 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  Widget _exportHistoryCard(BuildContext context) {
+    final visibleExports = _exportHistory
+        .where((record) {
+          final search = _exportHistorySearchController.text
+              .trim()
+              .toLowerCase();
+          if (search.isEmpty) {
+            return true;
+          }
+          return record.repoName.toLowerCase().contains(search) ||
+              record.repoPath.toLowerCase().contains(search) ||
+              record.profileName.toLowerCase().contains(search) ||
+              record.exportedTo.toLowerCase().contains(search) ||
+              record.exportedFiles.any(
+                (file) => file.toLowerCase().contains(search),
+              );
+        })
+        .toList(growable: false);
+    final displayExports = visibleExports.take(6).toList(growable: false);
+
+    return _panel(
+      context,
+      title: 'Export History',
+      subtitle:
+          'Browse the latest Omega OS exports, their manifest path, and copied report files.',
+      child: _loadingExportHistory
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : _exportHistory.isEmpty
+          ? Text(
+              'No export history has been recorded yet.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            )
+          : Column(
+              children: [
+                TextField(
+                  controller: _exportHistorySearchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Search export history',
+                    hintText: 'Repo, profile, export path, or file name',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (visibleExports.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'No exports match the current search.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                  )
+                else
+                  for (final record in displayExports) ...[
+                    _ExportHistoryTile(
+                      record: record,
+                      onOpenExport: record.exportedTo.isEmpty
+                          ? null
+                          : () => _service.openFolder(record.exportedTo),
+                      onOpenManifest: record.exportedTo.isEmpty
+                          ? null
+                          : () => _service.openPath(
+                              pathJoin(
+                                record.exportedTo,
+                                'export_manifest.json',
+                              ),
+                            ),
+                    ),
+                    if (record != displayExports.last)
+                      const SizedBox(height: 10),
+                  ],
+              ],
+            ),
+    );
+  }
+
   Widget _bundlePreviewsCard(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 1100;
     final previews = [
@@ -960,6 +1051,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     setState(() {
       _recentRuns = runs;
       _loadingRecentRuns = false;
+    });
+  }
+
+  Future<void> _loadExportHistory() async {
+    if (mounted) {
+      setState(() {
+        _loadingExportHistory = true;
+      });
+    }
+
+    final exports = await _service.loadExportHistory();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _exportHistory = exports;
+      _loadingExportHistory = false;
     });
   }
 
@@ -1416,6 +1524,105 @@ class _ReportHistoryTile extends StatelessWidget {
                   onPressed: onOpenIndex,
                   icon: const Icon(Icons.search),
                   label: const Text('Open Index'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExportHistoryTile extends StatelessWidget {
+  const _ExportHistoryTile({
+    required this.record,
+    required this.onOpenExport,
+    required this.onOpenManifest,
+  });
+
+  final RepoResearchExportRecord record;
+  final VoidCallback? onOpenExport;
+  final VoidCallback? onOpenManifest;
+
+  @override
+  Widget build(BuildContext context) {
+    final timestampLabel = record.exportedAt.isNotEmpty
+        ? record.exportedAt
+        : record.timestamp;
+    final fileCount = record.exportedFiles.length;
+    final promptCount = record.promptFiles.length;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  record.exportedTo.isEmpty
+                      ? 'Unknown export destination'
+                      : record.exportedTo,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 10),
+              _StatusChip(label: record.profileFolder, muted: false),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Profile: ${record.profileName} - $timestampLabel',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Repo: ${record.repoName} - Files: $fileCount - Prompts: $promptCount',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final file in record.exportedFiles.take(6))
+                _StatusChip(label: file, muted: false),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenExport,
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Open Export'),
+              ),
+              if (onOpenManifest != null)
+                FilledButton.tonalIcon(
+                  onPressed: onOpenManifest,
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Open Manifest'),
                 ),
             ],
           ),
