@@ -274,3 +274,6 @@ def test_graph_exporter_creates_graph_files(tmp_path):
     assert (output_dir / "dependency_graph.json").exists()
     assert (output_dir / "architecture_graph.json").exists()
     assert written["dependency_graph.md"].endswith("dependency_graph.md")
+    assert "Node Groups" in (output_dir / "architecture_graph.md").read_text(
+        encoding="utf-8",
+    )
