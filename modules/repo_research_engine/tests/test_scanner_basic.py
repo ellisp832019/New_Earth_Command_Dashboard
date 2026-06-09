@@ -128,6 +128,7 @@ def test_markdown_and_prompt_exports(tmp_path):
 
     assert (output_dir / "repo_research_report.md").exists()
     assert (output_dir / "security_report.md").exists()
+    assert (output_dir / "report_template_selection.md").exists()
     assert len(list((output_dir / "generated_prompts").glob("*.md"))) == 8
     assert "Dependency Summary" in (output_dir / "repo_research_report.md").read_text(
         encoding="utf-8",
@@ -263,11 +264,17 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
     report_dir = tmp_path / "reports"
     report_dir.mkdir()
     (report_dir / "repo_research_report.md").write_text("report", encoding="utf-8")
+    (report_dir / "report_template_selection.md").write_text("templates", encoding="utf-8")
+    (report_dir / "report_template_selection.json").write_text(
+        json.dumps({"profile_name": "MicroGrow", "report_templates": {}}),
+        encoding="utf-8",
+    )
     adapter = OmegaOsExportAdapter(tmp_path / "omega")
     destination = adapter.export(analysis, report_dir)
     assert destination.exists()
     assert (destination / "repo_research_report.md").exists()
     assert (destination / "export_manifest.json").exists()
+    assert (destination / "report_template_selection.md").exists()
 
 
 def test_comparison_and_change_tracking(tmp_path):

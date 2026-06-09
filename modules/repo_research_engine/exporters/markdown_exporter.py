@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
@@ -20,6 +21,7 @@ class MarkdownExporter:
     def save_bundle(self, out_dir: str | Path) -> Dict[str, str]:
         output_dir = Path(out_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
+        template_selection = self.analysis.get("report_templates", {})
 
         outputs = {
             "repo_research_report.md": self._render_main_report(),
@@ -29,12 +31,20 @@ class MarkdownExporter:
             "knowledge_report.md": self._render_knowledge_report(),
             "implementation_opportunities.md": self._render_implementation_opportunities(),
             "learning_notes.md": self._render_learning_notes(),
+            "report_template_selection.json": {
+                "profile_name": self.analysis.get("profile_name"),
+                "report_templates": template_selection,
+            },
+            "report_template_selection.md": self._render_template_selection(template_selection),
         }
 
         written: Dict[str, str] = {}
         for filename, content in outputs.items():
             target = output_dir / filename
-            target.write_text(content, encoding="utf-8")
+            if isinstance(content, str):
+                target.write_text(content, encoding="utf-8")
+            else:
+                target.write_text(json.dumps(content, indent=2), encoding="utf-8")
             written[filename] = str(target)
         return written
 
@@ -280,4 +290,17 @@ class MarkdownExporter:
         ]
         for item in self.analysis.get("learning_notes", []):
             lines.append(f"- {item}")
+        return "\n".join(lines).rstrip() + "\n"
+
+    def _render_template_selection(self, templates: Dict[str, Any]) -> str:
+        lines = [
+            "# Report Template Selection",
+            "",
+            "## Selected Templates",
+        ]
+        if templates:
+            for key, value in templates.items():
+                lines.append(f"- {key}: `{value}`")
+        else:
+            lines.append("- No template mapping was provided by the profile.")
         return "\n".join(lines).rstrip() + "\n"
