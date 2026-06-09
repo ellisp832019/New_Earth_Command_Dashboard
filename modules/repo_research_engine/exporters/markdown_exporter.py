@@ -104,6 +104,21 @@ class MarkdownExporter:
                     f"{len(group.get('manifests', []))} manifest(s)",
                 )
 
+        manifest_drilldowns = dependency_summary.get("manifest_drilldowns", [])
+        if manifest_drilldowns:
+            lines.append("")
+            lines.append("### By Runtime")
+            for group in manifest_drilldowns[:8]:
+                lines.append(
+                    f"- {group.get('runtime', 'Unknown')}: "
+                    f"{group.get('dependency_count', 0)} parsed dependencies",
+                )
+                for manifest in group.get("manifests", [])[:6]:
+                    sample = ", ".join(manifest.get("dependencies", [])[:5]) or "No parsed dependencies"
+                    lines.append(
+                        f"  - `{manifest.get('path')}` ({manifest.get('kind', 'unknown')}): {sample}",
+                    )
+
         lines += ["", "## File-Type Drilldowns"]
         drilldowns = a.get("file_type_drilldowns", [])
         if drilldowns:

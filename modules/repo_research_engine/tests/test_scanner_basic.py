@@ -114,6 +114,7 @@ def test_scanner_detects_language_framework_and_dependencies(tmp_path):
     assert any(item["name"] == "Flutter / Dart" for item in result["frameworks"])
     assert "riverpod" in result["dependency_summary"]["dependency_names"]
     assert result["dependency_summary"]["framework_groups"][0]["framework"] == "Flutter / Dart"
+    assert result["dependency_summary"]["manifest_drilldowns"][0]["runtime"] == "Flutter / Dart"
 
 
 def test_profile_manager_loads_profile_by_name():
@@ -354,6 +355,7 @@ def test_file_type_drilldowns_cover_core_categories(tmp_path):
 
     report = MarkdownExporter(analysis).render()
     assert "File-Type Drilldowns" in report
+    assert "Dependency Summary" in report
 
 
 def test_change_history_records_explicit_baseline_path(tmp_path):

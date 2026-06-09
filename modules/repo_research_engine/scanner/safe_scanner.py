@@ -627,10 +627,12 @@ class SafeRepoScanner:
             for path, data in sorted(dependencies.items())
         ]
         framework_groups = self._group_dependencies_by_framework(manifest_entries)
+        manifest_drilldowns = self._dependency_manifest_drilldowns(manifest_entries)
 
         return {
             "manifests": manifest_entries,
             "framework_groups": framework_groups,
+            "manifest_drilldowns": manifest_drilldowns,
             "dependency_count": len(dependency_names),
             "dependency_names": sorted(dependency_names),
         }
@@ -819,6 +821,48 @@ class SafeRepoScanner:
         if not cleaned:
             return ""
         return re.split(r"[<>=!~ \[]", cleaned, maxsplit=1)[0].strip()
+
+    def _dependency_manifest_drilldowns(self, manifests: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for manifest in manifests:
+            runtime = self._runtime_name_for_manifest_kind(str(manifest.get("kind", "unknown")))
+            entry = grouped.setdefault(
+                runtime,
+                {"runtime": runtime, "manifests": [], "dependency_count": 0},
+            )
+            entry["manifests"].append(
+                {
+                    "path": manifest.get("path", ""),
+                    "kind": manifest.get("kind", "unknown"),
+                    "dependencies": list(manifest.get("dependencies", [])),
+                    "dependency_count": manifest.get("dependency_count", 0),
+                }
+            )
+            entry["dependency_count"] += int(manifest.get("dependency_count", 0))
+
+        drilldowns: List[Dict[str, Any]] = []
+        for runtime, data in sorted(grouped.items()):
+            drilldowns.append(
+                {
+                    "runtime": runtime,
+                    "dependency_count": data["dependency_count"],
+                    "manifests": sorted(data["manifests"], key=lambda item: item["path"]),
+                }
+            )
+        return drilldowns
+
+    def _runtime_name_for_manifest_kind(self, kind: str) -> str:
+        mapping = {
+            "flutter": "Flutter / Dart",
+            "npm": "Node.js",
+            "python": "Python",
+            "go": "Go",
+            "rust": "Rust",
+            "java": "Java",
+            "platformio": "PlatformIO / Arduino",
+            "manifest": "Generic manifest",
+        }
+        return mapping.get(kind.lower(), kind.title() if kind else "Unknown")
 
     def _group_dependencies_by_framework(
         self,
