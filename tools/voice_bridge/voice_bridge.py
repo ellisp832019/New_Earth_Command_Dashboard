@@ -8,10 +8,12 @@ locally when the optional speech dependencies are installed.
 from __future__ import annotations
 
 import argparse
+import asyncio
+import base64
 import json
 import os
-import sys
 import shutil
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -61,6 +63,72 @@ def save_log(transcript: str, output_text: str) -> Path:
         file.write(output_text.strip() + "\n")
 
     return log_path
+
+
+def _load_realtime_stack() -> tuple[Any, Any]:
+    try:
+        from openai import AsyncOpenAI  # type: ignore
+        import sounddevice as sd  # type: ignore
+    except Exception as exc:  # pragma: no cover - runtime dependency loading
+        raise RuntimeError(
+            "Missing realtime speech dependencies. Install the packages in "
+            "tools/voice_bridge/requirements.txt."
+        ) from exc
+
+    return AsyncOpenAI, sd
+
+
+class RealtimeAudioPlayer:
+    def __init__(self, sounddevice_module: Any) -> None:
+        self._sd = sounddevice_module
+        self._stream = None
+
+    def start(self) -> None:
+        if self._stream is not None:
+            return
+
+        self._stream = self._sd.RawOutputStream(
+            samplerate=24000,
+            channels=1,
+            dtype="int16",
+            blocksize=0,
+        )
+        self._stream.start()
+
+    async def write(self, data: bytes) -> None:
+        if not data:
+            return
+
+        if self._stream is None:
+            self.start()
+
+        await asyncio.to_thread(self._stream.write, data)
+
+    def close(self) -> None:
+        if self._stream is None:
+            return
+
+        try:
+            self._stream.stop()
+        finally:
+            self._stream.close()
+            self._stream = None
+
+
+def _build_realtime_speech_instructions(extra_instructions: str | None = None) -> str:
+    parts = [
+        "You are Gaia, the calm voice of the New Earth Command Dashboard.",
+        "Speak naturally, warmly, and briefly.",
+        "Do not add facts that were not provided.",
+        "Do not turn the reply into a long monologue.",
+        "Preserve the meaning of the provided text, but speak it with good pacing and a calm tone.",
+        "If the text contains a next step, gently emphasize it.",
+    ]
+
+    if extra_instructions and extra_instructions.strip():
+        parts.append(extra_instructions.strip())
+
+    return "\n".join(parts)
 
 
 def _load_transcription_stack() -> tuple[Any, Any, Any]:
@@ -243,6 +311,86 @@ def _print_json(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=False))
 
 
+async def _speak_realtime(
+    text: str,
+    *,
+    model: str | None = None,
+    voice: str | None = None,
+    instructions: str | None = None,
+) -> dict[str, Any]:
+    AsyncOpenAI, sd = _load_realtime_stack()
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    player = RealtimeAudioPlayer(sd)
+    model_label = (model or os.environ.get("OPENAI_VOICE_MODEL") or "gpt-realtime-2").strip()
+    voice_label = (voice or os.environ.get("OPENAI_REALTIME_VOICE") or "").strip()
+    spoken_text_parts: list[str] = []
+    transcript_parts: list[str] = []
+    saw_error: str | None = None
+
+    try:
+        async with client.realtime.connect(model=model_label) as conn:
+          session_payload: dict[str, Any] = {
+              "type": "realtime",
+              "output_modalities": ["audio", "text"],
+              "instructions": _build_realtime_speech_instructions(instructions),
+          }
+          if voice_label:
+              session_payload["voice"] = voice_label
+
+          await conn.session.update(session=session_payload)
+          await conn.conversation.item.create(
+              item={
+                  "type": "message",
+                  "role": "user",
+                  "content": [
+                      {
+                          "type": "input_text",
+                          "text": text.strip(),
+                      }
+                  ],
+              }
+          )
+          await conn.response.create()
+
+          async for event in conn:
+              if event.type == "response.output_audio.delta":
+                  await player.write(base64.b64decode(event.delta))
+                  continue
+
+              if event.type == "response.output_text.delta":
+                  if event.delta:
+                      spoken_text_parts.append(event.delta)
+                  continue
+
+              if event.type == "response.output_audio_transcript.delta":
+                  if event.delta:
+                      transcript_parts.append(event.delta)
+                  continue
+
+              if event.type == "error":
+                  saw_error = getattr(event.error, "message", None) or "Realtime API error"
+                  break
+
+              if event.type == "response.done":
+                  break
+    finally:
+        player.close()
+
+    spoken_text = "".join(spoken_text_parts).strip()
+    transcript_text = "".join(transcript_parts).strip()
+    output_text = spoken_text or transcript_text
+
+    if saw_error is not None:
+        raise RuntimeError(saw_error)
+
+    return {
+        "ok": True,
+        "model": model_label,
+        "voice": voice_label or None,
+        "spoken_text": output_text,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="New Earth Dashboard Voice Bridge")
     subparsers = parser.add_subparsers(dest="command")
@@ -270,6 +418,21 @@ def main() -> int:
 
     prompt_parser = subparsers.add_parser("prompt", help="Format a transcript as a Codex prompt")
     prompt_parser.add_argument("transcript", nargs="?", default="", help="Transcript text")
+
+    speak_parser = subparsers.add_parser(
+        "realtime-speak",
+        help="Speak text through the OpenAI Realtime voice model and play it locally",
+    )
+    speak_parser.add_argument("text", nargs="?", default="", help="Text to speak")
+    speak_parser.add_argument("--model", type=str, default=None, help="Realtime model name")
+    speak_parser.add_argument("--voice", type=str, default=None, help="Realtime voice name")
+    speak_parser.add_argument(
+        "--instructions",
+        type=str,
+        default=None,
+        help="Optional extra instructions for the spoken reply",
+    )
+    speak_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
 
     args = parser.parse_args()
 
@@ -315,6 +478,37 @@ def main() -> int:
         save_log(transcript, output_text)
         return 0
 
+    if args.command == "realtime-speak":
+        text = args.text.strip()
+        if not text:
+            print("No text entered. Exiting.")
+            return 0
+
+        try:
+            payload = asyncio.run(
+                _speak_realtime(
+                    text,
+                    model=args.model,
+                    voice=args.voice,
+                    instructions=args.instructions,
+                )
+            )
+        except Exception as exc:
+            if args.json:
+                _print_json({
+                    "ok": False,
+                    "error": str(exc),
+                })
+            else:
+                print(f"Realtime speech failed: {exc}", file=sys.stderr)
+            return 1
+
+        if args.json:
+            _print_json(payload)
+        else:
+            print(payload.get("spoken_text", ""))
+        return 0
+
     if args.command == "transcribe-file":
         try:
             capture = transcribe_file(
@@ -349,6 +543,7 @@ def main() -> int:
 
     print("New Earth Dashboard Voice Bridge")
     print("Try: python tools/voice_bridge/voice_bridge.py listen-once --json")
+    print("Try: python tools/voice_bridge/voice_bridge.py realtime-speak --json \"Hello\"")
     return 0
 
 

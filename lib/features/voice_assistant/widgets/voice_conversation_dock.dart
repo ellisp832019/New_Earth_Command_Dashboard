@@ -11,11 +11,12 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../settings/application/settings_controller.dart';
 import '../application/voice_conversation_dock_controller.dart';
+import '../application/voice_assistant_turn_coordinator.dart';
 import '../application/voice_session_controller.dart';
 import '../desktop_speech_bridge_service.dart';
 import '../voice_command_model.dart';
-import '../voice_command_service.dart';
 import '../voice_speech_service.dart';
+import '../voice_command_service.dart';
 
 class VoiceConversationDock extends ConsumerStatefulWidget {
   const VoiceConversationDock({super.key});
@@ -31,8 +32,15 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
   final SpeechToText _speech = SpeechToText();
   final TextEditingController _followUpController = TextEditingController();
   final FocusNode _followUpFocusNode = FocusNode();
+  late final VoiceAssistantTurnCoordinator _turnCoordinator;
   bool _isCapturingFollowUp = false;
   String _followUpStatus = 'Speak a short follow-up or type it here.';
+
+  @override
+  void initState() {
+    super.initState();
+    _turnCoordinator = ref.read(voiceAssistantTurnCoordinatorProvider);
+  }
 
   @override
   void dispose() {
@@ -482,14 +490,6 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
 
     _followUpController.clear();
     _followUpFocusNode.requestFocus();
-    ref
-        .read(voiceSessionProvider.notifier)
-        .beginSpeaking(
-          owner: VoiceSessionOwner.dock,
-          label: 'Gaia speaking',
-          detail: 'Answering the follow-up',
-          opacity: 0.72,
-        );
     await _speakResponse(response);
 
     if (!mounted) {
@@ -547,14 +547,14 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         }
         return;
       }
-      await ref.read(voiceAssistantSpeechServiceProvider).stop();
+      await _turnCoordinator.stop();
       await Future<void>.delayed(const Duration(milliseconds: 120));
-    final capture = await _desktopSpeechBridgeService.captureOnce(
-      durationSeconds: 6,
-    );
-    if (!mounted) {
-      return;
-    }
+      final capture = await _desktopSpeechBridgeService.captureOnce(
+        durationSeconds: 6,
+      );
+      if (!mounted) {
+        return;
+      }
 
       var transcript = capture?.transcript.trim() ?? '';
       if (transcript.isEmpty) {
@@ -629,9 +629,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
           latestTranscript = result.recognizedWords;
           if (result.finalResult && !completer.isCompleted) {
             completer.complete(
-              latestTranscript.trim().isEmpty
-                  ? null
-                  : latestTranscript.trim(),
+              latestTranscript.trim().isEmpty ? null : latestTranscript.trim(),
             );
           }
         },
@@ -657,35 +655,29 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
 
   Future<void> _speakResponse(VoiceCommandAssistantResponse response) async {
     final voiceService = VoiceCommandService();
-    final settingsSnapshot = ref
-        .read(settingsSnapshotProvider)
-        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
-    if (settingsSnapshot == null ||
-        !settingsSnapshot.settings.voiceRepliesEnabled) {
-      return;
-    }
-
     try {
-      final voices = await ref.read(voiceAssistantVoicesProvider.future);
-      final selectedVoice = resolveConfiguredVoiceOption(
-        voices: voices,
-        preferredName: settingsSnapshot.settings.preferredTtsVoiceName,
-        preferredLocale: settingsSnapshot.settings.preferredTtsVoiceLocale,
-        preferredGender: settingsSnapshot.settings.preferredTtsVoiceGender,
-        preferredIdentifier:
-            settingsSnapshot.settings.preferredTtsVoiceIdentifier,
+      final settingsSnapshot = ref
+          .read(settingsSnapshotProvider)
+          .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+      if (settingsSnapshot == null ||
+          !settingsSnapshot.settings.voiceRepliesEnabled) {
+        return;
+      }
+
+      await _turnCoordinator.speak(
+        VoiceAssistantTurnPlan(
+          kind: VoiceAssistantTurnKind.dockFollowUp,
+          owner: VoiceSessionOwner.dock,
+          speakingLabel: 'Gaia speaking',
+          speakingDetail: 'Answering the follow-up',
+          followUpLabel: 'Gaia ready',
+          followUpDetail: 'Awaiting the next follow-up',
+          text: voiceService.buildSpokenReply(response),
+          settings: settingsSnapshot.settings,
+          tone: VoiceSpeechTone.briefing,
+          response: response,
+        ),
       );
-      await ref.read(voiceAssistantSpeechServiceProvider).stop();
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-      await ref
-          .read(voiceAssistantSpeechServiceProvider)
-          .speak(
-            voiceService.buildSpokenReply(response),
-            enabled: true,
-            rate: settingsSnapshot.settings.preferredTtsVoiceRate,
-            pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
-            voice: selectedVoice,
-          );
     } catch (_) {
       // Best-effort only. The dock should still update even if speech fails.
     }

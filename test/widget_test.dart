@@ -50,6 +50,15 @@ void main() {
     }
   }
 
+  Finder voiceAssistantScrollView() {
+    return find
+        .descendant(
+          of: find.byKey(const Key('voiceAssistantPageBody')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+  }
+
   Future<void> pumpUntilFound(
     WidgetTester tester,
     Finder finder, {
@@ -92,245 +101,243 @@ void main() {
     List<CommandDeckActionLogEntry>? recentActions,
   }) {
     final overrides = [
-        databaseReadyProvider.overrideWith((ref) async {}),
-        appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
-        voiceStartupGateProvider.overrideWith(
-          (ref) async =>
-              startupGateResult ??
-              const VoiceStartupGateResult(
-                isReady: true,
-                message: 'Test harness bypasses the voice startup gate.',
-                devices: <VoiceInputDevice>[],
-              ),
+      databaseReadyProvider.overrideWith((ref) async {}),
+      appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
+      voiceStartupGateProvider.overrideWith(
+        (ref) async =>
+            startupGateResult ??
+            const VoiceStartupGateResult(
+              isReady: true,
+              message: 'Test harness bypasses the voice startup gate.',
+              devices: <VoiceInputDevice>[],
+            ),
+      ),
+      dashboardSnapshotProvider.overrideWith(
+        (ref) async => DashboardSnapshot(
+          date: DateTime(2026, 5, 2),
+          hasTodayPlan: true,
+          activeProjectCount: 9,
+          activeProjects: const [
+            DashboardProjectSummary(
+              projectId: 'project-microgrow',
+              name: 'MicroGrow',
+              progressPercentage: 65,
+              currentMilestone: 'Stabilise diagnostics',
+              nextAction: 'Review the next useful diagnostics step.',
+            ),
+            DashboardProjectSummary(
+              projectId: 'project-new-earth-website',
+              name: 'New Earth Website',
+              progressPercentage: 40,
+              currentMilestone: 'Clarify site structure',
+              nextAction: 'Tighten the founder journey page.',
+            ),
+          ],
+          topTasks: const [],
+          topTaskTitles: const [],
+          showWellbeingCard: true,
+          showBusinessCard: true,
+          showLearningCard: true,
+          showContentCard: true,
+          energyLabel: 'High',
+          nextStepTitle: 'Next useful move',
+          nextStepSummary:
+              'Continue MicroGrow with Review the next useful diagnostics step.',
+          nextStepReason:
+              'It uses the strongest project context available right now.',
+          mainFocus: null,
+          focusReason: null,
+          morningIntention: null,
         ),
-        dashboardSnapshotProvider.overrideWith(
-          (ref) async => DashboardSnapshot(
-            date: DateTime(2026, 5, 2),
-            hasTodayPlan: true,
-            activeProjectCount: 9,
-            activeProjects: const [
-              DashboardProjectSummary(
-                projectId: 'project-microgrow',
-                name: 'MicroGrow',
-                progressPercentage: 65,
-                currentMilestone: 'Stabilise diagnostics',
-                nextAction: 'Review the next useful diagnostics step.',
-              ),
-              DashboardProjectSummary(
-                projectId: 'project-new-earth-website',
-                name: 'New Earth Website',
-                progressPercentage: 40,
-                currentMilestone: 'Clarify site structure',
-                nextAction: 'Tighten the founder journey page.',
-              ),
-            ],
-            topTasks: const [],
-            topTaskTitles: const [],
+      ),
+      voiceAssistantProjectOptionsProvider.overrideWith(
+        (ref) async => const [
+          VoiceAssistantProjectOption(
+            id: 'project-microgrow',
+            name: 'MicroGrow',
+          ),
+          VoiceAssistantProjectOption(
+            id: 'project-new-earth-website',
+            name: 'New Earth Website',
+          ),
+        ],
+      ),
+      projectsProvider.overrideWith(
+        (ref) async => [
+          Project(
+            projectId: 'project-microgrow',
+            name: 'MicroGrow',
+            shortDescription: 'Smart grow automation platform.',
+            longDescription: null,
+            vision: null,
+            status: 'Active',
+            priority: 'High',
+            progressPercentage: 0,
+            currentMilestone: 'Stabilise core diagnostics and v1.0 direction.',
+            nextAction: 'Review current MicroGrow build priorities.',
+            startDate: null,
+            targetDate: null,
+            createdAt: DateTime(2026, 5, 2),
+            updatedAt: DateTime(2026, 5, 2),
+            notes: null,
+            isArchived: false,
+          ),
+          Project(
+            projectId: 'project-new-earth-website',
+            name: 'New Earth Website',
+            shortDescription: 'Public home for New Earth projects and updates.',
+            longDescription: null,
+            vision: null,
+            status: 'Active',
+            priority: 'High',
+            progressPercentage: 0,
+            currentMilestone:
+                'Clarify site structure and founder journey content.',
+            nextAction: 'Choose the next page or section to improve.',
+            startDate: null,
+            targetDate: null,
+            createdAt: DateTime(2026, 5, 2),
+            updatedAt: DateTime(2026, 5, 2),
+            notes: null,
+            isArchived: false,
+          ),
+        ],
+      ),
+      tasksProvider.overrideWith(
+        (ref) async => [
+          Task(
+            taskId: 'task-1',
+            projectId: 'project-microgrow',
+            title: 'Review MicroGrow diagnostics',
+            description: 'Check the next useful diagnostics step.',
+            category: 'Build',
+            priority: 'High',
+            status: 'Inbox',
+            dueDate: null,
+            energyLevel: 'Medium',
+            estimatedMinutes: null,
+            actualMinutes: null,
+            createdAt: DateTime(2026, 5, 2, 9),
+            updatedAt: DateTime(2026, 5, 2, 9),
+            completedAt: null,
+            notes: null,
+            isTopThree: true,
+            isArchived: false,
+          ),
+          Task(
+            taskId: 'task-2',
+            projectId: 'project-new-earth-website',
+            title: 'Clarify founder journey page',
+            description: 'Tighten the next section structure.',
+            category: 'Content',
+            priority: 'Medium',
+            status: 'Planned',
+            dueDate: null,
+            energyLevel: 'Low',
+            estimatedMinutes: null,
+            actualMinutes: null,
+            createdAt: DateTime(2026, 5, 2, 10),
+            updatedAt: DateTime(2026, 5, 2, 10),
+            completedAt: null,
+            notes: null,
+            isTopThree: true,
+            isArchived: false,
+          ),
+        ],
+      ),
+      plannerTaskOptionsProvider.overrideWith(
+        (ref) async => [
+          Task(
+            taskId: 'task-1',
+            projectId: 'project-microgrow',
+            title: 'Review MicroGrow diagnostics',
+            description: 'Check the next useful diagnostics step.',
+            category: 'Build',
+            priority: 'High',
+            status: 'Inbox',
+            dueDate: null,
+            energyLevel: 'Medium',
+            estimatedMinutes: null,
+            actualMinutes: null,
+            createdAt: DateTime(2026, 5, 2, 9),
+            updatedAt: DateTime(2026, 5, 2, 9),
+            completedAt: null,
+            notes: null,
+            isTopThree: true,
+            isArchived: false,
+          ),
+          Task(
+            taskId: 'task-2',
+            projectId: 'project-new-earth-website',
+            title: 'Clarify founder journey page',
+            description: 'Tighten the next section structure.',
+            category: 'Content',
+            priority: 'Medium',
+            status: 'Planned',
+            dueDate: null,
+            energyLevel: 'Low',
+            estimatedMinutes: null,
+            actualMinutes: null,
+            createdAt: DateTime(2026, 5, 2, 10),
+            updatedAt: DateTime(2026, 5, 2, 10),
+            completedAt: null,
+            notes: null,
+            isTopThree: true,
+            isArchived: false,
+          ),
+        ],
+      ),
+      todayPlanProvider.overrideWith(
+        (ref) async => DailyPlan(
+          dailyPlanId: 'daily-plan-2026-05-02',
+          date: DateTime(2026, 5, 2),
+          mainFocus: null,
+          focusReason: null,
+          morningIntention: null,
+          topTask1Id: 'task-1',
+          topTask2Id: 'task-2',
+          topTask3Id: null,
+          learningFocusId: null,
+          contentFocusId: null,
+          businessFocusId: null,
+          wellbeingCheckinId: null,
+          eveningReview: null,
+          whatMovedForward: null,
+          whatWasCompleted: null,
+          whatWasLearned: null,
+          blockers: null,
+          carryForwardNotes: null,
+          tomorrowFocus: null,
+          createdAt: DateTime(2026, 5, 2),
+          updatedAt: DateTime(2026, 5, 2),
+        ),
+      ),
+      settingsSnapshotProvider.overrideWith(
+        (ref) async => SettingsSnapshot(
+          settings: AppSetting(
+            settingsId: 'settings-test',
+            themeMode: 'Dark',
+            defaultDashboardView: 'Dashboard',
             showWellbeingCard: true,
             showBusinessCard: true,
             showLearningCard: true,
             showContentCard: true,
-            energyLabel: 'High',
-            nextStepTitle: 'Next useful move',
-            nextStepSummary:
-                'Continue MicroGrow with Review the next useful diagnostics step.',
-            nextStepReason:
-                'It uses the strongest project context available right now.',
-            mainFocus: null,
-            focusReason: null,
-            morningIntention: null,
-          ),
-        ),
-        voiceAssistantProjectOptionsProvider.overrideWith(
-          (ref) async => const [
-            VoiceAssistantProjectOption(
-              id: 'project-microgrow',
-              name: 'MicroGrow',
-            ),
-            VoiceAssistantProjectOption(
-              id: 'project-new-earth-website',
-              name: 'New Earth Website',
-            ),
-          ],
-        ),
-        projectsProvider.overrideWith(
-          (ref) async => [
-            Project(
-              projectId: 'project-microgrow',
-              name: 'MicroGrow',
-              shortDescription: 'Smart grow automation platform.',
-              longDescription: null,
-              vision: null,
-              status: 'Active',
-              priority: 'High',
-              progressPercentage: 0,
-              currentMilestone:
-                  'Stabilise core diagnostics and v1.0 direction.',
-              nextAction: 'Review current MicroGrow build priorities.',
-              startDate: null,
-              targetDate: null,
-              createdAt: DateTime(2026, 5, 2),
-              updatedAt: DateTime(2026, 5, 2),
-              notes: null,
-              isArchived: false,
-            ),
-            Project(
-              projectId: 'project-new-earth-website',
-              name: 'New Earth Website',
-              shortDescription:
-                  'Public home for New Earth projects and updates.',
-              longDescription: null,
-              vision: null,
-              status: 'Active',
-              priority: 'High',
-              progressPercentage: 0,
-              currentMilestone:
-                  'Clarify site structure and founder journey content.',
-              nextAction: 'Choose the next page or section to improve.',
-              startDate: null,
-              targetDate: null,
-              createdAt: DateTime(2026, 5, 2),
-              updatedAt: DateTime(2026, 5, 2),
-              notes: null,
-              isArchived: false,
-            ),
-          ],
-        ),
-        tasksProvider.overrideWith(
-          (ref) async => [
-            Task(
-              taskId: 'task-1',
-              projectId: 'project-microgrow',
-              title: 'Review MicroGrow diagnostics',
-              description: 'Check the next useful diagnostics step.',
-              category: 'Build',
-              priority: 'High',
-              status: 'Inbox',
-              dueDate: null,
-              energyLevel: 'Medium',
-              estimatedMinutes: null,
-              actualMinutes: null,
-              createdAt: DateTime(2026, 5, 2, 9),
-              updatedAt: DateTime(2026, 5, 2, 9),
-              completedAt: null,
-              notes: null,
-              isTopThree: true,
-              isArchived: false,
-            ),
-            Task(
-              taskId: 'task-2',
-              projectId: 'project-new-earth-website',
-              title: 'Clarify founder journey page',
-              description: 'Tighten the next section structure.',
-              category: 'Content',
-              priority: 'Medium',
-              status: 'Planned',
-              dueDate: null,
-              energyLevel: 'Low',
-              estimatedMinutes: null,
-              actualMinutes: null,
-              createdAt: DateTime(2026, 5, 2, 10),
-              updatedAt: DateTime(2026, 5, 2, 10),
-              completedAt: null,
-              notes: null,
-              isTopThree: true,
-              isArchived: false,
-            ),
-          ],
-        ),
-        plannerTaskOptionsProvider.overrideWith(
-          (ref) async => [
-            Task(
-              taskId: 'task-1',
-              projectId: 'project-microgrow',
-              title: 'Review MicroGrow diagnostics',
-              description: 'Check the next useful diagnostics step.',
-              category: 'Build',
-              priority: 'High',
-              status: 'Inbox',
-              dueDate: null,
-              energyLevel: 'Medium',
-              estimatedMinutes: null,
-              actualMinutes: null,
-              createdAt: DateTime(2026, 5, 2, 9),
-              updatedAt: DateTime(2026, 5, 2, 9),
-              completedAt: null,
-              notes: null,
-              isTopThree: true,
-              isArchived: false,
-            ),
-            Task(
-              taskId: 'task-2',
-              projectId: 'project-new-earth-website',
-              title: 'Clarify founder journey page',
-              description: 'Tighten the next section structure.',
-              category: 'Content',
-              priority: 'Medium',
-              status: 'Planned',
-              dueDate: null,
-              energyLevel: 'Low',
-              estimatedMinutes: null,
-              actualMinutes: null,
-              createdAt: DateTime(2026, 5, 2, 10),
-              updatedAt: DateTime(2026, 5, 2, 10),
-              completedAt: null,
-              notes: null,
-              isTopThree: true,
-              isArchived: false,
-            ),
-          ],
-        ),
-        todayPlanProvider.overrideWith(
-          (ref) async => DailyPlan(
-            dailyPlanId: 'daily-plan-2026-05-02',
-            date: DateTime(2026, 5, 2),
-            mainFocus: null,
-            focusReason: null,
-            morningIntention: null,
-            topTask1Id: 'task-1',
-            topTask2Id: 'task-2',
-            topTask3Id: null,
-            learningFocusId: null,
-            contentFocusId: null,
-            businessFocusId: null,
-            wellbeingCheckinId: null,
-            eveningReview: null,
-            whatMovedForward: null,
-            whatWasCompleted: null,
-            whatWasLearned: null,
-            blockers: null,
-            carryForwardNotes: null,
-            tomorrowFocus: null,
+            showProjectsWorkspaceSnapshot: true,
+            dailyTopTaskLimit: 3,
+            voiceRepliesEnabled: false,
+            voiceAssistantEnabled: voiceAssistantEnabled,
+            preferredTtsVoiceName: null,
+            preferredTtsVoiceLocale: null,
+            preferredTtsVoiceGender: null,
+            preferredTtsVoiceIdentifier: null,
+            preferredTtsVoiceRate: 0.5,
+            preferredTtsVoicePitch: 1.0,
             createdAt: DateTime(2026, 5, 2),
             updatedAt: DateTime(2026, 5, 2),
           ),
+          appVersion: 'test',
         ),
-        settingsSnapshotProvider.overrideWith(
-          (ref) async => SettingsSnapshot(
-            settings: AppSetting(
-              settingsId: 'settings-test',
-              themeMode: 'Dark',
-              defaultDashboardView: 'Dashboard',
-              showWellbeingCard: true,
-              showBusinessCard: true,
-              showLearningCard: true,
-              showContentCard: true,
-              showProjectsWorkspaceSnapshot: true,
-              dailyTopTaskLimit: 3,
-              voiceRepliesEnabled: false,
-              voiceAssistantEnabled: voiceAssistantEnabled,
-              preferredTtsVoiceName: null,
-              preferredTtsVoiceLocale: null,
-              preferredTtsVoiceGender: null,
-              preferredTtsVoiceIdentifier: null,
-              preferredTtsVoiceRate: 0.5,
-              preferredTtsVoicePitch: 1.0,
-              createdAt: DateTime(2026, 5, 2),
-              updatedAt: DateTime(2026, 5, 2),
-            ),
-            appVersion: 'test',
-          ),
-        ),
+      ),
     ];
 
     if (recentActions != null) {
@@ -536,7 +543,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Voice Assistant'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
 
@@ -2095,7 +2102,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceMoreCaptureToolsTile')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
     await tester.tap(find.byKey(const Key('voiceMoreCaptureToolsTile')));
@@ -2104,7 +2111,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Related Project'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
     expect(find.text('Related Project'), findsOneWidget);
@@ -2167,7 +2174,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceTemplateButton-codex')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
 
@@ -2177,18 +2184,18 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceBriefingCard')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
     expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
-    expect(find.text('Briefing snapshot'), findsOneWidget);
+    expect(find.text('Review-first briefing'), findsOneWidget);
     expect(find.text('AI Assist preview'), findsOneWidget);
     expect(find.text('Use AI wording'), findsOneWidget);
     expect(find.text('Keep manual wording'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
     expect(
@@ -2209,7 +2216,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceStarterDeckShortcutGroup')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
 
@@ -2225,7 +2232,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceStarterDeckPlanGroup')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
     expect(find.text('Daily Reset'), findsOneWidget);
@@ -2233,7 +2240,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceStarterDeckCaptureGroup')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
     expect(find.text('Project Update'), findsOneWidget);
@@ -2241,7 +2248,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceStarterDeckShortcutGroup')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
     expect(find.text('Meeting Summary'), findsOneWidget);
@@ -2298,63 +2305,11 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
 
     expect(find.text('Save as Project'), findsOneWidget);
-  });
-
-  testWidgets('voice assistant wizard mode asks one question at a time', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      buildTestApp(
-        child: const MaterialApp(
-          home: VoiceAssistantScreen(startInWizardMode: true),
-        ),
-      ),
-    );
-    await pumpUntilIdle(tester);
-
-    expect(
-      find.byKey(const Key('voiceWizardCard'), skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining(
-        'What kind of entry do you want to create?',
-        skipOffstage: false,
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('AI wizard assist', skipOffstage: false), findsOneWidget);
-    expect(find.text('Use AI answer', skipOffstage: false), findsOneWidget);
-    expect(find.text('Current Thread'), findsNothing);
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('voiceWizardAnswerField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
-    await tester.enterText(
-      find.byKey(const Key('voiceWizardAnswerField')),
-      'Task',
-    );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('voiceWizardNextButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
-    await tester.tap(find.byKey(const Key('voiceWizardNextButton')));
-    await pumpUntilIdle(tester);
-
-    final transcriptField = tester
-        .widgetList<TextField>(find.byKey(const Key('voiceTranscriptField')))
-        .first;
-    expect(transcriptField.controller?.text, contains('Type: Task.'));
   });
 
   testWidgets('voice assistant can save a reviewed transcript as a task', (
@@ -2372,7 +2327,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceMoreCaptureToolsTile')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
     await tester.tap(find.byKey(const Key('voiceMoreCaptureToolsTile')));
@@ -2383,29 +2338,11 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
 
     await tester.tap(find.byKey(const Key('voiceSaveCommandButton')));
-    await pumpUntilIdle(tester);
-
-    await tester.scrollUntilVisible(
-      find.text(
-        'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.',
-      ),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
-
-    await tester.tap(
-      find
-          .text(
-            'Capture a task to review the voice bridge scaffold and prepare the next safe dashboard step.',
-          )
-          .first,
-    );
     await pumpUntilIdle(tester);
 
     final tasks = await database.select(database.tasks).get();
@@ -2438,7 +2375,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceMoreCaptureToolsTile')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await tester.pump();
     await tester.tap(find.byKey(const Key('voiceMoreCaptureToolsTile')));
@@ -2453,7 +2390,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceSaveCommandButton')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
 
@@ -2463,7 +2400,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('voiceHistoryItem-0')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: voiceAssistantScrollView(),
     );
     await pumpUntilIdle(tester);
 

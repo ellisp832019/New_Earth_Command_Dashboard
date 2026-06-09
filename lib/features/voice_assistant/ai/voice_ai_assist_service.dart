@@ -35,37 +35,38 @@ class VoiceAiAssistRequest {
   );
 }
 
-class VoiceAiAssistResponse {
+class VoiceAiAssistResponse extends VoiceAssistantResponse {
   const VoiceAiAssistResponse({
-    required this.summary,
-    required this.nextStep,
-    this.suggestedTitle,
-    this.suggestedSummary,
-    this.suggestedWizardAnswer,
-    this.suggestedType,
-    this.hints = const <String>[],
+    required super.summary,
+    required super.nextStep,
+    super.projectContext,
+    super.threadContext,
+    super.suggestedTitle,
+    super.suggestedSummary,
+    super.suggestedWizardAnswer,
+    super.suggestedType,
+    super.hints,
   });
 
   const VoiceAiAssistResponse.empty()
-    : summary = 'AI assist is not connected yet.',
-      nextStep = 'Review the transcript manually before saving.',
-      suggestedTitle = null,
-      suggestedSummary = null,
-      suggestedWizardAnswer = null,
-      suggestedType = null,
-      hints = const <String>[];
+    : super(
+        summary: 'AI assist is not connected yet.',
+        nextStep: 'Review the transcript manually before saving.',
+        projectContext: null,
+        threadContext: null,
+        suggestedTitle: null,
+        suggestedSummary: null,
+        suggestedWizardAnswer: null,
+        suggestedType: null,
+        hints: const <String>[],
+      );
 
-  final String summary;
-  final String nextStep;
-  final String? suggestedTitle;
-  final String? suggestedSummary;
-  final String? suggestedWizardAnswer;
-  final VoiceCommandType? suggestedType;
-  final List<String> hints;
-
+  @override
   VoiceAiAssistResponse copyWith({
     String? summary,
     String? nextStep,
+    String? projectContext,
+    String? threadContext,
     String? suggestedTitle,
     String? suggestedSummary,
     String? suggestedWizardAnswer,
@@ -75,9 +76,12 @@ class VoiceAiAssistResponse {
     return VoiceAiAssistResponse(
       summary: summary ?? this.summary,
       nextStep: nextStep ?? this.nextStep,
+      projectContext: projectContext ?? this.projectContext,
+      threadContext: threadContext ?? this.threadContext,
       suggestedTitle: suggestedTitle ?? this.suggestedTitle,
       suggestedSummary: suggestedSummary ?? this.suggestedSummary,
-      suggestedWizardAnswer: suggestedWizardAnswer ?? this.suggestedWizardAnswer,
+      suggestedWizardAnswer:
+          suggestedWizardAnswer ?? this.suggestedWizardAnswer,
       suggestedType: suggestedType ?? this.suggestedType,
       hints: hints ?? this.hints,
     );
@@ -134,7 +138,8 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
   ) async {
     final transcript = _normalizeText(request.transcript);
     final prompt = _normalizeText(request.prompt ?? '');
-    final inferredType = request.selectedType ?? request.conversationContext?.type;
+    final inferredType =
+        request.selectedType ?? request.conversationContext?.type;
     final hasPrompt = prompt.isNotEmpty;
 
     return VoiceAiAssistResponse(
@@ -142,7 +147,10 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
           ? _wizardSummaryFor(request.wizardStep, inferredType, prompt)
           : 'AI draft: the wizard is waiting for the next prompt.',
       nextStep: _wizardNextStepFor(request.wizardStep, inferredType),
-      suggestedTitle: _suggestedTitle(request, transcript.isNotEmpty ? transcript : prompt),
+      suggestedTitle: _suggestedTitle(
+        request,
+        transcript.isNotEmpty ? transcript : prompt,
+      ),
       suggestedSummary: _suggestedSummary(
         request,
         transcript.isNotEmpty ? transcript : prompt,
@@ -201,12 +209,15 @@ String _normalizeText(String value) {
 }
 
 String _buildFallbackTitle(String transcript) {
-  final cleaned = _normalizeText(transcript).replaceAll(
-    RegExp(r'^(project|task|journal|content|business|idea|codex)\s*:\s*',
-      caseSensitive: false,
-    ),
-    '',
-  ).replaceAll(RegExp(r'[.!?]+$'), '');
+  final cleaned = _normalizeText(transcript)
+      .replaceAll(
+        RegExp(
+          r'^(project|task|journal|content|business|idea|codex)\s*:\s*',
+          caseSensitive: false,
+        ),
+        '',
+      )
+      .replaceAll(RegExp(r'[.!?]+$'), '');
   if (cleaned.isEmpty) {
     return 'Voice capture';
   }
@@ -263,18 +274,16 @@ String _suggestedWizardAnswer({
   }
 
   final step = request.wizardStep;
-  final threadName = _normalizeText(request.conversationContext?.projectName ?? '');
+  final threadName = _normalizeText(
+    request.conversationContext?.projectName ?? '',
+  );
 
   return switch (step) {
-    VoiceWizardStep.type =>
-      inferredType?.label ?? 'Task',
-    VoiceWizardStep.title =>
-      _buildFallbackTitle(prompt),
-    VoiceWizardStep.project =>
-      threadName.isNotEmpty ? threadName : 'MicroGrow',
+    VoiceWizardStep.type => inferredType?.label ?? 'Task',
+    VoiceWizardStep.title => _buildFallbackTitle(prompt),
+    VoiceWizardStep.project => threadName.isNotEmpty ? threadName : 'MicroGrow',
     VoiceWizardStep.details => switch (inferredType) {
-      VoiceCommandType.task =>
-        'Category: Planning. Priority: Medium.',
+      VoiceCommandType.task => 'Category: Planning. Priority: Medium.',
       VoiceCommandType.project =>
         'Status: Active. Vision: Keep the thread calm and practical.',
       VoiceCommandType.journalEntry =>
@@ -287,8 +296,7 @@ String _suggestedWizardAnswer({
         'Review the repo change request and keep the prompt manual-review only.',
       VoiceCommandType.idea =>
         'Remember the idea, keep it light, and revisit it later.',
-      null =>
-        _buildFallbackSummary(prompt),
+      null => _buildFallbackSummary(prompt),
     },
     VoiceWizardStep.review =>
       'Review the assembled draft, then save it locally when it feels right.',
@@ -297,10 +305,9 @@ String _suggestedWizardAnswer({
 }
 
 String _buildFallbackSummary(String transcript) {
-  final stripped = _normalizeText(transcript).replaceAll(
-    RegExp(r'[.!?]+$'),
-    '',
-  );
+  final stripped = _normalizeText(
+    transcript,
+  ).replaceAll(RegExp(r'[.!?]+$'), '');
   if (stripped.isEmpty) {
     return 'Short summary will appear here after a transcript is captured.';
   }
@@ -358,7 +365,9 @@ VoiceCommandType? _inferTypeFromTranscript(String transcript) {
       lower.contains('contact')) {
     return VoiceCommandType.businessOpportunity;
   }
-  if (lower.contains('codex') || lower.contains('repo') || lower.contains('code')) {
+  if (lower.contains('codex') ||
+      lower.contains('repo') ||
+      lower.contains('code')) {
     return VoiceCommandType.codexPrompt;
   }
   if (lower.contains('idea') || lower.contains('future')) {
@@ -379,7 +388,9 @@ String _reviewSummaryFor(
 ) {
   final label = _keywordLabel(inferredType);
   if (context != null && context.hasMemory) {
-    final memoryLabel = _normalizeText(context.projectName ?? context.threadScopeLabel);
+    final memoryLabel = _normalizeText(
+      context.projectName ?? context.threadScopeLabel,
+    );
     return 'AI draft: this $label stays connected to the remembered thread at $memoryLabel.';
   }
 
@@ -443,11 +454,15 @@ String _wizardSummaryFor(
       'AI draft: this detail step should capture only the useful information for a ${_keywordLabel(inferredType)}.',
     VoiceWizardStep.review =>
       'AI draft: the assembled record is ready for a final review.',
-    null => 'AI draft: $stepLabel is ready for the next wizard answer. Prompt: $promptLabel.',
+    null =>
+      'AI draft: $stepLabel is ready for the next wizard answer. Prompt: $promptLabel.',
   };
 }
 
-String _wizardNextStepFor(VoiceWizardStep? step, VoiceCommandType? inferredType) {
+String _wizardNextStepFor(
+  VoiceWizardStep? step,
+  VoiceCommandType? inferredType,
+) {
   return switch (step) {
     VoiceWizardStep.type =>
       'Say task, project, journal, content, business, idea, or Codex.',
@@ -473,7 +488,8 @@ List<String> _buildReviewHints({
     'Review-first mode.',
     if (request.wizardStep != null) 'Wizard step: ${request.wizardStep!.label}',
     if (inferredType != null) 'Inferred type: ${inferredType.label}',
-    if (transcript.isNotEmpty) 'Suggested title: ${_buildFallbackTitle(transcript)}',
+    if (transcript.isNotEmpty)
+      'Suggested title: ${_buildFallbackTitle(transcript)}',
     if (request.conversationContext?.hasMemory == true)
       'Remembered thread is available for review.',
   ];
@@ -489,7 +505,8 @@ List<String> _buildWizardHints({
     'Local AI adapter active.',
     'Review-first mode.',
     if (prompt.isNotEmpty) 'Wizard prompt is ready.',
-    if (request.wizardStep != null) 'Current step: ${request.wizardStep!.label}',
+    if (request.wizardStep != null)
+      'Current step: ${request.wizardStep!.label}',
   ];
 
   if (transcript.isNotEmpty) {

@@ -9,6 +9,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../application/voice_conversation_dock_controller.dart';
+import '../application/voice_assistant_turn_coordinator.dart';
 import '../application/voice_session_controller.dart';
 import '../../settings/application/settings_controller.dart';
 import '../desktop_speech_bridge_service.dart';
@@ -35,6 +36,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
   final SpeechToText _speech = SpeechToText();
   final TextEditingController _captureController = TextEditingController();
   final FocusNode _captureFocusNode = FocusNode(debugLabel: 'GaiaHandsfree');
+  late final VoiceAssistantTurnCoordinator _turnCoordinator;
 
   Timer? _debounceTimer;
   bool _isStarted = false;
@@ -46,6 +48,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
   @override
   void initState() {
     super.initState();
+    _turnCoordinator = ref.read(voiceAssistantTurnCoordinatorProvider);
     _captureController.addListener(_handleCaptureChanged);
   }
 
@@ -252,22 +255,19 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
 
     if (settingsSnapshot?.settings.voiceRepliesEnabled ?? false) {
       try {
-        ref
-            .read(voiceSessionProvider.notifier)
-            .beginSpeaking(
-              owner: VoiceSessionOwner.handsfree,
-              label: 'Gaia greeting',
-              detail: 'Getting ready to listen',
-              opacity: 0.64,
-            );
-        await ref
-            .read(voiceAssistantSpeechServiceProvider)
-            .speak(
-              'Gaia is here and ready.',
-              enabled: true,
-              rate: settingsSnapshot!.settings.preferredTtsVoiceRate,
-              pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
-            );
+        await _turnCoordinator.speak(
+          VoiceAssistantTurnPlan(
+            kind: VoiceAssistantTurnKind.wake,
+            owner: VoiceSessionOwner.handsfree,
+            speakingLabel: 'Gaia greeting',
+            speakingDetail: 'Getting ready to listen',
+            followUpLabel: 'Gaia ready',
+            followUpDetail: 'Handsfree listener armed',
+            text: 'Gaia is here and ready.',
+            settings: settingsSnapshot!.settings,
+            tone: VoiceSpeechTone.wake,
+          ),
+        );
       } catch (_) {
         // Best-effort greeting only.
       }
@@ -350,14 +350,16 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         return;
       }
       _wakeOnlyRouteConsumed = true;
-      ref.read(voiceSessionProvider.notifier).handoff(
-        from: VoiceSessionOwner.handsfree,
-        to: VoiceSessionOwner.assistant,
-        phase: VoiceSessionPhase.awaitingFollowUp,
-        label: 'Gaia wake',
-        detail: 'Opening Voice Assistant',
-        opacity: 0.82,
-      );
+      ref
+          .read(voiceSessionProvider.notifier)
+          .handoff(
+            from: VoiceSessionOwner.handsfree,
+            to: VoiceSessionOwner.assistant,
+            phase: VoiceSessionPhase.awaitingFollowUp,
+            label: 'Gaia wake',
+            detail: 'Opening Voice Assistant',
+            opacity: 0.82,
+          );
       context.go(
         Uri(
           path: RouteNames.voiceAssistant,
@@ -376,14 +378,16 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
 
     _wakeOnlyRouteConsumed = false;
     _lastDispatchedTranscript = transcriptToOpen;
-    ref.read(voiceSessionProvider.notifier).handoff(
-      from: VoiceSessionOwner.handsfree,
-      to: VoiceSessionOwner.assistant,
-      phase: VoiceSessionPhase.awaitingFollowUp,
-      label: 'Gaia captured',
-      detail: 'Conversation dock visible',
-      opacity: 0.82,
-    );
+    ref
+        .read(voiceSessionProvider.notifier)
+        .handoff(
+          from: VoiceSessionOwner.handsfree,
+          to: VoiceSessionOwner.assistant,
+          phase: VoiceSessionPhase.awaitingFollowUp,
+          label: 'Gaia captured',
+          detail: 'Conversation dock visible',
+          opacity: 0.82,
+        );
     final route = Uri(
       path: RouteNames.voiceAssistant,
       queryParameters: {'transcript': transcriptToOpen},
@@ -476,34 +480,20 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     }
 
     try {
-      ref
-          .read(voiceSessionProvider.notifier)
-          .beginSpeaking(
-            owner: VoiceSessionOwner.handsfree,
-            label: 'Gaia speaking',
-            detail: 'Reading back the response',
-            opacity: 0.72,
-          );
-      final voices = await ref.read(voiceAssistantVoicesProvider.future);
-      final selectedVoice = resolveConfiguredVoiceOption(
-        voices: voices,
-        preferredName: settingsSnapshot.settings.preferredTtsVoiceName,
-        preferredLocale: settingsSnapshot.settings.preferredTtsVoiceLocale,
-        preferredGender: settingsSnapshot.settings.preferredTtsVoiceGender,
-        preferredIdentifier:
-            settingsSnapshot.settings.preferredTtsVoiceIdentifier,
+      await _turnCoordinator.speak(
+        VoiceAssistantTurnPlan(
+          kind: VoiceAssistantTurnKind.dockFollowUp,
+          owner: VoiceSessionOwner.handsfree,
+          speakingLabel: 'Gaia speaking',
+          speakingDetail: 'Reading back the response',
+          followUpLabel: 'Gaia ready',
+          followUpDetail: 'Handsfree listener ready',
+          text: VoiceCommandService().buildSpokenReply(response),
+          settings: settingsSnapshot.settings,
+          tone: VoiceSpeechTone.briefing,
+          response: response,
+        ),
       );
-      await ref.read(voiceAssistantSpeechServiceProvider).stop();
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-      await ref
-          .read(voiceAssistantSpeechServiceProvider)
-          .speak(
-            VoiceCommandService().buildSpokenReply(response),
-            enabled: true,
-            rate: settingsSnapshot.settings.preferredTtsVoiceRate,
-            pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
-            voice: selectedVoice,
-          );
     } catch (_) {
       // Best-effort only. The dock should still render even if speech fails.
     }

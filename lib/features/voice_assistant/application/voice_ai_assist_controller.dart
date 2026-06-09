@@ -1,13 +1,41 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../ai/voice_ai_assist_service.dart';
+import '../ai/openai_voice_ai_assist_service.dart';
+
+enum VoiceAiProviderMode { local, openAi }
 
 final voiceAiLocalStubProvider = Provider<VoiceAiAssistService>((ref) {
   return const LocalVoiceAiAssistService();
 });
 
+final voiceAiOpenAiProvider = Provider<OpenAIVoiceAiAssistService>((ref) {
+  final service = OpenAIVoiceAiAssistService();
+  ref.onDispose(service.dispose);
+  return service;
+});
+
+final voiceAiProviderModeProvider = Provider<VoiceAiProviderMode>((ref) {
+  final providerValue = Platform.environment['VOICE_AI_PROVIDER']
+      ?.trim()
+      .toLowerCase();
+  final apiKey = Platform.environment['OPENAI_API_KEY']?.trim();
+
+  if (providerValue == 'openai' && apiKey != null && apiKey.isNotEmpty) {
+    return VoiceAiProviderMode.openAi;
+  }
+
+  return VoiceAiProviderMode.local;
+});
+
 final voiceAiAssistAdapterProvider = Provider<VoiceAiAssistAdapter>((ref) {
-  return ref.read(voiceAiLocalStubProvider);
+  final mode = ref.watch(voiceAiProviderModeProvider);
+  return switch (mode) {
+    VoiceAiProviderMode.openAi => ref.read(voiceAiOpenAiProvider),
+    VoiceAiProviderMode.local => ref.read(voiceAiLocalStubProvider),
+  };
 });
 
 final voiceAiAssistServiceProvider = Provider<VoiceAiAssistService>((ref) {

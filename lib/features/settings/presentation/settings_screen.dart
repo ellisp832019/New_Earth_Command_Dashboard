@@ -124,6 +124,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         text:
                             'Dashboard cards can be hidden if they add noise rather than clarity.',
                       ),
+                      const SizedBox(height: 6),
+                      const _SettingsNote(
+                        icon: Icons.auto_awesome_outlined,
+                        text:
+                            'Optional AI voice assist stays off unless the OpenAI provider is configured.',
+                      ),
                     ],
                   ),
                 ),
@@ -226,6 +232,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         'Use this only if you want Gaia to speak replies and briefings on this device.',
                         style: theme.textTheme.bodyMedium,
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Advanced AI voice assist can be enabled separately through the configured provider.',
+                        style: theme.textTheme.bodySmall,
+                      ),
                       const SizedBox(height: 12),
                       SwitchListTile(
                         key: const Key('settingsVoiceAssistantToggle'),
@@ -260,9 +271,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           });
                           ref
                               .read(settingsControllerProvider)
-                              .setVoicePreferences(
-                                voiceRepliesEnabled: value,
-                              );
+                              .setVoicePreferences(voiceRepliesEnabled: value);
                         },
                       ),
                       const SizedBox(height: 12),
@@ -284,10 +293,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                             items: voiceOptions
                                 .map(
-                                  (voice) => DropdownMenuItem<VoiceTtsVoiceOption>(
-                                    value: voice,
-                                    child: Text(voice.label),
-                                  ),
+                                  (voice) =>
+                                      DropdownMenuItem<VoiceTtsVoiceOption>(
+                                        value: voice,
+                                        child: Text(voice.label),
+                                      ),
                                 )
                                 .toList(),
                             onChanged: (value) {
@@ -300,7 +310,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     preferredTtsVoiceName: value?.name,
                                     preferredTtsVoiceLocale: value?.locale,
                                     preferredTtsVoiceGender: value?.gender,
-                                    preferredTtsVoiceIdentifier: value?.identifier,
+                                    preferredTtsVoiceIdentifier:
+                                        value?.identifier,
                                   );
                             },
                           );
@@ -312,10 +323,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        'Speech Rate',
-                        style: theme.textTheme.titleSmall,
-                      ),
+                      Text('Speech Rate', style: theme.textTheme.titleSmall),
                       Slider(
                         key: const Key('settingsVoiceRateSlider'),
                         min: 0.0,
@@ -335,10 +343,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         },
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Pitch',
-                        style: theme.textTheme.titleSmall,
-                      ),
+                      Text('Pitch', style: theme.textTheme.titleSmall),
                       Slider(
                         key: const Key('settingsVoicePitchSlider'),
                         min: 0.5,
@@ -368,9 +373,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               final previewText =
                                   'This is your chosen voice for New Earth command replies.';
                               await ref
-                                  .read(
-                                    voiceAssistantSpeechServiceProvider,
-                                  )
+                                  .read(voiceAssistantSpeechServiceProvider)
                                   .speak(
                                     previewText,
                                     enabled: voiceRepliesEnabled,
@@ -512,12 +515,7 @@ class _SettingsNote extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: theme.colorScheme.primary),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodySmall,
-          ),
-        ),
+        Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
       ],
     );
   }

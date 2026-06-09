@@ -67,6 +67,9 @@ extension VoiceWizardStepLabel on VoiceWizardStep {
         return 'Review';
     }
   }
+
+  String get progressLabel =>
+      'Step ${index + 1} of ${VoiceWizardStep.values.length}';
 }
 
 class VoiceCommand {
@@ -251,18 +254,67 @@ class VoiceCommandQuickAction {
   final String? templateId;
 }
 
-class VoiceCommandAssistantResponse {
-  const VoiceCommandAssistantResponse({
+class VoiceAssistantResponse {
+  const VoiceAssistantResponse({
     required this.summary,
     required this.nextStep,
     this.projectContext,
     this.threadContext,
+    this.suggestedTitle,
+    this.suggestedSummary,
+    this.suggestedWizardAnswer,
+    this.suggestedType,
+    this.hints = const <String>[],
   });
 
   final String summary;
   final String nextStep;
   final String? projectContext;
   final String? threadContext;
+  final String? suggestedTitle;
+  final String? suggestedSummary;
+  final String? suggestedWizardAnswer;
+  final VoiceCommandType? suggestedType;
+  final List<String> hints;
+
+  VoiceAssistantResponse copyWith({
+    String? summary,
+    String? nextStep,
+    String? projectContext,
+    String? threadContext,
+    String? suggestedTitle,
+    String? suggestedSummary,
+    String? suggestedWizardAnswer,
+    VoiceCommandType? suggestedType,
+    List<String>? hints,
+  }) {
+    return VoiceAssistantResponse(
+      summary: summary ?? this.summary,
+      nextStep: nextStep ?? this.nextStep,
+      projectContext: projectContext ?? this.projectContext,
+      threadContext: threadContext ?? this.threadContext,
+      suggestedTitle: suggestedTitle ?? this.suggestedTitle,
+      suggestedSummary: suggestedSummary ?? this.suggestedSummary,
+      suggestedWizardAnswer:
+          suggestedWizardAnswer ?? this.suggestedWizardAnswer,
+      suggestedType: suggestedType ?? this.suggestedType,
+      hints: hints ?? this.hints,
+    );
+  }
+}
+
+class VoiceCommandAssistantResponse extends VoiceAssistantResponse {
+  const VoiceCommandAssistantResponse({
+    required super.summary,
+    required super.nextStep,
+    super.projectContext,
+    super.threadContext,
+    super.suggestedTitle,
+    super.suggestedSummary,
+    super.suggestedWizardAnswer,
+    super.suggestedType,
+    super.hints,
+  });
 }
 
 class VoiceCommandBriefing {

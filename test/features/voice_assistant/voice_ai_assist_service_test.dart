@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/features/voice_assistant/ai/voice_ai_assist_service.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/ai/openai_voice_ai_assist_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_ai_assist_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
 
@@ -75,6 +76,37 @@ class _FakeVoiceAiAssistAdapter implements VoiceAiAssistAdapter {
 }
 
 void main() {
+  test(
+    'voice assistant response contract is shared across local and ai paths',
+    () {
+      const localResponse = VoiceCommandAssistantResponse(
+        summary: 'Local summary',
+        nextStep: 'Local next step',
+        projectContext: 'MicroGrow',
+        threadContext: 'Thread context',
+      );
+      const aiResponse = VoiceAiAssistResponse(
+        summary: 'AI summary',
+        nextStep: 'AI next step',
+        suggestedTitle: 'Draft title',
+        suggestedSummary: 'Draft summary',
+        suggestedWizardAnswer: 'Draft wizard answer',
+        suggestedType: VoiceCommandType.task,
+        hints: ['calm', 'review-first'],
+        projectContext: 'MicroGrow',
+        threadContext: 'Thread context',
+      );
+
+      expect(localResponse, isA<VoiceAssistantResponse>());
+      expect(aiResponse, isA<VoiceAssistantResponse>());
+      expect(localResponse.projectContext, 'MicroGrow');
+      expect(localResponse.threadContext, 'Thread context');
+      expect(aiResponse.suggestedTitle, 'Draft title');
+      expect(aiResponse.suggestedWizardAnswer, 'Draft wizard answer');
+      expect(aiResponse.hints, ['calm', 'review-first']);
+    },
+  );
+
   test('voice ai assist provider returns the local adapter stub', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -94,22 +126,21 @@ void main() {
       ),
     );
     final container = ProviderContainer(
-      overrides: [
-        voiceAiAssistAdapterProvider.overrideWithValue(fakeAdapter),
-      ],
+      overrides: [voiceAiAssistAdapterProvider.overrideWithValue(fakeAdapter)],
     );
     addTearDown(container.dispose);
 
     expect(container.read(voiceAiAssistAdapterProvider), fakeAdapter);
-    expect(container.read(voiceAiAssistServiceProvider), isA<LocalVoiceAiAssistService>());
+    expect(
+      container.read(voiceAiAssistServiceProvider),
+      isA<LocalVoiceAiAssistService>(),
+    );
   });
 
   test('voice ai local stub provider can be swapped independently', () {
     const fakeStub = NoOpVoiceAiAssistService();
     final container = ProviderContainer(
-      overrides: [
-        voiceAiLocalStubProvider.overrideWithValue(fakeStub),
-      ],
+      overrides: [voiceAiLocalStubProvider.overrideWithValue(fakeStub)],
     );
     addTearDown(container.dispose);
 
@@ -139,7 +170,10 @@ void main() {
 
     expect(response.summary, contains('task stays connected'));
     expect(response.summary, contains('remembered thread'));
-    expect(response.nextStep, contains('Confirm the category, priority, and owner'));
+    expect(
+      response.nextStep,
+      contains('Confirm the category, priority, and owner'),
+    );
     expect(response.suggestedTitle, 'Dashboard cards');
     expect(response.suggestedSummary, contains('Review the dashboard cards'));
     expect(response.suggestedType, VoiceCommandType.task);
@@ -178,19 +212,34 @@ void main() {
 
       expect(wizardResponse.summary, contains('detail step'));
       expect(wizardResponse.summary, contains('project'));
-      expect(wizardResponse.nextStep, contains('Answer with only the details needed'));
+      expect(
+        wizardResponse.nextStep,
+        contains('Answer with only the details needed'),
+      );
       expect(wizardResponse.suggestedTitle, 'create the first milestone');
-      expect(wizardResponse.suggestedSummary, contains('Project: create the first milestone'));
-      expect(wizardResponse.suggestedWizardAnswer, contains('create the first milestone'));
+      expect(
+        wizardResponse.suggestedSummary,
+        contains('Project: create the first milestone'),
+      );
+      expect(
+        wizardResponse.suggestedWizardAnswer,
+        contains('create the first milestone'),
+      );
       expect(wizardResponse.hints, contains('Local AI adapter active.'));
       expect(wizardResponse.hints, contains('Current step: Details'));
       expect(memoryResponse.summary, contains('MicroGrow'));
       expect(memoryResponse.summary, contains('Latest entry'));
       expect(memoryResponse.nextStep, contains('Reopen the project flow'));
-      expect(memoryResponse.suggestedSummary, contains('Follow up with the dashboard voice workflow'));
+      expect(
+        memoryResponse.suggestedSummary,
+        contains('Follow up with the dashboard voice workflow'),
+      );
       expect(memoryResponse.hints, contains('Remembered thread is available.'));
       expect(memoryResponse.hints, contains('3 saved entries'));
-      expect(memoryResponse.hints, contains('Latest entry: Follow up with the dashboard voice workflow.'));
+      expect(
+        memoryResponse.hints,
+        contains('Latest entry: Follow up with the dashboard voice workflow.'),
+      );
     },
   );
 
@@ -218,48 +267,78 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final wizardResponse = await container
-          .read(
-            voiceAiBriefingAssistProvider(
-              const VoiceAiAssistRequest(
-                transcript: 'Project: create the next milestone.',
-                prompt: 'Which project should this belong to?',
-                selectedType: VoiceCommandType.project,
-                wizardStep: VoiceWizardStep.project,
-              ),
-            ).future,
-          );
+      final wizardResponse = await container.read(
+        voiceAiBriefingAssistProvider(
+          const VoiceAiAssistRequest(
+            transcript: 'Project: create the next milestone.',
+            prompt: 'Which project should this belong to?',
+            selectedType: VoiceCommandType.project,
+            wizardStep: VoiceWizardStep.project,
+          ),
+        ).future,
+      );
       expect(fakeService.lastMethod, 'wizard');
       expect(wizardResponse.summary, 'wizard summary');
 
-      final memoryResponse = await container
-          .read(
-            voiceAiBriefingAssistProvider(
-              const VoiceAiAssistRequest(
-                transcript: '',
-                conversationContext: VoiceConversationContext(
-                  label: 'Project',
-                  summary: 'Dashboard voice workflow',
-                  type: VoiceCommandType.project,
-                  projectName: 'MicroGrow',
-                ),
-              ),
-            ).future,
-          );
+      final memoryResponse = await container.read(
+        voiceAiBriefingAssistProvider(
+          const VoiceAiAssistRequest(
+            transcript: '',
+            conversationContext: VoiceConversationContext(
+              label: 'Project',
+              summary: 'Dashboard voice workflow',
+              type: VoiceCommandType.project,
+              projectName: 'MicroGrow',
+            ),
+          ),
+        ).future,
+      );
       expect(fakeService.lastMethod, 'memory');
       expect(memoryResponse.summary, 'memory summary');
 
-      final reviewResponse = await container
-          .read(
-            voiceAiBriefingAssistProvider(
-              const VoiceAiAssistRequest(
-                transcript: 'Review the dashboard cards and tighten the wording.',
-                selectedType: VoiceCommandType.task,
-              ),
-            ).future,
-          );
+      final reviewResponse = await container.read(
+        voiceAiBriefingAssistProvider(
+          const VoiceAiAssistRequest(
+            transcript: 'Review the dashboard cards and tighten the wording.',
+            selectedType: VoiceCommandType.task,
+          ),
+        ).future,
+      );
       expect(fakeService.lastMethod, 'review');
       expect(reviewResponse.summary, 'review summary');
     },
   );
+
+  test('openai voice ai parser keeps partial responses safe', () {
+    const fallback = VoiceAiAssistResponse(
+      summary: 'Local summary',
+      nextStep: 'Local next step',
+      suggestedTitle: 'Local title',
+      suggestedSummary: 'Local summary draft',
+      suggestedWizardAnswer: 'Local wizard answer',
+      suggestedType: VoiceCommandType.task,
+      hints: ['Local hint'],
+    );
+
+    final parsed = parseOpenAiVoiceAiAssistResponse('''
+SUMMARY: Gaia heard a task capture.
+NEXT_STEP: Confirm the category, priority, and owner.
+TITLE: Dashboard follow-up
+SUGGESTED_SUMMARY: Review the dashboard cards and tighten the wording.
+SUGGESTED_WIZARD_ANSWER: Planning
+TYPE: task
+HINTS: calm | review-first | local save
+''', fallback: fallback);
+
+    expect(parsed.summary, 'Gaia heard a task capture.');
+    expect(parsed.nextStep, 'Confirm the category, priority, and owner.');
+    expect(parsed.suggestedTitle, 'Dashboard follow-up');
+    expect(
+      parsed.suggestedSummary,
+      'Review the dashboard cards and tighten the wording.',
+    );
+    expect(parsed.suggestedWizardAnswer, 'Planning');
+    expect(parsed.suggestedType, VoiceCommandType.task);
+    expect(parsed.hints, ['calm', 'review-first', 'local save']);
+  });
 }

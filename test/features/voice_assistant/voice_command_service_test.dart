@@ -159,6 +159,62 @@ void main() {
     expect(response.projectContext, isNull);
   });
 
+  test('voice command service builds numbered wizard prompts', () {
+    final service = VoiceCommandService();
+
+    final typePrompt = service.buildWizardPrompt(step: VoiceWizardStep.type);
+    final titlePrompt = service.buildWizardPrompt(
+      step: VoiceWizardStep.title,
+      conversationContext: const VoiceConversationContext(
+        label: 'Project',
+        summary: 'Continuing the dashboard voice workflow thread',
+        type: VoiceCommandType.project,
+        projectName: 'MicroGrow',
+        title: 'Dashboard voice workflow',
+        transcript: 'Create a project for the dashboard voice workflow.',
+        entryCount: 2,
+      ),
+    );
+    final reviewPrompt = service.buildWizardPrompt(
+      step: VoiceWizardStep.review,
+      selectedType: VoiceCommandType.project,
+    );
+
+    expect(typePrompt, contains('Step 1 of 5'));
+    expect(typePrompt, contains('What kind of entry do you want to create?'));
+    expect(titlePrompt, contains('Step 2 of 5'));
+    expect(
+      titlePrompt,
+      contains('Continuing the dashboard voice workflow thread.'),
+    );
+    expect(reviewPrompt, contains('Step 5 of 5'));
+    expect(reviewPrompt, contains('save or start again'));
+  });
+
+  test('voice command service speaks with a more natural cadence', () {
+    final service = VoiceCommandService();
+    final spoken = service.buildSpokenReplyFromParts(
+      summary: 'Task captured',
+      nextStep: 'Confirm the category, priority, and owner before saving.',
+    );
+
+    expect(spoken, contains('Task captured'));
+    expect(spoken, contains('Next, Confirm the category'));
+  });
+
+  test('voice command service keeps longer replies calm and decisive', () {
+    final service = VoiceCommandService();
+    final spoken = service.buildSpokenReplyFromParts(
+      summary:
+          'The workflow is ready and the app can move forward without friction.',
+      nextStep:
+          'Open the review panel, check the details one time, and then save locally.',
+    );
+
+    expect(spoken, contains('Next, Open the review panel'));
+    expect(spoken, contains('Open the review panel'));
+  });
+
   test('voice command service builds a briefing with an ordered sequence', () {
     final service = VoiceCommandService();
     final suggestion = service.suggestCommand(

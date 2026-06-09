@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'dart:async';
 
@@ -11,8 +11,8 @@ import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-import '../../core/database/app_database.dart';
 import 'application/voice_conversation_dock_controller.dart';
+import 'application/voice_assistant_turn_coordinator.dart';
 import 'application/voice_ai_assist_controller.dart';
 import 'application/voice_session_controller.dart';
 import 'ai/voice_ai_assist_service.dart';
@@ -149,20 +149,14 @@ class _VoiceGuidePdfScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Voice Guide PDF'),
-      ),
-      body: PdfViewer.file(
-        pdfPath,
-        params: const PdfViewerParams(),
-      ),
+      appBar: AppBar(title: const Text('Voice Guide PDF')),
+      body: PdfViewer.file(pdfPath, params: const PdfViewerParams()),
     );
   }
 }
 
 class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
-  static const _voiceGuidePdfPath =
-      'docs/user_guide/voice_assistant_guide.pdf';
+  static const _voiceGuidePdfPath = 'docs/user_guide/voice_assistant_guide.pdf';
 
   final VoiceCommandService _service = VoiceCommandService();
   final DesktopSpeechBridgeService _desktopSpeechBridgeService =
@@ -189,6 +183,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   final FocusNode _transcriptFocusNode = FocusNode();
   final FocusNode _wizardAnswerFocusNode = FocusNode();
   late final VoiceSessionNotifier _voiceSessionNotifier;
+  late final VoiceAssistantTurnCoordinator _turnCoordinator;
 
   late _VoiceInteractionMode _mode;
   VoiceWizardStep _wizardStep = VoiceWizardStep.type;
@@ -266,9 +261,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Voice guide PDF not found at ${file.path}'),
-        ),
+        SnackBar(content: Text('Voice guide PDF not found at ${file.path}')),
       );
       return;
     }
@@ -291,6 +284,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         ? _VoiceInteractionMode.wizard
         : _VoiceInteractionMode.quick;
     _voiceSessionNotifier = ref.read(voiceSessionProvider.notifier);
+    _turnCoordinator = ref.read(voiceAssistantTurnCoordinatorProvider);
     _history = _service.getHistory();
     _transcriptController.addListener(_handleTranscriptChanged);
     _applyInitialTranscript(widget.initialTranscript);
@@ -437,22 +431,31 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         return;
       }
 
-    _wakeAcknowledgeSpoken = true;
-    await _speakWakeAcknowledge();
-  }());
+      _wakeAcknowledgeSpoken = true;
+      await _speakWakeAcknowledge();
+    }());
   }
 
   Future<void> _speakWakeAcknowledge() async {
-    ref
-        .read(voiceSessionProvider.notifier)
-        .beginSpeaking(
-          owner: VoiceSessionOwner.assistant,
-        label: 'Gaia speaking',
-        detail: 'Answering the wake phrase',
-        opacity: 0.72,
-      );
-    await _speakWithCurrentVoice(
-      "I'm here. Say task, project, summary, or continue thread.",
+    final settingsSnapshot = ref
+        .read(settingsSnapshotProvider)
+        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    if (settingsSnapshot == null) {
+      return;
+    }
+
+    await _turnCoordinator.speak(
+      VoiceAssistantTurnPlan(
+        kind: VoiceAssistantTurnKind.wake,
+        owner: VoiceSessionOwner.assistant,
+        speakingLabel: 'Gaia speaking',
+        speakingDetail: 'Answering the wake phrase',
+        followUpLabel: 'Gaia ready',
+        followUpDetail: 'Waiting for your next command',
+        text: "I'm here. Say task, project, summary, or continue thread.",
+        settings: settingsSnapshot.settings,
+        tone: VoiceSpeechTone.wake,
+      ),
     );
 
     if (!mounted ||
@@ -567,10 +570,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     return VoiceCommandAssistantResponse(
       summary: widget.wakeTriggered
-          ? 'I am here and ready to help. You can ask me what I can do, create a task, create a project, summarize today, or continue the thread.'
-          : 'I heard you and I am here to help. You can ask me what I can do, create a task, create a project, summarize today, or continue the thread.',
+          ? 'I am here and ready.'
+          : 'I heard you and I am here.',
       nextStep:
-          'Speak your next command and I will shape it into the right local action.',
+          'Say the next command and I will shape it into the right local action.',
       threadContext: _conversationContext == null
           ? null
           : 'You have a remembered thread ready to continue.',
@@ -810,8 +813,24 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       );
       _speechStatus = _wizardStep == VoiceWizardStep.review
           ? 'Wizard draft ready. Review the assembled transcript before saving.'
-          : 'Wizard answer saved. Keep going with the next question.';
+          : 'Wizard answer locked in. Keep going with the next question.';
     });
+
+    if (_wizardStep == VoiceWizardStep.review) {
+      unawaited(
+        _speakWithCurrentVoice(
+          'Draft complete. Ready for review.',
+          tone: VoiceSpeechTone.wizard,
+        ),
+      );
+    } else {
+      unawaited(
+        _speakWithCurrentVoice(
+          'Good. Next: ${_wizardPrompt()}',
+          tone: VoiceSpeechTone.wizard,
+        ),
+      );
+    }
 
     if (_wizardStep != VoiceWizardStep.review) {
       _wizardAnswerFocusNode.requestFocus();
@@ -976,7 +995,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         );
       } else {
         return await _startWindowsSpeechToTextCapture(
-          preparingStatus: 'Windows voice typing is unavailable, so Gaia is using the local speech recognizer.',
+          preparingStatus:
+              'Windows voice typing is unavailable, so Gaia is using the local speech recognizer.',
           unavailableStatus: 'Microphone speech capture is not available here.',
           unavailableError:
               'Check microphone permission or use Paste Transcript if speech capture remains quiet.',
@@ -1124,7 +1144,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     _handsfreeSessionActive = true;
     _wakeAutoListenQueued = true;
-    await ref.read(voiceAssistantSpeechServiceProvider).stop();
+    await _turnCoordinator.stop();
     setState(() {
       _speechStatus = 'Handsfree mode is listening. Speak naturally.';
     });
@@ -1143,9 +1163,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
       var transcript = capture?.transcript.trim() ?? '';
       if (transcript.isEmpty) {
-        transcript = (await _captureHandsfreeTranscriptWithSpeechToText())
-                ?.trim() ??
-            '';
+        transcript =
+            (await _captureHandsfreeTranscriptWithSpeechToText())?.trim() ?? '';
       }
       if (transcript.isEmpty) {
         session.beginListening(
@@ -1196,7 +1215,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final completer = Completer<String?>();
 
     setState(() {
-      _speechStatus = 'Handsfree mode is using the local microphone recognizer.';
+      _speechStatus =
+          'Handsfree mode is using the local microphone recognizer.';
       _speechError = null;
     });
 
@@ -1225,9 +1245,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           latestTranscript = result.recognizedWords;
           if (result.finalResult && !completer.isCompleted) {
             completer.complete(
-              latestTranscript.trim().isEmpty
-                  ? null
-                  : latestTranscript.trim(),
+              latestTranscript.trim().isEmpty ? null : latestTranscript.trim(),
             );
           }
         },
@@ -1270,7 +1288,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             owner: VoiceSessionOwner.assistant,
             label: 'Gaia idle',
             detail: 'Reviewing dictation',
-        );
+          );
       _usingWindowsVoiceTyping = false;
       return;
     }
@@ -1312,7 +1330,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         detail: 'Listening cancelled',
         isActive: false,
         opacity: 0.28,
-        );
+      );
       _usingWindowsVoiceTyping = false;
       return;
     }
@@ -1420,6 +1438,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
 
     try {
+      await _speakWithCurrentVoice(
+        'Saving locally now.',
+        tone: VoiceSpeechTone.calmConfirmation,
+      );
       final editableSuggestion = _buildEditableSuggestion();
       await ref
           .read(voiceCommandActionsControllerProvider)
@@ -1465,19 +1487,13 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _businessContactController.clear();
         _businessNextActionController.clear();
         _transcriptController.clear();
-        _speechStatus = 'Saved. Ready for the next one.';
+        _speechStatus = 'Saved locally. Ready for the next move.';
       });
       _setVoicePresence(
         label: 'Gaia ready',
         detail: 'Saved and ready',
         isActive: false,
         opacity: 0.32,
-      );
-
-      unawaited(
-        _speakWithCurrentVoice(
-          'Saved as ${_currentType.label}. Ready for the next one.',
-        ),
       );
 
       if (!mounted) {
@@ -1761,6 +1777,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     unawaited(
       _speakWithCurrentVoice(
         'Continuing this thread. ${conversationContext.summary}',
+        tone: VoiceSpeechTone.briefing,
       ),
     );
   }
@@ -1805,22 +1822,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     );
   }
 
-  VoiceTtsVoiceOption? _resolveSelectedVoice(
-    List<VoiceTtsVoiceOption> voices,
-    AppSetting settings,
-  ) {
-    for (final voice in voices) {
-      if (voice.name == settings.preferredTtsVoiceName &&
-          voice.locale == settings.preferredTtsVoiceLocale &&
-          voice.gender == settings.preferredTtsVoiceGender &&
-          voice.identifier == settings.preferredTtsVoiceIdentifier) {
-        return voice;
-      }
-    }
-    return null;
-  }
-
-  Future<void> _speakWithCurrentVoice(String text) async {
+  Future<void> _speakWithCurrentVoice(
+    String text, {
+    VoiceSpeechTone tone = VoiceSpeechTone.neutral,
+  }) async {
     final settingsSnapshot = ref
         .read(settingsSnapshotProvider)
         .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
@@ -1829,36 +1834,19 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     try {
-      ref
-          .read(voiceSessionProvider.notifier)
-          .beginSpeaking(
-            owner: VoiceSessionOwner.assistant,
-            label: 'Gaia speaking',
-            detail: 'Reading back the current response',
-            opacity: 0.72,
-          );
-      final voices = await ref.read(voiceAssistantVoicesProvider.future);
-      final selectedVoice = _resolveSelectedVoice(
-        voices,
-        settingsSnapshot.settings,
+      await _turnCoordinator.speak(
+        VoiceAssistantTurnPlan(
+          kind: VoiceAssistantTurnKind.briefing,
+          owner: VoiceSessionOwner.assistant,
+          speakingLabel: 'Gaia speaking',
+          speakingDetail: 'Reading back the current response',
+          followUpLabel: 'Gaia ready',
+          followUpDetail: 'Waiting for your next command',
+          text: text,
+          settings: settingsSnapshot.settings,
+          tone: tone,
+        ),
       );
-      await ref
-          .read(voiceAssistantSpeechServiceProvider)
-          .speak(
-            text,
-            enabled: settingsSnapshot.settings.voiceRepliesEnabled,
-            rate: settingsSnapshot.settings.preferredTtsVoiceRate,
-            pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
-            voice: selectedVoice,
-          );
-      ref
-          .read(voiceSessionProvider.notifier)
-          .beginAwaitingFollowUp(
-            owner: VoiceSessionOwner.assistant,
-            label: 'Gaia ready',
-            detail: 'Waiting for your next command',
-            opacity: 0.64,
-          );
     } catch (_) {
       // Voice output is best-effort. The transcript flow still works if TTS fails.
     }
@@ -1881,7 +1869,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   Future<void> _stopSpeaking() async {
-    await ref.read(voiceAssistantSpeechServiceProvider).stop();
+    await _turnCoordinator.stop();
     ref
         .read(voiceSessionProvider.notifier)
         .updatePresence(
@@ -2017,6 +2005,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             suggestion: activeSuggestion,
             conversationContext: conversationContext,
           );
+    final rawTranscript = _transcriptController.text.trim();
     final macroActions = _service.buildMacroActions(
       conversationContext: conversationContext,
     );
@@ -2048,15 +2037,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _acceptedAiTranscriptSummary ?? aiAssistDraft?.suggestedSummary;
     final String? wizardAiAnswer =
         _acceptedAiWizardAnswer ?? aiAssistDraft?.suggestedWizardAnswer;
-    final briefingSummary = appliedAiBriefing?.summary ?? briefing?.summary ?? '';
+    final briefingSummary =
+        appliedAiBriefing?.summary ?? briefing?.summary ?? '';
     final briefingNextStep =
         appliedAiBriefing?.nextStep ?? briefing?.nextStep ?? '';
-    final briefingReason =
-        appliedAiBriefing != null
-            ? 'AI wording is ready to review. Keep it only if it makes the next move clearer.'
-            : briefing?.projectContext ??
-                  briefing?.threadContext ??
-                  'It keeps the thread moving without adding noise.';
+    final briefingReason = appliedAiBriefing != null
+        ? 'AI wording is ready to review. Keep it only if it makes the next move clearer.'
+        : briefing?.projectContext ??
+              briefing?.threadContext ??
+              'It keeps the thread moving without adding noise.';
 
     return Scaffold(
       appBar: AppBar(
@@ -2070,1084 +2059,1186 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            'Speak, review, and turn your words into dashboard actions.',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _mode == _VoiceInteractionMode.wizard
-                ? 'Answer one question at a time and let the wizard assemble the draft for review.'
-                : 'Capture first, then review the transcript, then speak or save when it feels right.',
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: 14),
-          Card(
-            key: const Key('voiceFlowGuideCard'),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Start here', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: 4),
-                  Text(
-                    'The simplest path is Capture, Review, then Speak or Save. Whisper is tried first on Windows, then the local recognizer, and the extra tools stay lower on the page.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: const [
-                      Chip(label: Text('Capture')),
-                      Chip(label: Text('Review')),
-                      Chip(label: Text('Save')),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.tonalIcon(
-              key: const Key('voiceGuidePdfButton'),
-              onPressed: _openVoiceGuidePdf,
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('Voice Guide PDF'),
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (conversationContext != null) ...[
-            VoiceConversationThreadCard(
-              conversationContext: conversationContext,
-              onResumeThread: _continueCurrentThread,
-              onReuseLatestCapture: _restoreLatestCommandFromHistory,
-              onStartFresh: _startNewThread,
-              onCopySummary: _copyConversationSummary,
-            ),
-            const SizedBox(height: 16),
-          ],
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Icon(
-                    _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                    size: 32,
-                    color: _isListening
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      key: const Key('voiceStartListeningButton'),
-                      onPressed:
-                          _isSaving || _isListening || _isInitializingSpeech
-                          ? null
-                          : _startListening,
-                      icon: _isInitializingSpeech
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.mic_rounded),
-                      label: Text(
-                        _isInitializingSpeech
-                            ? 'Preparing'
-                            : 'Capture Speech',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      FilledButton.tonalIcon(
-                        key: const Key('voiceStopListeningButton'),
-                        onPressed: _isListening ? _stopListening : null,
-                        icon: const Icon(Icons.stop_circle_outlined),
-                        label: const Text('Stop'),
-                      ),
-                      TextButton.icon(
-                        key: const Key('voiceCancelListeningButton'),
-                        onPressed: _isListening ? _cancelListening : null,
-                        icon: const Icon(Icons.close),
-                        label: const Text('Cancel'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _speechStateColor(theme).withValues(alpha: 0.28),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            Chip(
-                              label: Text(_speechStateLabel),
-                              side: BorderSide.none,
-                              backgroundColor:
-                                  _speechStateColor(theme).withValues(alpha: 0.16),
-                            ),
-                            if (_usingWindowsVoiceTyping)
-                              Chip(
-                                label: const Text('Windows dictation'),
-                                side: BorderSide.none,
-                                backgroundColor: theme.colorScheme.secondaryContainer
-                                    .withValues(alpha: 0.72),
-                              ),
-                            if (!_usingWindowsVoiceTyping &&
-                                !_isInitializingSpeech &&
-                                !_isListening)
-                              Chip(
-                                label: const Text('Review mode'),
-                                side: BorderSide.none,
-                                backgroundColor: theme.colorScheme.primaryContainer
-                                    .withValues(alpha: 0.72),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _speechStatus,
-                          style: theme.textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_speechError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _speechError!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                  if (!_speechAvailable && _speechError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Paste Transcript and mock capture still work without microphone access.',
-                      style: theme.textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  ExpansionTile(
-                    key: const Key('voiceMoreCaptureToolsTile'),
-                    tilePadding: EdgeInsets.zero,
-                    childrenPadding: EdgeInsets.zero,
-                    title: Text(
-                      'More capture tools',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    subtitle: Text(
-                      'Use these if you want a different capture path.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    children: [
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          FilledButton.icon(
-                            key: const Key('voiceMockTranscriptButton'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor:
-                                  theme.colorScheme.secondaryContainer,
-                              foregroundColor:
-                                  theme.colorScheme.onSecondaryContainer,
-                            ),
-                            onPressed: _mockRecordCommand,
-                            icon: const Icon(Icons.graphic_eq),
-                            label: const Text('Use Mock Transcript'),
-                          ),
-                          FilledButton.tonalIcon(
-                            key: const Key('voicePasteTranscriptButton'),
-                            onPressed: _pasteFromClipboard,
-                            icon: const Icon(Icons.content_paste),
-                            label: const Text('Paste Transcript'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ExpansionTile(
-            key: const Key('voiceAdvancedModesTile'),
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: EdgeInsets.zero,
-            title: Text(
-              'Advanced voice modes',
+      body: KeyedSubtree(
+        key: const Key('voiceAssistantPageBody'),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              'Speak, review, and turn your words into dashboard actions.',
               style: theme.textTheme.titleMedium,
             ),
-            subtitle: Text(
-              'Wizard mode stays here so quick capture stays the default path.',
+            const SizedBox(height: 8),
+            Text(
+              _mode == _VoiceInteractionMode.wizard
+                  ? 'Answer one question at a time and let the wizard assemble the draft for review.'
+                  : 'Capture first, then review the transcript, then speak or save when it feels right.',
               style: theme.textTheme.bodySmall,
             ),
-            children: [
-              const SizedBox(height: 12),
-              SegmentedButton<_VoiceInteractionMode>(
-                key: const Key('voiceInteractionModeSegmentedButton'),
-                segments: const [
-                  ButtonSegment(
-                    value: _VoiceInteractionMode.quick,
-                    label: Text('Quick'),
-                    icon: Icon(Icons.flash_on_outlined),
-                  ),
-                  ButtonSegment(
-                    value: _VoiceInteractionMode.wizard,
-                    label: Text('Wizard'),
-                    icon: Icon(Icons.auto_fix_high_outlined),
-                  ),
-                ],
-                selected: {_mode},
-                onSelectionChanged: (selection) {
-                  _setVoiceMode(selection.first);
-                },
-              ),
-            ],
-          ),
-          if (_mode == _VoiceInteractionMode.wizard) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Card(
-              key: const Key('voiceWizardCard'),
+              key: const Key('voiceFlowGuideCard'),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Voice Wizard', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    Text('Start here', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 4),
                     Text(
-                      wizardPrompt ?? 'Let us build this one answer at a time.',
-                      style: theme.textTheme.bodyMedium,
+                      'The simplest path is Capture, Review, then Speak or Save. Whisper is tried first on Windows, then the local recognizer, and the extra tools stay lower on the page.',
+                      style: theme.textTheme.bodySmall,
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      key: const Key('voiceWizardAnswerField'),
-                      controller: _wizardAnswerController,
-                      focusNode: _wizardAnswerFocusNode,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Wizard answer',
-                        border: OutlineInputBorder(),
-                      ),
-                      onSubmitted: (_) => _submitWizardAnswer(),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
+                      children: const [
+                        Chip(label: Text('Capture')),
+                        Chip(label: Text('Review')),
+                        Chip(label: Text('Save')),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.tonalIcon(
+                key: const Key('voiceGuidePdfButton'),
+                onPressed: _openVoiceGuidePdf,
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Voice Guide PDF'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (conversationContext != null) ...[
+              VoiceConversationThreadCard(
+                conversationContext: conversationContext,
+                onResumeThread: _continueCurrentThread,
+                onReuseLatestCapture: _restoreLatestCommandFromHistory,
+                onStartFresh: _startNewThread,
+                onCopySummary: _copyConversationSummary,
+              ),
+              const SizedBox(height: 16),
+            ],
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Icon(
+                      _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                      size: 32,
+                      color: _isListening
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.primary,
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        key: const Key('voiceStartListeningButton'),
+                        onPressed:
+                            _isSaving || _isListening || _isInitializingSpeech
+                            ? null
+                            : _startListening,
+                        icon: _isInitializingSpeech
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.mic_rounded),
+                        label: Text(
+                          _isInitializingSpeech
+                              ? 'Preparing'
+                              : 'Capture Speech',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 10,
+                      runSpacing: 10,
                       children: [
-                        FilledButton.icon(
-                          key: const Key('voiceWizardNextButton'),
-                          onPressed: _submitWizardAnswer,
-                          icon: const Icon(Icons.arrow_forward),
-                          label: const Text('Use Answer'),
+                        FilledButton.tonalIcon(
+                          key: const Key('voiceStopListeningButton'),
+                          onPressed: _isListening ? _stopListening : null,
+                          icon: const Icon(Icons.stop_circle_outlined),
+                          label: const Text('Stop'),
                         ),
                         TextButton.icon(
-                          key: const Key('voiceWizardBackButton'),
-                          onPressed: _wizardTurns.isEmpty ? null : _wizardBack,
-                          icon: const Icon(Icons.arrow_back),
-                          label: const Text('Back'),
-                        ),
-                        TextButton.icon(
-                          key: const Key('voiceWizardResetButton'),
-                          onPressed: () => _resetWizardDraft(keepMode: true),
-                          icon: const Icon(Icons.restart_alt),
-                          label: const Text('Reset'),
+                          key: const Key('voiceCancelListeningButton'),
+                          onPressed: _isListening ? _cancelListening : null,
+                          icon: const Icon(Icons.close),
+                          label: const Text('Cancel'),
                         ),
                       ],
                     ),
-                    if (wizardSummary != null) ...[
-                      const SizedBox(height: 12),
-                      Text('Conversation', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _speechStateColor(
+                            theme,
+                          ).withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Chip(
+                                label: Text(_speechStateLabel),
+                                side: BorderSide.none,
+                                backgroundColor: _speechStateColor(
+                                  theme,
+                                ).withValues(alpha: 0.16),
+                              ),
+                              if (_usingWindowsVoiceTyping)
+                                Chip(
+                                  label: const Text('Windows dictation'),
+                                  side: BorderSide.none,
+                                  backgroundColor: theme
+                                      .colorScheme
+                                      .secondaryContainer
+                                      .withValues(alpha: 0.72),
+                                ),
+                              if (!_usingWindowsVoiceTyping &&
+                                  !_isInitializingSpeech &&
+                                  !_isListening)
+                                Chip(
+                                  label: const Text('Review mode'),
+                                  side: BorderSide.none,
+                                  backgroundColor: theme
+                                      .colorScheme
+                                      .primaryContainer
+                                      .withValues(alpha: 0.72),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _speechStatus,
+                            style: theme.textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_speechError != null) ...[
                       const SizedBox(height: 8),
-                      Text(wizardSummary, style: theme.textTheme.bodySmall),
+                      Text(
+                        _speechError!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ],
-                    if (wizardAiAnswer != null) ...[
+                    if (!_speechAvailable && _speechError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Paste Transcript and mock capture still work without microphone access.',
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    ExpansionTile(
+                      key: const Key('voiceMoreCaptureToolsTile'),
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      title: Text(
+                        'More capture tools',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      subtitle: Text(
+                        'Use these if you want a different capture path.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      children: [
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            FilledButton.icon(
+                              key: const Key('voiceMockTranscriptButton'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor:
+                                    theme.colorScheme.secondaryContainer,
+                                foregroundColor:
+                                    theme.colorScheme.onSecondaryContainer,
+                              ),
+                              onPressed: _mockRecordCommand,
+                              icon: const Icon(Icons.graphic_eq),
+                              label: const Text('Use Mock Transcript'),
+                            ),
+                            FilledButton.tonalIcon(
+                              key: const Key('voicePasteTranscriptButton'),
+                              onPressed: _pasteFromClipboard,
+                              icon: const Icon(Icons.content_paste),
+                              label: const Text('Paste Transcript'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ExpansionTile(
+              key: const Key('voiceAdvancedModesTile'),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
+              title: Text(
+                'Advanced voice modes',
+                style: theme.textTheme.titleMedium,
+              ),
+              subtitle: Text(
+                'Wizard mode stays here so quick capture stays the default path.',
+                style: theme.textTheme.bodySmall,
+              ),
+              children: [
+                const SizedBox(height: 12),
+                SegmentedButton<_VoiceInteractionMode>(
+                  key: const Key('voiceInteractionModeSegmentedButton'),
+                  segments: const [
+                    ButtonSegment(
+                      value: _VoiceInteractionMode.quick,
+                      label: Text('Quick'),
+                      icon: Icon(Icons.flash_on_outlined),
+                    ),
+                    ButtonSegment(
+                      value: _VoiceInteractionMode.wizard,
+                      label: Text('Wizard'),
+                      icon: Icon(Icons.auto_fix_high_outlined),
+                    ),
+                  ],
+                  selected: {_mode},
+                  onSelectionChanged: (selection) {
+                    _setVoiceMode(selection.first);
+                  },
+                ),
+              ],
+            ),
+            if (_mode == _VoiceInteractionMode.wizard) ...[
+              const SizedBox(height: 16),
+              Card(
+                key: const Key('voiceWizardCard'),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Voice Wizard', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_wizardStep.progressLabel} · ${_wizardStep.label}',
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          minHeight: 8,
+                          value:
+                              (_wizardStep.index + 1) /
+                              VoiceWizardStep.values.length,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'One answer at a time. Gaia will move to the next step after each submission.',
+                        style: theme.textTheme.bodySmall,
+                      ),
                       const SizedBox(height: 12),
-                      Text('AI wizard assist', style: theme.textTheme.titleSmall),
+                      Text(
+                        wizardPrompt ??
+                            'Let us build this one answer at a time.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('voiceWizardAnswerField'),
+                        controller: _wizardAnswerController,
+                        focusNode: _wizardAnswerFocusNode,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Wizard answer',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _submitWizardAnswer(),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.icon(
+                            key: const Key('voiceWizardNextButton'),
+                            onPressed: _submitWizardAnswer,
+                            icon: const Icon(Icons.arrow_forward),
+                            label: const Text('Use Answer'),
+                          ),
+                          TextButton.icon(
+                            key: const Key('voiceWizardBackButton'),
+                            onPressed: _wizardTurns.isEmpty
+                                ? null
+                                : _wizardBack,
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Back'),
+                          ),
+                          TextButton.icon(
+                            key: const Key('voiceWizardResetButton'),
+                            onPressed: () => _resetWizardDraft(keepMode: true),
+                            icon: const Icon(Icons.restart_alt),
+                            label: const Text('Reset'),
+                          ),
+                        ],
+                      ),
+                      if (wizardSummary != null) ...[
+                        const SizedBox(height: 12),
+                        Text('Conversation', style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        Text(wizardSummary, style: theme.textTheme.bodySmall),
+                      ],
+                      if (wizardAiAnswer != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'AI wizard assist',
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Use the suggestion or keep your own answer. The raw prompt stays review-first.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(wizardAiAnswer, style: theme.textTheme.bodyMedium),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton.tonalIcon(
+                              key: const Key('voiceApplyAiWizardAnswerButton'),
+                              onPressed: () =>
+                                  _applyAiWizardAnswer(wizardAiAnswer),
+                              icon: const Icon(Icons.auto_fix_high_outlined),
+                              label: const Text('Use AI answer'),
+                            ),
+                            TextButton.icon(
+                              key: const Key(
+                                'voiceKeepManualWizardAnswerButton',
+                              ),
+                              onPressed: _acceptedAiWizardAnswer == null
+                                  ? null
+                                  : _clearAiWizardAnswer,
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Keep manual answer'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            if (transcriptCleanupSummary != null) ...[
+              Card(
+                key: const Key('voiceTranscriptCleanupCard'),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transcript cleanup',
+                        style: theme.textTheme.titleSmall,
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        'Use the suggestion or keep your own answer. The raw prompt stays review-first.',
+                        'The raw transcript stays untouched. This is only a shorter review note to make the capture easier to scan.',
                         style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        wizardAiAnswer,
+                        transcriptCleanupSummary,
                         style: theme.textTheme.bodyMedium,
                       ),
+                      if (_acceptedAiTranscriptSummary != null) ...[
+                        const SizedBox(height: 10),
+                        TextButton.icon(
+                          key: const Key('voiceKeepManualSummaryButtonInline'),
+                          onPressed: _clearAiTranscriptSummary,
+                          icon: const Icon(Icons.undo_outlined),
+                          label: const Text('Keep manual summary'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            TranscriptPreviewCard(
+              controller: _transcriptController,
+              focusNode: _transcriptFocusNode,
+              onChanged: (_) => _handleTranscriptChanged(),
+              helperText: _mode == _VoiceInteractionMode.wizard
+                  ? 'The wizard assembles the draft here from each answered step. Review the full command before saving.'
+                  : 'Live microphone capture fills this field. Edit the words first, then save to the right local module.',
+            ),
+            const SizedBox(height: 16),
+            if (_mode != _VoiceInteractionMode.wizard &&
+                assistantResponse != null) ...[
+              Card(
+                key: const Key('voiceAssistantReplyCard'),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Assistant Reply',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        assistantResponse.summary,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        assistantResponse.nextStep,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      if (assistantResponse.projectContext != null ||
+                          assistantResponse.threadContext != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          [
+                            if (assistantResponse.projectContext != null)
+                              assistantResponse.projectContext,
+                            if (assistantResponse.threadContext != null)
+                              assistantResponse.threadContext,
+                          ].join(' • '),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           FilledButton.tonalIcon(
-                            key: const Key('voiceApplyAiWizardAnswerButton'),
-                            onPressed: () => _applyAiWizardAnswer(
-                              wizardAiAnswer,
+                            key: const Key('voiceSpeakReplyButton'),
+                            onPressed: () => _speakWithCurrentVoice(
+                              _service.buildSpokenReplyFromParts(
+                                summary: assistantResponse.summary,
+                                nextStep: assistantResponse.nextStep,
+                              ),
+                              tone: VoiceSpeechTone.briefing,
                             ),
-                            icon: const Icon(Icons.auto_fix_high_outlined),
-                            label: const Text('Use AI answer'),
+                            icon: const Icon(Icons.volume_up_outlined),
+                            label: const Text('Speak Reply'),
                           ),
                           TextButton.icon(
-                            key: const Key('voiceKeepManualWizardAnswerButton'),
-                            onPressed: _acceptedAiWizardAnswer == null
-                                ? null
-                                : _clearAiWizardAnswer,
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Keep manual answer'),
+                            key: const Key('voiceStopSpeakingButton'),
+                            onPressed: _stopSpeaking,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('Stop Voice'),
                           ),
                         ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
-          const SizedBox(height: 24),
-          if (transcriptCleanupSummary != null) ...[
-            Card(
-              key: const Key('voiceTranscriptCleanupCard'),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Transcript cleanup',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'The raw transcript stays untouched. This is only a shorter review note to make the capture easier to scan.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      transcriptCleanupSummary,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    if (_acceptedAiTranscriptSummary != null) ...[
-                      const SizedBox(height: 10),
-                      TextButton.icon(
-                        key: const Key('voiceKeepManualSummaryButtonInline'),
-                        onPressed: _clearAiTranscriptSummary,
-                        icon: const Icon(Icons.undo_outlined),
-                        label: const Text('Keep manual summary'),
-                      ),
-                    ],
-                  ],
-                ),
+              const SizedBox(height: 16),
+            ],
+            if (briefing != null) ...[
+              CalmGuidanceCard(
+                sectionLabel: 'Briefing',
+                title: briefingSummary,
+                summary: briefingNextStep,
+                reason: briefingReason,
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          TranscriptPreviewCard(
-            controller: _transcriptController,
-            focusNode: _transcriptFocusNode,
-            onChanged: (_) => _handleTranscriptChanged(),
-            helperText: _mode == _VoiceInteractionMode.wizard
-                ? 'The wizard assembles the draft here from each answered step. Review the full command before saving.'
-                : 'Live microphone capture fills this field. Edit the words first, then save to the right local module.',
-          ),
-          const SizedBox(height: 16),
-          if (assistantResponse != null) ...[
-            Card(
-              key: const Key('voiceAssistantReplyCard'),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Assistant Reply', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 6),
-                    Text(
-                      assistantResponse.summary,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      assistantResponse.nextStep,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    if (assistantResponse.projectContext != null ||
-                        assistantResponse.threadContext != null) ...[
-                      const SizedBox(height: 8),
+              const SizedBox(height: 16),
+              Card(
+                key: const Key('voiceBriefingCard'),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        [
-                          if (assistantResponse.projectContext != null)
-                            assistantResponse.projectContext,
-                          if (assistantResponse.threadContext != null)
-                            assistantResponse.threadContext,
-                        ].join(' • '),
-                        style: theme.textTheme.bodySmall,
+                        'Review-first briefing',
+                        style: theme.textTheme.titleSmall,
                       ),
-                    ],
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.tonalIcon(
-                          key: const Key('voiceSpeakReplyButton'),
-                          onPressed: () => _speakWithCurrentVoice(
-                            '${assistantResponse.summary} ${assistantResponse.nextStep}',
-                          ),
-                          icon: const Icon(Icons.volume_up_outlined),
-                          label: const Text('Speak Reply'),
-                        ),
-                        TextButton.icon(
-                          key: const Key('voiceStopSpeakingButton'),
-                          onPressed: _stopSpeaking,
-                          icon: const Icon(Icons.stop_circle_outlined),
-                          label: const Text('Stop Voice'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          if (briefing != null) ...[
-            CalmGuidanceCard(
-              sectionLabel: 'Briefing',
-              title: briefingSummary,
-              summary: briefingNextStep,
-              reason: briefingReason,
-            ),
-            const SizedBox(height: 16),
-            Card(
-              key: const Key('voiceBriefingCard'),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Briefing snapshot',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      appliedAiBriefing != null
-                          ? 'Read the AI wording, compare it with the manual draft, then keep whichever version makes the next move clearest.'
-                          : 'Read the snapshot, check the next move, then save it locally.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
-                    Text('What Gaia heard', style: theme.textTheme.labelSmall),
-                    const SizedBox(height: 4),
-                    Text(briefing.summary, style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 6),
-                    Text('Next move', style: theme.textTheme.labelSmall),
-                    const SizedBox(height: 4),
-                    Text(briefingNextStep, style: theme.textTheme.bodySmall),
-                    if (briefing.projectContext != null ||
-                        briefing.threadContext != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        [
-                          if (briefing.projectContext != null)
-                            briefing.projectContext,
-                          if (briefing.threadContext != null)
-                            briefing.threadContext,
-                        ].join(' • '),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                    if (briefing.memorySummary != null ||
-                        briefing.memoryHighlights.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text('Thread memory', style: theme.textTheme.labelSmall),
                       const SizedBox(height: 4),
                       Text(
-                        briefing.memorySummary ??
-                            'Gaia is building memory from the current thread.',
+                        appliedAiBriefing != null
+                            ? 'Read the AI wording, compare it with the manual draft, then keep whichever version makes the next move clearest.'
+                            : 'Read the snapshot, check the raw transcript below, then save it locally when it feels right.',
                         style: theme.textTheme.bodySmall,
                       ),
-                      if (briefing.memoryHighlights.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: briefing.memoryHighlights
-                              .map((highlight) => Chip(label: Text(highlight)))
-                              .toList(),
-                        ),
-                      ],
-                    ],
-                    if (briefing.plannerSummary != null ||
-                        briefing.plannerSteps.isNotEmpty) ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       Text(
-                        'Suggested path',
+                        'What Gaia heard',
                         style: theme.textTheme.labelSmall,
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        briefing.plannerSummary ??
-                            'Gaia is ready to suggest the next useful move.',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      if (briefing.plannerSteps.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: briefing.plannerSteps.asMap().entries.map((
-                            entry,
-                          ) {
-                            final index = entry.key;
-                            final step = entry.value;
-                            return Chip(label: Text('${index + 1}. $step'));
-                          }).toList(),
+                      Text(briefingSummary, style: theme.textTheme.bodyMedium),
+                      const SizedBox(height: 6),
+                      Text('Next move', style: theme.textTheme.labelSmall),
+                      const SizedBox(height: 4),
+                      Text(briefingNextStep, style: theme.textTheme.bodySmall),
+                      if (briefing.projectContext != null ||
+                          briefing.threadContext != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          [
+                            if (briefing.projectContext != null)
+                              briefing.projectContext,
+                            if (briefing.threadContext != null)
+                              briefing.threadContext,
+                          ].join(' • '),
+                          style: theme.textTheme.bodySmall,
                         ),
                       ],
-                    ],
-                    const SizedBox(height: 10),
-                    Text(
-                      'AI Assist preview',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.secondary,
-                        fontWeight: FontWeight.w700,
+                      if (rawTranscript.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Raw transcript',
+                          style: theme.textTheme.labelSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.42),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: Text(
+                            rawTranscript,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                      if (briefing.memorySummary != null ||
+                          briefing.memoryHighlights.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Thread memory',
+                          style: theme.textTheme.labelSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          briefing.memorySummary ??
+                              'Gaia is building memory from the current thread.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (briefing.memoryHighlights.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: briefing.memoryHighlights
+                                .map(
+                                  (highlight) => Chip(label: Text(highlight)),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ],
+                      if (briefing.plannerSummary != null ||
+                          briefing.plannerSteps.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Suggested path',
+                          style: theme.textTheme.labelSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          briefing.plannerSummary ??
+                              'Gaia is ready to suggest the next useful move.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (briefing.plannerSteps.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: briefing.plannerSteps.asMap().entries.map(
+                              (entry) {
+                                final index = entry.key;
+                                final step = entry.value;
+                                return Chip(label: Text('${index + 1}. $step'));
+                              },
+                            ).toList(),
+                          ),
+                        ],
+                      ],
+                      const SizedBox(height: 10),
+                      Text(
+                        'AI Assist preview',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    aiAssistAsync.when(
-                      data: (aiAssist) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              aiAssist.summary,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              aiAssist.nextStep,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                    if (aiAssist.suggestedType != null ||
-                        aiAssist.suggestedTitle != null) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                                runSpacing: 6,
+                      const SizedBox(height: 6),
+                      aiAssistAsync.when(
+                        data: (aiAssist) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                aiAssist.summary,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                aiAssist.nextStep,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              if (aiAssist.suggestedType != null ||
+                                  aiAssist.suggestedTitle != null) ...[
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: [
+                                    if (aiAssist.suggestedType != null)
+                                      Chip(
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        label: Text(
+                                          'AI type: ${aiAssist.suggestedType!.label}',
+                                        ),
+                                      ),
+                                    if (aiAssist.suggestedTitle != null)
+                                      Chip(
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        label: Text(
+                                          'AI title: ${aiAssist.suggestedTitle}',
+                                        ),
+                                      ),
+                                    if (aiAssist.suggestedSummary != null)
+                                      Chip(
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        label: Text(
+                                          'AI summary: ${aiAssist.suggestedSummary}',
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                              if (aiAssist.hints.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: aiAssist.hints
+                                      .map(
+                                        (hint) => Chip(
+                                          visualDensity: VisualDensity.compact,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          label: Text(hint),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: [
-                                  if (aiAssist.suggestedType != null)
-                                    Chip(
-                                      visualDensity: VisualDensity.compact,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      label: Text(
-                                        'AI type: ${aiAssist.suggestedType!.label}',
-                                      ),
+                                  FilledButton.tonalIcon(
+                                    key: const Key(
+                                      'voiceApplyAiBriefingButton',
                                     ),
+                                    onPressed: () =>
+                                        _applyAiBriefingDraft(aiAssist),
+                                    icon: const Icon(
+                                      Icons.auto_fix_high_outlined,
+                                    ),
+                                    label: const Text('Use AI wording'),
+                                  ),
+                                  TextButton.icon(
+                                    key: const Key(
+                                      'voiceKeepManualBriefingButton',
+                                    ),
+                                    onPressed: _acceptedAiBriefing == null
+                                        ? null
+                                        : _clearAiBriefingDraft,
+                                    icon: const Icon(Icons.edit_outlined),
+                                    label: const Text('Keep manual wording'),
+                                  ),
                                   if (aiAssist.suggestedTitle != null)
-                                    Chip(
-                                      visualDensity: VisualDensity.compact,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      label: Text(
-                                        'AI title: ${aiAssist.suggestedTitle}',
-                                      ),
+                                    OutlinedButton.icon(
+                                      key: const Key('voiceApplyAiTitleButton'),
+                                      onPressed: () {
+                                        setState(() {
+                                          _titleController.text =
+                                              aiAssist.suggestedTitle!;
+                                          _titleController.selection =
+                                              TextSelection.collapsed(
+                                                offset: _titleController
+                                                    .text
+                                                    .length,
+                                              );
+                                          _speechStatus =
+                                              'AI title applied. Review it before saving.';
+                                        });
+                                      },
+                                      icon: const Icon(Icons.title_outlined),
+                                      label: const Text('Use AI title'),
                                     ),
                                   if (aiAssist.suggestedSummary != null)
-                                    Chip(
-                                      visualDensity: VisualDensity.compact,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      label: Text(
-                                        'AI summary: ${aiAssist.suggestedSummary}',
+                                    OutlinedButton.icon(
+                                      key: const Key(
+                                        'voiceApplyAiSummaryButton',
                                       ),
+                                      onPressed: () =>
+                                          _applyAiTranscriptSummary(
+                                            aiAssist.suggestedSummary!,
+                                          ),
+                                      icon: const Icon(
+                                        Icons.short_text_outlined,
+                                      ),
+                                      label: const Text('Use AI summary'),
+                                    ),
+                                  if (_acceptedAiTranscriptSummary != null)
+                                    TextButton.icon(
+                                      key: const Key(
+                                        'voiceKeepManualSummaryButton',
+                                      ),
+                                      onPressed: _clearAiTranscriptSummary,
+                                      icon: const Icon(Icons.undo_outlined),
+                                      label: const Text('Keep manual summary'),
                                     ),
                                 ],
                               ),
                             ],
-                            if (aiAssist.hints.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: aiAssist.hints
-                                    .map(
-                                      (hint) => Chip(
-                                        visualDensity: VisualDensity.compact,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        label: Text(hint),
-                                      ),
-                                    )
-                                    .toList(),
+                          );
+                        },
+                        loading: () => Text(
+                          'Preparing AI assist suggestions...',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        error: (error, stackTrace) => Text(
+                          'AI assist could not load right now.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                      if (briefing.actions.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: briefing.actions.asMap().entries.map((
+                            entry,
+                          ) {
+                            final index = entry.key;
+                            final action = entry.value;
+                            return Tooltip(
+                              message: action.description,
+                              child: OutlinedButton.icon(
+                                key: Key(
+                                  'voiceBriefingActionButton-${action.id}',
+                                ),
+                                onPressed: () => _handleQuickAction(action),
+                                icon: Icon(_quickActionIcon(action.id)),
+                                label: Text('${index + 1}. ${action.label}'),
                               ),
-                            ],
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                FilledButton.tonalIcon(
-                                  key: const Key('voiceApplyAiBriefingButton'),
-                                  onPressed: () => _applyAiBriefingDraft(aiAssist),
-                                  icon: const Icon(Icons.auto_fix_high_outlined),
-                                  label: const Text('Use AI wording'),
-                                ),
-                                TextButton.icon(
-                                  key: const Key('voiceKeepManualBriefingButton'),
-                                  onPressed: _acceptedAiBriefing == null
-                                      ? null
-                                      : _clearAiBriefingDraft,
-                                  icon: const Icon(Icons.edit_outlined),
-                                  label: const Text('Keep manual wording'),
-                                ),
-                                if (aiAssist.suggestedTitle != null)
-                                  OutlinedButton.icon(
-                                    key: const Key('voiceApplyAiTitleButton'),
-                                    onPressed: () {
-                                      setState(() {
-                                        _titleController.text =
-                                            aiAssist.suggestedTitle!;
-                                        _titleController.selection =
-                                            TextSelection.collapsed(
-                                          offset: _titleController.text.length,
-                                        );
-                                        _speechStatus =
-                                            'AI title applied. Review it before saving.';
-                                      });
-                                    },
-                                    icon: const Icon(Icons.title_outlined),
-                                    label: const Text('Use AI title'),
-                                  ),
-                                if (aiAssist.suggestedSummary != null)
-                                  OutlinedButton.icon(
-                                    key: const Key('voiceApplyAiSummaryButton'),
-                                    onPressed: () => _applyAiTranscriptSummary(
-                                      aiAssist.suggestedSummary!,
-                                    ),
-                                    icon: const Icon(Icons.short_text_outlined),
-                                    label: const Text('Use AI summary'),
-                                  ),
-                                if (_acceptedAiTranscriptSummary != null)
-                                  TextButton.icon(
-                                    key: const Key('voiceKeepManualSummaryButton'),
-                                    onPressed: _clearAiTranscriptSummary,
-                                    icon: const Icon(Icons.undo_outlined),
-                                    label: const Text('Keep manual summary'),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        );
-                      },
-                      loading: () => Text(
-                        'Preparing AI assist suggestions...',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      error: (error, stackTrace) => Text(
-                        'AI assist could not load right now.',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                    if (briefing.actions.isNotEmpty) ...[
+                            );
+                          }).toList(),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: briefing.actions.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final action = entry.value;
-                          return Tooltip(
-                            message: action.description,
-                            child: OutlinedButton.icon(
-                              key: Key(
-                                'voiceBriefingActionButton-${action.id}',
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.tonalIcon(
+                            key: const Key('voiceSpeakBriefingButton'),
+                            onPressed: () => _speakWithCurrentVoice(
+                              _service.buildSpokenReplyFromParts(
+                                summary: briefingSummary,
+                                nextStep: briefing.nextStep,
                               ),
-                              onPressed: () => _handleQuickAction(action),
-                              icon: Icon(_quickActionIcon(action.id)),
-                              label: Text('${index + 1}. ${action.label}'),
+                              tone: VoiceSpeechTone.briefing,
                             ),
-                          );
-                        }).toList(),
+                            icon: const Icon(Icons.campaign_outlined),
+                            label: const Text('Speak Briefing'),
+                          ),
+                          TextButton.icon(
+                            key: const Key('voiceStopBriefingButton'),
+                            onPressed: _stopSpeaking,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('Stop Voice'),
+                          ),
+                        ],
                       ),
                     ],
-                    const SizedBox(height: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Card(
+              key: const Key('voiceMacroCard'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Action Macros', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tap a macro to run a common assistant move instantly.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: [
-                        FilledButton.tonalIcon(
-                          key: const Key('voiceSpeakBriefingButton'),
-                          onPressed: () => _speakWithCurrentVoice(
-                            '${briefing.summary} ${briefing.nextStep}',
-                          ),
-                          icon: const Icon(Icons.campaign_outlined),
-                          label: const Text('Speak Briefing'),
-                        ),
-                        TextButton.icon(
-                          key: const Key('voiceStopBriefingButton'),
-                          onPressed: _stopSpeaking,
-                          icon: const Icon(Icons.stop_circle_outlined),
-                          label: const Text('Stop Voice'),
-                        ),
-                      ],
+                      children: macroActions
+                          .map(
+                            (action) => Tooltip(
+                              message: action.description,
+                              child: FilledButton.tonalIcon(
+                                key: Key('voiceMacroButton-${action.id}'),
+                                onPressed: () => _handleQuickAction(action),
+                                icon: Icon(_quickActionIcon(action.id)),
+                                label: Text(action.label),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-          ],
-          Card(
-            key: const Key('voiceMacroCard'),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Action Macros', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap a macro to run a common assistant move instantly.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: macroActions
-                        .map(
-                          (action) => Tooltip(
-                            message: action.description,
-                            child: FilledButton.tonalIcon(
-                              key: Key('voiceMacroButton-${action.id}'),
-                              onPressed: () => _handleQuickAction(action),
-                              icon: Icon(_quickActionIcon(action.id)),
-                              label: Text(action.label),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Voice Starter Deck',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Pick a starting point, then edit the details before you save.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStarterDeckGroup(
-                    theme: theme,
-                    groupKey: const Key('voiceStarterDeckPlanGroup'),
-                    title: 'Plan',
-                    templateIds: const [
-                      'build-day',
-                      'summarize-today',
-                      'whats-next',
-                      'recall-thread',
-                      'plan-day',
-                      'daily-reset',
-                    ],
-                    templateById: templateById,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStarterDeckGroup(
-                    theme: theme,
-                    groupKey: const Key('voiceStarterDeckCaptureGroup'),
-                    title: 'Capture',
-                    templateIds: const [
-                      'project',
-                      'project-update',
-                      'task',
-                      'journal',
-                      'content',
-                      'business',
-                      'idea',
-                    ],
-                    templateById: templateById,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStarterDeckGroup(
-                    theme: theme,
-                    groupKey: const Key('voiceStarterDeckShortcutGroup'),
-                    title: 'Shortcuts',
-                    templateIds: const [
-                      'project-checkpoint',
-                      'carry-forward',
-                      'meeting-notes',
-                      'meeting-summary',
-                      'quick-review',
-                      'business-follow-up',
-                      'voice-review',
-                    ],
-                    templateById: templateById,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStarterDeckGroup(
-                    theme: theme,
-                    groupKey: const Key('voiceStarterDeckCodexGroup'),
-                    title: 'Review',
-                    templateIds: const ['codex'],
-                    templateById: templateById,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Command Router', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Based on the current command, here are the next likely moves.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: quickActions
-                        .map(
-                          (action) => Tooltip(
-                            message: action.description,
-                            child: OutlinedButton.icon(
-                              key: Key('voiceQuickActionButton-${action.id}'),
-                              onPressed: () => _handleQuickAction(action),
-                              icon: Icon(_quickActionIcon(action.id)),
-                              label: Text(action.label),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (activeSuggestion != null) ...[
-            const SizedBox(height: 16),
             Card(
-              key: const Key('voiceSuggestionCard'),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Suggested Action',
+                      'Voice Starter Deck',
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Type: ${activeSuggestion.suggestedType.label}',
-                      style: theme.textTheme.bodyMedium,
+                      'Pick a starting point, then edit the details before you save.',
+                      style: theme.textTheme.bodySmall,
                     ),
-                    const SizedBox(height: 4),
-                    TextFormField(
-                      key: const Key('voiceSuggestedTitleField'),
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        border: OutlineInputBorder(),
-                      ),
+                    const SizedBox(height: 12),
+                    _buildStarterDeckGroup(
+                      theme: theme,
+                      groupKey: const Key('voiceStarterDeckPlanGroup'),
+                      title: 'Plan',
+                      templateIds: const [
+                        'build-day',
+                        'summarize-today',
+                        'whats-next',
+                        'recall-thread',
+                        'plan-day',
+                        'daily-reset',
+                      ],
+                      templateById: templateById,
                     ),
-                    if (activeSuggestion.suggestedProjectName != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Project: ${activeSuggestion.suggestedProjectName}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                    ..._buildStructuredSuggestionLines(theme, activeSuggestion),
-                    if (activeSuggestion.usedExplicitType) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        'An explicit command prefix was detected in the transcript.',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                    if (activeSuggestion.usedWakePhrase) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        'Wake phrase detected: ${activeSuggestion.wakePhrase ?? 'Gaia'}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    _buildEditableFields(theme),
+                    const SizedBox(height: 12),
+                    _buildStarterDeckGroup(
+                      theme: theme,
+                      groupKey: const Key('voiceStarterDeckCaptureGroup'),
+                      title: 'Capture',
+                      templateIds: const [
+                        'project',
+                        'project-update',
+                        'task',
+                        'journal',
+                        'content',
+                        'business',
+                        'idea',
+                      ],
+                      templateById: templateById,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildStarterDeckGroup(
+                      theme: theme,
+                      groupKey: const Key('voiceStarterDeckShortcutGroup'),
+                      title: 'Shortcuts',
+                      templateIds: const [
+                        'project-checkpoint',
+                        'carry-forward',
+                        'meeting-notes',
+                        'meeting-summary',
+                        'quick-review',
+                        'business-follow-up',
+                        'voice-review',
+                      ],
+                      templateById: templateById,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildStarterDeckGroup(
+                      theme: theme,
+                      groupKey: const Key('voiceStarterDeckCodexGroup'),
+                      title: 'Review',
+                      templateIds: const ['codex'],
+                      templateById: templateById,
+                    ),
                   ],
                 ),
               ),
             ),
-          ],
-          const SizedBox(height: 16),
-          Text('Command Type', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 12),
-          CommandTypeSelector(
-            selectedType: _currentType,
-            onChanged: (value) {
-              setState(() {
-                _presetType = null;
-                _selectedType = value;
-              });
-            },
-          ),
-          const SizedBox(height: 24),
-          Text('Related Project', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 12),
-          projectOptions.when(
-            data: (options) {
-              return DropdownButtonFormField<String?>(
-                initialValue: _selectedProjectId,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Optional project link',
-                ),
-                items: [
-                  const DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('No project selected'),
-                  ),
-                  ...options.map(
-                    (project) => DropdownMenuItem<String?>(
-                      value: project.id,
-                      child: Text(project.name),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Command Router', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Based on the current command, here are the next likely moves.',
+                      style: theme.textTheme.bodySmall,
                     ),
-                  ),
-                ],
-                onChanged: _isSaving
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _selectedProjectId = value;
-                        });
-                      },
-              );
-            },
-            loading: () => const LinearProgressIndicator(),
-            error: (error, stackTrace) {
-              return Text(
-                'Projects could not be loaded right now.',
-                style: theme.textTheme.bodySmall,
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              FilledButton.icon(
-                key: const Key('voiceSaveCommandButton'),
-                onPressed: _isSaving
-                    ? null
-                    : _currentType == VoiceCommandType.codexPrompt
-                    ? _showCodexPrompt
-                    : _saveSelectedCommand,
-                icon: Icon(
-                  _currentType == VoiceCommandType.codexPrompt
-                      ? Icons.code_outlined
-                      : Icons.save_outlined,
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: quickActions
+                          .map(
+                            (action) => Tooltip(
+                              message: action.description,
+                              child: OutlinedButton.icon(
+                                key: Key('voiceQuickActionButton-${action.id}'),
+                                onPressed: () => _handleQuickAction(action),
+                                icon: Icon(_quickActionIcon(action.id)),
+                                label: Text(action.label),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ),
-                label: Text(
-                  _currentType == VoiceCommandType.codexPrompt
-                      ? 'Prepare Codex Prompt'
-                      : 'Save as ${_currentType.label}',
+              ),
+            ),
+            if (activeSuggestion != null) ...[
+              const SizedBox(height: 16),
+              Card(
+                key: const Key('voiceSuggestionCard'),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Suggested Action',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Type: ${activeSuggestion.suggestedType.label}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      TextFormField(
+                        key: const Key('voiceSuggestedTitleField'),
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Title',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      if (activeSuggestion.suggestedProjectName != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Project: ${activeSuggestion.suggestedProjectName}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                      ..._buildStructuredSuggestionLines(
+                        theme,
+                        activeSuggestion,
+                      ),
+                      if (activeSuggestion.usedExplicitType) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'An explicit command prefix was detected in the transcript.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                      if (activeSuggestion.usedWakePhrase) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Wake phrase detected: ${activeSuggestion.wakePhrase ?? 'Gaia'}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      _buildEditableFields(theme),
+                    ],
+                  ),
                 ),
               ),
             ],
-          ),
-          if (_lastCodexPrompt != null) ...[
+            const SizedBox(height: 16),
+            Text('Command Type', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            CommandTypeSelector(
+              selectedType: _currentType,
+              onChanged: (value) {
+                setState(() {
+                  _presetType = null;
+                  _selectedType = value;
+                });
+              },
+            ),
             const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Last Codex Prompt',
-                      style: theme.textTheme.titleMedium,
+            Text('Related Project', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            projectOptions.when(
+              data: (options) {
+                return DropdownButtonFormField<String?>(
+                  initialValue: _selectedProjectId,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Optional project link',
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('No project selected'),
                     ),
-                    const SizedBox(height: 8),
-                    SelectableText(_lastCodexPrompt!),
-                    if (_selectedProjectId != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Project context selected for review: $_selectedProjectId',
-                        style: theme.textTheme.bodySmall,
+                    ...options.map(
+                      (project) => DropdownMenuItem<String?>(
+                        value: project.id,
+                        child: Text(project.name),
                       ),
-                    ],
+                    ),
                   ],
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedProjectId = value;
+                          });
+                        },
+                );
+              },
+              loading: () => const LinearProgressIndicator(),
+              error: (error, stackTrace) {
+                return Text(
+                  'Projects could not be loaded right now.',
+                  style: theme.textTheme.bodySmall,
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                FilledButton.icon(
+                  key: const Key('voiceSaveCommandButton'),
+                  onPressed: _isSaving
+                      ? null
+                      : _currentType == VoiceCommandType.codexPrompt
+                      ? _showCodexPrompt
+                      : _saveSelectedCommand,
+                  icon: Icon(
+                    _currentType == VoiceCommandType.codexPrompt
+                        ? Icons.code_outlined
+                        : Icons.save_outlined,
+                  ),
+                  label: Text(
+                    _currentType == VoiceCommandType.codexPrompt
+                        ? 'Prepare Codex Prompt'
+                        : 'Save as ${_currentType.label}',
+                  ),
+                ),
+              ],
+            ),
+            if (_lastCodexPrompt != null) ...[
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Last Codex Prompt',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      SelectableText(_lastCodexPrompt!),
+                      if (_selectedProjectId != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Project context selected for review: $_selectedProjectId',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
+            ],
+            const SizedBox(height: 32),
+            CommandHistoryList(
+              commands: _history,
+              onCommandSelected: _restoreCommandFromHistory,
             ),
           ],
-          const SizedBox(height: 32),
-          CommandHistoryList(
-            commands: _history,
-            onCommandSelected: _restoreCommandFromHistory,
-          ),
-        ],
+        ),
       ),
     );
   }

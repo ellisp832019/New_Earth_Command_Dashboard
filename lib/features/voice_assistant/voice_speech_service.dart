@@ -5,6 +5,47 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
+
+enum VoiceSpeechProviderMode { localTts, openAiRealtime }
+
+enum VoiceSpeechTone { neutral, wake, briefing, wizard, calmConfirmation }
+
+@visibleForTesting
+double normalizeVoiceSpeechRate(double rate) {
+  if (!rate.isFinite) {
+    return 0.5;
+  }
+
+  return rate.clamp(0.46, 0.56).toDouble();
+}
+
+@visibleForTesting
+double normalizeVoiceSpeechPitch(double pitch) {
+  if (!pitch.isFinite) {
+    return 1.0;
+  }
+
+  return pitch.clamp(0.96, 1.04).toDouble();
+}
+
+@visibleForTesting
+String normalizeAssistantSpeechText(String text) {
+  return text.trim().replaceAll(RegExp(r'\s+'), ' ');
+}
+
+@visibleForTesting
+VoiceSpeechProviderMode resolveVoiceSpeechProviderMode({
+  Map<String, String>? environment,
+}) {
+  final env = environment ?? Platform.environment;
+  final provider = env['VOICE_SPEECH_PROVIDER']?.trim().toLowerCase();
+  if (provider == 'openai_realtime' || provider == 'openai-realtime') {
+    return VoiceSpeechProviderMode.openAiRealtime;
+  }
+
+  return VoiceSpeechProviderMode.localTts;
+}
 
 class VoiceTtsVoiceOption {
   const VoiceTtsVoiceOption({
@@ -61,12 +102,27 @@ class VoiceTtsVoiceOption {
 }
 
 class VoiceAssistantSpeechService {
-  VoiceAssistantSpeechService() : _channel = const MethodChannel(_channelName);
+  VoiceAssistantSpeechService({
+    VoiceSpeechProviderMode? providerMode,
+    String? realtimeModel,
+    String? realtimeVoice,
+  }) : _channel = const MethodChannel(_channelName),
+       _providerMode = providerMode ?? resolveVoiceSpeechProviderMode(),
+       _realtimeModel =
+           realtimeModel ??
+           Platform.environment['OPENAI_VOICE_MODEL'] ??
+           'gpt-realtime-2',
+       _realtimeVoice =
+           realtimeVoice ?? Platform.environment['OPENAI_REALTIME_VOICE'];
 
   static const String _channelName = 'new_earth/windows_voice_speech';
 
   final MethodChannel _channel;
+  final VoiceSpeechProviderMode _providerMode;
+  final String _realtimeModel;
+  final String? _realtimeVoice;
   Process? _fallbackSpeechProcess;
+  Future<void> _speechQueue = Future<void>.value();
 
   bool get _isVoiceOutputSupported {
     if (kIsWeb) {
@@ -116,41 +172,65 @@ class VoiceAssistantSpeechService {
     double rate = 0.5,
     double pitch = 1.0,
     VoiceTtsVoiceOption? voice,
+    VoiceSpeechTone tone = VoiceSpeechTone.neutral,
   }) async {
     if (!enabled || text.trim().isEmpty || !_isVoiceOutputSupported) {
       return;
     }
 
-    try {
-      await _channel.invokeMethod<void>('speak', <String, dynamic>{
-        'text': text.trim(),
-        'rate': rate.clamp(0.0, 1.0),
-        'pitch': pitch.clamp(0.5, 2.0),
-        'voice': voice?.toVoiceMap(),
-      });
-      return;
-    } on MissingPluginException {
-      await _speakWithPowerShellFallback(
-        text.trim(),
-        rate: rate,
-        pitch: pitch,
-        voiceName: voice?.name,
-      );
-    } on PlatformException {
-      await _speakWithPowerShellFallback(
-        text.trim(),
-        rate: rate,
-        pitch: pitch,
-        voiceName: voice?.name,
-      );
-    } catch (_) {
-      await _speakWithPowerShellFallback(
-        text.trim(),
-        rate: rate,
-        pitch: pitch,
-        voiceName: voice?.name,
-      );
-    }
+    final requestText = normalizeAssistantSpeechText(text);
+    final normalizedRate = normalizeVoiceSpeechRate(rate);
+    final normalizedPitch = normalizeVoiceSpeechPitch(pitch);
+    final pending = _speechQueue.then((_) async {
+      if (_providerMode == VoiceSpeechProviderMode.openAiRealtime) {
+        try {
+          await _speakWithOpenAiRealtimeBridge(
+            requestText,
+            rate: normalizedRate,
+            pitch: normalizedPitch,
+            voiceName: voice?.name,
+            tone: tone,
+          );
+          return;
+        } catch (_) {
+          // Fall back to local TTS below if the realtime bridge is unavailable.
+        }
+      }
+
+      try {
+        await _channel.invokeMethod<void>('speak', <String, dynamic>{
+          'text': requestText,
+          'rate': normalizedRate,
+          'pitch': normalizedPitch,
+          'voice': voice?.toVoiceMap(),
+        });
+        return;
+      } on MissingPluginException {
+        await _speakWithPowerShellFallback(
+          requestText,
+          rate: normalizedRate,
+          pitch: normalizedPitch,
+          voiceName: voice?.name,
+        );
+      } on PlatformException {
+        await _speakWithPowerShellFallback(
+          requestText,
+          rate: normalizedRate,
+          pitch: normalizedPitch,
+          voiceName: voice?.name,
+        );
+      } catch (_) {
+        await _speakWithPowerShellFallback(
+          requestText,
+          rate: normalizedRate,
+          pitch: normalizedPitch,
+          voiceName: voice?.name,
+        );
+      }
+    });
+
+    _speechQueue = pending.catchError((_) {});
+    await pending;
   }
 
   Future<void> stop() async {
@@ -193,19 +273,15 @@ class VoiceAssistantSpeechService {
         r'$voices | ConvertTo-Json -Compress',
       ].join('\n');
 
-      final output = await Process.run(
-        'powershell',
-        <String>[
-          '-NoLogo',
-          '-NoProfile',
-          '-NonInteractive',
-          '-ExecutionPolicy',
-          'Bypass',
-          '-EncodedCommand',
-          _encodePowerShellCommand(script),
-        ],
-        runInShell: true,
-      );
+      final output = await Process.run('powershell', <String>[
+        '-NoLogo',
+        '-NoProfile',
+        '-NonInteractive',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-EncodedCommand',
+        _encodePowerShellCommand(script),
+      ], runInShell: true);
 
       if (output.exitCode != 0) {
         return const <VoiceTtsVoiceOption>[];
@@ -263,27 +339,110 @@ class VoiceAssistantSpeechService {
         rate: rate,
         voiceName: voiceName,
       );
-      final process = await Process.start(
-        'powershell',
-        <String>[
-          '-NoLogo',
-          '-NoProfile',
-          '-NonInteractive',
-          '-ExecutionPolicy',
-          'Bypass',
-          '-EncodedCommand',
-          _encodePowerShellCommand(script),
-        ],
-        runInShell: true,
-      );
+      final process = await Process.start('powershell', <String>[
+        '-NoLogo',
+        '-NoProfile',
+        '-NonInteractive',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-EncodedCommand',
+        _encodePowerShellCommand(script),
+      ], runInShell: true);
       _fallbackSpeechProcess = process;
-      unawaited(process.exitCode.then((_) {
-        if (identical(_fallbackSpeechProcess, process)) {
-          _fallbackSpeechProcess = null;
-        }
-      }));
+      unawaited(
+        process.exitCode.then((_) {
+          if (identical(_fallbackSpeechProcess, process)) {
+            _fallbackSpeechProcess = null;
+          }
+        }),
+      );
     } catch (_) {
       // Best-effort only. Voice output should never block the workflow.
+    }
+  }
+
+  Future<void> _speakWithOpenAiRealtimeBridge(
+    String text, {
+    required double rate,
+    required double pitch,
+    String? voiceName,
+    required VoiceSpeechTone tone,
+  }) async {
+    if (!Platform.isWindows || text.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      await stop();
+      final script = _locateBridgeScript();
+      if (script == null) {
+        throw StateError('Voice bridge script not found.');
+      }
+
+      final python = await _resolvePythonCommand();
+      if (python == null) {
+        throw StateError('Python launcher not found.');
+      }
+
+      final speechTone = _buildRealtimeSpeechTone(
+        rate: rate,
+        pitch: pitch,
+        voiceName: voiceName ?? _realtimeVoice,
+        tone: tone,
+      );
+      final process = await Process.start(python.command, <String>[
+        ...python.args,
+        script.path,
+        'realtime-speak',
+        '--json',
+        if (_realtimeModel.trim().isNotEmpty) ...<String>[
+          '--model',
+          _realtimeModel.trim(),
+        ],
+        if ((_realtimeVoice ?? '').trim().isNotEmpty) ...<String>[
+          '--voice',
+          _realtimeVoice!.trim(),
+        ],
+        if (speechTone.isNotEmpty) ...<String>['--instructions', speechTone],
+        text.trim(),
+      ], runInShell: true);
+
+      _fallbackSpeechProcess = process;
+      unawaited(
+        process.exitCode.then((_) {
+          if (identical(_fallbackSpeechProcess, process)) {
+            _fallbackSpeechProcess = null;
+          }
+        }),
+      );
+
+      final stdoutBuffer = StringBuffer();
+      final stderrBuffer = StringBuffer();
+      final stdoutDone = process.stdout
+          .transform(utf8.decoder)
+          .listen(stdoutBuffer.write)
+          .asFuture<void>();
+      final stderrDone = process.stderr
+          .transform(utf8.decoder)
+          .listen(stderrBuffer.write)
+          .asFuture<void>();
+
+      final exitCode = await process.exitCode;
+      await Future.wait([stdoutDone, stderrDone]);
+
+      if (exitCode != 0) {
+        final stderrText = stderrBuffer.toString().trim();
+        final stdoutText = stdoutBuffer.toString().trim();
+        throw StateError(
+          stderrText.isNotEmpty
+              ? stderrText
+              : stdoutText.isNotEmpty
+              ? stdoutText
+              : 'Realtime speech bridge failed.',
+        );
+      }
+    } catch (_) {
+      rethrow;
     }
   }
 
@@ -299,7 +458,9 @@ class VoiceAssistantSpeechService {
 
     final buffer = StringBuffer()
       ..writeln('Add-Type -AssemblyName System.Speech')
-      ..writeln(r'$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer')
+      ..writeln(
+        r'$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer',
+      )
       ..writeln(r'try {');
 
     if (safeVoiceName.isNotEmpty) {
@@ -310,6 +471,7 @@ class VoiceAssistantSpeechService {
 
     buffer
       ..writeln('  \$synth.Rate = $rateValue')
+      ..writeln(r'  $synth.Volume = 100')
       ..writeln("  \$synth.Speak('$safeText')")
       ..writeln(r'} finally {')
       ..writeln(r'  $synth.Dispose()')
@@ -330,6 +492,94 @@ class VoiceAssistantSpeechService {
     }
     return base64Encode(bytes);
   }
+
+  String _buildRealtimeSpeechTone({
+    required double rate,
+    required double pitch,
+    String? voiceName,
+    required VoiceSpeechTone tone,
+  }) {
+    final toneLine = switch (tone) {
+      VoiceSpeechTone.wake =>
+        'Treat this as a wake acknowledgement: brief, immediate, reassuring, and ready to move.',
+      VoiceSpeechTone.briefing =>
+        'Treat this as a briefing: concise, clear, and quietly powerful.',
+      VoiceSpeechTone.wizard =>
+        'Treat this as wizard guidance: step-by-step, calm, and confidence-building.',
+      VoiceSpeechTone.calmConfirmation =>
+        'Treat this as a calm save confirmation: short, grounded, and reassuring.',
+      VoiceSpeechTone.neutral =>
+        'Treat this as a normal dashboard reply: short, warm, practical, and sure of itself.',
+    };
+
+    return [
+      'Speak the user text exactly in one calm, steady voice.',
+      toneLine,
+      'Keep the reply short, warm, conversational, and purposeful.',
+      'Use clean pauses between the summary and the next step.',
+      'Do not add extra information.',
+      if (voiceName != null && voiceName.isNotEmpty)
+        'The selected local voice label is $voiceName, but the spoken output should remain natural and calm.',
+    ].join('\n');
+  }
+
+  Future<_PythonCommand?> _resolvePythonCommand() async {
+    final commands = <_PythonCommand>[
+      const _PythonCommand(command: 'py', args: ['-3']),
+      const _PythonCommand(command: 'python', args: <String>[]),
+      const _PythonCommand(command: 'python3', args: <String>[]),
+    ];
+
+    for (final candidate in commands) {
+      try {
+        final result = await Process.run(candidate.command, <String>[
+          ...candidate.args,
+          '--version',
+        ], runInShell: true);
+        if (result.exitCode == 0) {
+          return candidate;
+        }
+      } catch (_) {
+        // Try the next Python launcher.
+      }
+    }
+
+    return null;
+  }
+
+  File? _locateBridgeScript() {
+    final startingPoints = <Directory>[
+      Directory.current,
+      File(Platform.resolvedExecutable).parent,
+    ];
+
+    for (final start in startingPoints) {
+      var directory = start;
+      for (var i = 0; i < 8; i += 1) {
+        final candidate = File(
+          path.join(directory.path, 'tools', 'voice_bridge', 'voice_bridge.py'),
+        );
+        if (candidate.existsSync()) {
+          return candidate;
+        }
+
+        final parent = directory.parent;
+        if (parent.path == directory.path) {
+          break;
+        }
+        directory = parent;
+      }
+    }
+
+    return null;
+  }
+}
+
+class _PythonCommand {
+  const _PythonCommand({required this.command, required this.args});
+
+  final String command;
+  final List<String> args;
 }
 
 VoiceTtsVoiceOption? resolveConfiguredVoiceOption({

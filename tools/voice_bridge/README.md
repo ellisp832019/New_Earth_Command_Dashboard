@@ -10,7 +10,8 @@ The bridge can:
 2. Transcribe it locally with Whisper.
 3. Transcribe a local audio or video file with Whisper.
 4. Format a transcript as a Codex-safe prompt.
-5. Save the result to `logs/voice_commands.log`.
+5. Speak a reply through OpenAI Realtime and play it locally on Windows.
+6. Save the result to `logs/voice_commands.log`.
 
 ## Setup
 
@@ -42,6 +43,26 @@ For a prompt-only run:
 python tools/voice_bridge/voice_bridge.py prompt "Summarize today"
 ```
 
+To speak a reply through GPT Realtime and play the audio locally:
+
+```bash
+python tools/voice_bridge/voice_bridge.py realtime-speak --json "I am here. Say task, project, summary, or continue thread."
+```
+
+If you want the Flutter app to use this path, set:
+
+```bash
+VOICE_SPEECH_PROVIDER=openai_realtime
+OPENAI_API_KEY=your-key
+```
+
+Optional realtime voice settings:
+
+```bash
+OPENAI_VOICE_MODEL=gpt-realtime-2
+OPENAI_REALTIME_VOICE=marin
+```
+
 If you only want to review the scaffold, you can also open:
 
 `tools/voice_bridge/voice_bridge.py.txt`
@@ -51,6 +72,8 @@ If you only want to review the scaffold, you can also open:
 The bridge does not automatically run Codex.
 
 Review every prompt before sending it to Codex.
+
+The realtime speech path is still opt-in. If the OpenAI bridge is unavailable, the app falls back to local Windows TTS.
 
 Do not use this bridge to directly control MicroGrow hardware, relays, pumps, fans, heaters, or lights.
 

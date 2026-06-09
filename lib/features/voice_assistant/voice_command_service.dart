@@ -1181,18 +1181,33 @@ class VoiceCommandService {
               'Pick a starter deck option or let the router guide the next move.',
           projectContext: projectContext,
           threadContext: threadContext,
-      );
+        );
     }
   }
 
   String buildSpokenReply(VoiceCommandAssistantResponse response) {
-    final summary = _spokenSentence(response.summary);
+    return buildSpokenReplyFromParts(
+      summary: response.summary,
+      nextStep: response.nextStep,
+    );
+  }
 
-    if (summary.isEmpty) {
-      return _spokenSentence(response.nextStep);
+  String buildSpokenReplyFromParts({
+    required String summary,
+    required String nextStep,
+  }) {
+    final spokenSummary = _spokenSentence(summary);
+    final spokenNextStep = _spokenSentence(nextStep);
+
+    if (spokenSummary.isEmpty) {
+      return spokenNextStep;
     }
 
-    return summary;
+    if (spokenNextStep.isEmpty || spokenNextStep == spokenSummary) {
+      return spokenSummary;
+    }
+
+    return '$spokenSummary. Next, $spokenNextStep';
   }
 
   VoiceCommandBriefing buildBriefing({
@@ -1239,36 +1254,37 @@ class VoiceCommandService {
     VoiceConversationContext? conversationContext,
   }) {
     final threadLeadIn = _buildWizardLeadIn(conversationContext);
+    final stepLeadIn = '${step.progressLabel}.';
     switch (step) {
       case VoiceWizardStep.type:
-        return '$threadLeadIn What kind of entry do you want to create? Say task, journal, content, business, idea, or Codex.';
+        return '$threadLeadIn$stepLeadIn What kind of entry do you want to create? Say task, journal, content, business, idea, or Codex.';
       case VoiceWizardStep.title:
-        return '$threadLeadIn What title should I use?';
+        return '$threadLeadIn$stepLeadIn What title should I use?';
       case VoiceWizardStep.project:
         return projectName == null
-            ? '$threadLeadIn Which project should this belong to?'
-            : '$threadLeadIn Which project should this belong to? I can see $projectName as a possible match.';
+            ? '$threadLeadIn$stepLeadIn Which project should this belong to?'
+            : '$threadLeadIn$stepLeadIn Which project should this belong to? I can see $projectName as a possible match.';
       case VoiceWizardStep.details:
         switch (selectedType) {
           case VoiceCommandType.task:
-            return '$threadLeadIn Any category or priority you want me to remember?';
+            return '$threadLeadIn$stepLeadIn What detail matters most for this task?';
           case VoiceCommandType.project:
-            return '$threadLeadIn What status, priority, vision, or next action should I capture for this project?';
+            return '$threadLeadIn$stepLeadIn What status, priority, vision, or next action matters most?';
           case VoiceCommandType.journalEntry:
-            return '$threadLeadIn What did you work on, what did you learn, and what should happen next?';
+            return '$threadLeadIn$stepLeadIn What did you work on, what did you learn, or what should happen next?';
           case VoiceCommandType.contentIdea:
-            return '$threadLeadIn Which platform and content type fit this best?';
+            return '$threadLeadIn$stepLeadIn What platform or format should I remember?';
           case VoiceCommandType.businessOpportunity:
-            return '$threadLeadIn Who is this with, and what is the next action?';
+            return '$threadLeadIn$stepLeadIn Who is this with, and what is the next action?';
           case VoiceCommandType.codexPrompt:
-            return '$threadLeadIn What should Codex change or review?';
+            return '$threadLeadIn$stepLeadIn What should Codex change or review?';
           case VoiceCommandType.idea:
-            return '$threadLeadIn What should I remember about this idea?';
+            return '$threadLeadIn$stepLeadIn What should I remember about this idea?';
           case null:
-            return '$threadLeadIn Tell me a little more detail.';
+            return '$threadLeadIn$stepLeadIn Tell me one more detail.';
         }
       case VoiceWizardStep.review:
-        return '$threadLeadIn I have the draft. Review it, then save or start again.';
+        return '$threadLeadIn$stepLeadIn I have the draft. Review it, then save or start again.';
     }
   }
 
@@ -1648,7 +1664,11 @@ Rules:
       return '';
     }
 
-    return '${conversationContext.summary} ';
+    final summary = conversationContext.summary.trim().replaceAll(
+      RegExp(r'[.!?]+$'),
+      '',
+    );
+    return '$summary. ';
   }
 
   String _briefingLine(String text) {
