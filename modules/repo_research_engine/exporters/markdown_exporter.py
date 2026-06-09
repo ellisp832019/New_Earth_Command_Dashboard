@@ -28,6 +28,7 @@ class MarkdownExporter:
             "repo_summary.md": self._render_repo_summary(),
             "security_report.md": self._render_security_report(),
             "risk_report.md": self._render_risk_report(),
+            "license_review.md": self._render_license_review_panel(),
             "knowledge_report.md": self._render_knowledge_report(),
             "implementation_opportunities.md": self._render_implementation_opportunities(),
             "learning_notes.md": self._render_learning_notes(),
@@ -263,6 +264,44 @@ class MarkdownExporter:
         lines += ["", "## Safety Notes"]
         for note in security.get("notes", []):
             lines.append(f"- {note}")
+        return "\n".join(lines).rstrip() + "\n"
+
+    def _render_license_review_panel(self) -> str:
+        lines = [
+            "# Licence Review Panel",
+            "",
+            "## Summary",
+        ]
+        license_summary = self.analysis.get("license_summary", {})
+        lines.append(
+            f"- Candidates: {license_summary.get('candidate_count', 0)}",
+        )
+        lines.append(
+            f"- Known licences: {', '.join(license_summary.get('known_licenses', [])) or 'None'}",
+        )
+        lines.append(
+            f"- Needs review: {license_summary.get('unknown_candidate_count', 0)}",
+        )
+
+        lines += ["", "## Candidate Review"]
+        licenses = self.analysis.get("licenses", [])
+        if licenses:
+            for item in licenses:
+                candidate_type = item.get("candidate_type", "candidate")
+                detected = item.get("detected_license", "Unknown")
+                review_status = item.get("review_status", "needs_review")
+                lines.append(
+                    f"- `{item.get('path')}` [{candidate_type}] - {detected} - {review_status}",
+                )
+        else:
+            lines.append("- No licence candidates were detected.")
+
+        lines += ["", "## Review Notes"]
+        lines += [
+            "- Keep licence excerpts masked if they are copied into notes or prompts.",
+            "- Treat unknown licence candidates as a manual review item before reuse.",
+            "- Prefer the detected licence name over any assumptions from file naming alone.",
+        ]
         return "\n".join(lines).rstrip() + "\n"
 
     def _render_risk_report(self) -> str:
