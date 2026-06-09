@@ -32,8 +32,10 @@ from scripts.run_research import (
     _append_export_history,
     _build_report_search_index,
     _build_release_notes,
+    _build_bundle_delta_summary,
     _render_comparison_markdown,
     _render_release_notes_markdown,
+    _render_bundle_delta_summary_markdown,
 )
 
 
@@ -254,6 +256,45 @@ def test_release_notes_capture_comparison_and_change_tracking(tmp_path):
     assert "Release Notes" in rendered
     assert "Change Tracking Summary" in rendered
     assert "Release Checks" in rendered
+
+
+def test_bundle_delta_summary_compares_previous_run(tmp_path):
+    history_file = tmp_path / "run_history.json"
+    history_file.write_text(
+        json.dumps(
+            [
+                {
+                    "timestamp": "2024-01-01T00:00:00",
+                    "repo_path": "D:/old",
+                    "profile": "Generic",
+                    "output_directory": "D:/old/out",
+                    "report_files": ["repo_research_report.md", "security_report.md"],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    current_run = {
+        "repo_path": "D:/new",
+        "profile": "MicroGrow",
+        "report_files": [
+            "repo_research_report.md",
+            "security_report.md",
+            "bundle_delta_summary.md",
+        ],
+    }
+
+    bundle_delta = _build_bundle_delta_summary(
+        output_dir=tmp_path / "out",
+        current_run=current_run,
+        history_file=history_file,
+    )
+    rendered = _render_bundle_delta_summary_markdown(bundle_delta)
+
+    assert bundle_delta["report_deltas"]["added"] == ["bundle_delta_summary.md"]
+    assert bundle_delta["current_run"]["profile"] == "MicroGrow"
+    assert "Bundle Delta Summary" in rendered
+    assert "Report Deltas" in rendered
 
 
 def test_license_detection_reports_summary_and_export(tmp_path):
@@ -495,6 +536,11 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
         json.dumps({"repo_name": "demo-repo"}),
         encoding="utf-8",
     )
+    (report_dir / "bundle_delta_summary.md").write_text("bundle delta", encoding="utf-8")
+    (report_dir / "bundle_delta_summary.json").write_text(
+        json.dumps({"summary": "1 reports added"}),
+        encoding="utf-8",
+    )
     adapter = OmegaOsExportAdapter(tmp_path / "omega")
     destination = adapter.export(analysis, report_dir)
     assert destination.exists()
@@ -503,6 +549,7 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
     assert (destination / "report_template_selection.md").exists()
     assert (destination / "report_search_index.md").exists()
     assert (destination / "release_notes.md").exists()
+    assert (destination / "bundle_delta_summary.md").exists()
 
 
 def test_comparison_and_change_tracking(tmp_path):

@@ -141,6 +141,25 @@ def main() -> None:
         encoding="utf-8",
     )
 
+    bundle_delta = _build_bundle_delta_summary(
+        output_dir=output_dir,
+        current_run={
+            "repo_path": args.repo,
+            "profile": profile.get("profile_name", args.profile),
+            "report_files": sorted(
+                file.name for file in output_dir.iterdir() if file.is_file()
+            ),
+        },
+    )
+    (output_dir / "bundle_delta_summary.json").write_text(
+        json.dumps(bundle_delta, indent=2),
+        encoding="utf-8",
+    )
+    (output_dir / "bundle_delta_summary.md").write_text(
+        _render_bundle_delta_summary_markdown(bundle_delta),
+        encoding="utf-8",
+    )
+
     _build_report_search_index(output_dir)
 
     if args.omega_root:
@@ -471,6 +490,88 @@ def _build_release_notes(
         "sections": sections,
         "release_checks": release_checks,
     }
+
+
+def _build_bundle_delta_summary(
+    *,
+    output_dir: Path,
+    current_run: dict,
+    history_file: Path | None = None,
+) -> dict:
+    history_path = history_file or (MODULE_ROOT / "reports" / "run_history.json")
+    previous_run = {}
+    if history_path.exists():
+        try:
+            decoded = json.loads(history_path.read_text(encoding="utf-8"))
+            if isinstance(decoded, list):
+                current_output = str(output_dir)
+                for entry in decoded:
+                    if not isinstance(entry, dict):
+                        continue
+                    output_directory = str(entry.get("output_directory", ""))
+                    if output_directory and output_directory != current_output:
+                        previous_run = entry
+                        break
+        except Exception:
+            previous_run = {}
+
+    current_reports = set(current_run.get("report_files", []))
+    previous_reports = set(previous_run.get("report_files", []))
+    added_reports = sorted(current_reports - previous_reports)
+    removed_reports = sorted(previous_reports - current_reports)
+    shared_reports = sorted(current_reports & previous_reports)
+
+    return {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "current_run": {
+            "repo_path": current_run.get("repo_path", ""),
+            "profile": current_run.get("profile", ""),
+            "output_directory": str(output_dir),
+        },
+        "previous_run": {
+            "repo_path": previous_run.get("repo_path", ""),
+            "profile": previous_run.get("profile", ""),
+            "output_directory": previous_run.get("output_directory", ""),
+        },
+        "report_deltas": {
+            "added": added_reports,
+            "removed": removed_reports,
+            "shared": shared_reports,
+        },
+        "summary": (
+            f"{len(added_reports)} reports added, "
+            f"{len(removed_reports)} reports removed, "
+            f"{len(shared_reports)} reports shared with the previous run."
+        ),
+        "notes": [
+            "This summary compares the current report bundle with the most recent prior run record.",
+            "Use it to spot new outputs before exporting or sharing the bundle.",
+        ],
+    }
+
+
+def _render_bundle_delta_summary_markdown(bundle_delta: dict) -> str:
+    lines = [
+        "# Bundle Delta Summary",
+        "",
+        f"Generated at: `{bundle_delta.get('generated_at', '')}`",
+        f"Current run profile: `{bundle_delta.get('current_run', {}).get('profile', '')}`",
+        f"Previous run profile: `{bundle_delta.get('previous_run', {}).get('profile', '')}`",
+        "",
+        "## Summary",
+        str(bundle_delta.get("summary", "")),
+        "",
+        "## Report Deltas",
+    ]
+    for label in ("added", "removed", "shared"):
+        items = bundle_delta.get("report_deltas", {}).get(label, [])
+        lines.append(f"- {label.title()}: {len(items)}")
+        for item in items[:20]:
+            lines.append(f"  - {item}")
+    lines += ["", "## Notes"]
+    for note in bundle_delta.get("notes", []):
+        lines.append(f"- {note}")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _render_release_notes_markdown(release_notes: dict) -> str:

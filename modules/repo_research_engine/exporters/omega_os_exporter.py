@@ -66,6 +66,8 @@ class OmegaOsExportAdapter:
             "report_search_index.md",
             "release_notes.json",
             "release_notes.md",
+            "bundle_delta_summary.json",
+            "bundle_delta_summary.md",
         ):
             source = report_dir / filename
             if source.exists():
