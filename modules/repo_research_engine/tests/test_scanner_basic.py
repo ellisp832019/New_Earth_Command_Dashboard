@@ -31,7 +31,9 @@ from scripts.run_research import (
     _append_change_history,
     _append_export_history,
     _build_report_search_index,
+    _build_release_notes,
     _render_comparison_markdown,
+    _render_release_notes_markdown,
 )
 
 
@@ -222,6 +224,36 @@ def test_report_search_index_indexes_generated_reports(tmp_path):
     assert index_json["report_count"] == 3
     assert any(item["path"] == "repo_comparison.md" for item in index_json["reports"])
     assert "Report Search Index" in index_md
+
+
+def test_release_notes_capture_comparison_and_change_tracking(tmp_path):
+    analysis = {
+        "repo_name": "demo",
+        "profile_name": "MicroGrow",
+        "project_summary": "Summary.",
+        "knowledge": {"risks": ["Masked risk reminder." ]},
+        "recommendations": ["Do a calm review."],
+        "top_useful_files": [{"path": "README.md"}, {"path": "lib/main.dart"}],
+    }
+    comparison = {"summary": "2 files added, 1 file removed, 1 file modified."}
+    change_tracking = {
+        "summary": "1 files added, 1 files removed, 1 files modified.",
+        "file_changes": {"added": ["a.py"], "removed": ["b.py"], "modified": ["c.py"]},
+    }
+
+    release_notes = _build_release_notes(
+        analysis=analysis,
+        comparison=comparison,
+        change_tracking=change_tracking,
+        output_dir=tmp_path,
+    )
+    rendered = _render_release_notes_markdown(release_notes)
+
+    assert release_notes["repo_name"] == "demo"
+    assert release_notes["comparison_summary"] == comparison["summary"]
+    assert "Release Notes" in rendered
+    assert "Change Tracking Summary" in rendered
+    assert "Release Checks" in rendered
 
 
 def test_license_detection_reports_summary_and_export(tmp_path):
@@ -458,6 +490,11 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
         json.dumps({"report_count": 1, "reports": []}),
         encoding="utf-8",
     )
+    (report_dir / "release_notes.md").write_text("release notes", encoding="utf-8")
+    (report_dir / "release_notes.json").write_text(
+        json.dumps({"repo_name": "demo-repo"}),
+        encoding="utf-8",
+    )
     adapter = OmegaOsExportAdapter(tmp_path / "omega")
     destination = adapter.export(analysis, report_dir)
     assert destination.exists()
@@ -465,6 +502,7 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
     assert (destination / "export_manifest.json").exists()
     assert (destination / "report_template_selection.md").exists()
     assert (destination / "report_search_index.md").exists()
+    assert (destination / "release_notes.md").exists()
 
 
 def test_comparison_and_change_tracking(tmp_path):

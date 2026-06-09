@@ -64,6 +64,8 @@ class OmegaOsExportAdapter:
             "report_template_selection.md",
             "report_search_index.json",
             "report_search_index.md",
+            "release_notes.json",
+            "release_notes.md",
         ):
             source = report_dir / filename
             if source.exists():

@@ -99,6 +99,8 @@ def main() -> None:
             _render_comparison_markdown(comparison),
             encoding="utf-8",
         )
+    else:
+        comparison = {}
 
     if args.baseline_inventory:
         baseline_path = Path(args.baseline_inventory).expanduser().resolve()
@@ -121,6 +123,23 @@ def main() -> None:
                 baseline_repo=str(baseline_scan.get("repo_name", "")),
                 change_tracking=change_tracking,
             )
+    else:
+        change_tracking = {}
+
+    release_notes = _build_release_notes(
+        analysis=analysis,
+        comparison=comparison,
+        change_tracking=change_tracking,
+        output_dir=output_dir,
+    )
+    (output_dir / "release_notes.json").write_text(
+        json.dumps(release_notes, indent=2),
+        encoding="utf-8",
+    )
+    (output_dir / "release_notes.md").write_text(
+        _render_release_notes_markdown(release_notes),
+        encoding="utf-8",
+    )
 
     _build_report_search_index(output_dir)
 
@@ -385,6 +404,102 @@ def _append_export_history(
     updated = [record, *existing][:20]
     history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
     history_markdown_file.write_text(_render_export_history_markdown(updated), encoding="utf-8")
+
+
+def _build_release_notes(
+    *,
+    analysis: dict,
+    comparison: dict,
+    change_tracking: dict,
+    output_dir: Path,
+) -> dict:
+    repo_name = analysis.get("repo_name", "repository")
+    profile_name = analysis.get("profile_name", "Generic")
+    summary = analysis.get("project_summary", "No project summary available.")
+    risks = analysis.get("knowledge", {}).get("risks", [])
+    recommendations = analysis.get("recommendations", [])
+    comparison_summary = comparison.get("summary", "")
+    change_summary = change_tracking.get("summary", "")
+    change_files = change_tracking.get("file_changes", {})
+    notable_files = [item.get("path", "") for item in analysis.get("top_useful_files", [])[:8]]
+
+    sections = [
+        {
+            "title": "Overview",
+            "items": [
+                f"Profile: {profile_name}",
+                f"Repository: {repo_name}",
+                summary,
+            ],
+        },
+        {
+            "title": "Release Signals",
+            "items": [
+                comparison_summary or "No repository comparison was supplied.",
+                change_summary or "No baseline inventory was supplied.",
+            ],
+        },
+        {
+            "title": "Notable Files",
+            "items": notable_files or ["No high-signal files were highlighted."],
+        },
+        {
+            "title": "Risks",
+            "items": risks or ["No major static risks were detected."],
+        },
+        {
+            "title": "Recommended Follow-Up",
+            "items": recommendations or ["No additional follow-up was suggested."],
+        },
+    ]
+
+    release_checks = [
+        "Review any newly added files before shipping a change.",
+        "Confirm high-risk or masked security signals are understood.",
+        "Check whether change tracking reflects the expected baseline.",
+        "Keep release notes local and readable for Knowledge Vault export.",
+    ]
+
+    return {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "repo_name": repo_name,
+        "profile_name": profile_name,
+        "output_directory": str(output_dir),
+        "comparison_summary": comparison_summary,
+        "change_summary": change_summary,
+        "change_files": change_files,
+        "sections": sections,
+        "release_checks": release_checks,
+    }
+
+
+def _render_release_notes_markdown(release_notes: dict) -> str:
+    lines = [
+        "# Release Notes",
+        "",
+        f"Generated at: `{release_notes.get('generated_at', '')}`",
+        f"Repository: `{release_notes.get('repo_name', '')}`",
+        f"Profile: `{release_notes.get('profile_name', '')}`",
+        "",
+    ]
+    for section in release_notes.get("sections", []):
+        lines.append(f"## {section.get('title', 'Section')}")
+        for item in section.get("items", []):
+            lines.append(f"- {item}")
+        lines.append("")
+
+    change_files = release_notes.get("change_files", {})
+    if change_files:
+        lines.append("## Change Tracking Summary")
+        for label in ("added", "removed", "modified"):
+            items = change_files.get(label, [])
+            lines.append(f"- {label.title()}: {len(items)}")
+        lines.append("")
+
+    lines += ["## Release Checks"]
+    for item in release_notes.get("release_checks", []):
+        lines.append(f"- {item}")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _build_report_search_index(report_dir: Path) -> None:
