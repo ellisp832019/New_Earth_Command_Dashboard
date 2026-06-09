@@ -264,6 +264,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             hint: 'MicroGrow, New Earth Dashboard, BioCalm, Generic',
           ),
           const SizedBox(height: 12),
+          _profilePresetsBlock(context),
+          const SizedBox(height: 12),
           _field(
             controller: _outputController,
             label: 'Output folder',
@@ -379,6 +381,68 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _profilePresetsBlock(BuildContext context) {
+    const presets = [
+      _ProfilePreset(
+        label: 'MicroGrow',
+        profile: 'MicroGrow',
+        outputFolder: 'microgrow',
+      ),
+      _ProfilePreset(
+        label: 'New Earth Dashboard',
+        profile: 'New Earth Dashboard',
+        outputFolder: 'new_earth_dashboard',
+      ),
+      _ProfilePreset(
+        label: 'New Earth Living',
+        profile: 'New Earth Living',
+        outputFolder: 'new_earth_living',
+      ),
+      _ProfilePreset(
+        label: 'BioCalm',
+        profile: 'BioCalm',
+        outputFolder: 'biocalm',
+      ),
+      _ProfilePreset(
+        label: 'Rehabilitation',
+        profile: 'New Earth Rehabilitation',
+        outputFolder: 'rehabilitation',
+      ),
+      _ProfilePreset(
+        label: 'Generic',
+        profile: 'Generic',
+        outputFolder: 'general',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick-start presets',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final preset in presets)
+              OutlinedButton(
+                onPressed: _isRunning
+                    ? null
+                    : () => _applyProfilePreset(preset),
+                child: Text(preset.label),
+              ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -681,6 +745,21 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     await _run(mode: _RunMode.graphs);
   }
 
+  void _applyProfilePreset(_ProfilePreset preset) {
+    final currentOutput = _outputController.text.trim();
+    final defaultOutput = _defaultOutputDirectory;
+    final outputLooksDefault =
+        currentOutput.isEmpty || currentOutput == defaultOutput;
+    setState(() {
+      _profileController.text = preset.profile;
+      _compareProfileController.text = preset.profile;
+      if (outputLooksDefault) {
+        _outputController.text = pathJoin(defaultOutput, preset.outputFolder);
+      }
+    });
+    _setMessage('Applied ${preset.label} preset.');
+  }
+
   Future<void> _run({required _RunMode mode}) async {
     final repoPath = _repoPathController.text.trim();
     if (repoPath.isEmpty) {
@@ -936,6 +1015,18 @@ class _StatusChip extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProfilePreset {
+  const _ProfilePreset({
+    required this.label,
+    required this.profile,
+    required this.outputFolder,
+  });
+
+  final String label;
+  final String profile;
+  final String outputFolder;
 }
 
 class _MetadataRow extends StatelessWidget {
