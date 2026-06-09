@@ -26,6 +26,8 @@ from sources import (
 from intelligence import (
     AiGenerationRequest,
     AiGenerationResponse,
+    DeterministicLocalAiProvider,
+    InMemoryRagSearchIndex,
     KnowledgeChunk,
     LocalAiProvider,
     RagSearchHit,
@@ -676,6 +678,44 @@ def test_local_ai_and_rag_interfaces_are_local_first():
     assert provider.generate(AiGenerationRequest(prompt="hello")).text == "hello"
     assert provider.embed(["abc", "abcd"]) == [[3.0], [4.0]]
     assert index.search("dashboard")[0].chunk_id == "1"
+
+
+def test_concrete_local_ai_provider_and_rag_index_work_without_network():
+    provider = DeterministicLocalAiProvider()
+    index = InMemoryRagSearchIndex(provider)
+    chunks = [
+        KnowledgeChunk(
+            chunk_id="one",
+            source_uri="local://docs/one",
+            text="New Earth dashboard research notes about profiles and exports.",
+            title="Dashboard Notes",
+        ),
+        KnowledgeChunk(
+            chunk_id="two",
+            source_uri="local://docs/two",
+            text="Generic architecture summary with scanner and security guidance.",
+            title="Architecture Notes",
+        ),
+    ]
+
+    index.index_documents(chunks)
+    response = provider.generate(
+        AiGenerationRequest(
+            prompt="Summarize the dashboard research notes.",
+            context=("Focus on exports and profiles.", "Keep it local-first."),
+        )
+    )
+    hits = index.search("exports and profiles")
+
+    assert provider.REQUIRES_NETWORK is False
+    assert index.REQUIRES_NETWORK is False
+    assert provider.provider_name == "DeterministicLocal"
+    assert response.model_name == "local-rule-based"
+    assert "Summarize the dashboard research notes." in response.text
+    assert len(provider.embed(["alpha", "beta"])) == 2
+    assert hits and hits[0].chunk_id == "one"
+    assert "exports" in hits[0].snippet.lower()
+    assert hits[0].metadata["title"] == "Dashboard Notes"
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):
