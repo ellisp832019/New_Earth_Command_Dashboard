@@ -91,6 +91,7 @@ def test_profile_analyser_masks_security_findings(tmp_path):
     assert findings
     assert all("supersecretvalue" not in finding["masked_excerpt"] for finding in findings)
     assert analysis["security"]["risk_level"] in {"medium", "high"}
+    assert any("masked" in risk.lower() for risk in analysis["knowledge"]["risks"])
 
 
 def test_markdown_and_prompt_exports(tmp_path):
