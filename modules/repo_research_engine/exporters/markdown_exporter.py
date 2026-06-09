@@ -94,6 +94,20 @@ class MarkdownExporter:
                     f"{len(group.get('manifests', []))} manifest(s)",
                 )
 
+        lines += ["", "## File-Type Drilldowns"]
+        drilldowns = a.get("file_type_drilldowns", [])
+        if drilldowns:
+            for group in drilldowns:
+                lines.append(f"### {group.get('label', 'Files')} ({group.get('count', 0)})")
+                for item in group.get("files", [])[:6]:
+                    flags = ", ".join(item.get("flags") or []) or "no flags"
+                    lines.append(
+                        f"- `{item.get('path')}` - {item.get('language', 'Unknown')} - {flags}",
+                    )
+                lines.append("")
+        else:
+            lines.append("- No drilldown categories were identified.")
+
         lines += ["", "## Licences"]
         license_summary = a.get("license_summary", {})
         if license_summary:

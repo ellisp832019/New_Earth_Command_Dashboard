@@ -156,6 +156,37 @@ def test_license_detection_reports_summary_and_export(tmp_path):
     assert "Known: MIT" in report
 
 
+def test_file_type_drilldowns_cover_core_categories(tmp_path):
+    (tmp_path / "README.md").write_text("# Docs", encoding="utf-8")
+    (tmp_path / "tool.sh").write_text("#!/bin/sh\necho hi\n", encoding="utf-8")
+    (tmp_path / "main.ino").write_text("void setup() {}\n", encoding="utf-8")
+    (tmp_path / "board.kicad_pcb").write_text("(kicad_pcb)\n", encoding="utf-8")
+    (tmp_path / "asset.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    scan = SafeRepoScanner(str(tmp_path)).scan()
+    profile = {
+        "profile_name": "Generic",
+        "project_type": "generic",
+        "priority_keywords": [],
+        "risk_keywords": [],
+        "output_focus": [],
+        "export_targets": [],
+        "export_locations": [],
+        "report_templates": {},
+    }
+    analysis = ProfileAnalyser(scan, profile).analyse()
+
+    labels = [item["label"] for item in analysis["file_type_drilldowns"]]
+    assert "Documentation" in labels
+    assert "Scripts" in labels
+    assert "Firmware / Code" in labels
+    assert "Hardware Design" in labels
+    assert "Binaries / Assets" in labels
+
+    report = MarkdownExporter(analysis).render()
+    assert "File-Type Drilldowns" in report
+
+
 def test_omega_export_adapter_creates_bundle(tmp_path):
     analysis = {
         "profile_name": "MicroGrow",

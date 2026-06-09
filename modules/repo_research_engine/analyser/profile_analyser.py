@@ -27,6 +27,7 @@ class ProfileAnalyser:
         top_useful_files = self._top_useful_files()
         risk_flags = self._risk_flags(security)
         architecture = knowledge.get("architecture_summary", "")
+        file_type_drilldowns = self._file_type_drilldowns()
 
         return {
             "profile_name": self.profile.get("profile_name"),
@@ -49,6 +50,7 @@ class ProfileAnalyser:
             "knowledge": knowledge,
             "architecture_summary": architecture,
             "project_summary": knowledge.get("project_summary", ""),
+            "file_type_drilldowns": file_type_drilldowns,
             "learning_notes": knowledge.get("learning_notes", []),
             "implementation_ideas": knowledge.get("implementation_ideas", []),
             "reusable_components": knowledge.get("reusable_components", []),
@@ -130,3 +132,41 @@ class ProfileAnalyser:
         risk_penalty = sum(2 if item.get("severity") == "high" else 1 for item in risk_flags[:25])
         score = max(0, (match_bonus * 2) + category_bonus - risk_penalty)
         return score
+
+    def _file_type_drilldowns(self) -> list[Dict[str, Any]]:
+        category_labels = [
+            ("documentation", "Documentation"),
+            ("script", "Scripts"),
+            ("firmware_or_code", "Firmware / Code"),
+            ("hardware_design", "Hardware Design"),
+            ("binary_or_asset", "Binaries / Assets"),
+        ]
+        drilldowns: list[Dict[str, Any]] = []
+        for category, label in category_labels:
+            files = [
+                record
+                for record in self.scan.get("files", [])
+                if record.get("category") == category
+            ]
+            if not files:
+                continue
+            drilldowns.append(
+                {
+                    "category": category,
+                    "label": label,
+                    "count": len(files),
+                    "files": sorted(
+                        [
+                            {
+                                "path": record.get("path", ""),
+                                "language": record.get("language", "Unknown"),
+                                "flags": record.get("flags", []),
+                                "size_bytes": record.get("size_bytes", 0),
+                            }
+                            for record in files
+                        ],
+                        key=lambda item: item["path"].lower(),
+                    )[:12],
+                }
+            )
+        return drilldowns
