@@ -11,6 +11,7 @@ from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
 from sources import (
     BitbucketSourceAdapter,
+    DocumentationResearchSourceAdapter,
     GitLabSourceAdapter,
     GitHubSourceAdapter,
     LocalPdfResearchSourceAdapter,
@@ -19,6 +20,7 @@ from sources import (
     RemoteRepositorySnapshot,
     ResearchDocument,
     ResearchSourceRef,
+    TranscriptResearchSourceAdapter,
     WebsiteResearchSourceAdapter,
 )
 from intelligence import (
@@ -566,6 +568,53 @@ def test_bitbucket_source_adapter_loads_local_snapshot(tmp_path):
     assert snapshot.metadata["metadata"]["provider"] == "Bitbucket"
     assert any(file_ref.path == "assets/banner.svg" for file_ref in snapshot.files)
     assert adapter.fetch_file_text(matches[0], "README.md").startswith("# Rehab")
+
+
+def test_document_source_adapters_discover_and_load_local_files(tmp_path):
+    root = tmp_path / "sources"
+    (root / "docs").mkdir(parents=True)
+    (root / "docs" / "README.md").write_text("# Docs\n\nUseful notes.", encoding="utf-8")
+    (root / "site").mkdir()
+    (root / "site" / "index.html").write_text(
+        "<html><body><h1>Project Site</h1><p>Welcome.</p></body></html>",
+        encoding="utf-8",
+    )
+    (root / "transcripts").mkdir()
+    (root / "transcripts" / "talk.vtt").write_text(
+        "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nHello world.\n",
+        encoding="utf-8",
+    )
+    (root / "papers").mkdir()
+    (root / "papers" / "paper.pdf").write_bytes(b"%PDF-1.4\n")
+    (root / "papers" / "paper.txt").write_text("# White Paper\n\nAnnotated text.", encoding="utf-8")
+
+    pdf_adapter = LocalPdfResearchSourceAdapter()
+    website_adapter = WebsiteResearchSourceAdapter()
+    transcript_adapter = TranscriptResearchSourceAdapter()
+    docs_adapter = DocumentationResearchSourceAdapter()
+
+    pdf_sources = pdf_adapter.discover_sources(root)
+    website_sources = website_adapter.discover_sources(root)
+    transcript_sources = transcript_adapter.discover_sources(root)
+    docs_sources = docs_adapter.discover_sources(root)
+
+    pdf_document = pdf_adapter.load_document(pdf_sources[0])
+    website_document = website_adapter.load_document(website_sources[0])
+    transcript_document = transcript_adapter.load_document(transcript_sources[0])
+    docs_document = docs_adapter.load_document(docs_sources[0])
+
+    assert pdf_sources[0].source_kind == "pdf"
+    assert pdf_document.text.startswith("# White Paper")
+    assert website_sources[0].source_kind == "website"
+    assert "Project Site" in website_document.text
+    assert transcript_sources[0].source_kind == "transcript"
+    assert "Hello world." in transcript_document.text
+    assert docs_sources[0].source_kind == "documentation"
+    assert docs_document.text.startswith("# Docs")
+    assert pdf_adapter.summarize_source(pdf_sources[0]) == "White Paper"
+    assert website_adapter.summarize_source(website_sources[0]) == "Project Site Welcome."
+    assert transcript_adapter.summarize_source(transcript_sources[0]).startswith("WEBVTT")
+    assert docs_adapter.summarize_source(docs_sources[0]) == "Docs"
 
 
 def test_research_source_interfaces_mark_network_opt_in():
