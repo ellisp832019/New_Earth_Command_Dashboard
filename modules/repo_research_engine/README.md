@@ -40,6 +40,7 @@ The Repo Research Engine is a safe, local-first research module for analysing Gi
 - `repo_comparison.md`
 - `change_tracking.md`
 - `report_template_selection.md`
+- `report_search_index.md`
 - `dependency_graph.md`
 - `architecture_graph.md`
 - `generated_prompts/*.md`

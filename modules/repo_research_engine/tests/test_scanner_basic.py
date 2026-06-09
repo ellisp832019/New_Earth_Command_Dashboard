@@ -30,6 +30,7 @@ from intelligence import (
 from scripts.run_research import (
     _append_change_history,
     _append_export_history,
+    _build_report_search_index,
     _render_comparison_markdown,
 )
 
@@ -206,6 +207,21 @@ def test_markdown_and_prompt_exports(tmp_path):
     assert "Dependency Summary" in (output_dir / "repo_research_report.md").read_text(
         encoding="utf-8",
     )
+
+
+def test_report_search_index_indexes_generated_reports(tmp_path):
+    (tmp_path / "repo_research_report.md").write_text("# Main Report\n\nAlpha beta.", encoding="utf-8")
+    (tmp_path / "knowledge_report.md").write_text("# Knowledge\n\nUseful notes.", encoding="utf-8")
+    (tmp_path / "repo_comparison.md").write_text("# Comparison\n\nChanged files.", encoding="utf-8")
+
+    _build_report_search_index(tmp_path)
+
+    index_json = json.loads((tmp_path / "report_search_index.json").read_text(encoding="utf-8"))
+    index_md = (tmp_path / "report_search_index.md").read_text(encoding="utf-8")
+
+    assert index_json["report_count"] == 3
+    assert any(item["path"] == "repo_comparison.md" for item in index_json["reports"])
+    assert "Report Search Index" in index_md
 
 
 def test_license_detection_reports_summary_and_export(tmp_path):
@@ -437,12 +453,18 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
         json.dumps({"profile_name": "MicroGrow", "report_templates": {}}),
         encoding="utf-8",
     )
+    (report_dir / "report_search_index.md").write_text("search index", encoding="utf-8")
+    (report_dir / "report_search_index.json").write_text(
+        json.dumps({"report_count": 1, "reports": []}),
+        encoding="utf-8",
+    )
     adapter = OmegaOsExportAdapter(tmp_path / "omega")
     destination = adapter.export(analysis, report_dir)
     assert destination.exists()
     assert (destination / "repo_research_report.md").exists()
     assert (destination / "export_manifest.json").exists()
     assert (destination / "report_template_selection.md").exists()
+    assert (destination / "report_search_index.md").exists()
 
 
 def test_comparison_and_change_tracking(tmp_path):

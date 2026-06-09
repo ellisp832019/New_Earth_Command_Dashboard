@@ -122,6 +122,8 @@ def main() -> None:
                 change_tracking=change_tracking,
             )
 
+    _build_report_search_index(output_dir)
+
     if args.omega_root:
         export_destination = OmegaOsExportAdapter(args.omega_root).export(
             analysis,
@@ -383,6 +385,90 @@ def _append_export_history(
     updated = [record, *existing][:20]
     history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
     history_markdown_file.write_text(_render_export_history_markdown(updated), encoding="utf-8")
+
+
+def _build_report_search_index(report_dir: Path) -> None:
+    report_files = sorted(
+        file for file in report_dir.glob("*.md") if file.is_file()
+    )
+    entries = []
+    for report_file in report_files:
+        if report_file.name.endswith(".md") and report_file.name.startswith("report_search_index"):
+            continue
+        text = report_file.read_text(encoding="utf-8")
+        headings = _extract_markdown_headings(text)
+        title = headings[0] if headings else report_file.stem.replace("_", " ").title()
+        entries.append(
+            {
+                "path": report_file.name,
+                "title": title,
+                "heading_count": len(headings),
+                "headings": headings[:12],
+                "word_count": len(text.split()),
+                "snippet": _first_nonempty_paragraph(text),
+                "keywords": _report_keywords(title, headings),
+            }
+        )
+
+    payload = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "report_count": len(entries),
+        "reports": entries,
+    }
+    (report_dir / "report_search_index.json").write_text(
+        json.dumps(payload, indent=2),
+        encoding="utf-8",
+    )
+    (report_dir / "report_search_index.md").write_text(
+        _render_report_search_index_markdown(payload),
+        encoding="utf-8",
+    )
+
+
+def _extract_markdown_headings(text: str) -> list[str]:
+    headings: list[str] = []
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if not stripped.startswith("#"):
+            continue
+        title = stripped.lstrip("#").strip()
+        if title:
+            headings.append(title)
+    return headings
+
+
+def _first_nonempty_paragraph(text: str) -> str:
+    paragraphs = [paragraph.strip() for paragraph in text.split("\n\n") if paragraph.strip()]
+    for paragraph in paragraphs:
+        if not paragraph.startswith("#"):
+            return paragraph.replace("\n", " ")[:220]
+    return paragraphs[0].replace("\n", " ")[:220] if paragraphs else ""
+
+
+def _report_keywords(title: str, headings: list[str]) -> list[str]:
+    words = set()
+    for text in [title, *headings]:
+        for token in text.lower().replace("-", " ").replace("_", " ").split():
+            cleaned = "".join(ch for ch in token if ch.isalnum())
+            if len(cleaned) >= 3:
+                words.add(cleaned)
+    return sorted(words)
+
+
+def _render_report_search_index_markdown(payload: dict) -> str:
+    lines = [
+        "# Report Search Index",
+        "",
+        f"Generated at: `{payload.get('generated_at', '')}`",
+        f"Report count: **{payload.get('report_count', 0)}**",
+        "",
+        "## Indexed Reports",
+    ]
+    for item in payload.get("reports", []):
+        lines.append(f"- `{item.get('path')}` - {item.get('title')}")
+        lines.append(f"  - Headings: {item.get('heading_count', 0)}")
+        lines.append(f"  - Keywords: {', '.join(item.get('keywords') or []) or 'none'}")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _render_export_history_markdown(records: list[dict]) -> str:
