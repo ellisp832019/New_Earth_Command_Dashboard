@@ -60,6 +60,28 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _comparisonPreviewController =
       TextEditingController();
+  late final TextEditingController _knowledgePreviewController =
+      TextEditingController();
+  late final TextEditingController _releaseNotesPreviewController =
+      TextEditingController();
+  late final TextEditingController _bundleDeltaPreviewController =
+      TextEditingController();
+  late final TextEditingController _reportIndexPreviewController =
+      TextEditingController();
+  late final TextEditingController _changeTrackingPreviewController =
+      TextEditingController();
+  late final TextEditingController _dependencyGraphPreviewController =
+      TextEditingController();
+  late final TextEditingController _architectureGraphPreviewController =
+      TextEditingController();
+  late final TextEditingController _documentIndexPreviewController =
+      TextEditingController();
+  late final TextEditingController _riskPreviewController =
+      TextEditingController();
+  late final TextEditingController _licenseReviewPreviewController =
+      TextEditingController();
+  late final TextEditingController _vaultNotePreviewController =
+      TextEditingController();
   late final TextEditingController _recentRunsSearchController =
       TextEditingController();
   late final TextEditingController _reportHistorySearchController =
@@ -82,10 +104,25 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _mainReportPath = '';
   String _securityReportPath = '';
   String _comparisonReportPath = '';
+  String _knowledgeReportPath = '';
+  String _releaseNotesPath = '';
+  String _bundleDeltaPath = '';
+  String _reportIndexPath = '';
+  String _changeTrackingPath = '';
+  String _dependencyGraphPath = '';
+  String _architectureGraphPath = '';
+  String _documentIndexPath = '';
+  String _riskReportPath = '';
   String _profileEditorStatus = 'Profile editor not loaded';
   String _profileComparisonStatus = 'Profile comparison not loaded';
   String _selectedTemplateSet = 'Generic';
   late String _activeSection;
+  Map<String, dynamic> _latestAnalysis = {};
+  Map<String, dynamic> _latestComparison = {};
+  Map<String, dynamic> _latestChangeTracking = {};
+  Map<String, dynamic> _latestReleaseNotes = {};
+  Map<String, dynamic> _latestBundleDelta = {};
+  Map<String, dynamic> _latestReportIndex = {};
 
   final GlobalKey _heroSectionKey = GlobalKey();
   final GlobalKey _scannerSectionKey = GlobalKey();
@@ -94,6 +131,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   final GlobalKey _exportsSectionKey = GlobalKey();
   final GlobalKey _promptsSectionKey = GlobalKey();
   final GlobalKey _settingsSectionKey = GlobalKey();
+  final GlobalKey _reportIndexSectionKey = GlobalKey();
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -155,6 +193,17 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _reportPreviewController.dispose();
     _securityPreviewController.dispose();
     _comparisonPreviewController.dispose();
+    _knowledgePreviewController.dispose();
+    _releaseNotesPreviewController.dispose();
+    _bundleDeltaPreviewController.dispose();
+    _reportIndexPreviewController.dispose();
+    _changeTrackingPreviewController.dispose();
+    _dependencyGraphPreviewController.dispose();
+    _architectureGraphPreviewController.dispose();
+    _documentIndexPreviewController.dispose();
+    _riskPreviewController.dispose();
+    _licenseReviewPreviewController.dispose();
+    _vaultNotePreviewController.dispose();
     _recentRunsSearchController.dispose();
     _reportHistorySearchController.dispose();
     _exportHistorySearchController.dispose();
@@ -299,6 +348,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         _comparisonCard(context),
       ],
       const SizedBox(height: 16),
+      _comparisonInsightsCard(context),
+      const SizedBox(height: 16),
+      _riskReviewCard(context),
+      const SizedBox(height: 16),
       if (isWide)
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,6 +379,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       const SizedBox(height: 16),
       _bundlePreviewsCard(context),
       const SizedBox(height: 16),
+      _knowledgeCard(context),
+      const SizedBox(height: 16),
+      _documentDiscoveryCard(context),
+      const SizedBox(height: 16),
+      _reportIndexCard(context),
+      const SizedBox(height: 16),
+      _releaseNotesCard(context),
+      const SizedBox(height: 16),
+      _bundleDeltaCard(context),
+      const SizedBox(height: 16),
       _reportHistoryCard(context),
       const SizedBox(height: 16),
       _recentRunsCard(context),
@@ -335,6 +398,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   List<Widget> _buildProfilesContent(BuildContext context) {
     return [
       _heroCard(context),
+      const SizedBox(height: 16),
+      _profileTemplateLibraryCard(context),
       const SizedBox(height: 16),
       _profileEditorCard(context),
       const SizedBox(height: 16),
@@ -363,6 +428,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       const SizedBox(height: 16),
       _bundlePreviewsCard(context),
       const SizedBox(height: 16),
+      _exportReviewCard(context),
+      const SizedBox(height: 16),
+      _graphReviewCard(context),
+      const SizedBox(height: 16),
+      _changeTimelineCard(context),
+      const SizedBox(height: 16),
       _exportHistoryCard(context),
     ];
   }
@@ -373,9 +444,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       const SizedBox(height: 16),
       _promptsCard(context),
       const SizedBox(height: 16),
-      _reportPreviewCard(context),
+      _sourceRegistryCard(context),
       const SizedBox(height: 16),
-      _exportHistoryCard(context),
+      _aiRagCard(context),
+      const SizedBox(height: 16),
+      _reportIndexCard(context),
     ];
   }
 
@@ -384,6 +457,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _heroCard(context),
       const SizedBox(height: 16),
       _settingsCard(context),
+      const SizedBox(height: 16),
+      _sourceRegistryCard(context),
+      const SizedBox(height: 16),
+      _aiRagCard(context),
     ];
   }
 
@@ -1373,6 +1450,752 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  Widget _markdownPreviewCard(
+    BuildContext context, {
+    Key? key,
+    required String title,
+    required String subtitle,
+    required TextEditingController controller,
+    String? openPath,
+    String openLabel = 'Open file',
+  }) {
+    return _panel(
+      context,
+      key: key,
+      title: title,
+      subtitle: subtitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 260,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: controller,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          if (openPath != null) ...[
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () => _openReportFile(openPath),
+              icon: const Icon(Icons.open_in_new),
+              label: Text(openLabel),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _knowledgeCard(BuildContext context) {
+    final knowledge = _latestAnalysis['knowledge'] is Map<String, dynamic>
+        ? _latestAnalysis['knowledge'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    final reusableComponents = _stringList(knowledge['reusable_components']);
+    final risks = _stringList(knowledge['risks']);
+    final recommendations = _stringList(knowledge['recommendations']);
+    final implementationIdeas = _stringList(
+      _latestAnalysis['implementation_ideas'],
+    );
+    final learningNotes = _stringList(_latestAnalysis['learning_notes']);
+
+    return _panel(
+      context,
+      title: 'Knowledge Extraction',
+      subtitle:
+          'Summaries, reusable components, risks, recommendations, and learning notes from the latest local analysis.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Project summary',
+            value:
+                _latestAnalysis['project_summary']?.toString().isNotEmpty ==
+                    true
+                ? _latestAnalysis['project_summary'].toString()
+                : 'No summary loaded',
+          ),
+          const SizedBox(height: 8),
+          _MetadataRow(
+            label: 'Architecture summary',
+            value:
+                _latestAnalysis['architecture_summary']
+                        ?.toString()
+                        .isNotEmpty ==
+                    true
+                ? _latestAnalysis['architecture_summary'].toString()
+                : 'No architecture summary loaded',
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Reusable Components',
+            leftItems: reusableComponents,
+            rightTitle: 'Recommendations',
+            rightItems: recommendations,
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Risks',
+            leftItems: risks,
+            rightTitle: 'Implementation Ideas',
+            rightItems: implementationIdeas,
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(context, 'Learning Notes', learningNotes),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _knowledgePreviewController,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: _knowledgeReportPath.isEmpty
+                ? null
+                : () => _openReportFile(_knowledgeReportPath),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open knowledge report'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _documentDiscoveryCard(BuildContext context) {
+    final documentIndex = _latestAnalysis['document_index'] is List
+        ? List<Map<String, dynamic>>.from(
+            (_latestAnalysis['document_index'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    final imageAssets = _latestAnalysis['image_assets'] is List
+        ? List<Map<String, dynamic>>.from(
+            (_latestAnalysis['image_assets'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    final diagramFiles = _latestAnalysis['diagram_files'] is List
+        ? List<Map<String, dynamic>>.from(
+            (_latestAnalysis['diagram_files'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+
+    return _panel(
+      context,
+      title: 'Document and Asset Discovery',
+      subtitle:
+          'Review indexed documents, image assets, and diagram sources found during the safe scan.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _bulletSection(
+            context,
+            'Indexed Documents',
+            documentIndex
+                .take(8)
+                .map(
+                  (item) => '${item['path']} - ${item['title'] ?? ''}'.trim(),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            'Image Assets',
+            imageAssets
+                .take(8)
+                .map(
+                  (item) =>
+                      '${item['path']} - ${item['asset_type'] ?? 'image'}',
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            'Diagram Files',
+            diagramFiles
+                .take(8)
+                .map(
+                  (item) =>
+                      '${item['path']} - ${item['diagram_type'] ?? 'diagram'}',
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _documentIndexPreviewController,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: _documentIndexPath.isEmpty
+                ? null
+                : () => _openReportFile(_documentIndexPath),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open document index report'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _reportIndexCard(BuildContext context) {
+    return _panel(
+      context,
+      key: _reportIndexSectionKey,
+      title: 'Report Search Index',
+      subtitle: 'Searchable index of the generated report bundle.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Report count',
+            value:
+                _latestReportIndex['report_count']?.toString().isNotEmpty ==
+                    true
+                ? _latestReportIndex['report_count'].toString()
+                : 'No index loaded',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 240,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _reportIndexPreviewController,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: _reportIndexPath.isEmpty
+                ? null
+                : () => _openReportFile(_reportIndexPath),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open report index'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _releaseNotesCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Release Notes',
+      subtitle: 'Roll-up of comparison, change tracking, and release checks.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Comparison summary',
+            value:
+                _latestReleaseNotes['comparison_summary']
+                        ?.toString()
+                        .isNotEmpty ==
+                    true
+                ? _latestReleaseNotes['comparison_summary'].toString()
+                : 'No comparison summary loaded',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _releaseNotesPreviewController,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: _releaseNotesPath.isEmpty
+                ? null
+                : () => _openReportFile(_releaseNotesPath),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open release notes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bundleDeltaCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Bundle Delta Summary',
+      subtitle: 'What changed between the latest bundle and the previous run.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Summary',
+            value: _latestBundleDelta['summary']?.toString().isNotEmpty == true
+                ? _latestBundleDelta['summary'].toString()
+                : 'No bundle delta loaded',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _bundleDeltaPreviewController,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: _bundleDeltaPath.isEmpty
+                ? null
+                : () => _openReportFile(_bundleDeltaPath),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open bundle delta'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _changeTimelineCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Change Tracking Timeline',
+      subtitle:
+          'File additions, removals, modifications, and risk shifts across the latest baseline comparison.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Summary',
+            value:
+                _latestChangeTracking['summary']?.toString().isNotEmpty == true
+                ? _latestChangeTracking['summary'].toString()
+                : 'No change tracking loaded',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 240,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _changeTrackingPreviewController,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: _changeTrackingPath.isEmpty
+                ? null
+                : () => _openReportFile(_changeTrackingPath),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open change tracking'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _graphReviewCard(BuildContext context) {
+    final dependencySummary = _latestAnalysis['dependency_summary'] is Map
+        ? Map<String, dynamic>.from(
+            _latestAnalysis['dependency_summary'] as Map,
+          )
+        : <String, dynamic>{};
+    final frameworkGroups = dependencySummary['framework_groups'] is List
+        ? List<Map<String, dynamic>>.from(
+            (dependencySummary['framework_groups'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    final manifestDrilldowns = dependencySummary['manifest_drilldowns'] is List
+        ? List<Map<String, dynamic>>.from(
+            (dependencySummary['manifest_drilldowns'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+
+    return _panel(
+      context,
+      title: 'Graph Review',
+      subtitle:
+          'Dependency and architecture graph previews from the latest safe run.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Framework Groups',
+            leftItems: frameworkGroups
+                .take(6)
+                .map(
+                  (item) =>
+                      '${item['framework'] ?? 'Unknown'} - ${item['dependency_count'] ?? 0} dependencies',
+                )
+                .toList(growable: false),
+            rightTitle: 'Runtime Drilldowns',
+            rightItems: manifestDrilldowns
+                .take(6)
+                .map(
+                  (item) =>
+                      '${item['runtime'] ?? 'Unknown'} - ${item['dependency_count'] ?? 0} dependencies',
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          _markdownPreviewCard(
+            context,
+            title: 'Dependency Graph',
+            subtitle: 'Graph file generated by the local analysis run.',
+            controller: _dependencyGraphPreviewController,
+            openPath: _dependencyGraphPath,
+            openLabel: 'Open dependency graph',
+          ),
+          const SizedBox(height: 12),
+          _markdownPreviewCard(
+            context,
+            title: 'Architecture Graph',
+            subtitle: 'Graph file highlighting node groups and key anchors.',
+            controller: _architectureGraphPreviewController,
+            openPath: _architectureGraphPath,
+            openLabel: 'Open architecture graph',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _exportReviewCard(BuildContext context) {
+    final outputDirectory = _outputController.text.trim().isEmpty
+        ? _defaultOutputDirectory
+        : _outputController.text.trim();
+    final promptsDirectory = pathJoin(outputDirectory, 'generated_prompts');
+    return _panel(
+      context,
+      title: 'Export Review',
+      subtitle:
+          'Confirm what will be copied to the Knowledge Vault and review the masked licence notes before export.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Export Targets',
+            leftItems: [
+              outputDirectory,
+              promptsDirectory,
+              _omegaRootController.text.trim(),
+            ],
+            rightTitle: 'Export Checks',
+            rightItems: [
+              'Vault note is generated from the local template',
+              'Licence review stays masked and local',
+              'Report bundle copies only generated files',
+            ],
+          ),
+          const SizedBox(height: 12),
+          _markdownPreviewCard(
+            context,
+            title: 'Licence Review',
+            subtitle: 'Detected licence candidates and their review status.',
+            controller: _licenseReviewPreviewController,
+            openPath: pathJoin(outputDirectory, 'license_review.md'),
+            openLabel: 'Open licence review',
+          ),
+          const SizedBox(height: 12),
+          _markdownPreviewCard(
+            context,
+            title: 'Vault Note',
+            subtitle: 'Local export note prepared for the Knowledge Vault.',
+            controller: _vaultNotePreviewController,
+            openPath: pathJoin(outputDirectory, 'vault_note.md'),
+            openLabel: 'Open vault note',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _comparisonInsightsCard(BuildContext context) {
+    final comparison = _latestComparison;
+    final dependencyChanges = comparison['dependency_changes'] is Map
+        ? Map<String, dynamic>.from(comparison['dependency_changes'] as Map)
+        : <String, dynamic>{};
+    final frameworkChanges = comparison['framework_changes'] is Map
+        ? Map<String, dynamic>.from(comparison['framework_changes'] as Map)
+        : <String, dynamic>{};
+    final licenseChanges = comparison['license_changes'] is Map
+        ? Map<String, dynamic>.from(comparison['license_changes'] as Map)
+        : <String, dynamic>{};
+
+    return _panel(
+      context,
+      title: 'Comparison Insights',
+      subtitle:
+          'Clear repo-to-repo deltas, dependency changes, and risk shifts from the latest comparison run.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Comparison summary',
+            value: comparison['summary']?.toString().isNotEmpty == true
+                ? comparison['summary'].toString()
+                : 'No comparison loaded',
+          ),
+          const SizedBox(height: 8),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Dependencies Added',
+            leftItems: _stringList(dependencyChanges['added']),
+            rightTitle: 'Dependencies Removed',
+            rightItems: _stringList(dependencyChanges['removed']),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Frameworks Added',
+            leftItems: _stringList(frameworkChanges['added']),
+            rightTitle: 'Frameworks Removed',
+            rightItems: _stringList(frameworkChanges['removed']),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Licences Added',
+            leftItems: _stringList(licenseChanges['added']),
+            rightTitle: 'Licences Removed',
+            rightItems: _stringList(licenseChanges['removed']),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            'Recommendations',
+            _stringList(comparison['recommendations']),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sourceRegistryCard(BuildContext context) {
+    const repoSources = ['GitHub', 'GitLab', 'Bitbucket'];
+    const researchSources = ['PDF', 'Website', 'Transcript', 'Documentation'];
+
+    return _panel(
+      context,
+      title: 'Source Adapter Registry',
+      subtitle:
+          'Read-only source contracts stay local-first until a source is explicitly chosen.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _bulletSection(context, 'Repository Sources', repoSources),
+          const SizedBox(height: 12),
+          _bulletSection(context, 'Research Sources', researchSources),
+          const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'AI/RAG',
+            value: 'Deterministic local provider and in-memory index only',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _aiRagCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Local AI and RAG Controls',
+      subtitle:
+          'The module ships with deterministic local AI and a local in-memory RAG index for offline use.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _StatusChip(
+            label: 'Deterministic local provider',
+            muted: false,
+          ),
+          const SizedBox(height: 8),
+          const _StatusChip(label: 'In-memory RAG index', muted: false),
+          const SizedBox(height: 8),
+          const _StatusChip(label: 'No network required', muted: false),
+          const SizedBox(height: 12),
+          Text(
+            'These interfaces stay available even when no external AI provider is configured.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileTemplateLibraryCard(BuildContext context) {
+    final templateSets = _templateSets.map((set) => set.name).toList();
+    return _panel(
+      context,
+      title: 'Template Library',
+      subtitle:
+          'Quick-select report template sets and keep the profile format editable as JSON.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _bulletSection(context, 'Available Template Sets', templateSets),
+          const SizedBox(height: 12),
+          Text(
+            'The selected template set is applied to the profile editor and exported report bundle.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _riskReviewCard(BuildContext context) {
+    return _markdownPreviewCard(
+      context,
+      title: 'Risk Review',
+      subtitle:
+          'Security, secret masking, suspicious script review, and licence follow-up notes.',
+      controller: _riskPreviewController,
+      openPath: _riskReportPath,
+    );
+  }
+
+  Widget _bulletSection(
+    BuildContext context,
+    String title,
+    List<String> items,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty)
+            Text(
+              'No items available.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            )
+          else
+            for (final item in items.take(8)) ...[
+              Text(
+                '- $item',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+              ),
+            ],
+        ],
+      ),
+    );
+  }
+
+  Widget _twoColumnBulletBlock(
+    BuildContext context, {
+    required String leftTitle,
+    required List<String> leftItems,
+    required String rightTitle,
+    required List<String> rightItems,
+  }) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final left = _bulletSection(context, leftTitle, leftItems);
+    final right = _bulletSection(context, rightTitle, rightItems);
+    if (!wide) {
+      return Column(children: [left, const SizedBox(height: 12), right]);
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 12),
+        Expanded(child: right),
+      ],
+    );
+  }
+
+  List<String> _stringList(dynamic value) {
+    if (value is List) {
+      return value.map((item) => item.toString()).toList(growable: false);
+    }
+    if (value == null) {
+      return const <String>[];
+    }
+    return <String>[value.toString()];
+  }
+
   Widget _promptsCard(BuildContext context) {
     final outputDirectory = _outputController.text.trim().isEmpty
         ? _defaultOutputDirectory
@@ -1935,15 +2758,78 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       final comparisonPreview = await _service.readFile(
         pathJoin(output, 'repo_comparison.md'),
       );
+      final artifacts = await _loadRunArtifacts(output);
+      final analysis = artifacts['analysis'] is Map
+          ? Map<String, dynamic>.from(artifacts['analysis'] as Map)
+          : <String, dynamic>{};
+      final comparison = artifacts['comparison'] is Map
+          ? Map<String, dynamic>.from(artifacts['comparison'] as Map)
+          : <String, dynamic>{};
+      final changeTracking = artifacts['change_tracking'] is Map
+          ? Map<String, dynamic>.from(artifacts['change_tracking'] as Map)
+          : <String, dynamic>{};
+      final releaseNotes = artifacts['release_notes'] is Map
+          ? Map<String, dynamic>.from(artifacts['release_notes'] as Map)
+          : <String, dynamic>{};
+      final bundleDelta = artifacts['bundle_delta'] is Map
+          ? Map<String, dynamic>.from(artifacts['bundle_delta'] as Map)
+          : <String, dynamic>{};
+      final reportIndex = artifacts['report_index'] is Map
+          ? Map<String, dynamic>.from(artifacts['report_index'] as Map)
+          : <String, dynamic>{};
+      final knowledge = analysis['knowledge'] is Map
+          ? Map<String, dynamic>.from(analysis['knowledge'] as Map)
+          : <String, dynamic>{};
 
       setState(() {
         _outputFiles = files;
         _reportPreviewController.text = preview;
         _securityPreviewController.text = securityPreview;
         _comparisonPreviewController.text = comparisonPreview;
+        _knowledgePreviewController.text =
+            artifacts['knowledge_report.md']?.toString() ?? '';
+        _releaseNotesPreviewController.text =
+            artifacts['release_notes.md']?.toString() ?? '';
+        _bundleDeltaPreviewController.text =
+            artifacts['bundle_delta_summary.md']?.toString() ?? '';
+        _reportIndexPreviewController.text =
+            artifacts['report_search_index.md']?.toString() ?? '';
+        _changeTrackingPreviewController.text =
+            artifacts['change_tracking.md']?.toString() ?? '';
+        _dependencyGraphPreviewController.text =
+            artifacts['dependency_graph.md']?.toString() ?? '';
+        _architectureGraphPreviewController.text =
+            artifacts['architecture_graph.md']?.toString() ?? '';
+        _documentIndexPreviewController.text =
+            knowledge['document_highlights'] is List
+            ? (knowledge['document_highlights'] as List)
+                  .map((item) => item.toString())
+                  .join('\n')
+            : '';
+        _riskPreviewController.text =
+            artifacts['risk_report.md']?.toString() ?? '';
+        _licenseReviewPreviewController.text =
+            artifacts['license_review.md']?.toString() ?? '';
+        _vaultNotePreviewController.text =
+            artifacts['vault_note.md']?.toString() ?? '';
+        _latestAnalysis = analysis;
+        _latestComparison = comparison;
+        _latestChangeTracking = changeTracking;
+        _latestReleaseNotes = releaseNotes;
+        _latestBundleDelta = bundleDelta;
+        _latestReportIndex = reportIndex;
         _mainReportPath = previewPath;
         _securityReportPath = pathJoin(output, 'security_report.md');
         _comparisonReportPath = pathJoin(output, 'repo_comparison.md');
+        _knowledgeReportPath = pathJoin(output, 'knowledge_report.md');
+        _releaseNotesPath = pathJoin(output, 'release_notes.md');
+        _bundleDeltaPath = pathJoin(output, 'bundle_delta_summary.md');
+        _reportIndexPath = pathJoin(output, 'report_search_index.md');
+        _changeTrackingPath = pathJoin(output, 'change_tracking.md');
+        _dependencyGraphPath = pathJoin(output, 'dependency_graph.md');
+        _architectureGraphPath = pathJoin(output, 'architecture_graph.md');
+        _documentIndexPath = pathJoin(output, 'repo_research_report.md');
+        _riskReportPath = pathJoin(output, 'risk_report.md');
         _logController.text = _renderLog(result);
         _lastRunLabel = result.succeeded
             ? 'Completed with exit code ${result.exitCode}'
@@ -1970,6 +2856,88 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           _isRunning = false;
         });
       }
+    }
+  }
+
+  Future<Map<String, dynamic>> _loadRunArtifacts(String outputDirectory) async {
+    final analysis = await _readJsonMap(
+      pathJoin(outputDirectory, 'analysis.json'),
+    );
+    final comparison = await _readJsonMap(
+      pathJoin(outputDirectory, 'repo_comparison.json'),
+    );
+    final changeTracking = await _readJsonMap(
+      pathJoin(outputDirectory, 'change_tracking.json'),
+    );
+    final releaseNotes = await _readJsonMap(
+      pathJoin(outputDirectory, 'release_notes.json'),
+    );
+    final bundleDelta = await _readJsonMap(
+      pathJoin(outputDirectory, 'bundle_delta_summary.json'),
+    );
+    final reportIndex = await _readJsonMap(
+      pathJoin(outputDirectory, 'report_search_index.json'),
+    );
+
+    return {
+      'analysis': analysis,
+      'comparison': comparison,
+      'change_tracking': changeTracking,
+      'release_notes': releaseNotes,
+      'bundle_delta': bundleDelta,
+      'report_index': reportIndex,
+      'knowledge_report.md': await _service.readFile(
+        pathJoin(outputDirectory, 'knowledge_report.md'),
+      ),
+      'implementation_opportunities.md': await _service.readFile(
+        pathJoin(outputDirectory, 'implementation_opportunities.md'),
+      ),
+      'learning_notes.md': await _service.readFile(
+        pathJoin(outputDirectory, 'learning_notes.md'),
+      ),
+      'release_notes.md': await _service.readFile(
+        pathJoin(outputDirectory, 'release_notes.md'),
+      ),
+      'bundle_delta_summary.md': await _service.readFile(
+        pathJoin(outputDirectory, 'bundle_delta_summary.md'),
+      ),
+      'report_search_index.md': await _service.readFile(
+        pathJoin(outputDirectory, 'report_search_index.md'),
+      ),
+      'change_tracking.md': await _service.readFile(
+        pathJoin(outputDirectory, 'change_tracking.md'),
+      ),
+      'dependency_graph.md': await _service.readFile(
+        pathJoin(outputDirectory, 'dependency_graph.md'),
+      ),
+      'architecture_graph.md': await _service.readFile(
+        pathJoin(outputDirectory, 'architecture_graph.md'),
+      ),
+      'risk_report.md': await _service.readFile(
+        pathJoin(outputDirectory, 'risk_report.md'),
+      ),
+      'license_review.md': await _service.readFile(
+        pathJoin(outputDirectory, 'license_review.md'),
+      ),
+      'vault_note.md': await _service.readFile(
+        pathJoin(outputDirectory, 'vault_note.md'),
+      ),
+      'report_template_selection.md': await _service.readFile(
+        pathJoin(outputDirectory, 'report_template_selection.md'),
+      ),
+    };
+  }
+
+  Future<Map<String, dynamic>> _readJsonMap(String filePath) async {
+    final text = await _service.readFile(filePath);
+    if (text.trim().isEmpty) {
+      return {};
+    }
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is Map<String, dynamic> ? decoded : {};
+    } catch (_) {
+      return {};
     }
   }
 
@@ -2026,7 +2994,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         .toList(growable: false);
   }
 
-  void _loadRecentRunIntoForm(RepoResearchRunRecord run) {
+  Future<void> _loadRecentRunIntoForm(RepoResearchRunRecord run) async {
     _repoPathController.text = run.repoPath;
     _profileController.text = run.profile;
     _outputController.text = run.outputDirectory;
@@ -2060,13 +3028,109 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           run.outputDirectory,
           'repo_comparison.md',
         );
+        _knowledgeReportPath = pathJoin(
+          run.outputDirectory,
+          'knowledge_report.md',
+        );
+        _releaseNotesPath = pathJoin(run.outputDirectory, 'release_notes.md');
+        _bundleDeltaPath = pathJoin(
+          run.outputDirectory,
+          'bundle_delta_summary.md',
+        );
+        _reportIndexPath = pathJoin(
+          run.outputDirectory,
+          'report_search_index.md',
+        );
+        _changeTrackingPath = pathJoin(
+          run.outputDirectory,
+          'change_tracking.md',
+        );
+        _dependencyGraphPath = pathJoin(
+          run.outputDirectory,
+          'dependency_graph.md',
+        );
+        _architectureGraphPath = pathJoin(
+          run.outputDirectory,
+          'architecture_graph.md',
+        );
+        _documentIndexPath = pathJoin(
+          run.outputDirectory,
+          'repo_research_report.md',
+        );
+        _riskReportPath = pathJoin(run.outputDirectory, 'risk_report.md');
       });
     }
+    final artifacts = await _loadRunArtifacts(run.outputDirectory);
+    if (!mounted) {
+      return;
+    }
+    final analysis = artifacts['analysis'] is Map
+        ? Map<String, dynamic>.from(artifacts['analysis'] as Map)
+        : <String, dynamic>{};
+    final comparison = artifacts['comparison'] is Map
+        ? Map<String, dynamic>.from(artifacts['comparison'] as Map)
+        : <String, dynamic>{};
+    final changeTracking = artifacts['change_tracking'] is Map
+        ? Map<String, dynamic>.from(artifacts['change_tracking'] as Map)
+        : <String, dynamic>{};
+    final releaseNotes = artifacts['release_notes'] is Map
+        ? Map<String, dynamic>.from(artifacts['release_notes'] as Map)
+        : <String, dynamic>{};
+    final bundleDelta = artifacts['bundle_delta'] is Map
+        ? Map<String, dynamic>.from(artifacts['bundle_delta'] as Map)
+        : <String, dynamic>{};
+    final reportIndex = artifacts['report_index'] is Map
+        ? Map<String, dynamic>.from(artifacts['report_index'] as Map)
+        : <String, dynamic>{};
+    final knowledge = analysis['knowledge'] is Map
+        ? Map<String, dynamic>.from(analysis['knowledge'] as Map)
+        : <String, dynamic>{};
+    setState(() {
+      _reportPreviewController.text =
+          analysis['project_summary']?.toString() ?? '';
+      _securityPreviewController.text =
+          artifacts['risk_report.md']?.toString() ?? '';
+      _comparisonPreviewController.text = comparison.isNotEmpty
+          ? _formatJsonPreview(comparison)
+          : '';
+      _knowledgePreviewController.text =
+          artifacts['knowledge_report.md']?.toString() ?? '';
+      _releaseNotesPreviewController.text =
+          artifacts['release_notes.md']?.toString() ?? '';
+      _bundleDeltaPreviewController.text =
+          artifacts['bundle_delta_summary.md']?.toString() ?? '';
+      _reportIndexPreviewController.text =
+          artifacts['report_search_index.md']?.toString() ?? '';
+      _changeTrackingPreviewController.text =
+          artifacts['change_tracking.md']?.toString() ?? '';
+      _dependencyGraphPreviewController.text =
+          artifacts['dependency_graph.md']?.toString() ?? '';
+      _architectureGraphPreviewController.text =
+          artifacts['architecture_graph.md']?.toString() ?? '';
+      _documentIndexPreviewController.text =
+          knowledge['document_highlights'] is List
+          ? (knowledge['document_highlights'] as List)
+                .map((item) => item.toString())
+                .join('\n')
+          : '';
+      _riskPreviewController.text =
+          artifacts['risk_report.md']?.toString() ?? '';
+      _licenseReviewPreviewController.text =
+          artifacts['license_review.md']?.toString() ?? '';
+      _vaultNotePreviewController.text =
+          artifacts['vault_note.md']?.toString() ?? '';
+      _latestAnalysis = analysis;
+      _latestComparison = comparison;
+      _latestChangeTracking = changeTracking;
+      _latestReleaseNotes = releaseNotes;
+      _latestBundleDelta = bundleDelta;
+      _latestReportIndex = reportIndex;
+    });
     _setMessage('Loaded the selected run into the form.');
   }
 
   Future<void> _rerunRecentRun(RepoResearchRunRecord run) async {
-    _loadRecentRunIntoForm(run);
+    await _loadRecentRunIntoForm(run);
     await _run(mode: _RunMode.bundle);
   }
 
@@ -2120,6 +3184,17 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       return const JsonEncoder.withIndent('  ').convert(decoded);
     } catch (_) {
       return text;
+    }
+  }
+
+  String _formatJsonPreview(Map<String, dynamic> data) {
+    if (data.isEmpty) {
+      return '';
+    }
+    try {
+      return const JsonEncoder.withIndent('  ').convert(data);
+    } catch (_) {
+      return data.toString();
     }
   }
 
