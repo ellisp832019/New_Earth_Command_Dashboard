@@ -38,6 +38,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   late final TextEditingController _logController = TextEditingController();
   late final TextEditingController _reportPreviewController =
       TextEditingController();
+  late final TextEditingController _securityPreviewController =
+      TextEditingController();
+  late final TextEditingController _comparisonPreviewController =
+      TextEditingController();
   late final TextEditingController _recentRunsSearchController =
       TextEditingController();
 
@@ -48,6 +52,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   bool _loadingRecentRuns = true;
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
+  String _mainReportPath = '';
+  String _securityReportPath = '';
+  String _comparisonReportPath = '';
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -71,6 +78,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _compareProfileController.dispose();
     _logController.dispose();
     _reportPreviewController.dispose();
+    _securityPreviewController.dispose();
+    _comparisonPreviewController.dispose();
     _recentRunsSearchController.dispose();
     super.dispose();
   }
@@ -129,6 +138,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             ],
             const SizedBox(height: 16),
             _reportPreviewCard(context),
+            const SizedBox(height: 16),
+            _bundlePreviewsCard(context),
             const SizedBox(height: 16),
             _recentRunsCard(context),
           ],
@@ -411,6 +422,58 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  Widget _bundlePreviewsCard(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 1100;
+    final previews = [
+      _PreviewPanel(
+        title: 'Main report',
+        controller: _reportPreviewController,
+        onOpen: _mainReportPath.isNotEmpty
+            ? () => _openReportFile(_mainReportPath)
+            : null,
+      ),
+      _PreviewPanel(
+        title: 'Security report',
+        controller: _securityPreviewController,
+        onOpen: _securityReportPath.isNotEmpty
+            ? () => _openReportFile(_securityReportPath)
+            : null,
+      ),
+      _PreviewPanel(
+        title: 'Comparison summary',
+        controller: _comparisonPreviewController,
+        onOpen: _comparisonReportPath.isNotEmpty
+            ? () => _openReportFile(_comparisonReportPath)
+            : null,
+      ),
+    ];
+
+    return _panel(
+      context,
+      title: 'Bundle Previews',
+      subtitle:
+          'Read the latest generated report set without leaving the dashboard.',
+      child: isWide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < previews.length; index++) ...[
+                  Expanded(child: previews[index]),
+                  if (index != previews.length - 1) const SizedBox(width: 12),
+                ],
+              ],
+            )
+          : Column(
+              children: [
+                for (var index = 0; index < previews.length; index++) ...[
+                  previews[index],
+                  if (index != previews.length - 1) const SizedBox(height: 12),
+                ],
+              ],
+            ),
+    );
+  }
+
   Widget _recentRunsCard(BuildContext context) {
     final visibleRuns = _filteredRecentRuns();
     return _panel(
@@ -619,10 +682,21 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       final files = await _service.listOutputFiles(output);
       final previewPath = pathJoin(output, 'repo_research_report.md');
       final preview = await _service.readFile(previewPath);
+      final securityPreview = await _service.readFile(
+        pathJoin(output, 'security_report.md'),
+      );
+      final comparisonPreview = await _service.readFile(
+        pathJoin(output, 'repo_comparison.md'),
+      );
 
       setState(() {
         _outputFiles = files;
         _reportPreviewController.text = preview;
+        _securityPreviewController.text = securityPreview;
+        _comparisonPreviewController.text = comparisonPreview;
+        _mainReportPath = previewPath;
+        _securityReportPath = pathJoin(output, 'security_report.md');
+        _comparisonReportPath = pathJoin(output, 'repo_comparison.md');
         _logController.text = _renderLog(result);
         _lastRunLabel = result.succeeded
             ? 'Completed with exit code ${result.exitCode}'
@@ -702,6 +776,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     if (mounted) {
       setState(() {
         _graphExport = run.graphExport;
+        _mainReportPath = pathJoin(
+          run.outputDirectory,
+          'repo_research_report.md',
+        );
+        _securityReportPath = pathJoin(
+          run.outputDirectory,
+          'security_report.md',
+        );
+        _comparisonReportPath = pathJoin(
+          run.outputDirectory,
+          'repo_comparison.md',
+        );
       });
     }
     _setMessage('Loaded the selected run into the form.');
@@ -737,6 +823,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openReportFile(String filePath) async {
+    try {
+      await _service.openPath(filePath);
+    } catch (error) {
+      _setMessage('Could not open report file: $error');
+    }
   }
 
   String pathJoin(String left, String right) {
@@ -939,6 +1033,72 @@ class _RecentRunTile extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewPanel extends StatelessWidget {
+  const _PreviewPanel({
+    required this.title,
+    required this.controller,
+    this.onOpen,
+  });
+
+  final String title;
+  final TextEditingController controller;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (onOpen != null)
+                TextButton.icon(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.open_in_new, size: 18),
+                  label: const Text('Open'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 220,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: controller,
+                readOnly: true,
+                maxLines: null,
+                decoration: const InputDecoration(border: InputBorder.none),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ),
           ),
         ],
       ),

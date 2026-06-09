@@ -1,0 +1,294 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as path;
+
+class RepoResearchEngineRunResult {
+  const RepoResearchEngineRunResult({
+    required this.exitCode,
+    required this.stdout,
+    required this.stderr,
+    required this.outputDirectory,
+    required this.command,
+  });
+
+  final int exitCode;
+  final String stdout;
+  final String stderr;
+  final String outputDirectory;
+  final List<String> command;
+
+  bool get succeeded => exitCode == 0;
+}
+
+class RepoResearchRunRecord {
+  const RepoResearchRunRecord({
+    required this.timestamp,
+    required this.repoPath,
+    required this.profile,
+    required this.outputDirectory,
+    required this.exitCode,
+    required this.command,
+    required this.graphExport,
+    required this.compareWith,
+    required this.baselineInventory,
+    required this.compareProfile,
+    required this.reportFiles,
+  });
+
+  factory RepoResearchRunRecord.fromJson(Map<String, dynamic> json) {
+    return RepoResearchRunRecord(
+      timestamp: json['timestamp']?.toString() ?? '',
+      repoPath: json['repo_path']?.toString() ?? '',
+      profile: json['profile']?.toString() ?? 'Generic',
+      outputDirectory: json['output_directory']?.toString() ?? '',
+      exitCode: int.tryParse(json['exit_code']?.toString() ?? '') ?? 0,
+      command: (json['command'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(growable: false),
+      graphExport: json['graph_export'] == true,
+      compareWith: json['compare_with']?.toString(),
+      baselineInventory: json['baseline_inventory']?.toString(),
+      compareProfile: json['compare_profile']?.toString(),
+      reportFiles: (json['report_files'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(growable: false),
+    );
+  }
+
+  final String timestamp;
+  final String repoPath;
+  final String profile;
+  final String outputDirectory;
+  final int exitCode;
+  final List<String> command;
+  final bool graphExport;
+  final String? compareWith;
+  final String? baselineInventory;
+  final String? compareProfile;
+  final List<String> reportFiles;
+
+  bool get succeeded => exitCode == 0;
+
+  DateTime? get parsedTimestamp => DateTime.tryParse(timestamp);
+
+  String get shortStatus => succeeded ? 'Success' : 'Needs review';
+}
+
+class RepoResearchEngineService {
+  RepoResearchEngineService({Directory? workingDirectory})
+    : _workingDirectory = workingDirectory ?? Directory.current;
+
+  final Directory _workingDirectory;
+
+  Directory moduleRootDirectory() {
+    var current = _workingDirectory;
+    while (true) {
+      final candidate = Directory(
+        path.join(current.path, 'modules', 'repo_research_engine'),
+      );
+      if (candidate.existsSync()) {
+        return candidate;
+      }
+
+      final parent = current.parent;
+      if (parent.path == current.path) {
+        break;
+      }
+      current = parent;
+    }
+
+    return Directory(
+      path.join(_workingDirectory.path, 'modules', 'repo_research_engine'),
+    );
+  }
+
+  Future<RepoResearchEngineRunResult> runResearch({
+    required String repoPath,
+    required String profile,
+    required String outDirectory,
+    String? omegaRoot,
+    String? compareWith,
+    String? baselineInventory,
+    String? compareProfile,
+    bool graphExport = false,
+  }) async {
+    final moduleRoot = moduleRootDirectory();
+    final script = path.join(moduleRoot.path, 'scripts', 'run_research.py');
+    final args = <String>[
+      script,
+      '--repo',
+      repoPath,
+      '--profile',
+      profile,
+      '--out',
+      outDirectory,
+    ];
+
+    if (omegaRoot != null && omegaRoot.trim().isNotEmpty) {
+      args.addAll(['--omega-root', omegaRoot.trim()]);
+    }
+    if (compareWith != null && compareWith.trim().isNotEmpty) {
+      args.addAll(['--compare-with', compareWith.trim()]);
+    }
+    if (baselineInventory != null && baselineInventory.trim().isNotEmpty) {
+      args.addAll(['--baseline-inventory', baselineInventory.trim()]);
+    }
+    if (compareProfile != null && compareProfile.trim().isNotEmpty) {
+      args.addAll(['--compare-profile', compareProfile.trim()]);
+    }
+    if (graphExport) {
+      args.add('--graph-export');
+    }
+
+    final command = _pythonCommand();
+    final process = await Process.start(
+      command,
+      args,
+      workingDirectory: moduleRoot.path,
+      runInShell: true,
+    );
+    final stdoutBuffer = StringBuffer();
+    final stderrBuffer = StringBuffer();
+
+    process.stdout.transform(utf8.decoder).listen(stdoutBuffer.write);
+    process.stderr.transform(utf8.decoder).listen(stderrBuffer.write);
+    final exitCode = await process.exitCode;
+
+    return RepoResearchEngineRunResult(
+      exitCode: exitCode,
+      stdout: stdoutBuffer.toString(),
+      stderr: stderrBuffer.toString(),
+      outputDirectory: outDirectory,
+      command: <String>[command, ...args],
+    );
+  }
+
+  Future<List<RepoResearchRunRecord>> loadRecentRuns({int limit = 8}) async {
+    final historyFile = _historyFile();
+    if (!await historyFile.exists()) {
+      return const <RepoResearchRunRecord>[];
+    }
+
+    try {
+      final decoded = jsonDecode(await historyFile.readAsString());
+      if (decoded is! List) {
+        return const <RepoResearchRunRecord>[];
+      }
+
+      final records = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(RepoResearchRunRecord.fromJson)
+          .toList();
+      records.sort(
+        (left, right) =>
+            (right.parsedTimestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
+                .compareTo(
+                  left.parsedTimestamp ??
+                      DateTime.fromMillisecondsSinceEpoch(0),
+                ),
+      );
+      return records.take(limit).toList(growable: false);
+    } catch (_) {
+      return const <RepoResearchRunRecord>[];
+    }
+  }
+
+  Future<void> appendRecentRun(RepoResearchRunRecord record) async {
+    final historyFile = _historyFile();
+    await historyFile.parent.create(recursive: true);
+
+    final existing = await loadRecentRuns(limit: 50);
+    final updated = <RepoResearchRunRecord>[
+      record,
+      ...existing,
+    ].take(20).toList(growable: false);
+
+    final encoded = jsonEncode(
+      updated
+          .map(
+            (entry) => {
+              'timestamp': entry.timestamp,
+              'repo_path': entry.repoPath,
+              'profile': entry.profile,
+              'output_directory': entry.outputDirectory,
+              'exit_code': entry.exitCode,
+              'command': entry.command,
+              'graph_export': entry.graphExport,
+              'compare_with': entry.compareWith,
+              'baseline_inventory': entry.baselineInventory,
+              'compare_profile': entry.compareProfile,
+              'report_files': entry.reportFiles,
+            },
+          )
+          .toList(growable: false),
+    );
+    await historyFile.writeAsString(encoded, flush: true);
+  }
+
+  Future<List<String>> listOutputFiles(String outputDirectory) async {
+    final directory = Directory(outputDirectory);
+    if (!await directory.exists()) {
+      return const <String>[];
+    }
+
+    final files = <String>[];
+    await for (final entity in directory.list(
+      recursive: false,
+      followLinks: false,
+    )) {
+      if (entity is! File) {
+        continue;
+      }
+      files.add(path.basename(entity.path));
+    }
+    files.sort();
+    return files;
+  }
+
+  Future<String> readFile(String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists()) {
+      return '';
+    }
+    return file.readAsString();
+  }
+
+  Future<void> openFolder(String folderPath) async {
+    final normalized = path.normalize(folderPath);
+    if (Platform.isWindows) {
+      await Process.start('explorer.exe', <String>[normalized]);
+      return;
+    }
+    if (Platform.isMacOS) {
+      await Process.start('open', <String>[normalized]);
+      return;
+    }
+    await Process.start('xdg-open', <String>[normalized]);
+  }
+
+  Future<void> openPath(String targetPath) async {
+    final normalized = path.normalize(targetPath);
+    if (Platform.isWindows) {
+      await Process.start('explorer.exe', <String>['/select,', normalized]);
+      return;
+    }
+    if (Platform.isMacOS) {
+      await Process.start('open', <String>[normalized]);
+      return;
+    }
+    await Process.start('xdg-open', <String>[normalized]);
+  }
+
+  String _pythonCommand() {
+    if (Platform.isWindows) {
+      return 'python';
+    }
+    return 'python3';
+  }
+
+  File _historyFile() {
+    final moduleRoot = moduleRootDirectory();
+    return File(path.join(moduleRoot.path, 'reports', 'run_history.json'));
+  }
+}
