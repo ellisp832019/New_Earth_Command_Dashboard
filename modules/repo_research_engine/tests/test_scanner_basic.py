@@ -208,9 +208,13 @@ def test_markdown_and_prompt_exports(tmp_path):
     assert (output_dir / "repo_research_report.md").exists()
     assert (output_dir / "security_report.md").exists()
     assert (output_dir / "license_review.md").exists()
+    assert (output_dir / "vault_note.md").exists()
     assert (output_dir / "report_template_selection.md").exists()
     assert len(list((output_dir / "generated_prompts").glob("*.md"))) == 8
     assert "Dependency Summary" in (output_dir / "repo_research_report.md").read_text(
+        encoding="utf-8",
+    )
+    assert "Repo Research Note" in (output_dir / "vault_note.md").read_text(
         encoding="utf-8",
     )
 
@@ -540,6 +544,7 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
         encoding="utf-8",
     )
     (report_dir / "license_review.md").write_text("licence review", encoding="utf-8")
+    (report_dir / "vault_note.md").write_text("vault note", encoding="utf-8")
     (report_dir / "bundle_delta_summary.md").write_text("bundle delta", encoding="utf-8")
     (report_dir / "bundle_delta_summary.json").write_text(
         json.dumps({"summary": "1 reports added"}),
@@ -555,6 +560,7 @@ def test_omega_export_adapter_creates_bundle(tmp_path):
     assert (destination / "release_notes.md").exists()
     assert (destination / "bundle_delta_summary.md").exists()
     assert (destination / "license_review.md").exists()
+    assert (destination / "vault_note.md").exists()
 
 
 def test_comparison_and_change_tracking(tmp_path):

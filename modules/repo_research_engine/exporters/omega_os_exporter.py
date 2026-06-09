@@ -45,6 +45,7 @@ class OmegaOsExportAdapter:
             "security_report.md",
             "risk_report.md",
             "license_review.md",
+            "vault_note.md",
             "knowledge_report.md",
             "implementation_opportunities.md",
             "learning_notes.md",

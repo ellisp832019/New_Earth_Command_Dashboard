@@ -29,6 +29,7 @@ class MarkdownExporter:
             "security_report.md": self._render_security_report(),
             "risk_report.md": self._render_risk_report(),
             "license_review.md": self._render_license_review_panel(),
+            "vault_note.md": self._render_vault_note(),
             "knowledge_report.md": self._render_knowledge_report(),
             "implementation_opportunities.md": self._render_implementation_opportunities(),
             "learning_notes.md": self._render_learning_notes(),
@@ -303,6 +304,91 @@ class MarkdownExporter:
             "- Prefer the detected licence name over any assumptions from file naming alone.",
         ]
         return "\n".join(lines).rstrip() + "\n"
+
+    def _render_vault_note(self) -> str:
+        template = self._load_vault_template()
+        replacements = {
+            "{{REPO_NAME}}": self.analysis.get("repo_name", "Unknown repository"),
+            "{{PROFILE_NAME}}": self.analysis.get("profile_name", "Unknown profile"),
+            "{{WHY_RESEARCHED}}": self._vault_why_researched(),
+            "{{USEFUL_IDEAS}}": self._vault_bullet_block(self.analysis.get("implementation_ideas", [])),
+            "{{FILES_WORTH_REVIEWING}}": self._vault_file_block(self.analysis.get("top_useful_files", [])),
+            "{{RISKS_LICENCE_NOTES}}": self._vault_risk_block(),
+            "{{WHAT_TO_ADAPT}}": self._vault_bullet_block(self.analysis.get("reusable_components", [])),
+            "{{WHAT_TO_IGNORE}}": self._vault_ignore_block(),
+            "{{NEXT_TASKS}}": self._vault_bullet_block(self.analysis.get("recommendations", [])),
+            "{{SOURCE_REPO}}": str(self.analysis.get("repo_path", "")),
+            "{{LOCAL_SCAN_REPORT}}": "repo_research_report.md",
+        }
+        rendered = template
+        for token, value in replacements.items():
+            rendered = rendered.replace(token, value)
+        return rendered.rstrip() + "\n"
+
+    def _load_vault_template(self) -> str:
+        template_name = (
+            self.analysis.get("report_templates", {}).get("vault_note")
+            or "repo_research_note_template.md"
+        )
+        template_path = (
+            Path(__file__).resolve().parents[1] / "vault_templates" / str(template_name)
+        )
+        if template_path.exists():
+            return template_path.read_text(encoding="utf-8")
+        return (
+            "# {{REPO_NAME}} - Repo Research Note\n\n"
+            "## Profile\n{{PROFILE_NAME}}\n\n"
+            "## Why this repo was researched\n{{WHY_RESEARCHED}}\n\n"
+            "## Useful ideas\n{{USEFUL_IDEAS}}\n\n"
+            "## Files worth reviewing\n{{FILES_WORTH_REVIEWING}}\n\n"
+            "## Risks / licence notes\n{{RISKS_LICENCE_NOTES}}\n\n"
+            "## What to adapt\n{{WHAT_TO_ADAPT}}\n\n"
+            "## What to ignore\n{{WHAT_TO_IGNORE}}\n\n"
+            "## Next tasks\n{{NEXT_TASKS}}\n\n"
+            "## Links\n- Source repo: {{SOURCE_REPO}}\n- Local scan report: {{LOCAL_SCAN_REPORT}}\n"
+        )
+
+    def _vault_why_researched(self) -> str:
+        project_summary = self.analysis.get("project_summary", "No summary available.")
+        architecture_summary = self.analysis.get("architecture_summary", "")
+        return "\n".join(
+            [
+                project_summary,
+                architecture_summary,
+            ]
+        ).strip()
+
+    def _vault_bullet_block(self, items: List[str]) -> str:
+        if not items:
+            return "- No items were highlighted."
+        return "\n".join(f"- {item}" for item in items[:8])
+
+    def _vault_file_block(self, useful_files: List[Dict[str, Any]]) -> str:
+        if not useful_files:
+            return "- No high-signal files were flagged."
+        lines = []
+        for item in useful_files[:8]:
+            lines.append(f"- `{item.get('path')}` - {item.get('category', 'other')}")
+        return "\n".join(lines)
+
+    def _vault_risk_block(self) -> str:
+        risks = self.analysis.get("knowledge", {}).get("risks", [])
+        licenses = self.analysis.get("licenses", [])
+        lines = []
+        if risks:
+            lines.extend(f"- {item}" for item in risks[:6])
+        if licenses:
+            lines.append("- Licence candidates were detected and should be reviewed before reuse.")
+        if not lines:
+            lines.append("- No major static risks were detected by the safe scan.")
+        return "\n".join(lines)
+
+    def _vault_ignore_block(self) -> str:
+        notes = [
+            "Ignore low-signal binaries unless they are directly relevant to the task.",
+            "Ignore generated output and build artifacts when reviewing the source architecture.",
+        ]
+        return "\n".join(f"- {note}" for note in notes)
 
     def _render_risk_report(self) -> str:
         lines = [
