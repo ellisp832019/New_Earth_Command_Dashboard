@@ -144,6 +144,14 @@ class MarkdownExporter:
             match = ", ".join(f.get("matches") or []) or "general relevance"
             lines.append(f"- `{f['path']}` - {f['category']} - {match}")
 
+        lines += ["", "## Document Index"]
+        document_highlights = a.get("knowledge", {}).get("document_highlights", [])
+        if document_highlights:
+            for item in document_highlights[:20]:
+                lines.append(f"- {item}")
+        else:
+            lines.append("- No document index highlights were generated.")
+
         lines += ["", "## Security Overview"]
         security = a.get("security", {})
         summary = security.get("summary", {})

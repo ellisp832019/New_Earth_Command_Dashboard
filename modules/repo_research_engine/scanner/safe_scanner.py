@@ -226,6 +226,7 @@ class SafeRepoScanner:
         category_counts: Counter[str] = Counter()
         language_counts: Counter[str] = Counter()
         docs: List[Dict[str, Any]] = []
+        document_index: List[Dict[str, Any]] = []
         manifest_files: List[Dict[str, Any]] = []
         license_candidates: List[Dict[str, Any]] = []
         known_licenses: set[str] = set()
@@ -259,14 +260,19 @@ class SafeRepoScanner:
             language_counts[language] += 1
 
             if category == "documentation":
+                doc_text = self._safe_read_text(p)
+                doc_summary = self._index_document(record, doc_text)
                 docs.append(
                     {
                         "path": record.path,
                         "language": language,
                         "size_bytes": size,
                         "flags": flags,
+                        "document_type": doc_summary.get("document_type", "documentation"),
+                        "title": doc_summary.get("title", ""),
                     }
                 )
+                document_index.append(doc_summary)
             if self._is_dependency_manifest(p):
                 manifest_files.append({"path": record.path, "suffix": record.suffix, "size_bytes": size})
             if self._looks_like_license_file(p):
@@ -302,6 +308,7 @@ class SafeRepoScanner:
             "language_counts": dict(sorted(language_counts.items())),
             "frameworks": frameworks,
             "documents": docs,
+            "document_index": document_index,
             "license_detection": license_candidates,
             "license_summary": {
                 "candidate_count": len(license_candidates),
@@ -361,6 +368,28 @@ class SafeRepoScanner:
         except OSError:
             return ""
 
+    def _index_document(self, record: FileRecord, text: str) -> Dict[str, Any]:
+        document_type = "markdown" if record.suffix.lower() == ".md" else "text"
+        headings = self._extract_markdown_headings(text) if document_type == "markdown" else []
+        links = self._extract_markdown_links(text) if document_type == "markdown" else []
+        tables = self._extract_markdown_tables(text) if document_type == "markdown" else []
+        reference_notes = self._extract_reference_notes(text) if document_type == "markdown" else []
+        title = self._document_title(text, record.path, headings)
+        return {
+            "path": record.path,
+            "document_type": document_type,
+            "title": title,
+            "heading_count": len(headings),
+            "headings": headings[:20],
+            "link_count": len(links),
+            "links": links[:20],
+            "table_count": len(tables),
+            "table_samples": tables[:10],
+            "reference_note_count": len(reference_notes),
+            "reference_notes": reference_notes[:12],
+            "word_count": len(re.findall(r"\b\S+\b", text)),
+        }
+
     def _detect_license_text(self, text: str) -> str:
         if not text.strip():
             return "Unknown"
@@ -368,6 +397,88 @@ class SafeRepoScanner:
             if pattern.search(text):
                 return name
         return "Unknown"
+
+    def _document_title(
+        self,
+        text: str,
+        fallback_path: str,
+        headings: Sequence[Dict[str, Any]],
+    ) -> str:
+        for heading in headings:
+            title = str(heading.get("text", "")).strip()
+            if title:
+                return title
+        for line in text.splitlines():
+            stripped = line.strip().lstrip("#").strip()
+            if stripped:
+                return stripped[:120]
+        return fallback_path
+
+    def _extract_markdown_headings(self, text: str) -> List[Dict[str, Any]]:
+        headings: List[Dict[str, Any]] = []
+        for line in text.splitlines():
+            stripped = line.lstrip()
+            if not stripped.startswith("#"):
+                continue
+            level = len(stripped) - len(stripped.lstrip("#"))
+            title = stripped[level:].strip()
+            if title:
+                headings.append({"level": level, "text": title})
+        return headings
+
+    def _extract_markdown_links(self, text: str) -> List[Dict[str, Any]]:
+        links: List[Dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+        for label, target in re.findall(r"\[([^\]]+)\]\(([^)]+)\)", text):
+            key = (label.strip(), target.strip())
+            if key in seen:
+                continue
+            seen.add(key)
+            links.append({"label": label.strip(), "target": target.strip(), "style": "inline"})
+        reference_targets = {
+            match.group(1).strip(): match.group(2).strip()
+            for match in re.finditer(r"^\[([^\]]+)\]:\s*(\S+)", text, flags=re.MULTILINE)
+        }
+        for label, ref in re.findall(r"\[([^\]]+)\]\[([^\]]+)\]", text):
+            target = reference_targets.get(ref.strip())
+            if not target:
+                continue
+            key = (label.strip(), target)
+            if key in seen:
+                continue
+            seen.add(key)
+            links.append({"label": label.strip(), "target": target, "style": "reference"})
+        return links
+
+    def _extract_markdown_tables(self, text: str) -> List[Dict[str, Any]]:
+        tables: List[Dict[str, Any]] = []
+        lines = text.splitlines()
+        index = 0
+        while index < len(lines) - 1:
+            current = lines[index].strip()
+            next_line = lines[index + 1].strip()
+            if "|" in current and re.fullmatch(r"[:\-\|\s]+", next_line):
+                rows = [current]
+                cursor = index + 2
+                while cursor < len(lines):
+                    candidate = lines[cursor].strip()
+                    if not candidate or "|" not in candidate:
+                        break
+                    rows.append(candidate)
+                    cursor += 1
+                tables.append({"row_count": len(rows), "sample": rows[:4]})
+                index = cursor
+                continue
+            index += 1
+        return tables
+
+    def _extract_reference_notes(self, text: str) -> List[str]:
+        notes: List[str] = []
+        for line in text.splitlines():
+            stripped = line.strip()
+            if re.match(r"^\[[^\]]+\]:\s*", stripped) or re.match(r"^\[\^[^\]]+\]:\s*", stripped):
+                notes.append(stripped)
+        return notes
 
     def _detect_dependencies(self, files: Sequence[FileRecord]) -> Dict[str, Any]:
         dependencies: Dict[str, Dict[str, Any]] = {}

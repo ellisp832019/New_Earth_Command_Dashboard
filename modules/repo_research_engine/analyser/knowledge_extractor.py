@@ -17,6 +17,7 @@ class KnowledgeExtractor:
         language_counts = self.scan.get("language_counts", {})
         frameworks = self.scan.get("frameworks", [])
         docs = self.scan.get("documents", [])
+        document_index = self.scan.get("document_index", [])
         dependencies = self.scan.get("dependency_summary", {})
         license_summary = self.scan.get("license_summary", {})
         useful_files = self._useful_files()
@@ -28,6 +29,7 @@ class KnowledgeExtractor:
         reusable_components = self._reusable_components(useful_files)
         risks = self._knowledge_risks()
         recommendations = self._recommendations()
+        document_highlights = self._document_highlights(document_index)
 
         return {
             "project_summary": project_summary,
@@ -40,6 +42,7 @@ class KnowledgeExtractor:
             "useful_files": useful_files,
             "profile_focus": self.profile.get("output_focus", []),
             "license_summary": license_summary,
+            "document_highlights": document_highlights,
         }
 
     def _useful_files(self) -> List[Dict[str, Any]]:
@@ -187,3 +190,22 @@ class KnowledgeExtractor:
             seen.add(text)
             unique.append(text)
         return unique
+
+    def _document_highlights(self, document_index: Sequence[Dict[str, Any]]) -> List[str]:
+        highlights: List[str] = []
+        for item in document_index[:12]:
+            title = str(item.get("title", "")).strip() or str(item.get("path", "")).strip()
+            heading_count = int(item.get("heading_count", 0))
+            link_count = int(item.get("link_count", 0))
+            table_count = int(item.get("table_count", 0))
+            parts = []
+            if heading_count:
+                parts.append(f"{heading_count} headings")
+            if link_count:
+                parts.append(f"{link_count} links")
+            if table_count:
+                parts.append(f"{table_count} tables")
+            if not parts:
+                parts.append("text index only")
+            highlights.append(f"{title} - {', '.join(parts)}")
+        return self._unique_nonempty(highlights)

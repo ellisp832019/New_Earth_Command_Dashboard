@@ -39,6 +39,23 @@ def test_scanner_finds_readme(tmp_path):
     result = SafeRepoScanner(str(tmp_path)).scan()
     assert result["file_count"] == 1
     assert result["files"][0]["category"] == "documentation"
+    assert result["document_index"][0]["heading_count"] == 1
+
+
+def test_document_index_extracts_headings_links_tables_and_notes(tmp_path):
+    (tmp_path / "README.md").write_text(
+        "# Title\n\n## Overview\nSee [Guide](guide.md).\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n[ref]: https://example.invalid\n[^1]: Footnote\n",
+        encoding="utf-8",
+    )
+
+    result = SafeRepoScanner(str(tmp_path)).scan()
+    document_index = result["document_index"][0]
+
+    assert document_index["title"] == "Title"
+    assert document_index["heading_count"] == 2
+    assert document_index["link_count"] == 1
+    assert document_index["table_count"] == 1
+    assert document_index["reference_note_count"] == 2
 
 
 def test_scanner_detects_language_framework_and_dependencies(tmp_path):
