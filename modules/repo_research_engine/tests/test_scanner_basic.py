@@ -124,6 +124,34 @@ def test_markdown_and_prompt_exports(tmp_path):
     assert len(list((output_dir / "generated_prompts").glob("*.md"))) == 8
 
 
+def test_license_detection_reports_summary_and_export(tmp_path):
+    (tmp_path / "LICENSE.md").write_text(
+        "MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy...",
+        encoding="utf-8",
+    )
+
+    scan = SafeRepoScanner(str(tmp_path)).scan()
+    profile = {
+        "profile_name": "Generic",
+        "project_type": "generic",
+        "priority_keywords": [],
+        "risk_keywords": [],
+        "output_focus": [],
+        "export_targets": [],
+        "export_locations": [],
+        "report_templates": {},
+    }
+    analysis = ProfileAnalyser(scan, profile).analyse()
+
+    assert analysis["license_summary"]["candidate_count"] == 1
+    assert analysis["licenses"][0]["candidate_type"] == "license"
+    assert analysis["licenses"][0]["review_status"] == "known"
+
+    report = MarkdownExporter(analysis).render()
+    assert "[license]" in report
+    assert "Known: MIT" in report
+
+
 def test_omega_export_adapter_creates_bundle(tmp_path):
     analysis = {
         "profile_name": "MicroGrow",
