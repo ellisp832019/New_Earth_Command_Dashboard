@@ -81,6 +81,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _comparisonReportPath = '';
   String _profileEditorStatus = 'Profile editor not loaded';
   String _profileComparisonStatus = 'Profile comparison not loaded';
+  String _selectedTemplateSet = 'Generic';
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -439,6 +440,31 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedTemplateSet,
+                  decoration: const InputDecoration(
+                    labelText: 'Report template set',
+                  ),
+                  items: _templateSets
+                      .map(
+                        (preset) => DropdownMenuItem<String>(
+                          value: preset.name,
+                          child: Text(preset.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _isRunning
+                      ? null
+                      : (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setState(() {
+                            _selectedTemplateSet = value;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -466,6 +492,13 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                           : () => _loadProfileEditorPath(_defaultProfilePath),
                       icon: const Icon(Icons.restart_alt),
                       label: const Text('Load Generic'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _isRunning
+                          ? null
+                          : () => _applyTemplateSet(_selectedTemplateSet),
+                      icon: const Icon(Icons.auto_awesome),
+                      label: const Text('Apply Template Set'),
                     ),
                   ],
                 ),
@@ -1335,6 +1368,28 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     }
   }
 
+  void _applyTemplateSet(String templateSetName) {
+    final preset = _templateSets.firstWhere(
+      (item) => item.name == templateSetName,
+      orElse: () => _templateSets.first,
+    );
+    try {
+      final decoded = jsonDecode(_profileEditorController.text);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Profile JSON must be an object');
+      }
+      decoded['report_templates'] = preset.templates;
+      final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
+      setState(() {
+        _profileEditorController.text = pretty;
+        _profileEditorStatus = 'Applied ${preset.name} template set.';
+      });
+      _setMessage('Applied ${preset.name} template set.');
+    } catch (error) {
+      _setMessage('Could not apply template set: $error');
+    }
+  }
+
   void _applyProfilePreset(_ProfilePreset preset) {
     final currentOutput = _outputController.text.trim();
     final defaultOutput = _defaultOutputDirectory;
@@ -1717,6 +1772,67 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     }
     return '$left${Platform.pathSeparator}$right';
   }
+}
+
+const List<_TemplateSetPreset> _templateSets = [
+  _TemplateSetPreset(
+    name: 'Generic',
+    templates: {
+      'main_report': 'repo_research_report.md',
+      'summary': 'repo_summary.md',
+      'security': 'security_report.md',
+      'risk': 'risk_report.md',
+      'knowledge': 'knowledge_report.md',
+      'implementation_opportunities': 'implementation_opportunities.md',
+      'learning_notes': 'learning_notes.md',
+    },
+  ),
+  _TemplateSetPreset(
+    name: 'New Earth Dashboard',
+    templates: {
+      'main_report': 'repo_research_report.md',
+      'summary': 'repo_summary.md',
+      'security': 'security_report.md',
+      'risk': 'risk_report.md',
+      'knowledge': 'knowledge_report.md',
+      'implementation_opportunities': 'implementation_opportunities.md',
+      'learning_notes': 'learning_notes.md',
+    },
+  ),
+  _TemplateSetPreset(
+    name: 'MicroGrow',
+    templates: {
+      'main_report': 'repo_research_report.md',
+      'summary': 'repo_summary.md',
+      'security': 'security_report.md',
+      'risk': 'risk_report.md',
+      'knowledge': 'knowledge_report.md',
+      'implementation_opportunities': 'implementation_opportunities.md',
+      'learning_notes': 'learning_notes.md',
+    },
+  ),
+  _TemplateSetPreset(
+    name: 'BioCalm',
+    templates: {
+      'main_report': 'repo_research_report.md',
+      'summary': 'repo_summary.md',
+      'security': 'security_report.md',
+      'risk': 'risk_report.md',
+      'knowledge': 'knowledge_report.md',
+      'implementation_opportunities': 'implementation_opportunities.md',
+      'learning_notes': 'learning_notes.md',
+    },
+  ),
+];
+
+class _TemplateSetPreset {
+  const _TemplateSetPreset({
+    required this.name,
+    required this.templates,
+  });
+
+  final String name;
+  final Map<String, String> templates;
 }
 
 class _ProfileReadResult {
