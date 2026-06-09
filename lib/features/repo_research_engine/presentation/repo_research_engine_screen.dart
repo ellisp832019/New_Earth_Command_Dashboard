@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,6 +36,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _compareProfileController =
       TextEditingController(text: 'Generic');
+  late final TextEditingController _profileEditorPathController =
+      TextEditingController();
+  late final TextEditingController _profileEditorController =
+      TextEditingController();
   late final TextEditingController _logController = TextEditingController();
   late final TextEditingController _reportPreviewController =
       TextEditingController();
@@ -56,16 +61,27 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   List<RepoResearchExportRecord> _exportHistory = const [];
   bool _loadingRecentRuns = true;
   bool _loadingExportHistory = true;
+  bool _loadingProfileEditor = true;
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
   String _mainReportPath = '';
   String _securityReportPath = '';
   String _comparisonReportPath = '';
+  String _profileEditorStatus = 'Profile editor not loaded';
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
     return '${moduleRoot.path}${Platform.pathSeparator}reports';
+  }
+
+  String get _defaultProfilesDirectory {
+    final moduleRoot = _service.moduleRootDirectory();
+    return '${moduleRoot.path}${Platform.pathSeparator}profiles';
+  }
+
+  String get _defaultProfilePath {
+    return pathJoin(_defaultProfilesDirectory, 'generic.profile.json');
   }
 
   @override
@@ -73,6 +89,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     super.initState();
     _loadRecentRuns();
     _loadExportHistory();
+    _loadProfileEditor();
   }
 
   @override
@@ -84,6 +101,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _compareWithController.dispose();
     _baselineController.dispose();
     _compareProfileController.dispose();
+    _profileEditorPathController.dispose();
+    _profileEditorController.dispose();
     _logController.dispose();
     _reportPreviewController.dispose();
     _securityPreviewController.dispose();
@@ -131,6 +150,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               const SizedBox(height: 16),
               _comparisonCard(context),
             ],
+            const SizedBox(height: 16),
+            _profileEditorCard(context),
             const SizedBox(height: 16),
             if (isWide)
               Row(
@@ -354,6 +375,82 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _profileEditorCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Profile Manager',
+      subtitle:
+          'Load, review, and save local profile JSON without leaving the dashboard.',
+      child: _loadingProfileEditor
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _field(
+                  controller: _profileEditorPathController,
+                  label: 'Profile JSON path',
+                  hint: _defaultProfilePath,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _profileEditorController,
+                  minLines: 10,
+                  maxLines: 18,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontFamily: 'monospace',
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Profile JSON',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _profileEditorStatus,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: _isRunning ? null : _loadProfileEditor,
+                      icon: const Icon(Icons.folder_open),
+                      label: const Text('Load Profile'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _isRunning ? null : _saveProfileEditor,
+                      icon: const Icon(Icons.save_outlined),
+                      label: const Text('Save Profile'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _isRunning
+                          ? null
+                          : () => _service.openFolder(_defaultProfilesDirectory),
+                      icon: const Icon(Icons.folder),
+                      label: const Text('Open Profiles Folder'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _isRunning
+                          ? null
+                          : () => _loadProfileEditorPath(_defaultProfilePath),
+                      icon: const Icon(Icons.restart_alt),
+                      label: const Text('Load Generic'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 
@@ -926,6 +1023,93 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     await _run(mode: _RunMode.graphs);
   }
 
+  Future<void> _loadProfileEditor() async {
+    await _loadProfileEditorPath(
+      _profileEditorPathController.text.trim().isEmpty
+          ? _defaultProfilePath
+          : _profileEditorPathController.text.trim(),
+    );
+  }
+
+  Future<void> _loadProfileEditorPath(String profilePath) async {
+    if (profilePath.isEmpty) {
+      _setMessage('Enter a profile JSON path first.');
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _loadingProfileEditor = true;
+      });
+    }
+
+    try {
+      final file = File(profilePath);
+      final exists = await file.exists();
+      final text = exists
+          ? await file.readAsString()
+          : jsonEncode(
+              {
+                'profile_name': 'Generic',
+                'project_type': 'generic local-first repository',
+                'priority_keywords': [],
+                'ignore_keywords': [],
+                'useful_file_patterns': [],
+                'risk_keywords': [],
+                'output_focus': [],
+                'export_targets': [],
+                'export_locations': [],
+                'report_templates': {},
+              },
+            );
+      final pretty = _prettyJson(text);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _profileEditorPathController.text = profilePath;
+        _profileEditorController.text = pretty;
+        _profileEditorStatus = exists
+            ? 'Loaded profile JSON from $profilePath.'
+            : 'Profile file not found, so a local template was loaded instead.';
+      });
+      _setMessage(exists ? 'Profile loaded.' : 'Loaded a starter profile template.');
+    } catch (error) {
+      _setMessage('Could not load profile JSON: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingProfileEditor = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveProfileEditor() async {
+    final profilePath = _profileEditorPathController.text.trim();
+    if (profilePath.isEmpty) {
+      _setMessage('Enter a profile JSON path first.');
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(_profileEditorController.text);
+      final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
+      final file = File(profilePath);
+      await file.parent.create(recursive: true);
+      await file.writeAsString(pretty, flush: true);
+      if (mounted) {
+        setState(() {
+          _profileEditorController.text = pretty;
+          _profileEditorStatus = 'Saved profile JSON to $profilePath.';
+        });
+      }
+      _setMessage('Profile saved.');
+    } catch (error) {
+      _setMessage('Could not save profile JSON: $error');
+    }
+  }
+
   void _applyProfilePreset(_ProfilePreset preset) {
     final currentOutput = _outputController.text.trim();
     final defaultOutput = _defaultOutputDirectory;
@@ -1176,6 +1360,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         '${local.day.toString().padLeft(2, '0')} '
         '${local.hour.toString().padLeft(2, '0')}:'
         '${local.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _prettyJson(String text) {
+    try {
+      final decoded = jsonDecode(text);
+      return const JsonEncoder.withIndent('  ').convert(decoded);
+    } catch (_) {
+      return text;
+    }
   }
 
   String pathJoin(String left, String right) {
