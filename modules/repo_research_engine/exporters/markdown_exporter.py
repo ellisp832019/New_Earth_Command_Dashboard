@@ -70,6 +70,30 @@ class MarkdownExporter:
         else:
             lines.append("- No strong framework signal detected.")
 
+        lines += ["", "## Dependency Summary"]
+        dependency_summary = a.get("dependency_summary", {})
+        manifests = dependency_summary.get("manifests", [])
+        if manifests:
+            lines.append(f"- Manifest files parsed: {len(manifests)}")
+            for manifest in manifests[:8]:
+                sample = ", ".join(manifest.get("dependencies", [])[:6]) or "No parsed dependencies"
+                lines.append(
+                    f"- `{manifest.get('path')}` ({manifest.get('kind', 'unknown')}): {sample}",
+                )
+        else:
+            lines.append("- No dependency manifests were parsed.")
+
+        framework_groups = dependency_summary.get("framework_groups", [])
+        if framework_groups:
+            lines.append("")
+            lines.append("### By Framework")
+            for group in framework_groups[:8]:
+                lines.append(
+                    f"- {group.get('framework', 'Unknown')}: "
+                    f"{group.get('dependency_count', 0)} dependencies across "
+                    f"{len(group.get('manifests', []))} manifest(s)",
+                )
+
         lines += ["", "## Licences"]
         license_summary = a.get("license_summary", {})
         if license_summary:

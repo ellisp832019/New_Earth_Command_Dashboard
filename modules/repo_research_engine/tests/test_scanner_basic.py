@@ -30,6 +30,7 @@ def test_scanner_detects_language_framework_and_dependencies(tmp_path):
     assert result["language_counts"]["Dart"] == 1
     assert any(item["name"] == "Flutter / Dart" for item in result["frameworks"])
     assert "riverpod" in result["dependency_summary"]["dependency_names"]
+    assert result["dependency_summary"]["framework_groups"][0]["framework"] == "Flutter / Dart"
 
 
 def test_profile_manager_loads_profile_by_name():
@@ -122,6 +123,9 @@ def test_markdown_and_prompt_exports(tmp_path):
     assert (output_dir / "repo_research_report.md").exists()
     assert (output_dir / "security_report.md").exists()
     assert len(list((output_dir / "generated_prompts").glob("*.md"))) == 8
+    assert "Dependency Summary" in (output_dir / "repo_research_report.md").read_text(
+        encoding="utf-8",
+    )
 
 
 def test_license_detection_reports_summary_and_export(tmp_path):

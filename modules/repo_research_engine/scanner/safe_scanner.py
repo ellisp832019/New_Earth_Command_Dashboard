@@ -383,11 +383,20 @@ class SafeRepoScanner:
                 for item in parsed.get("dependencies", []):
                     dependency_names.add(str(item))
 
+        manifest_entries = [
+            {
+                "path": path,
+                "kind": data.get("kind", "unknown"),
+                "dependencies": data.get("dependencies", [])[:12],
+                "dependency_count": len(data.get("dependencies", [])),
+            }
+            for path, data in sorted(dependencies.items())
+        ]
+        framework_groups = self._group_dependencies_by_framework(manifest_entries)
+
         return {
-            "manifests": [
-                {"path": path, "dependencies": data.get("dependencies", []), "kind": data.get("kind", "unknown")}
-                for path, data in sorted(dependencies.items())
-            ],
+            "manifests": manifest_entries,
+            "framework_groups": framework_groups,
             "dependency_count": len(dependency_names),
             "dependency_names": sorted(dependency_names),
         }
@@ -576,6 +585,51 @@ class SafeRepoScanner:
         if not cleaned:
             return ""
         return re.split(r"[<>=!~ \[]", cleaned, maxsplit=1)[0].strip()
+
+    def _group_dependencies_by_framework(
+        self,
+        manifests: Sequence[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for manifest in manifests:
+            framework = self._framework_name_for_manifest_kind(str(manifest.get("kind", "unknown")))
+            entry = grouped.setdefault(
+                framework,
+                {"framework": framework, "manifests": [], "dependencies": set()},
+            )
+            entry["manifests"].append(
+                {
+                    "path": manifest.get("path", ""),
+                    "kind": manifest.get("kind", "unknown"),
+                    "dependency_count": manifest.get("dependency_count", 0),
+                }
+            )
+            entry["dependencies"].update(manifest.get("dependencies", []))
+
+        ordered: List[Dict[str, Any]] = []
+        for framework, data in sorted(grouped.items()):
+            ordered.append(
+                {
+                    "framework": framework,
+                    "manifests": sorted(data["manifests"], key=lambda item: item["path"]),
+                    "dependencies": sorted(data["dependencies"]),
+                    "dependency_count": len(data["dependencies"]),
+                }
+            )
+        return ordered
+
+    def _framework_name_for_manifest_kind(self, kind: str) -> str:
+        mapping = {
+            "flutter": "Flutter / Dart",
+            "npm": "Node.js / Web UI",
+            "python": "Python",
+            "go": "Go",
+            "rust": "Rust",
+            "java": "Java",
+            "platformio": "PlatformIO / Arduino",
+            "manifest": "Generic manifest",
+        }
+        return mapping.get(kind.lower(), kind.title() if kind else "Unknown")
 
     def _detect_frameworks(self, files: Sequence[FileRecord], dependency_summary: Dict[str, Any]) -> List[Dict[str, Any]]:
         file_names = {Path(record.path).name.lower() for record in files}
