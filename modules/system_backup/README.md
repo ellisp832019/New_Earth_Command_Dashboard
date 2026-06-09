@@ -55,6 +55,7 @@ Later upgrade to a 2TB SSD.
 - Daily Backup
 - Weekly Snapshot
 - Monthly Archive
+- Quick Incremental
 - Refresh Status
 
 ## Build order
@@ -120,6 +121,7 @@ V3 = disaster recovery later
 The current module build adds the first Phase 2 automation layer:
 
 - daily backup
+- quick incremental backup
 - weekly snapshot
 - monthly archive
 - backup history file

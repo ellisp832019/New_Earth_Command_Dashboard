@@ -55,6 +55,7 @@ void main() {
                 weeklySnapshotDay: 'Sunday',
                 monthlyArchiveDay: 1,
                 staleAfterDays: 7,
+                quickKeep: 7,
                 dailyKeep: 7,
                 weeklyKeep: 4,
                 monthlyKeep: 12,
@@ -75,7 +76,7 @@ void main() {
               historyEntries: <BackupGuardianHistoryEntry>[],
               restorePoints: <BackupGuardianHistoryEntry>[],
               scheduleSummary: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
-              retentionSummary: 'Daily keep 7, weekly keep 4, monthly keep 12.',
+              retentionSummary: 'Quick keep 7, daily keep 7, weekly keep 4, monthly keep 12.',
               freshnessSummary: 'Backup ran today.',
               notificationBanner: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
               nextSuggestedRun: null,
@@ -100,6 +101,7 @@ void main() {
     expect(find.text('Backup Now'), findsOneWidget);
     expect(find.text('Verify Latest'), findsOneWidget);
     expect(find.text('Restore Dry Run'), findsOneWidget);
+    expect(find.text('Quick Incremental'), findsOneWidget);
     expect(find.text('Roadmap / Future work'), findsOneWidget);
     expect(find.text('V2 planned'), findsOneWidget);
     expect(find.text('V3 planned'), findsOneWidget);

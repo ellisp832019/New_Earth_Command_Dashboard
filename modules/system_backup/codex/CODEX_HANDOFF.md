@@ -38,6 +38,7 @@ modules/system_backup/runtime/latest_status.json
 - Backup Now
 - Verify Latest
 - Restore Dry Run
+- Quick Incremental
 - Open Backup Folder
 - View Latest Report
 
@@ -50,6 +51,7 @@ scripts/windows/dry_run.bat
 scripts/windows/backup_now.bat
 scripts/windows/verify_latest.bat
 scripts/windows/restore_dry_run.bat
+scripts/windows/quick_incremental.bat
 ```
 
 These Windows wrappers resolve the module root internally, so they are safe to launch directly without first changing directories.
@@ -78,6 +80,7 @@ These Windows wrappers resolve the module root internally, so they are safe to l
 
 The current build adds the first Phase 2 automation layer:
 
+- quick incremental backup
 - scheduled daily backup
 - weekly snapshot
 - monthly archive

@@ -69,6 +69,10 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                                 BackupGuardianAction.restoreDryRun,
                                 snapshot,
                               ),
+                          onQuickIncremental: () => _runAction(
+                            BackupGuardianAction.quickIncremental,
+                            snapshot,
+                          ),
                           onOpenBackupFolder: () => _openBackupFolder(snapshot),
                           onViewLatestReport: () =>
                               _viewLatestReport(snapshot),
@@ -196,6 +200,8 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
         'Verify Latest launching. Current saved result: ${snapshot.latestBackupStatus}.',
       BackupGuardianAction.restoreDryRun =>
         'Restore Dry Run launching into ${snapshot.config.restoreTestFolder}.',
+      BackupGuardianAction.quickIncremental =>
+        'Quick Incremental launching. It will copy only new and changed files into the mirror target.',
       BackupGuardianAction.dailyBackup =>
         'Daily Backup launching for the scheduled V2 run.',
       BackupGuardianAction.weeklySnapshot =>
@@ -218,6 +224,8 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
         'Verify Latest started. Saved status: ${snapshot.latestBackupStatus}. Last verification: ${_formatDate(snapshot.lastVerificationAt)}. The page will refresh shortly.',
       BackupGuardianAction.restoreDryRun =>
         'Restore Dry Run started. Test folder: ${snapshot.config.restoreTestFolder}. The page will refresh shortly.',
+      BackupGuardianAction.quickIncremental =>
+        'Quick Incremental started. Only new and changed files should copy. The page will refresh shortly.',
       BackupGuardianAction.dailyBackup =>
         'Daily Backup started. The timeline will refresh shortly.',
       BackupGuardianAction.weeklySnapshot =>
@@ -363,6 +371,7 @@ class _ActionCard extends StatelessWidget {
     required this.onBackupNow,
     required this.onVerifyLatest,
     required this.onRestoreDryRun,
+    required this.onQuickIncremental,
     required this.onOpenBackupFolder,
     required this.onViewLatestReport,
     required this.onRefreshStatus,
@@ -374,6 +383,7 @@ class _ActionCard extends StatelessWidget {
   final VoidCallback onBackupNow;
   final VoidCallback onVerifyLatest;
   final VoidCallback onRestoreDryRun;
+  final VoidCallback onQuickIncremental;
   final VoidCallback onOpenBackupFolder;
   final VoidCallback onViewLatestReport;
   final VoidCallback onRefreshStatus;
@@ -446,6 +456,11 @@ class _ActionCard extends StatelessWidget {
                 onPressed: isBusy ? null : onRestoreDryRun,
                 icon: const Icon(Icons.restore_outlined),
                 label: const Text('Restore Dry Run'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: isBusy ? null : onQuickIncremental,
+                icon: const Icon(Icons.bolt_outlined),
+                label: const Text('Quick Incremental'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenBackupFolder,

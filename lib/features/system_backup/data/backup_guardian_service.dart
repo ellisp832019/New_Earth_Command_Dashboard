@@ -8,6 +8,7 @@ enum BackupGuardianAction {
   backupNow,
   verifyLatest,
   restoreDryRun,
+  quickIncremental,
   dailyBackup,
   weeklySnapshot,
   monthlyArchive,
@@ -30,6 +31,7 @@ class BackupGuardianConfig {
     required this.weeklySnapshotDay,
     required this.monthlyArchiveDay,
     required this.staleAfterDays,
+    required this.quickKeep,
     required this.dailyKeep,
     required this.weeklyKeep,
     required this.monthlyKeep,
@@ -51,6 +53,7 @@ class BackupGuardianConfig {
   final String weeklySnapshotDay;
   final int monthlyArchiveDay;
   final int staleAfterDays;
+  final int quickKeep;
   final int dailyKeep;
   final int weeklyKeep;
   final int monthlyKeep;
@@ -139,6 +142,9 @@ class BackupGuardianConfig {
       staleAfterDays: schedule['stale_after_days'] is int
           ? schedule['stale_after_days'] as int
           : readInt('stale_after_days', 2),
+      quickKeep: retention['quick_keep'] is int
+          ? retention['quick_keep'] as int
+          : readInt('quick_keep', 7),
       dailyKeep: retention['daily_keep'] is int
           ? retention['daily_keep'] as int
           : readInt('daily_keep', 7),
@@ -245,7 +251,13 @@ class BackupGuardianService {
     final backupDriveExists = Directory(backupDriveRoot).existsSync();
     final latestBackupHistory = _latestHistoryEntry(
       history.entries,
-      const ['BackupNow', 'DailyBackup', 'WeeklySnapshot', 'MonthlyArchive'],
+      const [
+        'BackupNow',
+        'QuickIncremental',
+        'DailyBackup',
+        'WeeklySnapshot',
+        'MonthlyArchive',
+      ],
     );
     final latestVerificationHistory = _latestHistoryEntry(
       history.entries,
@@ -271,7 +283,9 @@ class BackupGuardianService {
 
     final lastBackupAt = status.lastBackupAt ??
         latestBackupHistory?.finishedAt ??
-        (status.mode == 'BackupNow' ? status.updatedAt : null);
+        (status.mode == 'BackupNow' || status.mode == 'QuickIncremental'
+            ? status.updatedAt
+            : null);
     final lastVerificationAt = status.lastVerificationAt ??
         latestVerificationHistory?.finishedAt ??
         (status.mode == 'VerifyLatest' ? status.updatedAt : null);
@@ -309,7 +323,7 @@ class BackupGuardianService {
         : 'Manual backups only for now.';
 
     final retentionSummary =
-        'Daily keep ${config.dailyKeep}, weekly keep ${config.weeklyKeep}, monthly keep ${config.monthlyKeep}.';
+        'Quick keep ${config.quickKeep}, daily keep ${config.dailyKeep}, weekly keep ${config.weeklyKeep}, monthly keep ${config.monthlyKeep}.';
 
     final notificationBanner = history.entries.isEmpty
         ? 'No backup history yet. Run a backup to start the timeline.'
@@ -367,6 +381,8 @@ class BackupGuardianService {
       BackupGuardianAction.verifyLatest => 'scripts/windows/verify_latest.bat',
       BackupGuardianAction.restoreDryRun =>
         'scripts/windows/restore_dry_run.bat',
+      BackupGuardianAction.quickIncremental =>
+        'scripts/windows/quick_incremental.bat',
       BackupGuardianAction.dailyBackup =>
         'scripts/windows/daily_backup.bat',
       BackupGuardianAction.weeklySnapshot =>
@@ -735,6 +751,7 @@ class BackupGuardianHistoryEntry {
     final lowerState = state.toLowerCase();
     return lowerState == 'green' ||
         mode == 'BackupNow' ||
+        mode == 'QuickIncremental' ||
         mode == 'DailyBackup' ||
         mode == 'WeeklySnapshot' ||
         mode == 'MonthlyArchive';

@@ -34,6 +34,7 @@ Systems
 - Daily Backup
 - Weekly Snapshot
 - Monthly Archive
+- Quick Incremental
 - Refresh Status
 
 ## Activity log

@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory=$true)]
-  [ValidateSet("DryRun","BackupNow","VerifyLatest","RestoreDryRun","DailyBackup","WeeklySnapshot","MonthlyArchive")]
+  [ValidateSet("DryRun","BackupNow","VerifyLatest","RestoreDryRun","QuickIncremental","DailyBackup","WeeklySnapshot","MonthlyArchive")]
   [string]$Mode
 )
 
@@ -157,6 +157,7 @@ function Prune-SnapshotFolders([string]$Kind, [int]$Keep) {
 
 function Get-BackupKind([string]$CurrentMode) {
   return switch ($CurrentMode) {
+    'QuickIncremental' { 'quick' }
     'DailyBackup' { 'daily' }
     'WeeklySnapshot' { 'weekly' }
     'MonthlyArchive' { 'monthly' }
@@ -170,6 +171,7 @@ function Get-ActionLabel([string]$CurrentMode) {
     'BackupNow' { 'Backup Now' }
     'VerifyLatest' { 'Verify Latest' }
     'RestoreDryRun' { 'Restore Dry Run' }
+    'QuickIncremental' { 'Quick Incremental' }
     'DailyBackup' { 'Scheduled Daily Backup' }
     'WeeklySnapshot' { 'Weekly Snapshot' }
     'MonthlyArchive' { 'Monthly Archive' }
@@ -184,12 +186,14 @@ function Get-RestorePointLabel([string]$CurrentMode, [datetime]$When) {
     'WeeklySnapshot' { "Weekly snapshot - $Stamp" }
     'MonthlyArchive' { "Monthly archive - $Stamp" }
     'BackupNow' { "Manual backup - $Stamp" }
+    'QuickIncremental' { "Quick incremental - $Stamp" }
     default { "$CurrentMode - $Stamp" }
   }
 }
 
 function Get-RetentionValue([string]$Kind, [int]$Fallback) {
   return switch ($Kind) {
+    'quick' { Get-IntValue (Get-ConfigValue $Config 'retention.quick_keep' $Fallback) $Fallback }
     'daily' { Get-IntValue (Get-ConfigValue $Config 'retention.daily_keep' $Fallback) $Fallback }
     'weekly' { Get-IntValue (Get-ConfigValue $Config 'retention.weekly_keep' $Fallback) $Fallback }
     'monthly' { Get-IntValue (Get-ConfigValue $Config 'retention.monthly_keep' $Fallback) $Fallback }
@@ -342,7 +346,12 @@ function Create-RestorePoint(
   return $RestorePointPath
 }
 
-function Invoke-BackupRun([string]$CurrentMode, [string]$SummaryWhenSuccess, [string]$SummaryWhenFailure) {
+function Invoke-BackupRun(
+  [string]$CurrentMode,
+  [string]$SummaryWhenSuccess,
+  [string]$SummaryWhenFailure,
+  [switch]$PreserveDeletedSourceFiles
+) {
   $RunStartedAt = Get-Date
   $Timer = [System.Diagnostics.Stopwatch]::StartNew()
   $ActionLabel = Get-ActionLabel -CurrentMode $CurrentMode
@@ -358,7 +367,8 @@ function Invoke-BackupRun([string]$CurrentMode, [string]$SummaryWhenSuccess, [st
   $TargetStatsBefore = Get-FolderStats -Path $Target
 
   if ($CurrentMode -eq 'DryRun') {
-    robocopy $Source $Target /MIR /L /R:2 /W:2 /XJ /FFT /Z @ExcludeArgs /TEE /LOG:$LogPath
+    $CopyModeArgs = if ($PreserveDeletedSourceFiles) { '/E' } else { '/MIR' }
+    robocopy $Source $Target $CopyModeArgs /L /R:2 /W:2 /XJ /FFT /Z @ExcludeArgs /TEE /LOG:$LogPath
     $RoboCode = $LASTEXITCODE
     $Timer.Stop()
     $TargetStatsAfter = Get-FolderStats -Path $Target
@@ -402,14 +412,23 @@ function Invoke-BackupRun([string]$CurrentMode, [string]$SummaryWhenSuccess, [st
     exit ($(if ($RoboCode -le 7) { 0 } else { $RoboCode }))
   }
 
-  robocopy $Source $Target /MIR /R:2 /W:2 /XJ /FFT /Z @ExcludeArgs /TEE /LOG:$LogPath
+  $CopyModeArgs = if ($PreserveDeletedSourceFiles) { '/E' } else { '/MIR' }
+  robocopy $Source $Target $CopyModeArgs /R:2 /W:2 /XJ /FFT /Z @ExcludeArgs /TEE /LOG:$LogPath
   $RoboCode = $LASTEXITCODE
   $Timer.Stop()
   $TargetStatsAfter = Get-FolderStats -Path $Target
   $BackupSizeBytes = $TargetStatsAfter.size_bytes
   $FilesScanned = $SourceStats.file_count
-  $FilesCopied = $TargetStatsAfter.file_count
-  $FilesSkipped = [Math]::Max(0, $FilesScanned - $FilesCopied)
+  $FilesCopied = if ($PreserveDeletedSourceFiles) {
+    [Math]::Max(0, $TargetStatsAfter.file_count - $TargetStatsBefore.file_count)
+  } else {
+    $TargetStatsAfter.file_count
+  }
+  $FilesSkipped = if ($PreserveDeletedSourceFiles) {
+    [Math]::Max(0, $TargetStatsBefore.file_count - $TargetStatsAfter.file_count)
+  } else {
+    [Math]::Max(0, $FilesScanned - $FilesCopied)
+  }
   $Summary = if ($RoboCode -le 7) { $SummaryWhenSuccess } else { $SummaryWhenFailure }
   $Warnings = @()
   $Errors = @()
@@ -429,7 +448,17 @@ function Invoke-BackupRun([string]$CurrentMode, [string]$SummaryWhenSuccess, [st
     $RestorePointPath = Create-RestorePoint -Kind $BackupKind -Action $CurrentMode -Summary $Summary -SourceStats $SourceStats -TargetStats $TargetStatsAfter -ReportPath $LogPath -ManifestPath $ManifestPath -RestoreTestStatus (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') -DurationMs $Timer.ElapsedMilliseconds
   }
 
-  $State = if ($RoboCode -le 7) { if ($CurrentMode -eq 'BackupNow') { 'amber' } elseif ($CurrentMode -eq 'DailyBackup' -or $CurrentMode -eq 'WeeklySnapshot' -or $CurrentMode -eq 'MonthlyArchive') { 'green' } else { 'grey' } } else { 'red' }
+  $State = if ($RoboCode -le 7) {
+    if ($CurrentMode -eq 'BackupNow') {
+      'amber'
+    } elseif ($CurrentMode -eq 'DailyBackup' -or $CurrentMode -eq 'WeeklySnapshot' -or $CurrentMode -eq 'MonthlyArchive' -or $CurrentMode -eq 'QuickIncremental') {
+      'green'
+    } else {
+      'grey'
+    }
+  } else {
+    'red'
+  }
 
   Write-Status -State $State -Summary $Summary -Warnings $Warnings -Errors $Errors -LastBackupAt ($(if ($CurrentMode -eq 'VerifyLatest') { $null } else { (Get-Date).ToString('o') })) -LastVerificationAt ($(if ($CurrentMode -eq 'VerifyLatest') { (Get-Date).ToString('o') } else { $null })) -RestoreTestStatus (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') -FilesScanned $FilesScanned -FilesCopied $FilesCopied -FilesSkipped $FilesSkipped -BackupSizeBytes $BackupSizeBytes -DurationMs $Timer.ElapsedMilliseconds -BackupKind $BackupKind -ManifestPath $ManifestPath -RestorePointPath $RestorePointPath
 
@@ -549,6 +578,9 @@ switch ($Mode) {
   }
   'BackupNow' {
     Invoke-BackupRun -CurrentMode $Mode -SummaryWhenSuccess 'Backup completed successfully. Verification still recommended.' -SummaryWhenFailure 'Backup failed.'
+  }
+  'QuickIncremental' {
+    Invoke-BackupRun -CurrentMode $Mode -PreserveDeletedSourceFiles -SummaryWhenSuccess 'Quick incremental backup completed successfully. Deleted source files were preserved in the target.' -SummaryWhenFailure 'Quick incremental backup failed.'
   }
   'DailyBackup' {
     Invoke-BackupRun -CurrentMode $Mode -SummaryWhenSuccess 'Scheduled daily backup completed successfully.' -SummaryWhenFailure 'Scheduled daily backup failed.'

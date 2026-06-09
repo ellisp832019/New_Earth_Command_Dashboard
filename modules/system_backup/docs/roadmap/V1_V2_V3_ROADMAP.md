@@ -37,6 +37,7 @@ V2 adds scheduled and smarter backup behaviour.
 
 V2 features:
 
+- Quick incremental backup
 - Scheduled daily backup
 - Weekly snapshot
 - Monthly archive
@@ -55,6 +56,7 @@ V2 features:
 
 Current build status:
 
+- Quick incremental backup is wired for new and changed files only.
 - Daily, weekly, and monthly actions are now wired.
 - Backup history is written to `modules/system_backup/runtime/backup_history.json`.
 - The dashboard now surfaces schedule, retention, freshness, and restore-point summaries.

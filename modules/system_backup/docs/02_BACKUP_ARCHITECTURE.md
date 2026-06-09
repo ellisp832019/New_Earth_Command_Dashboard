@@ -49,6 +49,7 @@ These wrappers resolve the module root internally, so they can be run directly w
 
 Dashboard-controlled scheduling:
 
+- Quick incremental backup
 - Daily backup
 - Weekly snapshot
 - Monthly archive
@@ -65,6 +66,7 @@ Phase 2 runtime data:
 
 Phase 2 restore-point folders:
 
+- `E:\NEW_EARTH_BACKUP\quick`
 - `E:\NEW_EARTH_BACKUP\daily`
 - `E:\NEW_EARTH_BACKUP\weekly`
 - `E:\NEW_EARTH_BACKUP\monthly`
