@@ -14,18 +14,18 @@
 
 ## Next Practical Steps
 
-1. Follow the round 2 workflow in `next_20_task_workflow_round2.md`.
-2. Expand richer document indexing and local search.
-3. Add report and export history browsing to the dashboard.
-4. Add release note generation and read-only external source adapters.
+1. Keep the round 2 workflow as the historical reference in `next_20_task_workflow_round2.md`.
+2. Follow `next_20_task_workflow_round3.md` for the post-polish feature sequence.
+3. Continue expanding the module with local-first review pages, comparison tools, and adapter coverage.
+4. Keep the dashboard route map aligned with the live Flutter integration.
 
 ## Medium-Term Expansion
 
-- GitHub API adapter
-- GitLab adapter
-- Bitbucket adapter
-- PDF and website research adapters
-- transcript research adapters
+- GitHub source adapter review pages
+- GitLab source adapter review pages
+- Bitbucket source adapter review pages
+- PDF and website research review pages
+- transcript and documentation review pages
 - local RAG search
 - local AI summarisation
 

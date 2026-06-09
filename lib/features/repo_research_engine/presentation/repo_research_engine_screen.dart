@@ -169,7 +169,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Repo Research Engine'),
+        title: _buildAppBarTitle(context),
         actions: [
           TextButton.icon(
             onPressed: _isRunning ? null : () => context.go(RouteNames.more),
@@ -182,60 +182,209 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         child: ListView(
           controller: _scrollController,
           padding: EdgeInsets.all(isWide ? 24 : 16),
-          children: [
-            _heroCard(context),
-            const SizedBox(height: 16),
-            if (isWide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _scannerCard(context)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _comparisonCard(context)),
-                ],
-              )
-            else ...[
-              _scannerCard(context),
-              const SizedBox(height: 16),
-              _comparisonCard(context),
-            ],
-            const SizedBox(height: 16),
-            _profileEditorCard(context),
-            const SizedBox(height: 16),
-            _profileComparisonCard(context),
-            const SizedBox(height: 16),
-            if (isWide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _outputsCard(context)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _logsCard(context)),
-                ],
-              )
-            else ...[
-              _outputsCard(context),
-              const SizedBox(height: 16),
-              _logsCard(context),
-            ],
-            const SizedBox(height: 16),
-            _reportPreviewCard(context),
-            const SizedBox(height: 16),
-            _bundlePreviewsCard(context),
-            const SizedBox(height: 16),
-            _promptsCard(context),
-            const SizedBox(height: 16),
-            _settingsCard(context),
-            const SizedBox(height: 16),
-            _reportHistoryCard(context),
-            const SizedBox(height: 16),
-            _exportHistoryCard(context),
-            const SizedBox(height: 16),
-            _recentRunsCard(context),
-          ],
+          children: _buildSectionContent(context, isWide),
         ),
       ),
     );
+  }
+
+  Widget _buildAppBarTitle(BuildContext context) {
+    final sectionLabel = switch (_activeSection) {
+      'scanner' => 'Repository Scanner',
+      'reports' => 'Research Reports',
+      'profiles' => 'Profile Manager',
+      'exports' => 'Knowledge Vault Exports',
+      'prompts' => 'Codex Prompt Generator',
+      'settings' => 'Settings',
+      _ => 'Home',
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Repo Research Engine'),
+        Text(
+          sectionLabel,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColours.darkMutedText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildSectionContent(BuildContext context, bool isWide) {
+    return switch (_activeSection) {
+      'scanner' => _buildScannerContent(context, isWide),
+      'reports' => _buildReportsContent(context, isWide),
+      'profiles' => _buildProfilesContent(context),
+      'exports' => _buildExportsContent(context, isWide),
+      'prompts' => _buildPromptsContent(context),
+      'settings' => _buildSettingsContent(context),
+      _ => _buildHomeContent(context, isWide),
+    };
+  }
+
+  List<Widget> _buildHomeContent(BuildContext context, bool isWide) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      if (isWide)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _scannerCard(context)),
+            const SizedBox(width: 16),
+            Expanded(child: _comparisonCard(context)),
+          ],
+        )
+      else ...[
+        _scannerCard(context),
+        const SizedBox(height: 16),
+        _comparisonCard(context),
+      ],
+      const SizedBox(height: 16),
+      _profileEditorCard(context),
+      const SizedBox(height: 16),
+      _profileComparisonCard(context),
+      const SizedBox(height: 16),
+      if (isWide)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _outputsCard(context)),
+            const SizedBox(width: 16),
+            Expanded(child: _logsCard(context)),
+          ],
+        )
+      else ...[
+        _outputsCard(context),
+        const SizedBox(height: 16),
+        _logsCard(context),
+      ],
+      const SizedBox(height: 16),
+      _reportPreviewCard(context),
+      const SizedBox(height: 16),
+      _bundlePreviewsCard(context),
+      const SizedBox(height: 16),
+      _promptsCard(context),
+      const SizedBox(height: 16),
+      _settingsCard(context),
+      const SizedBox(height: 16),
+      _reportHistoryCard(context),
+      const SizedBox(height: 16),
+      _exportHistoryCard(context),
+      const SizedBox(height: 16),
+      _recentRunsCard(context),
+    ];
+  }
+
+  List<Widget> _buildScannerContent(BuildContext context, bool isWide) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      if (isWide)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _scannerCard(context)),
+            const SizedBox(width: 16),
+            Expanded(child: _comparisonCard(context)),
+          ],
+        )
+      else ...[
+        _scannerCard(context),
+        const SizedBox(height: 16),
+        _comparisonCard(context),
+      ],
+      const SizedBox(height: 16),
+      if (isWide)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _outputsCard(context)),
+            const SizedBox(width: 16),
+            Expanded(child: _logsCard(context)),
+          ],
+        )
+      else ...[
+        _outputsCard(context),
+        const SizedBox(height: 16),
+        _logsCard(context),
+      ],
+      const SizedBox(height: 16),
+      _recentRunsCard(context),
+    ];
+  }
+
+  List<Widget> _buildReportsContent(BuildContext context, bool isWide) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      _reportPreviewCard(context),
+      const SizedBox(height: 16),
+      _bundlePreviewsCard(context),
+      const SizedBox(height: 16),
+      _reportHistoryCard(context),
+      const SizedBox(height: 16),
+      _recentRunsCard(context),
+    ];
+  }
+
+  List<Widget> _buildProfilesContent(BuildContext context) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      _profileEditorCard(context),
+      const SizedBox(height: 16),
+      _profileComparisonCard(context),
+    ];
+  }
+
+  List<Widget> _buildExportsContent(BuildContext context, bool isWide) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      if (isWide)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _outputsCard(context)),
+            const SizedBox(width: 16),
+            Expanded(child: _logsCard(context)),
+          ],
+        )
+      else ...[
+        _outputsCard(context),
+        const SizedBox(height: 16),
+        _logsCard(context),
+      ],
+      const SizedBox(height: 16),
+      _bundlePreviewsCard(context),
+      const SizedBox(height: 16),
+      _exportHistoryCard(context),
+    ];
+  }
+
+  List<Widget> _buildPromptsContent(BuildContext context) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      _promptsCard(context),
+      const SizedBox(height: 16),
+      _reportPreviewCard(context),
+      const SizedBox(height: 16),
+      _exportHistoryCard(context),
+    ];
+  }
+
+  List<Widget> _buildSettingsContent(BuildContext context) {
+    return [
+      _heroCard(context),
+      const SizedBox(height: 16),
+      _settingsCard(context),
+    ];
   }
 
   String _normalizeSection(String section) {
