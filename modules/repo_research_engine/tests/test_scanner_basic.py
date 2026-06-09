@@ -9,6 +9,12 @@ from exporters import MarkdownExporter, OmegaOsExportAdapter, PromptExporter
 from exporters.graph_exporter import GraphExporter
 from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
+from sources import (
+    GitHubSourceAdapter,
+    RemoteFileRef,
+    RemoteRepositoryRef,
+    RemoteRepositorySnapshot,
+)
 from scripts.run_research import (
     _append_change_history,
     _append_export_history,
@@ -253,6 +259,40 @@ def test_export_history_records_destination_and_files(tmp_path):
     assert decoded[0]["exported_files"] == ["export_manifest.json", "repo_research_report.md"]
     assert decoded[0]["prompt_files"] == ["bug_fix.md"]
     assert "Export History" in history_markdown_file.read_text(encoding="utf-8")
+
+
+def test_source_adapter_interfaces_are_read_only():
+    repository = RemoteRepositoryRef(
+        provider="GitHub",
+        owner="new-earth",
+        name="dashboard",
+        url="https://example.invalid/new-earth/dashboard",
+    )
+    snapshot = RemoteRepositorySnapshot(
+        repository=repository,
+        files=(RemoteFileRef(path="README.md", language="Markdown"),),
+        metadata={"branch": "main"},
+    )
+
+    class DummyGitHubAdapter(GitHubSourceAdapter):
+        def search_repositories(self, query: str, *, limit: int = 20):
+            return []
+
+        def fetch_repository_snapshot(self, repository: RemoteRepositoryRef):
+            return snapshot
+
+        def fetch_file_tree(self, repository: RemoteRepositoryRef, *, path: str = ""):
+            return list(snapshot.files)
+
+        def fetch_file_text(self, repository: RemoteRepositoryRef, path: str):
+            return ""
+
+    adapter = DummyGitHubAdapter()
+
+    assert adapter.provider_name == "GitHub"
+    assert snapshot.repository.name == "dashboard"
+    assert snapshot.source_type == "read-only"
+    assert adapter.fetch_repository_snapshot(repository) == snapshot
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):
