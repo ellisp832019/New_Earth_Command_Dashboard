@@ -629,3 +629,6 @@ def test_graph_exporter_creates_graph_files(tmp_path):
     assert "Node Groups" in (output_dir / "architecture_graph.md").read_text(
         encoding="utf-8",
     )
+    assert "Key Anchors" in (output_dir / "architecture_graph.md").read_text(
+        encoding="utf-8",
+    )

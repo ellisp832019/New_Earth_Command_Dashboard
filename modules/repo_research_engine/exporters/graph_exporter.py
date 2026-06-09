@@ -106,6 +106,7 @@ class GraphExporter:
                 "node_count": len(nodes),
                 "edge_count": len(edges),
                 "kind_counts": self._count_node_kinds(nodes),
+                "key_anchors": self._architecture_key_anchors(),
             },
         }
 
@@ -146,6 +147,31 @@ class GraphExporter:
             )
         return files
 
+    def _architecture_key_anchors(self) -> List[Dict[str, Any]]:
+        anchors: List[Dict[str, Any]] = []
+        for record in self._top_architecture_files()[:12]:
+            anchor_type = "file"
+            if record.get("category") == "documentation":
+                anchor_type = "documentation"
+            elif record.get("category") == "configuration":
+                anchor_type = "configuration"
+            elif record.get("category") == "hardware_design":
+                anchor_type = "hardware"
+            elif record.get("category") == "firmware_or_code":
+                anchor_type = "implementation"
+            elif record.get("category") == "script":
+                anchor_type = "script"
+            anchors.append(
+                {
+                    "path": record.get("path", ""),
+                    "anchor_type": anchor_type,
+                    "category": record.get("category", ""),
+                    "language": record.get("language", ""),
+                    "note": f"{record.get('category', 'file')} anchor",
+                }
+            )
+        return anchors
+
     def _render_graph_markdown(self, title: str, graph: Dict[str, Any]) -> str:
         lines = [
             f"# {title}",
@@ -159,6 +185,14 @@ class GraphExporter:
             lines += ["", "## Node Groups"]
             for kind, count in sorted(kind_counts.items()):
                 lines.append(f"- {kind}: {count}")
+
+            anchors = graph.get("summary", {}).get("key_anchors", [])
+            if anchors:
+                lines += ["", "## Key Anchors"]
+                for item in anchors[:12]:
+                    lines.append(
+                        f"- `{item.get('path')}` - {item.get('anchor_type')} - {item.get('note')}",
+                    )
 
             lines.append("")
             lines.append("## Nodes")
