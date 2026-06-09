@@ -44,6 +44,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _recentRunsSearchController =
       TextEditingController();
+  late final TextEditingController _reportHistorySearchController =
+      TextEditingController();
 
   bool _graphExport = true;
   bool _isRunning = false;
@@ -82,6 +84,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _securityPreviewController.dispose();
     _comparisonPreviewController.dispose();
     _recentRunsSearchController.dispose();
+    _reportHistorySearchController.dispose();
     super.dispose();
   }
 
@@ -141,6 +144,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             _reportPreviewCard(context),
             const SizedBox(height: 16),
             _bundlePreviewsCard(context),
+            const SizedBox(height: 16),
+            _reportHistoryCard(context),
             const SizedBox(height: 16),
             _recentRunsCard(context),
           ],
@@ -534,6 +539,91 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _reportHistoryCard(BuildContext context) {
+    final visibleRuns = _recentRuns
+        .where((run) {
+          final search = _reportHistorySearchController.text
+              .trim()
+              .toLowerCase();
+          if (search.isEmpty) {
+            return true;
+          }
+          return run.outputDirectory.toLowerCase().contains(search) ||
+              run.repoPath.toLowerCase().contains(search) ||
+              run.profile.toLowerCase().contains(search) ||
+              run.reportFiles.any(
+                (file) => file.toLowerCase().contains(search),
+              );
+        })
+        .toList(growable: false);
+    final displayRuns = visibleRuns.take(6).toList(growable: false);
+
+    return _panel(
+      context,
+      title: 'Report History',
+      subtitle:
+          'Browse recent report bundles, current output paths, and report indices.',
+      child: _loadingRecentRuns
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : _recentRuns.isEmpty
+          ? Text(
+              'No report bundles have been recorded yet.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            )
+          : Column(
+              children: [
+                TextField(
+                  controller: _reportHistorySearchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Search report history',
+                    hintText: 'Output path, repo, profile, or file name',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (visibleRuns.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'No report bundles match the current search.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                  )
+                else
+                  for (final run in displayRuns) ...[
+                    _ReportHistoryTile(
+                      run: run,
+                      onOpenBundle: run.outputDirectory.isEmpty
+                          ? null
+                          : () => _service.openFolder(run.outputDirectory),
+                      onOpenIndex:
+                          run.outputDirectory.isEmpty ||
+                              !run.reportFiles.contains(
+                                'report_search_index.md',
+                              )
+                          ? null
+                          : () => _service.openPath(
+                              pathJoin(
+                                run.outputDirectory,
+                                'report_search_index.md',
+                              ),
+                            ),
+                    ),
+                    if (run != displayRuns.last) const SizedBox(height: 10),
+                  ],
+              ],
+            ),
     );
   }
 
@@ -1226,6 +1316,108 @@ class _RecentRunTile extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportHistoryTile extends StatelessWidget {
+  const _ReportHistoryTile({
+    required this.run,
+    required this.onOpenBundle,
+    required this.onOpenIndex,
+  });
+
+  final RepoResearchRunRecord run;
+  final VoidCallback? onOpenBundle;
+  final VoidCallback? onOpenIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final timestamp = run.parsedTimestamp;
+    final timestampLabel = timestamp == null
+        ? run.timestamp
+        : '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+    final reportCount = run.reportFiles.length;
+    final reportIndexPresent = run.reportFiles.contains(
+      'report_search_index.md',
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  run.outputDirectory.isEmpty
+                      ? 'Unknown bundle'
+                      : run.outputDirectory,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 10),
+              _StatusChip(label: reportIndexPresent ? 'Indexed' : 'No index'),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Profile: ${run.profile} - $timestampLabel',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Files: $reportCount - Repo: ${run.repoPath}',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final file in run.reportFiles.take(6))
+                _StatusChip(label: file, muted: false),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenBundle,
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Open Bundle'),
+              ),
+              if (onOpenIndex != null)
+                FilledButton.tonalIcon(
+                  onPressed: onOpenIndex,
+                  icon: const Icon(Icons.search),
+                  label: const Text('Open Index'),
+                ),
+            ],
           ),
         ],
       ),
