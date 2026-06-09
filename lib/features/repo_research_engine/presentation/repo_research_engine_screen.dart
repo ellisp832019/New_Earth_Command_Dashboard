@@ -123,6 +123,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   Map<String, dynamic> _latestReleaseNotes = {};
   Map<String, dynamic> _latestBundleDelta = {};
   Map<String, dynamic> _latestReportIndex = {};
+  Map<String, dynamic> _latestDependencyGraph = {};
+  Map<String, dynamic> _latestArchitectureGraph = {};
 
   final GlobalKey _heroSectionKey = GlobalKey();
   final GlobalKey _scannerSectionKey = GlobalKey();
@@ -1851,6 +1853,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 
   Widget _graphReviewCard(BuildContext context) {
+    final dependencyGraph = _latestDependencyGraph;
+    final architectureGraph = _latestArchitectureGraph;
     final dependencySummary = _latestAnalysis['dependency_summary'] is Map
         ? Map<String, dynamic>.from(
             _latestAnalysis['dependency_summary'] as Map,
@@ -1877,6 +1881,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         children: [
           _twoColumnBulletBlock(
             context,
+            leftTitle: 'Dependency Graph Summary',
+            leftItems: _graphSummaryItems(dependencyGraph),
+            rightTitle: 'Architecture Graph Summary',
+            rightItems: _graphSummaryItems(architectureGraph),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
             leftTitle: 'Framework Groups',
             leftItems: frameworkGroups
                 .take(6)
@@ -1893,6 +1905,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                       '${item['runtime'] ?? 'Unknown'} - ${item['dependency_count'] ?? 0} dependencies',
                 )
                 .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            'Architecture Key Anchors',
+            _graphAnchorItems(architectureGraph),
           ),
           const SizedBox(height: 12),
           _markdownPreviewCard(
@@ -1979,6 +1997,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final licenseChanges = comparison['license_changes'] is Map
         ? Map<String, dynamic>.from(comparison['license_changes'] as Map)
         : <String, dynamic>{};
+    final addedFiles = _comparisonFileSnapshots('added');
+    final removedFiles = _comparisonFileSnapshots('removed');
+    final modifiedFiles = _comparisonModifiedSummaries();
 
     return _panel(
       context,
@@ -1995,6 +2016,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 : 'No comparison loaded',
           ),
           const SizedBox(height: 8),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'File Additions',
+            leftItems: addedFiles,
+            rightTitle: 'File Removals',
+            rightItems: removedFiles,
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'Shared / Modified',
+            value:
+                '${_comparisonCount(comparison['files_shared'])} shared files, '
+                '${_comparisonCount(comparison['files_modified'])} modified files',
+          ),
+          const SizedBox(height: 8),
+          _bulletSection(context, 'Modified Files', modifiedFiles),
+          const SizedBox(height: 12),
           _twoColumnBulletBlock(
             context,
             leftTitle: 'Dependencies Added',
@@ -2194,6 +2232,138 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       return const <String>[];
     }
     return <String>[value.toString()];
+  }
+
+  List<String> _comparisonFileSnapshots(String bucket) {
+    final details = _latestComparison['file_details'] is Map
+        ? Map<String, dynamic>.from(_latestComparison['file_details'] as Map)
+        : <String, dynamic>{};
+    final items = details[bucket] is List
+        ? List<Map<String, dynamic>>.from(
+            (details[bucket] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    if (items.isEmpty) {
+      return const ['No files recorded in this category.'];
+    }
+    return items
+        .take(8)
+        .map((item) {
+          final path = item['path']?.toString().isNotEmpty == true
+              ? item['path'].toString()
+              : 'Unknown file';
+          final category = item['category']?.toString().isNotEmpty == true
+              ? item['category'].toString()
+              : 'uncategorised';
+          final language = item['language']?.toString().isNotEmpty == true
+              ? item['language'].toString()
+              : 'unknown language';
+          return '$path - $category - $language';
+        })
+        .toList(growable: false);
+  }
+
+  List<String> _comparisonModifiedSummaries() {
+    final details = _latestComparison['file_details'] is Map
+        ? Map<String, dynamic>.from(_latestComparison['file_details'] as Map)
+        : <String, dynamic>{};
+    final items = details['modified'] is List
+        ? List<Map<String, dynamic>>.from(
+            (details['modified'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    if (items.isEmpty) {
+      return const ['No modified files were captured.'];
+    }
+    return items
+        .take(8)
+        .map((item) {
+          final path = item['path']?.toString().isNotEmpty == true
+              ? item['path'].toString()
+              : 'Unknown file';
+          final changes = item['changes'] is List
+              ? (item['changes'] as List)
+                    .map((entry) => entry.toString())
+                    .where((entry) => entry.trim().isNotEmpty)
+                    .join('; ')
+              : '';
+          if (changes.isEmpty) {
+            return path;
+          }
+          return '$path - $changes';
+        })
+        .toList(growable: false);
+  }
+
+  List<String> _graphSummaryItems(Map<String, dynamic> graph) {
+    if (graph.isEmpty) {
+      return const ['No graph bundle loaded yet.'];
+    }
+    final summary = graph['summary'] is Map
+        ? Map<String, dynamic>.from(graph['summary'] as Map)
+        : <String, dynamic>{};
+    final kindCounts = summary['kind_counts'] is Map
+        ? Map<String, dynamic>.from(summary['kind_counts'] as Map)
+        : <String, dynamic>{};
+    final lines = <String>[
+      'Nodes: ${summary['node_count'] ?? 0}',
+      'Edges: ${summary['edge_count'] ?? 0}',
+    ];
+    if (kindCounts.isNotEmpty) {
+      final topKinds = kindCounts.entries.toList()
+        ..sort(
+          (left, right) => (right.value as num).compareTo(left.value as num),
+        );
+      lines.add(
+        'Top groups: ${topKinds.take(3).map((entry) => '${entry.key} (${entry.value})').join(', ')}',
+      );
+    }
+    return lines;
+  }
+
+  List<String> _graphAnchorItems(Map<String, dynamic> graph) {
+    if (graph.isEmpty) {
+      return const ['Architecture anchors appear after a graph export runs.'];
+    }
+    final summary = graph['summary'] is Map
+        ? Map<String, dynamic>.from(graph['summary'] as Map)
+        : <String, dynamic>{};
+    final anchors = summary['key_anchors'] is List
+        ? List<Map<String, dynamic>>.from(
+            (summary['key_anchors'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    if (anchors.isEmpty) {
+      return const ['No anchor nodes were captured in the graph summary.'];
+    }
+    return anchors
+        .take(8)
+        .map((item) {
+          final path = item['path']?.toString().isNotEmpty == true
+              ? item['path'].toString()
+              : 'Unknown anchor';
+          final anchorType = item['anchor_type']?.toString().isNotEmpty == true
+              ? item['anchor_type'].toString()
+              : 'file';
+          final note = item['note']?.toString().isNotEmpty == true
+              ? item['note'].toString()
+              : 'anchor';
+          return '$path - $anchorType - $note';
+        })
+        .toList(growable: false);
+  }
+
+  int _comparisonCount(dynamic value) {
+    if (value is List) {
+      return value.length;
+    }
+    if (value is Map) {
+      return value.length;
+    }
+    if (value is int) {
+      return value;
+    }
+    return 0;
   }
 
   Widget _promptsCard(BuildContext context) {
@@ -2818,6 +2988,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         _latestReleaseNotes = releaseNotes;
         _latestBundleDelta = bundleDelta;
         _latestReportIndex = reportIndex;
+        _latestDependencyGraph = artifacts['dependency_graph.json'] is Map
+            ? Map<String, dynamic>.from(
+                artifacts['dependency_graph.json'] as Map,
+              )
+            : <String, dynamic>{};
+        _latestArchitectureGraph = artifacts['architecture_graph.json'] is Map
+            ? Map<String, dynamic>.from(
+                artifacts['architecture_graph.json'] as Map,
+              )
+            : <String, dynamic>{};
         _mainReportPath = previewPath;
         _securityReportPath = pathJoin(output, 'security_report.md');
         _comparisonReportPath = pathJoin(output, 'repo_comparison.md');
@@ -2912,6 +3092,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       ),
       'architecture_graph.md': await _service.readFile(
         pathJoin(outputDirectory, 'architecture_graph.md'),
+      ),
+      'dependency_graph.json': await _readJsonMap(
+        pathJoin(outputDirectory, 'dependency_graph.json'),
+      ),
+      'architecture_graph.json': await _readJsonMap(
+        pathJoin(outputDirectory, 'architecture_graph.json'),
       ),
       'risk_report.md': await _service.readFile(
         pathJoin(outputDirectory, 'risk_report.md'),
@@ -3125,6 +3311,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _latestReleaseNotes = releaseNotes;
       _latestBundleDelta = bundleDelta;
       _latestReportIndex = reportIndex;
+      _latestDependencyGraph = artifacts['dependency_graph.json'] is Map
+          ? Map<String, dynamic>.from(artifacts['dependency_graph.json'] as Map)
+          : <String, dynamic>{};
+      _latestArchitectureGraph = artifacts['architecture_graph.json'] is Map
+          ? Map<String, dynamic>.from(
+              artifacts['architecture_graph.json'] as Map,
+            )
+          : <String, dynamic>{};
     });
     _setMessage('Loaded the selected run into the form.');
   }
