@@ -105,6 +105,7 @@ def main() -> None:
         if baseline_path.exists():
             baseline_scan = json.loads(baseline_path.read_text(encoding="utf-8"))
             change_tracking = ChangeTracker(inventory, baseline_scan).track()
+            change_tracking["baseline_inventory_path"] = str(baseline_path)
             (output_dir / "change_tracking.json").write_text(
                 json.dumps(change_tracking, indent=2),
                 encoding="utf-8",
@@ -112,6 +113,13 @@ def main() -> None:
             (output_dir / "change_tracking.md").write_text(
                 _render_change_tracking_markdown(change_tracking),
                 encoding="utf-8",
+            )
+            _append_change_history(
+                history_file=MODULE_ROOT / "reports" / "change_history.json",
+                current_repo=args.repo,
+                baseline_inventory_path=str(baseline_path),
+                baseline_repo=str(baseline_scan.get("repo_name", "")),
+                change_tracking=change_tracking,
             )
 
     if args.omega_root:
@@ -284,6 +292,38 @@ def _append_run_history(
   }
   updated = [record, *existing][:20]
   history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
+
+
+def _append_change_history(
+    *,
+    history_file: Path,
+    current_repo: str,
+    baseline_inventory_path: str,
+    baseline_repo: str,
+    change_tracking: dict,
+) -> None:
+    history_file.parent.mkdir(parents=True, exist_ok=True)
+    existing = []
+    if history_file.exists():
+        try:
+            decoded = json.loads(history_file.read_text(encoding="utf-8"))
+            if isinstance(decoded, list):
+                existing = [item for item in decoded if isinstance(item, dict)]
+        except Exception:
+            existing = []
+
+    record = {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "current_repo": current_repo,
+        "baseline_inventory_path": baseline_inventory_path,
+        "baseline_repo": baseline_repo,
+        "summary": change_tracking.get("summary", ""),
+        "file_changes": change_tracking.get("file_changes", {}),
+        "new_risk_paths": change_tracking.get("new_risk_paths", []),
+        "resolved_risk_paths": change_tracking.get("resolved_risk_paths", []),
+    }
+    updated = [record, *existing][:20]
+    history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

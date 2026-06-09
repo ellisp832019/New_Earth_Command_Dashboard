@@ -9,7 +9,7 @@ from exporters import MarkdownExporter, OmegaOsExportAdapter, PromptExporter
 from exporters.graph_exporter import GraphExporter
 from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
-from scripts.run_research import _render_comparison_markdown
+from scripts.run_research import _append_change_history, _render_comparison_markdown
 
 
 def test_scanner_finds_readme(tmp_path):
@@ -186,6 +186,29 @@ def test_file_type_drilldowns_cover_core_categories(tmp_path):
 
     report = MarkdownExporter(analysis).render()
     assert "File-Type Drilldowns" in report
+
+
+def test_change_history_records_explicit_baseline_path(tmp_path):
+    history_file = tmp_path / "change_history.json"
+    change_tracking = {
+        "summary": "1 files added, 1 files removed, 1 files modified.",
+        "file_changes": {"added": ["a.py"], "removed": ["b.py"], "modified": ["c.py"]},
+        "new_risk_paths": ["a.py"],
+        "resolved_risk_paths": ["b.py"],
+    }
+
+    _append_change_history(
+        history_file=history_file,
+        current_repo="current-repo",
+        baseline_inventory_path="D:/baselines/previous_repo_inventory.json",
+        baseline_repo="baseline-repo",
+        change_tracking=change_tracking,
+    )
+
+    decoded = json.loads(history_file.read_text(encoding="utf-8"))
+    assert decoded[0]["baseline_inventory_path"].endswith("previous_repo_inventory.json")
+    assert decoded[0]["baseline_repo"] == "baseline-repo"
+    assert decoded[0]["file_changes"]["modified"] == ["c.py"]
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):
