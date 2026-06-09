@@ -40,6 +40,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _profileEditorController =
       TextEditingController();
+  late final TextEditingController _profileCompareLeftPathController =
+      TextEditingController();
+  late final TextEditingController _profileCompareRightPathController =
+      TextEditingController();
+  late final TextEditingController _profileCompareLeftController =
+      TextEditingController();
+  late final TextEditingController _profileCompareRightController =
+      TextEditingController();
+  late final TextEditingController _profileCompareSummaryController =
+      TextEditingController();
   late final TextEditingController _logController = TextEditingController();
   late final TextEditingController _reportPreviewController =
       TextEditingController();
@@ -62,6 +72,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   bool _loadingRecentRuns = true;
   bool _loadingExportHistory = true;
   bool _loadingProfileEditor = true;
+  bool _loadingProfileComparison = true;
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
@@ -69,6 +80,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _securityReportPath = '';
   String _comparisonReportPath = '';
   String _profileEditorStatus = 'Profile editor not loaded';
+  String _profileComparisonStatus = 'Profile comparison not loaded';
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -90,6 +102,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _loadRecentRuns();
     _loadExportHistory();
     _loadProfileEditor();
+    _loadProfileComparison();
   }
 
   @override
@@ -103,6 +116,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _compareProfileController.dispose();
     _profileEditorPathController.dispose();
     _profileEditorController.dispose();
+    _profileCompareLeftPathController.dispose();
+    _profileCompareRightPathController.dispose();
+    _profileCompareLeftController.dispose();
+    _profileCompareRightController.dispose();
+    _profileCompareSummaryController.dispose();
     _logController.dispose();
     _reportPreviewController.dispose();
     _securityPreviewController.dispose();
@@ -152,6 +170,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             ],
             const SizedBox(height: 16),
             _profileEditorCard(context),
+            const SizedBox(height: 16),
+            _profileComparisonCard(context),
             const SizedBox(height: 16),
             if (isWide)
               Row(
@@ -451,6 +471,160 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _profileComparisonCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Profile Comparison',
+      subtitle:
+          'Compare two local profile JSON files side by side and review the differences.',
+      child: _loadingProfileComparison
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _field(
+                  controller: _profileCompareLeftPathController,
+                  label: 'Left profile path',
+                  hint: _defaultProfilePath,
+                ),
+                const SizedBox(height: 12),
+                _field(
+                  controller: _profileCompareRightPathController,
+                  label: 'Right profile path',
+                  hint: pathJoin(_defaultProfilesDirectory, 'microgrow.profile.json'),
+                ),
+                const SizedBox(height: 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= 900;
+                    final leftPane = _comparisonPane(
+                      context,
+                      title: 'Left profile',
+                      controller: _profileCompareLeftController,
+                    );
+                    final rightPane = _comparisonPane(
+                      context,
+                      title: 'Right profile',
+                      controller: _profileCompareRightController,
+                    );
+                    if (!wide) {
+                      return Column(
+                        children: [
+                          leftPane,
+                          const SizedBox(height: 12),
+                          rightPane,
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: leftPane),
+                        const SizedBox(width: 12),
+                        Expanded(child: rightPane),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _profileComparisonStatus,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _profileCompareSummaryController,
+                  readOnly: true,
+                  minLines: 4,
+                  maxLines: 8,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontFamily: 'monospace',
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Comparison summary',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: _isRunning ? null : _loadProfileComparison,
+                      icon: const Icon(Icons.folder_open),
+                      label: const Text('Load Profiles'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _isRunning ? null : _compareProfiles,
+                      icon: const Icon(Icons.compare_arrows),
+                      label: const Text('Compare Profiles'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _isRunning
+                          ? null
+                          : () => _service.openFolder(_defaultProfilesDirectory),
+                      icon: const Icon(Icons.folder),
+                      label: const Text('Open Profiles Folder'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _comparisonPane(
+    BuildContext context, {
+    required String title,
+    required TextEditingController controller,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 260,
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: controller,
+                readOnly: true,
+                maxLines: null,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontFamily: 'monospace',
+                ),
+                decoration: const InputDecoration(border: InputBorder.none),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1031,6 +1205,57 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  Future<void> _loadProfileComparison() async {
+    final leftPath = _profileCompareLeftPathController.text.trim().isEmpty
+        ? _defaultProfilePath
+        : _profileCompareLeftPathController.text.trim();
+    final rightPath = _profileCompareRightPathController.text.trim().isEmpty
+        ? pathJoin(_defaultProfilesDirectory, 'microgrow.profile.json')
+        : _profileCompareRightPathController.text.trim();
+
+    if (mounted) {
+      setState(() {
+        _loadingProfileComparison = true;
+      });
+    }
+
+    try {
+      final leftResult = await _readProfileFile(leftPath);
+      final rightResult = await _readProfileFile(rightPath);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _profileCompareLeftPathController.text = leftPath;
+        _profileCompareRightPathController.text = rightPath;
+        _profileCompareLeftController.text = leftResult.prettyJson;
+        _profileCompareRightController.text = rightResult.prettyJson;
+        _profileCompareSummaryController.text = _renderProfileComparisonSummary(
+          leftPath: leftPath,
+          rightPath: rightPath,
+          leftJson: leftResult.decoded,
+          rightJson: rightResult.decoded,
+        );
+        _profileComparisonStatus = rightResult.exists && leftResult.exists
+            ? 'Compared $leftPath with $rightPath.'
+            : 'One or both profile files were missing, so a starter template was used.';
+      });
+      _setMessage('Profile comparison loaded.');
+    } catch (error) {
+      _setMessage('Could not compare profile JSON: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingProfileComparison = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _compareProfiles() async {
+    await _loadProfileComparison();
+  }
+
   Future<void> _loadProfileEditorPath(String profilePath) async {
     if (profilePath.isEmpty) {
       _setMessage('Enter a profile JSON path first.');
@@ -1371,12 +1596,139 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     }
   }
 
+  Future<_ProfileReadResult> _readProfileFile(String profilePath) async {
+    final file = File(profilePath);
+    final exists = await file.exists();
+    final text = exists
+        ? await file.readAsString()
+        : jsonEncode(
+            {
+              'profile_name': 'Generic',
+              'project_type': 'generic local-first repository',
+              'priority_keywords': [],
+              'ignore_keywords': [],
+              'useful_file_patterns': [],
+              'risk_keywords': [],
+              'output_focus': [],
+              'export_targets': [],
+              'export_locations': [],
+              'report_templates': {},
+            },
+          );
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(text);
+    } catch (_) {
+      decoded = {};
+    }
+    return _ProfileReadResult(
+      exists: exists,
+      prettyJson: _prettyJson(text),
+      decoded: decoded,
+    );
+  }
+
+  String _renderProfileComparisonSummary({
+    required String leftPath,
+    required String rightPath,
+    required dynamic leftJson,
+    required dynamic rightJson,
+  }) {
+    final differences = <String>[];
+    _collectProfileDifferences(
+      differences,
+      leftJson,
+      rightJson,
+    );
+    final summary = StringBuffer()
+      ..writeln('Left: $leftPath')
+      ..writeln('Right: $rightPath')
+      ..writeln('Differences found: ${differences.length}')
+      ..writeln('');
+    if (differences.isEmpty) {
+      summary.writeln('No structural differences were detected.');
+    } else {
+      for (final difference in differences.take(24)) {
+        summary.writeln('- $difference');
+      }
+    }
+    return summary.toString().trimRight();
+  }
+
+  void _collectProfileDifferences(
+    List<String> differences,
+    dynamic left,
+    dynamic right, [
+    String path = '',
+  ]) {
+    if (left is Map && right is Map) {
+      final leftKeys = left.keys.map((key) => key.toString()).toSet();
+      final rightKeys = right.keys.map((key) => key.toString()).toSet();
+      for (final key in leftKeys.difference(rightKeys)) {
+        differences.add('${_differencePath(path, key)} removed from left');
+      }
+      for (final key in rightKeys.difference(leftKeys)) {
+        differences.add('${_differencePath(path, key)} added on right');
+      }
+      for (final key in leftKeys.intersection(rightKeys)) {
+        _collectProfileDifferences(
+          differences,
+          left[key],
+          right[key],
+          _differencePath(path, key),
+        );
+      }
+      return;
+    }
+    if (left is List && right is List) {
+      if (left.length != right.length) {
+        differences.add(
+          '${path.isEmpty ? "root" : path}: list length ${left.length} vs ${right.length}',
+        );
+      }
+      final shortest = left.length < right.length ? left.length : right.length;
+      for (var index = 0; index < shortest; index++) {
+        _collectProfileDifferences(
+          differences,
+          left[index],
+          right[index],
+          '$path[$index]',
+        );
+      }
+      return;
+    }
+    if (left.toString() != right.toString()) {
+      differences.add(
+        '${path.isEmpty ? "root" : path}: ${left.toString()} vs ${right.toString()}',
+      );
+    }
+  }
+
+  String _differencePath(String prefix, String key) {
+    if (prefix.isEmpty) {
+      return key;
+    }
+    return '$prefix.$key';
+  }
+
   String pathJoin(String left, String right) {
     if (left.endsWith(Platform.pathSeparator)) {
       return '$left$right';
     }
     return '$left${Platform.pathSeparator}$right';
   }
+}
+
+class _ProfileReadResult {
+  const _ProfileReadResult({
+    required this.exists,
+    required this.prettyJson,
+    required this.decoded,
+  });
+
+  final bool exists;
+  final String prettyJson;
+  final dynamic decoded;
 }
 
 enum _RunMode { bundle, compare, graphs }
