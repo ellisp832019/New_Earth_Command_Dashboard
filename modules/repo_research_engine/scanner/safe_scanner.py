@@ -56,6 +56,8 @@ BINARY_EXTS = {
     ".zip",
 }
 
+IMAGE_EXTS = {".gif", ".ico", ".jpg", ".jpeg", ".png", ".svg", ".webp"}
+
 SCRIPT_EXTS = {".sh", ".ps1", ".bat", ".cmd", ".py"}
 DOC_EXTS = {".md", ".txt", ".rst", ".adoc", ".org"}
 CONFIG_EXTS = {".json", ".yaml", ".yml", ".toml", ".ini", ".env", ".cfg"}
@@ -227,6 +229,7 @@ class SafeRepoScanner:
         language_counts: Counter[str] = Counter()
         docs: List[Dict[str, Any]] = []
         document_index: List[Dict[str, Any]] = []
+        image_assets: List[Dict[str, Any]] = []
         manifest_files: List[Dict[str, Any]] = []
         license_candidates: List[Dict[str, Any]] = []
         known_licenses: set[str] = set()
@@ -273,6 +276,8 @@ class SafeRepoScanner:
                     }
                 )
                 document_index.append(doc_summary)
+            if self._looks_like_image_asset(p):
+                image_assets.append(self._index_image_asset(record))
             if self._is_dependency_manifest(p):
                 manifest_files.append({"path": record.path, "suffix": record.suffix, "size_bytes": size})
             if self._looks_like_license_file(p):
@@ -309,6 +314,7 @@ class SafeRepoScanner:
             "frameworks": frameworks,
             "documents": docs,
             "document_index": document_index,
+            "image_assets": image_assets,
             "license_detection": license_candidates,
             "license_summary": {
                 "candidate_count": len(license_candidates),
@@ -388,6 +394,44 @@ class SafeRepoScanner:
             "reference_note_count": len(reference_notes),
             "reference_notes": reference_notes[:12],
             "word_count": len(re.findall(r"\b\S+\b", text)),
+        }
+
+    def _looks_like_image_asset(self, path: Path) -> bool:
+        suffix = path.suffix.lower()
+        return suffix in IMAGE_EXTS
+
+    def _index_image_asset(self, record: FileRecord) -> Dict[str, Any]:
+        path = record.path.lower()
+        name = Path(record.path).name.lower()
+        asset_type = "image_asset"
+        if any(term in path for term in ("screenshot", "screen_capture", "screen-shot", "ui_preview", "preview")):
+            asset_type = "screenshot"
+        elif any(term in path for term in ("icon", "logo", "favicon", "badge")):
+            asset_type = "icon"
+        elif any(term in path for term in ("diagram", "flow", "graph", "architecture", "schema")):
+            asset_type = "diagram"
+        elif any(term in path for term in ("mockup", "wireframe", "design", "illustration", "asset")):
+            asset_type = "design_asset"
+
+        hints = []
+        if asset_type == "screenshot":
+            hints.append("review ui flow visually")
+        if asset_type == "icon":
+            hints.append("likely brand or navigation asset")
+        if asset_type == "diagram":
+            hints.append("review alongside architecture notes")
+        if asset_type == "design_asset":
+            hints.append("may be a presentation or product design asset")
+        if not hints:
+            hints.append("binary asset - inspect manually")
+
+        return {
+            "path": record.path,
+            "asset_type": asset_type,
+            "size_bytes": record.size_bytes,
+            "flags": record.flags,
+            "language": record.language,
+            "hints": hints,
         }
 
     def _detect_license_text(self, text: str) -> str:

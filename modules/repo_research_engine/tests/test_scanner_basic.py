@@ -58,6 +58,22 @@ def test_document_index_extracts_headings_links_tables_and_notes(tmp_path):
     assert document_index["reference_note_count"] == 2
 
 
+def test_image_asset_discovery_classifies_visual_assets(tmp_path):
+    (tmp_path / "screenshots").mkdir()
+    (tmp_path / "screenshots" / "dashboard-screenshot.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    (tmp_path / "icons").mkdir()
+    (tmp_path / "icons" / "app-icon.ico").write_bytes(b"ICON")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "architecture-diagram.svg").write_text("<svg></svg>", encoding="utf-8")
+
+    result = SafeRepoScanner(str(tmp_path)).scan()
+    asset_types = {item["asset_type"] for item in result["image_assets"]}
+
+    assert "screenshot" in asset_types
+    assert "icon" in asset_types
+    assert "diagram" in asset_types
+
+
 def test_scanner_detects_language_framework_and_dependencies(tmp_path):
     (tmp_path / "lib").mkdir()
     (tmp_path / "lib" / "main.dart").write_text("void main() {}", encoding="utf-8")

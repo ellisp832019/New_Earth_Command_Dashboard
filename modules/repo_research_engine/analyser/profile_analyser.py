@@ -28,6 +28,7 @@ class ProfileAnalyser:
         risk_flags = self._risk_flags(security)
         architecture = knowledge.get("architecture_summary", "")
         file_type_drilldowns = self._file_type_drilldowns()
+        image_assets = self.scan.get("image_assets", [])
 
         return {
             "profile_name": self.profile.get("profile_name"),
@@ -51,6 +52,7 @@ class ProfileAnalyser:
             "architecture_summary": architecture,
             "project_summary": knowledge.get("project_summary", ""),
             "file_type_drilldowns": file_type_drilldowns,
+            "image_assets": image_assets,
             "learning_notes": knowledge.get("learning_notes", []),
             "implementation_ideas": knowledge.get("implementation_ideas", []),
             "reusable_components": knowledge.get("reusable_components", []),

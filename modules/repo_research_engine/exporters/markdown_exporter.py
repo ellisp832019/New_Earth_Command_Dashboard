@@ -118,6 +118,21 @@ class MarkdownExporter:
         else:
             lines.append("- No drilldown categories were identified.")
 
+        lines += ["", "## Image Asset Discovery"]
+        image_assets = a.get("image_assets", [])
+        if image_assets:
+            asset_groups: Dict[str, List[Dict[str, Any]]] = {}
+            for item in image_assets:
+                asset_groups.setdefault(str(item.get("asset_type", "image_asset")), []).append(item)
+            for asset_type, items in sorted(asset_groups.items()):
+                lines.append(f"### {asset_type} ({len(items)})")
+                for item in items[:8]:
+                    hints = ", ".join(item.get("hints") or []) or "inspect manually"
+                    lines.append(f"- `{item.get('path')}` - {hints}")
+                lines.append("")
+        else:
+            lines.append("- No image assets were detected.")
+
         lines += ["", "## Licences"]
         license_summary = a.get("license_summary", {})
         if license_summary:
