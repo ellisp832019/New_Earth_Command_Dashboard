@@ -123,7 +123,22 @@ def main() -> None:
             )
 
     if args.omega_root:
-        OmegaOsExportAdapter(args.omega_root).export(analysis, output_dir, prompts_dir)
+        export_destination = OmegaOsExportAdapter(args.omega_root).export(
+            analysis,
+            output_dir,
+            prompts_dir,
+        )
+        export_manifest_path = export_destination / "export_manifest.json"
+        export_manifest = {}
+        if export_manifest_path.exists():
+            export_manifest = json.loads(export_manifest_path.read_text(encoding="utf-8"))
+        _append_export_history(
+            history_file=MODULE_ROOT / "reports" / "export_history.json",
+            history_markdown_file=MODULE_ROOT / "reports" / "export_history.md",
+            export_destination=export_destination,
+            export_manifest=export_manifest,
+            generated_prompts_dir=prompts_dir,
+        )
 
     _append_run_history(
         output_dir=output_dir,
@@ -324,6 +339,70 @@ def _append_change_history(
     }
     updated = [record, *existing][:20]
     history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
+
+
+def _append_export_history(
+    *,
+    history_file: Path,
+    history_markdown_file: Path,
+    export_destination: Path,
+    export_manifest: dict,
+    generated_prompts_dir: Path,
+) -> None:
+    history_file.parent.mkdir(parents=True, exist_ok=True)
+    existing = []
+    if history_file.exists():
+        try:
+            decoded = json.loads(history_file.read_text(encoding="utf-8"))
+            if isinstance(decoded, list):
+                existing = [item for item in decoded if isinstance(item, dict)]
+        except Exception:
+            existing = []
+
+    exported_files = sorted(
+        file.name
+        for file in export_destination.iterdir()
+        if file.is_file()
+    )
+    prompt_files = []
+    if generated_prompts_dir.exists():
+        prompt_files = sorted(prompt.name for prompt in generated_prompts_dir.glob("*.md"))
+
+    record = {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "exported_at": export_manifest.get("exported_at", ""),
+        "profile_name": export_manifest.get("profile_name", ""),
+        "profile_folder": export_manifest.get("profile_folder", ""),
+        "repo_name": export_manifest.get("repo_name", ""),
+        "repo_path": export_manifest.get("repo_path", ""),
+        "exported_to": str(export_destination),
+        "source_report_dir": export_manifest.get("source_report_dir", ""),
+        "exported_files": exported_files,
+        "prompt_files": prompt_files,
+    }
+    updated = [record, *existing][:20]
+    history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
+    history_markdown_file.write_text(_render_export_history_markdown(updated), encoding="utf-8")
+
+
+def _render_export_history_markdown(records: list[dict]) -> str:
+    lines = [
+        "# Export History",
+        "",
+        "## Recent Exports",
+    ]
+    if not records:
+        lines.append("- No exports recorded yet.")
+        return "\n".join(lines).rstrip() + "\n"
+
+    for record in records[:20]:
+        lines.append(f"- {record.get('timestamp', 'unknown')} - {record.get('profile_name', 'Unknown profile')}")
+        lines.append(f"  - Repo: `{record.get('repo_name', '')}`")
+        lines.append(f"  - Exported to: `{record.get('exported_to', '')}`")
+        lines.append(f"  - Files: {len(record.get('exported_files', []))}")
+        if record.get("prompt_files"):
+            lines.append(f"  - Prompts: {len(record.get('prompt_files', []))}")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 if __name__ == "__main__":

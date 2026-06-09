@@ -9,7 +9,11 @@ from exporters import MarkdownExporter, OmegaOsExportAdapter, PromptExporter
 from exporters.graph_exporter import GraphExporter
 from profiles import ProfileManager
 from scanner.safe_scanner import SafeRepoScanner
-from scripts.run_research import _append_change_history, _render_comparison_markdown
+from scripts.run_research import (
+    _append_change_history,
+    _append_export_history,
+    _render_comparison_markdown,
+)
 
 
 def test_scanner_finds_readme(tmp_path):
@@ -209,6 +213,44 @@ def test_change_history_records_explicit_baseline_path(tmp_path):
     assert decoded[0]["baseline_inventory_path"].endswith("previous_repo_inventory.json")
     assert decoded[0]["baseline_repo"] == "baseline-repo"
     assert decoded[0]["file_changes"]["modified"] == ["c.py"]
+
+
+def test_export_history_records_destination_and_files(tmp_path):
+    history_file = tmp_path / "export_history.json"
+    history_markdown_file = tmp_path / "export_history.md"
+    export_destination = tmp_path / "omega" / "MICROGROW" / "demo" / "20240101_010101"
+    export_destination.mkdir(parents=True, exist_ok=True)
+    (export_destination / "repo_research_report.md").write_text("report", encoding="utf-8")
+    (export_destination / "export_manifest.json").write_text(
+        json.dumps(
+            {
+                "exported_at": "2024-01-01T01:01:01",
+                "profile_name": "MicroGrow",
+                "profile_folder": "MICROGROW",
+                "repo_name": "demo",
+                "repo_path": "D:/demo",
+                "source_report_dir": "D:/reports",
+            }
+        ),
+        encoding="utf-8",
+    )
+    prompts_dir = tmp_path / "reports" / "generated_prompts"
+    prompts_dir.mkdir(parents=True, exist_ok=True)
+    (prompts_dir / "bug_fix.md").write_text("prompt", encoding="utf-8")
+
+    _append_export_history(
+        history_file=history_file,
+        history_markdown_file=history_markdown_file,
+        export_destination=export_destination,
+        export_manifest=json.loads((export_destination / "export_manifest.json").read_text(encoding="utf-8")),
+        generated_prompts_dir=prompts_dir,
+    )
+
+    decoded = json.loads(history_file.read_text(encoding="utf-8"))
+    assert decoded[0]["exported_to"].endswith("20240101_010101")
+    assert decoded[0]["exported_files"] == ["export_manifest.json", "repo_research_report.md"]
+    assert decoded[0]["prompt_files"] == ["bug_fix.md"]
+    assert "Export History" in history_markdown_file.read_text(encoding="utf-8")
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):
