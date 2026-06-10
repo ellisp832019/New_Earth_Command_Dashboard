@@ -45,6 +45,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Read-only GitHub source adapter
 - Read-only GitLab source adapter
 - Read-only Bitbucket source adapter
+- Read-only repository source adapter registry
 - Structured clone workspace importer
 - Local PDF, website, transcript, and docs ingestion adapters
 - Local deterministic AI provider and in-memory RAG index

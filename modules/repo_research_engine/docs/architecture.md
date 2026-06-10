@@ -103,6 +103,15 @@ It turns a local Git repository into:
 - Tracks file additions, removals, and simple change groups
 - Surfaces high-level recommendations for manual review
 
+### Repository Source Adapter Registry
+
+`sources/source_registry.py`
+
+- Describes the supported read-only repository providers
+- Creates the concrete GitHub, GitLab, and Bitbucket adapter classes
+- Keeps external repository integration explicit and snapshot-oriented
+- Avoids implying any live network integration beyond future adapter slices
+
 ### Graph Exporter
 
 `exporters/graph_exporter.py`
@@ -140,3 +149,4 @@ It must not:
 - Omega OS knowledge vault
 - Codex prompt handoff
 - Future comparison and graphing tools
+- Future live source integrations built on the read-only adapter registry

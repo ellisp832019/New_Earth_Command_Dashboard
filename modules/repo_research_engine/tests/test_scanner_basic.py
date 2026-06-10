@@ -15,6 +15,7 @@ from sources import (
     GitLabSourceAdapter,
     GitHubSourceAdapter,
     LocalPdfResearchSourceAdapter,
+    RepositorySourceAdapterRegistry,
     RemoteFileRef,
     RemoteRepositoryRef,
     RemoteRepositorySnapshot,
@@ -530,6 +531,27 @@ def test_source_adapter_interfaces_are_read_only():
     assert snapshot.repository.name == "dashboard"
     assert snapshot.source_type == "read-only"
     assert adapter.fetch_repository_snapshot(repository) == snapshot
+
+
+def test_source_adapter_registry_exposes_read_only_providers():
+    registry = RepositorySourceAdapterRegistry()
+    providers = registry.list_supported_providers()
+
+    assert [provider.name for provider in providers] == [
+        "Bitbucket",
+        "GitHub",
+        "GitLab",
+    ]
+    assert all(provider.read_only for provider in providers)
+    assert all(not provider.requires_network_opt_in for provider in providers)
+
+    github_adapter = registry.create_adapter("GitHub")
+    gitlab_adapter = registry.create_adapter("GitLab")
+    bitbucket_adapter = registry.create_adapter("Bitbucket")
+
+    assert github_adapter.provider_name == "GitHub"
+    assert gitlab_adapter.provider_name == "GitLab"
+    assert bitbucket_adapter.provider_name == "Bitbucket"
 
 
 def test_github_source_adapter_loads_local_snapshot(tmp_path):

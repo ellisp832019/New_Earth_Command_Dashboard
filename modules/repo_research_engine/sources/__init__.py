@@ -7,6 +7,7 @@ from .source_adapters import (
     RemoteRepositoryRef,
     RemoteRepositorySnapshot,
 )
+from .source_registry import RepositorySourceAdapterRegistry, RepositorySourceProviderSpec
 from .repository_workspace import (
     RepositoryCloneRequest,
     RepositoryCloneResult,

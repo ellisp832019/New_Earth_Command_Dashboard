@@ -22,6 +22,7 @@
 - Added recent clone history browsing and quick form reload support.
 - Added comparison report drilldown for file-level added, removed, and modified views.
 - Added local PDF, website, transcript, and documentation research source adapters.
+- Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a deterministic local AI provider and in-memory RAG search index.
 - Added module documentation for architecture, data flow, security, and roadmap.
 - Added tests for scanning, profiles, analysis, exports, comparison, graph export handling, source adapters, and local AI/RAG behavior.

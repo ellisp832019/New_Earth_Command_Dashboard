@@ -92,3 +92,8 @@ python modules/repo_research_engine/scripts/run_research.py --repo "D:/path/to/r
 ## Editable template registry
 
 - `config/template_sets.json`
+
+## Read-only source registry
+
+- `sources/source_registry.py`
+- Supported providers: GitHub, GitLab, Bitbucket
