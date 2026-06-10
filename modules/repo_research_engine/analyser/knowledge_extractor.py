@@ -21,11 +21,29 @@ class KnowledgeExtractor:
         dependencies = self.scan.get("dependency_summary", {})
         license_summary = self.scan.get("license_summary", {})
         useful_files = self._useful_files()
+        profile_focus = self.profile.get("output_focus", [])
 
-        architecture_summary = self._architecture_summary(repo_name, frameworks, language_counts, dependencies)
-        project_summary = self._project_summary(repo_name, repo_path, docs, frameworks, category_counts)
-        learning_notes = self._learning_notes(useful_files, docs)
-        implementation_ideas = self._implementation_ideas(frameworks, useful_files)
+        architecture_summary = self._architecture_summary(
+            repo_name,
+            frameworks,
+            language_counts,
+            dependencies,
+            useful_files,
+        )
+        project_summary = self._project_summary(
+            repo_name,
+            repo_path,
+            docs,
+            frameworks,
+            category_counts,
+            profile_focus,
+        )
+        learning_notes = self._learning_notes(useful_files, docs, document_index)
+        implementation_ideas = self._implementation_ideas(
+            frameworks,
+            useful_files,
+            profile_focus,
+        )
         reusable_components = self._reusable_components(useful_files)
         risks = self._knowledge_risks()
         recommendations = self._recommendations()
@@ -40,7 +58,7 @@ class KnowledgeExtractor:
             "risks": risks,
             "recommendations": recommendations,
             "useful_files": useful_files,
-            "profile_focus": self.profile.get("output_focus", []),
+            "profile_focus": profile_focus,
             "license_summary": license_summary,
             "document_highlights": document_highlights,
         }
@@ -71,16 +89,26 @@ class KnowledgeExtractor:
         docs: Sequence[Dict[str, Any]],
         frameworks: Sequence[Dict[str, Any]],
         category_counts: Dict[str, int],
+        profile_focus: Sequence[str],
     ) -> str:
         docs_count = len(docs)
-        docs_phrase = f"{docs_count} documentation file{'s' if docs_count != 1 else ''}" if docs_count else "no obvious documentation files"
-        framework_phrase = self._join_names([item.get("name", "") for item in frameworks]) or "no strong framework signal yet"
+        docs_phrase = (
+            f"{docs_count} documentation file{'s' if docs_count != 1 else ''}"
+            if docs_count
+            else "no obvious documentation files"
+        )
+        framework_phrase = (
+            self._join_names([item.get("name", "") for item in frameworks])
+            or "no strong framework signal yet"
+        )
         code_count = sum(category_counts.get(key, 0) for key in ("firmware_or_code", "script", "other"))
         binary_count = category_counts.get("binary_or_asset", 0)
+        profile_phrase = self._join_names(profile_focus) or "general analysis"
         return (
             f"{repo_name} at `{repo_path}` appears to be a local-first repository with {docs_phrase}, "
             f"approximately {code_count} code or script files, {binary_count} binary or asset files, "
-            f"and a primary framework signal of {framework_phrase}."
+            f"and a primary framework signal of {framework_phrase}. "
+            f"The current profile focus is {profile_phrase}, so the knowledge bundle should stay aligned with those review targets."
         )
 
     def _architecture_summary(
@@ -89,39 +117,68 @@ class KnowledgeExtractor:
         frameworks: Sequence[Dict[str, Any]],
         language_counts: Dict[str, int],
         dependencies: Dict[str, Any],
+        useful_files: Sequence[Dict[str, Any]],
     ) -> str:
         top_languages = self._join_names(self._top_keys(language_counts))
         framework_names = self._join_names([item.get("name", "") for item in frameworks])
         dependency_count = dependencies.get("dependency_count", 0)
         manifest_count = len(dependencies.get("manifests", []))
-        parts = [f"{repo_name} is structured as a local repository with {top_languages or 'mixed language'} assets."]
+        top_categories = self._join_names(
+            self._top_useful_categories(useful_files)
+        )
+        parts = [
+            f"{repo_name} is structured as a local repository with {top_languages or 'mixed language'} assets."
+        ]
         if framework_names:
             parts.append(f"Framework signals point to {framework_names}.")
         if dependency_count:
             parts.append(
                 f"The scan identified {dependency_count} named dependencies across {manifest_count} manifest file{'s' if manifest_count != 1 else ''}."
             )
+        if top_categories:
+            parts.append(
+                f"The highest-value review zones are {top_categories}, which should be checked before making implementation guesses."
+            )
         return " ".join(parts)
 
-    def _learning_notes(self, useful_files: Sequence[Dict[str, Any]], docs: Sequence[Dict[str, Any]]) -> List[str]:
+    def _learning_notes(
+        self,
+        useful_files: Sequence[Dict[str, Any]],
+        docs: Sequence[Dict[str, Any]],
+        document_index: Sequence[Dict[str, Any]],
+    ) -> List[str]:
         notes: List[str] = []
         if docs:
-            notes.append("Start with the README and docs because they usually explain the project model faster than code spelunking.")
+            notes.append(
+                "Start with the README, docs, and indexed documents because they usually explain the project model faster than code spelunking."
+            )
         if useful_files:
             notes.append(
                 "Review the highest-signal configuration and implementation files first, then trace the supporting modules around them."
+            )
+            notes.append(
+                "Turn the top useful files into a short manual review queue instead of trying to absorb the whole repository at once."
             )
         if any(item.get("category") == "hardware_design" for item in useful_files):
             notes.append("Hardware design files are present, so keep firmware and schematic review paired together.")
         if any(item.get("category") == "documentation" for item in useful_files):
             notes.append("Documentation exists and should be treated as an asset for knowledge extraction, not as filler.")
+        if docs or document_index:
+            notes.append(
+                "Use the document highlights and index to jump directly into the most structured sources rather than re-reading every file manually."
+            )
         if self.security.get("summary"):
             notes.append("Keep all security details masked when reusing these notes in other reports or prompts.")
         return self._unique_nonempty(notes) or [
             "The repository needs a manual review pass because the scan only found limited high-signal files."
         ]
 
-    def _implementation_ideas(self, frameworks: Sequence[Dict[str, Any]], useful_files: Sequence[Dict[str, Any]]) -> List[str]:
+    def _implementation_ideas(
+        self,
+        frameworks: Sequence[Dict[str, Any]],
+        useful_files: Sequence[Dict[str, Any]],
+        profile_focus: Sequence[str],
+    ) -> List[str]:
         ideas: List[str] = []
         framework_names = {item.get("name", "") for item in frameworks}
         if any("Flutter" in name for name in framework_names):
@@ -130,6 +187,13 @@ class KnowledgeExtractor:
             ideas.append("Keep firmware analysis focused on control loops, safety boundaries, and testability.")
         if useful_files:
             ideas.append("Turn the highest-value files into small, local New Earth tasks instead of copying whole implementations.")
+            ideas.append("Use the top useful files to define focused implementation slices, then keep the rest parked for later.")
+        if any(item.get("category") == "configuration" for item in useful_files):
+            ideas.append("Treat configuration and profile files as reusable presets rather than hard-coded assumptions.")
+        if profile_focus:
+            ideas.append(
+                f"Shape the next task around the profile focus areas: {self._join_names(profile_focus)}."
+            )
         if "Node.js" in framework_names:
             ideas.append("Mirror the package and script structure only where it improves maintainability, not as a blind port.")
         return self._unique_nonempty(ideas) or [
@@ -139,7 +203,7 @@ class KnowledgeExtractor:
     def _reusable_components(self, useful_files: Sequence[Dict[str, Any]]) -> List[str]:
         components: List[str] = []
         seen: set[str] = set()
-        for item in useful_files[:12]:
+        for item in self._rank_useful_files(useful_files)[:12]:
             label = f"{item.get('path')} ({item.get('category')})"
             if label not in seen:
                 seen.add(label)
@@ -169,6 +233,28 @@ class KnowledgeExtractor:
 
     def _top_keys(self, mapping: Dict[str, int], limit: int = 4) -> List[str]:
         return [key for key, _ in sorted(mapping.items(), key=lambda item: (-item[1], item[0]))[:limit]]
+
+    def _top_useful_categories(self, useful_files: Sequence[Dict[str, Any]], limit: int = 3) -> List[str]:
+        counts: Dict[str, int] = {}
+        for item in useful_files:
+            category = str(item.get("category", "other"))
+            counts[category] = counts.get(category, 0) + 1
+        return self._top_keys(counts, limit)
+
+    def _rank_useful_files(self, useful_files: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        def score(item: Dict[str, Any]) -> tuple[int, str]:
+            matches = len(item.get("matches", []))
+            category = str(item.get("category", ""))
+            category_bonus = {
+                "documentation": 4,
+                "configuration": 3,
+                "firmware_or_code": 2,
+                "hardware_design": 2,
+            }.get(category, 1)
+            flags = len(item.get("flags", []))
+            return (-(matches * 3 + category_bonus + flags), str(item.get("path", "")))
+
+        return sorted(list(useful_files), key=score)
 
     def _join_names(self, names: Sequence[str]) -> str:
         filtered = [name for name in names if name]

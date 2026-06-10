@@ -417,6 +417,8 @@ class MarkdownExporter:
 
     def _render_knowledge_report(self) -> str:
         knowledge = self.analysis.get("knowledge", {})
+        profile_focus = self.analysis.get("profile_focus", [])
+        document_highlights = knowledge.get("document_highlights", [])
         lines = [
             "# Knowledge Report",
             "",
@@ -425,6 +427,26 @@ class MarkdownExporter:
             "",
             "## Architecture Summary",
             knowledge.get("architecture_summary", "No architecture summary available."),
+            "",
+            "## Profile Focus",
+        ]
+        if profile_focus:
+            for item in profile_focus:
+                lines.append(f"- {item}")
+        else:
+            lines.append("- No profile focus was configured.")
+
+        lines += [
+            "",
+            "## Document Highlights",
+        ]
+        if document_highlights:
+            for item in document_highlights[:20]:
+                lines.append(f"- {item}")
+        else:
+            lines.append("- No document highlights were generated.")
+
+        lines += [
             "",
             "## Reusable Components",
         ]
@@ -441,6 +463,7 @@ class MarkdownExporter:
         return "\n".join(lines).rstrip() + "\n"
 
     def _render_implementation_opportunities(self) -> str:
+        profile_focus = self.analysis.get("profile_focus", [])
         lines = [
             "# Implementation Opportunities",
             "",
@@ -452,9 +475,16 @@ class MarkdownExporter:
         lines += ["", "## Reusable Components"]
         for item in self.analysis.get("reusable_components", []):
             lines.append(f"- {item}")
+        lines += ["", "## Profile Focus"]
+        if profile_focus:
+            for item in profile_focus:
+                lines.append(f"- {item}")
+        else:
+            lines.append("- No profile focus was configured.")
         return "\n".join(lines).rstrip() + "\n"
 
     def _render_learning_notes(self) -> str:
+        document_highlights = self.analysis.get("knowledge", {}).get("document_highlights", [])
         lines = [
             "# Learning Notes",
             "",
@@ -462,6 +492,12 @@ class MarkdownExporter:
         ]
         for item in self.analysis.get("learning_notes", []):
             lines.append(f"- {item}")
+        lines += ["", "## Document Highlights"]
+        if document_highlights:
+            for item in document_highlights[:12]:
+                lines.append(f"- {item}")
+        else:
+            lines.append("- No document highlights were generated.")
         return "\n".join(lines).rstrip() + "\n"
 
     def _render_template_selection(self, templates: Dict[str, Any]) -> str:

@@ -2,6 +2,7 @@
 
 ## Current Build
 
+- Refined the knowledge bundle with stronger profile focus, document highlights, and review-oriented implementation notes.
 - Rebuilt the scanner into a structured safe inventory engine.
 - Added a profile manager and supported profiles for the New Earth projects plus Generic.
 - Added security analysis with masked secret handling.

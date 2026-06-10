@@ -179,6 +179,32 @@ def test_profile_analyser_masks_security_findings(tmp_path):
     assert any("masked" in risk.lower() for risk in analysis["knowledge"]["risks"])
 
 
+def test_knowledge_extractor_builds_profile_aligned_notes(tmp_path):
+    (tmp_path / "README.md").write_text("# Demo\n\nProject notes.\n", encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "guide.md").write_text("# Guide\n\nHow it works.\n", encoding="utf-8")
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "main.dart").write_text("void main() {}\n", encoding="utf-8")
+
+    profile = {
+        "profile_name": "Generic",
+        "project_type": "generic",
+        "priority_keywords": ["guide", "main"],
+        "risk_keywords": [],
+        "output_focus": ["docs", "implementation"],
+        "export_targets": [],
+        "export_locations": [],
+        "report_templates": {},
+    }
+    scan = SafeRepoScanner(str(tmp_path)).scan()
+    analysis = ProfileAnalyser(scan, profile).analyse()
+
+    assert "profile focus is docs and implementation" in analysis["project_summary"].lower()
+    assert any("document highlights" in note.lower() for note in analysis["learning_notes"])
+    assert any("profile focus" in idea.lower() for idea in analysis["implementation_ideas"])
+    assert analysis["knowledge"]["document_highlights"]
+
+
 def test_markdown_and_prompt_exports(tmp_path):
     analysis = {
         "profile_name": "Generic",
@@ -196,11 +222,13 @@ def test_markdown_and_prompt_exports(tmp_path):
         "learning_notes": ["Start with docs."],
         "implementation_ideas": ["Use the README as a map."],
         "reusable_components": ["README.md (documentation)"],
+        "profile_focus": ["docs", "implementation"],
         "output_focus": ["docs"],
         "risk_flags": [],
         "knowledge": {
             "project_summary": "Summary.",
             "architecture_summary": "Architecture.",
+            "document_highlights": ["README.md - 2 headings"],
             "reusable_components": ["README.md (documentation)"],
             "risks": ["None"],
             "recommendations": ["Read the README first."],
@@ -221,6 +249,15 @@ def test_markdown_and_prompt_exports(tmp_path):
         encoding="utf-8",
     )
     assert "Repo Research Note" in (output_dir / "vault_note.md").read_text(
+        encoding="utf-8",
+    )
+    assert "Profile Focus" in (output_dir / "knowledge_report.md").read_text(
+        encoding="utf-8",
+    )
+    assert "Document Highlights" in (output_dir / "learning_notes.md").read_text(
+        encoding="utf-8",
+    )
+    assert "Profile Focus" in (output_dir / "implementation_opportunities.md").read_text(
         encoding="utf-8",
     )
 
