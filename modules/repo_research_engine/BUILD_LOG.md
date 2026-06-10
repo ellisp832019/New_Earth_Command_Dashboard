@@ -27,6 +27,7 @@
 - Added a dedicated architecture graph review card with grouped node, edge, and key-anchor views.
 - Added explicit export review workflow controls with review-first bundle, vault handoff, and prompt pack inspection.
 - Added prompt template family picker controls inside the Codex Prompt Generator card.
+- Split knowledge extraction into dedicated summary, architecture, risk, recommendation, and learning-note blocks.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a read-only research source adapter registry for document, PDF, transcript, and website extension points.

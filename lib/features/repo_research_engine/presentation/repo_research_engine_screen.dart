@@ -1838,6 +1838,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _latestAnalysis['implementation_ideas'],
     );
     final learningNotes = _stringList(_latestAnalysis['learning_notes']);
+    final projectSummary = _latestAnalysis['project_summary']
+        ?.toString()
+        .trim();
+    final architectureSummary = _latestAnalysis['architecture_summary']
+        ?.toString()
+        .trim();
 
     return _panel(
       context,
@@ -1847,23 +1853,45 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _MetadataRow(
-            label: 'Project summary',
-            value:
-                _latestAnalysis['project_summary']?.toString().isNotEmpty ==
-                    true
-                ? _latestAnalysis['project_summary'].toString()
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(
+                label: '${reusableComponents.length} reusable components',
+                muted: false,
+              ),
+              _StatusChip(label: '${risks.length} risks', muted: false),
+              _StatusChip(
+                label: '${recommendations.length} recommendations',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${implementationIdeas.length} implementation ideas',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${learningNotes.length} learning notes',
+                muted: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _knowledgeInsightBlock(
+            context,
+            title: 'Project Summary',
+            subtitle: 'A concise overview of the repository focus and scope.',
+            body: projectSummary?.isNotEmpty == true
+                ? projectSummary!
                 : 'No summary loaded',
           ),
-          const SizedBox(height: 8),
-          _MetadataRow(
-            label: 'Architecture summary',
-            value:
-                _latestAnalysis['architecture_summary']
-                        ?.toString()
-                        .isNotEmpty ==
-                    true
-                ? _latestAnalysis['architecture_summary'].toString()
+          const SizedBox(height: 12),
+          _knowledgeInsightBlock(
+            context,
+            title: 'Architecture Summary',
+            subtitle: 'A reviewable snapshot of the system structure and shape.',
+            body: architectureSummary?.isNotEmpty == true
+                ? architectureSummary!
                 : 'No architecture summary loaded',
           ),
           const SizedBox(height: 12),
@@ -1871,19 +1899,26 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             context,
             leftTitle: 'Reusable Components',
             leftItems: reusableComponents,
-            rightTitle: 'Recommendations',
-            rightItems: recommendations,
+            rightTitle: 'Implementation Ideas',
+            rightItems: implementationIdeas,
           ),
           const SizedBox(height: 12),
           _twoColumnBulletBlock(
             context,
             leftTitle: 'Risks',
             leftItems: risks,
-            rightTitle: 'Implementation Ideas',
-            rightItems: implementationIdeas,
+            rightTitle: 'Recommendations',
+            rightItems: recommendations,
           ),
           const SizedBox(height: 12),
-          _bulletSection(context, 'Learning Notes', learningNotes),
+          _knowledgeInsightBlock(
+            context,
+            title: 'Learning Notes',
+            subtitle: 'Working notes captured from the latest local analysis.',
+            body: learningNotes.isEmpty
+                ? 'No learning notes were captured.'
+                : learningNotes.map((item) => '- $item').join('\n'),
+          ),
           const SizedBox(height: 12),
           SizedBox(
             height: 220,
@@ -1907,6 +1942,52 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 : () => _openReportFile(_knowledgeReportPath),
             icon: const Icon(Icons.open_in_new),
             label: const Text('Open knowledge report'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _knowledgeInsightBlock(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String body,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            body,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkText,
+              height: 1.5,
+            ),
           ),
         ],
       ),
