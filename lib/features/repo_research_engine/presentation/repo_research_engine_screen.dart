@@ -92,6 +92,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _changeHistorySearchController =
       TextEditingController();
+  late final TextEditingController _exportHistoryPreviewController =
+      TextEditingController();
   late final TextEditingController _reportHistorySearchController =
       TextEditingController();
   late final TextEditingController _exportHistorySearchController =
@@ -126,6 +128,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _architectureGraphPath = '';
   String _documentIndexPath = '';
   String _riskReportPath = '';
+  String _exportHistoryPath = '';
   String _profileEditorStatus = 'Profile editor not loaded';
   String _profileComparisonStatus = 'Profile comparison not loaded';
   String _selectedTemplateSet = 'Generic';
@@ -167,6 +170,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
   String get _defaultProfilePath {
     return pathJoin(_defaultProfilesDirectory, 'generic.profile.json');
+  }
+
+  String get _exportHistoryMarkdownPath {
+    final moduleRoot = _service.moduleRootDirectory();
+    return pathJoin(
+      pathJoin(moduleRoot.path, 'reports'),
+      'export_history.md',
+    );
   }
 
   @override
@@ -233,6 +244,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _vaultNotePreviewController.dispose();
     _recentRunsSearchController.dispose();
     _changeHistorySearchController.dispose();
+    _exportHistoryPreviewController.dispose();
     _reportHistorySearchController.dispose();
     _exportHistorySearchController.dispose();
     super.dispose();
@@ -1508,6 +1520,47 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             )
           : Column(
               children: [
+                if (_exportHistory.isNotEmpty) ...[
+                  _MetadataRow(
+                    label: 'Latest export',
+                    value:
+                        '${_exportHistory.first.profileName} - ${_exportHistory.first.exportedTo}',
+                  ),
+                  const SizedBox(height: 8),
+                  _MetadataRow(
+                    label: 'History file',
+                    value: _exportHistoryPath.isEmpty
+                        ? 'Export history markdown not loaded'
+                        : _exportHistoryPath,
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 220,
+                    child: SingleChildScrollView(
+                      child: TextField(
+                        controller: _exportHistoryPreviewController,
+                        readOnly: true,
+                        maxLines: null,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkText,
+                          fontFamily: 'monospace',
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: _exportHistoryPath.isEmpty
+                        ? null
+                        : () => _service.openPath(_exportHistoryPath),
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Open export history'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 TextField(
                   controller: _exportHistorySearchController,
                   onChanged: (_) => setState(() {}),
@@ -3532,6 +3585,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       });
       await _loadRecentRuns(refreshStateOnly: false);
       await _loadChangeHistory(refreshStateOnly: false);
+      await _loadExportHistory();
 
       _setMessage(
         result.succeeded
@@ -3686,12 +3740,17 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     }
 
     final exports = await _service.loadExportHistory();
+    final exportHistoryMarkdown = await _service.readFile(
+      _exportHistoryMarkdownPath,
+    );
     if (!mounted) {
       return;
     }
     setState(() {
       _exportHistory = exports;
+      _exportHistoryPreviewController.text = exportHistoryMarkdown;
       _loadingExportHistory = false;
+      _exportHistoryPath = _exportHistoryMarkdownPath;
     });
   }
 

@@ -10,6 +10,7 @@
 - Added Omega OS export bundling.
 - Added repo comparison, change tracking, and graph export support.
 - Added readable change-history output with explicit baseline-path history browsing.
+- Added export-history markdown browsing with local preview and open actions.
 - Added report search, history browsing, release notes, and bundle delta summaries.
 - Added document, image, and diagram discovery.
 - Added local repository source adapters for GitHub, GitLab, and Bitbucket.

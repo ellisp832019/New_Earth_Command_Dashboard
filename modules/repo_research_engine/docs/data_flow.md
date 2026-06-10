@@ -50,6 +50,7 @@ Remote Git URL or local repository path
 - `learning_notes.md`
 - `change_tracking.md`
 - `change_history.md`
+- `export_history.md`
 - `generated_prompts/*.md`
 
 ## Design Notes
