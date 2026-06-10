@@ -1,5 +1,9 @@
 # Future Work Register
 
+See also:
+
+- `COMMIT_TREE_AND_NEXT_STEPS.md` for commit-sized backup guardian slices and the next-step plan.
+
 ## V2 Backlog
 
 | ID | Feature | Priority | Notes |
