@@ -2190,39 +2190,77 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     return _panel(
       context,
       key: key ?? _documentDiscoverySectionKey,
-      title: 'Document and Asset Discovery',
+      title: 'Document Index Review',
       subtitle:
-          'Review indexed documents, image assets, and diagram sources found during the safe scan.',
+          'Review indexed documents, headings, links, tables, and notes discovered during the safe scan.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(
+                label: '${documentIndex.length} documents',
+                muted: false,
+              ),
+              _StatusChip(
+                label:
+                    '${_documentIndexFieldCount(documentIndex, 'headings')} headings',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_documentIndexFieldCount(documentIndex, 'links')} links',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_documentIndexFieldCount(documentIndex, 'tables')} tables',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_documentIndexFieldCount(documentIndex, 'notes')} notes',
+                muted: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           _bulletSection(
             context,
             'Indexed Documents',
             documentIndex
                 .take(8)
-                .map(
-                  (item) => '${item['path']} - ${item['title'] ?? ''}'.trim(),
-                )
+                .map((item) => _renderDocumentIndexSummary(item))
                 .toList(growable: false),
           ),
           const SizedBox(height: 12),
-          _bulletSection(
+          _twoColumnBulletBlock(
             context,
-            'Image Assets',
-            imageAssets
+            leftTitle: 'Headings',
+            leftItems: _documentIndexFieldPreview(documentIndex, 'headings'),
+            rightTitle: 'Links',
+            rightItems: _documentIndexFieldPreview(documentIndex, 'links'),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Tables',
+            leftItems: _documentIndexFieldPreview(documentIndex, 'tables'),
+            rightTitle: 'Notes',
+            rightItems: _documentIndexFieldPreview(documentIndex, 'notes'),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Image Assets',
+            leftItems: imageAssets
                 .take(8)
                 .map(
                   (item) =>
                       '${item['path']} - ${item['asset_type'] ?? 'image'}',
                 )
                 .toList(growable: false),
-          ),
-          const SizedBox(height: 12),
-          _bulletSection(
-            context,
-            'Diagram Files',
-            diagramFiles
+            rightTitle: 'Diagram Files',
+            rightItems: diagramFiles
                 .take(8)
                 .map(
                   (item) =>
@@ -2242,7 +2280,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                   color: AppColours.darkText,
                   fontFamily: 'monospace',
                 ),
-                decoration: const InputDecoration(border: InputBorder.none),
+                decoration: const InputDecoration(
+                  labelText: 'Document index report preview',
+                  border: InputBorder.none,
+                ),
               ),
             ),
           ),
@@ -2257,6 +2298,96 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         ],
       ),
     );
+  }
+
+  int _documentIndexFieldCount(
+    List<Map<String, dynamic>> documents,
+    String field,
+  ) {
+    var count = 0;
+    for (final document in documents) {
+      final values = document[field];
+      if (values is List) {
+        count += values
+            .map((value) => value.toString().trim())
+            .where((value) => value.isNotEmpty)
+            .length;
+      }
+    }
+    return count;
+  }
+
+  List<String> _documentIndexFieldPreview(
+    List<Map<String, dynamic>> documents,
+    String field,
+  ) {
+    final results = <String>[];
+    for (final document in documents) {
+      final source = document['title']?.toString().isNotEmpty == true
+          ? document['title'].toString()
+          : document['path']?.toString().isNotEmpty == true
+          ? document['path'].toString()
+          : 'Unknown document';
+      final values = document[field];
+      if (values is List) {
+        for (final value in values) {
+          final text = _documentIndexValueText(value);
+          if (text.isEmpty) {
+            continue;
+          }
+          results.add('$source - $text');
+        }
+      }
+    }
+    if (results.isEmpty) {
+      return const ['No items discovered.'];
+    }
+    return results.take(8).toList(growable: false);
+  }
+
+  String _documentIndexValueText(dynamic value) {
+    if (value is Map) {
+      final map = Map<String, dynamic>.from(value);
+      final path = map['path']?.toString().isNotEmpty == true
+          ? map['path'].toString()
+          : map['text']?.toString().isNotEmpty == true
+          ? map['text'].toString()
+          : map['label']?.toString().isNotEmpty == true
+          ? map['label'].toString()
+          : '';
+      if (path.isNotEmpty) {
+        return path;
+      }
+      final entries = map.entries
+          .map((entry) => '${entry.key}: ${entry.value}')
+          .toList(growable: false);
+      return entries.join(', ');
+    }
+    return value?.toString().trim() ?? '';
+  }
+
+  String _renderDocumentIndexSummary(Map<String, dynamic> document) {
+    final path = document['path']?.toString().isNotEmpty == true
+        ? document['path'].toString()
+        : 'Unknown document';
+    final title = document['title']?.toString().isNotEmpty == true
+        ? document['title'].toString()
+        : '';
+    final headings = _stringList(document['headings']);
+    final links = _stringList(document['links']);
+    final tables = _stringList(document['tables']);
+    final notes = _stringList(document['notes']);
+    final pieces = <String>[
+      if (title.isNotEmpty) title,
+      if (headings.isNotEmpty) '${headings.length} headings',
+      if (links.isNotEmpty) '${links.length} links',
+      if (tables.isNotEmpty) '${tables.length} tables',
+      if (notes.isNotEmpty) '${notes.length} notes',
+    ];
+    if (pieces.isEmpty) {
+      return path;
+    }
+    return '$path - ${pieces.join(' - ')}';
   }
 
   Widget _reportIndexCard(BuildContext context, {Key? key}) {
