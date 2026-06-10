@@ -52,6 +52,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Local deterministic AI provider and in-memory RAG index
 - Local AI and RAG registries
 - Dashboard discoverability for the AI/RAG registry
+- Home hub split into calmer section launcher and recent activity cards
 - Core tests
 - Module docs
 

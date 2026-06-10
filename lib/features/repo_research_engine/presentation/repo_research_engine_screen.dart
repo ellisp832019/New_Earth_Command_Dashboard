@@ -335,53 +335,22 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     return [
       _heroCard(context),
       const SizedBox(height: 16),
-      if (isWide)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _scannerCard(context)),
-            const SizedBox(width: 16),
-            Expanded(child: _comparisonCard(context)),
-          ],
-        )
-      else ...[
-        _scannerCard(context),
-        const SizedBox(height: 16),
-        _comparisonCard(context),
-      ],
-      const SizedBox(height: 16),
-      _profileEditorCard(context),
-      const SizedBox(height: 16),
-      _profileComparisonCard(context),
+      _homeSectionLauncherCard(context),
       const SizedBox(height: 16),
       if (isWide)
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _outputsCard(context)),
+            Expanded(child: _recentRunsCard(context)),
             const SizedBox(width: 16),
-            Expanded(child: _logsCard(context)),
+            Expanded(child: _recentImportsCard(context)),
           ],
         )
       else ...[
-        _outputsCard(context),
+        _recentRunsCard(context),
         const SizedBox(height: 16),
-        _logsCard(context),
+        _recentImportsCard(context),
       ],
-      const SizedBox(height: 16),
-      _reportPreviewCard(context),
-      const SizedBox(height: 16),
-      _bundlePreviewsCard(context),
-      const SizedBox(height: 16),
-      _promptsCard(context),
-      const SizedBox(height: 16),
-      _settingsCard(context),
-      const SizedBox(height: 16),
-      _reportHistoryCard(context),
-      const SizedBox(height: 16),
-      _exportHistoryCard(context),
-      const SizedBox(height: 16),
-      _recentRunsCard(context),
     ];
   }
 
@@ -736,6 +705,117 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _homeSectionLauncherCard(BuildContext context) {
+    final sections = [
+      _HomeSectionLaunch(
+        title: 'Scanner',
+        description: 'Clone, scan, and compare local repos safely.',
+        icon: Icons.travel_explore_outlined,
+        section: 'scanner',
+      ),
+      _HomeSectionLaunch(
+        title: 'Reports',
+        description: 'Review knowledge notes, report previews, and release outputs.',
+        icon: Icons.description_outlined,
+        section: 'reports',
+      ),
+      _HomeSectionLaunch(
+        title: 'Profiles',
+        description: 'Inspect reusable profile JSON and template sets.',
+        icon: Icons.tune_outlined,
+        section: 'profiles',
+      ),
+      _HomeSectionLaunch(
+        title: 'Exports',
+        description: 'Review bundles before they are copied into Omega OS.',
+        icon: Icons.upload_outlined,
+        section: 'exports',
+      ),
+      _HomeSectionLaunch(
+        title: 'Prompts',
+        description: 'Generate Codex prompts and view source registries.',
+        icon: Icons.draw_outlined,
+        section: 'prompts',
+      ),
+      _HomeSectionLaunch(
+        title: 'Settings',
+        description: 'Adjust local paths, templates, and registry notes.',
+        icon: Icons.settings_outlined,
+        section: 'settings',
+      ),
+    ];
+
+    return _panel(
+      context,
+      title: 'Section Launcher',
+      subtitle:
+          'The home page stays calm and points each detailed workflow to its own page.',
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 960;
+          final crossAxisCount = wide ? 3 : 1;
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sections.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: wide ? 2.8 : 4.2,
+            ),
+            itemBuilder: (context, index) {
+              final item = sections[index];
+              return _HomeSectionTile(
+                launch: item,
+                onTap: () => _navigateToSection(item.section),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _recentImportsCard(BuildContext context) {
+    final visibleClones = _recentClones.take(4).toList(growable: false);
+    return _panel(
+      context,
+      title: 'Recent Imports',
+      subtitle:
+          'Recent structured workspace imports stay close to the home overview.',
+      child: _loadingCloneHistory
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : visibleClones.isEmpty
+          ? Text(
+              'No clone history has been recorded yet.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            )
+          : Column(
+              children: [
+                for (final record in visibleClones) ...[
+                  _CloneHistoryTile(
+                    record: record,
+                    onLoad: () => _loadCloneIntoForm(record),
+                    onOpenSource: record.sourceRoot.isEmpty
+                        ? null
+                        : () => _service.openFolder(record.sourceRoot),
+                    onOpenWorkspace: record.workspaceRoot.isEmpty
+                        ? null
+                        : () => _service.openFolder(record.workspaceRoot),
+                  ),
+                  if (record != visibleClones.last) const SizedBox(height: 10),
+                ],
+              ],
+            ),
     );
   }
 
@@ -4431,6 +4511,20 @@ class _ProfilePreset {
   final String outputFolder;
 }
 
+class _HomeSectionLaunch {
+  const _HomeSectionLaunch({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.section,
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+  final String section;
+}
+
 class _MetadataRow extends StatelessWidget {
   const _MetadataRow({required this.label, required this.value});
 
@@ -4461,6 +4555,74 @@ class _MetadataRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HomeSectionTile extends StatelessWidget {
+  const _HomeSectionTile({
+    required this.launch,
+    required this.onTap,
+  });
+
+  final _HomeSectionLaunch launch;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: AppColours.darkOutline.withValues(alpha: 0.6),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColours.darkSurface.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(launch.icon, color: AppColours.darkSecondary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    launch.title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    launch.description,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: AppColours.darkMutedText),
+          ],
+        ),
+      ),
     );
   }
 }

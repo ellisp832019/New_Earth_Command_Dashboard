@@ -27,6 +27,7 @@
 - Added a deterministic local AI provider and in-memory RAG search index.
 - Added local AI and RAG registries for explicit future provider and index extension points.
 - Added dashboard discoverability for the local AI and RAG registry via the module nav and Settings.
+- Split the Repo Research Engine home hub into a calmer section launcher plus recent activity cards.
 - Added module documentation for architecture, data flow, security, and roadmap.
 - Added tests for scanning, profiles, analysis, exports, comparison, graph export handling, source adapters, and local AI/RAG behavior.
 
@@ -48,6 +49,7 @@
 - Research source adapters
 - Local AI generation and RAG search
 - Local AI and RAG registry extension points
+- Home hub split into section launcher and overview cards
 
 ## Known Gaps
 
