@@ -154,6 +154,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   final GlobalKey _promptsSectionKey = GlobalKey();
   final GlobalKey _settingsSectionKey = GlobalKey();
   final GlobalKey _reportIndexSectionKey = GlobalKey();
+  final GlobalKey _aiRagSectionKey = GlobalKey();
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -325,6 +326,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'exports' => _buildExportsContent(context, isWide),
       'prompts' => _buildPromptsContent(context),
       'settings' => _buildSettingsContent(context),
+      'ai-rag' => _buildSettingsContent(context),
       _ => _buildHomeContent(context, isWide),
     };
   }
@@ -535,6 +537,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'exports' => 'exports',
       'prompts' => 'prompts',
       'settings' => 'settings',
+      'ai-rag' => 'ai-rag',
       _ => 'home',
     };
   }
@@ -547,6 +550,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'exports' => _exportsSectionKey,
       'prompts' => _promptsSectionKey,
       'settings' => _settingsSectionKey,
+      'ai-rag' => _aiRagSectionKey,
       _ => _heroSectionKey,
     };
   }
@@ -577,6 +581,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'exports' => RouteNames.repoResearchEngineExports,
       'prompts' => RouteNames.repoResearchEnginePrompts,
       'settings' => RouteNames.repoResearchEngineSettings,
+      'ai-rag' => RouteNames.repoResearchEngineSettings,
       _ => RouteNames.repoResearchEngine,
     };
     context.go(route);
@@ -634,6 +639,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 'Settings',
                 'settings',
                 Icons.settings_outlined,
+              ),
+              _sectionNavButton(
+                context,
+                'AI/RAG',
+                'ai-rag',
+                Icons.auto_awesome_outlined,
               ),
             ],
           );
@@ -2440,7 +2451,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           const SizedBox(height: 12),
           _MetadataRow(
             label: 'AI/RAG',
-            value: 'Deterministic local provider and in-memory index only',
+            value:
+                'See the dedicated local AI and RAG registry card for the active offline defaults.',
           ),
         ],
       ),
@@ -2448,28 +2460,30 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 
   Widget _aiRagCard(BuildContext context) {
+    const providers = ['DeterministicLocal (default)'];
+    const indexes = ['InMemoryLocal (default)'];
+
     return _panel(
       context,
-      title: 'Local AI and RAG Controls',
+      key: _aiRagSectionKey,
+      title: 'Local AI and RAG Registry',
       subtitle:
-          'The module ships with deterministic local AI and a local in-memory RAG index for offline use.',
+          'The module exposes explicit local-first extension points while keeping the safe offline defaults in place.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _StatusChip(
-            label: 'Deterministic local provider',
-            muted: false,
-          ),
-          const SizedBox(height: 8),
-          const _StatusChip(label: 'In-memory RAG index', muted: false),
+          const _StatusChip(label: 'Local-first defaults', muted: false),
           const SizedBox(height: 8),
           const _StatusChip(label: 'No network required', muted: false),
           const SizedBox(height: 12),
-          Text(
-            'These interfaces stay available even when no external AI provider is configured.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          _bulletSection(context, 'Supported AI Providers', providers),
+          const SizedBox(height: 12),
+          _bulletSection(context, 'Supported RAG Indexes', indexes),
+          const SizedBox(height: 8),
+          const _MetadataRow(
+            label: 'Extension points',
+            value:
+                'Future providers and indexes stay opt-in, local-first, and registry-backed.',
           ),
         ],
       ),

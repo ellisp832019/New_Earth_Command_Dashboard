@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/routing/route_names.dart';
 import '../application/settings_controller.dart';
 import '../../voice_assistant/voice_speech_service.dart';
 
@@ -129,6 +131,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         icon: Icons.auto_awesome_outlined,
                         text:
                             'Optional AI voice assist stays off unless the OpenAI provider is configured.',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Repo Research Engine Extensions',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Local AI and RAG stay registry-backed, deterministic by default, and opt-in for future providers.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const _SettingsNote(
+                            icon: Icons.auto_awesome_outlined,
+                            text: 'DeterministicLocal and InMemoryLocal are the current defaults.',
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              context.push(
+                                RouteNames.repoResearchEngineSettings,
+                              );
+                            },
+                            icon: const Icon(Icons.travel_explore_outlined),
+                            label: const Text('Open Repo Research Engine'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
