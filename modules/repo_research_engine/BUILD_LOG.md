@@ -33,6 +33,7 @@
 - Added an image and diagram asset review page with screenshot, icon, design, and binary flags.
 - Added profile template library controls with inspect-and-apply preset cards.
 - Added export history filtering with explicit profile, repo, folder, and file scopes.
+- Added report history filtering with explicit output, repo, profile, and generated-file scopes.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a read-only research source adapter registry for document, PDF, transcript, and website extension points.

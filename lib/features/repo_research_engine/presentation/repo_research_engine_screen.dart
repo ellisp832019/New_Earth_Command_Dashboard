@@ -117,6 +117,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   bool _loadingTemplateSets = true;
   String _recentRunsFilter = 'all';
   String _exportHistoryFilter = 'all';
+  String _reportHistoryFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
   String _dependencyGraphFilter = 'all';
@@ -1566,21 +1567,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 
   Widget _reportHistoryCard(BuildContext context) {
+    final search = _reportHistorySearchController.text.trim().toLowerCase();
     final visibleRuns = _recentRuns
-        .where((run) {
-          final search = _reportHistorySearchController.text
-              .trim()
-              .toLowerCase();
-          if (search.isEmpty) {
-            return true;
-          }
-          return run.outputDirectory.toLowerCase().contains(search) ||
-              run.repoPath.toLowerCase().contains(search) ||
-              run.profile.toLowerCase().contains(search) ||
-              run.reportFiles.any(
-                (file) => file.toLowerCase().contains(search),
-              );
-        })
+        .where((run) => _matchesReportHistoryFilter(run, search))
         .toList(growable: false);
     final displayRuns = visibleRuns.take(6).toList(growable: false);
 
@@ -1603,12 +1592,42 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             )
           : Column(
               children: [
+                DropdownButtonFormField<String>(
+                  initialValue: _reportHistoryFilter,
+                  decoration: const InputDecoration(
+                    labelText: 'Filter report history by',
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('Any field')),
+                    DropdownMenuItem(
+                      value: 'output',
+                      child: Text('Output directory'),
+                    ),
+                    DropdownMenuItem(value: 'repo', child: Text('Repository')),
+                    DropdownMenuItem(value: 'profile', child: Text('Profile')),
+                    DropdownMenuItem(
+                      value: 'files',
+                      child: Text('Generated files'),
+                    ),
+                  ],
+                  onChanged: (_isRunning || _loadingRecentRuns)
+                      ? null
+                      : (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setState(() {
+                            _reportHistoryFilter = value;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _reportHistorySearchController,
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
                     labelText: 'Search report history',
-                    hintText: 'Output path, repo, profile, or file name',
+                    hintText: 'Search within the selected field scope',
                     prefixIcon: Icon(Icons.search),
                   ),
                 ),
@@ -1648,6 +1667,26 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               ],
             ),
     );
+  }
+
+  bool _matchesReportHistoryFilter(RepoResearchRunRecord run, String search) {
+    if (search.isEmpty) {
+      return true;
+    }
+    final scope = _reportHistoryFilter;
+    return switch (scope) {
+      'output' => run.outputDirectory.toLowerCase().contains(search),
+      'repo' => run.repoPath.toLowerCase().contains(search),
+      'profile' => run.profile.toLowerCase().contains(search),
+      'files' => run.reportFiles.any((file) => file.toLowerCase().contains(search)),
+      _ =>
+        run.outputDirectory.toLowerCase().contains(search) ||
+            run.repoPath.toLowerCase().contains(search) ||
+            run.profile.toLowerCase().contains(search) ||
+            run.reportFiles.any(
+              (file) => file.toLowerCase().contains(search),
+            ),
+    };
   }
 
   Widget _exportHistoryCard(BuildContext context, {Key? key}) {
