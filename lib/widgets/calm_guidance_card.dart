@@ -11,6 +11,7 @@ class CalmGuidanceCard extends StatelessWidget {
     this.sectionLabel = 'Gentle guidance',
     this.icon = Icons.auto_awesome_outlined,
     this.iconColor = AppColours.darkSuccess,
+    this.details = const [],
   });
 
   final String sectionLabel;
@@ -19,6 +20,7 @@ class CalmGuidanceCard extends StatelessWidget {
   final String reason;
   final IconData icon;
   final Color iconColor;
+  final List<String> details;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,9 @@ class CalmGuidanceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),
@@ -69,6 +73,23 @@ class CalmGuidanceCard extends StatelessWidget {
                     color: AppColours.darkMutedText,
                   ),
                 ),
+                if (details.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: details
+                        .map(
+                          (detail) => Chip(
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            label: Text(detail),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Text(
                   'Why this: $reason',

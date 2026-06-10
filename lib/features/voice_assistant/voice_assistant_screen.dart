@@ -2588,6 +2588,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 title: briefingSummary,
                 summary: briefingNextStep,
                 reason: briefingReason,
+                details: [
+                  if (conversationContext != null)
+                    'Thread: ${conversationContext.threadScopeLabel}',
+                  if (conversationContext != null)
+                    conversationContext.entryCountLabel,
+                  if (briefing.projectContext != null) briefing.projectContext!,
+                  if (briefing.threadContext != null) briefing.threadContext!,
+                ],
               ),
               const SizedBox(height: 16),
               Card(
