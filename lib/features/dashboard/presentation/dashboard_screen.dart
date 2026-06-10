@@ -780,7 +780,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
       data: (snapshot) {
         final targetLabel = snapshot.backupDriveExists
             ? snapshot.backupTarget
-            : 'Waiting for E: / NEW_EARTH_BACKUP';
+            : 'Backup drive not connected';
         final statusLabel = snapshot.backupDriveExists
             ? 'Drive visible'
             : 'Drive missing';
@@ -859,7 +859,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Local-first backup path for D: to E: / NEW_EARTH_BACKUP.',
+                    'Local-first backup path for D: to E:\\NEW_EARTH_BACKUP.',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColours.darkText,
                     ),
@@ -878,7 +878,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                     child: Text(
                       snapshot.backupDriveExists
                           ? 'The backup drive is visible and ready for the next manual run.'
-                          : 'The dashboard is waiting for the external backup drive to appear.',
+                          : 'The dashboard is waiting for the external backup drive to reconnect.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColours.darkMutedText,
                         height: 1.4,

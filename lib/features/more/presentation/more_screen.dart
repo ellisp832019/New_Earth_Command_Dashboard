@@ -16,6 +16,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.commandDeck,
     ),
     _MoreItem(
+      title: 'Repo Research Engine',
+      description:
+          'Scan repositories safely, compare changes, and export research packs.',
+      icon: Icons.travel_explore_outlined,
+      route: RouteNames.repoResearchEngine,
+    ),
+    _MoreItem(
       title: 'Systems',
       description:
           'Protect the full D: drive, review backup status, and keep recovery tools calm.',
@@ -149,7 +156,8 @@ class MoreScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Journal, learning, content, business, wellbeing, inbox, voice, settings, projects intelligence, systems, and active system links all live here.',
+                  'Journal, learning, content, business, wellbeing, inbox, voice, repo research, settings, projects intelligence, systems, and active system links all live here.',
+                  // keep line under 120? okay
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                   ),
