@@ -33,6 +33,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Export review workflow controls with explicit bundle, vault, and prompt inspection
 - Prompt template family picker controls
 - Rich knowledge extraction blocks for summaries, risks, recommendations, and notes
+- Report section deep links for exact report and bundle views
 - Graph export support
 - Rich document indexing
 - Image asset discovery

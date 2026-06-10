@@ -157,6 +157,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   final GlobalKey _settingsSectionKey = GlobalKey();
   final GlobalKey _reportIndexSectionKey = GlobalKey();
   final GlobalKey _aiRagSectionKey = GlobalKey();
+  final GlobalKey _bundlePreviewsSectionKey = GlobalKey();
+  final GlobalKey _comparisonDrilldownSectionKey = GlobalKey();
+  final GlobalKey _knowledgeSectionKey = GlobalKey();
+  final GlobalKey _documentDiscoverySectionKey = GlobalKey();
+  final GlobalKey _releaseNotesSectionKey = GlobalKey();
+  final GlobalKey _bundleDeltaSectionKey = GlobalKey();
+  final GlobalKey _changeTimelineSectionKey = GlobalKey();
+  final GlobalKey _changeHistorySectionKey = GlobalKey();
+  final GlobalKey _riskReviewSectionKey = GlobalKey();
+  final GlobalKey _exportReviewSectionKey = GlobalKey();
+  final GlobalKey _exportHistorySectionKey = GlobalKey();
+  GlobalKey? _pendingSectionAnchorKey;
 
   String get _defaultOutputDirectory {
     final moduleRoot = _service.moduleRootDirectory();
@@ -220,6 +232,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _activeSection = nextSection;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToActiveSection();
+        _scrollToPendingSectionAnchor();
       });
     }
   }
@@ -408,19 +421,21 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       const SizedBox(height: 16),
       _reportPreviewCard(context),
       const SizedBox(height: 16),
-      _bundlePreviewsCard(context),
+      _reportDeepLinksCard(context),
       const SizedBox(height: 16),
-      _comparisonDrilldownCard(context),
+      _bundlePreviewsCard(context, key: _bundlePreviewsSectionKey),
       const SizedBox(height: 16),
-      _knowledgeCard(context),
+      _comparisonDrilldownCard(context, key: _comparisonDrilldownSectionKey),
       const SizedBox(height: 16),
-      _documentDiscoveryCard(context),
+      _knowledgeCard(context, key: _knowledgeSectionKey),
       const SizedBox(height: 16),
-      _reportIndexCard(context),
+      _documentDiscoveryCard(context, key: _documentDiscoverySectionKey),
       const SizedBox(height: 16),
-      _releaseNotesCard(context),
+      _reportIndexCard(context, key: _reportIndexSectionKey),
       const SizedBox(height: 16),
-      _bundleDeltaCard(context),
+      _releaseNotesCard(context, key: _releaseNotesSectionKey),
+      const SizedBox(height: 16),
+      _bundleDeltaCard(context, key: _bundleDeltaSectionKey),
       const SizedBox(height: 16),
       _reportHistoryCard(context),
       const SizedBox(height: 16),
@@ -459,17 +474,17 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         _logsCard(context),
       ],
       const SizedBox(height: 16),
-      _bundlePreviewsCard(context),
+      _bundlePreviewsCard(context, key: _bundlePreviewsSectionKey),
       const SizedBox(height: 16),
-      _exportReviewCard(context),
+      _exportReviewCard(context, key: _exportReviewSectionKey),
       const SizedBox(height: 16),
       _graphReviewCard(context),
       const SizedBox(height: 16),
-      _changeTimelineCard(context),
+      _changeTimelineCard(context, key: _changeTimelineSectionKey),
       const SizedBox(height: 16),
-      _changeHistoryCard(context),
+      _changeHistoryCard(context, key: _changeHistorySectionKey),
       const SizedBox(height: 16),
-      _exportHistoryCard(context),
+      _exportHistoryCard(context, key: _exportHistorySectionKey),
     ];
   }
 
@@ -540,10 +555,30 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  void _navigateToSection(String section) {
+  void _scrollToPendingSectionAnchor() {
+    final target = _pendingSectionAnchorKey;
+    if (target == null) {
+      return;
+    }
+    final targetContext = target.currentContext;
+    if (targetContext == null) {
+      return;
+    }
+    _pendingSectionAnchorKey = null;
+    Scrollable.ensureVisible(
+      targetContext,
+      alignment: 0.05,
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _navigateToSection(String section, {GlobalKey? anchorKey}) {
     final normalized = _normalizeSection(section);
+    final previousSection = _activeSection;
     setState(() {
       _activeSection = normalized;
+      _pendingSectionAnchorKey = anchorKey;
     });
     final route = switch (normalized) {
       'scanner' => RouteNames.repoResearchEngineScanner,
@@ -556,6 +591,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _ => RouteNames.repoResearchEngine,
     };
     context.go(route);
+    if (anchorKey != null && previousSection == normalized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToPendingSectionAnchor();
+      });
+    }
   }
 
   Widget _heroCard(BuildContext context) {
@@ -1497,10 +1537,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _reportPreviewCard(BuildContext context) {
+  Widget _reportPreviewCard(BuildContext context, {Key? key}) {
     return _panel(
       context,
-      key: _reportsSectionKey,
+      key: key ?? _reportsSectionKey,
       title: 'Report Preview',
       subtitle: 'Quick glance at the main report after the latest run.',
       child: SizedBox(
@@ -1606,7 +1646,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _exportHistoryCard(BuildContext context) {
+  Widget _exportHistoryCard(BuildContext context, {Key? key}) {
     final visibleExports = _exportHistory
         .where((record) {
           final search = _exportHistorySearchController.text
@@ -1628,6 +1668,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
     return _panel(
       context,
+      key: key ?? _exportHistorySectionKey,
       title: 'Export History',
       subtitle:
           'Browse the latest Omega OS exports, their manifest path, and copied report files.',
@@ -1730,7 +1771,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _bundlePreviewsCard(BuildContext context) {
+  Widget _bundlePreviewsCard(BuildContext context, {Key? key}) {
     final isWide = MediaQuery.sizeOf(context).width >= 1100;
     final previews = [
       _PreviewPanel(
@@ -1758,6 +1799,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
     return _panel(
       context,
+      key: key ?? _bundlePreviewsSectionKey,
       title: 'Bundle Previews',
       subtitle:
           'Read the latest generated report set without leaving the dashboard.',
@@ -1779,6 +1821,123 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 ],
               ],
             ),
+    );
+  }
+
+  Widget _reportDeepLinksCard(BuildContext context) {
+    return _panel(
+      context,
+      title: 'Report Deep Links',
+      subtitle:
+          'Jump directly to the exact report card or bundle view without losing your place.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MetadataRow(
+            label: 'Report views',
+            value:
+                'Main report, knowledge extraction, document discovery, report index, release notes, bundle delta, change timeline, change history, and risk review.',
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _deepLinkButton(
+                context,
+                label: 'Main report',
+                icon: Icons.description_outlined,
+                section: 'reports',
+                anchorKey: _reportsSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Bundle views',
+                icon: Icons.view_carousel_outlined,
+                section: 'reports',
+                anchorKey: _bundlePreviewsSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Comparison drilldown',
+                icon: Icons.compare_arrows,
+                section: 'reports',
+                anchorKey: _comparisonDrilldownSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Knowledge',
+                icon: Icons.auto_awesome_outlined,
+                section: 'reports',
+                anchorKey: _knowledgeSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Documents',
+                icon: Icons.folder_copy_outlined,
+                section: 'reports',
+                anchorKey: _documentDiscoverySectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Report index',
+                icon: Icons.search,
+                section: 'reports',
+                anchorKey: _reportIndexSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Release notes',
+                icon: Icons.article_outlined,
+                section: 'exports',
+                anchorKey: _releaseNotesSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Bundle delta',
+                icon: Icons.swap_horiz_outlined,
+                section: 'exports',
+                anchorKey: _bundleDeltaSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Change timeline',
+                icon: Icons.timeline_outlined,
+                section: 'exports',
+                anchorKey: _changeTimelineSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Change history',
+                icon: Icons.history_outlined,
+                section: 'exports',
+                anchorKey: _changeHistorySectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Risk review',
+                icon: Icons.privacy_tip_outlined,
+                section: 'exports',
+                anchorKey: _riskReviewSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Export review',
+                icon: Icons.upload_outlined,
+                section: 'exports',
+                anchorKey: _exportReviewSectionKey,
+              ),
+              _deepLinkButton(
+                context,
+                label: 'Export history',
+                icon: Icons.folder_open_outlined,
+                section: 'exports',
+                anchorKey: _exportHistorySectionKey,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1827,7 +1986,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _knowledgeCard(BuildContext context) {
+  Widget _deepLinkButton(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required String section,
+    required GlobalKey anchorKey,
+  }) {
+    return TextButton.icon(
+      onPressed: _isRunning
+          ? null
+          : () => _navigateToSection(section, anchorKey: anchorKey),
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+    );
+  }
+
+  Widget _knowledgeCard(BuildContext context, {Key? key}) {
     final knowledge = _latestAnalysis['knowledge'] is Map<String, dynamic>
         ? _latestAnalysis['knowledge'] as Map<String, dynamic>
         : <String, dynamic>{};
@@ -1847,6 +2022,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
     return _panel(
       context,
+      key: key ?? _knowledgeSectionKey,
       title: 'Knowledge Extraction',
       subtitle:
           'Summaries, reusable components, risks, recommendations, and learning notes from the latest local analysis.',
@@ -1994,7 +2170,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _documentDiscoveryCard(BuildContext context) {
+  Widget _documentDiscoveryCard(BuildContext context, {Key? key}) {
     final documentIndex = _latestAnalysis['document_index'] is List
         ? List<Map<String, dynamic>>.from(
             (_latestAnalysis['document_index'] as List).whereType<Map>(),
@@ -2013,6 +2189,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
     return _panel(
       context,
+      key: key ?? _documentDiscoverySectionKey,
       title: 'Document and Asset Discovery',
       subtitle:
           'Review indexed documents, image assets, and diagram sources found during the safe scan.',
@@ -2082,10 +2259,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _reportIndexCard(BuildContext context) {
+  Widget _reportIndexCard(BuildContext context, {Key? key}) {
     return _panel(
       context,
-      key: _reportIndexSectionKey,
+      key: key ?? _reportIndexSectionKey,
       title: 'Report Search Index',
       subtitle: 'Searchable index of the generated report bundle.',
       child: Column(
@@ -2128,9 +2305,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _releaseNotesCard(BuildContext context) {
+  Widget _releaseNotesCard(BuildContext context, {Key? key}) {
     return _panel(
       context,
+      key: key ?? _releaseNotesSectionKey,
       title: 'Release Notes',
       subtitle: 'Roll-up of comparison, change tracking, and release checks.',
       child: Column(
@@ -2175,9 +2353,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _bundleDeltaCard(BuildContext context) {
+  Widget _bundleDeltaCard(BuildContext context, {Key? key}) {
     return _panel(
       context,
+      key: key ?? _bundleDeltaSectionKey,
       title: 'Bundle Delta Summary',
       subtitle: 'What changed between the latest bundle and the previous run.',
       child: Column(
@@ -2218,9 +2397,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _changeTimelineCard(BuildContext context) {
+  Widget _changeTimelineCard(BuildContext context, {Key? key}) {
     return _panel(
       context,
+      key: key ?? _changeTimelineSectionKey,
       title: 'Change Tracking Timeline',
       subtitle:
           'File additions, removals, modifications, and risk shifts across the latest baseline comparison.',
@@ -2263,7 +2443,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _changeHistoryCard(BuildContext context) {
+  Widget _changeHistoryCard(BuildContext context, {Key? key}) {
     final visibleRecords = _changeHistory
         .where((record) {
           final search = _changeHistorySearchController.text
@@ -2284,6 +2464,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
     return _panel(
       context,
+      key: key ?? _changeHistorySectionKey,
       title: 'Change History',
       subtitle:
           'Browse the explicit baseline inventory path and change summary for the latest tracked comparisons.',
@@ -2532,7 +2713,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _exportReviewCard(BuildContext context) {
+  Widget _exportReviewCard(BuildContext context, {Key? key}) {
     final outputDirectory = _outputController.text.trim().isEmpty
         ? _defaultOutputDirectory
         : _outputController.text.trim();
@@ -2576,6 +2757,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     ];
     return _panel(
       context,
+      key: key ?? _exportReviewSectionKey,
       title: 'Export Review',
       subtitle:
           'Confirm what will be copied to the Knowledge Vault and review the masked licence notes before export.',
@@ -2865,7 +3047,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _comparisonDrilldownCard(BuildContext context) {
+  Widget _comparisonDrilldownCard(BuildContext context, {Key? key}) {
     final comparison = _latestComparison;
     final addedItems = _comparisonDetailItems('added');
     final removedItems = _comparisonDetailItems('removed');
@@ -2874,6 +3056,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
     return _panel(
       context,
+      key: key ?? _comparisonDrilldownSectionKey,
       title: 'Comparison Drilldown',
       subtitle:
           'Inspect the file-level deltas from the latest comparison report without opening the raw JSON first.',
@@ -2989,9 +3172,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _riskReviewCard(BuildContext context) {
+  Widget _riskReviewCard(BuildContext context, {Key? key}) {
     return _markdownPreviewCard(
       context,
+      key: key ?? _riskReviewSectionKey,
       title: 'Risk Review',
       subtitle:
           'Security, secret masking, suspicious script review, and licence follow-up notes.',

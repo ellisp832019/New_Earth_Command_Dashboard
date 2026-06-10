@@ -6,7 +6,8 @@
 4. Treat the local AI and RAG registries as the extension point for any future provider work.
 5. Continue round 3 by polishing the dedicated report, profile, export, prompt, and settings subpages.
 6. Use the export review controls as the handoff point for prompt-template picker work and later vault export refinements.
-7. Keep the richer knowledge extraction view aligned with the raw analysis fields and masking rules.
-8. Keep comparison and change history focused on fast review rather than dense raw output.
-9. Expand the graph drilldowns only if users still need more depth after the current filters land.
-10. Use the architecture review card as the primary place for future graph-inspection tweaks.
+7. Use the report deep links to move quickly between exact report cards and export bundle views.
+8. Keep the richer knowledge extraction view aligned with the raw analysis fields and masking rules.
+9. Keep comparison and change history focused on fast review rather than dense raw output.
+10. Expand the graph drilldowns only if users still need more depth after the current filters land.
+11. Use the architecture review card as the primary place for future graph-inspection tweaks.
