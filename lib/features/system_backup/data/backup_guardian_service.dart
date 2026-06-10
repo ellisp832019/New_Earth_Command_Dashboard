@@ -297,14 +297,14 @@ class BackupGuardianService {
     final backupAge = _backupAgeInDays(lastBackupAt);
     if (backupAge != null && backupAge >= config.staleAfterDays) {
       warnings.add(
-        'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old. Run Backup Now soon.',
+        'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old. A fresh backup would be a good next step.',
       );
     }
     if (lastBackupAt != null &&
         lastVerificationAt != null &&
         lastBackupAt.isAfter(lastVerificationAt)) {
       warnings.add(
-        'Latest backup is newer than the last verification. Run Verify Latest again.',
+        'Latest backup has not been verified yet. Run Verify Latest when ready.',
       );
     }
     final healthState = _deriveHealthState(
@@ -321,8 +321,8 @@ class BackupGuardianService {
       BackupGuardianHealthState.amber => sourceExists && !backupDriveExists
           ? 'Backup drive not connected'
           : backupAge != null && backupAge >= config.staleAfterDays
-              ? 'Backup is older than the freshness threshold'
-              : 'Backup exists but still needs review',
+              ? 'Backup is past the freshness threshold'
+              : 'Backup exists but still needs a quick review',
       BackupGuardianHealthState.red => !backupDriveExists
           ? 'Backup drive not connected'
           : 'Backup mirror missing or backup failed',
@@ -342,12 +342,12 @@ class BackupGuardianService {
         : 'Manual backups only for now.';
 
     final retentionSummary =
-        'Quick keep ${config.quickKeep}, daily keep ${config.dailyKeep}, weekly keep ${config.weeklyKeep}, monthly keep ${config.monthlyKeep}.';
+        'Retention keeps quick ${config.quickKeep}, daily ${config.dailyKeep}, weekly ${config.weeklyKeep}, and monthly ${config.monthlyKeep} backup sets.';
 
     final notificationBanner = history.entries.isEmpty
         ? 'No backup history yet. Run a backup to start the timeline.'
         : backupAge != null && backupAge >= config.staleAfterDays
-            ? 'Backup is older than ${config.staleAfterDays} day${config.staleAfterDays == 1 ? '' : 's'}. Run Backup Now soon.'
+            ? 'Backup is older than ${config.staleAfterDays} day${config.staleAfterDays == 1 ? '' : 's'}. A fresh backup would help keep it current.'
             : backupDriveExists
                 ? scheduleSummary
                 : 'Backup drive not connected. Plug in the external drive to continue.';
@@ -458,6 +458,20 @@ class BackupGuardianService {
     }
 
     await _openPath(snapshot.config.reportsFolder);
+  }
+
+  Future<void> openReportPath(String reportPath) async {
+    final normalized = reportPath.trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    if (File(normalized).existsSync()) {
+      await _openFile(normalized);
+      return;
+    }
+
+    await _openPath(path.dirname(normalized));
   }
 
   Future<BackupGuardianConfig> _loadConfig() async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +22,7 @@ class BackupGuardianScreen extends ConsumerStatefulWidget {
 class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
   bool _isBusy = false;
   String? _statusMessage;
+  _HistoryFilter _historyFilter = _HistoryFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +101,25 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                         const SizedBox(height: 20),
                         _StatusGrid(snapshot: snapshot),
                         const SizedBox(height: 20),
-                        _HistoryCard(snapshot: snapshot),
+                        _HistoryCard(
+                          snapshot: snapshot,
+                          historyFilter: _historyFilter,
+                          onHistoryFilterChanged: (filter) {
+                            setState(() {
+                              _historyFilter = filter;
+                            });
+                          },
+                        ),
                         const SizedBox(height: 20),
                         _WarningsCard(snapshot: snapshot),
                         const SizedBox(height: 20),
-                        _ActivityCard(snapshot: snapshot),
+                        _ActivityCard(
+                          snapshot: snapshot,
+                          onOpenReportPath: (reportPath) =>
+                              _openReportPath(reportPath),
+                        ),
+                        const SizedBox(height: 20),
+                        _GrowthCard(snapshot: snapshot),
                         const SizedBox(height: 20),
                         const _RoadmapCard(),
                       ],
@@ -159,6 +176,10 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
 
   Future<void> _viewLatestReport(BackupGuardianSnapshot snapshot) async {
     await ref.read(backupGuardianServiceProvider).viewLatestReport(snapshot);
+  }
+
+  Future<void> _openReportPath(String reportPath) async {
+    await ref.read(backupGuardianServiceProvider).openReportPath(reportPath);
   }
 
   void _refreshStatus() {
@@ -558,6 +579,29 @@ class _AutomationCard extends StatelessWidget {
                   height: 1.35,
                 ),
           ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Badge(
+                label: 'Quick ${snapshot.config.quickKeep}',
+                accent: AppColours.darkAmber,
+              ),
+              _Badge(
+                label: 'Daily ${snapshot.config.dailyKeep}',
+                accent: AppColours.darkSuccess,
+              ),
+              _Badge(
+                label: 'Weekly ${snapshot.config.weeklyKeep}',
+                accent: AppColours.darkPurple,
+              ),
+              _Badge(
+                label: 'Monthly ${snapshot.config.monthlyKeep}',
+                accent: AppColours.darkSecondary,
+              ),
+            ],
+          ),
           const SizedBox(height: 6),
           Text(
             snapshot.freshnessSummary,
@@ -605,15 +649,23 @@ class _AutomationCard extends StatelessWidget {
 }
 
 class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.snapshot});
+  const _HistoryCard({
+    required this.snapshot,
+    required this.historyFilter,
+    required this.onHistoryFilterChanged,
+  });
 
   final BackupGuardianSnapshot snapshot;
+  final _HistoryFilter historyFilter;
+  final ValueChanged<_HistoryFilter> onHistoryFilterChanged;
 
   @override
   Widget build(BuildContext context) {
     final latestEvent = snapshot.historyEntries.isNotEmpty
         ? snapshot.historyEntries.first
         : null;
+    final filteredEntries = _filterEntries(snapshot.historyEntries, historyFilter);
+    final filteredRestorePoints = _filterEntries(snapshot.restorePoints, historyFilter);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -638,13 +690,26 @@ class _HistoryCard extends StatelessWidget {
           if (latestEvent != null) ...[
             const SizedBox(height: 6),
             Text(
-              'Newest events appear first. Latest: ${latestEvent.action.isNotEmpty ? latestEvent.action : latestEvent.mode} at ${_formatDate(latestEvent.finishedAt ?? latestEvent.startedAt)}.',
+              'Newest events appear first. Showing ${_historyFilterDescription(historyFilter)}.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColours.darkSecondary,
                     height: 1.35,
                   ),
             ),
           ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final filter in _HistoryFilter.values)
+                _FilterChip(
+                  label: _historyFilterLabel(filter),
+                  selected: historyFilter == filter,
+                  onSelected: () => onHistoryFilterChanged(filter),
+                ),
+            ],
+          ),
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -652,12 +717,12 @@ class _HistoryCard extends StatelessWidget {
               final timeline = _EventList(
                 title: 'Recent backup events',
                 emptyText: 'No events yet.',
-                entries: snapshot.historyEntries.take(5).toList(growable: false),
+                entries: filteredEntries.take(5).toList(growable: false),
               );
               final restorePoints = _EventList(
                 title: 'Restore points',
                 emptyText: 'No restore points yet.',
-                entries: snapshot.restorePoints.take(5).toList(growable: false),
+                entries: filteredRestorePoints.take(5).toList(growable: false),
                 showRestorePointLabel: true,
               );
 
@@ -681,9 +746,162 @@ class _HistoryCard extends StatelessWidget {
               );
             },
           ),
+          if (filteredRestorePoints.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            _RestorePointPicker(entries: filteredRestorePoints),
+          ],
         ],
       ),
     );
+  }
+
+  List<BackupGuardianHistoryEntry> _filterEntries(
+    List<BackupGuardianHistoryEntry> entries,
+    _HistoryFilter filter,
+  ) {
+    return entries.where((entry) {
+      return switch (filter) {
+        _HistoryFilter.all => true,
+        _HistoryFilter.backups => _isBackupRun(entry),
+        _HistoryFilter.verification => entry.mode == 'VerifyLatest',
+        _HistoryFilter.restorePoints => entry.isRestorePoint,
+        _HistoryFilter.green => entry.state.toLowerCase() == 'green',
+        _HistoryFilter.amber => entry.state.toLowerCase() == 'amber',
+        _HistoryFilter.red => entry.state.toLowerCase() == 'red',
+      };
+    }).toList(growable: false);
+  }
+}
+
+class _RestorePointPicker extends StatefulWidget {
+  const _RestorePointPicker({required this.entries});
+
+  final List<BackupGuardianHistoryEntry> entries;
+
+  @override
+  State<_RestorePointPicker> createState() => _RestorePointPickerState();
+}
+
+class _RestorePointPickerState extends State<_RestorePointPicker> {
+  String? _selectedId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedId = widget.entries.isNotEmpty ? _idFor(widget.entries.first) : null;
+  }
+
+  @override
+  void didUpdateWidget(covariant _RestorePointPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.entries.isEmpty) {
+      _selectedId = null;
+      return;
+    }
+
+    final availableIds = widget.entries.map(_idFor).toSet();
+    if (_selectedId == null || !availableIds.contains(_selectedId)) {
+      _selectedId = _idFor(widget.entries.first);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedEntry = widget.entries.isEmpty
+        ? null
+        : widget.entries.firstWhere(
+            (entry) => _idFor(entry) == _selectedId,
+            orElse: () => widget.entries.first,
+          );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pick a restore point',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose one restore point to review its details without opening runtime files.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedId,
+            items: [
+              for (final entry in widget.entries)
+                DropdownMenuItem<String>(
+                  value: _idFor(entry),
+                  child: Text(_restorePointLabel(entry)),
+                ),
+            ],
+            onChanged: (value) {
+              setState(() => _selectedId = value);
+            },
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+              ),
+              filled: true,
+              fillColor: AppColours.darkSurface.withValues(alpha: 0.9),
+            ),
+          ),
+          if (selectedEntry != null) ...[
+            const SizedBox(height: 12),
+            _StatusTile(
+              label: 'Selected restore point',
+              value: _restorePointLabel(selectedEntry),
+              detail: [
+                _formatDate(selectedEntry.finishedAt ?? selectedEntry.startedAt),
+                if (selectedEntry.duration != null)
+                  _formatDuration(selectedEntry.duration!),
+                if (selectedEntry.filesCopied != null)
+                  '${selectedEntry.filesCopied} files',
+              ].join(' - '),
+              accent: AppColours.darkSuccess,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _idFor(BackupGuardianHistoryEntry? entry) {
+    if (entry == null) {
+      return '';
+    }
+    return [
+      entry.action,
+      entry.mode,
+      entry.restorePointLabel,
+      entry.finishedAt?.toIso8601String() ?? '',
+      entry.startedAt?.toIso8601String() ?? '',
+    ].join('|');
+  }
+
+  String _restorePointLabel(BackupGuardianHistoryEntry entry) {
+    if (entry.restorePointLabel.isNotEmpty) {
+      return entry.restorePointLabel;
+    }
+    return entry.action.isNotEmpty ? entry.action : entry.mode;
   }
 }
 
@@ -1012,9 +1230,13 @@ class _WarningsCard extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.snapshot});
+  const _ActivityCard({
+    required this.snapshot,
+    required this.onOpenReportPath,
+  });
 
   final BackupGuardianSnapshot snapshot;
+  final Future<void> Function(String reportPath) onOpenReportPath;
 
   @override
   Widget build(BuildContext context) {
@@ -1053,6 +1275,89 @@ class _ActivityCard extends StatelessWidget {
             _formatDate(snapshot.statusUpdatedAt),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Recent reports',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 6),
+          if (_recentReports(snapshot).isEmpty)
+            Text(
+              'No report history has been recorded yet.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final report in _recentReports(snapshot))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: TextButton.icon(
+                      onPressed: () {
+                        unawaited(onOpenReportPath(report.path));
+                      },
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: Text(report.label),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColours.darkMutedText,
+                        padding: EdgeInsets.zero,
+                        alignment: Alignment.centerLeft,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GrowthCard extends StatelessWidget {
+  const _GrowthCard({required this.snapshot});
+
+  final BackupGuardianSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final sizeTrend = _backupSizeTrend(snapshot.historyEntries);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Backup growth',
+            icon: Icons.trending_up_outlined,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            sizeTrend.isEmpty
+                ? 'No backup size trend recorded yet.'
+                : sizeTrend,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.4,
+                ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Current backup size: ${snapshot.backupSizeText}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
                 ),
           ),
         ],
@@ -1154,6 +1459,139 @@ class _RoadmapTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+String _backupSizeTrend(List<BackupGuardianHistoryEntry> entries) {
+  final sizes = entries
+      .where((entry) => entry.backupSizeText.isNotEmpty)
+      .toList(growable: false);
+
+  if (sizes.isEmpty) {
+    return '';
+  }
+
+  final latest = sizes.first;
+  final previous = sizes.length > 1 ? sizes[1] : null;
+  if (previous == null) {
+    return 'Latest recorded backup size is ${latest.backupSizeText}.';
+  }
+
+  return 'Latest recorded backup size is ${latest.backupSizeText}, compared with ${previous.backupSizeText} on the previous run.';
+}
+
+class _RecentReport {
+  const _RecentReport({
+    required this.label,
+    required this.path,
+  });
+
+  final String label;
+  final String path;
+}
+
+List<_RecentReport> _recentReports(BackupGuardianSnapshot snapshot) {
+  final reports = <_RecentReport>[];
+  if (snapshot.latestReportPath.trim().isNotEmpty) {
+    reports.add(
+      _RecentReport(
+        label: 'Latest report: ${p.basename(snapshot.latestReportPath)}',
+        path: snapshot.latestReportPath,
+      ),
+    );
+  }
+
+  for (final entry in snapshot.historyEntries) {
+    final reportPath = entry.reportPath.trim();
+    if (reportPath.isEmpty) {
+      continue;
+    }
+    final reportName = p.basename(reportPath);
+    if (reports.any((existing) => p.basename(existing.path) == reportName)) {
+      continue;
+    }
+    reports.add(
+      _RecentReport(
+        label: 'Report: $reportName',
+        path: reportPath,
+      ),
+    );
+    if (reports.length >= 3) {
+      break;
+    }
+  }
+
+  return reports;
+}
+
+bool _isBackupRun(BackupGuardianHistoryEntry entry) {
+  return entry.mode == 'BackupNow' ||
+      entry.mode == 'QuickIncremental' ||
+      entry.mode == 'DailyBackup' ||
+      entry.mode == 'WeeklySnapshot' ||
+      entry.mode == 'MonthlyArchive';
+}
+
+String _historyFilterLabel(_HistoryFilter filter) {
+  return switch (filter) {
+    _HistoryFilter.all => 'All',
+    _HistoryFilter.backups => 'Backups',
+    _HistoryFilter.verification => 'Verification',
+    _HistoryFilter.restorePoints => 'Restore points',
+    _HistoryFilter.green => 'Green',
+    _HistoryFilter.amber => 'Amber',
+    _HistoryFilter.red => 'Red',
+  };
+}
+
+String _historyFilterDescription(_HistoryFilter filter) {
+  return switch (filter) {
+    _HistoryFilter.all => 'all runs',
+    _HistoryFilter.backups => 'backup runs',
+    _HistoryFilter.verification => 'verification runs',
+    _HistoryFilter.restorePoints => 'restore points',
+    _HistoryFilter.green => 'green runs',
+    _HistoryFilter.amber => 'amber runs',
+    _HistoryFilter.red => 'red runs',
+  };
+}
+
+enum _HistoryFilter {
+  all,
+  backups,
+  verification,
+  restorePoints,
+  green,
+  amber,
+  red,
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = selected ? AppColours.darkSuccess : AppColours.darkAmber;
+    return FilterChip(
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      label: Text(label),
+      backgroundColor: AppColours.darkSurfaceAlt.withValues(alpha: 0.7),
+      selectedColor: AppColours.darkSuccess.withValues(alpha: 0.14),
+      side: BorderSide(color: accent.withValues(alpha: 0.35)),
+      labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: selected ? AppColours.darkText : AppColours.darkMutedText,
+            fontWeight: FontWeight.w700,
+          ),
     );
   }
 }

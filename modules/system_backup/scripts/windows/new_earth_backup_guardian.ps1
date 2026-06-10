@@ -741,7 +741,7 @@ switch ($Mode) {
       }
 
       if ($null -eq $Manifest) {
-        $Warnings = @("No manifest is recorded for the latest backup. Basic target checks passed only.")
+        $Warnings = @("The latest backup does not have a readable manifest yet. Basic target checks passed only.")
         if ($TargetStats.file_count -gt 0) {
           $Warnings += "Target contains $($TargetStats.file_count) file$(if ($TargetStats.file_count -eq 1) { '' } else { 's' })."
         }
@@ -797,20 +797,20 @@ switch ($Mode) {
 
       if ($SupportsFingerprint) {
         if ($TargetFingerprint.inventory_hash -ne $ExpectedHash) {
-          $Errors += "Target inventory fingerprint does not match the latest manifest."
+          $Errors += "Target inventory fingerprint mismatch. Manifest has $ExpectedHash but the current target has $($TargetFingerprint.inventory_hash)."
         }
         if ($TargetStats.file_count -ne $ExpectedCount) {
-          $Errors += "Target file count changed from $ExpectedCount to $($TargetStats.file_count)."
+          $Errors += "Target file count mismatch. Manifest expects $ExpectedCount file$(if ($ExpectedCount -eq 1) { '' } else { 's' }) but the current target has $($TargetStats.file_count)."
         }
         if ($TargetStats.size_bytes -ne $ExpectedSize) {
-          $Errors += "Target size changed from $(Format-ByteSize([long]$ExpectedSize)) to $($TargetStats.size_text)."
+          $Errors += "Target size mismatch. Manifest expects $(Format-ByteSize([long]$ExpectedSize)) but the current target is $($TargetStats.size_text)."
         }
       }
       if (-not [string]::IsNullOrWhiteSpace($ExpectedTargetPath) -and $ExpectedTargetPath -ne $Target) {
-        $Warnings += "Manifest target path is $ExpectedTargetPath, not $Target."
+        $Warnings += "Manifest target path is $ExpectedTargetPath, but the current target is $Target."
       }
       if (-not [string]::IsNullOrWhiteSpace($ExpectedTargetDrive) -and $ExpectedTargetDrive -ne $BackupRoot) {
-        $Warnings += "Manifest target drive is $ExpectedTargetDrive, not $BackupRoot."
+        $Warnings += "Manifest target drive is $ExpectedTargetDrive, but the current backup root is $BackupRoot."
       }
 
       if ($Errors.Count -eq 0) {

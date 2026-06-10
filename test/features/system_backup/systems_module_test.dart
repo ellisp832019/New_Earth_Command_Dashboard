@@ -139,7 +139,17 @@ void main() {
     expect(find.text('Quick Incremental'), findsOneWidget);
     expect(find.text('Open Backup Root'), findsOneWidget);
     expect(find.text('BackupNow'), findsWidgets);
-    expect(find.textContaining('Newest events appear first.'), findsOneWidget);
+    expect(find.textContaining('Showing all runs.'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Backups'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Verification'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Restore points'), findsOneWidget);
+    expect(find.text('Pick a restore point'), findsOneWidget);
+    expect(find.text('Backup growth'), findsOneWidget);
+    expect(find.text('Recent reports'), findsOneWidget);
+    expect(find.text('Quick 7'), findsOneWidget);
+    expect(find.text('Daily 7'), findsOneWidget);
+    expect(find.text('Weekly 4'), findsOneWidget);
+    expect(find.text('Monthly 12'), findsOneWidget);
     expect(find.text('Roadmap / Future work'), findsOneWidget);
     expect(find.text('V2 planned'), findsOneWidget);
     expect(find.text('V3 planned'), findsOneWidget);
