@@ -30,6 +30,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Timeline-style change history review
 - Dependency graph filters and drilldowns
 - Architecture graph review views
+- Export review workflow controls with explicit bundle, vault, and prompt inspection
 - Graph export support
 - Rich document indexing
 - Image asset discovery

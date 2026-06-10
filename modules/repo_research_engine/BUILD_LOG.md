@@ -25,6 +25,7 @@
 - Reworked change history into a compact timeline-style review view.
 - Added dependency and architecture graph filters with drilldown panels for node groups, edge groups, and anchors.
 - Added a dedicated architecture graph review card with grouped node, edge, and key-anchor views.
+- Added explicit export review workflow controls with review-first bundle, vault handoff, and prompt pack inspection.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a read-only research source adapter registry for document, PDF, transcript, and website extension points.

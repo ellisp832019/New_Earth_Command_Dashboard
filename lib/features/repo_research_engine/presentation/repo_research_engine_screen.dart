@@ -2456,6 +2456,43 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         ? _defaultOutputDirectory
         : _outputController.text.trim();
     final promptsDirectory = pathJoin(outputDirectory, 'generated_prompts');
+    final reportBundle = [
+      'repo_research_report.md',
+      'repo_summary.md',
+      'security_report.md',
+      'risk_report.md',
+      'knowledge_report.md',
+      'implementation_opportunities.md',
+      'learning_notes.md',
+      'repo_comparison.md',
+      'change_tracking.md',
+      'change_history.md',
+      'dependency_graph.md',
+      'architecture_graph.md',
+      'release_notes.md',
+      'bundle_delta_summary.md',
+    ];
+    final vaultHandoff = [
+      'license_review.md',
+      'vault_note.md',
+      'export_manifest.json',
+    ];
+    final structuredOutputs = [
+      'analysis.json',
+      'scan_manifest.json',
+      'repo_inventory.json',
+      'repository_tree.json',
+      'repo_comparison.json',
+      'change_tracking.json',
+      'change_history.json',
+      'dependency_graph.json',
+      'architecture_graph.json',
+      'comparison_analysis.json',
+      'report_template_selection.json',
+      'report_search_index.json',
+      'release_notes.json',
+      'bundle_delta_summary.json',
+    ];
     return _panel(
       context,
       title: 'Export Review',
@@ -2464,20 +2501,76 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _twoColumnBulletBlock(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: const [
+              _StatusChip(label: 'Review first', muted: false),
+              _StatusChip(label: 'Masked output only', muted: false),
+              _StatusChip(label: 'Local copy only', muted: false),
+              _StatusChip(label: 'No code execution', muted: false),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _exportArtifactGroup(
             context,
-            leftTitle: 'Export Targets',
-            leftItems: [
-              outputDirectory,
-              promptsDirectory,
-              _omegaRootController.text.trim(),
-            ],
-            rightTitle: 'Export Checks',
-            rightItems: [
-              'Vault note is generated from the local template',
-              'Licence review stays masked and local',
-              'Report bundle copies only generated files',
-            ],
+            title: 'Report bundle',
+            subtitle:
+                'These markdown reports and review notes are copied into the local export bundle.',
+            items: reportBundle,
+          ),
+          const SizedBox(height: 12),
+          _exportArtifactGroup(
+            context,
+            title: 'Vault handoff',
+            subtitle:
+                'These files are the explicit Knowledge Vault transfer layer and stay reviewable before copy.',
+            items: vaultHandoff,
+          ),
+          const SizedBox(height: 12),
+          _exportArtifactGroup(
+            context,
+            title: 'Structured outputs',
+            subtitle:
+                'These JSON manifests and indexes stay local and give the export bundle its traceable shape.',
+            items: structuredOutputs,
+          ),
+          const SizedBox(height: 12),
+          _panel(
+            context,
+            title: 'Export Controls',
+            subtitle:
+                'Open the exact workspace, prompts folder, or manifest before anything is copied onward.',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _service.openFolder(outputDirectory),
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Open export folder'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _service.openPath(
+                    pathJoin(outputDirectory, 'export_manifest.json'),
+                  ),
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Open export manifest'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _service.openFolder(promptsDirectory),
+                  icon: const Icon(Icons.article_outlined),
+                  label: const Text('Open prompt pack'),
+                ),
+                if (_omegaRootController.text.trim().isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () =>
+                        _service.openFolder(_omegaRootController.text.trim()),
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: const Text('Open Omega OS root'),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           _markdownPreviewCard(
@@ -2496,6 +2589,52 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             controller: _vaultNotePreviewController,
             openPath: pathJoin(outputDirectory, 'vault_note.md'),
             openLabel: 'Open vault note',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _exportArtifactGroup(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required List<String> items,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in items) _StatusChip(label: item, muted: false),
+            ],
           ),
         ],
       ),
