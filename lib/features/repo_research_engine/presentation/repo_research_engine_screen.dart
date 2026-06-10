@@ -116,6 +116,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   bool _loadingProfileComparison = true;
   bool _loadingTemplateSets = true;
   String _recentRunsFilter = 'all';
+  String _exportHistoryFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
   String _dependencyGraphFilter = 'all';
@@ -1650,22 +1651,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 
   Widget _exportHistoryCard(BuildContext context, {Key? key}) {
+    final search = _exportHistorySearchController.text.trim().toLowerCase();
     final visibleExports = _exportHistory
-        .where((record) {
-          final search = _exportHistorySearchController.text
-              .trim()
-              .toLowerCase();
-          if (search.isEmpty) {
-            return true;
-          }
-          return record.repoName.toLowerCase().contains(search) ||
-              record.repoPath.toLowerCase().contains(search) ||
-              record.profileName.toLowerCase().contains(search) ||
-              record.exportedTo.toLowerCase().contains(search) ||
-              record.exportedFiles.any(
-                (file) => file.toLowerCase().contains(search),
-              );
-        })
+        .where((record) => _matchesExportHistoryFilter(record, search))
         .toList(growable: false);
     final displayExports = visibleExports.take(6).toList(growable: false);
 
@@ -1730,12 +1718,48 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
+                DropdownButtonFormField<String>(
+                  initialValue: _exportHistoryFilter,
+                  decoration: const InputDecoration(
+                    labelText: 'Filter export history by',
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('Any field')),
+                    DropdownMenuItem(
+                      value: 'profile',
+                      child: Text('Profile name'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'repo',
+                      child: Text('Repository path'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'folder',
+                      child: Text('Export folder'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'files',
+                      child: Text('Copied files'),
+                    ),
+                  ],
+                  onChanged: (_isRunning || _loadingExportHistory)
+                      ? null
+                      : (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setState(() {
+                            _exportHistoryFilter = value;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _exportHistorySearchController,
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
                     labelText: 'Search export history',
-                    hintText: 'Repo, profile, export path, or file name',
+                    hintText: 'Search within the selected field scope',
                     prefixIcon: Icon(Icons.search),
                   ),
                 ),
@@ -1769,9 +1793,36 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                     if (record != displayExports.last)
                       const SizedBox(height: 10),
                   ],
-              ],
-            ),
+        ],
+      ),
     );
+  }
+
+  bool _matchesExportHistoryFilter(
+    RepoResearchExportRecord record,
+    String search,
+  ) {
+    if (search.isEmpty) {
+      return true;
+    }
+    final scope = _exportHistoryFilter;
+    return switch (scope) {
+      'profile' => record.profileName.toLowerCase().contains(search),
+      'repo' => record.repoPath.toLowerCase().contains(search),
+      'folder' => record.exportedTo.toLowerCase().contains(search),
+      'files' =>
+        record.exportedFiles.any(
+          (file) => file.toLowerCase().contains(search),
+        ),
+      _ =>
+        record.repoName.toLowerCase().contains(search) ||
+            record.repoPath.toLowerCase().contains(search) ||
+            record.profileName.toLowerCase().contains(search) ||
+            record.exportedTo.toLowerCase().contains(search) ||
+            record.exportedFiles.any(
+              (file) => file.toLowerCase().contains(search),
+            ),
+    };
   }
 
   Widget _bundlePreviewsCard(BuildContext context, {Key? key}) {

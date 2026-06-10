@@ -37,6 +37,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Document index review page with local document, heading, link, table, and note review
 - Image and diagram asset review page with binary-safe review grouping
 - Template library controls with direct inspect and apply actions
+- Export history filtering by profile, repo, folder, and copied files
 - Graph export support
 - Rich document indexing
 - Image asset discovery
