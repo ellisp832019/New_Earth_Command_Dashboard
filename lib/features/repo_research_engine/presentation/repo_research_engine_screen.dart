@@ -837,7 +837,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               runSpacing: 10,
               children: [
                 FilledButton.icon(
-                  onPressed: _isCloning ? null : _cloneIntoWorkspace,
+                  onPressed: _isCloning ? null : _cloneAndScan,
                   icon: _isCloning
                       ? const SizedBox(
                           height: 16,
@@ -845,7 +845,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.file_download_outlined),
-                  label: const Text('Clone to Workspace'),
+                  label: const Text('Clone + Scan'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isCloning ? null : _cloneIntoWorkspace,
+                  icon: const Icon(Icons.folder_copy),
+                  label: const Text('Clone Only'),
                 ),
                 TextButton.icon(
                   onPressed: workspaceRoot.isEmpty
@@ -2805,7 +2810,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     await _run(mode: _RunMode.graphs);
   }
 
-  Future<void> _cloneIntoWorkspace() async {
+  Future<void> _cloneAndScan() async {
+    await _cloneIntoWorkspace(scanAfterClone: true);
+  }
+
+  Future<void> _cloneIntoWorkspace({bool scanAfterClone = false}) async {
     final source = _cloneSourceController.text.trim().isNotEmpty
         ? _cloneSourceController.text.trim()
         : _repoPathController.text.trim();
@@ -2844,7 +2853,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             'Cloned ${result.provider}/${result.ownerPath}/${result.repoName} at $commitLabel';
         _lastCloneSourcePath = result.sourceRoot;
       });
-      _setMessage('Cloned repository into the structured workspace.');
+      if (scanAfterClone) {
+        final scanSucceeded = await _run(mode: _RunMode.bundle);
+        if (mounted) {
+          setState(() {
+            _lastCloneStatus = scanSucceeded
+                ? 'Cloned and scanned ${result.repoName}'
+                : 'Cloned ${result.repoName}, scan needs review';
+          });
+        }
+      } else {
+        _setMessage('Cloned repository into the structured workspace.');
+      }
     } catch (error) {
       if (mounted) {
         setState(() {
@@ -3036,16 +3056,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _setMessage('Applied ${preset.label} preset.');
   }
 
-  Future<void> _run({required _RunMode mode}) async {
+  Future<bool> _run({required _RunMode mode}) async {
     final repoPath = _repoPathController.text.trim();
     if (repoPath.isEmpty) {
       _setMessage('Enter a local repository path first.');
-      return;
+      return false;
     }
     final repoPathWarning = _repoPathWarning(repoPath);
     if (repoPathWarning.isNotEmpty) {
       _setMessage(repoPathWarning);
-      return;
+      return false;
     }
 
     final profile = _profileController.text.trim().isEmpty
@@ -3194,6 +3214,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             ? 'Repository research bundle generated successfully.'
             : 'The command finished, but returned exit code ${result.exitCode}.',
       );
+      return result.succeeded;
     } catch (error) {
       setState(() {
         _logController.text = 'Run failed:\n$error';
@@ -3201,6 +3222,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         _lastRunTimestampLabel = _formatDateTime(DateTime.now());
       });
       _setMessage('Repo Research Engine could not run: $error');
+      return false;
     } finally {
       if (mounted) {
         setState(() {

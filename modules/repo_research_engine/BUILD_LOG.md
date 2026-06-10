@@ -13,6 +13,7 @@
 - Added document, image, and diagram discovery.
 - Added local repository source adapters for GitHub, GitLab, and Bitbucket.
 - Added structured clone workspace importing for remote URLs and local repos.
+- Added one-click clone-and-scan workflow in the dashboard scanner page.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a deterministic local AI provider and in-memory RAG search index.
 - Added module documentation for architecture, data flow, security, and roadmap.

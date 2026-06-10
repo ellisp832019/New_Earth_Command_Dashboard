@@ -41,3 +41,4 @@ See `dashboard_integration/DASHBOARD_PAGE_MAP.md` for the intended route contrac
 - The home route is the main landing page, with nested routes for scanner, reports, profiles, exports, prompts, and settings.
 - The UI should keep the home page as the calm summary view and use the nested routes for focused work.
 - The scanner page now includes an opt-in clone-to-workspace flow that turns a Git URL or local repo into a structured local source folder before scanning.
+- The scanner page now offers a one-click clone-and-scan action that clones into the workspace and immediately runs the safe bundle on the cloned source folder.
