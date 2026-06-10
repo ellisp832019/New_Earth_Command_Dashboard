@@ -4,6 +4,21 @@ import 'voice_presence_controller.dart';
 
 enum VoiceSessionOwner { none, handsfree, assistant, dock }
 
+extension VoiceSessionOwnerLabel on VoiceSessionOwner {
+  String get displayLabel {
+    switch (this) {
+      case VoiceSessionOwner.none:
+        return 'Idle';
+      case VoiceSessionOwner.handsfree:
+        return 'Handsfree';
+      case VoiceSessionOwner.assistant:
+        return 'Assistant';
+      case VoiceSessionOwner.dock:
+        return 'Dock';
+    }
+  }
+}
+
 enum VoiceSessionPhase {
   idle,
   waking,
@@ -12,6 +27,27 @@ enum VoiceSessionPhase {
   speaking,
   awaitingFollowUp,
   error,
+}
+
+extension VoiceSessionPhaseLabel on VoiceSessionPhase {
+  String get displayLabel {
+    switch (this) {
+      case VoiceSessionPhase.idle:
+        return 'Idle';
+      case VoiceSessionPhase.waking:
+        return 'Waking';
+      case VoiceSessionPhase.listening:
+        return 'Listening';
+      case VoiceSessionPhase.processing:
+        return 'Processing';
+      case VoiceSessionPhase.speaking:
+        return 'Speaking';
+      case VoiceSessionPhase.awaitingFollowUp:
+        return 'Awaiting follow-up';
+      case VoiceSessionPhase.error:
+        return 'Error';
+    }
+  }
 }
 
 class VoiceSessionState {

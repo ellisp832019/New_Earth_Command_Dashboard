@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../application/voice_session_controller.dart';
 import '../application/voice_presence_controller.dart';
 
 class VoicePresenceChip extends ConsumerWidget {
@@ -12,10 +13,18 @@ class VoicePresenceChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final presence = ref.watch(voicePresenceProvider);
+    final session = ref.watch(voiceSessionProvider);
     final theme = Theme.of(context);
     final accent = presence.isActive
         ? AppColours.darkSuccess
         : AppColours.darkSecondary;
+    final label = compact && session.owner != VoiceSessionOwner.none
+        ? '${presence.label} · ${session.phase.displayLabel}'
+        : presence.label;
+    final detail = session.owner == VoiceSessionOwner.none
+        ? presence.detail
+        : '${session.owner.displayLabel} · ${session.phase.displayLabel}'
+              ' · ${presence.detail}';
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),
@@ -51,7 +60,7 @@ class VoicePresenceChip extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  presence.label,
+                  label,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: AppColours.darkText,
                     fontWeight: FontWeight.w700,
@@ -61,7 +70,7 @@ class VoicePresenceChip extends ConsumerWidget {
                 if (!compact) ...[
                   const SizedBox(height: 2),
                   Text(
-                    presence.detail,
+                    detail,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: AppColours.darkMutedText,
                       height: 1.0,
