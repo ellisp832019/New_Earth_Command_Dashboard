@@ -3517,35 +3517,82 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: const [
-              _StatusChip(label: 'Bug fixing', muted: false),
-              _StatusChip(label: 'Feature creation', muted: false),
-              _StatusChip(label: 'Architecture review', muted: false),
-              _StatusChip(label: 'Firmware review', muted: false),
-              _StatusChip(label: 'Flutter review', muted: false),
-              _StatusChip(label: 'ESP32 review', muted: false),
-              _StatusChip(label: 'Dashboard review', muted: false),
-              _StatusChip(label: 'Documentation generation', muted: false),
-            ],
-          ),
+          if (_templateSets.isEmpty)
+            Text(
+              'Loading prompt template families...',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            )
+          else
+            DropdownButtonFormField<String>(
+              initialValue:
+                  _templateSets.any((preset) => preset.name == _selectedTemplateSet)
+                  ? _selectedTemplateSet
+                  : null,
+              decoration: const InputDecoration(
+                labelText: 'Prompt template family',
+                hintText: 'Choose the family that should shape generated prompts',
+              ),
+              items: _templateSets
+                  .map(
+                    (preset) => DropdownMenuItem<String>(
+                      value: preset.name,
+                      child: Text(
+                        preset.description.isNotEmpty
+                            ? '${preset.name} - ${preset.description}'
+                            : preset.name,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _isRunning
+                  ? null
+                  : (value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setState(() {
+                        _selectedTemplateSet = value;
+                      });
+                    },
+            ),
           const SizedBox(height: 12),
+          if (selectedTemplateSet != null) ...[
+            _MetadataRow(label: 'Selected family', value: selectedTemplateSet.name),
+            const SizedBox(height: 8),
+            _MetadataRow(
+              label: 'Family description',
+              value: selectedTemplateSet.description.isNotEmpty
+                  ? selectedTemplateSet.description
+                  : 'No description supplied for this family.',
+            ),
+            const SizedBox(height: 8),
+            _MetadataRow(
+              label: 'Vault note template',
+              value: selectedTemplateSet.templates['vault_note'] ??
+                  'repo_research_note_template.md',
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final entry in selectedTemplateSet.templates.entries)
+                  _StatusChip(
+                    label: '${entry.key}: ${entry.value}',
+                    muted: false,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           _MetadataRow(label: 'Prompt output', value: promptsDirectory),
           const SizedBox(height: 8),
           _MetadataRow(
-            label: 'Current template set',
-            value: selectedTemplateSet == null
-                ? _selectedTemplateSet
-                : selectedTemplateSet.description.isNotEmpty
-                ? '${selectedTemplateSet.name} - ${selectedTemplateSet.description}'
-                : selectedTemplateSet.name,
-          ),
-          const SizedBox(height: 8),
-          _MetadataRow(
             label: 'Prompt status',
-            value: 'Generated from the latest local research bundle.',
+            value:
+                'Generated from the latest local research bundle and the selected family.',
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -3561,6 +3608,13 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 onPressed: () => _service.openFolder(outputDirectory),
                 icon: const Icon(Icons.folder),
                 label: const Text('Open Reports Folder'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: _isRunning || _loadingTemplateSets
+                    ? null
+                    : () => _applyTemplateSet(_selectedTemplateSet),
+                icon: const Icon(Icons.playlist_add_check),
+                label: const Text('Apply Selected Family'),
               ),
               OutlinedButton.icon(
                 onPressed: _isRunning

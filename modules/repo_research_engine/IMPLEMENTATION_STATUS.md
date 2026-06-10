@@ -31,6 +31,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Dependency graph filters and drilldowns
 - Architecture graph review views
 - Export review workflow controls with explicit bundle, vault, and prompt inspection
+- Prompt template family picker controls
 - Graph export support
 - Rich document indexing
 - Image asset discovery
