@@ -33,7 +33,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Remembered thread',
+                    'Resume remembered thread',
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
@@ -49,7 +49,20 @@ class VoiceConversationThreadCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Pick up the remembered thread, reuse the latest capture, copy the summary, or start fresh when you need a clean slate.',
+              'The latest capture is ready to continue. Reuse it, copy the summary, or start fresh if you want a new thread.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Resume state',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${conversationContext.entryCountLabel} · Latest capture: ${conversationContext.latestEntryLabel}',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -87,7 +100,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Latest saved step',
+              'Latest capture',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
