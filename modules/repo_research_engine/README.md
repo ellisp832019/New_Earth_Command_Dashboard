@@ -97,3 +97,8 @@ python modules/repo_research_engine/scripts/run_research.py --repo "D:/path/to/r
 
 - `sources/source_registry.py`
 - Supported providers: GitHub, GitLab, Bitbucket
+
+## Read-only research source registry
+
+- `sources/research_source_registry.py`
+- Supported sources: Documentation, PDF, Transcript, Website

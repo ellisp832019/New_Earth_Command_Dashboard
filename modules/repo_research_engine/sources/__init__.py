@@ -24,3 +24,4 @@ from .research_sources import (
     TranscriptResearchSourceAdapter,
     WebsiteResearchSourceAdapter,
 )
+from .research_source_registry import ResearchSourceAdapterRegistry, ResearchSourceProviderSpec

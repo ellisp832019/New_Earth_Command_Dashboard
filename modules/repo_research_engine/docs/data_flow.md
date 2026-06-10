@@ -31,10 +31,12 @@ Remote Git URL or local repository path
 9. The knowledge extractor turns the scan into a project summary, architecture summary, learning notes, implementation ideas, risks, and recommendations.
 10. The exporter writes the report set and records the selected template set in JSON and markdown.
 11. The prompt exporter creates reusable Codex prompts.
-12. The comparison engine can compare another repo or a saved inventory.
-13. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
-14. The graph exporter can write dependency and architecture graph bundles.
-15. The Omega OS adapter can copy the safe bundle into the research library path.
+12. The repository source adapter registry describes the supported read-only GitHub, GitLab, and Bitbucket extension points.
+13. The research source adapter registry describes the supported PDF, website, transcript, and documentation ingestion extension points.
+14. The comparison engine can compare another repo or a saved inventory.
+15. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
+16. The graph exporter can write dependency and architecture graph bundles.
+17. The Omega OS adapter can copy the safe bundle into the research library path.
 
 ## Output Set
 

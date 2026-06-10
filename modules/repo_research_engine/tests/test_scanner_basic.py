@@ -16,6 +16,7 @@ from sources import (
     GitHubSourceAdapter,
     LocalPdfResearchSourceAdapter,
     RepositorySourceAdapterRegistry,
+    ResearchSourceAdapterRegistry,
     RemoteFileRef,
     RemoteRepositoryRef,
     RemoteRepositorySnapshot,
@@ -722,6 +723,31 @@ def test_research_source_interfaces_mark_network_opt_in():
     assert WebsiteResearchSourceAdapter.REQUIRES_NETWORK_OPT_IN is True
     assert document.source.title == "Example research article"
     assert document.text == "Notes"
+
+
+def test_research_source_registry_exposes_offline_adapters():
+    registry = ResearchSourceAdapterRegistry()
+    providers = registry.list_supported_sources()
+
+    assert [provider.name for provider in providers] == [
+        "Documentation",
+        "PDF",
+        "Transcript",
+        "Website",
+    ]
+    assert any(provider.requires_network_opt_in for provider in providers)
+    assert registry.get_provider("pdf").source_kind == "pdf"
+    assert registry.get_provider("website").requires_network_opt_in is True
+
+    pdf_adapter = registry.create_adapter("pdf")
+    docs_adapter = registry.create_adapter("documentation")
+    transcript_adapter = registry.create_adapter("transcript")
+    website_adapter = registry.create_adapter("website")
+
+    assert pdf_adapter.SOURCE_KIND == "pdf"
+    assert docs_adapter.SOURCE_KIND == "documentation"
+    assert transcript_adapter.SOURCE_KIND == "transcript"
+    assert website_adapter.SOURCE_KIND == "website"
 
 
 def test_local_ai_and_rag_interfaces_are_local_first():

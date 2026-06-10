@@ -112,6 +112,15 @@ It turns a local Git repository into:
 - Keeps external repository integration explicit and snapshot-oriented
 - Avoids implying any live network integration beyond future adapter slices
 
+### Research Source Adapter Registry
+
+`sources/research_source_registry.py`
+
+- Describes the supported document ingestion adapters
+- Creates the concrete PDF, website, transcript, and documentation adapter classes
+- Keeps network access opt-in for the website adapter
+- Keeps the local document research surface explicit and future-ready
+
 ### Graph Exporter
 
 `exporters/graph_exporter.py`
@@ -150,3 +159,4 @@ It must not:
 - Codex prompt handoff
 - Future comparison and graphing tools
 - Future live source integrations built on the read-only adapter registry
+- Future document research integrations built on the read-only research source registry
