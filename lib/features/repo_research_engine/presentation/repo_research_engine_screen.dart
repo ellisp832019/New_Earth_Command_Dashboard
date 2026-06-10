@@ -681,6 +681,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             controller: _repoPathController,
             label: 'Repository path',
             hint: r'D:\Projects\example-repo',
+            helperText: _repoPathWarning(_repoPathController.text.trim()),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           _field(
@@ -2676,10 +2678,17 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     required TextEditingController controller,
     required String label,
     required String hint,
+    String? helperText,
+    ValueChanged<String>? onChanged,
   }) {
     return TextField(
       controller: controller,
-      decoration: InputDecoration(labelText: label, hintText: hint),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        helperText: helperText,
+      ),
     );
   }
 
@@ -2874,6 +2883,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final repoPath = _repoPathController.text.trim();
     if (repoPath.isEmpty) {
       _setMessage('Enter a local repository path first.');
+      return;
+    }
+    final repoPathWarning = _repoPathWarning(repoPath);
+    if (repoPathWarning.isNotEmpty) {
+      _setMessage(repoPathWarning);
       return;
     }
 
@@ -3353,6 +3367,32 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _repoPathWarning(String repoPath) {
+    if (repoPath.isEmpty) {
+      return '';
+    }
+    if (_looksLikeRemoteRepository(repoPath)) {
+      return 'Repository path must be a local folder, not a URL or git remote.';
+    }
+    return '';
+  }
+
+  bool _looksLikeRemoteRepository(String value) {
+    final normalized = value.trim().replaceAll('\\', '/').toLowerCase();
+    if (normalized.contains('://')) {
+      return true;
+    }
+    if (normalized.startsWith('git@')) {
+      return true;
+    }
+    if (normalized.endsWith('.git')) {
+      return true;
+    }
+    return normalized.contains('github.com/') ||
+        normalized.contains('gitlab.com/') ||
+        normalized.contains('bitbucket.org/');
   }
 
   Future<void> _openReportFile(String filePath) async {
