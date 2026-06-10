@@ -103,6 +103,11 @@ This module now includes V2 and V3 planning documents.
 Read:
 
 ```text
+docs/roadmap/BACKUP_GUARDIAN_MASTER_ROADMAP.md
+docs/roadmap/BACKUP_GUARDIAN_ENDGAME.md
+docs/roadmap/BACKUP_GUARDIAN_STATUS_TABLE.md
+docs/roadmap/BACKUP_GUARDIAN_PRIORITY_MATRIX.md
+docs/roadmap/BACKUP_GUARDIAN_20_TASK_PLAN.md
 docs/roadmap/V1_V2_V3_ROADMAP.md
 docs/roadmap/FUTURE_WORK_REGISTER.md
 docs/roadmap/PHASE_GATES.md
