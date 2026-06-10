@@ -60,25 +60,24 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                           snapshot: snapshot,
                           onDryRun: () =>
                               _runAction(BackupGuardianAction.dryRun, snapshot),
-                          onBackupNow: () =>
-                              _runAction(BackupGuardianAction.backupNow, snapshot),
-                          onVerifyLatest: () =>
-                              _runAction(
-                                BackupGuardianAction.verifyLatest,
-                                snapshot,
-                              ),
-                          onRestoreDryRun: () =>
-                              _runAction(
-                                BackupGuardianAction.restoreDryRun,
-                                snapshot,
-                              ),
+                          onBackupNow: () => _runAction(
+                            BackupGuardianAction.backupNow,
+                            snapshot,
+                          ),
+                          onVerifyLatest: () => _runAction(
+                            BackupGuardianAction.verifyLatest,
+                            snapshot,
+                          ),
+                          onRestoreDryRun: () => _runAction(
+                            BackupGuardianAction.restoreDryRun,
+                            snapshot,
+                          ),
                           onQuickIncremental: () => _runAction(
                             BackupGuardianAction.quickIncremental,
                             snapshot,
                           ),
                           onOpenBackupFolder: () => _openBackupFolder(snapshot),
-                          onViewLatestReport: () =>
-                              _viewLatestReport(snapshot),
+                          onViewLatestReport: () => _viewLatestReport(snapshot),
                           onRefreshStatus: _refreshStatus,
                         ),
                         const SizedBox(height: 20),
@@ -372,10 +371,7 @@ class _HeroCard extends StatelessWidget {
                 accent: AppColours.darkSecondary,
                 icon: Icons.lock_open_outlined,
               ),
-              _Badge(
-                label: 'Scheduled V2',
-                accent: AppColours.darkSuccess,
-              ),
+              _Badge(label: 'Scheduled V2', accent: AppColours.darkSuccess),
             ],
           ),
         ],
@@ -412,7 +408,8 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasVerification = snapshot.lastVerificationAt != null;
-    final verificationIsFresh = hasVerification &&
+    final verificationIsFresh =
+        hasVerification &&
         DateTime.now().difference(snapshot.lastVerificationAt!.toLocal()) <=
             const Duration(days: 7);
     final verifyAccent = verificationIsFresh
@@ -425,7 +422,10 @@ class _ActionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: 'Actions', icon: Icons.play_arrow_outlined),
+          const _SectionTitle(
+            title: 'Actions',
+            icon: Icons.play_arrow_outlined,
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -468,9 +468,9 @@ class _ActionCard extends StatelessWidget {
                   !hasVerification
                       ? 'Last verified: never'
                       : 'Last verified: ${_formatDate(snapshot.lastVerificationAt)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: verifyAccent,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: verifyAccent),
                 ),
               ),
               OutlinedButton.icon(
@@ -498,8 +498,8 @@ class _ActionCard extends StatelessWidget {
                   child: Text(
                     'Mirror folder is not ready yet, so I am opening the backup root instead.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColours.darkMutedText,
-                        ),
+                      color: AppColours.darkMutedText,
+                    ),
                   ),
                 ),
               OutlinedButton.icon(
@@ -567,17 +567,17 @@ class _AutomationCard extends StatelessWidget {
           Text(
             snapshot.scheduleSummary,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             snapshot.retentionSummary,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  height: 1.35,
-                ),
+              color: AppColours.darkSecondary,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -606,18 +606,18 @@ class _AutomationCard extends StatelessWidget {
           Text(
             snapshot.freshnessSummary,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkText,
+              height: 1.35,
+            ),
           ),
           if (snapshot.nextSuggestedRun != null) ...[
             const SizedBox(height: 6),
             Text(
               'Next suggested run: ${_formatDate(snapshot.nextSuggestedRun)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
           const SizedBox(height: 14),
@@ -664,8 +664,17 @@ class _HistoryCard extends StatelessWidget {
     final latestEvent = snapshot.historyEntries.isNotEmpty
         ? snapshot.historyEntries.first
         : null;
-    final filteredEntries = _filterEntries(snapshot.historyEntries, historyFilter);
-    final filteredRestorePoints = _filterEntries(snapshot.restorePoints, historyFilter);
+    final latestRestorePoint = snapshot.restorePoints.isNotEmpty
+        ? snapshot.restorePoints.first
+        : null;
+    final filteredEntries = _filterEntries(
+      snapshot.historyEntries,
+      historyFilter,
+    );
+    final filteredRestorePoints = _filterEntries(
+      snapshot.restorePoints,
+      historyFilter,
+    );
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -683,20 +692,45 @@ class _HistoryCard extends StatelessWidget {
                 ? 'Recent events from ${p.basename(snapshot.historyFilePath)}'
                 : 'No backup history has been recorded yet.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
           if (latestEvent != null) ...[
             const SizedBox(height: 6),
             Text(
               'Newest events appear first. Showing ${_historyFilterDescription(historyFilter)}.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkSecondary,
+                height: 1.35,
+              ),
             ),
           ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Badge(
+                label: _countLabel(snapshot.historyEntries.length, 'event'),
+                accent: AppColours.darkPurple,
+              ),
+              _Badge(
+                label: _countLabel(
+                  snapshot.restorePoints.length,
+                  'restore point',
+                ),
+                accent: AppColours.darkSuccess,
+              ),
+              if (latestRestorePoint != null)
+                _Badge(
+                  label:
+                      'Latest restore point: '
+                      '${_backupRestorePointLabel(latestRestorePoint)}',
+                  accent: AppColours.darkAmber,
+                ),
+            ],
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -759,17 +793,19 @@ class _HistoryCard extends StatelessWidget {
     List<BackupGuardianHistoryEntry> entries,
     _HistoryFilter filter,
   ) {
-    return entries.where((entry) {
-      return switch (filter) {
-        _HistoryFilter.all => true,
-        _HistoryFilter.backups => _isBackupRun(entry),
-        _HistoryFilter.verification => entry.mode == 'VerifyLatest',
-        _HistoryFilter.restorePoints => entry.isRestorePoint,
-        _HistoryFilter.green => entry.state.toLowerCase() == 'green',
-        _HistoryFilter.amber => entry.state.toLowerCase() == 'amber',
-        _HistoryFilter.red => entry.state.toLowerCase() == 'red',
-      };
-    }).toList(growable: false);
+    return entries
+        .where((entry) {
+          return switch (filter) {
+            _HistoryFilter.all => true,
+            _HistoryFilter.backups => _isBackupRun(entry),
+            _HistoryFilter.verification => entry.mode == 'VerifyLatest',
+            _HistoryFilter.restorePoints => entry.isRestorePoint,
+            _HistoryFilter.green => entry.state.toLowerCase() == 'green',
+            _HistoryFilter.amber => entry.state.toLowerCase() == 'amber',
+            _HistoryFilter.red => entry.state.toLowerCase() == 'red',
+          };
+        })
+        .toList(growable: false);
   }
 }
 
@@ -788,7 +824,9 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
   @override
   void initState() {
     super.initState();
-    _selectedId = widget.entries.isNotEmpty ? _idFor(widget.entries.first) : null;
+    _selectedId = widget.entries.isNotEmpty
+        ? _idFor(widget.entries.first)
+        : null;
   }
 
   @override
@@ -819,7 +857,9 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.8),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,17 +867,17 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
           Text(
             'Pick a restore point',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Choose one restore point to review its details without opening runtime files.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
@@ -846,7 +886,7 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
               for (final entry in widget.entries)
                 DropdownMenuItem<String>(
                   value: _idFor(entry),
-                  child: Text(_restorePointLabel(entry)),
+                  child: Text(_backupRestorePointLabel(entry)),
                 ),
             ],
             onChanged: (value) {
@@ -858,7 +898,9 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+                borderSide: BorderSide(
+                  color: AppColours.darkOutline.withValues(alpha: 0.8),
+                ),
               ),
               filled: true,
               fillColor: AppColours.darkSurface.withValues(alpha: 0.9),
@@ -868,9 +910,11 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
             const SizedBox(height: 12),
             _StatusTile(
               label: 'Selected restore point',
-              value: _restorePointLabel(selectedEntry),
+              value: _backupRestorePointLabel(selectedEntry),
               detail: [
-                _formatDate(selectedEntry.finishedAt ?? selectedEntry.startedAt),
+                _formatDate(
+                  selectedEntry.finishedAt ?? selectedEntry.startedAt,
+                ),
                 if (selectedEntry.duration != null)
                   _formatDuration(selectedEntry.duration!),
                 if (selectedEntry.filesCopied != null)
@@ -896,13 +940,6 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
       entry.startedAt?.toIso8601String() ?? '',
     ].join('|');
   }
-
-  String _restorePointLabel(BackupGuardianHistoryEntry entry) {
-    if (entry.restorePointLabel.isNotEmpty) {
-      return entry.restorePointLabel;
-    }
-    return entry.action.isNotEmpty ? entry.action : entry.mode;
-  }
 }
 
 class _EventList extends StatelessWidget {
@@ -925,7 +962,9 @@ class _EventList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.8),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -933,17 +972,17 @@ class _EventList extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           if (entries.isEmpty)
             Text(
               emptyText,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -997,24 +1036,21 @@ class _HistoryEntryTile extends StatelessWidget {
                 child: Text(
                   entry.action.isNotEmpty ? entry.action : entry.mode,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              _Badge(
-                label: entry.state.toUpperCase(),
-                accent: accent,
-              ),
+              _Badge(label: entry.state.toUpperCase(), accent: accent),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             entry.summary,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -1022,10 +1058,7 @@ class _HistoryEntryTile extends StatelessWidget {
             runSpacing: 8,
             children: [
               if (entry.mode.isNotEmpty)
-                _Badge(
-                  label: entry.mode,
-                  accent: AppColours.darkPurple,
-                ),
+                _Badge(label: entry.mode, accent: AppColours.darkPurple),
               _Badge(
                 label: _formatDate(entry.finishedAt ?? entry.startedAt),
                 accent: AppColours.darkSecondary,
@@ -1065,7 +1098,9 @@ class _StatusGrid extends StatelessWidget {
         label: 'Source drive',
         value: snapshot.sourceDrive,
         detail: snapshot.sourceExists ? 'Visible on this machine' : 'Missing',
-        accent: snapshot.sourceExists ? AppColours.darkSuccess : AppColours.darkAmber,
+        accent: snapshot.sourceExists
+            ? AppColours.darkSuccess
+            : AppColours.darkAmber,
       ),
       _StatusTile(
         label: 'Backup target',
@@ -1073,24 +1108,32 @@ class _StatusGrid extends StatelessWidget {
         detail: snapshot.backupDriveExists
             ? 'External drive visible'
             : 'Backup drive not connected',
-        accent: snapshot.backupDriveExists ? AppColours.darkSuccess : AppColours.darkAmber,
+        accent: snapshot.backupDriveExists
+            ? AppColours.darkSuccess
+            : AppColours.darkAmber,
       ),
       _StatusTile(
         label: 'Latest backup status',
         value: snapshot.latestBackupStatus,
-        detail: snapshot.statusFileExists ? 'From latest_status.json' : 'No status file yet',
+        detail: snapshot.statusFileExists
+            ? 'From latest_status.json'
+            : 'No status file yet',
         accent: AppColours.darkSecondary,
       ),
       _StatusTile(
         label: 'Last backup time',
         value: _formatDate(snapshot.lastBackupAt),
-        detail: snapshot.lastBackupAt == null ? 'Not recorded yet' : 'From latest status',
+        detail: snapshot.lastBackupAt == null
+            ? 'Not recorded yet'
+            : 'From latest status',
         accent: AppColours.darkSecondary,
       ),
       _StatusTile(
         label: 'Last verification time',
         value: _formatDate(snapshot.lastVerificationAt),
-        detail: snapshot.lastVerificationAt == null ? 'Not recorded yet' : 'From latest status',
+        detail: snapshot.lastVerificationAt == null
+            ? 'Not recorded yet'
+            : 'From latest status',
         accent: AppColours.darkSecondary,
       ),
       _StatusTile(
@@ -1174,24 +1217,27 @@ class _WarningsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: 'Warnings and errors', icon: Icons.warning_amber_outlined),
+          const _SectionTitle(
+            title: 'Warnings and errors',
+            icon: Icons.warning_amber_outlined,
+          ),
           const SizedBox(height: 12),
           if (snapshot.warnings.isEmpty && snapshot.errors.isEmpty)
             Text(
               'No warnings yet. The backup module is quiet.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.4,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
             )
           else ...[
             if (snapshot.warnings.isNotEmpty) ...[
               Text(
                 snapshot.backupDriveExists ? 'Warnings' : 'Waiting',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColours.darkText,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -1208,9 +1254,9 @@ class _WarningsCard extends StatelessWidget {
               Text(
                 'Errors',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColours.darkText,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -1230,10 +1276,7 @@ class _WarningsCard extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
-    required this.snapshot,
-    required this.onOpenReportPath,
-  });
+  const _ActivityCard({required this.snapshot, required this.onOpenReportPath});
 
   final BackupGuardianSnapshot snapshot;
   final Future<void> Function(String reportPath) onOpenReportPath;
@@ -1251,47 +1294,47 @@ class _ActivityCard extends StatelessWidget {
           Text(
             'Latest status file',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             p.basename(snapshot.statusFilePath),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 12),
           Text(
             'Last status update',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             _formatDate(snapshot.statusUpdatedAt),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 12),
           Text(
             'Recent reports',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           if (_recentReports(snapshot).isEmpty)
             Text(
               'No report history has been recorded yet.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -1348,17 +1391,17 @@ class _GrowthCard extends StatelessWidget {
                 ? 'No backup size trend recorded yet.'
                 : sizeTrend,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
             'Current backup size: ${snapshot.backupSizeText}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -1388,7 +1431,8 @@ class _RoadmapCard extends StatelessWidget {
               final cards = const [
                 _RoadmapTile(
                   title: 'V2',
-                  subtitle: 'Scheduled backups, history, retention, checksum verification',
+                  subtitle:
+                      'Scheduled backups, history, retention, checksum verification',
                 ),
                 _RoadmapTile(
                   title: 'V3',
@@ -1424,10 +1468,7 @@ class _RoadmapCard extends StatelessWidget {
 }
 
 class _RoadmapTile extends StatelessWidget {
-  const _RoadmapTile({
-    required this.title,
-    required this.subtitle,
-  });
+  const _RoadmapTile({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -1439,7 +1480,9 @@ class _RoadmapTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.75)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.75),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1453,9 +1496,9 @@ class _RoadmapTile extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.4,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -1482,10 +1525,7 @@ String _backupSizeTrend(List<BackupGuardianHistoryEntry> entries) {
 }
 
 class _RecentReport {
-  const _RecentReport({
-    required this.label,
-    required this.path,
-  });
+  const _RecentReport({required this.label, required this.path});
 
   final String label;
   final String path;
@@ -1511,18 +1551,24 @@ List<_RecentReport> _recentReports(BackupGuardianSnapshot snapshot) {
     if (reports.any((existing) => p.basename(existing.path) == reportName)) {
       continue;
     }
-    reports.add(
-      _RecentReport(
-        label: 'Report: $reportName',
-        path: reportPath,
-      ),
-    );
+    reports.add(_RecentReport(label: 'Report: $reportName', path: reportPath));
     if (reports.length >= 3) {
       break;
     }
   }
 
   return reports;
+}
+
+String _backupRestorePointLabel(BackupGuardianHistoryEntry entry) {
+  if (entry.restorePointLabel.isNotEmpty) {
+    return entry.restorePointLabel;
+  }
+  return entry.action.isNotEmpty ? entry.action : entry.mode;
+}
+
+String _countLabel(int count, String singular) {
+  return '$count $singular${count == 1 ? '' : 's'}';
 }
 
 bool _isBackupRun(BackupGuardianHistoryEntry entry) {
@@ -1589,9 +1635,9 @@ class _FilterChip extends StatelessWidget {
       selectedColor: AppColours.darkSuccess.withValues(alpha: 0.14),
       side: BorderSide(color: accent.withValues(alpha: 0.35)),
       labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: selected ? AppColours.darkText : AppColours.darkMutedText,
-            fontWeight: FontWeight.w700,
-          ),
+        color: selected ? AppColours.darkText : AppColours.darkMutedText,
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }
@@ -1624,9 +1670,9 @@ class _StatusTile extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1634,17 +1680,17 @@ class _StatusTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             detail,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -1653,11 +1699,7 @@ class _StatusTile extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.label,
-    required this.accent,
-    this.icon,
-  });
+  const _Badge({required this.label, required this.accent, this.icon});
 
   final String label;
   final Color accent;
@@ -1686,9 +1728,9 @@ class _Badge extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkText,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColours.darkText,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -1698,10 +1740,7 @@ class _Badge extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.icon,
-  });
+  const _SectionTitle({required this.title, required this.icon});
 
   final String title;
   final IconData icon;
@@ -1725,9 +1764,9 @@ class _SectionTitle extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -1761,14 +1800,8 @@ class _ErrorState extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  OutlinedButton(
-                    onPressed: onBack,
-                    child: const Text('Back'),
-                  ),
-                  FilledButton(
-                    onPressed: onRetry,
-                    child: const Text('Retry'),
-                  ),
+                  OutlinedButton(onPressed: onBack, child: const Text('Back')),
+                  FilledButton(onPressed: onRetry, child: const Text('Retry')),
                 ],
               ),
             ],
@@ -1814,7 +1847,10 @@ Color _healthAccent(BackupGuardianHealthState state) {
   };
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceRaised.withValues(alpha: 0.96)

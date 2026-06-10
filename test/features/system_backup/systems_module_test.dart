@@ -10,21 +10,22 @@ import 'package:new_earth_command_dashboard/features/systems/presentation/system
 
 void main() {
   testWidgets('more screen surfaces systems as a module', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: MoreScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: MoreScreen()));
 
     await tester.pumpAndSettle();
 
     expect(find.text('Systems'), findsOneWidget);
-    expect(find.text('Protect the full D: drive, review backup status, and keep recovery tools calm.'), findsOneWidget);
+    expect(
+      find.text(
+        'Protect the full D: drive, review backup status, and keep recovery tools calm.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('systems screen surfaces backup guardian', (tester) async {
     await tester.pumpWidget(
-      ProviderScope(
-        child: const MaterialApp(home: SystemsScreen()),
-      ),
+      ProviderScope(child: const MaterialApp(home: SystemsScreen())),
     );
 
     await tester.pump();
@@ -35,7 +36,9 @@ void main() {
     expect(find.text('Restore dry run'), findsOneWidget);
   });
 
-  testWidgets('backup guardian screen shows status and roadmap', (tester) async {
+  testWidgets('backup guardian screen shows status and roadmap', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -60,10 +63,12 @@ void main() {
                 weeklyKeep: 4,
                 monthlyKeep: 12,
                 mode: 'mirror',
-                configPath: 'modules/system_backup/config/backup_paths.local.json',
+                configPath:
+                    'modules/system_backup/config/backup_paths.local.json',
                 isLocalConfig: true,
               ),
-              statusFilePath: 'modules/system_backup/runtime/latest_status.json',
+              statusFilePath:
+                  'modules/system_backup/runtime/latest_status.json',
               statusFileExists: true,
               sourceExists: true,
               backupDriveExists: true,
@@ -71,10 +76,12 @@ void main() {
               healthState: BackupGuardianHealthState.green,
               latestBackupStatus: 'Latest backup verified',
               latestReportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
-              latestManifestPath: 'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
+              latestManifestPath:
+                  'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
               restoreTestStatus: 'Not run yet',
               backupSizeText: 'Not tracked in V1',
-              historyFilePath: 'modules/system_backup/runtime/backup_history.json',
+              historyFilePath:
+                  'modules/system_backup/runtime/backup_history.json',
               historyEntries: <BackupGuardianHistoryEntry>[
                 BackupGuardianHistoryEntry(
                   action: 'Backup Now',
@@ -88,7 +95,8 @@ void main() {
                   filesCopied: 12,
                   filesSkipped: 0,
                   backupSizeText: '2.0 KB',
-                  manifestPath: 'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
+                  manifestPath:
+                      'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
                   reportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
                   restorePointLabel: 'Manual backup - 2026-06-07 06:00',
                 ),
@@ -106,22 +114,26 @@ void main() {
                   filesCopied: 12,
                   filesSkipped: 0,
                   backupSizeText: '2.0 KB',
-                  manifestPath: 'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
+                  manifestPath:
+                      'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
                   reportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
                   restorePointLabel: 'Manual backup - 2026-06-07 06:00',
                 ),
               ],
-              scheduleSummary: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
-              retentionSummary: 'Quick keep 7, daily keep 7, weekly keep 4, monthly keep 12.',
+              scheduleSummary:
+                  'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
+              retentionSummary:
+                  'Quick keep 7, daily keep 7, weekly keep 4, monthly keep 12.',
               freshnessSummary: 'Backup ran today.',
-              notificationBanner: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
+              notificationBanner:
+                  'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
               nextSuggestedRun: null,
               lastBackupAt: null,
               lastVerificationAt: null,
               statusUpdatedAt: null,
               warnings: <String>['Robocopy exit code: 1'],
-                errors: <String>[],
-                healthSummary: 'Latest backup verified',
+              errors: <String>[],
+              healthSummary: 'Latest backup verified',
             ),
           ),
         ],
@@ -139,6 +151,12 @@ void main() {
     expect(find.text('Quick Incremental'), findsOneWidget);
     expect(find.text('Open Backup Root'), findsOneWidget);
     expect(find.text('BackupNow'), findsWidgets);
+    expect(find.text('1 event'), findsOneWidget);
+    expect(find.text('1 restore point'), findsOneWidget);
+    expect(
+      find.text('Latest restore point: Manual backup - 2026-06-07 06:00'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Showing all runs.'), findsOneWidget);
     expect(find.widgetWithText(FilterChip, 'Backups'), findsOneWidget);
     expect(find.widgetWithText(FilterChip, 'Verification'), findsOneWidget);
