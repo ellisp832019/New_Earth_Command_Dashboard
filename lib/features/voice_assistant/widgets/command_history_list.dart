@@ -114,18 +114,40 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       children: [
+        Text(
+          'Recent capture history',
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Saved captures stay local and can be reopened, copied, or filtered by type.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: Text(
-                'Command History',
-                style: theme.textTheme.titleMedium,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    label: Text('${widget.commands.length} saved captures'),
+                  ),
+                  if (_latestCommand != null)
+                    Chip(
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      label: Text(
+                        'Latest ${_latestCommand!.type.label.toLowerCase()} capture',
+                      ),
+                    ),
+                ],
               ),
             ),
-            Text(
-              '${filteredCommands.length}/${widget.commands.length}',
-              style: theme.textTheme.bodySmall,
-            ),
+            Text('${filteredCommands.length}/${widget.commands.length}'),
           ],
         ),
         const SizedBox(height: 12),
@@ -135,12 +157,12 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Latest capture',
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Latest capture',
                           style: theme.textTheme.titleSmall,
                         ),
                       ),
@@ -152,17 +174,17 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _latestCommand!.transcript,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _latestCommand!.transcript,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
                     '${_latestCommand!.type.label} capture ready to reuse.',
-                    style: theme.textTheme.bodySmall,
-                  ),
+                        style: theme.textTheme.bodySmall,
+                      ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
