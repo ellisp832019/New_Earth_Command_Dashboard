@@ -39,6 +39,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _compareProfileController =
       TextEditingController(text: 'Generic');
+  late final TextEditingController _cloneSourceController =
+      TextEditingController();
+  late final TextEditingController _workspaceRootController =
+      TextEditingController(text: _defaultWorkspaceRoot);
+  late final TextEditingController _cloneBranchController =
+      TextEditingController();
   late final TextEditingController _profileEditorPathController =
       TextEditingController();
   late final TextEditingController _profileEditorController =
@@ -90,6 +96,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
 
   bool _graphExport = true;
+  bool _isCloning = false;
   bool _isRunning = false;
   List<String> _outputFiles = const [];
   List<RepoResearchRunRecord> _recentRuns = const [];
@@ -116,6 +123,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _profileEditorStatus = 'Profile editor not loaded';
   String _profileComparisonStatus = 'Profile comparison not loaded';
   String _selectedTemplateSet = 'Generic';
+  String _lastCloneStatus = 'No workspace clone yet';
+  String _lastCloneSourcePath = '';
   late String _activeSection;
   Map<String, dynamic> _latestAnalysis = {};
   Map<String, dynamic> _latestComparison = {};
@@ -143,6 +152,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String get _defaultProfilesDirectory {
     final moduleRoot = _service.moduleRootDirectory();
     return '${moduleRoot.path}${Platform.pathSeparator}profiles';
+  }
+
+  String get _defaultWorkspaceRoot {
+    final moduleRoot = _service.moduleRootDirectory();
+    return '${moduleRoot.path}${Platform.pathSeparator}workspaces${Platform.pathSeparator}imports';
   }
 
   String get _defaultProfilePath {
@@ -184,6 +198,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _compareWithController.dispose();
     _baselineController.dispose();
     _compareProfileController.dispose();
+    _cloneSourceController.dispose();
+    _workspaceRootController.dispose();
+    _cloneBranchController.dispose();
     _profileEditorPathController.dispose();
     _profileEditorController.dispose();
     _profileCompareLeftPathController.dispose();
@@ -349,6 +366,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         const SizedBox(height: 16),
         _comparisonCard(context),
       ],
+      const SizedBox(height: 16),
+      _workspaceCloneCard(context),
       const SizedBox(height: 16),
       _comparisonInsightsCard(context),
       const SizedBox(height: 16),
@@ -762,6 +781,78 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                   onPressed: _isRunning ? null : _runGraphExport,
                   icon: const Icon(Icons.account_tree_outlined),
                   label: const Text('Graphs only'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _workspaceCloneCard(BuildContext context) {
+    final workspaceRoot = _workspaceRootController.text.trim().isEmpty
+        ? _defaultWorkspaceRoot
+        : _workspaceRootController.text.trim();
+    return _panel(
+      context,
+      title: 'Clone Into Workspace',
+      subtitle:
+          'Clone a remote Git source or local repository into a structured local workspace before scanning.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _field(
+            controller: _cloneSourceController,
+            label: 'Source URL or local repo',
+            hint: r'https://github.com/owner/repo.git or D:\path\to\repo',
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          _field(
+            controller: _workspaceRootController,
+            label: 'Workspace root',
+            hint: _defaultWorkspaceRoot,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          _field(
+            controller: _cloneBranchController,
+            label: 'Branch (optional)',
+            hint: 'main',
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(label: 'Workspace layout', value: workspaceRoot),
+          const SizedBox(height: 8),
+          _MetadataRow(label: 'Last clone', value: _lastCloneStatus),
+          if (_lastCloneSourcePath.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _MetadataRow(label: 'Source folder', value: _lastCloneSourcePath),
+          ],
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: _isCloning ? null : _cloneIntoWorkspace,
+                  icon: _isCloning
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.file_download_outlined),
+                  label: const Text('Clone to Workspace'),
+                ),
+                TextButton.icon(
+                  onPressed: workspaceRoot.isEmpty
+                      ? null
+                      : () => _service.openFolder(workspaceRoot),
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Open Workspace Root'),
                 ),
               ],
             ),
@@ -2452,6 +2543,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         : _outputController.text.trim();
     final omegaRoot = _omegaRootController.text.trim();
     final profilesDirectory = _defaultProfilesDirectory;
+    final workspaceRoot = _workspaceRootController.text.trim().isEmpty
+        ? _defaultWorkspaceRoot
+        : _workspaceRootController.text.trim();
 
     return _panel(
       context,
@@ -2470,6 +2564,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           _MetadataRow(label: 'Output folder', value: outputDirectory),
           const SizedBox(height: 8),
           _MetadataRow(label: 'Profiles folder', value: profilesDirectory),
+          const SizedBox(height: 8),
+          _MetadataRow(label: 'Workspace root', value: workspaceRoot),
           const SizedBox(height: 8),
           _MetadataRow(label: 'Omega OS export root', value: omegaRoot),
           const SizedBox(height: 12),
@@ -2498,6 +2594,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 onPressed: () => _service.openFolder(profilesDirectory),
                 icon: const Icon(Icons.folder),
                 label: const Text('Open Profiles Folder'),
+              ),
+              TextButton.icon(
+                onPressed: () => _service.openFolder(workspaceRoot),
+                icon: const Icon(Icons.folder_copy),
+                label: const Text('Open Workspace Root'),
               ),
               TextButton.icon(
                 onPressed: () => _service.openFolder(omegaRoot),
@@ -2702,6 +2803,62 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
   Future<void> _runGraphExport() async {
     await _run(mode: _RunMode.graphs);
+  }
+
+  Future<void> _cloneIntoWorkspace() async {
+    final source = _cloneSourceController.text.trim().isNotEmpty
+        ? _cloneSourceController.text.trim()
+        : _repoPathController.text.trim();
+    if (source.isEmpty) {
+      _setMessage('Enter a repository URL or local repo path first.');
+      return;
+    }
+
+    final workspaceRoot = _workspaceRootController.text.trim().isEmpty
+        ? _defaultWorkspaceRoot
+        : _workspaceRootController.text.trim();
+    final branch = _cloneBranchController.text.trim();
+
+    setState(() {
+      _isCloning = true;
+      _lastCloneStatus = 'Cloning...';
+    });
+
+    try {
+      final result = await _service.cloneRepository(
+        source: source,
+        workspaceRoot: workspaceRoot,
+        branch: branch.isEmpty ? null : branch,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _repoPathController.text = result.sourceRoot;
+        final commitLabel = result.commit.isEmpty
+            ? 'latest'
+            : (result.commit.length > 8
+                  ? result.commit.substring(0, 8)
+                  : result.commit);
+        _lastCloneStatus =
+            'Cloned ${result.provider}/${result.ownerPath}/${result.repoName} at $commitLabel';
+        _lastCloneSourcePath = result.sourceRoot;
+      });
+      _setMessage('Cloned repository into the structured workspace.');
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _lastCloneStatus = 'Clone failed';
+        });
+      }
+      _setMessage('Could not clone repository: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCloning = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadProfileEditor() async {

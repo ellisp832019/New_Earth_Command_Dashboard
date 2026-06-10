@@ -7,6 +7,13 @@ from .source_adapters import (
     RemoteRepositoryRef,
     RemoteRepositorySnapshot,
 )
+from .repository_workspace import (
+    RepositoryCloneRequest,
+    RepositoryCloneResult,
+    RepositoryIdentity,
+    RepositoryWorkspaceLayout,
+    RepositoryWorkspaceManager,
+)
 from .research_sources import (
     DocumentationResearchSourceAdapter,
     LocalPdfResearchSourceAdapter,

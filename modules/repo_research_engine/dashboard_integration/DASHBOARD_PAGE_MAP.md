@@ -10,7 +10,7 @@
 ### Repository Scanner
 
 - route: `/more/repo-research-engine/scanner`
-- purpose: select a local repo path and run the safe scan
+- purpose: clone a source into a structured workspace, then select the local repo path and run the safe scan
 
 ### Research Reports
 

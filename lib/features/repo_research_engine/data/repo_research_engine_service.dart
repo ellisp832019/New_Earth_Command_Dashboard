@@ -21,6 +21,44 @@ class RepoResearchEngineRunResult {
   bool get succeeded => exitCode == 0;
 }
 
+class RepoResearchCloneResult {
+  const RepoResearchCloneResult({
+    required this.exitCode,
+    required this.source,
+    required this.workspaceRoot,
+    required this.repositoryRoot,
+    required this.sourceRoot,
+    required this.provider,
+    required this.ownerPath,
+    required this.repoName,
+    required this.branch,
+    required this.commit,
+    required this.manifestPath,
+    required this.workspaceManifestPath,
+    required this.command,
+    required this.stdout,
+    required this.stderr,
+  });
+
+  final int exitCode;
+  final String source;
+  final String workspaceRoot;
+  final String repositoryRoot;
+  final String sourceRoot;
+  final String provider;
+  final String ownerPath;
+  final String repoName;
+  final String branch;
+  final String commit;
+  final String manifestPath;
+  final String workspaceManifestPath;
+  final List<String> command;
+  final String stdout;
+  final String stderr;
+
+  bool get succeeded => exitCode == 0;
+}
+
 class RepoResearchRunRecord {
   const RepoResearchRunRecord({
     required this.timestamp,
@@ -206,6 +244,71 @@ class RepoResearchEngineService {
       stderr: stderrBuffer.toString(),
       outputDirectory: outDirectory,
       command: <String>[command, ...args],
+    );
+  }
+
+  Future<RepoResearchCloneResult> cloneRepository({
+    required String source,
+    required String workspaceRoot,
+    String? branch,
+  }) async {
+    final moduleRoot = moduleRootDirectory();
+    final script = path.join(moduleRoot.path, 'scripts', 'clone_repo.py');
+    final args = <String>[
+      script,
+      '--source',
+      source,
+      '--workspace-root',
+      workspaceRoot,
+    ];
+    if (branch != null && branch.trim().isNotEmpty) {
+      args.addAll(['--branch', branch.trim()]);
+    }
+
+    final command = _pythonCommand();
+    final process = await Process.start(
+      command,
+      args,
+      workingDirectory: moduleRoot.path,
+      runInShell: true,
+    );
+    final stdoutBuffer = StringBuffer();
+    final stderrBuffer = StringBuffer();
+
+    process.stdout.transform(utf8.decoder).listen(stdoutBuffer.write);
+    process.stderr.transform(utf8.decoder).listen(stderrBuffer.write);
+    final exitCode = await process.exitCode;
+    final stdout = stdoutBuffer.toString();
+    final stderr = stderrBuffer.toString();
+
+    if (exitCode != 0) {
+      throw StateError(
+        stderr.trim().isNotEmpty ? stderr.trim() : 'Repository clone failed.',
+      );
+    }
+
+    final decoded = jsonDecode(stdout);
+    if (decoded is! Map<String, dynamic>) {
+      throw StateError('Repository clone returned an invalid response.');
+    }
+
+    return RepoResearchCloneResult(
+      exitCode: exitCode,
+      source: decoded['source']?.toString() ?? source,
+      workspaceRoot: decoded['workspace_root']?.toString() ?? workspaceRoot,
+      repositoryRoot: decoded['repository_root']?.toString() ?? '',
+      sourceRoot: decoded['source_root']?.toString() ?? '',
+      provider: decoded['provider']?.toString() ?? 'local',
+      ownerPath: decoded['owner_path']?.toString() ?? '',
+      repoName: decoded['repo_name']?.toString() ?? '',
+      branch: decoded['branch']?.toString() ?? '',
+      commit: decoded['commit']?.toString() ?? '',
+      manifestPath: decoded['manifest_path']?.toString() ?? '',
+      workspaceManifestPath:
+          decoded['workspace_manifest_path']?.toString() ?? '',
+      command: <String>[command, ...args],
+      stdout: stdout,
+      stderr: stderr,
     );
   }
 

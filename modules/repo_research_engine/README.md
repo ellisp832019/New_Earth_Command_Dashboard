@@ -5,6 +5,7 @@ The Repo Research Engine is a safe, local-first research module for analysing Gi
 ## What it does
 
 - Scans local repositories without executing unknown code
+- Can clone a remote Git source into a structured local workspace before scanning
 - Builds a recursive inventory and repository tree
 - Detects languages, frameworks, firmware, hardware design files, docs, licences, and dependencies
 - Flags secrets, keys, tokens, certificates, suspicious binaries, and dangerous scripts
@@ -65,6 +66,12 @@ It must never:
 
 ```bash
 python modules/repo_research_engine/scripts/run_research.py --repo "D:/path/to/repo" --profile MicroGrow --out modules/repo_research_engine/reports
+```
+
+To clone a source into a structured workspace first:
+
+```bash
+python modules/repo_research_engine/scripts/clone_repo.py --source "https://github.com/owner/repo.git" --workspace-root "modules/repo_research_engine/workspaces/imports"
 ```
 
 To export into Omega OS at the same time:
