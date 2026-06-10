@@ -136,6 +136,14 @@ Park these until the local-first core is strong enough:
 
 Use these docs for the detailed slices:
 
+- [`docs/roadmap/dashboard_module_landscape.md`](dashboard_module_landscape.md)
+- [`docs/roadmap/dashboard_module_map.md`](dashboard_module_map.md)
+- [`docs/roadmap/dashboard_ranked_roadmap.md`](dashboard_ranked_roadmap.md)
+- [`docs/roadmap/dashboard_module_activation_roadmap.md`](dashboard_module_activation_roadmap.md)
+- [`docs/roadmap/dashboard_module_first_week_plan.md`](dashboard_module_first_week_plan.md)
+- [`docs/roadmap/dashboard_module_20_task_execution_queue.md`](dashboard_module_20_task_execution_queue.md)
+- [`docs/roadmap/dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
+- [`docs/roadmap/dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
 - [`docs/roadmap/mvp_roadmap.md`](mvp_roadmap.md)
 - [`docs/roadmap/mvp_execution_plan.md`](mvp_execution_plan.md)
 - [`docs/roadmap/future_tasks.md`](future_tasks.md)
@@ -143,7 +151,7 @@ Use these docs for the detailed slices:
 - [`docs/roadmap/ai_10_task_roadmap.md`](ai_10_task_roadmap.md)
 - [`docs/roadmap/treasury_20_task_roadmap.md`](treasury_20_task_roadmap.md)
 
-## What “Done” Means For A Slice
+## What "Done" Means For A Slice
 
 A slice is only done when:
 
@@ -173,4 +181,3 @@ The best next order is:
 3. Keep Knowledge Library reliable and useful.
 4. Add the AI adapter contract and stub.
 5. Layer on AI assist features only after the stub is stable.
-
