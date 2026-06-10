@@ -1,0 +1,65 @@
+{
+  "profile_name": "Omega OS",
+  "project_type": "New Earth file-system, knowledge, treasury and operations OS",
+  "priority_keywords": [
+    "vault",
+    "Obsidian",
+    "backup",
+    "filesystem",
+    "index",
+    "markdown",
+    "automation",
+    "local-first",
+    "knowledge base",
+    "sync",
+    "archive"
+  ],
+  "ignore_keywords": [
+    "cloud lock-in",
+    "black box"
+  ],
+  "risk_keywords": [
+    "delete",
+    "overwrite",
+    "credential",
+    "secret",
+    "token",
+    "destructive"
+  ],
+  "useful_file_patterns": [
+    "README*",
+    "docs/**/*.md",
+    "scripts/**/*",
+    "*.ps1",
+    "*.py",
+    "*.json",
+    "*.yaml"
+  ],
+  "output_focus": [
+    "file structures",
+    "automation scripts",
+    "knowledge indexing",
+    "backup strategy",
+    "dashboard integration"
+  ],
+  "template_set": "Omega OS",
+  "template_set_description": "General-purpose export template for broader Omega OS research work.",
+  "export_locations": [
+    "D:/NEW_EARTH_OMEGA_OS_PACK/22_KNOWLEDGE_AND_LEARNING/GIT_RESEARCH_LIBRARY/GENERAL"
+  ],
+  "report_templates": {
+    "main_report": "repo_research_report.md",
+    "summary": "repo_summary.md",
+    "security": "security_report.md",
+    "risk": "risk_report.md",
+    "knowledge": "knowledge_report.md",
+    "implementation_opportunities": "implementation_opportunities.md",
+    "learning_notes": "learning_notes.md",
+    "vault_note": "repo_research_note_template.md"
+  },
+  "export_targets": [
+    "Omega OS",
+    "Obsidian",
+    "Dashboard"
+  ]
+}

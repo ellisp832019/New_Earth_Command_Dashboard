@@ -1,0 +1,66 @@
+{
+  "profile_name": "BioCalm",
+  "project_type": "local-first wearable wellness and emotional-state research",
+  "priority_keywords": [
+    "ESP32",
+    "wearable",
+    "HRV",
+    "PPG",
+    "GSR",
+    "EDA",
+    "BLE",
+    "sensor",
+    "wellbeing",
+    "privacy",
+    "local-first",
+    "breathwork"
+  ],
+  "ignore_keywords": [
+    "medical claim",
+    "diagnosis",
+    "cloud-only tracking"
+  ],
+  "risk_keywords": [
+    "medical diagnosis",
+    "patient data",
+    "token",
+    "secret",
+    "regulated claim"
+  ],
+  "useful_file_patterns": [
+    "*.ino",
+    "*.cpp",
+    "*.h",
+    "README*",
+    "docs/**/*.md",
+    "lib/**/*.dart",
+    "platformio.ini"
+  ],
+  "output_focus": [
+    "sensor ideas",
+    "privacy patterns",
+    "wearable architecture",
+    "New Earth Living integration",
+    "ethical warnings"
+  ],
+  "template_set": "BioCalm",
+  "template_set_description": "Calm review template for wellbeing and low-friction analysis notes.",
+  "export_locations": [
+    "D:/NEW_EARTH_OMEGA_OS_PACK/22_KNOWLEDGE_AND_LEARNING/GIT_RESEARCH_LIBRARY/BIOCALM"
+  ],
+  "report_templates": {
+    "main_report": "repo_research_report.md",
+    "summary": "repo_summary.md",
+    "security": "security_report.md",
+    "risk": "risk_report.md",
+    "knowledge": "knowledge_report.md",
+    "implementation_opportunities": "implementation_opportunities.md",
+    "learning_notes": "learning_notes.md",
+    "vault_note": "repo_research_note_template.md"
+  },
+  "export_targets": [
+    "BioCalm docs",
+    "Obsidian",
+    "New Earth Living"
+  ]
+}

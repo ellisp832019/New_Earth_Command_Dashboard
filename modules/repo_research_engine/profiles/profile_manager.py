@@ -6,6 +6,8 @@ from typing import Any, Dict, Iterable, List
 import json
 
 DEFAULT_PROFILE_FIELDS: Dict[str, Any] = {
+    "template_set": "Generic",
+    "template_set_description": "Balanced local-first research bundle for general repositories.",
     "priority_keywords": [],
     "ignore_keywords": [],
     "risk_keywords": [],
@@ -87,6 +89,8 @@ class ProfileManager:
         profile.update(data)
         profile.setdefault("profile_name", source_path.stem)
         profile.setdefault("project_type", "generic local-first repository")
+        profile.setdefault("template_set", profile.get("profile_name", "Generic"))
+        profile.setdefault("template_set_description", "")
         profile.setdefault("export_locations", [])
         profile.setdefault("report_templates", dict(DEFAULT_PROFILE_FIELDS["report_templates"]))
         profile["profile_path"] = str(source_path)

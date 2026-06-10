@@ -35,6 +35,8 @@ class MarkdownExporter:
             "learning_notes.md": self._render_learning_notes(),
             "report_template_selection.json": {
                 "profile_name": self.analysis.get("profile_name"),
+                "template_set": self.analysis.get("template_set"),
+                "template_set_description": self.analysis.get("template_set_description", ""),
                 "report_templates": template_selection,
             },
             "report_template_selection.md": self._render_template_selection(template_selection),
@@ -501,8 +503,20 @@ class MarkdownExporter:
         return "\n".join(lines).rstrip() + "\n"
 
     def _render_template_selection(self, templates: Dict[str, Any]) -> str:
+        template_set = self.analysis.get("template_set", "Unknown")
+        template_set_description = self.analysis.get("template_set_description", "")
         lines = [
             "# Report Template Selection",
+            "",
+            f"Template set: **{template_set}**",
+        ]
+        if template_set_description:
+            lines += [
+                "",
+                "## Template Set Notes",
+                template_set_description,
+            ]
+        lines += [
             "",
             "## Selected Templates",
         ]
@@ -511,4 +525,10 @@ class MarkdownExporter:
                 lines.append(f"- {key}: `{value}`")
         else:
             lines.append("- No template mapping was provided by the profile.")
+        lines += [
+            "",
+            "## Editing Notes",
+            "- Keep the template mapping in the profile JSON so local edits stay explicit.",
+            "- Update the template set name alongside the mapping when you switch bundle styles.",
+        ]
         return "\n".join(lines).rstrip() + "\n"

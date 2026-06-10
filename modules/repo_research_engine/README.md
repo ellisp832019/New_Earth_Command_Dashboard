@@ -88,3 +88,7 @@ python modules/repo_research_engine/scripts/run_research.py --repo "D:/path/to/r
 - `docs/data_flow.md`
 - `docs/security_model.md`
 - `docs/roadmap.md`
+
+## Editable template registry
+
+- `config/template_sets.json`

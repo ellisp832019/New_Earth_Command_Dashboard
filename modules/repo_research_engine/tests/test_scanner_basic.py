@@ -127,6 +127,7 @@ def test_profile_manager_loads_profile_by_name():
     manager = ProfileManager(Path(__file__).resolve().parents[1] / "profiles")
     profile = manager.load_profile("MicroGrow")
     assert profile["profile_name"] == "MicroGrow"
+    assert profile["template_set"] == "MicroGrow"
     assert "export_locations" in profile
     assert "report_templates" in profile
 
@@ -225,6 +226,8 @@ def test_markdown_and_prompt_exports(tmp_path):
         "profile_focus": ["docs", "implementation"],
         "output_focus": ["docs"],
         "risk_flags": [],
+        "template_set": "Generic",
+        "template_set_description": "Balanced local-first research bundle for general repositories.",
         "knowledge": {
             "project_summary": "Summary.",
             "architecture_summary": "Architecture.",
@@ -249,6 +252,13 @@ def test_markdown_and_prompt_exports(tmp_path):
         encoding="utf-8",
     )
     assert "Repo Research Note" in (output_dir / "vault_note.md").read_text(
+        encoding="utf-8",
+    )
+    template_selection = json.loads(
+        (output_dir / "report_template_selection.json").read_text(encoding="utf-8")
+    )
+    assert template_selection["template_set"] == "Generic"
+    assert "Template set:" in (output_dir / "report_template_selection.md").read_text(
         encoding="utf-8",
     )
     assert "Profile Focus" in (output_dir / "knowledge_report.md").read_text(

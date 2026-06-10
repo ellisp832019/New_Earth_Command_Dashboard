@@ -34,6 +34,8 @@ class ProfileAnalyser:
         return {
             "profile_name": self.profile.get("profile_name"),
             "project_type": self.profile.get("project_type"),
+            "template_set": self.profile.get("template_set", self.profile.get("profile_name")),
+            "template_set_description": self.profile.get("template_set_description", ""),
             "repo_path": self.scan.get("repo_path"),
             "repo_name": self.scan.get("repo_name"),
             "scanned_at": self.scan.get("scanned_at"),

@@ -107,12 +107,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   List<RepoResearchRunRecord> _recentRuns = const [];
   List<RepoResearchChangeHistoryRecord> _changeHistory = const [];
   List<RepoResearchExportRecord> _exportHistory = const [];
+  List<_TemplateSetPreset> _templateSets = const [];
   bool _loadingCloneHistory = true;
   bool _loadingRecentRuns = true;
   bool _loadingChangeHistory = true;
   bool _loadingExportHistory = true;
   bool _loadingProfileEditor = true;
   bool _loadingProfileComparison = true;
+  bool _loadingTemplateSets = true;
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
@@ -172,12 +174,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     return pathJoin(_defaultProfilesDirectory, 'generic.profile.json');
   }
 
+  String get _templateSetsPath {
+    final moduleRoot = _service.moduleRootDirectory();
+    return pathJoin(pathJoin(moduleRoot.path, 'config'), 'template_sets.json');
+  }
+
+  _TemplateSetPreset? get _selectedTemplateSetPreset {
+    for (final preset in _templateSets) {
+      if (preset.name == _selectedTemplateSet) {
+        return preset;
+      }
+    }
+    return _templateSets.isNotEmpty ? _templateSets.first : null;
+  }
+
   String get _exportHistoryMarkdownPath {
     final moduleRoot = _service.moduleRootDirectory();
-    return pathJoin(
-      pathJoin(moduleRoot.path, 'reports'),
-      'export_history.md',
-    );
+    return pathJoin(pathJoin(moduleRoot.path, 'reports'), 'export_history.md');
   }
 
   @override
@@ -188,6 +201,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _loadRecentRuns();
     _loadChangeHistory();
     _loadExportHistory();
+    _loadTemplateSets();
     _loadProfileEditor();
     _loadProfileComparison();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -976,7 +990,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedTemplateSet,
+                  initialValue:
+                      _templateSets.any(
+                        (preset) => preset.name == _selectedTemplateSet,
+                      )
+                      ? _selectedTemplateSet
+                      : null,
                   decoration: const InputDecoration(
                     labelText: 'Report template set',
                   ),
@@ -984,11 +1003,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                       .map(
                         (preset) => DropdownMenuItem<String>(
                           value: preset.name,
-                          child: Text(preset.name),
+                          child: Text(
+                            preset.description.isNotEmpty
+                                ? '${preset.name} - ${preset.description}'
+                                : preset.name,
+                          ),
                         ),
                       )
                       .toList(),
-                  onChanged: _isRunning
+                  onChanged: (_isRunning || _loadingTemplateSets)
                       ? null
                       : (value) {
                           if (value == null) {
@@ -999,6 +1022,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                           });
                         },
                 ),
+                if (_loadingTemplateSets) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Loading template set registry...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 10,
@@ -2799,6 +2831,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         ? _defaultOutputDirectory
         : _outputController.text.trim();
     final promptsDirectory = pathJoin(outputDirectory, 'generated_prompts');
+    final selectedTemplateSet = _selectedTemplateSetPreset;
 
     return _panel(
       context,
@@ -2836,7 +2869,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           const SizedBox(height: 8),
           _MetadataRow(
             label: 'Current template set',
-            value: _selectedTemplateSet,
+            value: selectedTemplateSet == null
+                ? _selectedTemplateSet
+                : selectedTemplateSet.description.isNotEmpty
+                ? '${selectedTemplateSet.name} - ${selectedTemplateSet.description}'
+                : selectedTemplateSet.name,
           ),
           const SizedBox(height: 8),
           _MetadataRow(
@@ -3343,6 +3380,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               'output_focus': [],
               'export_targets': [],
               'export_locations': [],
+              'template_set': _selectedTemplateSet,
+              'template_set_description':
+                  _selectedTemplateSetPreset?.description ?? '',
               'report_templates': {},
             });
       final pretty = _prettyJson(text);
@@ -3398,18 +3438,27 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   void _applyTemplateSet(String templateSetName) {
     final preset = _templateSets.firstWhere(
       (item) => item.name == templateSetName,
-      orElse: () => _templateSets.first,
+      orElse: () => _templateSets.isNotEmpty
+          ? _templateSets.first
+          : const _TemplateSetPreset(
+              name: 'Generic',
+              description: '',
+              templates: {},
+            ),
     );
     try {
       final decoded = jsonDecode(_profileEditorController.text);
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException('Profile JSON must be an object');
       }
+      decoded['template_set'] = preset.name;
+      decoded['template_set_description'] = preset.description;
       decoded['report_templates'] = preset.templates;
       final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
       setState(() {
         _profileEditorController.text = pretty;
         _profileEditorStatus = 'Applied ${preset.name} template set.';
+        _selectedTemplateSet = preset.name;
       });
       _setMessage('Applied ${preset.name} template set.');
     } catch (error) {
@@ -3752,6 +3801,181 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _loadingExportHistory = false;
       _exportHistoryPath = _exportHistoryMarkdownPath;
     });
+  }
+
+  Future<void> _loadTemplateSets() async {
+    if (mounted) {
+      setState(() {
+        _loadingTemplateSets = true;
+      });
+    }
+
+    final loadedSets = await _readTemplateSetsRegistry();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _templateSets = loadedSets;
+      final hasSelected = _templateSets.any(
+        (preset) => preset.name == _selectedTemplateSet,
+      );
+      if (_templateSets.isNotEmpty && !hasSelected) {
+        _selectedTemplateSet = _templateSets.first.name;
+      }
+      _loadingTemplateSets = false;
+    });
+  }
+
+  Future<List<_TemplateSetPreset>> _readTemplateSetsRegistry() async {
+    final registryPath = _templateSetsPath;
+    final text = await _service.readFile(registryPath);
+    if (text.trim().isEmpty) {
+      return _defaultTemplateSets();
+    }
+
+    try {
+      final decoded = jsonDecode(text);
+      if (decoded is! Map<String, dynamic>) {
+        return _defaultTemplateSets();
+      }
+      final items = decoded['template_sets'];
+      if (items is! List) {
+        return _defaultTemplateSets();
+      }
+
+      final presets = <_TemplateSetPreset>[];
+      for (final entry in items.whereType<Map>()) {
+        final templates = entry['report_templates'] is Map
+            ? Map<String, String>.from(
+                (entry['report_templates'] as Map).map(
+                  (key, value) => MapEntry(key.toString(), value.toString()),
+                ),
+              )
+            : <String, String>{};
+        presets.add(
+          _TemplateSetPreset(
+            name: entry['name']?.toString().isNotEmpty == true
+                ? entry['name'].toString()
+                : 'Generic',
+            description: entry['description']?.toString() ?? '',
+            templates: templates,
+          ),
+        );
+      }
+      return presets.isEmpty ? _defaultTemplateSets() : presets;
+    } catch (_) {
+      return _defaultTemplateSets();
+    }
+  }
+
+  List<_TemplateSetPreset> _defaultTemplateSets() {
+    return const [
+      _TemplateSetPreset(
+        name: 'Generic',
+        description:
+            'Balanced local-first research bundle for general repositories.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'repo_research_note_template.md',
+        },
+      ),
+      _TemplateSetPreset(
+        name: 'MicroGrow',
+        description:
+            'Focused on firmware, hardware safety, and local automation notes.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'microgrow_research_note_template.md',
+        },
+      ),
+      _TemplateSetPreset(
+        name: 'New Earth Dashboard',
+        description:
+            'Optimised for dashboard structure, navigation, and calm UI review.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'new_earth_dashboard_research_note_template.md',
+        },
+      ),
+      _TemplateSetPreset(
+        name: 'New Earth Living',
+        description:
+            'Tailored for living systems, routines, and wellbeing-focused projects.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'new_earth_living_research_note_template.md',
+        },
+      ),
+      _TemplateSetPreset(
+        name: 'BioCalm',
+        description:
+            'Calm review template for wellbeing and low-friction analysis notes.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'biocalm_research_note_template.md',
+        },
+      ),
+      _TemplateSetPreset(
+        name: 'New Earth Rehabilitation',
+        description:
+            'Structured for recovery work, repeatability, and careful safety checks.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'rehabilitation_research_note_template.md',
+        },
+      ),
+      _TemplateSetPreset(
+        name: 'Omega OS',
+        description:
+            'General-purpose export template for broader Omega OS research work.',
+        templates: {
+          'main_report': 'repo_research_report.md',
+          'summary': 'repo_summary.md',
+          'security': 'security_report.md',
+          'risk': 'risk_report.md',
+          'knowledge': 'knowledge_report.md',
+          'implementation_opportunities': 'implementation_opportunities.md',
+          'learning_notes': 'learning_notes.md',
+          'vault_note': 'omega_os_research_note_template.md',
+        },
+      ),
+    ];
   }
 
   List<RepoResearchRunRecord> _filteredRecentRuns() {
@@ -4128,61 +4352,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 }
 
-const List<_TemplateSetPreset> _templateSets = [
-  _TemplateSetPreset(
-    name: 'Generic',
-    templates: {
-      'main_report': 'repo_research_report.md',
-      'summary': 'repo_summary.md',
-      'security': 'security_report.md',
-      'risk': 'risk_report.md',
-      'knowledge': 'knowledge_report.md',
-      'implementation_opportunities': 'implementation_opportunities.md',
-      'learning_notes': 'learning_notes.md',
-    },
-  ),
-  _TemplateSetPreset(
-    name: 'New Earth Dashboard',
-    templates: {
-      'main_report': 'repo_research_report.md',
-      'summary': 'repo_summary.md',
-      'security': 'security_report.md',
-      'risk': 'risk_report.md',
-      'knowledge': 'knowledge_report.md',
-      'implementation_opportunities': 'implementation_opportunities.md',
-      'learning_notes': 'learning_notes.md',
-    },
-  ),
-  _TemplateSetPreset(
-    name: 'MicroGrow',
-    templates: {
-      'main_report': 'repo_research_report.md',
-      'summary': 'repo_summary.md',
-      'security': 'security_report.md',
-      'risk': 'risk_report.md',
-      'knowledge': 'knowledge_report.md',
-      'implementation_opportunities': 'implementation_opportunities.md',
-      'learning_notes': 'learning_notes.md',
-    },
-  ),
-  _TemplateSetPreset(
-    name: 'BioCalm',
-    templates: {
-      'main_report': 'repo_research_report.md',
-      'summary': 'repo_summary.md',
-      'security': 'security_report.md',
-      'risk': 'risk_report.md',
-      'knowledge': 'knowledge_report.md',
-      'implementation_opportunities': 'implementation_opportunities.md',
-      'learning_notes': 'learning_notes.md',
-    },
-  ),
-];
-
 class _TemplateSetPreset {
-  const _TemplateSetPreset({required this.name, required this.templates});
+  const _TemplateSetPreset({
+    required this.name,
+    required this.description,
+    required this.templates,
+  });
 
   final String name;
+  final String description;
   final Map<String, String> templates;
 }
 

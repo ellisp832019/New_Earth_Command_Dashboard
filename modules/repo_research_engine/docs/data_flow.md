@@ -25,15 +25,16 @@ Remote Git URL or local repository path
 3. The scanner walks the source folder and ignores known generated folders.
 4. File metadata is written into `repo_inventory.json`.
 5. A profile JSON file is loaded and normalised.
-6. The analyser scores the repository against the profile.
-7. The security analyzer scans for secrets, keys, tokens, certificates, dangerous scripts, and suspicious binaries.
-8. The knowledge extractor turns the scan into a project summary, architecture summary, learning notes, implementation ideas, risks, and recommendations.
-9. The exporter writes the report set.
-10. The prompt exporter creates reusable Codex prompts.
-11. The comparison engine can compare another repo or a saved inventory.
-12. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
-13. The graph exporter can write dependency and architecture graph bundles.
-14. The Omega OS adapter can copy the safe bundle into the research library path.
+6. The template set registry in `config/template_sets.json` supplies editable report template mappings.
+7. The analyser scores the repository against the profile.
+8. The security analyzer scans for secrets, keys, tokens, certificates, dangerous scripts, and suspicious binaries.
+9. The knowledge extractor turns the scan into a project summary, architecture summary, learning notes, implementation ideas, risks, and recommendations.
+10. The exporter writes the report set and records the selected template set in JSON and markdown.
+11. The prompt exporter creates reusable Codex prompts.
+12. The comparison engine can compare another repo or a saved inventory.
+13. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
+14. The graph exporter can write dependency and architecture graph bundles.
+15. The Omega OS adapter can copy the safe bundle into the research library path.
 
 ## Output Set
 
