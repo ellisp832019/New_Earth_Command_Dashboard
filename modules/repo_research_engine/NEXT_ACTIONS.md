@@ -6,3 +6,4 @@
 4. Treat the local AI and RAG registries as the extension point for any future provider work.
 5. Continue round 3 by polishing the dedicated report, profile, export, prompt, and settings subpages.
 6. Keep comparison and change history focused on fast review rather than dense raw output.
+7. Expand the graph drilldowns only if users still need more depth after the current filters land.

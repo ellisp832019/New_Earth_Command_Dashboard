@@ -118,6 +118,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   String _recentRunsFilter = 'all';
   String _lastRunLabel = 'No run yet';
   String _lastRunTimestampLabel = 'Not captured yet';
+  String _dependencyGraphFilter = 'all';
+  String _architectureGraphFilter = 'all';
   String _mainReportPath = '';
   String _securityReportPath = '';
   String _comparisonReportPath = '';
@@ -2289,6 +2291,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             (dependencySummary['manifest_drilldowns'] as List).whereType<Map>(),
           )
         : <Map<String, dynamic>>[];
+    final dependencyFilterOptions = _graphFilterOptions(dependencyGraph);
+    final architectureFilterOptions = _graphFilterOptions(architectureGraph);
+    final dependencyFilter = dependencyFilterOptions.contains(
+      _dependencyGraphFilter,
+    )
+        ? _dependencyGraphFilter
+        : 'all';
+    final architectureFilter = architectureFilterOptions.contains(
+      _architectureGraphFilter,
+    )
+        ? _architectureGraphFilter
+        : 'all';
 
     return _panel(
       context,
@@ -2304,6 +2318,69 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             leftItems: _graphSummaryItems(dependencyGraph),
             rightTitle: 'Architecture Graph Summary',
             rightItems: _graphSummaryItems(architectureGraph),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 1000;
+              final dependencyPanel = _graphDrilldownPanel(
+                context,
+                title: 'Dependency Drilldown',
+                subtitle:
+                    'Filter frameworks, manifests, and dependencies by kind.',
+                graph: dependencyGraph,
+                filterOptions: dependencyFilterOptions,
+                selectedFilter: dependencyFilter,
+                onFilterChanged: (value) {
+                  if (value == null || value == _dependencyGraphFilter) {
+                    return;
+                  }
+                  setState(() {
+                    _dependencyGraphFilter = value;
+                  });
+                },
+                nodeSectionTitle: 'Dependency Nodes',
+                edgeSectionTitle: 'Dependency Edges',
+                includeAnchors: false,
+              );
+              final architecturePanel = _graphDrilldownPanel(
+                context,
+                title: 'Architecture Drilldown',
+                subtitle:
+                    'Filter categories, languages, files, directories, and risk anchors.',
+                graph: architectureGraph,
+                filterOptions: architectureFilterOptions,
+                selectedFilter: architectureFilter,
+                onFilterChanged: (value) {
+                  if (value == null || value == _architectureGraphFilter) {
+                    return;
+                  }
+                  setState(() {
+                    _architectureGraphFilter = value;
+                  });
+                },
+                nodeSectionTitle: 'Architecture Nodes',
+                edgeSectionTitle: 'Architecture Edges',
+                includeAnchors: true,
+              );
+              if (!wide) {
+                return Column(
+                  children: [
+                    dependencyPanel,
+                    const SizedBox(height: 12),
+                    architecturePanel,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: dependencyPanel),
+                  const SizedBox(width: 12),
+                  Expanded(child: architecturePanel),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           _twoColumnBulletBlock(
@@ -2329,7 +2406,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           _bulletSection(
             context,
             'Architecture Key Anchors',
-            _graphAnchorItems(architectureGraph),
+            _graphAnchorItems(architectureGraph, kind: architectureFilter),
           ),
           const SizedBox(height: 12),
           _markdownPreviewCard(
@@ -2341,6 +2418,13 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             openLabel: 'Open dependency graph',
           ),
           const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'Dependency focus',
+            value: dependencyFilter == 'all'
+                ? 'Showing all dependency node kinds'
+                : 'Showing only $dependencyFilter nodes',
+          ),
+          const SizedBox(height: 12),
           _markdownPreviewCard(
             context,
             title: 'Architecture Graph',
@@ -2348,6 +2432,13 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             controller: _architectureGraphPreviewController,
             openPath: _architectureGraphPath,
             openLabel: 'Open architecture graph',
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'Architecture focus',
+            value: architectureFilter == 'all'
+                ? 'Showing all architecture node kinds'
+                : 'Showing only $architectureFilter nodes',
           ),
         ],
       ),
@@ -2954,7 +3045,86 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     return lines;
   }
 
-  List<String> _graphAnchorItems(Map<String, dynamic> graph) {
+  List<String> _graphFilterOptions(Map<String, dynamic> graph) {
+    if (graph.isEmpty) {
+      return const ['all'];
+    }
+    final nodes = graph['nodes'] is List
+        ? List<Map<String, dynamic>>.from((graph['nodes'] as List).whereType<Map>())
+        : <Map<String, dynamic>>[];
+    final kinds = <String>{'all'};
+    for (final node in nodes) {
+      final kind = node['kind']?.toString().trim() ?? '';
+      if (kind.isNotEmpty) {
+        kinds.add(kind);
+      }
+    }
+    return kinds.toList(growable: false)..sort();
+  }
+
+  List<String> _graphNodeItems(
+    Map<String, dynamic> graph, {
+    String kind = 'all',
+  }) {
+    final nodes = graph['nodes'] is List
+        ? List<Map<String, dynamic>>.from((graph['nodes'] as List).whereType<Map>())
+        : <Map<String, dynamic>>[];
+    final filtered = nodes.where((node) {
+      final nodeKind = node['kind']?.toString().trim() ?? '';
+      return kind == 'all' || nodeKind == kind;
+    }).toList(growable: false);
+    if (filtered.isEmpty) {
+      return const ['No graph nodes match the selected filter.'];
+    }
+    return filtered
+        .take(8)
+        .map((node) {
+          final label = node['label']?.toString().isNotEmpty == true
+              ? node['label'].toString()
+              : node['id']?.toString() ?? 'Unknown node';
+          final nodeKind = node['kind']?.toString().isNotEmpty == true
+              ? node['kind'].toString()
+              : 'unknown';
+          return '$label - $nodeKind';
+        })
+        .toList(growable: false);
+  }
+
+  List<String> _graphEdgeItems(
+    Map<String, dynamic> graph, {
+    String kind = 'all',
+  }) {
+    final edges = graph['edges'] is List
+        ? List<Map<String, dynamic>>.from((graph['edges'] as List).whereType<Map>())
+        : <Map<String, dynamic>>[];
+    final filtered = edges.where((edge) {
+      final edgeKind = edge['kind']?.toString().trim() ?? '';
+      return kind == 'all' || edgeKind == kind;
+    }).toList(growable: false);
+    if (filtered.isEmpty) {
+      return const ['No graph edges match the selected filter.'];
+    }
+    return filtered
+        .take(8)
+        .map((edge) {
+          final from = edge['from']?.toString().isNotEmpty == true
+              ? edge['from'].toString()
+              : 'Unknown';
+          final to = edge['to']?.toString().isNotEmpty == true
+              ? edge['to'].toString()
+              : 'Unknown';
+          final edgeKind = edge['kind']?.toString().isNotEmpty == true
+              ? edge['kind'].toString()
+              : 'unknown';
+          return '$from -> $to - $edgeKind';
+        })
+        .toList(growable: false);
+  }
+
+  List<String> _graphAnchorItems(
+    Map<String, dynamic> graph, {
+    String kind = 'all',
+  }) {
     if (graph.isEmpty) {
       return const ['Architecture anchors appear after a graph export runs.'];
     }
@@ -2969,7 +3139,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     if (anchors.isEmpty) {
       return const ['No anchor nodes were captured in the graph summary.'];
     }
-    return anchors
+    final filtered = anchors.where((item) {
+      if (kind == 'all') {
+        return true;
+      }
+      final anchorType = item['anchor_type']?.toString().trim() ?? '';
+      final category = item['category']?.toString().trim() ?? '';
+      return anchorType == kind || category == kind;
+    }).toList(growable: false);
+    if (filtered.isEmpty) {
+      return const ['No anchors match the selected graph filter.'];
+    }
+    return filtered
         .take(8)
         .map((item) {
           final path = item['path']?.toString().isNotEmpty == true
@@ -2983,6 +3164,118 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
               : 'anchor';
           return '$path - $anchorType - $note';
         })
+        .toList(growable: false);
+  }
+
+  Widget _graphDrilldownPanel(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required Map<String, dynamic> graph,
+    required List<String> filterOptions,
+    required String selectedFilter,
+    required ValueChanged<String?> onFilterChanged,
+    required String nodeSectionTitle,
+    required String edgeSectionTitle,
+    required bool includeAnchors,
+  }) {
+    final nodeItems = _graphNodeItems(graph, kind: selectedFilter);
+    final edgeItems = _graphEdgeItems(graph, kind: selectedFilter);
+    final anchorItems = includeAnchors
+        ? _graphAnchorItems(graph, kind: selectedFilter)
+        : const <String>[];
+
+    return _panel(
+      context,
+      title: title,
+      subtitle: subtitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: selectedFilter,
+            decoration: const InputDecoration(
+              labelText: 'Graph filter',
+            ),
+            items: filterOptions
+                .map(
+                  (option) => DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option == 'all' ? 'All kinds' : option),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: onFilterChanged,
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: nodeSectionTitle,
+            leftItems: _graphNodeGroupItems(graph),
+            rightTitle: edgeSectionTitle,
+            rightItems: _graphEdgeGroupItems(graph),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            '$nodeSectionTitle (filtered)',
+            nodeItems,
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            '$edgeSectionTitle (filtered)',
+            edgeItems,
+          ),
+          if (includeAnchors) ...[
+            const SizedBox(height: 12),
+            _bulletSection(context, 'Key Anchors', anchorItems),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<String> _graphNodeGroupItems(Map<String, dynamic> graph) {
+    if (graph.isEmpty) {
+      return const ['No node groups available.'];
+    }
+    final summary = graph['summary'] is Map
+        ? Map<String, dynamic>.from(graph['summary'] as Map)
+        : <String, dynamic>{};
+    final kindCounts = summary['kind_counts'] is Map
+        ? Map<String, dynamic>.from(summary['kind_counts'] as Map)
+        : <String, dynamic>{};
+    if (kindCounts.isEmpty) {
+      return const ['No node groups available.'];
+    }
+    final entries = kindCounts.entries.toList()
+      ..sort((left, right) => (right.value as num).compareTo(left.value as num));
+    return entries
+        .take(8)
+        .map((entry) => '${entry.key} - ${entry.value} nodes')
+        .toList(growable: false);
+  }
+
+  List<String> _graphEdgeGroupItems(Map<String, dynamic> graph) {
+    final edges = graph['edges'] is List
+        ? List<Map<String, dynamic>>.from((graph['edges'] as List).whereType<Map>())
+        : <Map<String, dynamic>>[];
+    if (edges.isEmpty) {
+      return const ['No edge groups available.'];
+    }
+    final counts = <String, int>{};
+    for (final edge in edges) {
+      final kind = edge['kind']?.toString().trim().isNotEmpty == true
+          ? edge['kind'].toString()
+          : 'unknown';
+      counts[kind] = (counts[kind] ?? 0) + 1;
+    }
+    final entries = counts.entries.toList()
+      ..sort((left, right) => right.value.compareTo(left.value));
+    return entries
+        .take(8)
+        .map((entry) => '${entry.key} - ${entry.value} edges')
         .toList(growable: false);
   }
 
