@@ -11,9 +11,10 @@ import '../data/treasury_wizard_draft.dart';
 import '../data/treasury_wizard_flow.dart';
 
 class TreasuryWizardScreen extends ConsumerStatefulWidget {
-  const TreasuryWizardScreen({super.key, this.initialFlow});
+  const TreasuryWizardScreen({super.key, this.initialFlow, this.initialStepIndex});
 
   final String? initialFlow;
+  final int? initialStepIndex;
 
   @override
   ConsumerState<TreasuryWizardScreen> createState() =>
@@ -44,6 +45,8 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
         _controllers[index].text = draft.values[index];
       }
     }
+    final requestedStep = widget.initialStepIndex ?? 0;
+    _stepIndex = requestedStep.clamp(0, _stepsFor(_flow).length);
     for (var index = 0; index < _controllers.length; index++) {
       final stepIndex = index;
       _controllers[index].addListener(() {
@@ -90,7 +93,7 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
                   const SizedBox(height: 14),
                   _WizardDraftBanner(
                     draft: draft,
-                    onContinue: () => _goToStep(_stepIndex),
+                    onContinue: () => _goToStep(draft.nextStepIndex),
                   ),
                 ],
                 const SizedBox(height: 14),

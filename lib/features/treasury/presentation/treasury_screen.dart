@@ -969,6 +969,7 @@ class _WeeklyDraftStateCard extends ConsumerWidget {
                 onPressed: () => context.push(
                   RouteNames.treasuryWizardFor(
                     TreasuryWizardFlow.weeklyRitual.routeValue,
+                    step: draft.nextStepIndex,
                   ),
                 ),
                 icon: const Icon(Icons.play_arrow),

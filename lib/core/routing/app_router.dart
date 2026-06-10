@@ -245,6 +245,9 @@ final appRouter = GoRouter(
                   path: 'wizard',
                   builder: (context, state) => TreasuryWizardScreen(
                     initialFlow: state.uri.queryParameters['flow'],
+                    initialStepIndex: int.tryParse(
+                      state.uri.queryParameters['step'] ?? '',
+                    ),
                   ),
                 ),
               ],

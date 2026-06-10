@@ -170,10 +170,14 @@ abstract final class RouteNames {
     ).toString();
   }
 
-  static String treasuryWizardFor(String flow) {
+  static String treasuryWizardFor(String flow, {int? step}) {
+    final queryParameters = <String, String>{'flow': flow};
+    if (step != null && step >= 0) {
+      queryParameters['step'] = step.toString();
+    }
     return Uri(
       path: treasuryWizard,
-      queryParameters: {'flow': flow},
+      queryParameters: queryParameters,
     ).toString();
   }
 }

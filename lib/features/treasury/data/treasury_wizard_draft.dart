@@ -29,6 +29,16 @@ class TreasuryWizardDraft {
 
   bool get hasContent => values.any((value) => value.trim().isNotEmpty);
 
+  int get nextStepIndex {
+    for (var index = 0; index < values.length; index++) {
+      if (values[index].trim().isEmpty) {
+        return index;
+      }
+    }
+
+    return values.length;
+  }
+
   String get firstSummary {
     for (final value in values) {
       final trimmed = value.trim();
