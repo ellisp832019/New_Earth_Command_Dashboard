@@ -492,20 +492,31 @@ class _ActionCard extends StatelessWidget {
                       : 'Open Backup Root',
                 ),
               ),
+              Text(
+                snapshot.mirrorFolderExists
+                    ? 'Opens ${snapshot.config.mirrorFolder}'
+                    : 'Opens ${snapshot.backupTarget} because the mirror folder is not ready yet.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
               if (!snapshot.mirrorFolderExists)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    'Mirror folder is not ready yet, so I am opening the backup root instead.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkMutedText,
-                    ),
+                Text(
+                  'Mirror folder is not ready yet, so I am opening the backup root instead.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
                   ),
                 ),
               OutlinedButton.icon(
                 onPressed: onViewLatestReport,
                 icon: const Icon(Icons.article_outlined),
-                label: const Text('View Latest Report'),
+                label: const Text('Open Latest Report'),
+              ),
+              Text(
+                'Latest report: ${p.basename(snapshot.latestReportPath)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: onRefreshStatus,

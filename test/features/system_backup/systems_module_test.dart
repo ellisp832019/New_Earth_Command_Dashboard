@@ -150,6 +150,14 @@ void main() {
     expect(find.text('Restore Dry Run'), findsOneWidget);
     expect(find.text('Quick Incremental'), findsOneWidget);
     expect(find.text('Open Backup Root'), findsOneWidget);
+    expect(
+      find.text(
+        'Opens E:/NEW_EARTH_BACKUP because the mirror folder is not ready yet.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Open Latest Report'), findsOneWidget);
+    expect(find.text('Latest report: latest.log'), findsAtLeastNWidgets(2));
     expect(find.text('BackupNow'), findsWidgets);
     expect(find.text('1 event'), findsOneWidget);
     expect(find.text('1 restore point'), findsOneWidget);
