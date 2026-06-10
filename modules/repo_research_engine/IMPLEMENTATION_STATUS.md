@@ -26,6 +26,8 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Profile manager
 - Repo comparison engine
 - Change tracking
+- Comparison insight summary and repo context
+- Timeline-style change history review
 - Graph export support
 - Rich document indexing
 - Image asset discovery

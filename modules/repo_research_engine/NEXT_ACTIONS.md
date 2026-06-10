@@ -5,3 +5,4 @@
 3. Keep the module on the current nested route structure unless a later task explicitly changes it.
 4. Treat the local AI and RAG registries as the extension point for any future provider work.
 5. Continue round 3 by polishing the dedicated report, profile, export, prompt, and settings subpages.
+6. Keep comparison and change history focused on fast review rather than dense raw output.

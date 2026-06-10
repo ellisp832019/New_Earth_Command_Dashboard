@@ -21,6 +21,8 @@
 - Added automatic opening of the cloned source folder after workspace import.
 - Added recent clone history browsing and quick form reload support.
 - Added comparison report drilldown for file-level added, removed, and modified views.
+- Improved the repo comparison view with summary chips, repo context, and delta snapshots.
+- Reworked change history into a compact timeline-style review view.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a read-only research source adapter registry for document, PDF, transcript, and website extension points.
@@ -39,6 +41,7 @@
 - Masked security findings
 - Markdown and prompt export generation
 - Repo comparison and change tracking
+- Comparison insight summary and timeline-style change history
 - Graph export bundling
 - Omega OS export bundling
 - Document index generation

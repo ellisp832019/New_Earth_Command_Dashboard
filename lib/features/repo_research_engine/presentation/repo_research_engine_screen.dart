@@ -2197,6 +2197,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         })
         .toList(growable: false);
     final displayRecords = visibleRecords.take(6).toList(growable: false);
+    final latestRecord = displayRecords.isNotEmpty ? displayRecords.first : null;
 
     return _panel(
       context,
@@ -2227,6 +2228,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                _twoColumnBulletBlock(
+                  context,
+                  leftTitle: 'Timeline Entries',
+                  leftItems: ['${visibleRecords.length} visible records'],
+                  rightTitle: 'Latest Baseline',
+                  rightItems: [
+                    latestRecord?.baselineInventoryPath.isNotEmpty == true
+                        ? latestRecord!.baselineInventoryPath
+                        : 'No baseline recorded',
+                  ],
+                ),
+                const SizedBox(height: 12),
                 if (visibleRecords.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -2238,15 +2251,19 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                     ),
                   )
                 else
-                  for (final record in displayRecords) ...[
+                  for (var index = 0; index < displayRecords.length; index++) ...[
                     _ChangeHistoryTile(
-                      record: record,
-                      onOpenBaseline: record.baselineInventoryPath.isEmpty
+                      record: displayRecords[index],
+                      isFirst: index == 0,
+                      isLast: index == displayRecords.length - 1,
+                      onOpenBaseline: displayRecords[index].baselineInventoryPath.isEmpty
                           ? null
                           : () =>
-                                _service.openPath(record.baselineInventoryPath),
+                                _service.openPath(
+                                  displayRecords[index].baselineInventoryPath,
+                                ),
                     ),
-                    if (record != displayRecords.last)
+                    if (index != displayRecords.length - 1)
                       const SizedBox(height: 10),
                   ],
               ],
@@ -2402,6 +2419,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final addedFiles = _comparisonFileSnapshots('added');
     final removedFiles = _comparisonFileSnapshots('removed');
     final modifiedFiles = _comparisonModifiedSummaries();
+    final currentRepo = comparison['current_repo']?.toString().isNotEmpty == true
+        ? comparison['current_repo'].toString()
+        : 'Current repo not loaded';
+    final otherRepo = comparison['other_repo']?.toString().isNotEmpty == true
+        ? comparison['other_repo'].toString()
+        : 'Comparison target not loaded';
+    final fileDelta = _comparisonCount(comparison['files_added']) -
+        _comparisonCount(comparison['files_removed']);
+    final directoryDelta = _comparisonCount(comparison['directory_count_delta']);
 
     return _panel(
       context,
@@ -2411,6 +2437,53 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(
+                label: '${_comparisonCount(comparison['files_added'])} added',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(comparison['files_removed'])} removed',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(comparison['files_modified'])} modified',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(comparison['files_shared'])} shared',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(dependencyChanges['added'])} deps +',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(dependencyChanges['removed'])} deps -',
+                muted: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Compared Repositories',
+            leftItems: [currentRepo],
+            rightTitle: 'Comparison Target',
+            rightItems: [otherRepo],
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'File Delta',
+            leftItems: ['${fileDelta >= 0 ? '+' : ''}$fileDelta files'],
+            rightTitle: 'Directory Delta',
+            rightItems: ['${directoryDelta >= 0 ? '+' : ''}$directoryDelta dirs'],
+          ),
+          const SizedBox(height: 12),
           _MetadataRow(
             label: 'Comparison summary',
             value: comparison['summary']?.toString().isNotEmpty == true
@@ -2463,6 +2536,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             context,
             'Recommendations',
             _stringList(comparison['recommendations']),
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'Review note',
+            value:
+                'Treat dependency, framework, and licence deltas as manual review cues before copying anything across.',
           ),
         ],
       ),
@@ -4998,10 +5077,14 @@ class _ReportHistoryTile extends StatelessWidget {
 class _ChangeHistoryTile extends StatelessWidget {
   const _ChangeHistoryTile({
     required this.record,
+    required this.isFirst,
+    required this.isLast,
     required this.onOpenBaseline,
   });
 
   final RepoResearchChangeHistoryRecord record;
+  final bool isFirst;
+  final bool isLast;
   final VoidCallback? onOpenBaseline;
 
   @override
@@ -5013,97 +5096,136 @@ class _ChangeHistoryTile extends StatelessWidget {
     final added = record.fileChanges['added'] ?? const <String>[];
     final removed = record.fileChanges['removed'] ?? const <String>[];
     final modified = record.fileChanges['modified'] ?? const <String>[];
+    final riskDeltaLabel = record.newRiskPaths.isNotEmpty ||
+            record.resolvedRiskPaths.isNotEmpty
+        ? '${record.newRiskPaths.length} new risk path${record.newRiskPaths.length == 1 ? '' : 's'}, ${record.resolvedRiskPaths.length} resolved'
+        : 'No risk shifts recorded';
     final previewFiles = <String>[
       ...added.take(2),
       ...removed.take(2),
       ...modified.take(2),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.48),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColours.darkOutline.withValues(alpha: 0.7),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  record.currentRepo.isEmpty
-                      ? 'Unknown current repo'
-                      : record.currentRepo,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppColours.darkText,
-                    fontWeight: FontWeight.w600,
+          SizedBox(
+            width: 26,
+            child: Column(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: isFirst
+                        ? AppColours.darkSecondary
+                        : AppColours.darkMutedText,
+                    shape: BoxShape.circle,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: AppColours.darkOutline.withValues(alpha: 0.75),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColours.darkSurfaceRaised.withValues(alpha: 0.48),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColours.darkOutline.withValues(alpha: 0.7),
                 ),
               ),
-              const SizedBox(width: 10),
-              _StatusChip(label: record.fileChangeSummary, muted: false),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Baseline: ${record.baselineRepo} - $timestampLabel',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Baseline inventory: ${record.baselineInventoryPath}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (record.summary.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              record.summary,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final file in previewFiles.take(6))
-                _StatusChip(label: file, muted: false),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (record.newRiskPaths.isNotEmpty ||
-              record.resolvedRiskPaths.isNotEmpty)
-            Text(
-              'Risk shifts: ${record.newRiskPaths.length} new, ${record.resolvedRiskPaths.length} resolved',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
-            ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              TextButton.icon(
-                onPressed: onOpenBaseline,
-                icon: const Icon(Icons.folder_open),
-                label: const Text('Open Baseline'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          record.currentRepo.isEmpty
+                              ? 'Unknown current repo'
+                              : record.currentRepo,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: AppColours.darkText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _StatusChip(label: record.fileChangeSummary, muted: false),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _StatusChip(label: timestampLabel, muted: false),
+                      _StatusChip(
+                        label: record.baselineRepo.isEmpty
+                            ? 'Baseline repo not set'
+                            : record.baselineRepo,
+                        muted: false,
+                      ),
+                      _StatusChip(label: riskDeltaLabel, muted: false),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Baseline inventory: ${record.baselineInventoryPath}',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (record.summary.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      record.summary,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final file in previewFiles.take(6))
+                        _StatusChip(label: file, muted: false),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TextButton.icon(
+                        onPressed: onOpenBaseline,
+                        icon: const Icon(Icons.folder_open),
+                        label: const Text('Open Baseline'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
