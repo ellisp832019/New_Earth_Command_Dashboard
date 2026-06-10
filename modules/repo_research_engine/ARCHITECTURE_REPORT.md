@@ -4,7 +4,7 @@
 
 The Repo Research Engine is now a safe, local-first analysis module built around a single principle: inspect, summarise, and export without executing untrusted repository code.
 
-The round 2 workflow is complete and the module now covers repository scanning, security review, knowledge extraction, read-only repository adapters, local research source adapters, and deterministic local intelligence contracts.
+The round 2 workflow is complete and the module now covers repository scanning, security review, knowledge extraction, read-only repository adapters, local research source adapters, deterministic local intelligence contracts, and explicit AI/RAG registry extension points.
 
 ## Current Structure
 
@@ -26,6 +26,7 @@ The round 2 workflow is complete and the module now covers repository scanning, 
 - Keep exports local and path-based.
 - Keep source adapters read-only and snapshot-oriented.
 - Keep AI and RAG implementations local-first and deterministic by default.
+- Keep AI and RAG extension points explicit, local-first, and opt-in.
 - Keep prompts generated files instead of hard-coded chat text.
 
 ## Integration Notes

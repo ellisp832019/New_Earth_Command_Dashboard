@@ -8,3 +8,9 @@ from .interfaces import (
     RagSearchHit,
     RagSearchIndex,
 )
+from .registry import (
+    LocalAiProviderRegistry,
+    LocalAiProviderSpec,
+    RagSearchIndexRegistry,
+    RagSearchIndexSpec,
+)

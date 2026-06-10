@@ -102,3 +102,9 @@ python modules/repo_research_engine/scripts/run_research.py --repo "D:/path/to/r
 
 - `sources/research_source_registry.py`
 - Supported sources: Documentation, PDF, Transcript, Website
+
+## Local AI and RAG registry
+
+- `intelligence/registry.py`
+- Supported providers: DeterministicLocal
+- Supported indexes: InMemoryLocal

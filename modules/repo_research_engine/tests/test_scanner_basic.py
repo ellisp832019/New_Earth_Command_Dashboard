@@ -32,7 +32,9 @@ from intelligence import (
     InMemoryRagSearchIndex,
     KnowledgeChunk,
     LocalAiProvider,
+    LocalAiProviderRegistry,
     RagSearchHit,
+    RagSearchIndexRegistry,
     RagSearchIndex,
 )
 from scripts.run_research import (
@@ -832,6 +834,30 @@ def test_concrete_local_ai_provider_and_rag_index_work_without_network():
     assert hits and hits[0].chunk_id == "one"
     assert "exports" in hits[0].snippet.lower()
     assert hits[0].metadata["title"] == "Dashboard Notes"
+
+
+def test_local_ai_registry_exposes_safe_default_provider():
+    registry = LocalAiProviderRegistry()
+    providers = registry.list_supported_providers()
+
+    assert [provider.name for provider in providers] == ["DeterministicLocal"]
+    assert providers[0].deterministic is True
+    assert providers[0].requires_network_opt_in is False
+    assert registry.get_provider("DeterministicLocal").model_name == "local-rule-based"
+    assert registry.create_provider("DeterministicLocal").provider_name == "DeterministicLocal"
+    assert registry.describe_providers()[0]["description"].startswith("Rule-based local AI provider")
+
+
+def test_rag_registry_exposes_safe_default_index():
+    registry = RagSearchIndexRegistry()
+    indexes = registry.list_supported_indexes()
+
+    assert [index.name for index in indexes] == ["InMemoryLocal"]
+    assert indexes[0].deterministic is True
+    assert indexes[0].requires_network_opt_in is False
+    assert registry.get_index("InMemoryLocal").description.startswith("Local in-memory RAG index")
+    assert isinstance(registry.create_index("InMemoryLocal"), InMemoryRagSearchIndex)
+    assert registry.describe_indexes()[0]["description"].startswith("Local in-memory RAG index")
 
 
 def test_omega_export_adapter_creates_bundle(tmp_path):

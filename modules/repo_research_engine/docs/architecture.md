@@ -73,6 +73,15 @@ It turns a local Git repository into:
 - Extracts reusable components and implementation ideas
 - Builds calm, AI-ready notes without exposing secrets
 
+### Local AI and RAG Registry
+
+`intelligence/registry.py`
+
+- Describes the supported local AI providers and RAG indexes
+- Creates the deterministic default provider and in-memory index
+- Keeps future provider and index integrations explicit and opt-in
+- Preserves the local-first default when no external provider is configured
+
 ### Markdown Exporter
 
 `exporters/markdown_exporter.py`
@@ -160,3 +169,5 @@ It must not:
 - Future comparison and graphing tools
 - Future live source integrations built on the read-only adapter registry
 - Future document research integrations built on the read-only research source registry
+- Future AI provider integrations built on the local AI registry
+- Future RAG index integrations built on the local RAG registry

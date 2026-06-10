@@ -33,10 +33,12 @@ Remote Git URL or local repository path
 11. The prompt exporter creates reusable Codex prompts.
 12. The repository source adapter registry describes the supported read-only GitHub, GitLab, and Bitbucket extension points.
 13. The research source adapter registry describes the supported PDF, website, transcript, and documentation ingestion extension points.
-14. The comparison engine can compare another repo or a saved inventory.
-15. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
-16. The graph exporter can write dependency and architecture graph bundles.
-17. The Omega OS adapter can copy the safe bundle into the research library path.
+14. The local AI provider registry describes deterministic offline providers and future opt-in provider slots.
+15. The local RAG index registry describes deterministic offline indexes and future opt-in index slots.
+16. The comparison engine can compare another repo or a saved inventory.
+17. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
+18. The graph exporter can write dependency and architecture graph bundles.
+19. The Omega OS adapter can copy the safe bundle into the research library path.
 
 ## Output Set
 
