@@ -15,6 +15,7 @@
 - Added structured clone workspace importing for remote URLs and local repos.
 - Added one-click clone-and-scan workflow in the dashboard scanner page.
 - Added automatic opening of the cloned source folder after workspace import.
+- Added recent clone history browsing and quick form reload support.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a deterministic local AI provider and in-memory RAG search index.
 - Added module documentation for architecture, data flow, security, and roadmap.

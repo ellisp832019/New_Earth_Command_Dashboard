@@ -43,3 +43,4 @@ See `dashboard_integration/DASHBOARD_PAGE_MAP.md` for the intended route contrac
 - The scanner page now includes an opt-in clone-to-workspace flow that turns a Git URL or local repo into a structured local source folder before scanning.
 - The scanner page now offers a one-click clone-and-scan action that clones into the workspace and immediately runs the safe bundle on the cloned source folder.
 - After a successful clone, the dashboard opens the imported source folder so the user can inspect the workspace immediately.
+- The scanner page now keeps recent clone history so a previously imported workspace can be reloaded without retyping the source or branch.

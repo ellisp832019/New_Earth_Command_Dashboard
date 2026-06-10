@@ -59,6 +59,76 @@ class RepoResearchCloneResult {
   bool get succeeded => exitCode == 0;
 }
 
+class RepoResearchCloneHistoryRecord {
+  const RepoResearchCloneHistoryRecord({
+    required this.timestamp,
+    required this.source,
+    required this.workspaceRoot,
+    required this.repositoryRoot,
+    required this.sourceRoot,
+    required this.provider,
+    required this.ownerPath,
+    required this.repoName,
+    required this.branch,
+    required this.commit,
+  });
+
+  factory RepoResearchCloneHistoryRecord.fromJson(Map<String, dynamic> json) {
+    return RepoResearchCloneHistoryRecord(
+      timestamp: json['timestamp']?.toString() ?? '',
+      source: json['source']?.toString() ?? '',
+      workspaceRoot: json['workspace_root']?.toString() ?? '',
+      repositoryRoot: json['repository_root']?.toString() ?? '',
+      sourceRoot: json['source_root']?.toString() ?? '',
+      provider: json['provider']?.toString() ?? 'local',
+      ownerPath: json['owner_path']?.toString() ?? '',
+      repoName: json['repo_name']?.toString() ?? '',
+      branch: json['branch']?.toString() ?? '',
+      commit: json['commit']?.toString() ?? '',
+    );
+  }
+
+  final String timestamp;
+  final String source;
+  final String workspaceRoot;
+  final String repositoryRoot;
+  final String sourceRoot;
+  final String provider;
+  final String ownerPath;
+  final String repoName;
+  final String branch;
+  final String commit;
+
+  DateTime? get parsedTimestamp => DateTime.tryParse(timestamp);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'timestamp': timestamp,
+      'source': source,
+      'workspace_root': workspaceRoot,
+      'repository_root': repositoryRoot,
+      'source_root': sourceRoot,
+      'provider': provider,
+      'owner_path': ownerPath,
+      'repo_name': repoName,
+      'branch': branch,
+      'commit': commit,
+    };
+  }
+
+  String get displayTitle {
+    final ownerSegment = ownerPath.isEmpty ? '' : '$ownerPath/';
+    return '$provider/$ownerSegment$repoName';
+  }
+
+  String get shortCommit {
+    if (commit.isEmpty) {
+      return 'latest';
+    }
+    return commit.length > 8 ? commit.substring(0, 8) : commit;
+  }
+}
+
 class RepoResearchRunRecord {
   const RepoResearchRunRecord({
     required this.timestamp,
@@ -292,7 +362,7 @@ class RepoResearchEngineService {
       throw StateError('Repository clone returned an invalid response.');
     }
 
-    return RepoResearchCloneResult(
+    final result = RepoResearchCloneResult(
       exitCode: exitCode,
       source: decoded['source']?.toString() ?? source,
       workspaceRoot: decoded['workspace_root']?.toString() ?? workspaceRoot,
@@ -310,6 +380,23 @@ class RepoResearchEngineService {
       stdout: stdout,
       stderr: stderr,
     );
+
+    await appendCloneHistory(
+      RepoResearchCloneHistoryRecord(
+        timestamp: DateTime.now().toIso8601String(),
+        source: result.source,
+        workspaceRoot: result.workspaceRoot,
+        repositoryRoot: result.repositoryRoot,
+        sourceRoot: result.sourceRoot,
+        provider: result.provider,
+        ownerPath: result.ownerPath,
+        repoName: result.repoName,
+        branch: result.branch,
+        commit: result.commit,
+      ),
+    );
+
+    return result;
   }
 
   Future<List<RepoResearchRunRecord>> loadRecentRuns({int limit = 8}) async {
@@ -373,6 +460,38 @@ class RepoResearchEngineService {
     }
   }
 
+  Future<List<RepoResearchCloneHistoryRecord>> loadCloneHistory({
+    int limit = 10,
+  }) async {
+    final historyFile = _cloneHistoryFile();
+    if (!await historyFile.exists()) {
+      return const <RepoResearchCloneHistoryRecord>[];
+    }
+
+    try {
+      final decoded = jsonDecode(await historyFile.readAsString());
+      if (decoded is! List) {
+        return const <RepoResearchCloneHistoryRecord>[];
+      }
+
+      final records = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(RepoResearchCloneHistoryRecord.fromJson)
+          .toList();
+      records.sort(
+        (left, right) =>
+            (right.parsedTimestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
+                .compareTo(
+                  left.parsedTimestamp ??
+                      DateTime.fromMillisecondsSinceEpoch(0),
+                ),
+      );
+      return records.take(limit).toList(growable: false);
+    } catch (_) {
+      return const <RepoResearchCloneHistoryRecord>[];
+    }
+  }
+
   Future<void> appendRecentRun(RepoResearchRunRecord record) async {
     final historyFile = _historyFile();
     await historyFile.parent.create(recursive: true);
@@ -401,6 +520,22 @@ class RepoResearchEngineService {
             },
           )
           .toList(growable: false),
+    );
+    await historyFile.writeAsString(encoded, flush: true);
+  }
+
+  Future<void> appendCloneHistory(RepoResearchCloneHistoryRecord record) async {
+    final historyFile = _cloneHistoryFile();
+    await historyFile.parent.create(recursive: true);
+
+    final existing = await loadCloneHistory(limit: 50);
+    final updated = <RepoResearchCloneHistoryRecord>[
+      record,
+      ...existing,
+    ].take(20).toList(growable: false);
+
+    final encoded = jsonEncode(
+      updated.map((entry) => entry.toJson()).toList(growable: false),
     );
     await historyFile.writeAsString(encoded, flush: true);
   }
@@ -474,5 +609,10 @@ class RepoResearchEngineService {
   File _exportHistoryFile() {
     final moduleRoot = moduleRootDirectory();
     return File(path.join(moduleRoot.path, 'reports', 'export_history.json'));
+  }
+
+  File _cloneHistoryFile() {
+    final moduleRoot = moduleRootDirectory();
+    return File(path.join(moduleRoot.path, 'reports', 'clone_history.json'));
   }
 }

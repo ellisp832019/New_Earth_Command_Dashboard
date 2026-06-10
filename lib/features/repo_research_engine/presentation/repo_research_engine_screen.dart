@@ -99,8 +99,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   bool _isCloning = false;
   bool _isRunning = false;
   List<String> _outputFiles = const [];
+  List<RepoResearchCloneHistoryRecord> _recentClones = const [];
   List<RepoResearchRunRecord> _recentRuns = const [];
   List<RepoResearchExportRecord> _exportHistory = const [];
+  bool _loadingCloneHistory = true;
   bool _loadingRecentRuns = true;
   bool _loadingExportHistory = true;
   bool _loadingProfileEditor = true;
@@ -167,6 +169,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   void initState() {
     super.initState();
     _activeSection = _normalizeSection(widget.initialSection);
+    _loadCloneHistory();
     _loadRecentRuns();
     _loadExportHistory();
     _loadProfileEditor();
@@ -368,6 +371,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       ],
       const SizedBox(height: 16),
       _workspaceCloneCard(context),
+      const SizedBox(height: 16),
+      _cloneHistoryCard(context),
       const SizedBox(height: 16),
       _comparisonInsightsCard(context),
       const SizedBox(height: 16),
@@ -864,6 +869,45 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _cloneHistoryCard(BuildContext context) {
+    final visibleClones = _recentClones.take(6).toList(growable: false);
+    return _panel(
+      context,
+      title: 'Recent Imports',
+      subtitle:
+          'Reopen previously imported workspaces without retyping the source URL.',
+      child: _loadingCloneHistory
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : visibleClones.isEmpty
+          ? Text(
+              'No clone history has been recorded yet.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            )
+          : Column(
+              children: [
+                for (final record in visibleClones) ...[
+                  _CloneHistoryTile(
+                    record: record,
+                    onLoad: () => _loadCloneIntoForm(record),
+                    onOpenSource: record.sourceRoot.isEmpty
+                        ? null
+                        : () => _service.openFolder(record.sourceRoot),
+                    onOpenWorkspace: record.workspaceRoot.isEmpty
+                        ? null
+                        : () => _service.openFolder(record.workspaceRoot),
+                  ),
+                  if (record != visibleClones.last) const SizedBox(height: 10),
+                ],
+              ],
+            ),
     );
   }
 
@@ -2874,6 +2918,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       } else {
         _setMessage('Cloned repository into the structured workspace.');
       }
+      await _loadCloneHistory();
     } catch (error) {
       if (mounted) {
         setState(() {
@@ -2888,6 +2933,25 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         });
       }
     }
+  }
+
+  Future<void> _loadCloneIntoForm(RepoResearchCloneHistoryRecord record) async {
+    if (mounted) {
+      setState(() {
+        _cloneSourceController.text = record.source;
+        _workspaceRootController.text = record.workspaceRoot.isNotEmpty
+            ? record.workspaceRoot
+            : _defaultWorkspaceRoot;
+        _cloneBranchController.text = record.branch;
+        _repoPathController.text = record.sourceRoot.isNotEmpty
+            ? record.sourceRoot
+            : record.repositoryRoot;
+        _lastCloneStatus =
+            'Loaded ${record.displayTitle} from history (${record.shortCommit})';
+        _lastCloneSourcePath = record.sourceRoot;
+      });
+    }
+    _setMessage('Loaded clone history entry into the form.');
   }
 
   Future<void> _loadProfileEditor() async {
@@ -2943,6 +3007,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         });
       }
     }
+  }
+
+  Future<void> _loadCloneHistory() async {
+    if (mounted) {
+      setState(() {
+        _loadingCloneHistory = true;
+      });
+    }
+
+    final clones = await _service.loadCloneHistory();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _recentClones = clones;
+      _loadingCloneHistory = false;
+    });
   }
 
   Future<void> _compareProfiles() async {
@@ -4045,6 +4126,102 @@ class _RecentRunTile extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CloneHistoryTile extends StatelessWidget {
+  const _CloneHistoryTile({
+    required this.record,
+    required this.onLoad,
+    required this.onOpenSource,
+    required this.onOpenWorkspace,
+  });
+
+  final RepoResearchCloneHistoryRecord record;
+  final VoidCallback onLoad;
+  final VoidCallback? onOpenSource;
+  final VoidCallback? onOpenWorkspace;
+
+  @override
+  Widget build(BuildContext context) {
+    final timestampLabel = record.parsedTimestamp == null
+        ? record.timestamp
+        : '${record.parsedTimestamp!.year}-${record.parsedTimestamp!.month.toString().padLeft(2, '0')}-${record.parsedTimestamp!.day.toString().padLeft(2, '0')} ${record.parsedTimestamp!.hour.toString().padLeft(2, '0')}:${record.parsedTimestamp!.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  record.displayTitle,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 10),
+              _StatusChip(label: record.shortCommit, muted: false),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Source: ${record.source} - $timestampLabel',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Workspace: ${record.workspaceRoot}',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: onLoad,
+                icon: const Icon(Icons.tune),
+                label: const Text('Load'),
+              ),
+              if (onOpenSource != null)
+                TextButton.icon(
+                  onPressed: onOpenSource,
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Open Source'),
+                ),
+              if (onOpenWorkspace != null)
+                FilledButton.tonalIcon(
+                  onPressed: onOpenWorkspace,
+                  icon: const Icon(Icons.folder_copy),
+                  label: const Text('Open Workspace'),
+                ),
+            ],
           ),
         ],
       ),
