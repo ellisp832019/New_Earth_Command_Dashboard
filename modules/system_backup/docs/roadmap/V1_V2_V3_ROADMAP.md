@@ -60,7 +60,14 @@ Current build status:
 - Daily, weekly, and monthly actions are now wired.
 - Backup history is written to `modules/system_backup/runtime/backup_history.json`.
 - The dashboard now surfaces schedule, retention, freshness, and restore-point summaries.
-- Checksum manifests and deeper verification remain future work.
+- Checksum manifests are written and `Verify Latest` now compares the latest manifest fingerprint against the current target.
+
+V2 items still open:
+
+- Task Scheduler or dashboard scheduling for the existing actions.
+- Optional backup history database if a richer local query layer is needed later.
+- Restore point selection from the dashboard UI.
+- Dashboard notification banners.
 
 V2 should only be started after V1 is stable.
 

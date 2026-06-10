@@ -6,17 +6,23 @@ See also:
 
 ## V2 Backlog
 
+### Already landed in the tree
+
+- Scheduled daily, weekly, monthly, and quick backup actions
+- Backup history file and dashboard history surface
+- Backup age warnings and freshness summaries
+- Backup size tracking
+- Retention rules
+- Checksum manifest support
+- Restore point summaries
+
+### Remaining V2 backlog
+
 | ID | Feature | Priority | Notes |
 |---|---|---:|---|
-| BG-V2-001 | Scheduled daily backups | High | Windows Task Scheduler or dashboard scheduler |
-| BG-V2-002 | Weekly snapshots | High | Snapshot folder with date stamp |
-| BG-V2-003 | Monthly archives | Medium | Long-term restore points |
-| BG-V2-004 | Backup history database | High | SQLite or dashboard local DB |
-| BG-V2-005 | Backup age warnings | High | Dashboard amber/red states |
-| BG-V2-006 | Backup size tracking | Medium | Track growth of New Earth system |
-| BG-V2-007 | Retention rules | Medium | Keep daily/weekly/monthly windows |
-| BG-V2-008 | Checksum manifest | High | Verify important files |
-| BG-V2-009 | Restore point list | Medium | Select restore point from UI |
+| BG-V2-001 | Scheduled backup orchestration | High | Task Scheduler or dashboard scheduler for the existing actions |
+| BG-V2-004 | Backup history database | Medium | Optional SQLite upgrade for richer querying later |
+| BG-V2-009 | Restore point picker | Medium | Let the user select a restore point from the UI |
 | BG-V2-010 | Dashboard notifications | Medium | Local warning banners |
 
 ## V3 Backlog

@@ -22,6 +22,7 @@
 - Daily, weekly, and monthly actions are wired.
 - `runtime/backup_history.json` is being written.
 - The dashboard shows schedule, retention, freshness, and restore-point summaries.
+- Checksum-manifest-backed verification is available for the latest backup.
 
 ## V2 Done When
 
@@ -29,7 +30,7 @@
 - Backup history is visible.
 - Retention rules are working.
 - Backup-age warnings work.
-- Verification is stronger than simple target exists check.
+- Verification is stronger than a simple target-exists check and can compare against the latest manifest fingerprint.
 - Restore point folders are being created and pruned.
 
 ## V3 Can Start When

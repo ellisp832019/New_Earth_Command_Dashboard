@@ -90,10 +90,10 @@ The current build adds the first Phase 2 automation layer:
 - restore point folders
 - schedule and retention summaries
 - next suggested run
+- checksum-manifest-backed verification
 
 ## Phase 3 later
 
-- Add checksum manifests.
 - Add drive health checks.
 - Add second/off-site drive support.
 - Add deeper restore workflows.

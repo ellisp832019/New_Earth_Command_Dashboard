@@ -31,7 +31,6 @@ Add later:
 - Daily/weekly/monthly retention
 - Backup history database
 - Backup age warnings
-- Checksum manifest
 - Restore point list
 - Dashboard notifications
 
@@ -39,7 +38,7 @@ Current module state:
 
 - Daily, weekly, and monthly actions are already implemented.
 - Backup history is written to `modules/system_backup/runtime/backup_history.json`.
-- Dashboard notifications and restore-point summaries are already visible.
+- Dashboard freshness, restore-point summaries, and manifest-backed verification are already visible.
 
 ## V3 Future Work
 

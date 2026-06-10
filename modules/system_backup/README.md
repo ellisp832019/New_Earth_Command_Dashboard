@@ -80,7 +80,7 @@ modules/system_backup/runtime/latest_status.json
 
 ## Backup history
 
-Phase 2 also writes a history file that the dashboard can use to show recent backup activity and restore points:
+The current build writes a history file that the dashboard can use to show recent backup activity and restore points:
 
 ```text
 modules/system_backup/runtime/backup_history.json
@@ -92,12 +92,13 @@ This history is used to surface:
 - backup age warnings
 - next suggested run
 - schedule and retention summaries
+- manifest-backed verification results
 - restore point entries under `E:\NEW_EARTH_BACKUP`
 
 
 ## Roadmap included
 
-This module now includes V2 and V3 as future work.
+This module now includes V2 and V3 planning documents.
 
 Read:
 
@@ -128,3 +129,4 @@ The current module build adds the first Phase 2 automation layer:
 - retention settings
 - freshness warnings
 - restore point listing
+- checksum-manifest-backed verification
