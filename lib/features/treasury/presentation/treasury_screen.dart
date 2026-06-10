@@ -395,6 +395,13 @@ class _TreasuryHeroCard extends StatelessWidget {
                     'The app reads the external finance pack from local config.',
                 accent: AppColours.darkSecondary,
               ),
+              const SizedBox(height: 12),
+              _HeroMetricCard(
+                label: 'Config file',
+                value: snapshot.configPath,
+                note: 'Treasury reads the finance link from this local file.',
+                accent: AppColours.darkPrimary,
+              ),
               const SizedBox(height: 14),
               Align(
                 alignment: Alignment.centerRight,
