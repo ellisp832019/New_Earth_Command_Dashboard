@@ -31,6 +31,7 @@
 - Added report section deep links to jump directly to report and export review cards.
 - Added a document index review page with headings, links, tables, notes, and local asset context.
 - Added an image and diagram asset review page with screenshot, icon, design, and binary flags.
+- Added profile template library controls with inspect-and-apply preset cards.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a read-only research source adapter registry for document, PDF, transcript, and website extension points.

@@ -3468,7 +3468,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   }
 
   Widget _profileTemplateLibraryCard(BuildContext context) {
-    final templateSets = _templateSets.map((set) => set.name).toList();
+    final selectedPreset = _selectedTemplateSetPreset;
     return _panel(
       context,
       title: 'Template Library',
@@ -3477,13 +3477,129 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _bulletSection(context, 'Available Template Sets', templateSets),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(label: '${_templateSets.length} template sets', muted: false),
+              if (selectedPreset != null)
+                _StatusChip(label: 'Selected: ${selectedPreset.name}', muted: false),
+            ],
+          ),
           const SizedBox(height: 12),
+          if (_templateSets.isEmpty)
+            Text(
+              'Template families are still loading.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final preset in _templateSets)
+                  SizedBox(
+                    width: 320,
+                    child: _templatePresetCard(context, preset),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _templatePresetCard(
+    BuildContext context,
+    _TemplateSetPreset preset,
+  ) {
+    final isSelected = preset.name == _selectedTemplateSet;
+    final templateEntries = preset.templates.entries.toList(growable: false);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppColours.darkSurface.withValues(alpha: 0.98)
+            : AppColours.darkSurfaceRaised.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isSelected
+              ? AppColours.darkSecondary.withValues(alpha: 0.8)
+              : AppColours.darkOutline.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  preset.name,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (isSelected) const _StatusChip(label: 'Active', muted: false),
+            ],
+          ),
+          const SizedBox(height: 6),
           Text(
-            'The selected template set is applied to the profile editor and exported report bundle.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            preset.description.isNotEmpty
+                ? preset.description
+                : 'No description supplied.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final entry in templateEntries.take(4))
+                _StatusChip(
+                  label: '${entry.key}: ${entry.value}',
+                  muted: false,
+                ),
+            ],
+          ),
+          if (templateEntries.length > 4) ...[
+            const SizedBox(height: 8),
+            Text(
+              '+ ${templateEntries.length - 4} more templates',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: _isRunning
+                    ? null
+                    : () {
+                        setState(() {
+                          _selectedTemplateSet = preset.name;
+                        });
+                      },
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Select'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: _isRunning ? null : () => _applyTemplateSet(preset.name),
+                icon: const Icon(Icons.playlist_add_check),
+                label: const Text('Apply'),
+              ),
+            ],
           ),
         ],
       ),
