@@ -2383,6 +2383,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             },
           ),
           const SizedBox(height: 12),
+          _architectureReviewCard(
+            context,
+            graph: architectureGraph,
+            selectedFilter: architectureFilter,
+          ),
+          const SizedBox(height: 12),
           _twoColumnBulletBlock(
             context,
             leftTitle: 'Framework Groups',
@@ -3277,6 +3283,62 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         .take(8)
         .map((entry) => '${entry.key} - ${entry.value} edges')
         .toList(growable: false);
+  }
+
+  Widget _architectureReviewCard(
+    BuildContext context, {
+    required Map<String, dynamic> graph,
+    required String selectedFilter,
+  }) {
+    final summary = graph['summary'] is Map
+        ? Map<String, dynamic>.from(graph['summary'] as Map)
+        : <String, dynamic>{};
+    final kindCounts = summary['kind_counts'] is Map
+        ? Map<String, dynamic>.from(summary['kind_counts'] as Map)
+        : <String, dynamic>{};
+    final topKinds = kindCounts.entries.toList()
+      ..sort((left, right) => (right.value as num).compareTo(left.value as num));
+    final filteredAnchors = _graphAnchorItems(graph, kind: selectedFilter);
+
+    return _panel(
+      context,
+      title: 'Architecture Review',
+      subtitle:
+          'Review the architecture graph as a calm summary of node groups, edge groups, and key file anchors.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Architecture Node Groups',
+            leftItems: _graphNodeGroupItems(graph),
+            rightTitle: 'Architecture Edge Groups',
+            rightItems: _graphEdgeGroupItems(graph),
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'Architecture summary',
+            value: 'Nodes: ${summary['node_count'] ?? 0} | Edges: ${summary['edge_count'] ?? 0}',
+          ),
+          const SizedBox(height: 8),
+          _MetadataRow(
+            label: 'Top kinds',
+            value: topKinds.isEmpty
+                ? 'No node groups available'
+                : topKinds
+                    .take(4)
+                    .map((entry) => '${entry.key} (${entry.value})')
+                    .join(' | '),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            'Architecture Key Anchors',
+            filteredAnchors,
+          ),
+        ],
+      ),
+    );
   }
 
   int _comparisonCount(dynamic value) {

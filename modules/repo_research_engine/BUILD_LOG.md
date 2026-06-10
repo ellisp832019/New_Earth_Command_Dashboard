@@ -24,6 +24,7 @@
 - Improved the repo comparison view with summary chips, repo context, and delta snapshots.
 - Reworked change history into a compact timeline-style review view.
 - Added dependency and architecture graph filters with drilldown panels for node groups, edge groups, and anchors.
+- Added a dedicated architecture graph review card with grouped node, edge, and key-anchor views.
 - Added local PDF, website, transcript, and documentation research source adapters.
 - Added a read-only repository source adapter registry for GitHub, GitLab, and Bitbucket extension points.
 - Added a read-only research source adapter registry for document, PDF, transcript, and website extension points.
@@ -44,6 +45,7 @@
 - Repo comparison and change tracking
 - Comparison insight summary and timeline-style change history
 - Dependency graph filters and drilldowns
+- Architecture graph review views
 - Graph export bundling
 - Omega OS export bundling
 - Document index generation

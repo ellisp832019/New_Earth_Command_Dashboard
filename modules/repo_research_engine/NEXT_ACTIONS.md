@@ -7,3 +7,4 @@
 5. Continue round 3 by polishing the dedicated report, profile, export, prompt, and settings subpages.
 6. Keep comparison and change history focused on fast review rather than dense raw output.
 7. Expand the graph drilldowns only if users still need more depth after the current filters land.
+8. Use the architecture review card as the primary place for future graph-inspection tweaks.
