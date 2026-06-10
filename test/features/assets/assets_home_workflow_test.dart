@@ -34,6 +34,8 @@ void main() {
     expect(find.text('Priority focus'), findsOneWidget);
     expect(find.text('Low stock needs attention'), findsOneWidget);
     expect(find.text('Top 3 focus'), findsOneWidget);
+    expect(find.text('CONFIG'), findsOneWidget);
+    expect(find.text('local_paths.json'), findsWidgets);
     expect(find.text('1. Open Equipment Register'), findsOneWidget);
     expect(find.text('2. Open Parts Inventory'), findsOneWidget);
     expect(find.textContaining('Open Low Stock / Reorder'), findsWidgets);

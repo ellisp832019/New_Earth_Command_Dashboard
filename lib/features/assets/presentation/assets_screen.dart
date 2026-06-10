@@ -293,6 +293,11 @@ class _AssetHero extends StatelessWidget {
             children: [
               _HeaderChip(label: 'Status', value: statusLabel),
               _HeaderChip(
+                label: 'Config',
+                value: path.basename(snapshot.configPath),
+                accentColor: AppColours.darkSecondary,
+              ),
+              _HeaderChip(
                 label: 'Equipment',
                 value: '${snapshot.equipmentCount}',
                 accentColor: AppColours.darkSuccess,
