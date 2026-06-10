@@ -35,6 +35,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Rich knowledge extraction blocks for summaries, risks, recommendations, and notes
 - Report section deep links for exact report and bundle views
 - Document index review page with local document, heading, link, table, and note review
+- Image and diagram asset review page with binary-safe review grouping
 - Graph export support
 - Rich document indexing
 - Image asset discovery

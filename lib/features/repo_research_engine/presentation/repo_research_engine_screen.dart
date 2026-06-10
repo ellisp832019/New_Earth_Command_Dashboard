@@ -161,6 +161,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   final GlobalKey _comparisonDrilldownSectionKey = GlobalKey();
   final GlobalKey _knowledgeSectionKey = GlobalKey();
   final GlobalKey _documentDiscoverySectionKey = GlobalKey();
+  final GlobalKey _assetReviewSectionKey = GlobalKey();
   final GlobalKey _releaseNotesSectionKey = GlobalKey();
   final GlobalKey _bundleDeltaSectionKey = GlobalKey();
   final GlobalKey _changeTimelineSectionKey = GlobalKey();
@@ -430,6 +431,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _knowledgeCard(context, key: _knowledgeSectionKey),
       const SizedBox(height: 16),
       _documentDiscoveryCard(context, key: _documentDiscoverySectionKey),
+      const SizedBox(height: 16),
+      _assetReviewCard(context, key: _assetReviewSectionKey),
       const SizedBox(height: 16),
       _reportIndexCard(context, key: _reportIndexSectionKey),
       const SizedBox(height: 16),
@@ -2388,6 +2391,190 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       return path;
     }
     return '$path - ${pieces.join(' - ')}';
+  }
+
+  Widget _assetReviewCard(BuildContext context, {Key? key}) {
+    final imageAssets = _latestAnalysis['image_assets'] is List
+        ? List<Map<String, dynamic>>.from(
+            (_latestAnalysis['image_assets'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    final diagramFiles = _latestAnalysis['diagram_files'] is List
+        ? List<Map<String, dynamic>>.from(
+            (_latestAnalysis['diagram_files'] as List).whereType<Map>(),
+          )
+        : <Map<String, dynamic>>[];
+    final screenshotAssets = _assetFilter(imageAssets, ['screenshot', 'screen', 'capture']);
+    final iconAssets = _assetFilter(imageAssets, ['icon', 'glyph', 'symbol']);
+    final designAssets = _assetFilter(imageAssets, ['design', 'mockup', 'layout', 'ui']);
+    final flaggedAssets = [
+      ...imageAssets.where(_assetIsFlagged),
+      ...diagramFiles.where(_assetIsFlagged),
+    ];
+
+    return _panel(
+      context,
+      key: key ?? _assetReviewSectionKey,
+      title: 'Image and Diagram Asset Review',
+      subtitle:
+          'Review screenshots, icons, design assets, and diagram files without parsing binaries.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(label: '${imageAssets.length} images', muted: false),
+              _StatusChip(label: '${diagramFiles.length} diagrams', muted: false),
+              _StatusChip(
+                label: '${screenshotAssets.length} screenshots',
+                muted: false,
+              ),
+              _StatusChip(label: '${iconAssets.length} icons', muted: false),
+              _StatusChip(label: '${designAssets.length} design assets', muted: false),
+              _StatusChip(label: '${flaggedAssets.length} flagged', muted: false),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Screenshots',
+            leftItems: _assetPreviewItems(
+              screenshotAssets,
+              defaultLabel: 'screenshot',
+            ),
+            rightTitle: 'Icons',
+            rightItems: _assetPreviewItems(iconAssets, defaultLabel: 'icon'),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Design Assets',
+            leftItems: _assetPreviewItems(
+              designAssets,
+              defaultLabel: 'design asset',
+            ),
+            rightTitle: 'Diagrams',
+            rightItems: _assetPreviewItems(
+              diagramFiles,
+              defaultLabel: 'diagram',
+              typeField: 'diagram_type',
+            ),
+          ),
+          const SizedBox(height: 12),
+          _bulletSection(
+            context,
+            'Flagged Binaries',
+            flaggedAssets.isEmpty
+                ? const ['No flagged binaries were discovered.']
+                : flaggedAssets
+                    .take(8)
+                    .map(_assetPreviewSummary)
+                    .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Binaries are listed for review only; the module does not parse them.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _assetIsFlagged(Map<String, dynamic> item) {
+    final values = [
+      item['binary'],
+      item['is_binary'],
+      item['flagged'],
+      item['suspicious'],
+      item['flagged_as_binary'],
+      item['binary_file'],
+    ];
+    for (final value in values) {
+      if (value is bool && value) {
+        return true;
+      }
+      final text = value?.toString().trim().toLowerCase() ?? '';
+      if (['true', 'yes', '1', 'flagged', 'binary', 'suspicious'].contains(text)) {
+        return true;
+      }
+    }
+    final summary = _assetSearchText(item);
+    return summary.contains('binary') || summary.contains('suspicious');
+  }
+
+  List<Map<String, dynamic>> _assetFilter(
+    List<Map<String, dynamic>> assets,
+    List<String> keywords,
+  ) {
+    if (assets.isEmpty) {
+      return const <Map<String, dynamic>>[];
+    }
+    return assets.where((asset) {
+      final haystack = _assetSearchText(asset);
+      return keywords.any((keyword) => haystack.contains(keyword));
+    }).toList(growable: false);
+  }
+
+  List<String> _assetPreviewItems(
+    List<Map<String, dynamic>> assets, {
+    required String defaultLabel,
+    String typeField = 'asset_type',
+  }) {
+    if (assets.isEmpty) {
+      return const ['No items discovered.'];
+    }
+    return assets
+        .take(8)
+        .map((item) {
+          final path = item['path']?.toString().isNotEmpty == true
+              ? item['path'].toString()
+              : 'Unknown asset';
+          final type = item[typeField]?.toString().isNotEmpty == true
+              ? item[typeField].toString()
+              : defaultLabel;
+          return '$path - $type';
+        })
+        .toList(growable: false);
+  }
+
+  String _assetPreviewSummary(Map<String, dynamic> item) {
+    final path = item['path']?.toString().isNotEmpty == true
+        ? item['path'].toString()
+        : 'Unknown asset';
+    final type = item['asset_type']?.toString().isNotEmpty == true
+        ? item['asset_type'].toString()
+        : item['diagram_type']?.toString().isNotEmpty == true
+        ? item['diagram_type'].toString()
+        : 'binary asset';
+    final notes = <String>[];
+    if (item['notes']?.toString().isNotEmpty == true) {
+      notes.add(item['notes'].toString());
+    }
+    if (item['category']?.toString().isNotEmpty == true) {
+      notes.add(item['category'].toString());
+    }
+    if (notes.isEmpty) {
+      return '$path - $type';
+    }
+    return '$path - $type - ${notes.join(' - ')}';
+  }
+
+  String _assetSearchText(Map<String, dynamic> item) {
+    return [
+      item['path'],
+      item['title'],
+      item['asset_type'],
+      item['diagram_type'],
+      item['category'],
+      item['kind'],
+      item['notes'],
+      item['label'],
+    ].map((value) => value?.toString().toLowerCase() ?? '').join(' ');
   }
 
   Widget _reportIndexCard(BuildContext context, {Key? key}) {
