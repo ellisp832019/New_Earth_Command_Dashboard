@@ -98,6 +98,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _exportHistorySearchController =
       TextEditingController();
+  late final TextEditingController _repositoryTreeSearchController =
+      TextEditingController();
 
   bool _graphExport = true;
   bool _isCloning = false;
@@ -149,6 +151,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   Map<String, dynamic> _latestReportIndex = {};
   Map<String, dynamic> _latestDependencyGraph = {};
   Map<String, dynamic> _latestArchitectureGraph = {};
+  Map<String, dynamic> _latestRepositoryInventory = {};
+  Map<String, dynamic> _latestRepositoryTree = {};
 
   final GlobalKey _heroSectionKey = GlobalKey();
   final GlobalKey _scannerSectionKey = GlobalKey();
@@ -164,6 +168,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   final GlobalKey _knowledgeSectionKey = GlobalKey();
   final GlobalKey _documentDiscoverySectionKey = GlobalKey();
   final GlobalKey _assetReviewSectionKey = GlobalKey();
+  final GlobalKey _repositoryTreeSectionKey = GlobalKey();
   final GlobalKey _releaseNotesSectionKey = GlobalKey();
   final GlobalKey _bundleDeltaSectionKey = GlobalKey();
   final GlobalKey _changeTimelineSectionKey = GlobalKey();
@@ -280,6 +285,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _exportHistoryPreviewController.dispose();
     _reportHistorySearchController.dispose();
     _exportHistorySearchController.dispose();
+    _repositoryTreeSearchController.dispose();
     super.dispose();
   }
 
@@ -435,6 +441,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _documentDiscoveryCard(context, key: _documentDiscoverySectionKey),
       const SizedBox(height: 16),
       _assetReviewCard(context, key: _assetReviewSectionKey),
+      const SizedBox(height: 16),
+      _repositoryTreeCard(context, key: _repositoryTreeSectionKey),
       const SizedBox(height: 16),
       _reportIndexCard(context, key: _reportIndexSectionKey),
       const SizedBox(height: 16),
@@ -2665,6 +2673,284 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       item['notes'],
       item['label'],
     ].map((value) => value?.toString().toLowerCase() ?? '').join(' ');
+  }
+
+  Widget _repositoryTreeCard(BuildContext context, {Key? key}) {
+    final tree = _latestRepositoryTree;
+    final inventory = _latestRepositoryInventory;
+    final search = _repositoryTreeSearchController.text.trim().toLowerCase();
+    final topLevel = _repositoryTreeNodeChildren(tree);
+    final visibleTopLevel = search.isEmpty
+        ? topLevel
+        : topLevel
+            .where((node) => _repositoryTreeNodeVisible(node, search))
+            .toList(growable: false);
+    final languageCounts = inventory['language_counts'] is Map
+        ? Map<String, dynamic>.from(inventory['language_counts'] as Map)
+        : <String, dynamic>{};
+    final categoryCounts = inventory['category_counts'] is Map
+        ? Map<String, dynamic>.from(inventory['category_counts'] as Map)
+        : <String, dynamic>{};
+
+    return _panel(
+      context,
+      key: key ?? _repositoryTreeSectionKey,
+      title: 'Repository Tree Explorer',
+      subtitle:
+          'Search the local repository tree by folder, file, language, or category and expand only the matching branches.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(
+                label: '${_comparisonCount(inventory['file_count'])} files',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(inventory['directory_count'])} folders',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(languageCounts)} languages',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${_comparisonCount(categoryCounts)} categories',
+                muted: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _repositoryTreeSearchController,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: 'Search repository tree',
+              hintText: 'Folder, file, language, or category',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _twoColumnBulletBlock(
+            context,
+            leftTitle: 'Top-Level Nodes',
+            leftItems: visibleTopLevel.isEmpty
+                ? const ['No tree nodes match the current search.']
+                : visibleTopLevel
+                    .take(8)
+                    .map(_repositoryTreeSummary)
+                    .toList(growable: false),
+            rightTitle: 'Languages / Categories',
+            rightItems: _repositoryTreeSummaryPairs(languageCounts, categoryCounts),
+          ),
+          const SizedBox(height: 12),
+          _MetadataRow(
+            label: 'Repository root',
+            value: tree['name']?.toString().isNotEmpty == true
+                ? tree['name'].toString()
+                : 'No repository tree loaded',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 460,
+            child: SingleChildScrollView(
+              child: tree.isEmpty
+                  ? Text(
+                      'No repository tree JSON has been loaded yet.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    )
+                  : _repositoryTreeNodeView(
+                      context,
+                      tree,
+                      search: search,
+                      depth: 0,
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _repositoryTreeNodeChildren(
+    Map<String, dynamic> node,
+  ) {
+    final children = node['children'] is List
+        ? (node['children'] as List).whereType<Map>().toList()
+        : <Map>[];
+    return children.map((item) => Map<String, dynamic>.from(item)).toList(
+      growable: false,
+    );
+  }
+
+  bool _repositoryTreeNodeVisible(Map<String, dynamic> node, String search) {
+    if (search.isEmpty) {
+      return true;
+    }
+    if (_repositoryTreeNodeSearchText(node).contains(search)) {
+      return true;
+    }
+    for (final child in _repositoryTreeNodeChildren(node)) {
+      if (_repositoryTreeNodeVisible(child, search)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _repositoryTreeNodeSearchText(Map<String, dynamic> node) {
+    return [
+      node['name'],
+      node['path'],
+      node['kind'],
+      node['language'],
+      node['category'],
+      node['suffix'],
+      node['flags'],
+    ].map((value) => value?.toString().toLowerCase() ?? '').join(' ');
+  }
+
+  Widget _repositoryTreeNodeView(
+    BuildContext context,
+    Map<String, dynamic> node, {
+    required String search,
+    required int depth,
+  }) {
+    final children = _repositoryTreeNodeChildren(node)
+        .where((child) => _repositoryTreeNodeVisible(child, search))
+        .toList(growable: false);
+    final isDirectory = node['kind']?.toString() == 'directory';
+    final nodeName = node['name']?.toString().isNotEmpty == true
+        ? node['name'].toString()
+        : 'Unknown node';
+    final nodePath = node['path']?.toString().isNotEmpty == true
+        ? node['path'].toString()
+        : nodeName;
+    final fileCount = _comparisonCount(node['file_count']);
+    final directoryCount = _comparisonCount(node['directory_count']);
+    if (search.isNotEmpty &&
+        !_repositoryTreeNodeSearchText(node).contains(search) &&
+        children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    if (!isDirectory) {
+      return Padding(
+        padding: EdgeInsets.only(left: depth * 12.0),
+        child: ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.insert_drive_file_outlined, size: 18),
+          title: Text(
+            nodeName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            '$nodePath - ${node['language'] ?? node['category'] ?? 'file'}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: _StatusChip(label: '${node['suffix'] ?? 'file'}', muted: false),
+        ),
+      );
+    }
+    return Container(
+      margin: EdgeInsets.only(left: depth == 0 ? 0 : 8),
+      child: ExpansionTile(
+        key: PageStorageKey<String>(nodePath),
+        initiallyExpanded: depth < 1 || search.isNotEmpty,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 0),
+        childrenPadding: const EdgeInsets.only(left: 8),
+        leading: const Icon(Icons.folder_open_outlined),
+        title: Text(
+          nodeName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          '$nodePath - $fileCount files, $directoryCount folders',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        children: children.isEmpty
+            ? [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    search.isNotEmpty
+                        ? 'No matching children found.'
+                        : 'No child nodes recorded.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+                ),
+              ]
+            : [
+                for (final child in children)
+                  _repositoryTreeNodeView(
+                    context,
+                    child,
+                    search: search,
+                    depth: depth + 1,
+                  ),
+              ],
+      ),
+    );
+  }
+
+  List<String> _repositoryTreeSummaryPairs(
+    Map<String, dynamic> languageCounts,
+    Map<String, dynamic> categoryCounts,
+  ) {
+    final entries = <MapEntry<String, int>>[];
+    for (final entry in languageCounts.entries) {
+      entries.add(MapEntry(entry.key, _comparisonCount(entry.value)));
+    }
+    entries.sort((left, right) => right.value.compareTo(left.value));
+    final languages = entries.take(4).map((entry) {
+      final value = entry.value;
+      return '${entry.key} - $value files';
+    });
+
+    final categoryEntries = <MapEntry<String, int>>[];
+    for (final entry in categoryCounts.entries) {
+      categoryEntries.add(MapEntry(entry.key, _comparisonCount(entry.value)));
+    }
+    categoryEntries.sort((left, right) => right.value.compareTo(left.value));
+    final categories = categoryEntries.take(4).map((entry) {
+      final value = entry.value;
+      return '${entry.key} - $value files';
+    });
+
+    final results = <String>[
+      ...languages,
+      ...categories,
+    ];
+    if (results.isEmpty) {
+      return const ['No summary data available.'];
+    }
+    return results.toList(growable: false);
+  }
+
+  String _repositoryTreeSummary(Map<String, dynamic> node) {
+    final name = node['name']?.toString().isNotEmpty == true
+        ? node['name'].toString()
+        : 'Unknown node';
+    final path = node['path']?.toString().isNotEmpty == true
+        ? node['path'].toString()
+        : name;
+    final fileCount = _comparisonCount(node['file_count']);
+    final directoryCount = _comparisonCount(node['directory_count']);
+    final kind = node['kind']?.toString().isNotEmpty == true
+        ? node['kind'].toString()
+        : 'node';
+    return '$path - $kind - $fileCount files, $directoryCount folders';
   }
 
   Widget _reportIndexCard(BuildContext context, {Key? key}) {
@@ -5124,6 +5410,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 artifacts['architecture_graph.json'] as Map,
               )
             : <String, dynamic>{};
+        _latestRepositoryInventory = artifacts['repo_inventory'] is Map
+            ? Map<String, dynamic>.from(artifacts['repo_inventory'] as Map)
+            : <String, dynamic>{};
+        _latestRepositoryTree = artifacts['repository_tree'] is Map
+            ? Map<String, dynamic>.from(artifacts['repository_tree'] as Map)
+            : <String, dynamic>{};
         _mainReportPath = previewPath;
         _securityReportPath = pathJoin(output, 'security_report.md');
         _comparisonReportPath = pathJoin(output, 'repo_comparison.md');
@@ -5196,6 +5488,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'release_notes': releaseNotes,
       'bundle_delta': bundleDelta,
       'report_index': reportIndex,
+      'repo_inventory': await _readJsonMap(
+        pathJoin(outputDirectory, 'repo_inventory.json'),
+      ),
+      'repository_tree': await _readJsonMap(
+        pathJoin(outputDirectory, 'repository_tree.json'),
+      ),
       'knowledge_report.md': await _service.readFile(
         pathJoin(outputDirectory, 'knowledge_report.md'),
       ),
@@ -5645,6 +5943,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           ? Map<String, dynamic>.from(
               artifacts['architecture_graph.json'] as Map,
             )
+          : <String, dynamic>{};
+      _latestRepositoryInventory = artifacts['repo_inventory'] is Map
+          ? Map<String, dynamic>.from(artifacts['repo_inventory'] as Map)
+          : <String, dynamic>{};
+      _latestRepositoryTree = artifacts['repository_tree'] is Map
+          ? Map<String, dynamic>.from(artifacts['repository_tree'] as Map)
           : <String, dynamic>{};
     });
     _setMessage('Loaded the selected run into the form.');

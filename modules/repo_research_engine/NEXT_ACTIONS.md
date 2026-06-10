@@ -11,3 +11,4 @@
 9. Keep comparison and change history focused on fast review rather than dense raw output.
 10. Expand the graph drilldowns only if users still need more depth after the current filters land.
 11. Use the architecture review card as the primary place for future graph-inspection tweaks.
+12. Extend the repository tree explorer only if users need deeper branch metadata or file previews.

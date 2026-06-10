@@ -39,6 +39,7 @@ The second 20-task workflow has been completed, with separate commits for each t
 - Template library controls with direct inspect and apply actions
 - Export history filtering by profile, repo, folder, and copied files
 - Report history filtering by output, repo, profile, and generated files
+- Repository tree explorer with search and recursive branch drilldown
 - Graph export support
 - Rich document indexing
 - Image asset discovery
