@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode DailyBackup
 
+if errorlevel 1 (
+  echo Daily backup finished with errors.
+) else (
+  echo Daily backup complete.
+)
+
 pause

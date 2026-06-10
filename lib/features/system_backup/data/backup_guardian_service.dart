@@ -168,9 +168,11 @@ class BackupGuardianSnapshot {
     required this.statusFileExists,
     required this.sourceExists,
     required this.backupDriveExists,
+    required this.mirrorFolderExists,
     required this.healthState,
     required this.latestBackupStatus,
     required this.latestReportPath,
+    required this.latestManifestPath,
     required this.restoreTestStatus,
     required this.backupSizeText,
     required this.historyFilePath,
@@ -194,9 +196,11 @@ class BackupGuardianSnapshot {
   final bool statusFileExists;
   final bool sourceExists;
   final bool backupDriveExists;
+  final bool mirrorFolderExists;
   final BackupGuardianHealthState healthState;
   final String latestBackupStatus;
   final String latestReportPath;
+  final String latestManifestPath;
   final String restoreTestStatus;
   final String backupSizeText;
   final String historyFilePath;
@@ -245,6 +249,7 @@ class BackupGuardianService {
     final status = await _loadStatus();
     final history = await _loadHistory();
     final sourceExists = Directory(config.sourceDrive).existsSync();
+    final mirrorFolderExists = Directory(config.mirrorFolder).existsSync();
     final backupDriveRoot = path.dirname(
       config.backupTarget.replaceAll('\\', '/').trimRight(),
     );
@@ -290,6 +295,18 @@ class BackupGuardianService {
         latestVerificationHistory?.finishedAt ??
         (status.mode == 'VerifyLatest' ? status.updatedAt : null);
     final backupAge = _backupAgeInDays(lastBackupAt);
+    if (backupAge != null && backupAge >= config.staleAfterDays) {
+      warnings.add(
+        'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old. Run Backup Now soon.',
+      );
+    }
+    if (lastBackupAt != null &&
+        lastVerificationAt != null &&
+        lastBackupAt.isAfter(lastVerificationAt)) {
+      warnings.add(
+        'Latest backup is newer than the last verification. Run Verify Latest again.',
+      );
+    }
     final healthState = _deriveHealthState(
       status: status,
       sourceExists: sourceExists,
@@ -302,11 +319,13 @@ class BackupGuardianService {
     final healthSummary = switch (healthState) {
       BackupGuardianHealthState.green => 'Latest backup verified',
       BackupGuardianHealthState.amber => sourceExists && !backupDriveExists
-          ? 'Waiting for the external backup drive'
+          ? 'Backup drive not connected'
           : backupAge != null && backupAge >= config.staleAfterDays
               ? 'Backup is older than the freshness threshold'
               : 'Backup exists but still needs review',
-      BackupGuardianHealthState.red => 'Backup failed or target missing',
+      BackupGuardianHealthState.red => !backupDriveExists
+          ? 'Backup drive not connected'
+          : 'Backup mirror missing or backup failed',
       BackupGuardianHealthState.grey => 'No backup run yet',
     };
 
@@ -329,7 +348,9 @@ class BackupGuardianService {
         ? 'No backup history yet. Run a backup to start the timeline.'
         : backupAge != null && backupAge >= config.staleAfterDays
             ? 'Backup is older than ${config.staleAfterDays} day${config.staleAfterDays == 1 ? '' : 's'}. Run Backup Now soon.'
-            : scheduleSummary;
+            : backupDriveExists
+                ? scheduleSummary
+                : 'Backup drive not connected. Plug in the external drive to continue.';
 
     final nextSuggestedRun = _calculateNextSuggestedRun(
       config: config,
@@ -342,6 +363,7 @@ class BackupGuardianService {
       statusFileExists: status.exists,
       sourceExists: sourceExists,
       backupDriveExists: backupDriveExists,
+      mirrorFolderExists: mirrorFolderExists,
       healthState: healthState,
       latestBackupStatus: status.summary.isNotEmpty
           ? status.summary
@@ -349,6 +371,10 @@ class BackupGuardianService {
       latestReportPath: status.latestReportPath.isNotEmpty
           ? status.latestReportPath
           : _fallbackReportPath(config),
+      latestManifestPath: _latestManifestPath(
+        status: status,
+        latestBackupHistory: latestBackupHistory,
+      ),
       restoreTestStatus: status.restoreTestStatus.isNotEmpty
           ? status.restoreTestStatus
           : 'Not run yet',
@@ -415,6 +441,12 @@ class BackupGuardianService {
   }
 
   Future<void> openBackupFolder(BackupGuardianSnapshot snapshot) async {
+    final mirrorFolder = snapshot.config.mirrorFolder.trim();
+    if (mirrorFolder.isNotEmpty && Directory(mirrorFolder).existsSync()) {
+      await _openPath(mirrorFolder);
+      return;
+    }
+
     await _openPath(snapshot.backupTarget);
   }
 
@@ -552,6 +584,21 @@ class BackupGuardianService {
     return null;
   }
 
+  String _latestManifestPath({
+    required _ParsedStatus status,
+    required BackupGuardianHistoryEntry? latestBackupHistory,
+  }) {
+    if (status.manifestPath.isNotEmpty) {
+      return status.manifestPath;
+    }
+
+    if (latestBackupHistory != null && latestBackupHistory.manifestPath.isNotEmpty) {
+      return latestBackupHistory.manifestPath;
+    }
+
+    return '';
+  }
+
   int? _backupAgeInDays(DateTime? lastBackupAt) {
     if (lastBackupAt == null) {
       return null;
@@ -625,6 +672,7 @@ class _ParsedStatus {
     this.target = '',
     this.summary = '',
     this.latestReportPath = '',
+    this.manifestPath = '',
     this.restoreTestStatus = '',
     this.backupSizeText = '',
     this.warnings = const <String>[],
@@ -641,6 +689,7 @@ class _ParsedStatus {
   final String target;
   final String summary;
   final String latestReportPath;
+  final String manifestPath;
   final String restoreTestStatus;
   final String backupSizeText;
   final List<String> warnings;
@@ -676,6 +725,7 @@ class _ParsedStatus {
       latestReportPath: readString('latest_report_path').isNotEmpty
           ? readString('latest_report_path')
           : readString('log_path'),
+      manifestPath: readString('manifest_path'),
       restoreTestStatus: readString('restore_test_status'),
       backupSizeText: readString('backup_size_text'),
       warnings: _stringList(json['warnings']),

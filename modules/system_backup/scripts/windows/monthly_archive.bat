@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode MonthlyArchive
 
+if errorlevel 1 (
+  echo Monthly archive finished with errors.
+) else (
+  echo Monthly archive complete.
+)
+
 pause

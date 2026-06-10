@@ -341,7 +341,7 @@ class _HeroCard extends StatelessWidget {
               _Badge(
                 label: snapshot.backupDriveExists
                     ? snapshot.backupTarget
-                    : 'Waiting for E: / NEW_EARTH_BACKUP',
+                    : 'Backup drive not connected',
                 accent: snapshot.backupDriveExists
                     ? AppColours.darkPurple
                     : AppColours.darkAmber,
@@ -465,8 +465,22 @@ class _ActionCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenBackupFolder,
                 icon: const Icon(Icons.folder_open_outlined),
-                label: const Text('Open Backup Folder'),
+                label: Text(
+                  snapshot.mirrorFolderExists
+                      ? 'Open Mirror Folder'
+                      : 'Open Backup Root',
+                ),
               ),
+              if (!snapshot.mirrorFolderExists)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    'Mirror folder is not ready yet, so I am opening the backup root instead.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                  ),
+                ),
               OutlinedButton.icon(
                 onPressed: onViewLatestReport,
                 icon: const Icon(Icons.article_outlined),
@@ -476,6 +490,22 @@ class _ActionCard extends StatelessWidget {
                 onPressed: onRefreshStatus,
                 icon: const Icon(Icons.refresh_outlined),
                 label: const Text('Refresh Status'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: const [
+              _Badge(
+                label: 'Backup Now: exact mirror',
+                accent: AppColours.darkSuccess,
+              ),
+              _Badge(
+                label: 'Quick Incremental: faster deltas',
+                accent: AppColours.darkAmber,
               ),
             ],
           ),
@@ -581,6 +611,10 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final latestEvent = snapshot.historyEntries.isNotEmpty
+        ? snapshot.historyEntries.first
+        : null;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _panelDecoration(context),
@@ -601,6 +635,16 @@ class _HistoryCard extends StatelessWidget {
                   height: 1.4,
                 ),
           ),
+          if (latestEvent != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Newest events appear first. Latest: ${latestEvent.action.isNotEmpty ? latestEvent.action : latestEvent.mode} at ${_formatDate(latestEvent.finishedAt ?? latestEvent.startedAt)}.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    height: 1.35,
+                  ),
+            ),
+          ],
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -759,6 +803,11 @@ class _HistoryEntryTile extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              if (entry.mode.isNotEmpty)
+                _Badge(
+                  label: entry.mode,
+                  accent: AppColours.darkPurple,
+                ),
               _Badge(
                 label: _formatDate(entry.finishedAt ?? entry.startedAt),
                 accent: AppColours.darkSecondary,
@@ -805,7 +854,7 @@ class _StatusGrid extends StatelessWidget {
         value: snapshot.backupTarget,
         detail: snapshot.backupDriveExists
             ? 'External drive visible'
-            : 'Waiting for E: / NEW_EARTH_BACKUP',
+            : 'Backup drive not connected',
         accent: snapshot.backupDriveExists ? AppColours.darkSuccess : AppColours.darkAmber,
       ),
       _StatusTile(
@@ -835,7 +884,7 @@ class _StatusGrid extends StatelessWidget {
       _StatusTile(
         label: 'Backup size',
         value: snapshot.backupSizeText,
-        detail: 'Tracked in the report layer later',
+        detail: 'Captured from the latest backup run',
         accent: AppColours.darkPurple,
       ),
       _StatusTile(
@@ -849,6 +898,18 @@ class _StatusGrid extends StatelessWidget {
         value: p.basename(snapshot.latestReportPath),
         detail: snapshot.latestReportPath,
         accent: AppColours.darkSecondary,
+      ),
+      _StatusTile(
+        label: 'Latest manifest path',
+        value: snapshot.latestManifestPath.isNotEmpty
+            ? p.basename(snapshot.latestManifestPath)
+            : 'No manifest yet',
+        detail: snapshot.latestManifestPath.isNotEmpty
+            ? snapshot.latestManifestPath
+            : 'Manifest creation is optional until the next verified backup runs.',
+        accent: snapshot.latestManifestPath.isNotEmpty
+            ? AppColours.darkSuccess
+            : AppColours.darkAmber,
       ),
     ];
 

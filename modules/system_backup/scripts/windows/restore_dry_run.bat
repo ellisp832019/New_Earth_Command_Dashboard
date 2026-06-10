@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode RestoreDryRun
 
+if errorlevel 1 (
+  echo Restore dry run finished with errors.
+) else (
+  echo Restore dry run complete.
+)
+
 pause

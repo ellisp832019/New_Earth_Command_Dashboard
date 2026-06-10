@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode VerifyLatest
 
+if errorlevel 1 (
+  echo Verify latest finished with errors.
+) else (
+  echo Verify latest complete.
+)
+
 pause

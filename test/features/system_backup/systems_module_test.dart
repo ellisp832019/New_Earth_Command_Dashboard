@@ -40,7 +40,7 @@ void main() {
       ProviderScope(
         overrides: [
           backupGuardianSnapshotProvider.overrideWith(
-            (ref) async => const BackupGuardianSnapshot(
+            (ref) async => BackupGuardianSnapshot(
               config: BackupGuardianConfig(
                 sourceDrive: 'D:/',
                 backupTarget: 'E:/NEW_EARTH_BACKUP',
@@ -67,14 +67,50 @@ void main() {
               statusFileExists: true,
               sourceExists: true,
               backupDriveExists: true,
+              mirrorFolderExists: false,
               healthState: BackupGuardianHealthState.green,
               latestBackupStatus: 'Latest backup verified',
               latestReportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
+              latestManifestPath: 'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
               restoreTestStatus: 'Not run yet',
               backupSizeText: 'Not tracked in V1',
               historyFilePath: 'modules/system_backup/runtime/backup_history.json',
-              historyEntries: <BackupGuardianHistoryEntry>[],
-              restorePoints: <BackupGuardianHistoryEntry>[],
+              historyEntries: <BackupGuardianHistoryEntry>[
+                BackupGuardianHistoryEntry(
+                  action: 'Backup Now',
+                  mode: 'BackupNow',
+                  state: 'green',
+                  summary: 'Latest backup verified',
+                  startedAt: DateTime.parse('2026-06-07T05:55:00Z'),
+                  finishedAt: DateTime.parse('2026-06-07T06:00:00Z'),
+                  durationMs: 300000,
+                  filesScanned: 12,
+                  filesCopied: 12,
+                  filesSkipped: 0,
+                  backupSizeText: '2.0 KB',
+                  manifestPath: 'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
+                  reportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
+                  restorePointLabel: 'Manual backup - 2026-06-07 06:00',
+                ),
+              ],
+              restorePoints: <BackupGuardianHistoryEntry>[
+                BackupGuardianHistoryEntry(
+                  action: 'Backup Now',
+                  mode: 'BackupNow',
+                  state: 'green',
+                  summary: 'Latest backup verified',
+                  startedAt: DateTime.parse('2026-06-07T05:55:00Z'),
+                  finishedAt: DateTime.parse('2026-06-07T06:00:00Z'),
+                  durationMs: 300000,
+                  filesScanned: 12,
+                  filesCopied: 12,
+                  filesSkipped: 0,
+                  backupSizeText: '2.0 KB',
+                  manifestPath: 'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
+                  reportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
+                  restorePointLabel: 'Manual backup - 2026-06-07 06:00',
+                ),
+              ],
               scheduleSummary: 'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
               retentionSummary: 'Quick keep 7, daily keep 7, weekly keep 4, monthly keep 12.',
               freshnessSummary: 'Backup ran today.',
@@ -84,8 +120,8 @@ void main() {
               lastVerificationAt: null,
               statusUpdatedAt: null,
               warnings: <String>['Robocopy exit code: 1'],
-              errors: <String>[],
-              healthSummary: 'Latest backup verified',
+                errors: <String>[],
+                healthSummary: 'Latest backup verified',
             ),
           ),
         ],
@@ -98,12 +134,21 @@ void main() {
 
     expect(find.text('Backup Guardian'), findsOneWidget);
     expect(find.text('Dry Run'), findsOneWidget);
-    expect(find.text('Backup Now'), findsOneWidget);
     expect(find.text('Verify Latest'), findsOneWidget);
     expect(find.text('Restore Dry Run'), findsOneWidget);
     expect(find.text('Quick Incremental'), findsOneWidget);
+    expect(find.text('Open Backup Root'), findsOneWidget);
+    expect(find.text('BackupNow'), findsWidgets);
+    expect(find.textContaining('Newest events appear first.'), findsOneWidget);
     expect(find.text('Roadmap / Future work'), findsOneWidget);
     expect(find.text('V2 planned'), findsOneWidget);
     expect(find.text('V3 planned'), findsOneWidget);
+    expect(find.text('Latest manifest path'), findsOneWidget);
+    expect(
+      find.text(
+        'Mirror folder is not ready yet, so I am opening the backup root instead.',
+      ),
+      findsOneWidget,
+    );
   });
 }

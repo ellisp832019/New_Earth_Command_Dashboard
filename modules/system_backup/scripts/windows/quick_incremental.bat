@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode QuickIncremental
 
+if errorlevel 1 (
+  echo Quick incremental finished with errors.
+) else (
+  echo Quick incremental complete.
+)
+
 pause

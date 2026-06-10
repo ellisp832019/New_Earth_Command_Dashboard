@@ -58,14 +58,14 @@ function Get-ConfigValue($Object, $Path, $Fallback) {
 
 function Get-IntValue($Value, $Fallback) {
   if ($Value -is [int]) {
-    return [int]$Value
+    return [long]$Value
   }
   if ($Value -is [long]) {
-    return [int]$Value
+    return [long]$Value
   }
   if ($Value -is [string]) {
-    $Parsed = 0
-    if ([int]::TryParse($Value.Trim(), [ref]$Parsed)) {
+    $Parsed = [long]0
+    if ([long]::TryParse($Value.Trim(), [ref]$Parsed)) {
       return $Parsed
     }
   }
@@ -125,6 +125,74 @@ function Get-ManifestPath([string]$Stamp) {
   return Join-Path $Manifests "backup_manifest_$Stamp.json"
 }
 
+function Get-LatestHistoryEvent() {
+  if (!(Test-Path $HistoryPath)) {
+    return $null
+  }
+
+  $History = Read-JsonFile -Path $HistoryPath
+  if ($null -eq $History -or -not $History.PSObject.Properties['events']) {
+    return $null
+  }
+
+  $Events = @($History.events)
+  if ($Events.Count -eq 0) {
+    return $null
+  }
+
+  return $Events[0]
+}
+
+function Get-RelativePath([string]$Root, [string]$FullName) {
+  $NormalizedRoot = $Root.TrimEnd('\', '/')
+  if ([string]::IsNullOrWhiteSpace($NormalizedRoot) -or [string]::IsNullOrWhiteSpace($FullName)) {
+    return $FullName
+  }
+
+  if ($FullName.Length -le $NormalizedRoot.Length) {
+    return ''
+  }
+
+  $RelativePath = $FullName.Substring($NormalizedRoot.Length).TrimStart('\', '/')
+  return ($RelativePath -replace '\\', '/')
+}
+
+function Get-PathFingerprint([string]$Path) {
+  $Fingerprint = [ordered]@{
+    file_count = 0
+    inventory_hash_algorithm = 'SHA256'
+    inventory_hash = ''
+  }
+
+  if (!(Test-Path $Path)) {
+    return $Fingerprint
+  }
+
+  $Files = @(Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction SilentlyContinue | Sort-Object FullName)
+  $Fingerprint.file_count = $Files.Count
+  if ($Files.Count -eq 0) {
+    return $Fingerprint
+  }
+
+  $Builder = New-Object System.Text.StringBuilder
+  foreach ($File in $Files) {
+    $RelativePath = Get-RelativePath -Root $Path -FullName $File.FullName
+    $Line = "{0}|{1}|{2}|{3}" -f $RelativePath, $File.Length, $File.LastWriteTimeUtc.ToString('o'), $File.Attributes
+    [void]$Builder.AppendLine($Line)
+  }
+
+  $Sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $Bytes = [System.Text.Encoding]::UTF8.GetBytes($Builder.ToString())
+    $HashBytes = $Sha256.ComputeHash($Bytes)
+    $Fingerprint.inventory_hash = ([BitConverter]::ToString($HashBytes) -replace '-', '').ToLowerInvariant()
+  } finally {
+    $Sha256.Dispose()
+  }
+
+  return $Fingerprint
+}
+
 function Get-SnapshotFolder([string]$Kind, [string]$Stamp) {
   $Folder = Join-Path $BackupRoot $Kind
   if (!(Test-Path $Folder)) {
@@ -155,67 +223,90 @@ function Prune-SnapshotFolders([string]$Kind, [int]$Keep) {
   }
 }
 
+function Write-StepMessage([string]$Message) {
+  Write-Host ("[{0}] {1}" -f (Get-Date -Format 'HH:mm:ss'), $Message)
+}
+
 function Get-BackupKind([string]$CurrentMode) {
-  return switch ($CurrentMode) {
-    'QuickIncremental' { 'quick' }
-    'DailyBackup' { 'daily' }
-    'WeeklySnapshot' { 'weekly' }
-    'MonthlyArchive' { 'monthly' }
-    default { 'manual' }
+  $Kind = 'manual'
+  switch ($CurrentMode) {
+    'QuickIncremental' { $Kind = 'quick'; break }
+    'DailyBackup' { $Kind = 'daily'; break }
+    'WeeklySnapshot' { $Kind = 'weekly'; break }
+    'MonthlyArchive' { $Kind = 'monthly'; break }
   }
+  return $Kind
 }
 
 function Get-ActionLabel([string]$CurrentMode) {
-  return switch ($CurrentMode) {
-    'DryRun' { 'Dry Run' }
-    'BackupNow' { 'Backup Now' }
-    'VerifyLatest' { 'Verify Latest' }
-    'RestoreDryRun' { 'Restore Dry Run' }
-    'QuickIncremental' { 'Quick Incremental' }
-    'DailyBackup' { 'Scheduled Daily Backup' }
-    'WeeklySnapshot' { 'Weekly Snapshot' }
-    'MonthlyArchive' { 'Monthly Archive' }
-    default { $CurrentMode }
+  $Label = $CurrentMode
+  switch ($CurrentMode) {
+    'DryRun' { $Label = 'Dry Run'; break }
+    'BackupNow' { $Label = 'Backup Now'; break }
+    'VerifyLatest' { $Label = 'Verify Latest'; break }
+    'RestoreDryRun' { $Label = 'Restore Dry Run'; break }
+    'QuickIncremental' { $Label = 'Quick Incremental'; break }
+    'DailyBackup' { $Label = 'Scheduled Daily Backup'; break }
+    'WeeklySnapshot' { $Label = 'Weekly Snapshot'; break }
+    'MonthlyArchive' { $Label = 'Monthly Archive'; break }
   }
+  return $Label
 }
 
 function Get-RestorePointLabel([string]$CurrentMode, [datetime]$When) {
   $Stamp = $When.ToString('yyyy-MM-dd HH:mm')
-  return switch ($CurrentMode) {
-    'DailyBackup' { "Daily backup - $Stamp" }
-    'WeeklySnapshot' { "Weekly snapshot - $Stamp" }
-    'MonthlyArchive' { "Monthly archive - $Stamp" }
-    'BackupNow' { "Manual backup - $Stamp" }
-    'QuickIncremental' { "Quick incremental - $Stamp" }
-    default { "$CurrentMode - $Stamp" }
+  $Label = "$CurrentMode - $Stamp"
+  switch ($CurrentMode) {
+    'DailyBackup' { $Label = "Daily backup - $Stamp"; break }
+    'WeeklySnapshot' { $Label = "Weekly snapshot - $Stamp"; break }
+    'MonthlyArchive' { $Label = "Monthly archive - $Stamp"; break }
+    'BackupNow' { $Label = "Manual backup - $Stamp"; break }
+    'QuickIncremental' { $Label = "Quick incremental - $Stamp"; break }
   }
+  return $Label
 }
 
 function Get-RetentionValue([string]$Kind, [int]$Fallback) {
-  return switch ($Kind) {
-    'quick' { Get-IntValue (Get-ConfigValue $Config 'retention.quick_keep' $Fallback) $Fallback }
-    'daily' { Get-IntValue (Get-ConfigValue $Config 'retention.daily_keep' $Fallback) $Fallback }
-    'weekly' { Get-IntValue (Get-ConfigValue $Config 'retention.weekly_keep' $Fallback) $Fallback }
-    'monthly' { Get-IntValue (Get-ConfigValue $Config 'retention.monthly_keep' $Fallback) $Fallback }
-    default { $Fallback }
+  $Value = $Fallback
+  switch ($Kind) {
+    'quick' { $Value = Get-IntValue (Get-ConfigValue $Config 'retention.quick_keep' $Fallback) $Fallback; break }
+    'daily' { $Value = Get-IntValue (Get-ConfigValue $Config 'retention.daily_keep' $Fallback) $Fallback; break }
+    'weekly' { $Value = Get-IntValue (Get-ConfigValue $Config 'retention.weekly_keep' $Fallback) $Fallback; break }
+    'monthly' { $Value = Get-IntValue (Get-ConfigValue $Config 'retention.monthly_keep' $Fallback) $Fallback; break }
   }
+  return $Value
 }
 
-function Write-Manifest([string]$Path, [string]$Action, [string]$Kind, [string]$Summary, [hashtable]$SourceStats, [hashtable]$TargetStats, [string]$ReportPath) {
+function Write-Manifest(
+  [string]$Path,
+  [string]$Action,
+  [string]$Kind,
+  [string]$Summary,
+  [hashtable]$SourceStats,
+  [hashtable]$TargetStats,
+  [hashtable]$TargetFingerprint,
+  [string]$ReportPath
+) {
   $Manifest = [ordered]@{
     module = 'system_backup'
+    manifest_version = 1
     action = $Action
     backup_kind = $Kind
     summary = $Summary
     created_at = (Get-Date).ToString('o')
     source_drive = $Source
+    source_path = $Source
     target_drive = $BackupRoot
+    target_path = $Target
     source_file_count = $SourceStats.file_count
     source_size_bytes = $SourceStats.size_bytes
     source_size_text = $SourceStats.size_text
     target_file_count = $TargetStats.file_count
     target_size_bytes = $TargetStats.size_bytes
     target_size_text = $TargetStats.size_text
+    target_inventory_hash_algorithm = $TargetFingerprint.inventory_hash_algorithm
+    target_inventory_hash = $TargetFingerprint.inventory_hash
+    target_inventory_file_count = $TargetFingerprint.file_count
     report_path = $ReportPath
   }
 
@@ -360,14 +451,18 @@ function Invoke-BackupRun(
   $RestorePointPath = $null
 
   if ($CurrentMode -ne 'DryRun' -and !(Test-Path $Target)) {
+    Write-StepMessage "Preparing backup target folder..."
     New-Item -ItemType Directory -Path $Target -Force | Out-Null
   }
 
+  Write-StepMessage "Scanning source files..."
   $SourceStats = Get-FolderStats -Path $Source
+  Write-StepMessage "Scanning backup target..."
   $TargetStatsBefore = Get-FolderStats -Path $Target
 
   if ($CurrentMode -eq 'DryRun') {
     $CopyModeArgs = if ($PreserveDeletedSourceFiles) { '/E' } else { '/MIR' }
+    Write-StepMessage "Running dry run copy preview..."
     robocopy $Source $Target $CopyModeArgs /L /R:2 /W:2 /XJ /FFT /Z @ExcludeArgs /TEE /LOG:$LogPath
     $RoboCode = $LASTEXITCODE
     $Timer.Stop()
@@ -381,11 +476,6 @@ function Invoke-BackupRun(
     $Errors = @()
     if ($RoboCode -gt 7) {
       $Errors = @("Robocopy exit code: $RoboCode")
-    }
-
-    if ($Config.create_manifest) {
-      $ManifestPath = Get-ManifestPath -Stamp $RunStartedAt.ToString('yyyyMMdd_HHmmss')
-      Write-Manifest -Path $ManifestPath -Action $ActionLabel -Kind $BackupKind -Summary $Summary -SourceStats $SourceStats -TargetStats $TargetStatsAfter -ReportPath $LogPath
     }
 
     Write-Status -State ($(if ($RoboCode -le 7) { 'grey' } else { 'red' })) -Summary $Summary -Warnings $Warnings -Errors $Errors -FilesScanned $FilesScanned -FilesCopied $FilesCopied -FilesSkipped $FilesSkipped -BackupSizeBytes $BackupSizeBytes -DurationMs $Timer.ElapsedMilliseconds -BackupKind $BackupKind -ManifestPath $ManifestPath
@@ -413,6 +503,7 @@ function Invoke-BackupRun(
   }
 
   $CopyModeArgs = if ($PreserveDeletedSourceFiles) { '/E' } else { '/MIR' }
+  Write-StepMessage "Starting file copy..."
   robocopy $Source $Target $CopyModeArgs /R:2 /W:2 /XJ /FFT /Z @ExcludeArgs /TEE /LOG:$LogPath
   $RoboCode = $LASTEXITCODE
   $Timer.Stop()
@@ -441,7 +532,17 @@ function Invoke-BackupRun(
 
   if ($Config.create_manifest) {
     $ManifestPath = Get-ManifestPath -Stamp $RunStartedAt.ToString('yyyyMMdd_HHmmss')
-    Write-Manifest -Path $ManifestPath -Action $ActionLabel -Kind $BackupKind -Summary $Summary -SourceStats $SourceStats -TargetStats $TargetStatsAfter -ReportPath $LogPath
+    try {
+      $TargetFingerprint = Get-PathFingerprint -Path $Target
+      Write-Manifest -Path $ManifestPath -Action $ActionLabel -Kind $BackupKind -Summary $Summary -SourceStats $SourceStats -TargetStats $TargetStatsAfter -TargetFingerprint $TargetFingerprint -ReportPath $LogPath
+    } catch {
+      if ($ManifestPath -and (Test-Path $ManifestPath)) {
+        Remove-Item -LiteralPath $ManifestPath -Force -ErrorAction SilentlyContinue
+      }
+
+      $ManifestPath = $null
+      $Warnings += "Manifest creation failed: $($_.Exception.Message)"
+    }
   }
 
   if ($RoboCode -le 7) {
@@ -458,6 +559,10 @@ function Invoke-BackupRun(
     }
   } else {
     'red'
+  }
+
+  if ($RoboCode -le 7 -and $Warnings.Count -gt 0 -and $State -eq 'green') {
+    $State = 'amber'
   }
 
   Write-Status -State $State -Summary $Summary -Warnings $Warnings -Errors $Errors -LastBackupAt ($(if ($CurrentMode -eq 'VerifyLatest') { $null } else { (Get-Date).ToString('o') })) -LastVerificationAt ($(if ($CurrentMode -eq 'VerifyLatest') { (Get-Date).ToString('o') } else { $null })) -RestoreTestStatus (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') -FilesScanned $FilesScanned -FilesCopied $FilesCopied -FilesSkipped $FilesSkipped -BackupSizeBytes $BackupSizeBytes -DurationMs $Timer.ElapsedMilliseconds -BackupKind $BackupKind -ManifestPath $ManifestPath -RestorePointPath $RestorePointPath
@@ -549,13 +654,13 @@ if (!(Test-Path $Source)) {
 }
 
 if ($Mode -ne "DryRun" -and !(Test-Path (Split-Path $Target -Parent))) {
-  Write-Status "red" "Backup drive missing" @() @("Backup target root not found: $Target")
+  Write-Status "red" "Backup drive not connected." @() @("Backup target root not found: $BackupRoot")
   Write-HistoryEntry ([ordered]@{
     action = 'Drive Check'
     mode = $Mode
     backup_kind = 'manual'
     state = 'red'
-    summary = "Backup target root not found: $Target"
+    summary = "Backup target root not found: $BackupRoot"
     started_at = (Get-Date).ToString('o')
     finished_at = (Get-Date).ToString('o')
     duration_ms = 0
@@ -592,20 +697,166 @@ switch ($Mode) {
     Invoke-BackupRun -CurrentMode $Mode -SummaryWhenSuccess 'Monthly archive completed successfully.' -SummaryWhenFailure 'Monthly archive failed.'
   }
   'VerifyLatest' {
-    $TargetStats = Get-FolderStats -Path $Target
-    if (Test-Path $Target) {
-      $LastBackupAt = Get-ConfigValue $ExistingStatus 'last_backup_at' $null
-      $Warnings = @("Deep checksum verification to be added in Phase 2.")
-      if ($TargetStats.file_count -gt 0) {
-        $Warnings += "Target contains $($TargetStats.file_count) file$(if ($TargetStats.file_count -eq 1) { '' } else { 's' })."
-      }
-      Write-Status "green" "Backup target exists. Basic verification passed." $Warnings @() $null (Get-Date).ToString("o") (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') $TargetStats.file_count $TargetStats.file_count 0 $TargetStats.size_bytes 0 'backup' $null $null
+    if (!(Test-Path $BackupRoot)) {
+      Write-Status "red" "Backup drive not connected." @() @("Backup target root not found: $BackupRoot")
       Write-HistoryEntry ([ordered]@{
         action = 'Verify Latest'
         mode = $Mode
         backup_kind = 'manual'
-        state = 'green'
-        summary = 'Backup target exists. Basic verification passed.'
+        state = 'red'
+        summary = "Backup target root not found: $BackupRoot"
+        started_at = (Get-Date).ToString('o')
+        finished_at = (Get-Date).ToString('o')
+        duration_ms = 0
+        files_scanned = 0
+        files_copied = 0
+        files_skipped = 0
+        backup_size_bytes = 0
+        backup_size_text = '0 B'
+        manifest_path = ''
+        report_path = $LogPath
+        restore_point_label = ''
+        restore_point_path = ''
+      })
+      exit 1
+    }
+
+    $TargetStats = Get-FolderStats -Path $Target
+    if (Test-Path $Target) {
+      $LastBackupAt = Get-ConfigValue $ExistingStatus 'last_backup_at' $null
+      $ManifestPath = Get-ConfigValue $ExistingStatus 'manifest_path' ''
+      if ([string]::IsNullOrWhiteSpace([string]$ManifestPath) -or !(Test-Path $ManifestPath)) {
+        $LatestHistoryEvent = Get-LatestHistoryEvent
+        if ($null -ne $LatestHistoryEvent -and $LatestHistoryEvent.PSObject.Properties['manifest_path']) {
+          $HistoryManifestPath = [string]$LatestHistoryEvent.manifest_path
+          if (-not [string]::IsNullOrWhiteSpace($HistoryManifestPath) -and (Test-Path $HistoryManifestPath)) {
+            $ManifestPath = $HistoryManifestPath
+          }
+        }
+      }
+      $Manifest = $null
+      if (-not [string]::IsNullOrWhiteSpace([string]$ManifestPath) -and (Test-Path $ManifestPath)) {
+        Write-StepMessage "Reading latest backup manifest..."
+        $Manifest = Read-JsonFile -Path $ManifestPath
+      }
+
+      if ($null -eq $Manifest) {
+        $Warnings = @("No manifest is recorded for the latest backup. Basic target checks passed only.")
+        if ($TargetStats.file_count -gt 0) {
+          $Warnings += "Target contains $($TargetStats.file_count) file$(if ($TargetStats.file_count -eq 1) { '' } else { 's' })."
+        }
+
+        Write-Status "amber" "Backup target exists. Manifest verification is not available yet." $Warnings @() $LastBackupAt (Get-Date).ToString("o") (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') $TargetStats.file_count $TargetStats.file_count 0 $TargetStats.size_bytes 0 'backup' $null $null
+        Write-HistoryEntry ([ordered]@{
+          action = 'Verify Latest'
+          mode = $Mode
+          backup_kind = 'manual'
+          state = 'amber'
+          summary = 'Backup target exists. Manifest verification is not available yet.'
+          started_at = (Get-Date).ToString('o')
+          finished_at = (Get-Date).ToString('o')
+          duration_ms = 0
+          files_scanned = $TargetStats.file_count
+          files_copied = $TargetStats.file_count
+          files_skipped = 0
+          backup_size_bytes = $TargetStats.size_bytes
+          backup_size_text = $TargetStats.size_text
+          manifest_path = ''
+          report_path = $LogPath
+          restore_point_label = ''
+          restore_point_path = ''
+        })
+        exit 0
+      }
+
+      $ExpectedHash = [string](Get-ConfigValue $Manifest 'target_inventory_hash' '')
+      $ExpectedHashAlgorithm = [string](Get-ConfigValue $Manifest 'target_inventory_hash_algorithm' 'SHA256')
+      $ExpectedCount = Get-IntValue (Get-ConfigValue $Manifest 'target_inventory_file_count' $TargetStats.file_count) $TargetStats.file_count
+      $ExpectedSize = Get-IntValue (Get-ConfigValue $Manifest 'target_size_bytes' $TargetStats.size_bytes) $TargetStats.size_bytes
+      $ExpectedTargetPath = [string](Get-ConfigValue $Manifest 'target_path' $Target)
+      $ExpectedTargetDrive = [string](Get-ConfigValue $Manifest 'target_drive' $BackupRoot)
+      $BackupKind = [string](Get-ConfigValue $Manifest 'backup_kind' 'manual')
+
+      $Errors = @()
+      $Warnings = @()
+      $SupportsFingerprint = -not [string]::IsNullOrWhiteSpace($ExpectedHash)
+      if (-not $SupportsFingerprint) {
+        if ($TargetStats.file_count -gt 0) {
+          $Warnings += "Latest manifest does not include a fingerprint yet. Basic target checks passed only."
+        } else {
+          $Warnings += "Latest manifest does not include a fingerprint yet."
+        }
+      }
+
+      if ($SupportsFingerprint) {
+        $TargetFingerprint = Get-PathFingerprint -Path $Target
+        if ($TargetFingerprint.inventory_hash_algorithm -ne $ExpectedHashAlgorithm) {
+          $Warnings += "Manifest hash algorithm changed from $ExpectedHashAlgorithm to $($TargetFingerprint.inventory_hash_algorithm)."
+        }
+      }
+
+      if ($SupportsFingerprint) {
+        if ($TargetFingerprint.inventory_hash -ne $ExpectedHash) {
+          $Errors += "Target inventory fingerprint does not match the latest manifest."
+        }
+        if ($TargetStats.file_count -ne $ExpectedCount) {
+          $Errors += "Target file count changed from $ExpectedCount to $($TargetStats.file_count)."
+        }
+        if ($TargetStats.size_bytes -ne $ExpectedSize) {
+          $Errors += "Target size changed from $(Format-ByteSize([long]$ExpectedSize)) to $($TargetStats.size_text)."
+        }
+      }
+      if (-not [string]::IsNullOrWhiteSpace($ExpectedTargetPath) -and $ExpectedTargetPath -ne $Target) {
+        $Warnings += "Manifest target path is $ExpectedTargetPath, not $Target."
+      }
+      if (-not [string]::IsNullOrWhiteSpace($ExpectedTargetDrive) -and $ExpectedTargetDrive -ne $BackupRoot) {
+        $Warnings += "Manifest target drive is $ExpectedTargetDrive, not $BackupRoot."
+      }
+
+      if ($Errors.Count -eq 0) {
+        if ($SupportsFingerprint) {
+          $Summary = 'Latest backup matches the manifest fingerprint.'
+        } else {
+          $Summary = 'Backup target exists. Basic verification passed.'
+        }
+        $State = 'green'
+        if ($Warnings.Count -gt 0) {
+          $State = 'amber'
+        }
+        Write-Status $State $Summary $Warnings @() $LastBackupAt (Get-Date).ToString("o") (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') $TargetStats.file_count $TargetStats.file_count 0 $TargetStats.size_bytes 0 $BackupKind $ManifestPath $null
+        Write-HistoryEntry ([ordered]@{
+          action = 'Verify Latest'
+          mode = $Mode
+          backup_kind = $BackupKind
+          state = $State
+          summary = $Summary
+          started_at = (Get-Date).ToString('o')
+          finished_at = (Get-Date).ToString('o')
+          duration_ms = 0
+          files_scanned = $TargetStats.file_count
+          files_copied = $TargetStats.file_count
+          files_skipped = 0
+          backup_size_bytes = $TargetStats.size_bytes
+          backup_size_text = $TargetStats.size_text
+          manifest_path = $ManifestPath
+          report_path = $LogPath
+          restore_point_label = ''
+          restore_point_path = ''
+        })
+        exit 0
+      }
+
+      $Summary = 'Latest backup verification failed.'
+      if ($Warnings.Count -gt 0) {
+        $Summary = 'Latest backup verification found manifest differences.'
+      }
+      Write-Status "red" $Summary $Warnings $Errors $LastBackupAt (Get-Date).ToString("o") (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') $TargetStats.file_count $TargetStats.file_count 0 $TargetStats.size_bytes 0 $BackupKind $ManifestPath $null
+      Write-HistoryEntry ([ordered]@{
+        action = 'Verify Latest'
+        mode = $Mode
+        backup_kind = $BackupKind
+        state = 'red'
+        summary = $Summary
         started_at = (Get-Date).ToString('o')
         finished_at = (Get-Date).ToString('o')
         duration_ms = 0
@@ -614,20 +865,20 @@ switch ($Mode) {
         files_skipped = 0
         backup_size_bytes = $TargetStats.size_bytes
         backup_size_text = $TargetStats.size_text
-        manifest_path = ''
+        manifest_path = $ManifestPath
         report_path = $LogPath
         restore_point_label = ''
         restore_point_path = ''
       })
-      exit 0
+      exit 1
     } else {
-      Write-Status "red" "Backup target missing." @() @("Missing: $Target")
+      Write-Status "red" "Backup mirror missing." @() @("Missing mirror folder: $Target")
       Write-HistoryEntry ([ordered]@{
         action = 'Verify Latest'
         mode = $Mode
         backup_kind = 'manual'
         state = 'red'
-        summary = "Missing: $Target"
+        summary = "Missing mirror folder: $Target"
         started_at = (Get-Date).ToString('o')
         finished_at = (Get-Date).ToString('o')
         duration_ms = 0

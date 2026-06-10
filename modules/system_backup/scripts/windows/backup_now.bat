@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode BackupNow
 
+if errorlevel 1 (
+  echo Backup now finished with errors.
+) else (
+  echo Backup now complete.
+)
+
 pause

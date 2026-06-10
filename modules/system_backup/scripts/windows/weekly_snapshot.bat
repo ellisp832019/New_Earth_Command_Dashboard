@@ -9,4 +9,10 @@ echo ==========================================
 
 powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -Mode WeeklySnapshot
 
+if errorlevel 1 (
+  echo Weekly snapshot finished with errors.
+) else (
+  echo Weekly snapshot complete.
+)
+
 pause
