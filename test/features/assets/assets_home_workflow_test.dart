@@ -36,6 +36,9 @@ void main() {
     expect(find.text('Top 3 focus'), findsOneWidget);
     expect(find.text('CONFIG'), findsOneWidget);
     expect(find.text('local_paths.json'), findsWidgets);
+    expect(find.text('17 required folders'), findsOneWidget);
+    expect(find.text('0 missing folders'), findsOneWidget);
+    expect(find.text('0 missing files'), findsOneWidget);
     expect(find.text('1. Open Equipment Register'), findsOneWidget);
     expect(find.text('2. Open Parts Inventory'), findsOneWidget);
     expect(find.textContaining('Open Low Stock / Reorder'), findsWidgets);
@@ -102,6 +105,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Missing data'), findsOneWidget);
+    expect(find.text('17 required folders'), findsOneWidget);
     expect(find.text('2 folders missing'), findsOneWidget);
     expect(find.text('1 file missing'), findsOneWidget);
     expect(find.text('Finish setup first'), findsOneWidget);

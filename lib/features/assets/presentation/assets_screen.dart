@@ -424,6 +424,33 @@ class _AssetHealthCard extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _InlineTag(
+                    label:
+                        '${snapshot.requiredFolders.length} required folders',
+                    accent: AppColours.darkSecondary,
+                    foreground: AppColours.darkText,
+                  ),
+                  _InlineTag(
+                    label: '${snapshot.missingFolders.length} missing folders',
+                    accent: snapshot.missingFolders.isEmpty
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                    foreground: AppColours.darkText,
+                  ),
+                  _InlineTag(
+                    label: '${snapshot.missingFiles.length} missing files',
+                    accent: snapshot.missingFiles.isEmpty
+                        ? AppColours.darkSuccess
+                        : AppColours.darkAmber,
+                    foreground: AppColours.darkText,
+                  ),
+                ],
+              ),
               if (snapshot.issues.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 Wrap(
