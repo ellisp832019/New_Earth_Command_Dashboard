@@ -2853,6 +2853,15 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             'Cloned ${result.provider}/${result.ownerPath}/${result.repoName} at $commitLabel';
         _lastCloneSourcePath = result.sourceRoot;
       });
+      if (result.sourceRoot.isNotEmpty) {
+        try {
+          await _service.openFolder(result.sourceRoot);
+        } catch (error) {
+          _setMessage(
+            'Cloned repository, but could not open the source folder: $error',
+          );
+        }
+      }
       if (scanAfterClone) {
         final scanSucceeded = await _run(mode: _RunMode.bundle);
         if (mounted) {
