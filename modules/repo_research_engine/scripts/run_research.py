@@ -118,6 +118,7 @@ def main() -> None:
             )
             _append_change_history(
                 history_file=MODULE_ROOT / "reports" / "change_history.json",
+                history_markdown_file=MODULE_ROOT / "reports" / "change_history.md",
                 current_repo=args.repo,
                 baseline_inventory_path=str(baseline_path),
                 baseline_repo=str(baseline_scan.get("repo_name", "")),
@@ -352,6 +353,7 @@ def _append_run_history(
 def _append_change_history(
     *,
     history_file: Path,
+    history_markdown_file: Path,
     current_repo: str,
     baseline_inventory_path: str,
     baseline_repo: str,
@@ -379,6 +381,50 @@ def _append_change_history(
     }
     updated = [record, *existing][:20]
     history_file.write_text(json.dumps(updated, indent=2), encoding="utf-8")
+    history_markdown_file.write_text(
+        _render_change_history_markdown(updated),
+        encoding="utf-8",
+    )
+
+
+def _render_change_history_markdown(history_records: list[dict]) -> str:
+    lines = [
+        "# Change History",
+        "",
+        "Safe local history of baseline comparisons captured by the Repo Research Engine.",
+        "",
+    ]
+    if not history_records:
+        lines += [
+            "No change-tracking history has been recorded yet.",
+            "",
+        ]
+        return "\n".join(lines).rstrip() + "\n"
+
+    for entry in history_records[:10]:
+        file_changes = entry.get("file_changes", {}) if isinstance(entry, dict) else {}
+        added = file_changes.get("added", []) if isinstance(file_changes, dict) else []
+        removed = file_changes.get("removed", []) if isinstance(file_changes, dict) else []
+        modified = file_changes.get("modified", []) if isinstance(file_changes, dict) else []
+        lines += [
+            "## Change Run",
+            f"- Timestamp: `{entry.get('timestamp', '')}`",
+            f"- Current repo: `{entry.get('current_repo', '')}`",
+            f"- Baseline repo: `{entry.get('baseline_repo', '')}`",
+            f"- Baseline inventory: `{entry.get('baseline_inventory_path', '')}`",
+            f"- Summary: {entry.get('summary', '')}",
+            f"- File changes: {len(added)} added, {len(removed)} removed, {len(modified)} modified",
+        ]
+        if entry.get("new_risk_paths"):
+            lines.append("- New risk paths:")
+            for item in entry.get("new_risk_paths", [])[:10]:
+                lines.append(f"  - `{item}`")
+        if entry.get("resolved_risk_paths"):
+            lines.append("- Resolved risk paths:")
+            for item in entry.get("resolved_risk_paths", [])[:10]:
+                lines.append(f"  - `{item}`")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _append_export_history(

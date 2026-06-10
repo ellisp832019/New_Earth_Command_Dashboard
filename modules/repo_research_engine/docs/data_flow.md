@@ -31,8 +31,9 @@ Remote Git URL or local repository path
 9. The exporter writes the report set.
 10. The prompt exporter creates reusable Codex prompts.
 11. The comparison engine can compare another repo or a saved inventory.
-12. The graph exporter can write dependency and architecture graph bundles.
-13. The Omega OS adapter can copy the safe bundle into the research library path.
+12. The change-tracking history writer appends a local-only run record with the explicit baseline inventory path.
+13. The graph exporter can write dependency and architecture graph bundles.
+14. The Omega OS adapter can copy the safe bundle into the research library path.
 
 ## Output Set
 
@@ -47,6 +48,8 @@ Remote Git URL or local repository path
 - `knowledge_report.md`
 - `implementation_opportunities.md`
 - `learning_notes.md`
+- `change_tracking.md`
+- `change_history.md`
 - `generated_prompts/*.md`
 
 ## Design Notes

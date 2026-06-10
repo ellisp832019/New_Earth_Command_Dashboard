@@ -225,6 +225,24 @@ def test_markdown_and_prompt_exports(tmp_path):
     )
 
 
+def test_omega_os_exporter_copies_change_history(tmp_path):
+    analysis = {
+        "profile_name": "MicroGrow",
+        "repo_name": "demo",
+        "repo_path": str(tmp_path / "repo"),
+    }
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    (report_dir / "repo_research_report.md").write_text("report", encoding="utf-8")
+    (report_dir / "change_history.md").write_text("history", encoding="utf-8")
+    (report_dir / "change_history.json").write_text("[]", encoding="utf-8")
+
+    destination = OmegaOsExportAdapter(tmp_path / "omega").export(analysis, report_dir)
+
+    assert (destination / "change_history.md").exists()
+    assert (destination / "change_history.json").exists()
+
+
 def test_report_search_index_indexes_generated_reports(tmp_path):
     (tmp_path / "repo_research_report.md").write_text("# Main Report\n\nAlpha beta.", encoding="utf-8")
     (tmp_path / "knowledge_report.md").write_text("# Knowledge\n\nUseful notes.", encoding="utf-8")
@@ -371,6 +389,7 @@ def test_file_type_drilldowns_cover_core_categories(tmp_path):
 
 def test_change_history_records_explicit_baseline_path(tmp_path):
     history_file = tmp_path / "change_history.json"
+    history_markdown_file = tmp_path / "change_history.md"
     change_tracking = {
         "summary": "1 files added, 1 files removed, 1 files modified.",
         "file_changes": {"added": ["a.py"], "removed": ["b.py"], "modified": ["c.py"]},
@@ -380,6 +399,7 @@ def test_change_history_records_explicit_baseline_path(tmp_path):
 
     _append_change_history(
         history_file=history_file,
+        history_markdown_file=history_markdown_file,
         current_repo="current-repo",
         baseline_inventory_path="D:/baselines/previous_repo_inventory.json",
         baseline_repo="baseline-repo",
@@ -390,6 +410,7 @@ def test_change_history_records_explicit_baseline_path(tmp_path):
     assert decoded[0]["baseline_inventory_path"].endswith("previous_repo_inventory.json")
     assert decoded[0]["baseline_repo"] == "baseline-repo"
     assert decoded[0]["file_changes"]["modified"] == ["c.py"]
+    assert "Change History" in history_markdown_file.read_text(encoding="utf-8")
 
 
 def test_export_history_records_destination_and_files(tmp_path):

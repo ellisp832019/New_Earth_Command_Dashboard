@@ -90,6 +90,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       TextEditingController();
   late final TextEditingController _recentRunsSearchController =
       TextEditingController();
+  late final TextEditingController _changeHistorySearchController =
+      TextEditingController();
   late final TextEditingController _reportHistorySearchController =
       TextEditingController();
   late final TextEditingController _exportHistorySearchController =
@@ -101,9 +103,11 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
   List<String> _outputFiles = const [];
   List<RepoResearchCloneHistoryRecord> _recentClones = const [];
   List<RepoResearchRunRecord> _recentRuns = const [];
+  List<RepoResearchChangeHistoryRecord> _changeHistory = const [];
   List<RepoResearchExportRecord> _exportHistory = const [];
   bool _loadingCloneHistory = true;
   bool _loadingRecentRuns = true;
+  bool _loadingChangeHistory = true;
   bool _loadingExportHistory = true;
   bool _loadingProfileEditor = true;
   bool _loadingProfileComparison = true;
@@ -171,6 +175,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _activeSection = _normalizeSection(widget.initialSection);
     _loadCloneHistory();
     _loadRecentRuns();
+    _loadChangeHistory();
     _loadExportHistory();
     _loadProfileEditor();
     _loadProfileComparison();
@@ -227,6 +232,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     _licenseReviewPreviewController.dispose();
     _vaultNotePreviewController.dispose();
     _recentRunsSearchController.dispose();
+    _changeHistorySearchController.dispose();
     _reportHistorySearchController.dispose();
     _exportHistorySearchController.dispose();
     super.dispose();
@@ -461,6 +467,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _graphReviewCard(context),
       const SizedBox(height: 16),
       _changeTimelineCard(context),
+      const SizedBox(height: 16),
+      _changeHistoryCard(context),
       const SizedBox(height: 16),
       _exportHistoryCard(context),
     ];
@@ -1996,6 +2004,80 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
+  Widget _changeHistoryCard(BuildContext context) {
+    final visibleRecords = _changeHistory
+        .where((record) {
+          final search = _changeHistorySearchController.text
+              .trim()
+              .toLowerCase();
+          if (search.isEmpty) {
+            return true;
+          }
+          return record.currentRepo.toLowerCase().contains(search) ||
+              record.baselineRepo.toLowerCase().contains(search) ||
+              record.baselineInventoryPath.toLowerCase().contains(search) ||
+              record.summary.toLowerCase().contains(search) ||
+              record.fileChangeSummary.toLowerCase().contains(search);
+        })
+        .toList(growable: false);
+    final displayRecords = visibleRecords.take(6).toList(growable: false);
+
+    return _panel(
+      context,
+      title: 'Change History',
+      subtitle:
+          'Browse the explicit baseline inventory path and change summary for the latest tracked comparisons.',
+      child: _loadingChangeHistory
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CircularProgressIndicator(),
+            )
+          : _changeHistory.isEmpty
+          ? Text(
+              'No change history has been recorded yet.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            )
+          : Column(
+              children: [
+                TextField(
+                  controller: _changeHistorySearchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Search change history',
+                    hintText: 'Current repo, baseline, path, or summary',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (visibleRecords.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'No change history entries match the current search.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                  )
+                else
+                  for (final record in displayRecords) ...[
+                    _ChangeHistoryTile(
+                      record: record,
+                      onOpenBaseline: record.baselineInventoryPath.isEmpty
+                          ? null
+                          : () =>
+                                _service.openPath(record.baselineInventoryPath),
+                    ),
+                    if (record != displayRecords.last)
+                      const SizedBox(height: 10),
+                  ],
+              ],
+            ),
+    );
+  }
+
   Widget _graphReviewCard(BuildContext context) {
     final dependencyGraph = _latestDependencyGraph;
     final architectureGraph = _latestArchitectureGraph;
@@ -3449,6 +3531,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         _lastRunTimestampLabel = _formatDateTime(DateTime.now());
       });
       await _loadRecentRuns(refreshStateOnly: false);
+      await _loadChangeHistory(refreshStateOnly: false);
 
       _setMessage(
         result.succeeded
@@ -3575,6 +3658,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     setState(() {
       _recentRuns = runs;
       _loadingRecentRuns = false;
+    });
+  }
+
+  Future<void> _loadChangeHistory({bool refreshStateOnly = true}) async {
+    if (refreshStateOnly && mounted) {
+      setState(() {
+        _loadingChangeHistory = true;
+      });
+    }
+
+    final history = await _service.loadChangeHistory();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _changeHistory = history;
+      _loadingChangeHistory = false;
     });
   }
 
@@ -4474,6 +4574,122 @@ class _ReportHistoryTile extends StatelessWidget {
                   icon: const Icon(Icons.search),
                   label: const Text('Open Index'),
                 ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChangeHistoryTile extends StatelessWidget {
+  const _ChangeHistoryTile({
+    required this.record,
+    required this.onOpenBaseline,
+  });
+
+  final RepoResearchChangeHistoryRecord record;
+  final VoidCallback? onOpenBaseline;
+
+  @override
+  Widget build(BuildContext context) {
+    final timestamp = record.parsedTimestamp;
+    final timestampLabel = timestamp == null
+        ? record.timestamp
+        : '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+    final added = record.fileChanges['added'] ?? const <String>[];
+    final removed = record.fileChanges['removed'] ?? const <String>[];
+    final modified = record.fileChanges['modified'] ?? const <String>[];
+    final previewFiles = <String>[
+      ...added.take(2),
+      ...removed.take(2),
+      ...modified.take(2),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  record.currentRepo.isEmpty
+                      ? 'Unknown current repo'
+                      : record.currentRepo,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 10),
+              _StatusChip(label: record.fileChangeSummary, muted: false),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Baseline: ${record.baselineRepo} - $timestampLabel',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Baseline inventory: ${record.baselineInventoryPath}',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (record.summary.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              record.summary,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final file in previewFiles.take(6))
+                _StatusChip(label: file, muted: false),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (record.newRiskPaths.isNotEmpty ||
+              record.resolvedRiskPaths.isNotEmpty)
+            Text(
+              'Risk shifts: ${record.newRiskPaths.length} new, ${record.resolvedRiskPaths.length} resolved',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+            ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenBaseline,
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Open Baseline'),
+              ),
             ],
           ),
         ],

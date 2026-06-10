@@ -183,6 +183,57 @@ class RepoResearchRunRecord {
   String get shortStatus => succeeded ? 'Success' : 'Needs review';
 }
 
+class RepoResearchChangeHistoryRecord {
+  const RepoResearchChangeHistoryRecord({
+    required this.timestamp,
+    required this.currentRepo,
+    required this.baselineInventoryPath,
+    required this.baselineRepo,
+    required this.summary,
+    required this.fileChanges,
+    required this.newRiskPaths,
+    required this.resolvedRiskPaths,
+  });
+
+  factory RepoResearchChangeHistoryRecord.fromJson(Map<String, dynamic> json) {
+    return RepoResearchChangeHistoryRecord(
+      timestamp: json['timestamp']?.toString() ?? '',
+      currentRepo: json['current_repo']?.toString() ?? '',
+      baselineInventoryPath: json['baseline_inventory_path']?.toString() ?? '',
+      baselineRepo: json['baseline_repo']?.toString() ?? '',
+      summary: json['summary']?.toString() ?? '',
+      fileChanges: _stringListMap(json['file_changes']),
+      newRiskPaths: _stringList(json['new_risk_paths']),
+      resolvedRiskPaths: _stringList(json['resolved_risk_paths']),
+    );
+  }
+
+  final String timestamp;
+  final String currentRepo;
+  final String baselineInventoryPath;
+  final String baselineRepo;
+  final String summary;
+  final Map<String, List<String>> fileChanges;
+  final List<String> newRiskPaths;
+  final List<String> resolvedRiskPaths;
+
+  DateTime? get parsedTimestamp => DateTime.tryParse(timestamp);
+
+  String get fileChangeSummary {
+    final added = fileChanges['added']?.length ?? 0;
+    final removed = fileChanges['removed']?.length ?? 0;
+    final modified = fileChanges['modified']?.length ?? 0;
+    return '$added added, $removed removed, $modified modified';
+  }
+
+  String get shortBaselinePath {
+    if (baselineInventoryPath.isEmpty) {
+      return 'No baseline path recorded';
+    }
+    return path.basename(baselineInventoryPath);
+  }
+}
+
 class RepoResearchExportRecord {
   const RepoResearchExportRecord({
     required this.timestamp,
@@ -460,6 +511,38 @@ class RepoResearchEngineService {
     }
   }
 
+  Future<List<RepoResearchChangeHistoryRecord>> loadChangeHistory({
+    int limit = 8,
+  }) async {
+    final historyFile = _changeHistoryFile();
+    if (!await historyFile.exists()) {
+      return const <RepoResearchChangeHistoryRecord>[];
+    }
+
+    try {
+      final decoded = jsonDecode(await historyFile.readAsString());
+      if (decoded is! List) {
+        return const <RepoResearchChangeHistoryRecord>[];
+      }
+
+      final records = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(RepoResearchChangeHistoryRecord.fromJson)
+          .toList();
+      records.sort(
+        (left, right) =>
+            (right.parsedTimestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
+                .compareTo(
+                  left.parsedTimestamp ??
+                      DateTime.fromMillisecondsSinceEpoch(0),
+                ),
+      );
+      return records.take(limit).toList(growable: false);
+    } catch (_) {
+      return const <RepoResearchChangeHistoryRecord>[];
+    }
+  }
+
   Future<List<RepoResearchCloneHistoryRecord>> loadCloneHistory({
     int limit = 10,
   }) async {
@@ -615,4 +698,31 @@ class RepoResearchEngineService {
     final moduleRoot = moduleRootDirectory();
     return File(path.join(moduleRoot.path, 'reports', 'clone_history.json'));
   }
+
+  File _changeHistoryFile() {
+    final moduleRoot = moduleRootDirectory();
+    return File(path.join(moduleRoot.path, 'reports', 'change_history.json'));
+  }
+}
+
+Map<String, List<String>> _stringListMap(dynamic value) {
+  if (value is! Map) {
+    return const <String, List<String>>{};
+  }
+  final result = <String, List<String>>{};
+  for (final entry in value.entries) {
+    if (entry.value is List) {
+      result[entry.key.toString()] = (entry.value as List)
+          .map((item) => item.toString())
+          .toList(growable: false);
+    }
+  }
+  return result;
+}
+
+List<String> _stringList(dynamic value) {
+  if (value is List) {
+    return value.map((item) => item.toString()).toList(growable: false);
+  }
+  return const <String>[];
 }
