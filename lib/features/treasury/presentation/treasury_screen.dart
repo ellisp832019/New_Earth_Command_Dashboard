@@ -126,6 +126,8 @@ class _TreasuryHomeScreen extends StatelessWidget {
             const SizedBox(height: 18),
             const _DecisionReviewCard(),
             const SizedBox(height: 18),
+            _TreasuryStateOverviewCard(snapshot: snapshot),
+            const SizedBox(height: 18),
             LayoutBuilder(
               builder: (context, constraints) {
                 final useTwoColumns = constraints.maxWidth >= 960;
@@ -1046,6 +1048,10 @@ class _DecisionReviewCard extends ConsumerWidget {
       ),
       data: (summary) {
         final recentDecisions = summary.recentDecisions;
+        final stateCounts = {
+          for (final item in summary.workspace.stateSummaries)
+            item.kind: item.count,
+        };
 
         return Container(
           decoration: _cardDecoration(),
@@ -1077,6 +1083,30 @@ class _DecisionReviewCard extends ConsumerWidget {
                   _StatusPill(
                     label: summary.weeklyReviewDate ?? 'No weekly review yet',
                     accent: AppColours.darkSuccess,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _StatusPill(
+                    label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  _StatusPill(
+                    label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                    accent: AppColours.darkAmber,
+                  ),
+                  _StatusPill(
+                    label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                    accent: const Color(0xFFE26B6B),
+                  ),
+                  _StatusPill(
+                    label:
+                        'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
+                    accent: AppColours.darkSecondary,
                   ),
                 ],
               ),
@@ -1209,6 +1239,66 @@ class _DecisionReviewCard extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _TreasuryStateOverviewCard extends StatelessWidget {
+  const _TreasuryStateOverviewCard({required this.snapshot});
+
+  final TreasuryWorkspaceSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final stateCounts = {
+      for (final item in snapshot.stateSummaries) item.kind: item.count,
+    };
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            icon: Icons.tune_outlined,
+            title: 'State overview',
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'A simple glance at the current Safe / Watch / Pause / Decision picture across Treasury.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _StatusPill(
+                label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
+                accent: AppColours.darkSuccess,
+              ),
+              _StatusPill(
+                label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                accent: AppColours.darkAmber,
+              ),
+              _StatusPill(
+                label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                accent: const Color(0xFFE26B6B),
+              ),
+              _StatusPill(
+                label:
+                    'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
+                accent: AppColours.darkSecondary,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

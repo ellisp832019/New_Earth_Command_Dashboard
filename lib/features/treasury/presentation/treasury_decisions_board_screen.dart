@@ -80,6 +80,8 @@ class TreasuryDecisionsBoardScreen extends ConsumerWidget {
                     financeRootPath: snapshot.financeRootPath ?? 'Unlinked',
                   ),
                   const SizedBox(height: 14),
+                  _DecisionsStateOverviewCard(snapshot: snapshot),
+                  const SizedBox(height: 14),
                   _DecisionsActionCard(
                     onAddDecision: () => _showAddDecisionDialog(context, ref),
                   ),
@@ -103,6 +105,57 @@ class TreasuryDecisionsBoardScreen extends ConsumerWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _DecisionsStateOverviewCard extends StatelessWidget {
+  const _DecisionsStateOverviewCard({required this.snapshot});
+
+  final TreasuryWorkspaceSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final stateCounts = {
+      for (final item in snapshot.stateSummaries) item.kind: item.count,
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Treasury state overview', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              'A calm glance at the Safe / Watch / Pause / Decision picture before opening the register.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _DecisionInfoChip(
+                  label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
+                ),
+                _DecisionInfoChip(
+                  label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                ),
+                _DecisionInfoChip(
+                  label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                ),
+                _DecisionInfoChip(
+                  label:
+                      'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
