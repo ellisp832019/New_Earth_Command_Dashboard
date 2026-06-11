@@ -73,6 +73,7 @@ The gateway now supports a real read-only SQLite-backed adapter mode for:
 - `dashboard.summary.today`
 - `dashboard.project.status.read`
 - `dashboard.tasks.next`
+- `microgrow.status.read`
 
 Enable it by setting either:
 
@@ -80,6 +81,7 @@ Enable it by setting either:
 - or `NEW_EARTH_DASHBOARD_DB_PATH`
 
 This keeps the permission layer as the only gate and avoids exposing write actions or dangerous commands.
+For now, `microgrow.status.read` reports the real MicroGrow project status already stored in the dashboard database, rather than claiming live sensor data that the schema does not store yet.
 
 ## Allowed
 

@@ -214,6 +214,28 @@ class VoiceGatewayTests(unittest.TestCase):
         self.assertIn("Test the real Alexa adapter", response.speech)
         self.assertIn("Review the launcher health flow", response.speech)
 
+    def test_sqlite_microgrow_status_reads_real_data(self) -> None:
+        db_path = _create_temp_dashboard_db()
+        original_dashboard = dict(gateway.CONFIG["dashboard"])
+        gateway.CONFIG["dashboard"] = {
+            **original_dashboard,
+            "mode": "sqlite",
+            "sqlite_db_path": str(db_path),
+        }
+        try:
+            response = gateway.route_voice_command(
+                self._request("microgrow.status.read", "GetMicroGrowStatusIntent"),
+                x_gateway_secret="test-secret",
+            )
+        finally:
+            gateway.CONFIG["dashboard"] = original_dashboard
+            _cleanup_temp_db(db_path)
+
+        self.assertEqual(response.decision, "allowed")
+        self.assertIn("MicroGrow project status is Active at 40 percent", response.speech)
+        self.assertIn("Keep MicroGrow read-only for the first release", response.speech)
+        self.assertIn("Live sensor readings are not stored", response.speech)
+
 
 if __name__ == "__main__":
     unittest.main()

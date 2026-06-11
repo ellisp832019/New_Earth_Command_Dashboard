@@ -124,9 +124,12 @@ The gateway can now read real local dashboard data directly from the New Earth S
 - `dashboard.summary.today`
 - `dashboard.project.status.read`
 - `dashboard.tasks.next`
+- `microgrow.status.read`
 
 To enable that mode:
 
 1. Set `dashboard.mode: sqlite` in `config/gateway_config.local.yaml`.
 2. Set `dashboard.sqlite_db_path` to your local `new_earth_command_dashboard.db` file, or set `NEW_EARTH_DASHBOARD_DB_PATH`.
 3. Keep the permission layer in place. The SQLite adapter is read-only and does not bypass `voice_permissions.yaml`.
+
+In the current schema, `microgrow.status.read` returns the real local MicroGrow project status and next linked work from the dashboard database. It does not invent live sensor or relay readings when those tables are not present yet.

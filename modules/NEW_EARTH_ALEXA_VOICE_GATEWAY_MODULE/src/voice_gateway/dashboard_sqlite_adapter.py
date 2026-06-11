@@ -33,6 +33,8 @@ def dashboard_call_sqlite(
             return _project_status_summary(connection, slots)
         if command == "dashboard.tasks.next":
             return _next_tasks_summary(connection)
+        if command == "microgrow.status.read":
+            return _microgrow_status_summary(connection)
 
     return (
         "That read-only dashboard command is not wired into the real SQLite adapter yet."
@@ -119,6 +121,56 @@ def _next_tasks_summary(connection: sqlite3.Connection) -> str:
         lines.append(f"{prefix} is {task['status']} with {task['priority']} priority.")
 
     return " ".join(lines)
+
+
+def _microgrow_status_summary(connection: sqlite3.Connection) -> str:
+    projects = _active_projects(connection, limit=1, project_name="microgrow")
+    if not projects:
+        return (
+            "I could not find a MicroGrow project in the local dashboard database yet."
+        )
+
+    project = projects[0]
+    next_task = connection.execute(
+        """
+        SELECT title, status, priority
+        FROM tasks
+        WHERE project_id = ?
+          AND is_archived = 0
+          AND status NOT IN ('Done', 'Parked')
+        ORDER BY created_at ASC
+        LIMIT 1
+        """,
+        (project["project_id"],),
+    ).fetchone()
+
+    milestone = _clean_text(project["current_milestone"])
+    next_action = _clean_text(project["next_action"])
+    progress = project["progress_percentage"] or 0
+
+    parts = [
+        (
+            f"MicroGrow project status is {project['status']} at {progress} percent "
+            "in the local dashboard."
+        )
+    ]
+
+    if milestone:
+        parts.append(f"Current milestone is {milestone}.")
+    if next_action:
+        parts.append(f"Next action is {next_action}.")
+    if next_task:
+        parts.append(
+            f"The next linked task is {next_task['title']} with "
+            f"{next_task['priority']} priority and {next_task['status']} status."
+        )
+    else:
+        parts.append("No active MicroGrow tasks are queued in the local dashboard.")
+
+    parts.append(
+        "Live sensor readings are not stored in this dashboard database yet, so this reply stays at project-status level."
+    )
+    return " ".join(parts)
 
 
 def _today_plan(connection: sqlite3.Connection) -> Optional[sqlite3.Row]:

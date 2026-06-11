@@ -147,6 +147,9 @@ The SQLite-backed mode currently supports:
 - `dashboard.summary.today`
 - `dashboard.project.status.read`
 - `dashboard.tasks.next`
+- `microgrow.status.read`
+
+Right now, `microgrow.status.read` uses the real local MicroGrow project and task data already stored in the dashboard SQLite database. It stays read-only and does not assume live sensor tables exist unless those are added later.
 
 For a fast disable, set:
 
