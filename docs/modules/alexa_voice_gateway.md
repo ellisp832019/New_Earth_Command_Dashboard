@@ -66,6 +66,21 @@ scripts\stop_voice_gateway.bat
   - safe smoke requests
   - stop helper
 
+## Real local adapter
+
+The gateway now supports a real read-only SQLite-backed adapter mode for:
+
+- `dashboard.summary.today`
+- `dashboard.project.status.read`
+- `dashboard.tasks.next`
+
+Enable it by setting either:
+
+- `dashboard.mode: sqlite` with `dashboard.sqlite_db_path`
+- or `NEW_EARTH_DASHBOARD_DB_PATH`
+
+This keeps the permission layer as the only gate and avoids exposing write actions or dangerous commands.
+
 ## Allowed
 
 - Dashboard summary

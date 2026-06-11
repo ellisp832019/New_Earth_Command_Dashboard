@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import datetime as dt
 import os
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -145,6 +147,229 @@ class VoiceGatewayTests(unittest.TestCase):
 
         self.assertEqual(exc_info.exception.status_code, 503)
 
+    def test_sqlite_dashboard_summary_reads_real_data(self) -> None:
+        db_path = _create_temp_dashboard_db()
+        original_dashboard = dict(gateway.CONFIG["dashboard"])
+        gateway.CONFIG["dashboard"] = {
+            **original_dashboard,
+            "mode": "sqlite",
+            "sqlite_db_path": str(db_path),
+        }
+        try:
+            response = gateway.route_voice_command(
+                self._request("dashboard.summary.today", "GetTodaySummaryIntent"),
+                x_gateway_secret="test-secret",
+            )
+        finally:
+            gateway.CONFIG["dashboard"] = original_dashboard
+            _cleanup_temp_db(db_path)
+
+        self.assertEqual(response.decision, "allowed")
+        self.assertIn("Today's main focus is Finish the safe voice bridge", response.speech)
+        self.assertIn("Top 3 tasks are Test the real Alexa adapter", response.speech)
+
+    def test_sqlite_project_status_reads_real_data(self) -> None:
+        db_path = _create_temp_dashboard_db()
+        original_dashboard = dict(gateway.CONFIG["dashboard"])
+        gateway.CONFIG["dashboard"] = {
+            **original_dashboard,
+            "mode": "sqlite",
+            "sqlite_db_path": str(db_path),
+        }
+        try:
+            response = gateway.route_voice_command(
+                self._request(
+                    "dashboard.project.status.read",
+                    "GetProjectStatusIntent",
+                    {"project": "New Earth Command Dashboard"},
+                ),
+                x_gateway_secret="test-secret",
+            )
+        finally:
+            gateway.CONFIG["dashboard"] = original_dashboard
+            _cleanup_temp_db(db_path)
+
+        self.assertEqual(response.decision, "allowed")
+        self.assertIn("New Earth Command Dashboard", response.speech)
+        self.assertIn("65 percent", response.speech)
+
+    def test_sqlite_next_tasks_reads_real_data(self) -> None:
+        db_path = _create_temp_dashboard_db()
+        original_dashboard = dict(gateway.CONFIG["dashboard"])
+        gateway.CONFIG["dashboard"] = {
+            **original_dashboard,
+            "mode": "sqlite",
+            "sqlite_db_path": str(db_path),
+        }
+        try:
+            response = gateway.route_voice_command(
+                self._request("dashboard.tasks.next", "ListNextTasksIntent"),
+                x_gateway_secret="test-secret",
+            )
+        finally:
+            gateway.CONFIG["dashboard"] = original_dashboard
+            _cleanup_temp_db(db_path)
+
+        self.assertEqual(response.decision, "allowed")
+        self.assertIn("Test the real Alexa adapter", response.speech)
+        self.assertIn("Review the launcher health flow", response.speech)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _create_temp_dashboard_db() -> Path:
+    fd, raw_path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    db_path = Path(raw_path)
+    _seed_dashboard_db(db_path)
+    return db_path
+
+
+def _cleanup_temp_db(db_path: Path) -> None:
+    if db_path.exists():
+        try:
+            db_path.unlink()
+        except PermissionError:
+            pass
+
+
+def _seed_dashboard_db(db_path: Path) -> None:
+    with sqlite3.connect(db_path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE projects (
+              project_id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              status TEXT NOT NULL,
+              priority TEXT NOT NULL,
+              progress_percentage INTEGER NOT NULL,
+              current_milestone TEXT,
+              next_action TEXT,
+              updated_at INTEGER NOT NULL,
+              is_archived INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE tasks (
+              task_id TEXT PRIMARY KEY,
+              project_id TEXT,
+              title TEXT NOT NULL,
+              priority TEXT NOT NULL,
+              status TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              is_top_three INTEGER NOT NULL DEFAULT 0,
+              is_archived INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE daily_plans (
+              daily_plan_id TEXT PRIMARY KEY,
+              date INTEGER NOT NULL UNIQUE,
+              main_focus TEXT,
+              top_task_1_id TEXT,
+              top_task_2_id TEXT,
+              top_task_3_id TEXT
+            )
+            """
+        )
+
+        now = int(dt.datetime.now().timestamp())
+        start_of_day = dt.datetime.now()
+        today = int(dt.datetime(start_of_day.year, start_of_day.month, start_of_day.day).timestamp())
+
+        connection.execute(
+            """
+            INSERT INTO projects (
+              project_id, name, status, priority, progress_percentage,
+              current_milestone, next_action, updated_at, is_archived
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """,
+            (
+                "project-1",
+                "New Earth Command Dashboard",
+                "Active",
+                "High",
+                65,
+                "Real adapter bridge",
+                "Wire read-only Alexa commands to live dashboard data",
+                now,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO projects (
+              project_id, name, status, priority, progress_percentage,
+              current_milestone, next_action, updated_at, is_archived
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """,
+            (
+                "project-2",
+                "MicroGrow",
+                "Active",
+                "Medium",
+                40,
+                "Status-only bridge",
+                "Keep MicroGrow read-only for the first release",
+                now - 120,
+            ),
+        )
+
+        tasks = [
+            (
+                "task-1",
+                "project-1",
+                "Test the real Alexa adapter",
+                "High",
+                "Doing",
+                now - 300,
+                1,
+            ),
+            (
+                "task-2",
+                "project-1",
+                "Review the launcher health flow",
+                "High",
+                "Inbox",
+                now - 200,
+                1,
+            ),
+            (
+                "task-3",
+                "project-2",
+                "Keep MicroGrow read-only",
+                "Medium",
+                "Next",
+                now - 100,
+                1,
+            ),
+        ]
+        connection.executemany(
+            """
+            INSERT INTO tasks (
+              task_id, project_id, title, priority, status, created_at, is_top_three, is_archived
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+            """,
+            tasks,
+        )
+        connection.execute(
+            """
+            INSERT INTO daily_plans (
+              daily_plan_id, date, main_focus, top_task_1_id, top_task_2_id, top_task_3_id
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "daily-plan-today",
+                today,
+                "Finish the safe voice bridge",
+                "task-1",
+                "task-2",
+                "task-3",
+            ),
+        )
+        connection.commit()

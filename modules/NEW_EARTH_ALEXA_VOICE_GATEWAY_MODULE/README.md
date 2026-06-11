@@ -116,3 +116,17 @@ If `NEW_EARTH_VOICE_GATEWAY_SECRET` is set in your shell, the test helper now se
 ```text
 bash scripts/test_gateway.sh
 ```
+
+## Real read-only dashboard adapter
+
+The gateway can now read real local dashboard data directly from the New Earth SQLite database for these commands:
+
+- `dashboard.summary.today`
+- `dashboard.project.status.read`
+- `dashboard.tasks.next`
+
+To enable that mode:
+
+1. Set `dashboard.mode: sqlite` in `config/gateway_config.local.yaml`.
+2. Set `dashboard.sqlite_db_path` to your local `new_earth_command_dashboard.db` file, or set `NEW_EARTH_DASHBOARD_DB_PATH`.
+3. Keep the permission layer in place. The SQLite adapter is read-only and does not bypass `voice_permissions.yaml`.

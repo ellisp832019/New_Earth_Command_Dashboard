@@ -12,6 +12,8 @@ import yaml
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from .dashboard_sqlite_adapter import dashboard_call_sqlite
+
 ROOT = Path(__file__).resolve().parents[2]
 PERMISSIONS_PATH = ROOT / "config" / "voice_permissions.yaml"
 CONFIG_PATH = ROOT / "config" / "gateway_config.local.yaml"
@@ -124,8 +126,13 @@ def permission_for(command: str) -> Optional[Dict[str, Any]]:
 
 
 def dashboard_call(command: str, slots: Dict[str, Any]) -> str:
-    base_url = CONFIG.get("dashboard", {}).get("base_url", "http://127.0.0.1:8099")
-    timeout = CONFIG.get("dashboard", {}).get("timeout_seconds", 5)
+    dashboard_config = CONFIG.get("dashboard", {})
+    mode = dashboard_config.get("mode", "http")
+    if mode == "sqlite":
+        return dashboard_call_sqlite(command, slots, CONFIG)
+
+    base_url = dashboard_config.get("base_url", "http://127.0.0.1:8099")
+    timeout = dashboard_config.get("timeout_seconds", 5)
     try:
         resp = requests.post(
             f"{base_url}/voice/command",

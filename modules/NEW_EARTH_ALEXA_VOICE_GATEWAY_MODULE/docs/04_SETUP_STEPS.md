@@ -128,6 +128,26 @@ config/gateway_config.local.yaml
 
 Never commit local secrets.
 
+For the new real read-only SQLite adapter, you can switch the dashboard mode like this in `config/gateway_config.local.yaml`:
+
+```yaml
+dashboard:
+  mode: sqlite
+  sqlite_db_path: C:\path\to\new_earth_command_dashboard.db
+```
+
+You can also leave the config file untouched and set:
+
+```text
+NEW_EARTH_DASHBOARD_DB_PATH=C:\path\to\new_earth_command_dashboard.db
+```
+
+The SQLite-backed mode currently supports:
+
+- `dashboard.summary.today`
+- `dashboard.project.status.read`
+- `dashboard.tasks.next`
+
 For a fast disable, set:
 
 ```text

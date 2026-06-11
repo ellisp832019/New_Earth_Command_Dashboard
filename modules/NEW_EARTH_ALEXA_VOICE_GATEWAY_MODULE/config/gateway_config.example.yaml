@@ -7,8 +7,10 @@ gateway:
   shared_secret_env: NEW_EARTH_VOICE_GATEWAY_SECRET
 
 dashboard:
+  mode: http
   base_url: http://127.0.0.1:8099
   timeout_seconds: 5
+  sqlite_db_path: ""
 
 logging:
   audit_log_path: audit/voice_audit.jsonl
