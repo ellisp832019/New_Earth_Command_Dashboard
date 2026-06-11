@@ -69,6 +69,8 @@ import '../../features/treasury/presentation/treasury_budget_pots_screen.dart';
 import '../../features/treasury/presentation/treasury_monthly_summary_screen.dart';
 import '../../features/treasury/presentation/treasury_settings_screen.dart';
 import '../../features/treasury/presentation/treasury_wizard_screen.dart';
+import '../../features/voice_intelligence/presentation/voice_module_screen.dart';
+import '../../features/voice_intelligence/presentation/voice_conversation_screen.dart';
 import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
@@ -639,6 +641,59 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.settings,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voice,
+      redirect: (context, state) {
+        if (state.uri.queryParameters['view'] == 'home') {
+          return null;
+        }
+        return RouteNames.voiceConversation;
+      },
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.home),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceConversation,
+      builder: (context, state) => const VoiceConversationScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceNotes,
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.notes),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceMeetings,
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.meetings),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceDashboardAssistant,
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.assistant),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceMicrogrow,
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.microgrow),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceAudit,
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.audit),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceSettings,
+      builder: (context, state) =>
+          const VoiceModuleScreen(section: VoiceModuleSection.settings),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

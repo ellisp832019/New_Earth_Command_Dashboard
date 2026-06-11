@@ -18,6 +18,9 @@ import 'tables/learning_items_table.dart';
 import 'tables/projects_table.dart';
 import 'tables/tasks_table.dart';
 import 'tables/wellbeing_checkins_table.dart';
+import 'tables/voice_audit_logs_table.dart';
+import 'tables/voice_conversation_threads_table.dart';
+import 'tables/voice_module_preferences_table.dart';
 
 part 'app_database.g.dart';
 
@@ -33,13 +36,16 @@ part 'app_database.g.dart';
     WellbeingCheckins,
     InboxItems,
     AppSettings,
+    VoiceAuditLogs,
+    VoiceConversationThreads,
+    VoiceModulePreferences,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,20 +55,60 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (migrator, from, to) async {
           if (from < 2) {
             await migrator.addColumn(appSettings, appSettings.voiceRepliesEnabled);
-            await migrator.addColumn(appSettings, appSettings.voiceAssistantEnabled);
-            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceName);
-            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceLocale);
-            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceGender);
-            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceIdentifier);
-            await migrator.addColumn(appSettings, appSettings.preferredTtsVoiceRate);
-            await migrator.addColumn(appSettings, appSettings.preferredTtsVoicePitch);
-          } else if (from < 3) {
-            await migrator.addColumn(appSettings, appSettings.voiceAssistantEnabled);
-          } else if (from < 4) {
+            await migrator.addColumn(
+              appSettings,
+              appSettings.voiceAssistantEnabled,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.preferredTtsVoiceName,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.preferredTtsVoiceLocale,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.preferredTtsVoiceGender,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.preferredTtsVoiceIdentifier,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.preferredTtsVoiceRate,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.preferredTtsVoicePitch,
+            );
+          }
+
+          if (from < 3) {
+            await migrator.addColumn(
+              appSettings,
+              appSettings.voiceAssistantEnabled,
+            );
+          }
+
+          if (from < 4) {
             await migrator.addColumn(
               appSettings,
               appSettings.showProjectsWorkspaceSnapshot,
             );
+          }
+
+          if (from < 5) {
+            await migrator.createTable(voiceConversationThreads);
+          }
+
+          if (from < 6) {
+            await migrator.createTable(voiceAuditLogs);
+          }
+
+          if (from < 7) {
+            await migrator.createTable(voiceModulePreferences);
           }
         },
       );

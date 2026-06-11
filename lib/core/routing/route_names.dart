@@ -79,7 +79,18 @@ abstract final class RouteNames {
   static const inbox = '/inbox';
   static const newInbox = '/inbox/new';
   static const settings = '/settings';
+  static const voice = '/voice';
+  static const voiceConversation = '/voice/conversation';
+  static const voiceNotes = '/voice/notes';
+  static const voiceMeetings = '/voice/meetings';
+  static const voiceDashboardAssistant = '/voice/assistant';
+  static const voiceMicrogrow = '/voice/microgrow';
+  static const voiceAudit = '/voice/audit';
+  static const voiceSettings = '/voice/settings';
   static const voiceAssistant = '/voice-assistant';
+  static const voiceHomeRoute = '/voice?view=home';
+
+  static String voiceHome() => voiceHomeRoute;
   static const calmUiDemo = '/dashboard/calm-ui-demo';
 
   static String launchpadCampaign(String campaignId) {

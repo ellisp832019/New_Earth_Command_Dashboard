@@ -32,6 +32,9 @@ void main() {
         'learning_items',
         'projects',
         'tasks',
+        'voice_audit_logs',
+        'voice_conversation_threads',
+        'voice_module_preferences',
         'wellbeing_checkins',
       ]),
     );
