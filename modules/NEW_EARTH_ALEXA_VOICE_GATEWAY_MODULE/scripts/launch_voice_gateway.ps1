@@ -14,6 +14,8 @@ $mockLog = Join-Path $logsDir 'mock_dashboard.log'
 $mockErrorLog = Join-Path $logsDir 'mock_dashboard.error.log'
 $gatewayLog = Join-Path $logsDir 'voice_gateway.log'
 $gatewayErrorLog = Join-Path $logsDir 'voice_gateway.error.log'
+$envFile = Join-Path $moduleRoot '.env.local'
+$fallbackEnvFile = Join-Path $moduleRoot '.env'
 
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
@@ -28,8 +30,42 @@ function Write-LauncherLog {
   Add-Content -Path $launcherLog -Value "$(Get-Date -Format o) $Message"
 }
 
+function Import-DotEnvFile {
+  param([string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    return $false
+  }
+
+  foreach ($line in Get-Content -Path $Path) {
+    $trimmed = $line.Trim()
+    if (-not $trimmed -or $trimmed.StartsWith('#')) {
+      continue
+    }
+
+    $separatorIndex = $trimmed.IndexOf('=')
+    if ($separatorIndex -lt 1) {
+      continue
+    }
+
+    $name = $trimmed.Substring(0, $separatorIndex).Trim()
+    $value = $trimmed.Substring($separatorIndex + 1).Trim()
+    [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+  }
+
+  return $true
+}
+
 Write-LauncherLog 'Launcher starting.'
 Write-LauncherLog "Module root: $moduleRoot"
+
+if (Import-DotEnvFile -Path $envFile) {
+  Write-LauncherLog "Loaded environment from $envFile."
+} elseif (Import-DotEnvFile -Path $fallbackEnvFile) {
+  Write-LauncherLog "Loaded environment from $fallbackEnvFile."
+} else {
+  Write-LauncherLog 'No local env file found. Using existing shell environment.'
+}
 
 if (-not $NoMockDashboard) {
   Start-Process `
