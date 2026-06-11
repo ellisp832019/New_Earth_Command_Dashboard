@@ -56,6 +56,13 @@ function Import-DotEnvFile {
   return $true
 }
 
+function Get-MatchingProcesses {
+  param([string]$Pattern)
+
+  return @(Get-CimInstance Win32_Process |
+    Where-Object { $_.CommandLine -match $Pattern })
+}
+
 Write-LauncherLog 'Launcher starting.'
 Write-LauncherLog "Module root: $moduleRoot"
 
@@ -68,25 +75,35 @@ if (Import-DotEnvFile -Path $envFile) {
 }
 
 if (-not $NoMockDashboard) {
-  Start-Process `
-    -FilePath $python `
-    -ArgumentList 'examples/dashboard_mock/mock_dashboard_api.py' `
-    -WorkingDirectory $moduleRoot `
-    -WindowStyle Hidden `
-    -RedirectStandardOutput $mockLog `
-    -RedirectStandardError $mockErrorLog | Out-Null
-  Write-LauncherLog "Mock dashboard started with $python."
+  $existingMockProcesses = Get-MatchingProcesses -Pattern 'mock_dashboard_api\.py'
+  if ($existingMockProcesses.Count -gt 0) {
+    Write-LauncherLog "Mock dashboard already running. Skipping duplicate start ($($existingMockProcesses.Count) process(es))."
+  } else {
+    Start-Process `
+      -FilePath $python `
+      -ArgumentList 'examples/dashboard_mock/mock_dashboard_api.py' `
+      -WorkingDirectory $moduleRoot `
+      -WindowStyle Hidden `
+      -RedirectStandardOutput $mockLog `
+      -RedirectStandardError $mockErrorLog | Out-Null
+    Write-LauncherLog "Mock dashboard started with $python."
+  }
 }
 
 if (-not $NoGateway) {
-  Start-Process `
-    -FilePath $python `
-    -ArgumentList '-m', 'src.voice_gateway.app' `
-    -WorkingDirectory $moduleRoot `
-    -WindowStyle Hidden `
-    -RedirectStandardOutput $gatewayLog `
-    -RedirectStandardError $gatewayErrorLog | Out-Null
-  Write-LauncherLog "Voice gateway started with $python."
+  $existingGatewayProcesses = Get-MatchingProcesses -Pattern 'src\.voice_gateway\.app'
+  if ($existingGatewayProcesses.Count -gt 0) {
+    Write-LauncherLog "Voice gateway already running. Skipping duplicate start ($($existingGatewayProcesses.Count) process(es))."
+  } else {
+    Start-Process `
+      -FilePath $python `
+      -ArgumentList '-m', 'src.voice_gateway.app' `
+      -WorkingDirectory $moduleRoot `
+      -WindowStyle Hidden `
+      -RedirectStandardOutput $gatewayLog `
+      -RedirectStandardError $gatewayErrorLog | Out-Null
+    Write-LauncherLog "Voice gateway started with $python."
+  }
 }
 
 Write-LauncherLog 'Launcher finished.'

@@ -151,6 +151,8 @@ The SQLite-backed mode currently supports:
 
 Right now, `microgrow.status.read` uses the real local MicroGrow project and task data already stored in the dashboard SQLite database. It stays read-only and does not assume live sensor tables exist unless those are added later.
 
+For copying the same gateway URL and shared secret into the Alexa Lambda environment, see `docs/07_LAMBDA_ENV_SETUP.md`.
+
 For a fast disable, set:
 
 ```text
