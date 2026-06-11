@@ -1,4 +1,5 @@
 import 'safety_command_gateway.dart';
+import 'voice_openai_transport.dart';
 import 'voice_models.dart';
 
 abstract class VoiceAiProvider {
@@ -307,31 +308,193 @@ class MockVoiceAiProvider extends VoiceAiProvider {
 class OpenAiVoiceAiProvider extends MockVoiceAiProvider {
   const OpenAiVoiceAiProvider({
     required this.runtimeConfig,
-  });
+    VoiceOpenAiTransport? transport,
+  }) : _transport = transport;
 
   final VoiceRuntimeConfig runtimeConfig;
+  final VoiceOpenAiTransport? _transport;
+
+  VoiceOpenAiTransport get _resolvedTransport {
+    return _transport ?? VoiceOpenAiTransport(apiKey: runtimeConfig.apiKey);
+  }
 
   @override
   Future<VoiceTranscriptionResult> transcribe({
     required VoiceSessionMode mode,
     required String prompt,
     required VoiceRuntimeConfig config,
-  }) {
-    return super.transcribe(
-      mode: mode,
-      prompt: prompt,
-      config: config,
-    ).then(
-      (result) => VoiceTranscriptionResult(
-        transcript: result.transcript,
-        durationSeconds: result.durationSeconds,
-        mode: result.mode,
+  }) async {
+    if (!runtimeConfig.canUseOpenAi) {
+      return super.transcribe(
+        mode: mode,
+        prompt: prompt,
+        config: config,
+      );
+    }
+
+    try {
+      final transcript = await _resolvedTransport.completeText(
+        model: config.transcriptionModel,
+        instructions:
+            'Shape the user prompt into a calm dashboard voice transcript draft. Keep it short, readable, and safe. Mention that hardware control stays blocked if the user asks for actions.',
+        input:
+            'Mode: ${mode.name}\nPrompt: ${prompt.trim().isEmpty ? _fallbackPromptForMode(mode) : prompt.trim()}',
+      );
+
+      return VoiceTranscriptionResult(
+        transcript: transcript,
+        durationSeconds: _estimateDuration(transcript),
+        mode: mode,
         providerLabel: 'OpenAI transcription mode',
-        notes: runtimeConfig.canUseOpenAi
-            ? 'OpenAI provider layer selected with local-first review.'
-            : 'OpenAI mode is selected, but the app will still stay mock-first without a key.',
+        notes:
+            'OpenAI text transport was used. Recording and review stay local-first.',
+      );
+    } catch (_) {
+      return super.transcribe(
+        mode: mode,
+        prompt: prompt,
+        config: config,
+      );
+    }
+  }
+
+  @override
+  Future<MeetingSummaryResult> summarizeMeeting({
+    required String transcript,
+    required String meetingTitle,
+  }) async {
+    if (!runtimeConfig.canUseOpenAi) {
+      return super.summarizeMeeting(
+        transcript: transcript,
+        meetingTitle: meetingTitle,
+      );
+    }
+
+    try {
+      final summaryJson = await _resolvedTransport.completeJson(
+        model: runtimeConfig.transcriptionModel,
+        instructions:
+            'Return strict JSON with keys summary, decisions, actions, risks, followUps. Keep values concise, clear, and review-first.',
+        input:
+            'Meeting title: ${meetingTitle.trim()}\nTranscript:\n${transcript.trim()}',
+      );
+
+      return MeetingSummaryResult(
+        summary: summaryJson['summary']?.toString() ??
+            'OpenAI meeting summary draft is ready for review.',
+        decisions: _stringList(summaryJson['decisions']),
+        actions: _stringList(summaryJson['actions']),
+        risks: _stringList(summaryJson['risks']),
+        followUps: _stringList(summaryJson['followUps']),
+      );
+    } catch (_) {
+      return super.summarizeMeeting(
+        transcript: transcript,
+        meetingTitle: meetingTitle,
+      );
+    }
+  }
+
+  @override
+  Future<VoiceAssistantResponse> assist({
+    required String message,
+    required SafetyCommandGateway safetyGateway,
+    String? activeProject,
+  }) async {
+    if (!runtimeConfig.canUseOpenAi) {
+      return super.assist(
+        message: message,
+        safetyGateway: safetyGateway,
+        activeProject: activeProject,
+      );
+    }
+
+    final normalized = message.trim().toLowerCase();
+    final intent = _classifyIntent(normalized);
+    final safetyDecision = safetyGateway.evaluate(
+      SafetyCommandRequest(
+        rawText: message,
+        intent: intent,
+        parameters: <String, Object?>{
+          if (activeProject?.trim().isNotEmpty == true)
+            'activeProject': activeProject!.trim(),
+        },
       ),
     );
+
+    if (!safetyDecision.allowed) {
+      return VoiceAssistantResponse(
+        reply:
+            'I can help with the dashboard request, but that action is blocked for V1: ${safetyDecision.reason}',
+        intents: <String>[intent],
+        actions: const <VoiceCommandAction>[],
+        spokenReply: 'That action is blocked in V1.',
+        safetyDecision: safetyDecision,
+      );
+    }
+
+    try {
+      final reply = await _resolvedTransport.completeText(
+        model: runtimeConfig.transcriptionModel,
+        instructions:
+            'You are a calm dashboard assistant. Reply in one or two short paragraphs. Keep hardware writes blocked in V1 and suggest safe next steps only.',
+        input:
+            'User message: ${message.trim()}\nActive project: ${activeProject?.trim().isEmpty == true ? 'none' : activeProject?.trim() ?? 'none'}\nIntent: $intent',
+      );
+
+      return VoiceAssistantResponse(
+        reply: reply,
+        intents: <String>[intent],
+        actions: _actionsForIntent(intent),
+        spokenReply: _spokenReply(reply),
+        safetyDecision: safetyDecision,
+      );
+    } catch (_) {
+      return super.assist(
+        message: message,
+        safetyGateway: safetyGateway,
+        activeProject: activeProject,
+      );
+    }
+  }
+
+  String _fallbackPromptForMode(VoiceSessionMode mode) {
+    return switch (mode) {
+      VoiceSessionMode.voiceNote =>
+        'I captured a calm voice note about the dashboard voice workflow and the next safe step.',
+      VoiceSessionMode.meeting =>
+        'The meeting focused on the dashboard voice module, a safe MicroGrow status bridge, and review-first delivery.',
+      VoiceSessionMode.assistant =>
+        'Draft a safe dashboard action and keep hardware control blocked.',
+      VoiceSessionMode.microgrowStatus =>
+        'What is the current MicroGrow status?',
+    };
+  }
+
+  List<String> _stringList(Object? value) {
+    if (value is! List) {
+      return const <String>[];
+    }
+
+    return value.map((item) => item.toString()).toList(growable: false);
+  }
+
+  List<VoiceCommandAction> _actionsForIntent(String intent) {
+    return switch (intent) {
+      'microgrow.status.read' => const <VoiceCommandAction>[],
+      'meeting.summary.create' => const [
+        VoiceCommandAction(type: 'meeting.summary.create', status: 'draft'),
+      ],
+      'dashboard.task.create' => const [
+        VoiceCommandAction(type: 'task.create', status: 'draft'),
+      ],
+      'dashboard.note.create' => const [
+        VoiceCommandAction(type: 'note.create', status: 'draft'),
+      ],
+      _ => const [
+        VoiceCommandAction(type: 'dashboard.assistant.reply', status: 'openai'),
+      ],
+    };
   }
 
 }

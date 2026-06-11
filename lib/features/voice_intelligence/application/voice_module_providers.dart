@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../data/meeting_summary_service.dart';
 import '../data/voice_ai_provider.dart';
+import '../data/voice_openai_transport.dart';
 import '../data/microgrow_voice_status_service.dart';
 import '../data/safety_command_gateway.dart';
 import '../data/voice_assistant_service.dart';
@@ -141,11 +142,19 @@ final voiceSafetyGatewayProvider = Provider<SafetyCommandGateway>((ref) {
   return const SafetyCommandGateway();
 });
 
+final voiceOpenAiTransportProvider = Provider<VoiceOpenAiTransport>((ref) {
+  final runtime = ref.watch(voiceModuleConfigProvider).runtime;
+  return VoiceOpenAiTransport(apiKey: runtime.apiKey);
+});
+
 final voiceAiProviderProvider = Provider<VoiceAiProvider>((ref) {
   final runtime = ref.watch(voiceModuleConfigProvider).runtime;
   if (runtime.canUseOpenAi &&
       runtime.providerMode != VoiceProviderMode.mock) {
-    return OpenAiVoiceAiProvider(runtimeConfig: runtime);
+    return OpenAiVoiceAiProvider(
+      runtimeConfig: runtime,
+      transport: ref.watch(voiceOpenAiTransportProvider),
+    );
   }
 
   return const MockVoiceAiProvider();
