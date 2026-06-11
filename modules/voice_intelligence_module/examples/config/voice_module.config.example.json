@@ -1,0 +1,29 @@
+{
+  "provider": "mock",
+  "openai": {
+    "apiKeyEnv": "OPENAI_API_KEY",
+    "transcriptionModel": "gpt-4o-mini-transcribe",
+    "realtimeModel": "gpt-realtime-2",
+    "ttsModel": "tts-1"
+  },
+  "features": {
+    "voiceNotesEnabled": true,
+    "meetingTranscriberEnabled": true,
+    "dashboardAssistantEnabled": true,
+    "microgrowReadOnlyEnabled": true,
+    "microgrowVoiceControlEnabled": false,
+    "alwaysOnWakeWordEnabled": false,
+    "cloudSyncVoiceLogsEnabled": false
+  },
+  "privacy": {
+    "saveAudioByDefault": false,
+    "saveTranscriptsByDefault": true,
+    "showRecordingIndicator": true,
+    "allowDeleteSessions": true
+  },
+  "paths": {
+    "omegaOsRoot": "D:/NEW_EARTH_OMEGA_OS_PACK",
+    "defaultVoiceLogs": "D:/NEW_EARTH_OMEGA_OS_PACK/23_AI_AND_AUTOMATION/VOICE_LOGS",
+    "meetingLogs": "D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS"
+  }
+}
