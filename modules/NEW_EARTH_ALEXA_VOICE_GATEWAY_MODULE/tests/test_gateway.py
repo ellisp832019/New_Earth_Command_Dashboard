@@ -119,11 +119,12 @@ class VoiceGatewayTests(unittest.TestCase):
         with patch(
             "src.voice_gateway.app.requests.post",
             side_effect=RuntimeError("sensitive backend detail"),
-        ):
+        ), patch.object(gateway.LOGGER, "exception") as log_exception_mock:
             speech = gateway.dashboard_call("dashboard.summary.today", {})
 
         self.assertIn("could not reach the dashboard safely", speech.lower())
         self.assertNotIn("sensitive backend detail", speech)
+        log_exception_mock.assert_called_once()
 
     def test_dangerous_action_cannot_pass_through(self) -> None:
         response = gateway.route_voice_command(
