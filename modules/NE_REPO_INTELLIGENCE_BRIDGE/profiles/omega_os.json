@@ -1,0 +1,45 @@
+{
+  "project_name": "New_Earth_Omega_OS",
+  "project_type": "operating_system",
+  "repo_root": ".",
+  "source_of_truth": "local repo + Omega OS + Obsidian exports",
+  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN",
+  "obsidian_project_folder": "03_REPO_KNOWLEDGE_EXPORTS/Omega_OS",
+  "dashboard_export_path": "D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/01_PROJECT_REPO_BRIDGE/Omega_OS",
+  "ignore": [
+    ".git",
+    ".dart_tool",
+    ".venv",
+    "node_modules",
+    "build",
+    "dist",
+    ".obsidian",
+    "logs"
+  ],
+  "locked_rules": [
+    "Local-first architecture",
+    "No file deletion by sync module",
+    "Never overwrite hand-written Obsidian sections",
+    "Human approval required for source-code edits",
+    "No secrets copied into Dashboard or AI context exports",
+    "Omega OS is the source-of-truth structure",
+    "Keep project memory organised by folder number",
+    "No automation deletes knowledge records"
+  ],
+  "safe_ai_permissions": [
+    "read exported markdown",
+    "read dashboard JSON",
+    "summarise current project state",
+    "suggest next actions",
+    "flag risks",
+    "generate reports"
+  ],
+  "blocked_ai_permissions": [
+    "delete files",
+    "edit source code without approval",
+    "access secrets",
+    "push to GitHub",
+    "run destructive commands",
+    "change licences or payment logic without approval"
+  ]
+}
