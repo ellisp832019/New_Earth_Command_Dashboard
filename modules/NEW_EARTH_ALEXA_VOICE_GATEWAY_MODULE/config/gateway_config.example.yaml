@@ -1,0 +1,24 @@
+gateway:
+  host: 127.0.0.1
+  port: 8088
+  environment: dev
+  enabled: true
+  require_shared_secret: true
+  shared_secret_env: NEW_EARTH_VOICE_GATEWAY_SECRET
+
+dashboard:
+  base_url: http://127.0.0.1:8099
+  timeout_seconds: 5
+
+logging:
+  audit_log_path: audit/voice_audit.jsonl
+  enable_console_log: true
+
+alexa:
+  skill_name: New Earth Dashboard
+  locale: en-GB
+  account_linking_required_for_personal_data: true
+
+microgrow:
+  read_only: true
+  allow_relay_control: false

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+config/gateway_config.local.yaml
+audit/*.jsonl
+logs/*
+!logs/.gitkeep
+!audit/.gitkeep
+node_modules/
+.env.local
