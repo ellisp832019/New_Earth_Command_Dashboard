@@ -574,6 +574,8 @@ class _AlexaVoiceGatewayScreenState extends State<AlexaVoiceGatewayScreen> {
             onRefreshHealth: _refreshHealth,
           ),
           const SizedBox(height: 14),
+          const _AdapterModeGuideCard(),
+          const SizedBox(height: 14),
           _LaunchCard(
             windowsStartCommand:
                 'cd $_moduleFolderPath\npython examples/dashboard_mock/mock_dashboard_api.py\npython -m src.voice_gateway.app',
@@ -1177,6 +1179,166 @@ class _LaunchCard extends StatelessWidget {
           _CodeBlock(title: 'Gateway tests', value: testCommand),
           const SizedBox(height: 12),
           _CodeBlock(title: 'Trusted launcher', value: launcherCommand),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdapterModeGuideCard extends StatelessWidget {
+  const _AdapterModeGuideCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_tree_outlined,
+                color: AppColours.darkSecondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Adapter mode guide',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: AppColours.darkText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose the simple mock HTTP path while wiring things up, or switch to SQLite when you want Alexa to read from the real local dashboard database.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const _ModeGuideTile(
+            title: 'HTTP mode',
+            subtitle: 'Best for first setup and quick health checks.',
+            accent: AppColours.darkSecondary,
+            bullets: [
+              'Leave `dashboard.mode: http` in `gateway_config.yaml`.',
+              'Start the mock dashboard, then start the gateway.',
+              'Use this mode when you want easy smoke tests and visible mock responses.',
+            ],
+            codeTitle: 'Config',
+            code: 'dashboard:\n  mode: http\n  base_url: http://127.0.0.1:8099',
+          ),
+          const SizedBox(height: 12),
+          const _ModeGuideTile(
+            title: 'SQLite mode',
+            subtitle: 'Best when you want real read-only dashboard data.',
+            accent: AppColours.darkGlow,
+            bullets: [
+              'Set `dashboard.mode: sqlite` in `gateway_config.yaml`.',
+              'Point `dashboard.sqlite_db_path` to your local SQLite file, or use `NEW_EARTH_DASHBOARD_DB_PATH`.',
+              'Current real commands: `dashboard.summary.today`, `dashboard.project.status.read`, and `dashboard.tasks.next`.',
+            ],
+            codeTitle: 'Config',
+            code:
+                'dashboard:\n  mode: sqlite\n  sqlite_db_path: D:\\path\\to\\new_earth.db',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeGuideTile extends StatelessWidget {
+  const _ModeGuideTile({
+    required this.title,
+    required this.subtitle,
+    required this.bullets,
+    required this.codeTitle,
+    required this.code,
+    required this.accent,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<String> bullets;
+  final String codeTitle;
+  final String code;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _Pill(
+                label: title,
+                icon: Icons.settings_ethernet_outlined,
+                accent: accent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...bullets.map(
+            (bullet) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(Icons.circle, size: 8, color: accent),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      bullet,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          _CodeBlock(title: codeTitle, value: code),
         ],
       ),
     );
