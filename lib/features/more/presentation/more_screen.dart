@@ -111,6 +111,14 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.voiceAssistant,
     ),
     _MoreItem(
+      title: 'Alexa Voice Gateway',
+      description:
+          'Review the guarded Alexa doorway, allowed commands, blocked commands, and audit trail.',
+      icon: Icons.hub_outlined,
+      route: RouteNames.alexaVoiceGateway,
+      badge: 'Local',
+    ),
+    _MoreItem(
       title: 'Settings',
       description: 'Configure the dashboard.',
       icon: Icons.settings_outlined,
@@ -223,6 +231,32 @@ class MoreScreen extends StatelessWidget {
                                     color: AppColours.darkText,
                                   ),
                                 ),
+                                if (item.badge != null) ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColours.darkSecondary
+                                          .withValues(alpha: 0.14),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: AppColours.darkSecondary
+                                            .withValues(alpha: 0.26),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      item.badge!,
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: AppColours.darkText,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 8),
                                 Text(
                                   item.description,
@@ -273,10 +307,12 @@ class _MoreItem {
     required this.description,
     required this.icon,
     required this.route,
+    this.badge,
   });
 
   final String title;
   final String description;
   final IconData icon;
   final String route;
+  final String? badge;
 }

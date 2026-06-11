@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -215,6 +219,7 @@ class _Sidebar extends StatelessWidget {
               icon: Icons.mic_none_rounded,
               route: RouteNames.voice,
             ),
+            const _AlexaGatewaySidebarLink(),
             _SidebarLink(
               label: 'Search',
               icon: Icons.search,
@@ -442,6 +447,103 @@ class _SidebarLink extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AlexaGatewaySidebarLink extends StatefulWidget {
+  const _AlexaGatewaySidebarLink();
+
+  @override
+  State<_AlexaGatewaySidebarLink> createState() =>
+      _AlexaGatewaySidebarLinkState();
+}
+
+class _AlexaGatewaySidebarLinkState extends State<_AlexaGatewaySidebarLink> {
+  Timer? _timer;
+  String _badge = '...';
+  Color _accent = AppColours.darkMutedText;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshStatus();
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted) {
+        return;
+      }
+
+      _refreshStatus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshStatus() async {
+    final client = HttpClient();
+
+    try {
+      final request = await client
+          .getUrl(Uri.parse('http://127.0.0.1:8088/health'))
+          .timeout(const Duration(seconds: 2));
+      final response = await request.close().timeout(
+        const Duration(seconds: 2),
+      );
+      final body = await response.transform(utf8.decoder).join();
+      final ok = response.statusCode >= 200 && response.statusCode < 300;
+
+      var badge = 'Off';
+      var accent = AppColours.darkPrimary;
+
+      if (ok) {
+        var enabled = true;
+        try {
+          final decoded = jsonDecode(body);
+          if (decoded is Map<String, dynamic>) {
+            enabled = decoded['enabled'] != false;
+          }
+        } catch (_) {
+          enabled = true;
+        }
+
+        badge = enabled ? 'Live' : 'Paused';
+        accent = enabled ? AppColours.darkSecondary : AppColours.darkGlow;
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _badge = badge;
+        _accent = accent;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _badge = 'Off';
+        _accent = AppColours.darkPrimary;
+      });
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SidebarLink(
+      label: 'Alexa Voice Gateway',
+      icon: Icons.hub_outlined,
+      route: RouteNames.alexaVoiceGateway,
+      accent: _accent,
+      badge: _badge,
     );
   }
 }

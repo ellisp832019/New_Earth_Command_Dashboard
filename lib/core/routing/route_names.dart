@@ -63,6 +63,7 @@ abstract final class RouteNames {
   static const meetingFollowUps = '/more/meetings/follow-ups';
   static const meetingTemplates = '/more/meetings/templates';
   static const meetingSettings = '/more/meetings/settings';
+  static const alexaVoiceGateway = '/more/alexa-voice-gateway';
   static const projectsIntelligence = '/projects-intelligence';
   static const projectsIntelligenceLegacy = '/more/projects-intelligence';
   static const knowledgeLibrary = '/more/knowledge-library';

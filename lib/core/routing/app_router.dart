@@ -54,6 +54,7 @@ import '../../features/meeting_system/presentation/meeting_follow_ups_screen.dar
 import '../../features/meeting_system/presentation/meeting_settings_screen.dart';
 import '../../features/meeting_system/presentation/meeting_templates_screen.dart';
 import '../../features/meeting_system/presentation/new_meeting_wizard_screen.dart';
+import '../../features/alexa_voice_gateway/presentation/alexa_voice_gateway_screen.dart';
 import '../../features/project_intelligence/presentation/projects_intelligence_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_settings_screen.dart';
@@ -474,6 +475,10 @@ final appRouter = GoRouter(
                   path: 'omega-os-health',
                   builder: (context, state) =>
                       const OmegaOsFolderHealthScreen(),
+                ),
+                GoRoute(
+                  path: 'alexa-voice-gateway',
+                  builder: (context, state) => const AlexaVoiceGatewayScreen(),
                 ),
               ],
             ),
