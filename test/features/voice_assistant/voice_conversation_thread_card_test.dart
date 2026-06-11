@@ -11,6 +11,7 @@ void main() {
     var resumed = false;
     var reusedLatest = false;
     var startedFresh = false;
+    var openedSharedConversation = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -36,6 +37,9 @@ void main() {
               startedFresh = true;
             },
             onCopySummary: () {},
+            onOpenSharedConversation: () {
+              openedSharedConversation = true;
+            },
           ),
         ),
       ),
@@ -60,6 +64,7 @@ void main() {
     expect(find.text('Type: Project'), findsOneWidget);
     expect(find.text('Project: MicroGrow'), findsOneWidget);
     expect(find.text('Continue thread'), findsOneWidget);
+    expect(find.text('Open shared conversation'), findsOneWidget);
     expect(find.text('Copy summary'), findsOneWidget);
     expect(find.text('Start fresh'), findsOneWidget);
 
@@ -74,5 +79,9 @@ void main() {
     await tester.tap(find.text('Start fresh'));
     await tester.pumpAndSettle();
     expect(startedFresh, isTrue);
+
+    await tester.tap(find.text('Open shared conversation'));
+    await tester.pumpAndSettle();
+    expect(openedSharedConversation, isTrue);
   });
 }

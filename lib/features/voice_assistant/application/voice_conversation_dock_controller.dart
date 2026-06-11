@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/routing/route_names.dart';
+import '../../voice_intelligence/application/voice_module_providers.dart';
+import '../../voice_intelligence/application/voice_thread_controller.dart';
 import '../voice_command_model.dart';
 import '../voice_command_service.dart';
 import 'voice_session_controller.dart';
@@ -90,6 +93,15 @@ class VoiceConversationDockNotifier
       threadContext: threadContext,
       conversationContext: conversationContext,
     );
+    _syncSharedConversationThread(
+      summary: summary,
+      nextStep: nextStep,
+      transcript: transcript,
+      conversationContext: conversationContext,
+      isWake: isWake,
+      projectContext: projectContext,
+      threadContext: threadContext,
+    );
   }
 
   void hide() {
@@ -145,6 +157,16 @@ class VoiceConversationDockNotifier
       threadContext: response.threadContext,
       conversationContext: nextConversationContext,
     );
+    _syncSharedConversationThread(
+      summary: response.summary,
+      nextStep: response.nextStep,
+      transcript: suggestion.transcript,
+      conversationContext: nextConversationContext,
+      isWake: suggestion.usedWakePhrase || suggestion.isWakeOnly,
+      projectContext:
+          response.projectContext ?? suggestion.suggestedProjectName,
+      threadContext: response.threadContext,
+    );
     ref
         .read(voiceSessionProvider.notifier)
         .beginAwaitingFollowUp(
@@ -154,6 +176,56 @@ class VoiceConversationDockNotifier
           opacity: 0.64,
         );
     return response;
+  }
+
+  void _syncSharedConversationThread({
+    required String summary,
+    required String nextStep,
+    required String transcript,
+    required bool isWake,
+    VoiceConversationContext? conversationContext,
+    String? projectContext,
+    String? threadContext,
+  }) {
+    final thread = ref.read(voiceConversationThreadProvider.notifier);
+    thread.rememberThread(
+      threadTitle: 'Voice Assistant',
+      summary: summary,
+      nextStep: nextStep,
+      resumeRoute: RouteNames.voiceConversation,
+      latestCaptureLabel:
+          conversationContext?.latestEntryLabel ?? 'Legacy follow-up',
+      latestCapturePreview:
+          conversationContext?.latestEntryPreview ?? transcript,
+      lastThingYouSaid: transcript,
+      reviewPrompt: isWake
+          ? 'Review the wake-triggered assistant reply before saving.'
+          : 'Review the legacy assistant reply before saving.',
+      prompts: [
+        const VoiceConversationPrompt(
+          label: 'Open shared conversation',
+          description: 'Switch into the calm shared voice thread.',
+          route: RouteNames.voiceConversation,
+        ),
+        const VoiceConversationPrompt(
+          label: 'Return home',
+          description: 'Go back to the voice hub.',
+          route: RouteNames.voice,
+        ),
+        if (threadContext != null && threadContext.isNotEmpty)
+          const VoiceConversationPrompt(
+            label: 'Open legacy assistant',
+            description: 'Continue in the legacy assistant surface.',
+            route: RouteNames.voiceAssistant,
+          ),
+      ],
+      isFresh: false,
+    );
+    thread.pinCurrentTurn(
+      title: 'Legacy dock turn',
+      body: summary,
+      note: 'This is the latest reply from the dock.',
+    );
   }
 }
 

@@ -3103,9 +3103,9 @@ class _DashboardQuickCaptureCardState
           const SizedBox(height: 10),
           FilledButton.tonalIcon(
             key: const Key('dashboardVoiceCaptureButton'),
-            onPressed: () => context.push(RouteNames.voiceAssistant),
+            onPressed: () => context.push(RouteNames.voice),
             icon: const Icon(Icons.mic_none_rounded),
-            label: const Text('Use Voice'),
+            label: const Text('Open Voice'),
           ),
         ],
       ),

@@ -109,11 +109,10 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
       );
     }
 
-    return ListView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      children: [
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Text(
           'Recent capture history',
           style: theme.textTheme.titleMedium,
@@ -157,12 +156,12 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Latest capture',
+                      Expanded(
+                        child: Text(
+                          'Latest capture',
                           style: theme.textTheme.titleSmall,
                         ),
                       ),
@@ -174,17 +173,17 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
                         ),
                       ),
                     ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _latestCommand!.transcript,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _latestCommand!.transcript,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
                     '${_latestCommand!.type.label} capture ready to reuse.',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                    style: theme.textTheme.bodySmall,
+                  ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
@@ -285,7 +284,7 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
                 leading: const Icon(Icons.history_rounded),
                 title: Text(command.transcript),
                 subtitle: Text(
-                  '${command.type.label} • ${_formatDateTime(command.createdAt)}',
+                  '${command.type.label} - ${_formatDateTime(command.createdAt)}',
                 ),
                 trailing: Wrap(
                   spacing: 4,
@@ -317,7 +316,8 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
             );
           }),
         ],
-      ],
+        ],
+      ),
     );
   }
 }

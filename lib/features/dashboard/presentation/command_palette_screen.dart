@@ -278,11 +278,11 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
       _CommandPaletteEntry(
         group: 'Navigate',
         kind: 'Page',
-        title: 'Voice Assistant',
-        description: 'Open the review-first voice flow.',
-        searchText: 'voice assistant speech wizard',
+        title: 'Voice Intelligence',
+        description: 'Open the new voice module with notes, meetings, and MicroGrow status.',
+        searchText: 'voice intelligence voice assistant speech wizard notes meetings microgrow',
         icon: Icons.mic_outlined,
-        onTap: () => context.go(RouteNames.voiceAssistant),
+        onTap: () => context.go(RouteNames.voice),
       ),
       _CommandPaletteEntry(
         group: 'Navigate',

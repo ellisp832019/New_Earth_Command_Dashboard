@@ -378,6 +378,13 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
+                        FilledButton.tonalIcon(
+                          key: const Key('voiceOpenSharedConversationButton'),
+                          onPressed: () =>
+                              context.go(RouteNames.voiceConversation),
+                          icon: const Icon(Icons.forum_outlined),
+                          label: const Text('Open shared conversation'),
+                        ),
                         FilledButton.icon(
                           onPressed: dock.transcript.isEmpty
                               ? null

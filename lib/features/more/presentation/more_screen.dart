@@ -97,6 +97,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.inbox,
     ),
     _MoreItem(
+      title: 'Voice Intelligence',
+      description:
+          'Open the new voice module with notes, meeting summaries, MicroGrow status, and the audit log.',
+      icon: Icons.mic_none_rounded,
+      route: RouteNames.voice,
+    ),
+    _MoreItem(
       title: 'Voice Assistant',
       description:
           'Review spoken commands safely before turning them into dashboard actions.',

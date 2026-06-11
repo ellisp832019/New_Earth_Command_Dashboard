@@ -22,11 +22,13 @@ import 'voice_command_model.dart';
 import 'voice_command_service.dart';
 import 'voice_speech_service.dart';
 import 'windows_voice_typing_service.dart';
+import '../voice_intelligence/application/voice_module_providers.dart';
+import '../voice_intelligence/application/voice_thread_controller.dart';
+import '../../core/routing/route_names.dart';
 import '../settings/application/settings_controller.dart';
 import '../../widgets/calm_guidance_card.dart';
 import 'widgets/command_history_list.dart';
 import 'widgets/command_type_selector.dart';
-import 'widgets/voice_presence_chip.dart';
 import 'widgets/transcript_preview_card.dart';
 import 'widgets/voice_conversation_thread_card.dart';
 
@@ -1747,6 +1749,48 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       projectName: projectName,
       previous: continueExistingThread ? _conversationContext : null,
     );
+    _syncSharedConversationThread();
+  }
+
+  void _syncSharedConversationThread() {
+    final conversationContext = _conversationContext;
+    if (conversationContext == null) {
+      return;
+    }
+
+    ref
+        .read(voiceConversationThreadProvider.notifier)
+        .rememberThread(
+          threadTitle: 'Voice Assistant',
+          summary: conversationContext.summary,
+          nextStep:
+              'Continue the shared thread in the calm voice conversation route.',
+          resumeRoute: RouteNames.voiceConversation,
+          latestCaptureLabel: conversationContext.latestEntryLabel,
+          latestCapturePreview: conversationContext.latestEntryPreview,
+          lastThingYouSaid:
+              conversationContext.transcript ?? conversationContext.summary,
+          reviewPrompt:
+              'Review the legacy assistant thread before saving or branching it.',
+          prompts: const [
+            VoiceConversationPrompt(
+              label: 'Open shared conversation',
+              description: 'Switch into the calm shared voice thread.',
+              route: RouteNames.voiceConversation,
+            ),
+            VoiceConversationPrompt(
+              label: 'Return home',
+              description: 'Go back to the voice hub.',
+              route: RouteNames.voice,
+            ),
+            VoiceConversationPrompt(
+              label: 'Open legacy assistant',
+              description: 'Stay in the legacy assistant flow.',
+              route: RouteNames.voiceAssistant,
+            ),
+          ],
+          isFresh: false,
+        );
   }
 
   void _continueCurrentThread() {
@@ -1788,6 +1832,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _resetWizardDraft(keepMode: true, preserveThread: false);
       _speechStatus = 'Started a fresh voice thread.';
     });
+    ref.read(voiceConversationThreadProvider.notifier).startFresh();
     _setVoicePresence(
       label: 'Gaia ready',
       detail: 'Started a fresh thread',
@@ -2048,17 +2093,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               'It keeps the thread moving without adding noise.';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Voice Assistant'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Center(
-              child: IgnorePointer(child: VoicePresenceChip(compact: true)),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Voice Assistant')),
       body: KeyedSubtree(
         key: const Key('voiceAssistantPageBody'),
         child: ListView(
@@ -2121,6 +2156,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                 onReuseLatestCapture: _restoreLatestCommandFromHistory,
                 onStartFresh: _startNewThread,
                 onCopySummary: _copyConversationSummary,
+                onOpenSharedConversation: () =>
+                    context.go(RouteNames.voiceConversation),
               ),
               const SizedBox(height: 16),
             ],

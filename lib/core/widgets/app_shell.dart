@@ -211,6 +211,11 @@ class _Sidebar extends StatelessWidget {
               route: RouteNames.inbox,
             ),
             _SidebarLink(
+              label: 'Voice',
+              icon: Icons.mic_none_rounded,
+              route: RouteNames.voice,
+            ),
+            _SidebarLink(
               label: 'Search',
               icon: Icons.search,
               route: RouteNames.commandPalette,

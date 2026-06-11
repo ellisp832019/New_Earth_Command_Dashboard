@@ -10,6 +10,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
     required this.onReuseLatestCapture,
     required this.onStartFresh,
     required this.onCopySummary,
+    required this.onOpenSharedConversation,
   });
 
   final VoiceConversationContext conversationContext;
@@ -17,6 +18,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
   final VoidCallback onReuseLatestCapture;
   final VoidCallback onStartFresh;
   final VoidCallback onCopySummary;
+  final VoidCallback onOpenSharedConversation;
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +139,12 @@ class VoiceConversationThreadCard extends StatelessWidget {
                   onPressed: onResumeThread,
                   icon: const Icon(Icons.play_arrow_outlined),
                   label: const Text('Continue thread'),
+                ),
+                FilledButton.icon(
+                  key: const Key('voiceOpenSharedConversationButton'),
+                  onPressed: onOpenSharedConversation,
+                  icon: const Icon(Icons.forum_outlined),
+                  label: const Text('Open shared conversation'),
                 ),
                 OutlinedButton.icon(
                   key: const Key('voiceCopyThreadSummaryButton'),

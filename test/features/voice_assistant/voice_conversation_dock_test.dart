@@ -59,6 +59,7 @@ void main() {
       find.text('Say create a task, create a project, or ask what I can do.'),
       findsOneWidget,
     );
+    expect(find.text('Open shared conversation'), findsOneWidget);
   });
 
   testWidgets('voice conversation dock shows quick follow-up actions', (
@@ -105,6 +106,7 @@ void main() {
     expect(find.text('Plan Day'), findsWidgets);
     expect(find.text('Recall Memory'), findsWidgets);
     expect(find.text('Continue Thread'), findsOneWidget);
+    expect(find.text('Open shared conversation'), findsOneWidget);
     expect(find.text('Open Assistant'), findsOneWidget);
   });
 
@@ -186,5 +188,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('What can you do?'), findsOneWidget);
+    expect(find.text('Open shared conversation'), findsOneWidget);
   });
 }
