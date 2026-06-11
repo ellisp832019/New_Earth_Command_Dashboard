@@ -34,6 +34,7 @@ V0.1 foundation is live:
 - Dashboard Quick Capture saves directly into Inbox
 - Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
 - Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
+- Voice Intelligence V1 is now integrated as a new `/voice` module with mock transcription, a full `/voice/conversation` loop, locally persisted shared thread memory and audit logging, remembered voice settings, meeting summaries, MicroGrow read-only status, safety gating, and no hidden hardware writes
 - On Windows, Gaia now waits for a connected headset or headset microphone before the main dashboard loads
 - Meeting System phase 1 is live with dashboard, meeting index, wizard, detail, and trackers
 - Launchpad module phase 1 is live with campaign manager, rewards, story builder, readiness tracker, finance modeller, and JSON seed import; phase 2 now adds media, grants, investors, partners, manufacturing, community, timeline, analytics, launch checklist, backer updates, fulfilment, and impact records; phase 3 is polishing the overview, summary cards, reward cards, and archive flow
@@ -45,6 +46,7 @@ V0.1 foundation is live:
 - [Getting Started](docs/user_guide/getting_started.md)
 - [App Roadmap](docs/roadmap/app_roadmap.md)
 - [Meeting System module](modules/meeting_system/README.md)
+- [Voice Intelligence module pack](modules/voice_intelligence_module/README.md)
 - [Launchpad module](modules/new_earth_launchpad_module/README.md)
 - [MVP Roadmap](docs/roadmap/mvp_roadmap.md)
 - [Architecture Decisions](docs/architecture/architecture_decisions.md)

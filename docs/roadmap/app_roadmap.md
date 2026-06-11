@@ -26,14 +26,14 @@ The app already has working surfaces for:
 - Treasury
 - Assets and QR labels
 - Knowledge Library
-- Voice Assistant
+- Voice Assistant and Voice Intelligence
 
 The strongest active systems right now are:
 
 - the local-first Dashboard and task loop
 - the Knowledge Engine module for PDF library scanning and catalogue work
 - the QR label and print queue workflow
-- the Windows voice capture and voice assistant path
+- the Windows voice capture, legacy voice assistant, and new voice intelligence path
 
 ## Working Principles
 
