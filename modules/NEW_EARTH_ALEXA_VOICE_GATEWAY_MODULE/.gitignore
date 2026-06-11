@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 config/gateway_config.local.yaml
+alexa_skill/lambda_node/.lambda-env.local.json
 audit/*.jsonl
 logs/*
 !logs/.gitkeep
