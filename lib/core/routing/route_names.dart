@@ -35,6 +35,9 @@ abstract final class RouteNames {
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const projectsWorkspace = '/projects-intelligence/workspace';
+  static const repoIntelligenceBridge = '/projects-intelligence/repo-bridge';
+  static const repoIntelligenceBridgeSettings =
+      '/projects-intelligence/repo-bridge/settings';
   static const tasks = '/tasks';
   static const newTask = '/tasks/new';
   static const planner = '/planner';

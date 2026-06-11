@@ -55,6 +55,8 @@ import '../../features/meeting_system/presentation/meeting_settings_screen.dart'
 import '../../features/meeting_system/presentation/meeting_templates_screen.dart';
 import '../../features/meeting_system/presentation/new_meeting_wizard_screen.dart';
 import '../../features/project_intelligence/presentation/projects_intelligence_screen.dart';
+import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
+import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_settings_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
@@ -263,6 +265,18 @@ final appRouter = GoRouter(
               path: RouteNames.projectsIntelligence,
               builder: (context, state) => const ProjectsIntelligenceScreen(),
               routes: [
+                GoRoute(
+                  path: 'repo-bridge',
+                  builder: (context, state) =>
+                      const RepoIntelligenceBridgeScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'settings',
+                      builder: (context, state) =>
+                          const RepoIntelligenceBridgeSettingsScreen(),
+                    ),
+                  ],
+                ),
                 GoRoute(
                   path: 'workspace',
                   builder: (context, state) => const ProjectsScreen(),
