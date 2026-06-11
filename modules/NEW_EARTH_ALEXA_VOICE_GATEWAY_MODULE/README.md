@@ -33,6 +33,8 @@ Dashboard API / MicroGrow / Notes / Tasks
 - Secure deployment checklist
 - Codex handoff prompts
 - Mock dashboard API for testing
+- Windows start and stop launcher helpers
+- Python 3.14-compatible dependency pins
 
 ## First build target
 
@@ -73,3 +75,44 @@ modules/NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE/
 ## Safety principle
 
 Alexa should never directly control your local systems. Alexa talks to the gateway. The gateway decides what is safe.
+
+## Runtime notes
+
+- The current dependency pins are validated against Python `3.14` on Windows.
+- Create a local virtual environment before running the gateway.
+- Set `NEW_EARTH_VOICE_GATEWAY_SECRET` before local smoke testing or dashboard launch-helper testing.
+
+## Local quick start
+
+```text
+cd modules/NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE
+python -m venv .venv
+.\.venv\Scripts\python.exe -m ensurepip --upgrade
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Set your local shared secret:
+
+```text
+set NEW_EARTH_VOICE_GATEWAY_SECRET=change-this-long-random-secret
+```
+
+Then use either:
+
+```text
+scripts\launch_voice_gateway.cmd
+```
+
+or:
+
+```text
+scripts\stop_voice_gateway.cmd
+```
+
+## Local smoke test
+
+If `NEW_EARTH_VOICE_GATEWAY_SECRET` is set in your shell, the test helper now sends the secure header automatically:
+
+```text
+bash scripts/test_gateway.sh
+```

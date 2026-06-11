@@ -11,7 +11,9 @@ $logsDir = Join-Path $moduleRoot 'logs'
 $runtimeDir = Join-Path $moduleRoot 'runtime'
 $launcherLog = Join-Path $logsDir 'launcher.log'
 $mockLog = Join-Path $logsDir 'mock_dashboard.log'
+$mockErrorLog = Join-Path $logsDir 'mock_dashboard.error.log'
 $gatewayLog = Join-Path $logsDir 'voice_gateway.log'
+$gatewayErrorLog = Join-Path $logsDir 'voice_gateway.error.log'
 
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
@@ -30,33 +32,25 @@ Write-LauncherLog 'Launcher starting.'
 Write-LauncherLog "Module root: $moduleRoot"
 
 if (-not $NoMockDashboard) {
-  $mockArgs = @(
-    '-NoProfile'
-    '-WindowStyle'
-    'Hidden'
-    '-WorkingDirectory'
-    $moduleRoot
-    '-Command'
-    "& '$python' examples/dashboard_mock/mock_dashboard_api.py *> '$mockLog'"
-  )
-
-  Start-Process -FilePath 'powershell.exe' -ArgumentList $mockArgs | Out-Null
-  Write-LauncherLog 'Mock dashboard started.'
+  Start-Process `
+    -FilePath $python `
+    -ArgumentList 'examples/dashboard_mock/mock_dashboard_api.py' `
+    -WorkingDirectory $moduleRoot `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $mockLog `
+    -RedirectStandardError $mockErrorLog | Out-Null
+  Write-LauncherLog "Mock dashboard started with $python."
 }
 
 if (-not $NoGateway) {
-  $gatewayArgs = @(
-    '-NoProfile'
-    '-WindowStyle'
-    'Hidden'
-    '-WorkingDirectory'
-    $moduleRoot
-    '-Command'
-    "& '$python' -m src.voice_gateway.app *> '$gatewayLog'"
-  )
-
-  Start-Process -FilePath 'powershell.exe' -ArgumentList $gatewayArgs | Out-Null
-  Write-LauncherLog 'Voice gateway started.'
+  Start-Process `
+    -FilePath $python `
+    -ArgumentList '-m', 'src.voice_gateway.app' `
+    -WorkingDirectory $moduleRoot `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $gatewayLog `
+    -RedirectStandardError $gatewayErrorLog | Out-Null
+  Write-LauncherLog "Voice gateway started with $python."
 }
 
 Write-LauncherLog 'Launcher finished.'

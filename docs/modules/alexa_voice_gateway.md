@@ -20,12 +20,13 @@ The Alexa Voice Gateway is a guarded voice doorway. Alexa can only request appro
 
 1. Open `modules/NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE/config/gateway_config.example.yaml`.
 2. Set local values in `config/gateway_config.local.yaml` if needed.
-3. Set `NEW_EARTH_VOICE_GATEWAY_SECRET`.
-4. Optionally set `ALEXA_GATEWAY_ENABLED=false` to disable the module instantly.
-5. Run the mock dashboard API.
-6. Run `python -m src.voice_gateway.app` from the module folder.
-7. Open the dashboard page and use the `Launch helper` card to copy the start commands if you do not want to type them manually.
-8. On Windows, you can run the trusted launcher directly:
+3. Create a local `.venv` and install `requirements.txt`.
+4. Set `NEW_EARTH_VOICE_GATEWAY_SECRET`.
+5. Optionally set `ALEXA_GATEWAY_ENABLED=false` to disable the module instantly.
+6. Run the mock dashboard API.
+7. Run `python -m src.voice_gateway.app` from the module folder.
+8. Open the dashboard page and use the `Launch helper` card to copy the start commands if you do not want to type them manually.
+9. On Windows, you can run the trusted launcher directly:
 
 ```text
 scripts\launch_voice_gateway.cmd
@@ -52,8 +53,18 @@ scripts\stop_voice_gateway.bat
 ## Mock testing
 
 - Run `scripts/test_gateway.sh`.
+- If `NEW_EARTH_VOICE_GATEWAY_SECRET` is set in your shell, the script includes the secure header automatically.
 - Post mock JSON to `/voice/command`.
 - Use the mock dashboard API in `examples/dashboard_mock/mock_dashboard_api.py`.
+
+## Validated runtime
+
+- Python `3.14` validated locally with the current dependency pins
+- Windows launcher flow validated locally:
+  - start helper
+  - local health checks
+  - safe smoke requests
+  - stop helper
 
 ## Allowed
 

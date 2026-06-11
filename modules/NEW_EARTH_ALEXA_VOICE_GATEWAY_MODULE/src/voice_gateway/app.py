@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -31,6 +32,7 @@ def load_config() -> Dict[str, Any]:
 
 CONFIG = load_config()
 PERMISSIONS = load_yaml(PERMISSIONS_PATH)
+LOGGER = logging.getLogger("new_earth.alexa_voice_gateway")
 
 app = FastAPI(title="New Earth Alexa Voice Gateway", version="0.1.0")
 
@@ -134,7 +136,11 @@ def dashboard_call(command: str, slots: Dict[str, Any]) -> str:
         data = resp.json()
         return data.get("speech", "Dashboard command completed.")
     except Exception as exc:
-        return f"I could not reach the dashboard safely. The gateway error was: {exc}"
+        LOGGER.exception("Dashboard adapter call failed for command %s", command, exc_info=exc)
+        return (
+            "I could not reach the dashboard safely just now. "
+            "Please check the local gateway logs and try again."
+        )
 
 
 @app.get("/health")

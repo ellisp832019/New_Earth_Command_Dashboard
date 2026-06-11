@@ -21,7 +21,7 @@ function Stop-MatchingProcess {
   )
 
   $matches = Get-CimInstance Win32_Process |
-    Where-Object { $_.CommandLine -like "*$Pattern*" }
+    Where-Object { $_.CommandLine -match $Pattern }
 
   if (-not $matches) {
     Write-LauncherLog "$Label not running."
@@ -39,6 +39,6 @@ function Stop-MatchingProcess {
 }
 
 Write-LauncherLog 'Stop launcher starting.'
-Stop-MatchingProcess -Pattern 'examples/dashboard_mock/mock_dashboard_api.py' -Label 'Mock dashboard'
-Stop-MatchingProcess -Pattern '-m src.voice_gateway.app' -Label 'Voice gateway'
+Stop-MatchingProcess -Pattern 'mock_dashboard_api\.py' -Label 'Mock dashboard'
+Stop-MatchingProcess -Pattern 'src\.voice_gateway\.app' -Label 'Voice gateway'
 Write-LauncherLog 'Stop launcher finished.'

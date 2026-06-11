@@ -97,13 +97,33 @@ class VoiceGatewayTests(unittest.TestCase):
                 gateway.CONFIG["logging"]["audit_log_path"] = original_audit_path
 
     def test_microgrow_status_is_read_only(self) -> None:
-        response = gateway.route_voice_command(
-            self._request("microgrow.status.read", "GetMicroGrowStatusIntent"),
-            x_gateway_secret="test-secret",
-        )
+        with patch.object(
+            gateway,
+            "dashboard_call",
+            return_value="MicroGrow mock status: node online.",
+        ) as dashboard_call_mock:
+            response = gateway.route_voice_command(
+                self._request("microgrow.status.read", "GetMicroGrowStatusIntent"),
+                x_gateway_secret="test-secret",
+            )
 
         self.assertEqual(response.decision, "allowed")
         self.assertEqual(response.command, "microgrow.status.read")
+        self.assertEqual(response.speech, "MicroGrow mock status: node online.")
+        dashboard_call_mock.assert_called_once_with(
+            "microgrow.status.read",
+            {},
+        )
+
+    def test_dashboard_failure_returns_safe_message(self) -> None:
+        with patch(
+            "src.voice_gateway.app.requests.post",
+            side_effect=RuntimeError("sensitive backend detail"),
+        ):
+            speech = gateway.dashboard_call("dashboard.summary.today", {})
+
+        self.assertIn("could not reach the dashboard safely", speech.lower())
+        self.assertNotIn("sensitive backend detail", speech)
 
     def test_dangerous_action_cannot_pass_through(self) -> None:
         response = gateway.route_voice_command(

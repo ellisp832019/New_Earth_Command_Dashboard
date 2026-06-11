@@ -15,7 +15,18 @@ cd modules/NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE
 python -m venv .venv
 source .venv/bin/activate  # Linux/macOS
 # .venv\Scripts\activate   # Windows PowerShell
+python -m ensurepip --upgrade
 pip install -r requirements.txt
+```
+
+The current dependency pins are validated against Python `3.14` on Windows.
+
+## 2a. Set shared secret
+
+Before running local tests or the dashboard launch helper, set:
+
+```text
+NEW_EARTH_VOICE_GATEWAY_SECRET=change-this-long-random-secret
 ```
 
 ## 3. Run mock dashboard
@@ -48,6 +59,8 @@ http://127.0.0.1:8088
 bash scripts/test_gateway.sh
 ```
 
+If `NEW_EARTH_VOICE_GATEWAY_SECRET` is set in your shell, the script now includes the secure `x-gateway-secret` header automatically.
+
 If you are using the dashboard launch helper, it also gives you copy buttons for:
 
 - Windows startup commands
@@ -68,6 +81,18 @@ If you prefer `.bat`, use:
 
 ```text
 scripts\launch_voice_gateway.bat
+```
+
+To stop the local services again:
+
+```text
+scripts\stop_voice_gateway.cmd
+```
+
+Or:
+
+```text
+scripts\stop_voice_gateway.bat
 ```
 
 ## 7. Create Alexa custom skill
