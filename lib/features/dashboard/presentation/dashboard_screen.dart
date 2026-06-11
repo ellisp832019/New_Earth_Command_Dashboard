@@ -23,6 +23,7 @@ import '../../meeting_system/application/meeting_system_controller.dart';
 import '../../meeting_system/data/meeting_folder_service.dart';
 import '../../meeting_system/presentation/meeting_system_widgets.dart';
 import '../../planner/application/planner_controller.dart';
+import '../../repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../../system_backup/application/backup_guardian_controller.dart';
 import '../application/dashboard_controller.dart';
@@ -689,10 +690,6 @@ class _SupportModuleGrid extends StatelessWidget {
         ),
     ];
 
-    if (cards.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth >= 1120
@@ -712,6 +709,8 @@ class _SupportModuleGrid extends StatelessWidget {
             const KnowledgeLibraryDashboardCard(),
             const SizedBox(height: 14),
             const BackupGuardianDashboardCard(),
+            const SizedBox(height: 14),
+            const RepoIntelligenceBridgeDashboardCard(),
             const SizedBox(height: 14),
             GridView.builder(
               shrinkWrap: true,

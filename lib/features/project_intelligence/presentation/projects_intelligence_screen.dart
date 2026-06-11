@@ -152,6 +152,13 @@ class _ProjectsIntelligenceScreenState
                               label: const Text('Open unified JSON'),
                             ),
                             TextButton.icon(
+                              onPressed: () => context.push(
+                                RouteNames.repoIntelligenceBridge,
+                              ),
+                              icon: const Icon(Icons.account_tree_outlined),
+                              label: const Text('Open bridge'),
+                            ),
+                            TextButton.icon(
                               onPressed: () => service.openFolder(
                                 service.moduleRootDirectory().path,
                               ),
@@ -806,6 +813,11 @@ class _ProjectWorkflowSpotlightCard extends StatelessWidget {
                     context.push(RouteNames.projectDetail(project.projectId)),
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open detail'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.repoIntelligenceBridge),
+                icon: const Icon(Icons.account_tree_outlined),
+                label: const Text('Open bridge'),
               ),
               OutlinedButton.icon(
                 onPressed: () => context.push(
