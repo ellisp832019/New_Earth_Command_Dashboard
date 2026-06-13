@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "New Earth Grant Tracker",
+  "type": "object",
+  "required": [
+    "version",
+    "updated",
+    "grants"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "updated": {
+      "type": "string"
+    },
+    "grants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "grant_name",
+          "project",
+          "funding_body",
+          "status",
+          "owner",
+          "next_action",
+          "folder_path"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "grant_name": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "funding_body": {
+            "type": "string"
+          },
+          "funding_type": {
+            "type": "string"
+          },
+          "amount_requested": {
+            "type": [
+              "number",
+              "integer",
+              "null"
+            ]
+          },
+          "match_funding_required": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Idea",
+              "Researching",
+              "Eligible",
+              "Drafting",
+              "Needs Evidence",
+              "Needs Budget",
+              "Needs Partner",
+              "Ready to Submit",
+              "Submitted",
+              "Under Review",
+              "Approved",
+              "Rejected",
+              "Paused",
+              "Reporting Phase",
+              "Closed"
+            ]
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submission_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ]
+          },
+          "readiness_score": {
+            "type": "object"
+          },
+          "folder_path": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

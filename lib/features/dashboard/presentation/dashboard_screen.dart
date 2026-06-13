@@ -216,6 +216,13 @@ class _DashboardHero extends StatelessWidget {
                 icon: const Icon(Icons.account_balance_wallet_outlined),
                 label: const Text('Open Treasury'),
               ),
+              TextButton.icon(
+                onPressed: () => context.push(
+                  RouteNames.fundingGrantsCommandCentre,
+                ),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Open Grants'),
+              ),
             ],
           );
 

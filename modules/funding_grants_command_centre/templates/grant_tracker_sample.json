@@ -1,0 +1,116 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-06-13",
+  "grants": [
+    {
+      "id": "GRANT-0001",
+      "grant_name": "MicroGrow Prototype Validation Grant",
+      "project": "MicroGrow",
+      "funding_body": "Innovate UK / suitable innovation fund",
+      "funding_type": "Innovation grant",
+      "amount_requested": 25000,
+      "match_funding_required": "TBC",
+      "status": "Drafting",
+      "deadline": "TBC",
+      "submission_date": null,
+      "decision_date": null,
+      "priority": "High",
+      "owner": "Peter Ellis",
+      "next_action": "Create one-page summary, budget and evidence pack",
+      "risk_level": "Medium",
+      "readiness_score": {
+        "project_summary": 6,
+        "budget": 3,
+        "evidence": 5,
+        "partner_support": 1,
+        "impact_case": 5,
+        "commercial_plan": 4,
+        "risk_management": 4,
+        "total": 28,
+        "max": 70
+      },
+      "folder_path": "D:\\NEW_EARTH_OMEGA_OS_PACK\\17_FINANCE_AND_TREASURY\\09_GRANTS_DONATIONS_AND_FUNDING\\01_ACTIVE_APPLICATIONS\\INNOVATE_UK_MICROGROW_V1_2026",
+      "notes": "Position as local-first smart grow automation prototype validation for education, food resilience and rehabilitation use cases.",
+      "tags": [
+        "microgrow",
+        "iot",
+        "food_resilience",
+        "education",
+        "prototype"
+      ]
+    },
+    {
+      "id": "GRANT-0002",
+      "grant_name": "New Earth Dashboard Local-First Productivity Grant",
+      "project": "New Earth Dashboard",
+      "funding_body": "Digital innovation / SME productivity fund",
+      "funding_type": "Digital innovation grant",
+      "amount_requested": 15000,
+      "match_funding_required": "TBC",
+      "status": "Researching",
+      "deadline": "TBC",
+      "submission_date": null,
+      "decision_date": null,
+      "priority": "Medium",
+      "owner": "Peter Ellis",
+      "next_action": "Define dashboard MVP and local-first data protection case",
+      "risk_level": "Medium",
+      "readiness_score": {
+        "project_summary": 4,
+        "budget": 2,
+        "evidence": 3,
+        "partner_support": 0,
+        "impact_case": 3,
+        "commercial_plan": 3,
+        "risk_management": 3,
+        "total": 18,
+        "max": 70
+      },
+      "folder_path": "D:\\NEW_EARTH_OMEGA_OS_PACK\\17_FINANCE_AND_TREASURY\\09_GRANTS_DONATIONS_AND_FUNDING\\01_ACTIVE_APPLICATIONS\\DIGITAL_NEW_EARTH_DASHBOARD_2026",
+      "notes": "Position as a local-first project operating system for mission-led builders, small teams and community projects.",
+      "tags": [
+        "dashboard",
+        "local_first",
+        "productivity",
+        "ai_safety"
+      ]
+    },
+    {
+      "id": "GRANT-0003",
+      "grant_name": "MicroGrow Rehabilitation Pilot Grant",
+      "project": "Rehabilitation Initiative",
+      "funding_body": "Social innovation / justice / education fund",
+      "funding_type": "Social impact grant",
+      "amount_requested": 60000,
+      "match_funding_required": "TBC",
+      "status": "Needs Partner",
+      "deadline": "TBC",
+      "submission_date": null,
+      "decision_date": null,
+      "priority": "High",
+      "owner": "Peter Ellis",
+      "next_action": "Identify pilot partner and prepare support letter template",
+      "risk_level": "High",
+      "readiness_score": {
+        "project_summary": 5,
+        "budget": 2,
+        "evidence": 4,
+        "partner_support": 0,
+        "impact_case": 6,
+        "commercial_plan": 2,
+        "risk_management": 3,
+        "total": 22,
+        "max": 70
+      },
+      "folder_path": "D:\\NEW_EARTH_OMEGA_OS_PACK\\17_FINANCE_AND_TREASURY\\09_GRANTS_DONATIONS_AND_FUNDING\\01_ACTIVE_APPLICATIONS\\SOCIAL_MICROGROW_REHAB_PILOT_2026",
+      "notes": "Do not submit until a credible pilot partner is attached.",
+      "tags": [
+        "rehabilitation",
+        "education",
+        "microgrow",
+        "skills",
+        "social_impact"
+      ]
+    }
+  ]
+}

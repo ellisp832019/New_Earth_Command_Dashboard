@@ -42,6 +42,7 @@ import '../../features/launchpad/presentation/launchpad_routes.dart';
 import '../../features/more/presentation/more_screen.dart';
 import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
 import '../../features/command_deck/presentation/command_deck_screen.dart';
+import '../../features/funding_grants_command_centre/presentation/funding_grants_command_centre_screen.dart';
 import '../../features/repo_research_engine/presentation/repo_research_engine_screen.dart';
 import '../../features/systems/presentation/systems_screen.dart';
 import '../../features/system_backup/presentation/backup_guardian_screen.dart';
@@ -461,6 +462,11 @@ final appRouter = GoRouter(
                       ),
                     ),
                   ],
+                ),
+                GoRoute(
+                  path: 'funding-grants',
+                  builder: (context, state) =>
+                      const FundingGrantsCommandCentreScreen(),
                 ),
                 GoRoute(
                   path: 'knowledge-library',

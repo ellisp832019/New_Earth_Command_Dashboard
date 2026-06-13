@@ -32,6 +32,7 @@ abstract final class RouteNames {
   static const treasuryMonthlySummary = '/treasury/monthly-summary';
   static const treasurySettings = '/treasury/settings';
   static const treasuryBudgetPots = '/treasury/budget-pots';
+  static const fundingGrantsCommandCentre = '/more/funding-grants';
   static const projects = '/projects';
   static const newProject = '/projects/new';
   static const projectsWorkspace = '/projects-intelligence/workspace';

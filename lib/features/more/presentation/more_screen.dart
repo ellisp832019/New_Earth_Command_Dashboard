@@ -58,6 +58,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.launchpad,
     ),
     _MoreItem(
+      title: 'Funding & Grants',
+      description:
+          'Track grant applications, readiness, folder packs, and Omega OS tracker records.',
+      icon: Icons.receipt_long_outlined,
+      route: RouteNames.fundingGrantsCommandCentre,
+    ),
+    _MoreItem(
       title: 'Journal',
       description:
           'Capture build progress, lessons, decisions, and reflections.',
