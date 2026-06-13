@@ -132,6 +132,17 @@ Park these until the local-first core is strong enough:
 - MicroGrow live links
 - cloud sync
 
+### 7. Grow The Module Hub
+
+The Module Hub should grow in small, safe slices:
+
+1. Browsing and search
+2. Module detail depth
+3. Module operations
+4. Layout and docking
+5. Safety and governance
+6. Polish and release
+
 ## Topic Roadmaps
 
 Use these docs for the detailed slices:
@@ -144,6 +155,7 @@ Use these docs for the detailed slices:
 - [`docs/roadmap/dashboard_module_20_task_execution_queue.md`](dashboard_module_20_task_execution_queue.md)
 - [`docs/roadmap/dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
 - [`docs/roadmap/dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
+- [`docs/roadmap/module_hub_roadmap.md`](module_hub_roadmap.md)
 - [`docs/roadmap/mvp_roadmap.md`](mvp_roadmap.md)
 - [`docs/roadmap/mvp_execution_plan.md`](mvp_execution_plan.md)
 - [`docs/roadmap/future_tasks.md`](future_tasks.md)

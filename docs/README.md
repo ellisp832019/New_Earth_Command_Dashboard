@@ -17,6 +17,7 @@ The app is built local-first, offline-first, and clarity-first. Documentation sh
 - [Dashboard Module 20-Task Execution Queue](roadmap/dashboard_module_20_task_execution_queue.md)
 - [Dashboard Module 20-Task Delivery Phases](roadmap/dashboard_module_20_task_delivery_phases.md)
 - [Dashboard Phase 1 Build Checklist](roadmap/dashboard_phase_1_build_checklist.md)
+- [Module Hub Roadmap](roadmap/module_hub_roadmap.md)
 - [Meeting System module](../modules/meeting_system/README.md)
 - [Voice Intelligence module pack](../modules/voice_intelligence_module/README.md)
 - [Module Hub architecture](architecture/module_hub/module_hub_architecture.md)
