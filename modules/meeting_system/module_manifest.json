@@ -1,0 +1,20 @@
+{
+  "module_id": "meeting_system",
+  "module_name": "Meeting System",
+  "version": "0.1.0",
+  "description": "Meeting planning, decisions, actions, follow-ups and templates for calm review.",
+  "category": "Project Management",
+  "status": "enabled",
+  "enabled": true,
+  "dockable": false,
+  "defaultDockPosition": "fullscreen",
+  "permissions": ["file_read", "file_write"],
+  "omegaOsPath": "OMEGA_OS/MODULES/MEETING_SYSTEM",
+  "backend": {
+    "implemented": true,
+    "type": "local_shell",
+    "notes": "Dashboard surface is already active locally."
+  },
+  "tags": ["meetings", "actions", "templates"],
+  "notes": "This module is already present in the dashboard and is treated as an active local surface."
+}

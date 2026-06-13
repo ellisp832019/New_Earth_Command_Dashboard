@@ -1,0 +1,20 @@
+{
+  "module_id": "voice_intelligence_module",
+  "module_name": "Voice Intelligence",
+  "version": "0.1.0",
+  "description": "Voice analysis shell for transcripts, conversation history, and future speech intelligence.",
+  "category": "AI Automation",
+  "status": "enabled",
+  "enabled": true,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "permissions": ["microphone", "speaker", "file_read"],
+  "omegaOsPath": "OMEGA_OS/MODULES/VOICE_INTELLIGENCE_MODULE",
+  "backend": {
+    "implemented": true,
+    "type": "local_voice_shell",
+    "notes": "Voice shell is active locally."
+  },
+  "tags": ["voice", "intelligence", "transcript"],
+  "notes": "This module is already active in the app shell and should not be inferred as planned."
+}

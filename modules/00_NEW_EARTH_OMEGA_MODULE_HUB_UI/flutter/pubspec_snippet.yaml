@@ -1,6 +1,0 @@
-# Add only if your dashboard does not already include these patterns.
-# No external dependency is required for the scaffold itself.
-# Optional future dependencies:
-# go_router: for routing
-# riverpod/provider: for state management
-# web_socket_channel: for future backend event streams

@@ -1,0 +1,20 @@
+{
+  "module_id": "project_repo_bridge",
+  "module_name": "Project Repo Bridge",
+  "version": "0.1.0",
+  "description": "Bridges project context to repository awareness for future source-linked dashboards.",
+  "category": "Security",
+  "status": "disabled",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": ["file_read", "repo_access"],
+  "omegaOsPath": "OMEGA_OS/MODULES/PROJECT_REPO_BRIDGE",
+  "backend": {
+    "implemented": false,
+    "type": "bridge_stub",
+    "notes": "Project-to-repo bridge remains read-only."
+  },
+  "tags": ["project", "repo", "bridge"],
+  "notes": "Kept disabled until repo mapping is wired."
+}

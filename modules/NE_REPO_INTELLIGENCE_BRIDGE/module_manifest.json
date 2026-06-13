@@ -1,0 +1,20 @@
+{
+  "module_id": "NE_REPO_INTELLIGENCE_BRIDGE",
+  "module_name": "Repo Intelligence Bridge",
+  "version": "0.1.0",
+  "description": "Read-only bridge for repository awareness, status, and future local research flows.",
+  "category": "Security",
+  "status": "disabled",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "permissions": ["file_read", "repo_access"],
+  "omegaOsPath": "OMEGA_OS/MODULES/REPO_INTELLIGENCE_BRIDGE",
+  "backend": {
+    "implemented": false,
+    "type": "bridge_stub",
+    "notes": "Read-only bridge placeholder."
+  },
+  "tags": ["repo", "bridge", "research"],
+  "notes": "This bridge exists locally and is tracked as a disabled module until the live data link is ready."
+}

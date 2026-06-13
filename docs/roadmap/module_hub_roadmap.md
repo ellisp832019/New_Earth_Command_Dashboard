@@ -29,15 +29,10 @@ Done:
 Result:
 The hub remembers module state after restart.
 
-## Next
-
 ### Browsing And Search
 
-Goal:
-Make the hub easier to scan as the module count grows.
-
-Includes:
-- search by name, tag, category, and path
+Done:
+- search by name, tag, category, path, permissions, and dockability
 - filters for status, category, dockability, and permissions
 - sort options for quick scanning
 - clearer empty states
@@ -47,83 +42,68 @@ The user can find a module quickly without feeling overloaded.
 
 ### Module Detail Depth
 
-Goal:
-Give each module a clearer inspection surface.
-
-Includes:
+Done:
 - health breakdown
 - warnings and next action
 - richer manifest metadata
 - permissions review
-- logs or notes panels where useful
+- logs and notes panels
 
 Result:
 The user can understand what the module does and what it needs.
 
 ### Module Operations
 
-Goal:
-Add safe local operations around modules.
-
-Includes:
-- install or import module flow
-- refresh or rescan
-- update checks for local packages
-- archive or remove where needed
+Done:
+- refresh and rescan local module registry
+- inspect install and Omega OS paths
+- jump back into settings, permissions, docking, and governance
+- keep install/import and archive/remove flows staged safely for later wiring
 
 Result:
-The hub can manage the module inventory instead of only viewing it.
+The hub can manage the module inventory in small local steps instead of only viewing it.
 
 ### Layout And Docking
 
-Goal:
-Let the hub act as a launcher and layout controller.
-
-Includes:
-- per-module dock placement controls
-- pinned module shortcuts
-- launch into dock surfaces
-- dashboard entry points for favorite modules
+Done:
+- dock preview by position
+- local pin toggle for layout planning
+- placement snapshot for the active module
+- dock launch handoff
 
 Result:
-The hub becomes a practical launch point for the working system.
+The hub can act as a practical launcher and layout controller.
 
 ### Safety And Governance
 
-Goal:
-Keep module actions explicit and safe.
-
-Includes:
-- approval screens for sensitive permissions
-- manifest validation rules
-- warnings for incomplete or risky modules
-- audit logs for local actions
+Done:
+- validation checklist
+- sensitive permission review
+- audit trail placeholder
+- navigation into permissions, operations, and docking from one review surface
 
 Result:
-The hub stays safe even as module power grows.
-
-## Later
+The hub keeps module actions explicit and safe.
 
 ### Polish And Release
 
-Goal:
-Make the hub pleasant to use every day.
-
-Includes:
+Done:
 - tighter copy and spacing
-- clearer empty states
-- end-to-end tests
+- back navigation to More
+- truthful scaffold versus planned status labels
+- clearer action labels across detail and sub-screens
+- saved browse state for search, filters, sort, and view mode
+- focused end-to-end and repository tests
 - Windows build verification
-- doc updates
 
 Result:
-The Module Hub is ready to stay in the regular workflow.
+The Module Hub is pleasant to use, stays honest about module state, remembers how it was being used, and still builds on Windows.
+
+## Later
+
+No later items yet.
 
 ## Recommended Next Order
 
-1. Browsing and search
-2. Module detail depth
-3. Module operations
-4. Layout and docking
-5. Safety and governance
-6. Polish and release
+1. Module Hub is complete for now.
+2. Resume with the next active product slice when ready.

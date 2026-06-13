@@ -1,0 +1,20 @@
+{
+  "module_id": "new_earth_launchpad_module",
+  "module_name": "Launchpad",
+  "version": "0.1.0",
+  "description": "Campaign and launch planning shell for awareness, delivery, and future public launch workflows.",
+  "category": "Community Outreach",
+  "status": "installed",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "left",
+  "permissions": ["file_read", "file_write"],
+  "omegaOsPath": "OMEGA_OS/MODULES/NEW_EARTH_LAUNCHPAD",
+  "backend": {
+    "implemented": false,
+    "type": "planning_shell",
+    "notes": "Launch planning shell only."
+  },
+  "tags": ["launch", "campaign", "planning"],
+  "notes": "Present in the dashboard as a local planning module."
+}

@@ -1,0 +1,20 @@
+{
+  "module_id": "NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE",
+  "module_name": "Alexa Voice Gateway",
+  "version": "0.1.0",
+  "description": "Guarded local gateway for voice triggers and future Alexa-connected handoff workflows.",
+  "category": "Voice Hardware",
+  "status": "experimental",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "permissions": ["microphone", "speaker", "local_network"],
+  "omegaOsPath": "OMEGA_OS/MODULES/ALEXA_VOICE_GATEWAY",
+  "backend": {
+    "implemented": false,
+    "type": "gateway_stub",
+    "notes": "External voice bridge not connected."
+  },
+  "tags": ["voice", "gateway", "alexa"],
+  "notes": "Shown as experimental because the gateway is intentionally guarded."
+}

@@ -134,7 +134,7 @@ Park these until the local-first core is strong enough:
 
 ### 7. Grow The Module Hub
 
-The Module Hub should grow in small, safe slices:
+The Module Hub has now been taken through its first full slice set and hardened:
 
 1. Browsing and search
 2. Module detail depth
@@ -142,6 +142,8 @@ The Module Hub should grow in small, safe slices:
 4. Layout and docking
 5. Safety and governance
 6. Polish and release
+
+The current Module Hub work is complete for now. Revisit it when a new module slice or new docking requirement appears.
 
 ## Topic Roadmaps
 
@@ -193,3 +195,4 @@ The best next order is:
 3. Keep Knowledge Library reliable and useful.
 4. Add the AI adapter contract and stub.
 5. Layer on AI assist features only after the stub is stable.
+6. Treat the Module Hub as complete for the moment unless a new module slice needs it.
