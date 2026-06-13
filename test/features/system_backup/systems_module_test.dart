@@ -197,7 +197,7 @@ void main() {
     expect(find.text('Open Backup Root'), findsOneWidget);
     expect(
       find.text(
-        'Opens E:/NEW_EARTH_BACKUP because the mirror folder is not ready yet.',
+        'Click opens the backup root at E:/NEW_EARTH_BACKUP because the mirror folder is not ready yet.',
       ),
       findsOneWidget,
     );
@@ -244,7 +244,7 @@ void main() {
     );
     expect(
       find.text(
-        'Mirror folder is not ready yet, so I am opening the backup root instead.',
+        'Mirror folder is not ready yet, so the backup root will open instead.',
       ),
       findsOneWidget,
     );

@@ -498,15 +498,15 @@ class _ActionCard extends StatelessWidget {
               ),
               Text(
                 snapshot.mirrorFolderExists
-                    ? 'Opens ${snapshot.config.mirrorFolder}'
-                    : 'Opens ${snapshot.backupTarget} because the mirror folder is not ready yet.',
+                    ? 'Click opens the mirror folder at ${snapshot.config.mirrorFolder}.'
+                    : 'Click opens the backup root at ${snapshot.backupTarget} because the mirror folder is not ready yet.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
                 ),
               ),
               if (!snapshot.mirrorFolderExists)
                 Text(
-                  'Mirror folder is not ready yet, so I am opening the backup root instead.',
+                  'Mirror folder is not ready yet, so the backup root will open instead.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                   ),
