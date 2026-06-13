@@ -2,9 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../data/funding_grants_repository.dart';
 import '../models/grant_record.dart';
@@ -47,9 +51,13 @@ class _FundingGrantsCommandCentreScreenState
 
   List<GrantRecord> _grants = const <GrantRecord>[];
   String? _selectedGrantId;
+  String _searchQuery = '';
+  GrantStatusFilter _statusFilter = GrantStatusFilter.all;
+  GrantSortMode _sortMode = GrantSortMode.deadlineSoonest;
   GrantStatus _draftStatus = GrantStatus.drafting;
   bool _loading = true;
   bool _saving = false;
+  bool _fileOpsBusy = false;
   String? _error;
 
   FundingGrantsRepository get _repository =>
@@ -269,6 +277,38 @@ class _FundingGrantsCommandCentreScreenState
     _showSnackBar('Ready for a new grant draft.');
   }
 
+  Future<void> _applyGrantStatus(GrantStatus status) async {
+    setState(() {
+      _draftStatus = status;
+    });
+
+    final selected = _selectedGrant;
+    if (selected == null) {
+      _showSnackBar('Draft status set to ${status.label}.');
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      await _repository.updateGrantStatus(selected, status);
+      await _loadGrants(selectGrantId: selected.id);
+      _showSnackBar('Moved ${selected.grantName} to ${status.label}.');
+    } catch (error) {
+      setState(() {
+        _error = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
+  }
+
   Future<void> _refreshFolder() async {
     final selected = _selectedGrant;
     if (selected == null) {
@@ -305,6 +345,63 @@ class _FundingGrantsCommandCentreScreenState
     _showSnackBar('Folder path copied.');
   }
 
+  Future<void> _exportTracker() async {
+    setState(() {
+      _fileOpsBusy = true;
+    });
+
+    try {
+      final exportsDir = await _repository.exportTrackerSnapshot();
+      _showSnackBar('Tracker exported to ${exportsDir.path}.');
+    } catch (error) {
+      setState(() {
+        _error = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _fileOpsBusy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _importTracker() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['json', 'csv'],
+      dialogTitle: 'Import grant tracker file',
+    );
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final filePath = result.files.single.path;
+    if (filePath == null || filePath.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _fileOpsBusy = true;
+    });
+
+    try {
+      await _repository.importTrackerFile(filePath);
+      await _loadGrants();
+      _showSnackBar('Tracker imported from ${path.basename(filePath)}.');
+    } catch (error) {
+      setState(() {
+        _error = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _fileOpsBusy = false;
+        });
+      }
+    }
+  }
+
   void _selectGrant(GrantRecord grant) {
     setState(() {
       _selectedGrantId = grant.id;
@@ -332,6 +429,7 @@ class _FundingGrantsCommandCentreScreenState
 
     final summary = _summaryFor(_grants);
     final selectedGrant = _selectedGrant;
+    final visibleGrants = _filteredGrants(_grants);
     final wide = MediaQuery.sizeOf(context).width >= 1180;
 
     return Scaffold(
@@ -342,8 +440,17 @@ class _FundingGrantsCommandCentreScreenState
           children: [
             _HeaderCard(
               summary: summary,
+              onBack: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(RouteNames.dashboard);
+                }
+              },
               onNewGrant: _newGrant,
               onRefresh: () => _loadGrants(selectGrantId: _selectedGrantId),
+              onExport: _fileOpsBusy ? null : _exportTracker,
+              onImport: _fileOpsBusy ? null : _importTracker,
             ),
             const SizedBox(height: 16),
             if (_error != null) ...[
@@ -357,9 +464,27 @@ class _FundingGrantsCommandCentreScreenState
                   Expanded(
                     flex: 5,
                     child: _GrantListPanel(
-                      grants: _grants,
+                      grants: visibleGrants,
                       selectedGrantId: _selectedGrantId,
                       onSelectGrant: _selectGrant,
+                      searchQuery: _searchQuery,
+                      onSearchChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                      statusFilter: _statusFilter,
+                      onStatusFilterChanged: (value) {
+                        setState(() {
+                          _statusFilter = value;
+                        });
+                      },
+                      sortMode: _sortMode,
+                      onSortModeChanged: (value) {
+                        setState(() {
+                          _sortMode = value;
+                        });
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -401,15 +526,36 @@ class _FundingGrantsCommandCentreScreenState
                       onOpenFolder: _openFolder,
                       onCopyFolderPath: _copyFolderPath,
                       onRefreshFolder: _refreshFolder,
+                      onExport: _fileOpsBusy ? null : _exportTracker,
+                      onImport: _fileOpsBusy ? null : _importTracker,
+                      onStatusAction: _applyGrantStatus,
                     ),
                   ),
                 ],
               )
             else ...[
               _GrantListPanel(
-                grants: _grants,
+                grants: visibleGrants,
                 selectedGrantId: _selectedGrantId,
                 onSelectGrant: _selectGrant,
+                searchQuery: _searchQuery,
+                onSearchChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                statusFilter: _statusFilter,
+                onStatusFilterChanged: (value) {
+                  setState(() {
+                    _statusFilter = value;
+                  });
+                },
+                sortMode: _sortMode,
+                onSortModeChanged: (value) {
+                  setState(() {
+                    _sortMode = value;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               _GrantEditorPanel(
@@ -448,6 +594,9 @@ class _FundingGrantsCommandCentreScreenState
                 onOpenFolder: _openFolder,
                 onCopyFolderPath: _copyFolderPath,
                 onRefreshFolder: _refreshFolder,
+                onExport: _fileOpsBusy ? null : _exportTracker,
+                onImport: _fileOpsBusy ? null : _importTracker,
+                onStatusAction: _applyGrantStatus,
               ),
             ],
           ],
@@ -532,18 +681,106 @@ class _FundingGrantsCommandCentreScreenState
         .where((item) => item.isNotEmpty)
         .toList();
   }
+
+  List<GrantRecord> _filteredGrants(List<GrantRecord> grants) {
+    final query = _searchQuery.trim().toLowerCase();
+    final filtered = grants.where((grant) {
+      if (!_matchesStatusFilter(grant, _statusFilter)) {
+        return false;
+      }
+
+      if (query.isEmpty) {
+        return true;
+      }
+
+      final haystack = [
+        grant.id,
+        grant.grantName,
+        grant.project,
+        grant.fundingBody,
+        grant.fundingType,
+        grant.status.label,
+        grant.priority,
+        grant.owner,
+        grant.nextAction,
+        grant.riskLevel,
+        grant.notes,
+        grant.folderPath,
+        ...grant.tags,
+      ].join(' ').toLowerCase();
+      return haystack.contains(query);
+    }).toList();
+
+    filtered.sort((a, b) => _compareGrants(a, b, _sortMode));
+    return filtered;
+  }
+
+  bool _matchesStatusFilter(GrantRecord grant, GrantStatusFilter filter) {
+    switch (filter) {
+      case GrantStatusFilter.all:
+        return true;
+      case GrantStatusFilter.drafting:
+        return grant.status == GrantStatus.drafting ||
+            grant.status == GrantStatus.idea ||
+            grant.status == GrantStatus.researching;
+      case GrantStatusFilter.attention:
+        return grant.status == GrantStatus.needsEvidence ||
+            grant.status == GrantStatus.needsBudget ||
+            grant.status == GrantStatus.needsPartner ||
+            grant.status == GrantStatus.eligible;
+      case GrantStatusFilter.ready:
+        return grant.status == GrantStatus.readyToSubmit;
+      case GrantStatusFilter.submitted:
+        return grant.status == GrantStatus.submitted ||
+            grant.status == GrantStatus.underReview;
+      case GrantStatusFilter.approved:
+        return grant.status == GrantStatus.approved ||
+            grant.status == GrantStatus.reportingPhase ||
+            grant.status == GrantStatus.closed;
+      case GrantStatusFilter.paused:
+        return grant.status == GrantStatus.paused ||
+            grant.status == GrantStatus.rejected;
+    }
+  }
+
+  int _compareGrants(GrantRecord a, GrantRecord b, GrantSortMode sortMode) {
+    switch (sortMode) {
+      case GrantSortMode.deadlineSoonest:
+        return _compareByDeadline(a, b);
+      case GrantSortMode.readinessHighest:
+        return b.readinessScore.total.compareTo(a.readinessScore.total);
+      case GrantSortMode.name:
+        return a.grantName.toLowerCase().compareTo(b.grantName.toLowerCase());
+    }
+  }
+
+  int _compareByDeadline(GrantRecord a, GrantRecord b) {
+    final aDate = a.deadlineDate ?? DateTime(9999);
+    final bDate = b.deadlineDate ?? DateTime(9999);
+    final dateCompare = aDate.compareTo(bDate);
+    if (dateCompare != 0) {
+      return dateCompare;
+    }
+    return a.grantName.toLowerCase().compareTo(b.grantName.toLowerCase());
+  }
 }
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
     required this.summary,
+    required this.onBack,
     required this.onNewGrant,
     required this.onRefresh,
+    this.onExport,
+    this.onImport,
   });
 
   final FundingGrantsSummary summary;
+  final VoidCallback onBack;
   final VoidCallback onNewGrant;
   final VoidCallback onRefresh;
+  final VoidCallback? onExport;
+  final VoidCallback? onImport;
 
   @override
   Widget build(BuildContext context) {
@@ -556,6 +793,11 @@ class _HeaderCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              IconButton(
+                onPressed: onBack,
+                tooltip: 'Back',
+                icon: const Icon(Icons.arrow_back),
+              ),
               const Icon(
                 Icons.campaign_outlined,
                 color: AppColours.darkSecondary,
@@ -579,6 +821,18 @@ class _HeaderCard extends StatelessWidget {
                 onPressed: onRefresh,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Refresh'),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: onExport,
+                icon: const Icon(Icons.upload_outlined),
+                label: const Text('Export'),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: onImport,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Import'),
               ),
             ],
           ),
@@ -637,11 +891,23 @@ class _GrantListPanel extends StatelessWidget {
     required this.grants,
     required this.selectedGrantId,
     required this.onSelectGrant,
+    required this.searchQuery,
+    required this.onSearchChanged,
+    required this.statusFilter,
+    required this.onStatusFilterChanged,
+    required this.sortMode,
+    required this.onSortModeChanged,
   });
 
   final List<GrantRecord> grants;
   final String? selectedGrantId;
   final ValueChanged<GrantRecord> onSelectGrant;
+  final String searchQuery;
+  final ValueChanged<String> onSearchChanged;
+  final GrantStatusFilter statusFilter;
+  final ValueChanged<GrantStatusFilter> onStatusFilterChanged;
+  final GrantSortMode sortMode;
+  final ValueChanged<GrantSortMode> onSortModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -667,9 +933,97 @@ class _GrantListPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
+          TextField(
+            onChanged: onSearchChanged,
+            decoration: const InputDecoration(
+              labelText: 'Search grants',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _FilterChip(
+                label: 'All',
+                selected: statusFilter == GrantStatusFilter.all,
+                onSelected: () => onStatusFilterChanged(GrantStatusFilter.all),
+              ),
+              _FilterChip(
+                label: 'Drafting',
+                selected: statusFilter == GrantStatusFilter.drafting,
+                onSelected: () =>
+                    onStatusFilterChanged(GrantStatusFilter.drafting),
+              ),
+              _FilterChip(
+                label: 'Attention',
+                selected: statusFilter == GrantStatusFilter.attention,
+                onSelected: () =>
+                    onStatusFilterChanged(GrantStatusFilter.attention),
+              ),
+              _FilterChip(
+                label: 'Ready',
+                selected: statusFilter == GrantStatusFilter.ready,
+                onSelected: () => onStatusFilterChanged(GrantStatusFilter.ready),
+              ),
+              _FilterChip(
+                label: 'Submitted',
+                selected: statusFilter == GrantStatusFilter.submitted,
+                onSelected: () =>
+                    onStatusFilterChanged(GrantStatusFilter.submitted),
+              ),
+              _FilterChip(
+                label: 'Approved',
+                selected: statusFilter == GrantStatusFilter.approved,
+                onSelected: () =>
+                    onStatusFilterChanged(GrantStatusFilter.approved),
+              ),
+              _FilterChip(
+                label: 'Paused',
+                selected: statusFilter == GrantStatusFilter.paused,
+                onSelected: () => onStatusFilterChanged(GrantStatusFilter.paused),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<GrantSortMode>(
+            initialValue: sortMode,
+            decoration: const InputDecoration(labelText: 'Sort by'),
+            items: const [
+              DropdownMenuItem(
+                value: GrantSortMode.deadlineSoonest,
+                child: Text('Deadline soonest'),
+              ),
+              DropdownMenuItem(
+                value: GrantSortMode.readinessHighest,
+                child: Text('Readiness highest'),
+              ),
+              DropdownMenuItem(
+                value: GrantSortMode.name,
+                child: Text('Name'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                onSortModeChanged(value);
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          Text(
+            grants.isEmpty
+                ? 'No grants match your current view.'
+                : '${grants.length} grant${grants.length == 1 ? '' : 's'} in view',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+          ),
           if (grants.isEmpty)
             Text(
-              'No grants found yet. Start a new draft to create the first tracker entry.',
+              searchQuery.trim().isEmpty
+                  ? 'No grants found yet. Start a new draft to create the first tracker entry.'
+                  : 'No grants matched “$searchQuery”. Try a broader search or clear the filters.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColours.darkMutedText,
                   ),
@@ -728,6 +1082,9 @@ class _GrantEditorPanel extends StatelessWidget {
     required this.onOpenFolder,
     required this.onCopyFolderPath,
     required this.onRefreshFolder,
+    required this.onExport,
+    required this.onImport,
+    required this.onStatusAction,
   });
 
   final GlobalKey<FormState> formKey;
@@ -761,6 +1118,9 @@ class _GrantEditorPanel extends StatelessWidget {
   final VoidCallback onOpenFolder;
   final VoidCallback onCopyFolderPath;
   final VoidCallback onRefreshFolder;
+  final VoidCallback? onExport;
+  final VoidCallback? onImport;
+  final Future<void> Function(GrantStatus status) onStatusAction;
 
   @override
   Widget build(BuildContext context) {
@@ -834,6 +1194,67 @@ class _GrantEditorPanel extends StatelessWidget {
                   onPressed: saving ? null : onRefreshFolder,
                   icon: const Icon(Icons.sync_outlined),
                   label: const Text('Refresh folder'),
+                ),
+                TextButton.icon(
+                  onPressed: onExport,
+                  icon: const Icon(Icons.upload_outlined),
+                  label: const Text('Export'),
+                ),
+                TextButton.icon(
+                  onPressed: onImport,
+                  icon: const Icon(Icons.download_outlined),
+                  label: const Text('Import'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _sectionTitle(context, 'Move status'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _StatusActionButton(
+                  label: 'Drafting',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.drafting),
+                ),
+                _StatusActionButton(
+                  label: 'Researching',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.researching),
+                ),
+                _StatusActionButton(
+                  label: 'Needs Partner',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.needsPartner),
+                ),
+                _StatusActionButton(
+                  label: 'Ready',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.readyToSubmit),
+                ),
+                _StatusActionButton(
+                  label: 'Submitted',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.submitted),
+                ),
+                _StatusActionButton(
+                  label: 'Approved',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.approved),
+                ),
+                _StatusActionButton(
+                  label: 'Paused',
+                  onPressed: saving
+                      ? null
+                      : () => onStatusAction(GrantStatus.paused),
                 ),
               ],
             ),
@@ -1141,6 +1562,54 @@ class _MiniTag extends StatelessWidget {
   }
 }
 
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: selected ? AppColours.darkBackground : AppColours.darkText,
+            fontWeight: FontWeight.w700,
+          ),
+      selectedColor: AppColours.darkPrimary,
+      backgroundColor: AppColours.darkSurfaceAlt,
+      side: BorderSide(
+        color: selected ? AppColours.darkPrimary : AppColours.darkOutline,
+      ),
+    );
+  }
+}
+
+class _StatusActionButton extends StatelessWidget {
+  const _StatusActionButton({
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.tonal(
+      onPressed: onPressed,
+      child: Text(label),
+    );
+  }
+}
+
 class _MetricChip extends StatelessWidget {
   const _MetricChip({required this.label, required this.value});
 
@@ -1258,6 +1727,22 @@ class FundingGrantsSummary {
   final int dueSoonCount;
   final int missingNextActionsCount;
   final int readinessAverage;
+}
+
+enum GrantStatusFilter {
+  all,
+  drafting,
+  attention,
+  ready,
+  submitted,
+  approved,
+  paused,
+}
+
+enum GrantSortMode {
+  deadlineSoonest,
+  readinessHighest,
+  name,
 }
 
 BoxDecoration _panelDecoration() {

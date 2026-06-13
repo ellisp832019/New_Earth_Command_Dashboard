@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 
 import '../models/grant_record.dart';
 import '../models/grant_status.dart';
+import '../models/readiness_score.dart';
 import '../services/folder_template_service.dart';
 import 'funding_grants_paths.dart';
 
@@ -120,6 +121,59 @@ class FundingGrantsRepository {
     await _writeTrackerFiles(grants);
   }
 
+  Future<Directory> exportTrackerSnapshot() async {
+    await bootstrapWorkspace();
+    final exportsDir = Directory(
+      path.join(FundingGrantsPaths.trackerMasterFolder, 'exports'),
+    );
+    await exportsDir.create(recursive: true);
+
+    final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+    final jsonTarget = File(path.join(exportsDir.path, 'grant_tracker_$timestamp.json'));
+    final csvTarget = File(path.join(exportsDir.path, 'grant_tracker_$timestamp.csv'));
+    final jsonSource = File(FundingGrantsPaths.trackerJsonPath);
+    final csvSource = File(FundingGrantsPaths.trackerCsvPath);
+
+    if (await jsonSource.exists()) {
+      await jsonSource.copy(jsonTarget.path);
+    }
+    if (await csvSource.exists()) {
+      await csvSource.copy(csvTarget.path);
+    }
+
+    return exportsDir;
+  }
+
+  Future<void> importTrackerFile(String sourcePath) async {
+    final source = File(sourcePath);
+    if (!await source.exists()) {
+      throw FileSystemException('Import file not found', sourcePath);
+    }
+
+    final ext = path.extension(sourcePath).toLowerCase();
+    if (ext == '.json') {
+      final decoded = jsonDecode(await source.readAsString()) as Map<String, dynamic>;
+      final grants = _grantsFromDecodedJson(decoded).map(_normalizeGrant).toList();
+      await _writeTrackerFiles(grants);
+      return;
+    }
+
+    if (ext == '.csv') {
+      final grants = _grantsFromCsv(await source.readAsString());
+      await _writeTrackerFiles(grants.map(_normalizeGrant).toList());
+      return;
+    }
+
+    throw UnsupportedError('Only grant_tracker JSON or CSV files can be imported.');
+  }
+
+  Future<GrantRecord> updateGrantStatus(
+    GrantRecord grant,
+    GrantStatus status,
+  ) async {
+    return saveGrant(grant.copyWith(status: status), previous: grant);
+  }
+
   Future<GrantRecord> _ensureGrantWorkspace(GrantRecord grant) async {
     final normalizedFolderPath = _normalizeFolderPath(grant);
     final folder = Directory(normalizedFolderPath);
@@ -173,11 +227,7 @@ class FundingGrantsRepository {
     }
 
     final decoded = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-    final grants = decoded['grants'] as List<dynamic>? ?? const <dynamic>[];
-    return grants
-        .whereType<Map<String, dynamic>>()
-        .map(GrantRecord.fromJson)
-        .toList();
+    return _grantsFromDecodedJson(decoded);
   }
 
   Future<List<GrantRecord>> _readSeedGrants() async {
@@ -231,6 +281,79 @@ class FundingGrantsRepository {
       lines.add(_csvRow(grant).join(','));
     }
     await file.writeAsString('${lines.join('\n')}\n', flush: true);
+  }
+
+  List<GrantRecord> _grantsFromDecodedJson(Map<String, dynamic> decoded) {
+    final grants = decoded['grants'] as List<dynamic>? ?? const <dynamic>[];
+    return grants
+        .whereType<Map<String, dynamic>>()
+        .map(GrantRecord.fromJson)
+        .toList();
+  }
+
+  List<GrantRecord> _grantsFromCsv(String rawCsv) {
+    final lines = rawCsv
+        .split(RegExp(r'\r?\n'))
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+    if (lines.isEmpty) {
+      return <GrantRecord>[];
+    }
+
+    final headers = _parseCsvLine(lines.first);
+    final grants = <GrantRecord>[];
+    for (var i = 1; i < lines.length; i++) {
+      final cells = _parseCsvLine(lines[i]);
+      final row = <String, dynamic>{};
+      for (var index = 0; index < headers.length && index < cells.length; index++) {
+        row[headers[index]] = cells[index];
+      }
+      grants.add(_grantFromCsvRow(row));
+    }
+    return grants;
+  }
+
+  GrantRecord _grantFromCsvRow(Map<String, dynamic> row) {
+    final tagsValue = row['tags']?.toString() ?? '';
+    return GrantRecord(
+      id: row['id']?.toString() ?? '',
+      grantName: row['grant_name']?.toString() ?? '',
+      project: row['project']?.toString() ?? '',
+      fundingBody: row['funding_body']?.toString() ?? '',
+      fundingType: row['funding_type']?.toString() ?? '',
+      amountRequested: double.tryParse(row['amount_requested']?.toString() ?? '') ?? 0,
+      matchFundingRequired: row['match_funding_required']?.toString() ?? '',
+      status: GrantStatusLabel.fromLabel(row['status']?.toString() ?? ''),
+      deadline: row['deadline']?.toString().isNotEmpty == true
+          ? row['deadline'].toString()
+          : 'TBC',
+      submissionDate: _nullableText(row['submission_date']),
+      decisionDate: _nullableText(row['decision_date']),
+      priority: row['priority']?.toString().isNotEmpty == true
+          ? row['priority'].toString()
+          : 'Medium',
+      owner: row['owner']?.toString() ?? '',
+      nextAction: row['next_action']?.toString() ?? '',
+      riskLevel: row['risk_level']?.toString().isNotEmpty == true
+          ? row['risk_level'].toString()
+          : 'Medium',
+      readinessScore: ReadinessScore(
+        projectSummary: _intFromText(row['project_summary']),
+        budget: _intFromText(row['budget']),
+        evidence: _intFromText(row['evidence']),
+        partnerSupport: _intFromText(row['partner_support']),
+        impactCase: _intFromText(row['impact_case']),
+        commercialPlan: _intFromText(row['commercial_plan']),
+        riskManagement: _intFromText(row['risk_management']),
+      ),
+      folderPath: row['folder_path']?.toString() ?? '',
+      notes: row['notes']?.toString() ?? '',
+      tags: tagsValue
+          .split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList(),
+    );
   }
 
   List<String> _csvRow(GrantRecord grant) {
@@ -337,6 +460,46 @@ class FundingGrantsRepository {
       return '"${value.replaceAll('"', '""')}"';
     }
     return value;
+  }
+
+  List<String> _parseCsvLine(String line) {
+    final cells = <String>[];
+    final buffer = StringBuffer();
+    var inQuotes = false;
+
+    for (var i = 0; i < line.length; i++) {
+      final char = line[i];
+      if (char == '"') {
+        final nextIsQuote = i + 1 < line.length && line[i + 1] == '"';
+        if (nextIsQuote) {
+          buffer.write('"');
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (char == ',' && !inQuotes) {
+        cells.add(buffer.toString());
+        buffer.clear();
+        continue;
+      }
+
+      buffer.write(char);
+    }
+
+    cells.add(buffer.toString());
+    return cells;
+  }
+
+  String? _nullableText(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
+
+  int _intFromText(dynamic value) {
+    return int.tryParse(value?.toString().trim() ?? '') ?? 0;
   }
 
   String _slugify(String value) {
