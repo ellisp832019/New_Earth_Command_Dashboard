@@ -112,3 +112,7 @@ Desktop.ini
 .backup_*/
 backups/
 !backups/README.md
+
+# Repo Research Engine generated outputs
+modules/repo_research_engine/workspaces/
+modules/repo_research_engine/reports/clone_history.json
