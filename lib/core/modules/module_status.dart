@@ -4,6 +4,7 @@ enum ModuleStatus {
   disabled,
   needsConfiguration,
   error,
+  scaffold,
   planned,
   experimental,
 }
@@ -21,6 +22,8 @@ extension ModuleStatusLabel on ModuleStatus {
         return 'Needs Configuration';
       case ModuleStatus.error:
         return 'Error';
+      case ModuleStatus.scaffold:
+        return 'Scaffold';
       case ModuleStatus.planned:
         return 'Planned';
       case ModuleStatus.experimental:

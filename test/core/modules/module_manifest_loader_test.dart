@@ -41,8 +41,9 @@ void main() {
       expect(manifest.id, 'gaia_voice_assistant');
       expect(manifest.name, 'GAIA Voice Assistant');
       expect(manifest.category, ModuleCategory.aiAutomation);
-      expect(manifest.status, ModuleStatus.installed);
-      expect(manifest.enabled, isTrue);
+      expect(manifest.status, ModuleStatus.scaffold);
+      expect(manifest.status.label, 'Scaffold');
+      expect(manifest.enabled, isFalse);
       expect(manifest.permissions, hasLength(3));
       expect(manifest.health.warnings, isNotEmpty);
     },
@@ -94,8 +95,34 @@ void main() {
       final beta = registry.byId('beta_module');
 
       expect(alpha?.status, ModuleStatus.enabled);
-      expect(beta?.status, ModuleStatus.planned);
+      expect(beta?.status, ModuleStatus.scaffold);
+      expect(beta?.status.label, 'Scaffold');
       expect(beta?.description, contains('inferred'));
     },
   );
+
+  test('module loader keeps manifest-backed modules out of scaffold state', () {
+    final registry = ModuleLoader().load();
+
+    expect(
+      registry.byId('meeting_system')?.status,
+      isNot(ModuleStatus.scaffold),
+    );
+    expect(
+      registry.byId('voice_intelligence_module')?.status,
+      isNot(ModuleStatus.scaffold),
+    );
+    expect(
+      registry.byId('new_earth_command_deck')?.status,
+      isNot(ModuleStatus.scaffold),
+    );
+    expect(
+      registry.byId('repo_research_engine')?.status,
+      isNot(ModuleStatus.scaffold),
+    );
+    expect(
+      registry.byId('knowledge_engine')?.status,
+      isNot(ModuleStatus.scaffold),
+    );
+  });
 }

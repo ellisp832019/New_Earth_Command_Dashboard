@@ -78,7 +78,7 @@ class ModuleManifestParser {
           'No module_manifest.json file exists yet. This entry was inferred from the folder.',
       category: _parseCategory(_inferCategoryLabel(folderName), folderName),
       version: '0.1.0',
-      status: ModuleStatus.planned,
+      status: ModuleStatus.scaffold,
       enabled: false,
       dockable: true,
       defaultDockPosition: _inferDockPosition(folderName),
@@ -102,10 +102,12 @@ class ModuleManifestParser {
   ModuleStatus _parseStatus(String rawStatus, Map<String, dynamic> backend) {
     switch (rawStatus.trim().toLowerCase()) {
       case 'installed':
+        return ModuleStatus.installed;
       case 'scaffold_ready':
       case 'bridge_ready':
       case 'ready_for_build':
-        return ModuleStatus.installed;
+      case 'scaffold':
+        return ModuleStatus.scaffold;
       case 'enabled':
       case 'running':
         return ModuleStatus.enabled;
@@ -253,7 +255,10 @@ class ModuleManifestParser {
     final warnings = <String>[
       if (backendImplemented == false) 'Backend is not implemented yet.',
       if (backendNotes.isNotEmpty) backendNotes,
-      if (status == ModuleStatus.planned) 'This module is still planned.',
+      if (status == ModuleStatus.scaffold)
+        'This module is a scaffold and still needs a manifest.',
+      if (status == ModuleStatus.planned)
+        'This module is planned but not yet built.',
       if (status == ModuleStatus.needsConfiguration)
         'This module needs configuration before it can be enabled.',
     ];
@@ -265,6 +270,7 @@ class ModuleManifestParser {
         ModuleStatus.disabled => ModuleHealthState.offline,
         ModuleStatus.needsConfiguration => ModuleHealthState.warning,
         ModuleStatus.error => ModuleHealthState.error,
+        ModuleStatus.scaffold => ModuleHealthState.unknown,
         ModuleStatus.planned => ModuleHealthState.unknown,
         ModuleStatus.experimental => ModuleHealthState.degraded,
       },
