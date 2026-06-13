@@ -124,6 +124,7 @@ class ModuleLoader {
         warnings: ['No real loader wired yet.'],
         nextAction: 'Connect manifest loading in the next phase.',
       ),
+      source: ModuleManifestSource.manifest,
       tags: ['core', 'registry', 'dashboard'],
       notes: 'This module is the hub for the dashboard module shell.',
     );

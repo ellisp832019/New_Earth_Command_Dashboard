@@ -43,6 +43,7 @@ class ModuleDetailScreen extends StatelessWidget {
                     children: [
                       Chip(label: Text(module.category.label)),
                       Chip(label: Text(module.status.label)),
+                      Chip(label: Text(module.source.label)),
                       Chip(label: Text('v${module.version}')),
                       Chip(
                         label: Text(
@@ -123,6 +124,7 @@ class ModuleDetailScreen extends StatelessWidget {
                   _InfoRow(label: 'Module ID', value: module.id),
                   _InfoRow(label: 'Version', value: module.version),
                   _InfoRow(label: 'Category', value: module.category.label),
+                  _InfoRow(label: 'Source', value: module.source.label),
                   _InfoRow(label: 'Current status', value: module.status.label),
                   _InfoRow(
                     label: 'Enabled state',

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 
 import 'package:new_earth_command_dashboard/core/modules/module_category.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_loader.dart';
+import 'package:new_earth_command_dashboard/core/modules/module_manifest.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_manifest_parser.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_status.dart';
 
@@ -43,6 +44,7 @@ void main() {
       expect(manifest.category, ModuleCategory.aiAutomation);
       expect(manifest.status, ModuleStatus.scaffold);
       expect(manifest.status.label, 'Scaffold');
+      expect(manifest.source.label, 'Manifest');
       expect(manifest.enabled, isFalse);
       expect(manifest.permissions, hasLength(3));
       expect(manifest.health.warnings, isNotEmpty);
@@ -97,6 +99,8 @@ void main() {
       expect(alpha?.status, ModuleStatus.enabled);
       expect(beta?.status, ModuleStatus.scaffold);
       expect(beta?.status.label, 'Scaffold');
+      expect(alpha?.source.label, 'Manifest');
+      expect(beta?.source.label, 'Inferred scaffold');
       expect(beta?.description, contains('inferred'));
     },
   );

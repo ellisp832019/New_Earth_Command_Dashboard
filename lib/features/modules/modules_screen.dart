@@ -80,6 +80,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
     final errorCount = filteredModules
         .where((module) => module.health.state == ModuleHealthState.error)
         .length;
+    final manifestCount = filteredModules
+        .where((module) => module.source == ModuleManifestSource.manifest)
+        .length;
+    final inferredCount = filteredModules.length - manifestCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -95,6 +99,8 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 'Showing ${filteredModules.length} of ${modules.length} modules',
             enabledCount: enabledCount,
             errorCount: errorCount,
+            manifestCount: manifestCount,
+            inferredCount: inferredCount,
           ),
           const SizedBox(height: 16),
           Card(
@@ -610,12 +616,16 @@ class _HeaderCard extends StatelessWidget {
     required this.summary,
     required this.enabledCount,
     required this.errorCount,
+    required this.manifestCount,
+    required this.inferredCount,
   });
 
   final String subtitle;
   final String summary;
   final int enabledCount;
   final int errorCount;
+  final int manifestCount;
+  final int inferredCount;
 
   @override
   Widget build(BuildContext context) {
@@ -653,6 +663,8 @@ class _HeaderCard extends StatelessWidget {
               children: [
                 _SummaryCard(label: 'Enabled', value: '$enabledCount'),
                 _SummaryCard(label: 'Errors', value: '$errorCount'),
+                _SummaryCard(label: 'Manifest', value: '$manifestCount'),
+                _SummaryCard(label: 'Inferred', value: '$inferredCount'),
                 const _SummaryCard(label: 'Mode', value: 'Live local'),
                 const _SummaryCard(label: 'Path', value: 'Folder-backed'),
               ],

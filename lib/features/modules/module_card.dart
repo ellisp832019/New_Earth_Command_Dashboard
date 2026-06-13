@@ -52,7 +52,14 @@ class ModuleCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _StatusBadge(label: module.status.label, color: statusColor),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _StatusBadge(label: module.status.label, color: statusColor),
+                      const SizedBox(height: 8),
+                      _SourceBadge(module: module),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -170,5 +177,35 @@ class _CompactChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(avatar: Icon(icon, size: 16), label: Text(label));
+  }
+}
+
+class _SourceBadge extends StatelessWidget {
+  const _SourceBadge({required this.module});
+
+  final ModuleManifest module;
+
+  @override
+  Widget build(BuildContext context) {
+    final isManifest = module.source == ModuleManifestSource.manifest;
+    final color = isManifest
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.secondary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        module.source.label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }

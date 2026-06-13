@@ -4,6 +4,19 @@ import 'module_health.dart';
 import 'module_permissions.dart';
 import 'module_status.dart';
 
+enum ModuleManifestSource { manifest, inferred }
+
+extension ModuleManifestSourceLabel on ModuleManifestSource {
+  String get label {
+    switch (this) {
+      case ModuleManifestSource.manifest:
+        return 'Manifest';
+      case ModuleManifestSource.inferred:
+        return 'Inferred scaffold';
+    }
+  }
+}
+
 class ModuleManifest {
   const ModuleManifest({
     required this.id,
@@ -19,6 +32,7 @@ class ModuleManifest {
     required this.installPath,
     required this.omegaOsPath,
     required this.health,
+    this.source = ModuleManifestSource.manifest,
     this.tags = const [],
     this.notes = '',
   });
@@ -36,6 +50,7 @@ class ModuleManifest {
   final String installPath;
   final String omegaOsPath;
   final ModuleHealthSnapshot health;
+  final ModuleManifestSource source;
   final List<String> tags;
   final String notes;
 
@@ -52,6 +67,7 @@ class ModuleManifest {
     String? installPath,
     String? omegaOsPath,
     ModuleHealthSnapshot? health,
+    ModuleManifestSource? source,
     List<String>? tags,
     String? notes,
   }) {
@@ -69,6 +85,7 @@ class ModuleManifest {
       installPath: installPath ?? this.installPath,
       omegaOsPath: omegaOsPath ?? this.omegaOsPath,
       health: health ?? this.health,
+      source: source ?? this.source,
       tags: tags ?? this.tags,
       notes: notes ?? this.notes,
     );

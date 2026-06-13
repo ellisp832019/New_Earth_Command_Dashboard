@@ -62,6 +62,7 @@ class ModuleManifestParser {
       installPath: installPath,
       omegaOsPath: omegaOsPath,
       health: _parseHealth(data, status, backend),
+      source: ModuleManifestSource.manifest,
       tags: _parseTags(data),
       notes: _buildNotes(data, backend),
     );
@@ -93,6 +94,7 @@ class ModuleManifestParser {
         warnings: ['Placeholder created from folder structure.'],
         nextAction: 'Add module_manifest.json to formalise this module.',
       ),
+      source: ModuleManifestSource.inferred,
       tags: const ['inferred', 'placeholder'],
       notes:
           'Generated because the module folder does not yet contain a manifest.',
