@@ -4,42 +4,34 @@ This roadmap keeps the Module Hub local-first, calm, and reviewable.
 
 The Module Hub is the control center for discovering dashboard modules, checking what they need, and deciding what is enabled locally.
 
-## Current Status
+## Completed
 
-- Phase 1 complete: registry foundation
-- Phase 2 complete: enabled-state persistence
-- Next active phase: browsing and search
+### Registry Foundation
 
-## Phase 1 - Registry Foundation
-
-Goal:
-Build the first working module registry and show modules in a calm hub view.
-
-Includes:
+Done:
 - discover local module folders
 - read manifests and infer fallback metadata
 - show module cards in the hub
 - show status, health, permissions, install path, and dockability
 - open module detail, settings, and permissions screens
 
-Success result:
+Result:
 The user can open the Module Hub and inspect the current module inventory.
 
-## Phase 2 - Persistence And State
+### Persistence And State
 
-Goal:
-Keep the enable/disable state local and stable across app restarts.
-
-Includes:
+Done:
 - persist enabled and disabled state locally
 - reload saved state on app start
 - keep settings and detail screens in sync
 - test manifest loading and state persistence
 
-Success result:
+Result:
 The hub remembers module state after restart.
 
-## Phase 3 - Browsing And Search
+## Next
+
+### Browsing And Search
 
 Goal:
 Make the hub easier to scan as the module count grows.
@@ -50,10 +42,10 @@ Includes:
 - sort options for quick scanning
 - clearer empty states
 
-Success result:
+Result:
 The user can find a module quickly without feeling overloaded.
 
-## Phase 4 - Module Detail Depth
+### Module Detail Depth
 
 Goal:
 Give each module a clearer inspection surface.
@@ -65,10 +57,10 @@ Includes:
 - permissions review
 - logs or notes panels where useful
 
-Success result:
+Result:
 The user can understand what the module does and what it needs.
 
-## Phase 5 - Module Operations
+### Module Operations
 
 Goal:
 Add safe local operations around modules.
@@ -79,10 +71,10 @@ Includes:
 - update checks for local packages
 - archive or remove where needed
 
-Success result:
+Result:
 The hub can manage the module inventory instead of only viewing it.
 
-## Phase 6 - Layout And Docking
+### Layout And Docking
 
 Goal:
 Let the hub act as a launcher and layout controller.
@@ -93,10 +85,10 @@ Includes:
 - launch into dock surfaces
 - dashboard entry points for favorite modules
 
-Success result:
+Result:
 The hub becomes a practical launch point for the working system.
 
-## Phase 7 - Safety And Governance
+### Safety And Governance
 
 Goal:
 Keep module actions explicit and safe.
@@ -107,10 +99,12 @@ Includes:
 - warnings for incomplete or risky modules
 - audit logs for local actions
 
-Success result:
+Result:
 The hub stays safe even as module power grows.
 
-## Phase 8 - Polish And Release
+## Later
+
+### Polish And Release
 
 Goal:
 Make the hub pleasant to use every day.
@@ -122,7 +116,7 @@ Includes:
 - Windows build verification
 - doc updates
 
-Success result:
+Result:
 The Module Hub is ready to stay in the regular workflow.
 
 ## Recommended Next Order
@@ -133,4 +127,3 @@ The Module Hub is ready to stay in the regular workflow.
 4. Layout and docking
 5. Safety and governance
 6. Polish and release
-

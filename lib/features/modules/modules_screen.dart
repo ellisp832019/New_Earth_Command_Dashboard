@@ -9,6 +9,7 @@ import '../../core/modules/module_status.dart';
 import '../../core/modules/module_types.dart';
 import 'application/module_hub_controller.dart';
 import 'module_card.dart';
+import 'module_hub_filtering.dart';
 import 'module_dock_preview.dart';
 
 class ModulesScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,9 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
   ModuleViewMode _viewMode = ModuleViewMode.grid;
   ModuleCategory? _categoryFilter;
   ModuleStatus? _statusFilter;
+  bool? _dockableFilter;
+  ModulePermissionType? _permissionFilter;
+  ModuleHubSortMode _sortMode = ModuleHubSortMode.alphabetical;
 
   @override
   void dispose() {
@@ -34,7 +38,15 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final modules = ref.watch(moduleHubModulesProvider);
-    final filteredModules = modules.where(_matchesFilters).toList();
+    final filteredModules = filterAndSortModuleHubModules(
+      modules: modules,
+      query: _searchController.text,
+      categoryFilter: _categoryFilter,
+      statusFilter: _statusFilter,
+      dockableFilter: _dockableFilter,
+      permissionFilter: _permissionFilter,
+      sortMode: _sortMode,
+    );
     final enabledCount = filteredModules
         .where((module) => module.enabled)
         .length;
@@ -103,7 +115,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     controller: _searchController,
                     decoration: InputDecoration(
                       labelText: 'Search modules',
-                      hintText: 'Name, description, tag or folder',
+                      hintText: 'Name, description, tag, permission or folder',
                       prefixIcon: const Icon(Icons.search),
                       border: const OutlineInputBorder(),
                       suffixIcon: _searchController.text.isEmpty
@@ -120,6 +132,8 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
+                const SizedBox(width: 12),
+                _buildSortMenu(),
                 const SizedBox(width: 12),
                 ToggleButtons(
                   isSelected: [
@@ -148,7 +162,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Use the filters to narrow the registry to a specific module family or status.',
+              'Use search, filters, and sort to narrow the registry to what matters now.',
               style: theme.textTheme.bodySmall,
             ),
           ],
@@ -165,6 +179,30 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Filters', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Text('Dockability', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('All'),
+                  selected: _dockableFilter == null,
+                  onSelected: (_) => setState(() => _dockableFilter = null),
+                ),
+                ChoiceChip(
+                  label: const Text('Dockable'),
+                  selected: _dockableFilter == true,
+                  onSelected: (_) => setState(() => _dockableFilter = true),
+                ),
+                ChoiceChip(
+                  label: const Text('Fixed'),
+                  selected: _dockableFilter == false,
+                  onSelected: (_) => setState(() => _dockableFilter = false),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             Text('Category', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
@@ -211,6 +249,38 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Text('Permissions', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('All'),
+                  selected: _permissionFilter == null,
+                  onSelected: (_) => setState(() => _permissionFilter = null),
+                ),
+                ...ModulePermissionType.values.map(
+                  (permissionType) => ChoiceChip(
+                    label: Text(permissionType.label),
+                    selected: _permissionFilter == permissionType,
+                    onSelected: (_) {
+                      setState(() => _permissionFilter = permissionType);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _clearFilters,
+                icon: const Icon(Icons.filter_alt_off_outlined),
+                label: const Text('Clear filters'),
+              ),
+            ),
           ],
         ),
       ),
@@ -241,6 +311,28 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
   }
 
   Widget _buildModuleGridOrList(List<ModuleManifest> modules) {
+    if (modules.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'No modules match these filters',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Try a broader search or clear one of the filters to bring the module back.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_viewMode == ModuleViewMode.list) {
       return Column(
         children: [
@@ -292,20 +384,49 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
     );
   }
 
-  bool _matchesFilters(ModuleManifest module) {
-    final query = _searchController.text.trim().toLowerCase();
-    final matchesSearch =
-        query.isEmpty ||
-        module.name.toLowerCase().contains(query) ||
-        module.description.toLowerCase().contains(query) ||
-        module.installPath.toLowerCase().contains(query) ||
-        module.tags.any((tag) => tag.toLowerCase().contains(query));
+  Widget _buildSortMenu() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<ModuleHubSortMode>(
+        value: _sortMode,
+        borderRadius: BorderRadius.circular(16),
+        items: const [
+          DropdownMenuItem(
+            value: ModuleHubSortMode.alphabetical,
+            child: Text('A-Z'),
+          ),
+          DropdownMenuItem(
+            value: ModuleHubSortMode.enabledFirst,
+            child: Text('Enabled first'),
+          ),
+          DropdownMenuItem(
+            value: ModuleHubSortMode.category,
+            child: Text('Category'),
+          ),
+          DropdownMenuItem(
+            value: ModuleHubSortMode.status,
+            child: Text('Status'),
+          ),
+        ],
+        onChanged: (value) {
+          if (value == null) {
+            return;
+          }
+          setState(() => _sortMode = value);
+        },
+        icon: const Icon(Icons.sort),
+      ),
+    );
+  }
 
-    final matchesCategory =
-        _categoryFilter == null || module.category == _categoryFilter;
-    final matchesStatus =
-        _statusFilter == null || module.status == _statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _categoryFilter = null;
+      _statusFilter = null;
+      _dockableFilter = null;
+      _permissionFilter = null;
+      _sortMode = ModuleHubSortMode.alphabetical;
+    });
   }
 
   ModuleManifest _assistantDockPreview() {
