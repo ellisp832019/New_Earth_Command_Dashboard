@@ -51,6 +51,8 @@ class _FundingGrantsCommandCentreScreenState
 
   List<GrantRecord> _grants = const <GrantRecord>[];
   String? _selectedGrantId;
+  final List<String> _grantHistory = <String>[];
+  int _grantHistoryIndex = -1;
   String _searchQuery = '';
   GrantStatusFilter _statusFilter = GrantStatusFilter.all;
   GrantSortMode _sortMode = GrantSortMode.deadlineSoonest;
@@ -121,6 +123,7 @@ class _FundingGrantsCommandCentreScreenState
         _loading = false;
       });
       _syncFormFromSelection();
+      _recordGrantHistory(selectedId);
     } catch (error) {
       setState(() {
         _loading = false;
@@ -170,6 +173,82 @@ class _FundingGrantsCommandCentreScreenState
     _commercialPlanController.text = grant.readinessScore.commercialPlan.toString();
     _riskManagementController.text = grant.readinessScore.riskManagement.toString();
     _draftStatus = grant.status;
+  }
+
+  void _recordGrantHistory(String? grantId) {
+    if (grantId == null || grantId.isEmpty) {
+      return;
+    }
+
+    if (_grantHistoryIndex >= 0 &&
+        _grantHistoryIndex < _grantHistory.length &&
+        _grantHistory[_grantHistoryIndex] == grantId) {
+      return;
+    }
+
+    if (_grantHistoryIndex < _grantHistory.length - 1) {
+      _grantHistory.removeRange(_grantHistoryIndex + 1, _grantHistory.length);
+    }
+
+    _grantHistory.add(grantId);
+    _grantHistoryIndex = _grantHistory.length - 1;
+  }
+
+  bool get _canGoToPreviousGrant {
+    if (_selectedGrantId == null) {
+      return _grantHistory.isNotEmpty && _grantHistoryIndex >= 0;
+    }
+    return _grantHistoryIndex > 0;
+  }
+
+  bool get _canGoToNextGrant {
+    if (_selectedGrantId == null) {
+      return false;
+    }
+    return _grantHistoryIndex >= 0 &&
+        _grantHistoryIndex < _grantHistory.length - 1;
+  }
+
+  void _goToPreviousGrant() {
+    if (!_canGoToPreviousGrant) {
+      return;
+    }
+
+    final targetIndex = _selectedGrantId == null
+        ? _grantHistoryIndex
+        : _grantHistoryIndex - 1;
+    if (targetIndex < 0 || targetIndex >= _grantHistory.length) {
+      return;
+    }
+
+    _selectGrantById(_grantHistory[targetIndex]);
+  }
+
+  void _goToNextGrant() {
+    if (!_canGoToNextGrant) {
+      return;
+    }
+
+    final targetIndex = _grantHistoryIndex + 1;
+    if (targetIndex < 0 || targetIndex >= _grantHistory.length) {
+      return;
+    }
+
+    _selectGrantById(_grantHistory[targetIndex]);
+  }
+
+  void _selectGrantById(String grantId) {
+    final grantIndex = _grants.indexWhere((item) => item.id == grantId);
+    if (grantIndex == -1) {
+      return;
+    }
+    final grant = _grants[grantIndex];
+    setState(() {
+      _selectedGrantId = grant.id;
+      _draftStatus = grant.status;
+    });
+    _syncFormFromSelection();
+    _recordGrantHistory(grant.id);
   }
 
   void _clearFormForNewGrant() {
@@ -329,11 +408,44 @@ class _FundingGrantsCommandCentreScreenState
 
   Future<void> _openFolder() async {
     final selected = _selectedGrant;
-    if (selected == null || selected.folderPath.isEmpty) {
+    if (selected == null) {
       return;
     }
 
-    await Process.start('explorer', [selected.folderPath]);
+    final folderPath = selected.folderPath.trim();
+    final folderExists =
+        folderPath.isNotEmpty && await Directory(folderPath).exists();
+    if (folderExists) {
+      await Process.start('explorer', [folderPath]);
+      return;
+    }
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _showSnackBar('Fix the grant fields before creating the folder.');
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      final draft = _draftFromForm(id: selected.id);
+      final saved = await _repository.saveGrant(draft, previous: selected);
+      await _loadGrants(selectGrantId: saved.id);
+      await Process.start('explorer', [saved.folderPath]);
+      _showSnackBar('Grant folder created and opened.');
+    } catch (error) {
+      setState(() {
+        _error = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
   }
 
   Future<void> _copyFolderPath() async {
@@ -409,6 +521,7 @@ class _FundingGrantsCommandCentreScreenState
       _draftStatus = grant.status;
     });
     _syncFormFromSelection();
+    _recordGrantHistory(grant.id);
   }
 
   void _showSnackBar(String message) {
@@ -453,6 +566,8 @@ class _FundingGrantsCommandCentreScreenState
               onExport: _fileOpsBusy ? null : _exportTracker,
               onImport: _fileOpsBusy ? null : _importTracker,
             ),
+            const SizedBox(height: 16),
+            _CompactStatusPanel(summary: summary, selectedGrant: selectedGrant),
             const SizedBox(height: 16),
             if (_error != null) ...[
               _ErrorBanner(message: _error!),
@@ -530,6 +645,8 @@ class _FundingGrantsCommandCentreScreenState
                       onExport: _fileOpsBusy ? null : _exportTracker,
                       onImport: _fileOpsBusy ? null : _importTracker,
                       onStatusAction: _applyGrantStatus,
+                      onPreviousGrant: _canGoToPreviousGrant ? _goToPreviousGrant : null,
+                      onNextGrant: _canGoToNextGrant ? _goToNextGrant : null,
                     ),
                   ),
                 ],
@@ -598,6 +715,8 @@ class _FundingGrantsCommandCentreScreenState
                 onExport: _fileOpsBusy ? null : _exportTracker,
                 onImport: _fileOpsBusy ? null : _importTracker,
                 onStatusAction: _applyGrantStatus,
+                onPreviousGrant: _canGoToPreviousGrant ? _goToPreviousGrant : null,
+                onNextGrant: _canGoToNextGrant ? _goToNextGrant : null,
               ),
             ],
           ],
@@ -887,6 +1006,88 @@ class _HeaderCard extends StatelessWidget {
   }
 }
 
+class _CompactStatusPanel extends StatelessWidget {
+  const _CompactStatusPanel({
+    required this.summary,
+    required this.selectedGrant,
+  });
+
+  final FundingGrantsSummary summary;
+  final GrantRecord? selectedGrant;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selectedLabel = selectedGrant == null
+        ? 'No grant selected'
+        : '${selectedGrant!.grantName} • ${selectedGrant!.status.label}';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.insights_outlined,
+                color: AppColours.darkSecondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Workflow snapshot',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                selectedLabel,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _CompactStatTile(label: 'Ready', value: '${summary.readyCount}'),
+              _CompactStatTile(
+                label: 'Due soon',
+                value: '${summary.dueSoonCount}',
+              ),
+              _CompactStatTile(
+                label: 'Parked',
+                value: '${summary.pausedCount}',
+              ),
+              _CompactStatTile(
+                label: 'Missing next step',
+                value: '${summary.missingNextActionsCount}',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            summary.readyCount > 0
+                ? 'There is at least one grant ready to move forward.'
+                : 'Keep one grant moving and park the rest until the next useful step is clear.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GrantListPanel extends StatelessWidget {
   const _GrantListPanel({
     required this.grants,
@@ -1086,6 +1287,8 @@ class _GrantEditorPanel extends StatelessWidget {
     required this.onExport,
     required this.onImport,
     required this.onStatusAction,
+    required this.onPreviousGrant,
+    required this.onNextGrant,
   });
 
   final GlobalKey<FormState> formKey;
@@ -1122,6 +1325,8 @@ class _GrantEditorPanel extends StatelessWidget {
   final VoidCallback? onExport;
   final VoidCallback? onImport;
   final Future<void> Function(GrantStatus status) onStatusAction;
+  final VoidCallback? onPreviousGrant;
+  final VoidCallback? onNextGrant;
 
   @override
   Widget build(BuildContext context) {
@@ -1161,6 +1366,17 @@ class _GrantEditorPanel extends StatelessWidget {
                   ),
                 ),
                 if (selected != null) _StatusTag(status: selected.status),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Previous grant',
+                  onPressed: onPreviousGrant,
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                IconButton(
+                  tooltip: 'Next grant',
+                  onPressed: onNextGrant,
+                  icon: const Icon(Icons.chevron_right),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -1185,7 +1401,7 @@ class _GrantEditorPanel extends StatelessWidget {
                 TextButton.icon(
                   onPressed: saving ? null : onOpenFolder,
                   icon: const Icon(Icons.folder_open_outlined),
-                  label: const Text('Open folder'),
+                  label: const Text('Open / repair folder'),
                 ),
                 TextButton.icon(
                   onPressed: saving ? null : onCopyFolderPath,
@@ -1642,6 +1858,50 @@ class _StatusActionButton extends StatelessWidget {
     return FilledButton.tonal(
       onPressed: onPressed,
       child: Text(label),
+    );
+  }
+}
+
+class _CompactStatTile extends StatelessWidget {
+  const _CompactStatTile({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 118),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
     );
   }
 }
