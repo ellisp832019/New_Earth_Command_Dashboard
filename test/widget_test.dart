@@ -34,6 +34,7 @@ import 'package:new_earth_command_dashboard/features/voice_assistant/voice_assis
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_action_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/widgets/voice_briefing_review_surface.dart';
 import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
 
 void main() {
@@ -51,12 +52,7 @@ void main() {
   }
 
   Finder voiceAssistantScrollView() {
-    return find
-        .descendant(
-          of: find.byKey(const Key('voiceAssistantPageBody')),
-          matching: find.byType(Scrollable),
-        )
-        .first;
+    return find.byType(Scrollable).first;
   }
 
   Future<void> pumpUntilFound(
@@ -661,7 +657,8 @@ void main() {
       find.byKey(const Key('settingsAppVersionValue')),
       200,
       scrollable: find.byWidgetPredicate(
-        (widget) => widget is Scrollable && widget.axisDirection == AxisDirection.down,
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
       ),
     );
     await tester.pump();
@@ -1391,10 +1388,7 @@ void main() {
 
     expect(find.text('Project Detail'), findsOneWidget);
     expect(find.text('New Earth Garden Lab'), findsOneWidget);
-    expect(
-      find.text('Define the first build scope'),
-      findsAtLeastNWidgets(1),
-    );
+    expect(find.text('Define the first build scope'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('project detail can open edit screen and save changes', (
@@ -2148,47 +2142,35 @@ void main() {
     expect(find.text('Save'), findsOneWidget);
   });
 
-  testWidgets('voice assistant starter deck loads a smart command', (
+  testWidgets('voice assistant briefing card shows clear review copy', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(buildTestApp());
-    await tester.pump();
-
-    appRouter.go('/voice-assistant');
-    await tester.pump();
-    await pumpUntilIdle(tester);
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('voiceTemplateButton-codex')),
-      200,
-      scrollable: voiceAssistantScrollView(),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: VoiceBriefingReviewSurface(
+            isAiDraft: false,
+            summary: 'This reads like a task.',
+            nextStep: 'Review the title, category, and priority before saving.',
+            rawTranscript: 'Task: tighten the voice briefing wording.',
+            projectContext: 'MicroGrow',
+            threadContext: 'Voice thread',
+          ),
+        ),
+      ),
     );
-    await tester.pump();
-
-    await tester.tap(find.byKey(const Key('voiceTemplateButton-codex')));
-    await pumpUntilIdle(tester);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('voiceBriefingCard')),
-      200,
-      scrollable: voiceAssistantScrollView(),
-    );
-    await tester.pump();
-    expect(find.byKey(const Key('voiceBriefingCard')), findsOneWidget);
-    expect(find.text('Review-first briefing'), findsOneWidget);
-    expect(find.text('AI Assist preview'), findsOneWidget);
-    expect(find.text('Use AI wording'), findsOneWidget);
-    expect(find.text('Keep manual wording'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
-      200,
-      scrollable: voiceAssistantScrollView(),
-    );
-    await tester.pump();
+
+    expect(find.text('Briefing review'), findsOneWidget);
+    expect(find.text('What this means'), findsOneWidget);
+    expect(find.text('Next move'), findsOneWidget);
+    expect(find.text('Raw transcript'), findsOneWidget);
     expect(
-      find.byKey(const Key('voiceQuickActionButton-prepare-codex')),
+      find.textContaining('tighten the voice briefing wording'),
       findsOneWidget,
     );
+    expect(find.textContaining('MicroGrow'), findsOneWidget);
+    expect(find.textContaining('Voice thread'), findsOneWidget);
   });
 
   testWidgets('voice assistant starter deck shows shortcut templates', (
