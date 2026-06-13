@@ -199,6 +199,10 @@ void main() {
       findsWidgets,
     );
     expect(
+      find.text('Restore preview stays non-destructive in V1.'),
+      findsOneWidget,
+    );
+    expect(
       find.text(
         'Mirror folder is not ready yet, so I am opening the backup root instead.',
       ),

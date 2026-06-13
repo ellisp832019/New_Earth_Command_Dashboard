@@ -223,7 +223,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       BackupGuardianAction.verifyLatest =>
         'Verify Latest launching. Current saved result: ${snapshot.latestBackupStatus}.',
       BackupGuardianAction.restoreDryRun =>
-        'Restore Dry Run launching into ${snapshot.config.restoreTestFolder}. It will stay non-destructive and write only to the test folder.',
+        'Restore Dry Run opening the preview area at ${snapshot.config.restoreTestFolder}. It will stay non-destructive and write only to the test folder.',
       BackupGuardianAction.quickIncremental =>
         'Quick Incremental launching. It will copy only new and changed files into the mirror target.',
       BackupGuardianAction.dailyBackup =>
@@ -247,7 +247,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       BackupGuardianAction.verifyLatest =>
         'Verify Latest started. Saved status: ${snapshot.latestBackupStatus}. Last verification: ${_formatDate(snapshot.lastVerificationAt)}. The page will refresh shortly.',
       BackupGuardianAction.restoreDryRun =>
-        'Restore Dry Run started. Test folder: ${snapshot.config.restoreTestFolder}. This stays non-destructive and the page will refresh shortly.',
+        'Restore Dry Run started. Preview area: ${snapshot.config.restoreTestFolder}. This stays non-destructive and the page will refresh shortly.',
       BackupGuardianAction.quickIncremental =>
         'Quick Incremental started. Only new and changed files should copy. The page will refresh shortly.',
       BackupGuardianAction.dailyBackup =>
@@ -1165,7 +1165,7 @@ class _StatusGrid extends StatelessWidget {
       _StatusTile(
         label: 'Restore test status',
         value: snapshot.restoreTestStatus,
-        detail: 'Restore remains dry-run only in V1',
+        detail: 'Restore preview stays non-destructive in V1.',
         accent: AppColours.darkPurple,
       ),
       _StatusTile(
