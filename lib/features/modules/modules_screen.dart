@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/dock/dock_position.dart';
 import '../../core/modules/module_category.dart';
+import '../../core/modules/module_event_bus.dart';
 import '../../core/modules/module_health.dart';
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_permissions.dart';
@@ -84,6 +85,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
         .where((module) => module.source == ModuleManifestSource.manifest)
         .length;
     final inferredCount = filteredModules.length - manifestCount;
+    final recentEvents = ref.watch(moduleRecentEventsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -123,6 +125,8 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          _buildActivityCard(theme, recentEvents),
           const SizedBox(height: 16),
           _buildSearchAndViewControls(theme),
           const SizedBox(height: 12),
@@ -368,6 +372,39 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
         _SummaryCard(label: 'Installed', value: '$installedCount'),
         _SummaryCard(label: 'Experimental', value: '$experimentalCount'),
       ],
+    );
+  }
+
+  Widget _buildActivityCard(ThemeData theme, List<ModuleEvent> recentEvents) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Live activity', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              recentEvents.isEmpty
+                  ? 'No module events yet. Enable a module or change a dock position to see the live feed.'
+                  : 'Recent module events are shown here as they happen.',
+              style: theme.textTheme.bodySmall,
+            ),
+            if (recentEvents.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Column(
+                children: [
+                  for (final event in recentEvents)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _ActivityRow(event: event),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -637,7 +674,7 @@ class _HeaderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('More · Module Hub', style: theme.textTheme.labelLarge),
+            Text('More - Module Hub', style: theme.textTheme.labelLarge),
             const SizedBox(height: 6),
             Text(subtitle, style: theme.textTheme.displaySmall),
             const SizedBox(height: 12),
@@ -668,6 +705,78 @@ class _HeaderCard extends StatelessWidget {
                 const _SummaryCard(label: 'Mode', value: 'Live local'),
                 const _SummaryCard(label: 'Path', value: 'Folder-backed'),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({required this.event});
+
+  final ModuleEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                switch (event.type) {
+                  ModuleEventType.enabledChanged => Icons.toggle_on,
+                  ModuleEventType.dockPositionChanged => Icons.view_sidebar,
+                  ModuleEventType.registryReloaded => Icons.refresh,
+                },
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.type.label,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    event.message.isEmpty
+                        ? event.moduleId
+                        : '${event.moduleId} - ${event.message}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    event.timestamp.toLocal().toIso8601String(),
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

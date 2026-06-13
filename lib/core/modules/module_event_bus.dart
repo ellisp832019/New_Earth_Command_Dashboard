@@ -8,6 +8,19 @@ enum ModuleEventType {
   registryReloaded,
 }
 
+extension ModuleEventTypeLabel on ModuleEventType {
+  String get label {
+    switch (this) {
+      case ModuleEventType.enabledChanged:
+        return 'Enabled state changed';
+      case ModuleEventType.dockPositionChanged:
+        return 'Dock position changed';
+      case ModuleEventType.registryReloaded:
+        return 'Registry reloaded';
+    }
+  }
+}
+
 class ModuleEvent {
   const ModuleEvent({
     required this.moduleId,
@@ -43,8 +56,31 @@ class ModuleEventBus {
   }
 }
 
+class ModuleRecentEventsController extends Notifier<List<ModuleEvent>> {
+  StreamSubscription<ModuleEvent>? _subscription;
+
+  @override
+  List<ModuleEvent> build() {
+    final bus = ref.read(moduleEventBusProvider);
+    _subscription = bus.events.listen(_handleEvent);
+    ref.onDispose(() {
+      unawaited(_subscription?.cancel());
+    });
+    return const <ModuleEvent>[];
+  }
+
+  void _handleEvent(ModuleEvent event) {
+    state = <ModuleEvent>[event, ...state].take(5).toList(growable: false);
+  }
+}
+
 final moduleEventBusProvider = Provider<ModuleEventBus>((ref) {
   final bus = ModuleEventBus();
   ref.onDispose(bus.dispose);
   return bus;
 });
+
+final moduleRecentEventsProvider =
+    NotifierProvider<ModuleRecentEventsController, List<ModuleEvent>>(
+      ModuleRecentEventsController.new,
+    );

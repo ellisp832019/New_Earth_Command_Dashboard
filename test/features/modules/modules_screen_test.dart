@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:new_earth_command_dashboard/features/modules/modules_screen.dart';
 
 void main() {
@@ -9,7 +10,7 @@ void main() {
       const ProviderScope(child: MaterialApp(home: ModulesScreen())),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(BackButton), findsOneWidget);
     expect(find.text('Back to More'), findsOneWidget);
