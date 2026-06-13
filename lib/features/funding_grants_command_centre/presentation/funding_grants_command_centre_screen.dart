@@ -240,6 +240,7 @@ class _FundingGrantsCommandCentreScreenState
 
   Future<void> _saveGrant() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
+      _showSnackBar('Please fix the highlighted grant fields before saving.');
       return;
     }
 
@@ -1140,6 +1141,7 @@ class _GrantEditorPanel extends StatelessWidget {
       decoration: _panelDecoration(),
       child: Form(
         key: formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1271,7 +1273,10 @@ class _GrantEditorPanel extends StatelessWidget {
                   child: _textField(
                     'Amount requested',
                     amountRequestedController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: _amountRequestedValidator,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1383,6 +1388,7 @@ class _GrantEditorPanel extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         keyboardType: TextInputType.number,
+        validator: _readinessScoreValidator,
         decoration: InputDecoration(labelText: label),
       ),
     );
@@ -1419,6 +1425,36 @@ class _GrantEditorPanel extends StatelessWidget {
   String? _required(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'This field is required';
+    }
+    return null;
+  }
+
+  String? _amountRequestedValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Enter an amount';
+    }
+
+    final amount = double.tryParse(value.trim());
+    if (amount == null) {
+      return 'Enter a valid number';
+    }
+    if (amount <= 0) {
+      return 'Amount should be greater than zero';
+    }
+    return null;
+  }
+
+  String? _readinessScoreValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final score = int.tryParse(value.trim());
+    if (score == null) {
+      return 'Use a whole number';
+    }
+    if (score < 0 || score > 10) {
+      return 'Score must be 0 to 10';
     }
     return null;
   }
