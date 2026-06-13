@@ -221,6 +221,8 @@ void main() {
     expect(find.text('Backup growth'), findsOneWidget);
     expect(find.textContaining('Latest backup size: 2.0 KB'), findsOneWidget);
     expect(find.textContaining('Previous backup size: 1.5 KB'), findsOneWidget);
+    expect(find.text('Latest report'), findsOneWidget);
+    expect(find.textContaining('Report: older.log'), findsWidgets);
     expect(find.text('Recent reports'), findsOneWidget);
     expect(find.text('Quick 7'), findsOneWidget);
     expect(find.text('Daily 7'), findsOneWidget);

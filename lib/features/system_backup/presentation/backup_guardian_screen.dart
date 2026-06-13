@@ -1406,6 +1406,8 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final recentReports = _recentReports(snapshot);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _panelDecoration(context),
@@ -1445,6 +1447,37 @@ class _ActivityCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
+            'Latest report',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (recentReports.isNotEmpty)
+            TextButton.icon(
+              onPressed: () {
+                unawaited(onOpenReportPath(recentReports.first.path));
+              },
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(recentReports.first.label),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColours.darkMutedText,
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            )
+          else
+            Text(
+              'No report history has been recorded yet.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 12),
+          Text(
             'Recent reports',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: AppColours.darkText,
@@ -1452,9 +1485,11 @@ class _ActivityCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          if (_recentReports(snapshot).isEmpty)
+          if (recentReports.length <= 1)
             Text(
-              'No report history has been recorded yet.',
+              recentReports.isEmpty
+                  ? 'No report history has been recorded yet.'
+                  : 'Only the latest report has been recorded so far.',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
@@ -1463,7 +1498,7 @@ class _ActivityCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final report in _recentReports(snapshot))
+                for (final report in recentReports.skip(1))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: TextButton.icon(
