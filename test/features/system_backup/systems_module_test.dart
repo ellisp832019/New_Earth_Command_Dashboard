@@ -229,9 +229,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Showing all runs.'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Backups'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Verification'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Restore points'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Backups (2)'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Verification (1)'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Restore points (3)'), findsOneWidget);
     expect(find.text('Pick a restore point'), findsOneWidget);
     expect(find.textContaining('Action: Backup Now'), findsWidgets);
     expect(find.textContaining('Kind: manual'), findsWidgets);
@@ -239,6 +239,10 @@ void main() {
     expect(find.text('Backup growth'), findsOneWidget);
     expect(find.textContaining('Latest backup size: 2.0 KB'), findsOneWidget);
     expect(find.textContaining('Previous backup size: 1.5 KB'), findsOneWidget);
+    expect(
+      find.textContaining('Backup size grew by 512 B compared with the previous run.'),
+      findsOneWidget,
+    );
     expect(find.text('Latest report'), findsOneWidget);
     expect(find.textContaining('Report: older.log'), findsWidgets);
     expect(find.text('Recent reports'), findsOneWidget);

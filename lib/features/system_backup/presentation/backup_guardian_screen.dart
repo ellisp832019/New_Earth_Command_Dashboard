@@ -698,6 +698,10 @@ class _HistoryCard extends StatelessWidget {
       snapshot.restorePoints,
       historyFilter,
     );
+    final filterCounts = {
+      for (final filter in _HistoryFilter.values)
+        filter: _historyFilterCount(snapshot.historyEntries, filter),
+    };
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -761,7 +765,10 @@ class _HistoryCard extends StatelessWidget {
             children: [
               for (final filter in _HistoryFilter.values)
                 _FilterChip(
-                  label: _historyFilterLabel(filter),
+                  label: _historyFilterLabel(
+                    filter,
+                    filterCounts[filter] ?? 0,
+                  ),
                   selected: historyFilter == filter,
                   onSelected: () => onHistoryFilterChanged(filter),
                 ),
@@ -829,6 +836,13 @@ class _HistoryCard extends StatelessWidget {
           };
         })
         .toList(growable: false);
+  }
+
+  int _historyFilterCount(
+    List<BackupGuardianHistoryEntry> entries,
+    _HistoryFilter filter,
+  ) {
+    return _filterEntries(entries, filter).length;
   }
 }
 
@@ -1540,6 +1554,7 @@ class _GrowthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sizeTrend = _backupSizeTrend(snapshot.historyEntries);
+    final sizeDelta = _backupSizeDelta(snapshot.historyEntries);
     final sizeSamples = _backupSizeSamples(snapshot.historyEntries);
 
     return Container(
@@ -1578,6 +1593,15 @@ class _GrowthCard extends StatelessWidget {
                     accent: AppColours.darkAmber,
                   ),
               ],
+            ),
+          ],
+          if (sizeDelta.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              sizeDelta,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkSecondary,
+              ),
             ),
           ],
           const SizedBox(height: 10),
@@ -1706,7 +1730,21 @@ String _backupSizeTrend(List<BackupGuardianHistoryEntry> entries) {
     return 'Latest recorded backup size is ${latest.backupSizeText}.';
   }
 
-  return 'Latest recorded backup size is ${latest.backupSizeText}, compared with ${previous.backupSizeText} on the previous run.';
+  final latestBytes = _parseBackupSizeText(latest.backupSizeText);
+  final previousBytes = _parseBackupSizeText(previous.backupSizeText);
+  if (latestBytes == null || previousBytes == null) {
+    return 'Latest recorded backup size is ${latest.backupSizeText}, compared with ${previous.backupSizeText} on the previous run.';
+  }
+
+  final diff = latestBytes - previousBytes;
+  final direction = diff > 0
+      ? 'up'
+      : diff < 0
+          ? 'down'
+          : 'unchanged';
+  final diffText = diff == 0 ? 'no change' : _formatBytes(diff.abs());
+
+  return 'Latest recorded backup size is ${latest.backupSizeText}, $direction $diffText from the previous run.';
 }
 
 List<String> _backupSizeSamples(List<BackupGuardianHistoryEntry> entries) {
@@ -1720,6 +1758,30 @@ List<String> _backupSizeSamples(List<BackupGuardianHistoryEntry> entries) {
   }
 
   return sizes.take(2).toList(growable: false);
+}
+
+String _backupSizeDelta(List<BackupGuardianHistoryEntry> entries) {
+  final sizes = entries
+      .where((entry) => entry.backupSizeText.isNotEmpty && _isBackupRun(entry))
+      .toList(growable: false);
+
+  if (sizes.length < 2) {
+    return '';
+  }
+
+  final latestBytes = _parseBackupSizeText(sizes.first.backupSizeText);
+  final previousBytes = _parseBackupSizeText(sizes[1].backupSizeText);
+  if (latestBytes == null || previousBytes == null) {
+    return '';
+  }
+
+  final diff = latestBytes - previousBytes;
+  if (diff == 0) {
+    return 'Backup size is unchanged from the previous run.';
+  }
+
+  final verb = diff > 0 ? 'grew by' : 'shrank by';
+  return 'Backup size $verb ${_formatBytes(diff.abs())} compared with the previous run.';
 }
 
 class _RecentReport {
@@ -1805,16 +1867,58 @@ bool _isBackupRun(BackupGuardianHistoryEntry entry) {
       entry.mode == 'MonthlyArchive';
 }
 
-String _historyFilterLabel(_HistoryFilter filter) {
+String _historyFilterLabel(_HistoryFilter filter, int count) {
   return switch (filter) {
-    _HistoryFilter.all => 'All',
-    _HistoryFilter.backups => 'Backups',
-    _HistoryFilter.verification => 'Verification',
-    _HistoryFilter.restorePoints => 'Restore points',
-    _HistoryFilter.green => 'Green',
-    _HistoryFilter.amber => 'Amber',
-    _HistoryFilter.red => 'Red',
+    _HistoryFilter.all => _historyLabel('All', count),
+    _HistoryFilter.backups => _historyLabel('Backups', count),
+    _HistoryFilter.verification => _historyLabel('Verification', count),
+    _HistoryFilter.restorePoints => _historyLabel('Restore points', count),
+    _HistoryFilter.green => _historyLabel('Green', count),
+    _HistoryFilter.amber => _historyLabel('Amber', count),
+    _HistoryFilter.red => _historyLabel('Red', count),
   };
+}
+
+String _historyLabel(String label, int count) {
+  return '$label ($count)';
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) {
+    return '$bytes B';
+  }
+  if (bytes < 1024 * 1024) {
+    return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  }
+  if (bytes < 1024 * 1024 * 1024) {
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+  return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+}
+
+int? _parseBackupSizeText(String text) {
+  final normalized = text.trim().toUpperCase();
+  final match = RegExp(r'^([0-9]+(?:\.[0-9]+)?)\s*(B|KB|MB|GB)$').firstMatch(
+    normalized,
+  );
+  if (match == null) {
+    return null;
+  }
+
+  final value = double.tryParse(match.group(1)!);
+  if (value == null) {
+    return null;
+  }
+
+  final unit = match.group(2)!;
+  final multiplier = switch (unit) {
+    'B' => 1,
+    'KB' => 1024,
+    'MB' => 1024 * 1024,
+    'GB' => 1024 * 1024 * 1024,
+    _ => 1,
+  };
+  return (value * multiplier).round();
 }
 
 String _historyFilterDescription(_HistoryFilter filter) {
