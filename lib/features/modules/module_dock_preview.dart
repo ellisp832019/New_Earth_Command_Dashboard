@@ -10,11 +10,13 @@ class ModuleDockPreview extends StatefulWidget {
     required this.module,
     this.initialPosition = DockPosition.right,
     this.showAssistantDockPlaceholder = false,
+    this.onPositionChanged,
   });
 
   final ModuleManifest module;
   final DockPosition initialPosition;
   final bool showAssistantDockPlaceholder;
+  final ValueChanged<DockPosition>? onPositionChanged;
 
   @override
   State<ModuleDockPreview> createState() => _ModuleDockPreviewState();
@@ -46,6 +48,7 @@ class _ModuleDockPreviewState extends State<ModuleDockPreview> {
                     setState(() {
                       _position = position;
                     });
+                    widget.onPositionChanged?.call(position);
                   },
                 ),
               )

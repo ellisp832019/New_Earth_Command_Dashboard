@@ -1,23 +1,45 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/dock/dock_position.dart';
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
+import 'application/module_hub_controller.dart';
 import 'module_dock_preview.dart';
 
-class ModuleDockingScreen extends StatefulWidget {
+class ModuleDockingScreen extends ConsumerStatefulWidget {
   const ModuleDockingScreen({super.key, required this.module});
 
   final ModuleManifest module;
 
   @override
-  State<ModuleDockingScreen> createState() => _ModuleDockingScreenState();
+  ConsumerState<ModuleDockingScreen> createState() =>
+      _ModuleDockingScreenState();
 }
 
-class _ModuleDockingScreenState extends State<ModuleDockingScreen> {
+class _ModuleDockingScreenState extends ConsumerState<ModuleDockingScreen> {
+  late DockPosition _selectedPosition;
   bool _pinnedLocally = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final savedPosition = ref
+        .read(moduleHubStateRepositoryProvider)
+        .loadDockLayoutState()
+        .positionFor(widget.module.id);
+    _selectedPosition = savedPosition ?? widget.module.defaultDockPosition;
+  }
+
+  Future<void> _saveDockPosition(DockPosition position) async {
+    await ref
+        .read(moduleHubStateRepositoryProvider)
+        .saveDockPosition(widget.module.id, position);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,10 +103,18 @@ class _ModuleDockingScreenState extends State<ModuleDockingScreen> {
                   Text('Dock preview', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 12),
                   ModuleDockPreview(
-                    module: widget.module,
-                    initialPosition: widget.module.defaultDockPosition,
+                    module: widget.module.copyWith(
+                      defaultDockPosition: _selectedPosition,
+                    ),
+                    initialPosition: _selectedPosition,
                     showAssistantDockPlaceholder:
                         widget.module.id == 'module_hub',
+                    onPositionChanged: (position) {
+                      setState(() {
+                        _selectedPosition = position;
+                      });
+                      unawaited(_saveDockPosition(position));
+                    },
                   ),
                 ],
               ),
@@ -104,7 +134,7 @@ class _ModuleDockingScreenState extends State<ModuleDockingScreen> {
                   const SizedBox(height: 12),
                   _InfoRow(
                     label: 'Default dock',
-                    value: widget.module.defaultDockPosition.label,
+                    value: _selectedPosition.label,
                   ),
                   _InfoRow(
                     label: 'Dockable',

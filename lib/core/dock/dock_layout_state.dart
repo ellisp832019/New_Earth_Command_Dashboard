@@ -2,76 +2,64 @@ import 'dock_position.dart';
 
 class DockLayoutState {
   const DockLayoutState({
-    this.leftModuleId,
-    this.rightModuleId,
-    this.bottomModuleId,
-    this.floatingModuleId,
-    this.fullscreenModuleId,
+    this.positionsByModuleId = const <String, DockPosition>{},
   });
 
-  final String? leftModuleId;
-  final String? rightModuleId;
-  final String? bottomModuleId;
-  final String? floatingModuleId;
-  final String? fullscreenModuleId;
+  final Map<String, DockPosition> positionsByModuleId;
 
-  String? moduleFor(DockPosition position) {
-    switch (position) {
-      case DockPosition.left:
-        return leftModuleId;
-      case DockPosition.right:
-        return rightModuleId;
-      case DockPosition.bottom:
-        return bottomModuleId;
-      case DockPosition.floating:
-        return floatingModuleId;
-      case DockPosition.fullscreen:
-        return fullscreenModuleId;
-    }
+  DockPosition? positionFor(String moduleId) {
+    return positionsByModuleId[moduleId];
   }
 
-  DockLayoutState mount(String moduleId, DockPosition position) {
-    switch (position) {
-      case DockPosition.left:
-        return DockLayoutState(
-          leftModuleId: moduleId,
-          rightModuleId: rightModuleId,
-          bottomModuleId: bottomModuleId,
-          floatingModuleId: floatingModuleId,
-          fullscreenModuleId: fullscreenModuleId,
-        );
-      case DockPosition.right:
-        return DockLayoutState(
-          leftModuleId: leftModuleId,
-          rightModuleId: moduleId,
-          bottomModuleId: bottomModuleId,
-          floatingModuleId: floatingModuleId,
-          fullscreenModuleId: fullscreenModuleId,
-        );
-      case DockPosition.bottom:
-        return DockLayoutState(
-          leftModuleId: leftModuleId,
-          rightModuleId: rightModuleId,
-          bottomModuleId: moduleId,
-          floatingModuleId: floatingModuleId,
-          fullscreenModuleId: fullscreenModuleId,
-        );
-      case DockPosition.floating:
-        return DockLayoutState(
-          leftModuleId: leftModuleId,
-          rightModuleId: rightModuleId,
-          bottomModuleId: bottomModuleId,
-          floatingModuleId: moduleId,
-          fullscreenModuleId: fullscreenModuleId,
-        );
-      case DockPosition.fullscreen:
-        return DockLayoutState(
-          leftModuleId: leftModuleId,
-          rightModuleId: rightModuleId,
-          bottomModuleId: bottomModuleId,
-          floatingModuleId: floatingModuleId,
-          fullscreenModuleId: moduleId,
-        );
+  DockLayoutState setPosition(String moduleId, DockPosition position) {
+    final next = Map<String, DockPosition>.from(positionsByModuleId);
+    next[moduleId] = position;
+    return DockLayoutState(positionsByModuleId: Map.unmodifiable(next));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'positionsByModuleId': positionsByModuleId.map(
+        (moduleId, position) => MapEntry(moduleId, position.name),
+      ),
+    };
+  }
+
+  factory DockLayoutState.fromJson(Map<String, dynamic> json) {
+    final rawPositions = json['positionsByModuleId'];
+    if (rawPositions is Map) {
+      final positions = <String, DockPosition>{};
+      rawPositions.forEach((key, value) {
+        final moduleId = key.toString().trim();
+        if (moduleId.isEmpty) {
+          return;
+        }
+        final position = _parseDockPosition(value);
+        if (position != null) {
+          positions[moduleId] = position;
+        }
+      });
+      return DockLayoutState(positionsByModuleId: Map.unmodifiable(positions));
+    }
+
+    return const DockLayoutState();
+  }
+
+  static DockPosition? _parseDockPosition(dynamic value) {
+    final text = value?.toString().trim().toLowerCase() ?? '';
+    switch (text) {
+      case 'left':
+        return DockPosition.left;
+      case 'right':
+        return DockPosition.right;
+      case 'bottom':
+        return DockPosition.bottom;
+      case 'floating':
+        return DockPosition.floating;
+      case 'fullscreen':
+        return DockPosition.fullscreen;
+      default:
+        return null;
     }
   }
 }

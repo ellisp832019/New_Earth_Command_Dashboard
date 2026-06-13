@@ -6,7 +6,11 @@ class DockManager {
 
   final DockLayoutState state;
 
+  DockPosition? positionFor(String moduleId) {
+    return state.positionFor(moduleId);
+  }
+
   DockManager mount(String moduleId, DockPosition position) {
-    return DockManager(state: state.mount(moduleId, position));
+    return DockManager(state: state.setPosition(moduleId, position));
   }
 }

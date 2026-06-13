@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../dock/dock_layout_state.dart';
+import '../dock/dock_position.dart';
+
 class ModuleHubStateRepository {
   ModuleHubStateRepository({String? stateFilePath})
     : stateFilePath =
@@ -66,6 +69,36 @@ class ModuleHubStateRepository {
   Future<void> saveHubUiState(Map<String, dynamic> state) async {
     final payload = _readPayload();
     payload['hubUiState'] = state;
+    payload['updatedAt'] = DateTime.now().toIso8601String();
+
+    final file = File(stateFilePath);
+    await file.parent.create(recursive: true);
+    await file.writeAsString(JsonEncoder.withIndent('  ').convert(payload));
+  }
+
+  DockLayoutState loadDockLayoutState() {
+    final payload = _readPayload();
+    final dockLayoutState = payload['dockLayoutState'];
+    if (dockLayoutState is Map<String, dynamic>) {
+      return DockLayoutState.fromJson(dockLayoutState);
+    }
+    if (dockLayoutState is Map) {
+      return DockLayoutState.fromJson(
+        dockLayoutState.map((key, value) => MapEntry(key.toString(), value)),
+      );
+    }
+    return const DockLayoutState();
+  }
+
+  Future<void> saveDockPosition(String moduleId, DockPosition position) async {
+    final current = loadDockLayoutState();
+    final updated = current.setPosition(moduleId, position);
+    await saveDockLayoutState(updated);
+  }
+
+  Future<void> saveDockLayoutState(DockLayoutState state) async {
+    final payload = _readPayload();
+    payload['dockLayoutState'] = state.toJson();
     payload['updatedAt'] = DateTime.now().toIso8601String();
 
     final file = File(stateFilePath);
