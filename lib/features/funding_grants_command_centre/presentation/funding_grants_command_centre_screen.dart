@@ -48,6 +48,7 @@ class _FundingGrantsCommandCentreScreenState
   final _impactCaseController = TextEditingController();
   final _commercialPlanController = TextEditingController();
   final _riskManagementController = TextEditingController();
+  final _searchController = TextEditingController();
 
   List<GrantRecord> _grants = const <GrantRecord>[];
   String? _selectedGrantId;
@@ -104,6 +105,7 @@ class _FundingGrantsCommandCentreScreenState
     _impactCaseController.dispose();
     _commercialPlanController.dispose();
     _riskManagementController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -604,6 +606,7 @@ class _FundingGrantsCommandCentreScreenState
                       grants: visibleGrants,
                       selectedGrantId: _selectedGrantId,
                       onSelectGrant: _selectGrant,
+                      searchController: _searchController,
                       searchQuery: _searchQuery,
                       onSearchChanged: (value) {
                         setState(() {
@@ -677,6 +680,7 @@ class _FundingGrantsCommandCentreScreenState
                 grants: visibleGrants,
                 selectedGrantId: _selectedGrantId,
                 onSelectGrant: _selectGrant,
+                searchController: _searchController,
                 searchQuery: _searchQuery,
                 onSearchChanged: (value) {
                   setState(() {
@@ -778,6 +782,7 @@ class _FundingGrantsCommandCentreScreenState
     final missingNextActionsCount =
         grants.where((grant) => grant.nextAction.trim().isEmpty).length;
     final dueSoonCount = _dueSoonCount(grants);
+    final overdueCount = _overdueCount(grants);
     final readinessAverage = grants.isEmpty
         ? 0
         : (grants.fold<int>(0, (sum, grant) => sum + grant.readinessScore.total) /
@@ -792,6 +797,7 @@ class _FundingGrantsCommandCentreScreenState
       approvedCount: approvedCount,
       pausedCount: pausedCount,
       dueSoonCount: dueSoonCount,
+      overdueCount: overdueCount,
       missingNextActionsCount: missingNextActionsCount,
       readinessAverage: readinessAverage,
     );
@@ -805,6 +811,14 @@ class _FundingGrantsCommandCentreScreenState
       return deadline != null &&
           deadline.isAfter(now.subtract(const Duration(days: 1))) &&
           deadline.isBefore(threshold);
+    }).length;
+  }
+
+  int _overdueCount(List<GrantRecord> grants) {
+    final today = DateTime.now();
+    return grants.where((grant) {
+      final deadline = grant.deadlineDate;
+      return deadline != null && deadline.isBefore(today);
     }).length;
   }
 
@@ -1023,6 +1037,7 @@ class _HeaderCard extends StatelessWidget {
                 value: '${summary.pausedCount}',
               ),
               _MetricChip(label: 'Due soon', value: '${summary.dueSoonCount}'),
+              _MetricChip(label: 'Overdue', value: '${summary.overdueCount}'),
               _MetricChip(
                 label: 'Missing next action',
                 value: '${summary.missingNextActionsCount}',
@@ -1095,6 +1110,10 @@ class _CompactStatusPanel extends StatelessWidget {
               _CompactStatTile(
                 label: 'Due soon',
                 value: '${summary.dueSoonCount}',
+              ),
+              _CompactStatTile(
+                label: 'Overdue',
+                value: '${summary.overdueCount}',
               ),
               _CompactStatTile(
                 label: 'Parked',
@@ -1203,6 +1222,7 @@ class _GrantListPanel extends StatelessWidget {
     required this.grants,
     required this.selectedGrantId,
     required this.onSelectGrant,
+    required this.searchController,
     required this.searchQuery,
     required this.onSearchChanged,
     required this.statusFilter,
@@ -1214,6 +1234,7 @@ class _GrantListPanel extends StatelessWidget {
   final List<GrantRecord> grants;
   final String? selectedGrantId;
   final ValueChanged<GrantRecord> onSelectGrant;
+  final TextEditingController searchController;
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;
   final GrantStatusFilter statusFilter;
@@ -1246,10 +1267,21 @@ class _GrantListPanel extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           TextField(
+            controller: searchController,
             onChanged: onSearchChanged,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Search grants',
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear search',
+                      onPressed: () {
+                        searchController.clear();
+                        onSearchChanged('');
+                      },
+                      icon: const Icon(Icons.clear),
+                    ),
             ),
           ),
           const SizedBox(height: 12),
@@ -1295,6 +1327,18 @@ class _GrantListPanel extends StatelessWidget {
                 label: 'Paused',
                 selected: statusFilter == GrantStatusFilter.paused,
                 onSelected: () => onStatusFilterChanged(GrantStatusFilter.paused),
+              ),
+              TextButton.icon(
+                onPressed:
+                    searchQuery.isEmpty && statusFilter == GrantStatusFilter.all
+                        ? null
+                        : () {
+                            searchController.clear();
+                            onSearchChanged('');
+                            onStatusFilterChanged(GrantStatusFilter.all);
+                          },
+                icon: const Icon(Icons.tune_outlined),
+                label: const Text('Reset view'),
               ),
             ],
           ),
@@ -1786,6 +1830,36 @@ class _GrantEditorPanel extends StatelessWidget {
   }
 }
 
+String? _deadlineWarningLabel(GrantRecord grant) {
+  final deadline = grant.deadlineDate;
+  if (deadline == null) {
+    return null;
+  }
+
+  final now = DateTime.now();
+  final overdue = deadline.isBefore(DateTime(now.year, now.month, now.day));
+  if (overdue) {
+    return 'Overdue';
+  }
+
+  final dueSoon = deadline.isBefore(now.add(const Duration(days: 14)));
+  if (dueSoon) {
+    return 'Due soon';
+  }
+
+  return null;
+}
+
+bool _isOverdue(GrantRecord grant) {
+  final deadline = grant.deadlineDate;
+  if (deadline == null) {
+    return false;
+  }
+
+  final now = DateTime.now();
+  return deadline.isBefore(DateTime(now.year, now.month, now.day));
+}
+
 class _ParkedGrantTile extends StatelessWidget {
   const _ParkedGrantTile({
     required this.grant,
@@ -1927,10 +2001,18 @@ class _GrantListTile extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                _StatusTag(status: grant.status),
                 _MiniTag(label: grant.priority),
                 _MiniTag(label: _money(grant.amountRequested)),
                 _MiniTag(label: '${readiness.total}/70'),
-                if (grant.hasDeadline) _MiniTag(label: grant.deadline),
+                if (grant.hasDeadline) _MiniTag(label: 'Deadline ${grant.deadline}'),
+                if (grant.nextAction.trim().isEmpty)
+                  _MiniTag(label: 'Needs next action'),
+                if (_deadlineWarningLabel(grant) != null)
+                  _DeadlineTag(
+                    label: _deadlineWarningLabel(grant)!,
+                    overdue: _isOverdue(grant),
+                  ),
               ],
             ),
             const SizedBox(height: 10),
@@ -2001,6 +2083,36 @@ class _MiniTag extends StatelessWidget {
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: AppColours.darkText,
+            ),
+      ),
+    );
+  }
+}
+
+class _DeadlineTag extends StatelessWidget {
+  const _DeadlineTag({
+    required this.label,
+    required this.overdue,
+  });
+
+  final String label;
+  final bool overdue;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = overdue ? Colors.redAccent : Colors.orangeAccent;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
             ),
       ),
     );
@@ -2203,6 +2315,7 @@ class FundingGrantsSummary {
     required this.approvedCount,
     required this.pausedCount,
     required this.dueSoonCount,
+    required this.overdueCount,
     required this.missingNextActionsCount,
     required this.readinessAverage,
   });
@@ -2214,6 +2327,7 @@ class FundingGrantsSummary {
   final int approvedCount;
   final int pausedCount;
   final int dueSoonCount;
+  final int overdueCount;
   final int missingNextActionsCount;
   final int readinessAverage;
 }
