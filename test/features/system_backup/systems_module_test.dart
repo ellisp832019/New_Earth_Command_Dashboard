@@ -228,6 +228,12 @@ void main() {
     expect(find.text('Daily 7'), findsOneWidget);
     expect(find.text('Weekly 4'), findsOneWidget);
     expect(find.text('Monthly 12'), findsOneWidget);
+    expect(
+      find.text(
+        'Quick keeps the newest snapshots, daily keeps routine runs, weekly keeps recovery points, and monthly keeps long-term archives.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Roadmap / Future work'), findsOneWidget);
     expect(find.text('V2 roadmap'), findsOneWidget);
     expect(find.text('V3 roadmap'), findsOneWidget);

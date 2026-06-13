@@ -391,7 +391,7 @@ class BackupGuardianService {
         : 'Manual backups only for now.';
 
     final retentionSummary =
-        'Retention keeps quick ${config.quickKeep}, daily ${config.dailyKeep}, weekly ${config.weeklyKeep}, and monthly ${config.monthlyKeep} backup sets.';
+        'Retention keeps ${config.quickKeep} quick snapshots, ${config.dailyKeep} daily runs, ${config.weeklyKeep} weekly points, and ${config.monthlyKeep} monthly archives.';
 
     final notificationBanner = history.entries.isEmpty
         ? 'No backup history yet. Run a backup to start the timeline.'

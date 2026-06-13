@@ -594,6 +594,14 @@ class _AutomationCard extends StatelessWidget {
               height: 1.35,
             ),
           ),
+          const SizedBox(height: 6),
+          Text(
+            'Quick keeps the newest snapshots, daily keeps routine runs, weekly keeps recovery points, and monthly keeps long-term archives.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
