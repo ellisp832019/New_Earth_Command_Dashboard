@@ -358,24 +358,33 @@ class _FundingGrantsCommandCentreScreenState
   }
 
   Future<void> _applyGrantStatus(GrantStatus status) async {
-    setState(() {
-      _draftStatus = status;
-    });
-
     final selected = _selectedGrant;
     if (selected == null) {
+      setState(() {
+        _draftStatus = status;
+      });
       _showSnackBar('Draft status set to ${status.label}.');
       return;
     }
 
+    await _moveGrantToStatus(selected, status);
+  }
+
+  Future<void> _restoreParkedGrant(GrantRecord grant) async {
+    await _selectGrantAsync(grant);
+    await _moveGrantToStatus(grant, GrantStatus.drafting);
+  }
+
+  Future<void> _moveGrantToStatus(GrantRecord grant, GrantStatus status) async {
     setState(() {
+      _draftStatus = status;
       _saving = true;
     });
 
     try {
-      await _repository.updateGrantStatus(selected, status);
-      await _loadGrants(selectGrantId: selected.id);
-      _showSnackBar('Moved ${selected.grantName} to ${status.label}.');
+      await _repository.updateGrantStatus(grant, status);
+      await _loadGrants(selectGrantId: grant.id);
+      _showSnackBar('Moved ${grant.grantName} to ${status.label}.');
     } catch (error) {
       setState(() {
         _error = error.toString();
@@ -524,6 +533,10 @@ class _FundingGrantsCommandCentreScreenState
     _recordGrantHistory(grant.id);
   }
 
+  Future<void> _selectGrantAsync(GrantRecord grant) async {
+    _selectGrant(grant);
+  }
+
   void _showSnackBar(String message) {
     if (!mounted) {
       return;
@@ -544,6 +557,7 @@ class _FundingGrantsCommandCentreScreenState
     final summary = _summaryFor(_grants);
     final selectedGrant = _selectedGrant;
     final visibleGrants = _filteredGrants(_grants);
+    final parkedGrants = _parkedGrants(_grants);
     final wide = MediaQuery.sizeOf(context).width >= 1180;
 
     return Scaffold(
@@ -568,6 +582,13 @@ class _FundingGrantsCommandCentreScreenState
             ),
             const SizedBox(height: 16),
             _CompactStatusPanel(summary: summary, selectedGrant: selectedGrant),
+            const SizedBox(height: 16),
+            _ParkedGrantsPanel(
+              grants: parkedGrants,
+              selectedGrantId: _selectedGrantId,
+              onSelectGrant: _selectGrant,
+              onRestoreGrant: _restoreParkedGrant,
+            ),
             const SizedBox(height: 16),
             if (_error != null) ...[
               _ErrorBanner(message: _error!),
@@ -835,6 +856,18 @@ class _FundingGrantsCommandCentreScreenState
     return filtered;
   }
 
+  List<GrantRecord> _parkedGrants(List<GrantRecord> grants) {
+    final parked = grants
+        .where(
+          (grant) =>
+              grant.status == GrantStatus.paused ||
+              grant.status == GrantStatus.rejected,
+        )
+        .toList();
+    parked.sort((a, b) => _compareGrants(a, b, GrantSortMode.deadlineSoonest));
+    return parked;
+  }
+
   bool _matchesStatusFilter(GrantRecord grant, GrantStatusFilter filter) {
     switch (filter) {
       case GrantStatusFilter.all:
@@ -1020,7 +1053,7 @@ class _CompactStatusPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final selectedLabel = selectedGrant == null
         ? 'No grant selected'
-        : '${selectedGrant!.grantName} • ${selectedGrant!.status.label}';
+        : '${selectedGrant!.grantName} - ${selectedGrant!.status.label}';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1082,6 +1115,83 @@ class _CompactStatusPanel extends StatelessWidget {
               color: AppColours.darkMutedText,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParkedGrantsPanel extends StatelessWidget {
+  const _ParkedGrantsPanel({
+    required this.grants,
+    required this.selectedGrantId,
+    required this.onSelectGrant,
+    required this.onRestoreGrant,
+  });
+
+  final List<GrantRecord> grants;
+  final String? selectedGrantId;
+  final ValueChanged<GrantRecord> onSelectGrant;
+  final Future<void> Function(GrantRecord grant) onRestoreGrant;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.push_pin_outlined,
+                color: AppColours.darkSecondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Parked grants',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _MetricChip(label: 'Parked', value: '${grants.length}'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Paused or rejected grants stay here until you are ready to bring one back into the active pipeline.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (grants.isEmpty)
+            Text(
+              'Nothing is parked right now.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+            )
+          else
+            Column(
+              children: [
+                for (var index = 0; index < grants.length; index++) ...[
+                  _ParkedGrantTile(
+                    grant: grants[index],
+                    selected: grants[index].id == selectedGrantId,
+                    onTap: () => onSelectGrant(grants[index]),
+                    onRestore: () => onRestoreGrant(grants[index]),
+                  ),
+                  if (index != grants.length - 1) const SizedBox(height: 10),
+                ],
+              ],
+            ),
         ],
       ),
     );
@@ -1673,6 +1783,89 @@ class _GrantEditorPanel extends StatelessWidget {
       return 'Score must be 0 to 10';
     }
     return null;
+  }
+}
+
+class _ParkedGrantTile extends StatelessWidget {
+  const _ParkedGrantTile({
+    required this.grant,
+    required this.selected,
+    required this.onTap,
+    required this.onRestore,
+  });
+
+  final GrantRecord grant;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColours.darkSurfaceRaised
+              : AppColours.darkSurfaceAlt,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? AppColours.darkSecondary : AppColours.darkOutline,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    grant.grantName,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColours.darkText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+                _StatusTag(status: grant.status),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${grant.project} - ${grant.owner}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    grant.nextAction.isEmpty
+                        ? 'No next action captured yet.'
+                        : grant.nextAction,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColours.darkMutedText,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton.icon(
+                  onPressed: onRestore,
+                  icon: const Icon(Icons.play_arrow_outlined),
+                  label: const Text('Restore'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
