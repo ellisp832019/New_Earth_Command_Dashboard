@@ -115,13 +115,13 @@ class VoiceStartupGateResult {
     }
 
     final deviceNames = devices.map((device) => device.name).join(', ');
-    return VoiceStartupGateResult(
-      isReady: false,
-      message:
-          'A microphone is available, but Gaia did not see a headset-like device yet. Found: $deviceNames. If this is your headset mic, you can still try Use headset anyway.',
-      devices: devices,
-      state: VoiceStartupGateState.microphoneOnly,
-    );
+      return VoiceStartupGateResult(
+        isReady: false,
+        message:
+            'A microphone is available, but Gaia did not see a headset-like device yet. Found: $deviceNames. If this is your headset mic, choose Have Voice.',
+        devices: devices,
+        state: VoiceStartupGateState.microphoneOnly,
+      );
   }
 }
 

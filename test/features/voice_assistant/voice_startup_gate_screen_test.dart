@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_screen.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_service.dart';
@@ -30,11 +31,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Continue without Voice'), findsOneWidget);
-    expect(find.text('Use headset anyway'), findsOneWidget);
+    expect(find.text('No Voice'), findsOneWidget);
+    expect(find.text('Have Voice'), findsOneWidget);
   });
 
-  testWidgets('startup gate bypass can be accepted from the screen', (
+  testWidgets('startup gate can request voice assistant from the screen', (
     tester,
   ) async {
     const result = VoiceStartupGateResult(
@@ -55,13 +56,13 @@ void main() {
             builder: (context) {
               return Consumer(
                 builder: (context, ref, _) {
-                  final bypass = ref.watch(voiceStartupGateBypassProvider);
+                  final landingRoute = ref.watch(voiceStartupGateLandingProvider);
                   return Column(
                     children: [
                       Expanded(
                         child: VoiceStartupGateScreen(result: result),
                       ),
-                      Text('Bypass: $bypass'),
+                      Text('Landing: ${landingRoute ?? "none"}'),
                     ],
                   );
                 },
@@ -72,9 +73,44 @@ void main() {
       ),
     );
 
-    expect(find.text('Bypass: false'), findsOneWidget);
-    await tester.tap(find.text('Use headset anyway'));
+    expect(find.text('Landing: none'), findsOneWidget);
+    await tester.tap(find.text('Have Voice'));
     await tester.pumpAndSettle();
-    expect(find.text('Bypass: true'), findsOneWidget);
+    expect(find.text('Landing: ${RouteNames.voiceAssistant}'), findsOneWidget);
+  });
+
+  testWidgets('no voice requests the dashboard landing', (
+    tester,
+  ) async {
+    const result = VoiceStartupGateResult(
+      isReady: false,
+      message: 'Checking for a connected headset...',
+      devices: <VoiceInputDevice>[],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Consumer(
+            builder: (context, ref, _) {
+              final landingRoute = ref.watch(voiceStartupGateLandingProvider);
+              return Column(
+                children: [
+                  Expanded(
+                    child: VoiceStartupGateScreen(result: result),
+                  ),
+                  Text('Landing: ${landingRoute ?? "none"}'),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Landing: none'), findsOneWidget);
+    await tester.tap(find.text('No Voice'));
+    await tester.pumpAndSettle();
+    expect(find.text('Landing: ${RouteNames.dashboard}'), findsOneWidget);
   });
 }

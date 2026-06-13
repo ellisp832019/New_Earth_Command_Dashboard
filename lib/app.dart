@@ -31,66 +31,69 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
     ref.watch(databaseReadyProvider);
     final themeMode = ref.watch(appThemeModeProvider);
     final settingsSnapshot = ref.watch(settingsSnapshotProvider);
+    final startupComplete = ref.watch(voiceStartupGateBypassProvider);
 
     Widget buildAppRouter() {
-      return MeetingNotificationBridge(
-        child: MaterialApp.router(
-          title: 'Gaia',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          routerConfig: appRouter,
-          builder: (context, child) {
-            final routedChild = Shortcuts(
-              shortcuts: const {
-                SingleActivator(LogicalKeyboardKey.keyK, control: true):
-                    OpenCommandPaletteIntent(),
-                SingleActivator(LogicalKeyboardKey.escape):
-                    CloseCommandPaletteIntent(),
-              },
-              child: Actions(
-                actions: {
-                  OpenCommandPaletteIntent:
-                      CallbackAction<OpenCommandPaletteIntent>(
-                        onInvoke: (intent) {
-                          appRouter.go(RouteNames.commandPalette);
-                          return null;
-                        },
-                      ),
-                  CloseCommandPaletteIntent:
-                      CallbackAction<CloseCommandPaletteIntent>(
-                        onInvoke: (intent) {
-                          if (appRouter.canPop()) {
-                            appRouter.pop();
-                          }
-                          return null;
-                        },
-                      ),
+      return _VoiceStartupLandingHandler(
+        child: MeetingNotificationBridge(
+          child: MaterialApp.router(
+            title: 'Gaia',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeMode,
+            routerConfig: appRouter,
+            builder: (context, child) {
+              final routedChild = Shortcuts(
+                shortcuts: const {
+                  SingleActivator(LogicalKeyboardKey.keyK, control: true):
+                      OpenCommandPaletteIntent(),
+                  SingleActivator(LogicalKeyboardKey.escape):
+                      CloseCommandPaletteIntent(),
                 },
-                child: child ?? const SizedBox.shrink(),
-              ),
-            );
+                child: Actions(
+                  actions: {
+                    OpenCommandPaletteIntent:
+                        CallbackAction<OpenCommandPaletteIntent>(
+                          onInvoke: (intent) {
+                            appRouter.go(RouteNames.commandPalette);
+                            return null;
+                          },
+                        ),
+                    CloseCommandPaletteIntent:
+                        CallbackAction<CloseCommandPaletteIntent>(
+                          onInvoke: (intent) {
+                            if (appRouter.canPop()) {
+                              appRouter.pop();
+                            }
+                            return null;
+                          },
+                        ),
+                  },
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
 
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                VoiceHandsfreeLayer(child: routedChild),
-                const Positioned(
-                  top: 16,
-                  right: 16,
-                  child: SafeArea(
-                    child: IgnorePointer(child: VoicePresenceChip()),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  VoiceHandsfreeLayer(child: routedChild),
+                  const Positioned(
+                    top: 16,
+                    right: 16,
+                    child: SafeArea(
+                      child: IgnorePointer(child: VoicePresenceChip()),
+                    ),
                   ),
-                ),
-                const Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: SafeArea(child: VoiceConversationDock()),
-                ),
-              ],
-            );
-          },
+                  const Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: SafeArea(child: VoiceConversationDock()),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       );
     }
@@ -120,11 +123,7 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
 
     return settingsSnapshot.when(
       data: (snapshot) {
-        if (ref.watch(voiceStartupGateBypassProvider)) {
-          return buildAppRouter();
-        }
-
-        if (!snapshot.settings.voiceAssistantEnabled) {
+        if (startupComplete) {
           return buildAppRouter();
         }
 
@@ -140,15 +139,12 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
             ),
           ),
           data: (VoiceStartupGateResult result) {
-            if (!result.isReady) {
-              return buildGateScreen(result);
-            }
-            return buildAppRouter();
+            return buildGateScreen(result);
           },
         );
       },
       loading: () {
-        if (ref.watch(voiceStartupGateBypassProvider)) {
+        if (startupComplete) {
           return buildAppRouter();
         }
 
@@ -164,15 +160,12 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
             ),
           ),
           data: (VoiceStartupGateResult result) {
-            if (!result.isReady) {
-              return buildGateScreen(result);
-            }
-            return buildAppRouter();
+            return buildGateScreen(result);
           },
         );
       },
       error: (error, stackTrace) {
-        if (ref.watch(voiceStartupGateBypassProvider)) {
+        if (startupComplete) {
           return buildAppRouter();
         }
 
@@ -188,13 +181,63 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
             ),
           ),
           data: (VoiceStartupGateResult result) {
-            if (!result.isReady) {
-              return buildGateScreen(result);
-            }
-            return buildAppRouter();
+            return buildGateScreen(result);
           },
         );
       },
     );
+  }
+}
+
+class _VoiceStartupLandingHandler extends ConsumerStatefulWidget {
+  const _VoiceStartupLandingHandler({required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<_VoiceStartupLandingHandler> createState() =>
+      _VoiceStartupLandingHandlerState();
+}
+
+class _VoiceStartupLandingHandlerState
+    extends ConsumerState<_VoiceStartupLandingHandler> {
+  bool _navigationQueued = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyInitialLanding();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VoiceStartupLandingHandler oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _applyInitialLanding();
+  }
+
+  void _applyInitialLanding() {
+    final landingRoute = ref.read(voiceStartupGateLandingProvider);
+    if (landingRoute == null || _navigationQueued) {
+      return;
+    }
+
+    _navigationQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      appRouter.go(landingRoute);
+      if (voiceStartupGateLandingRoute.value == landingRoute) {
+        voiceStartupGateLandingRoute.value = null;
+      }
+      ref.read(voiceStartupGateLandingProvider.notifier).clear();
+      _navigationQueued = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

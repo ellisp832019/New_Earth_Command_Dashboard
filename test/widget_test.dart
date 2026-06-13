@@ -2123,9 +2123,9 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Gaia is waiting for your headset'), findsOneWidget);
-    expect(find.text('Use headset anyway'), findsOneWidget);
+    expect(find.text('Have Voice'), findsOneWidget);
 
-    await tester.tap(find.text('Use headset anyway'));
+    await tester.tap(find.text('Have Voice'));
     await pumpUntilIdle(tester);
 
     expect(find.text('Dashboard'), findsWidgets);

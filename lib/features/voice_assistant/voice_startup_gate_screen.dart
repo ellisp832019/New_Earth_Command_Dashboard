@@ -139,7 +139,7 @@ class _VoiceStartupGateScreenState
       VoiceStartupGateState.noDevices =>
         'No audio input is showing up yet. Connect a Bluetooth headset or headset microphone, then try again.',
       VoiceStartupGateState.microphoneOnly =>
-        'Windows can see a microphone, but not one that looks like a headset. If this is your headset mic, you can still try Use headset anyway.',
+        'Windows can see a microphone, but not one that looks like a headset. If this is your headset mic, choose Have Voice.',
       VoiceStartupGateState.checkFailed =>
         'Gaia could not verify the audio devices from Windows right now. Open diagnostics to check the offline bridge and default input path.',
       VoiceStartupGateState.bypassed =>
@@ -153,7 +153,7 @@ class _VoiceStartupGateScreenState
       VoiceStartupGateState.noDevices =>
         'If a headset is already connected, unplug and reconnect it, then retry.',
       VoiceStartupGateState.microphoneOnly =>
-        'Try Use headset anyway if this microphone is actually the one on your headset.',
+        'Choose Have Voice if this microphone is actually the one on your headset.',
       VoiceStartupGateState.checkFailed =>
         'Run diagnostics to see whether the bridge can still reach the input device.',
       VoiceStartupGateState.bypassed =>
@@ -284,11 +284,18 @@ class _VoiceStartupGateScreenState
                         FilledButton.tonalIcon(
                           onPressed: () {
                             ref
-                                .read(voiceStartupGateBypassProvider.notifier)
-                                .allowBypass();
+                                .read(settingsControllerProvider)
+                                .setVoicePreferences(
+                                  voiceAssistantEnabled: true,
+                                );
+                            ref
+                                .read(
+                                  voiceStartupGateLandingProvider.notifier,
+                                )
+                                .requestVoiceAssistant();
                           },
                           icon: const Icon(Icons.headset_mic_outlined),
-                          label: const Text('Use headset anyway'),
+                          label: const Text('Have Voice'),
                         ),
                         OutlinedButton.icon(
                           onPressed: () {
@@ -297,9 +304,14 @@ class _VoiceStartupGateScreenState
                                 .setVoicePreferences(
                                   voiceAssistantEnabled: false,
                                 );
+                            ref
+                                .read(
+                                  voiceStartupGateLandingProvider.notifier,
+                                )
+                                .requestDashboard();
                           },
                           icon: const Icon(Icons.volume_off_outlined),
-                          label: const Text('Continue without Voice'),
+                          label: const Text('No Voice'),
                         ),
                         TextButton.icon(
                           onPressed: _showVoiceDiagnostics,
