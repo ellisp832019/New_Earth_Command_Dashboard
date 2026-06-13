@@ -173,6 +173,7 @@ class BackupGuardianSnapshot {
     required this.latestBackupStatus,
     required this.latestReportPath,
     required this.latestManifestPath,
+    required this.latestManifestExists,
     required this.restoreTestStatus,
     required this.backupSizeText,
     required this.historyFilePath,
@@ -201,6 +202,7 @@ class BackupGuardianSnapshot {
   final String latestBackupStatus;
   final String latestReportPath;
   final String latestManifestPath;
+  final bool latestManifestExists;
   final String restoreTestStatus;
   final String backupSizeText;
   final String historyFilePath;
@@ -268,6 +270,14 @@ class BackupGuardianService {
       history.entries,
       const ['VerifyLatest'],
     );
+    final statusManifestPath = status.manifestPath.trim();
+    final historyManifestPath = latestBackupHistory?.manifestPath.trim() ?? '';
+    final latestManifestPath = _latestManifestPath(
+      status: status,
+      latestBackupHistory: latestBackupHistory,
+    );
+    final latestManifestExists = latestManifestPath.isNotEmpty &&
+        File(latestManifestPath).existsSync();
 
     final warnings = <String>[
       ...status.warnings,
@@ -279,6 +289,16 @@ class BackupGuardianService {
         'Waiting for the external backup drive to appear.',
       if (history.entries.isEmpty)
         'No backup history has been recorded yet.',
+      if (statusManifestPath.isNotEmpty &&
+          historyManifestPath.isNotEmpty &&
+          statusManifestPath != historyManifestPath)
+        'The status file and history record point to different manifests. The latest backup record is being used for review.',
+      if (latestManifestPath.isNotEmpty && !latestManifestExists)
+        'The latest manifest is recorded but the file is missing. Verify Latest can only trust a readable manifest.',
+      if (latestManifestPath.isEmpty &&
+          (status.exists || latestBackupHistory != null) &&
+          config.verifyAfterBackup)
+        'The latest backup does not have a recorded manifest yet. Verify Latest will fall back to target checks until one appears.',
     ];
 
     final errors = <String>[
@@ -313,11 +333,19 @@ class BackupGuardianService {
       backupDriveExists: backupDriveExists,
       lastBackupAt: lastBackupAt,
       lastVerificationAt: lastVerificationAt,
+      latestManifestExists: latestManifestExists,
+      manifestRequired: config.verifyAfterBackup,
       staleAfterDays: config.staleAfterDays,
     );
 
     final healthSummary = switch (healthState) {
       BackupGuardianHealthState.green => 'Latest backup verified',
+      BackupGuardianHealthState.amber when latestManifestPath.isNotEmpty &&
+          !latestManifestExists =>
+        'Latest backup needs a readable manifest',
+      BackupGuardianHealthState.amber when latestManifestPath.isEmpty &&
+          (status.exists || latestBackupHistory != null) =>
+        'Latest backup is waiting for manifest-backed verification',
       BackupGuardianHealthState.amber => sourceExists && !backupDriveExists
           ? 'Backup drive not connected'
           : backupAge != null && backupAge >= config.staleAfterDays
@@ -371,10 +399,8 @@ class BackupGuardianService {
       latestReportPath: status.latestReportPath.isNotEmpty
           ? status.latestReportPath
           : _fallbackReportPath(config),
-      latestManifestPath: _latestManifestPath(
-        status: status,
-        latestBackupHistory: latestBackupHistory,
-      ),
+      latestManifestPath: latestManifestPath,
+      latestManifestExists: latestManifestExists,
       restoreTestStatus: status.restoreTestStatus.isNotEmpty
           ? status.restoreTestStatus
           : 'Not run yet',
@@ -528,6 +554,8 @@ class BackupGuardianService {
     required bool backupDriveExists,
     required DateTime? lastBackupAt,
     required DateTime? lastVerificationAt,
+    required bool latestManifestExists,
+    required bool manifestRequired,
     required int staleAfterDays,
   }) {
     if (!sourceExists) {
@@ -547,6 +575,10 @@ class BackupGuardianService {
       if (lastVerificationAt == null || lastBackupAt.isAfter(lastVerificationAt)) {
         return BackupGuardianHealthState.amber;
       }
+    }
+
+    if (manifestRequired && lastBackupAt != null && !latestManifestExists) {
+      return BackupGuardianHealthState.amber;
     }
 
     final backupAge = _backupAgeInDays(lastBackupAt);

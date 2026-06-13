@@ -78,6 +78,7 @@ void main() {
               latestReportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
               latestManifestPath:
                   'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
+              latestManifestExists: true,
               restoreTestStatus: 'Not run yet',
               backupSizeText: 'Not tracked in V1',
               historyFilePath:
@@ -177,8 +178,8 @@ void main() {
     expect(find.text('Weekly 4'), findsOneWidget);
     expect(find.text('Monthly 12'), findsOneWidget);
     expect(find.text('Roadmap / Future work'), findsOneWidget);
-    expect(find.text('V2 planned'), findsOneWidget);
-    expect(find.text('V3 planned'), findsOneWidget);
+    expect(find.text('V2 roadmap'), findsOneWidget);
+    expect(find.text('V3 roadmap'), findsOneWidget);
     expect(find.text('Latest manifest path'), findsOneWidget);
     expect(
       find.text(

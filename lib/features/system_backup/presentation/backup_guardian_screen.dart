@@ -219,11 +219,11 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       BackupGuardianAction.verifyLatest =>
         'Verify Latest launching. Current saved result: ${snapshot.latestBackupStatus}.',
       BackupGuardianAction.restoreDryRun =>
-        'Restore Dry Run launching into ${snapshot.config.restoreTestFolder}.',
+        'Restore Dry Run launching into ${snapshot.config.restoreTestFolder}. It will stay non-destructive and write only to the test folder.',
       BackupGuardianAction.quickIncremental =>
         'Quick Incremental launching. It will copy only new and changed files into the mirror target.',
       BackupGuardianAction.dailyBackup =>
-        'Daily Backup launching for the scheduled V2 run.',
+        'Daily Backup launching for the scheduled run.',
       BackupGuardianAction.weeklySnapshot =>
         'Weekly Snapshot launching for a dated restore point.',
       BackupGuardianAction.monthlyArchive =>
@@ -243,7 +243,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       BackupGuardianAction.verifyLatest =>
         'Verify Latest started. Saved status: ${snapshot.latestBackupStatus}. Last verification: ${_formatDate(snapshot.lastVerificationAt)}. The page will refresh shortly.',
       BackupGuardianAction.restoreDryRun =>
-        'Restore Dry Run started. Test folder: ${snapshot.config.restoreTestFolder}. The page will refresh shortly.',
+        'Restore Dry Run started. Test folder: ${snapshot.config.restoreTestFolder}. This stays non-destructive and the page will refresh shortly.',
       BackupGuardianAction.quickIncremental =>
         'Quick Incremental started. Only new and changed files should copy. The page will refresh shortly.',
       BackupGuardianAction.dailyBackup =>
@@ -371,7 +371,7 @@ class _HeroCard extends StatelessWidget {
                 accent: AppColours.darkSecondary,
                 icon: Icons.lock_open_outlined,
               ),
-              _Badge(label: 'Scheduled V2', accent: AppColours.darkSuccess),
+              _Badge(label: 'Scheduled runs', accent: AppColours.darkSuccess),
             ],
           ),
         ],
@@ -1177,10 +1177,14 @@ class _StatusGrid extends StatelessWidget {
             ? p.basename(snapshot.latestManifestPath)
             : 'No manifest yet',
         detail: snapshot.latestManifestPath.isNotEmpty
-            ? snapshot.latestManifestPath
+            ? snapshot.latestManifestExists
+                ? 'Manifest recorded in the latest backup and readable now.'
+                : 'Manifest path is recorded, but the file is missing.'
             : 'Manifest creation is optional until the next verified backup runs.',
         accent: snapshot.latestManifestPath.isNotEmpty
-            ? AppColours.darkSuccess
+            ? snapshot.latestManifestExists
+                ? AppColours.darkSuccess
+                : AppColours.darkAmber
             : AppColours.darkAmber,
       ),
     ];
@@ -1500,7 +1504,7 @@ class _RoadmapTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              _Badge(label: '$title planned', accent: AppColours.darkAmber),
+              _Badge(label: '$title roadmap', accent: AppColours.darkAmber),
             ],
           ),
           const SizedBox(height: 10),
