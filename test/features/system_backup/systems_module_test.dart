@@ -108,6 +108,24 @@ void main() {
                   reportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
                   restorePointLabel: 'Manual backup - 2026-06-07 06:00',
                 ),
+                BackupGuardianHistoryEntry(
+                  action: 'Daily Backup',
+                  mode: 'DailyBackup',
+                  backupKind: 'daily',
+                  state: 'green',
+                  summary: 'Scheduled daily backup completed successfully.',
+                  startedAt: DateTime.parse('2026-06-06T05:55:00Z'),
+                  finishedAt: DateTime.parse('2026-06-06T06:00:00Z'),
+                  durationMs: 240000,
+                  filesScanned: 10,
+                  filesCopied: 10,
+                  filesSkipped: 0,
+                  backupSizeText: '1.5 KB',
+                  manifestPath:
+                      'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260606_060000.json',
+                  reportPath: 'E:/NEW_EARTH_BACKUP/reports/older.log',
+                  restorePointLabel: 'Daily backup - 2026-06-06 06:00',
+                ),
               ],
               restorePoints: <BackupGuardianHistoryEntry>[
                 BackupGuardianHistoryEntry(
@@ -127,6 +145,24 @@ void main() {
                       'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
                   reportPath: 'E:/NEW_EARTH_BACKUP/reports/latest.log',
                   restorePointLabel: 'Manual backup - 2026-06-07 06:00',
+                ),
+                BackupGuardianHistoryEntry(
+                  action: 'Daily Backup',
+                  mode: 'DailyBackup',
+                  backupKind: 'daily',
+                  state: 'green',
+                  summary: 'Scheduled daily backup completed successfully.',
+                  startedAt: DateTime.parse('2026-06-06T05:55:00Z'),
+                  finishedAt: DateTime.parse('2026-06-06T06:00:00Z'),
+                  durationMs: 240000,
+                  filesScanned: 10,
+                  filesCopied: 10,
+                  filesSkipped: 0,
+                  backupSizeText: '1.5 KB',
+                  manifestPath:
+                      'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260606_060000.json',
+                  reportPath: 'E:/NEW_EARTH_BACKUP/reports/older.log',
+                  restorePointLabel: 'Daily backup - 2026-06-06 06:00',
                 ),
               ],
               scheduleSummary:
@@ -168,8 +204,8 @@ void main() {
     expect(find.text('Open Latest Report'), findsOneWidget);
     expect(find.text('Latest report: latest.log'), findsAtLeastNWidgets(2));
     expect(find.text('BackupNow'), findsWidgets);
-    expect(find.text('1 event'), findsOneWidget);
-    expect(find.text('1 restore point'), findsOneWidget);
+    expect(find.text('2 events'), findsOneWidget);
+    expect(find.text('2 restore points'), findsOneWidget);
     expect(
       find.text('Latest restore point: Manual backup - 2026-06-07 06:00'),
       findsOneWidget,
@@ -183,6 +219,8 @@ void main() {
     expect(find.textContaining('Kind: manual'), findsWidgets);
     expect(find.textContaining('Report: latest.log'), findsWidgets);
     expect(find.text('Backup growth'), findsOneWidget);
+    expect(find.textContaining('Latest backup size: 2.0 KB'), findsOneWidget);
+    expect(find.textContaining('Previous backup size: 1.5 KB'), findsOneWidget);
     expect(find.text('Recent reports'), findsOneWidget);
     expect(find.text('Quick 7'), findsOneWidget);
     expect(find.text('Daily 7'), findsOneWidget);

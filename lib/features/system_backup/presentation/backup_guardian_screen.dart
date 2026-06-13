@@ -1497,6 +1497,7 @@ class _GrowthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sizeTrend = _backupSizeTrend(snapshot.historyEntries);
+    final sizeSamples = _backupSizeSamples(snapshot.historyEntries);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1518,6 +1519,24 @@ class _GrowthCard extends StatelessWidget {
               height: 1.4,
             ),
           ),
+          if (sizeSamples.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Badge(
+                  label: 'Latest backup size: ${sizeSamples.first}',
+                  accent: AppColours.darkSuccess,
+                ),
+                if (sizeSamples.length > 1)
+                  _Badge(
+                    label: 'Previous backup size: ${sizeSamples[1]}',
+                    accent: AppColours.darkAmber,
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 10),
           Text(
             'Current backup size: ${snapshot.backupSizeText}',
@@ -1645,6 +1664,19 @@ String _backupSizeTrend(List<BackupGuardianHistoryEntry> entries) {
   }
 
   return 'Latest recorded backup size is ${latest.backupSizeText}, compared with ${previous.backupSizeText} on the previous run.';
+}
+
+List<String> _backupSizeSamples(List<BackupGuardianHistoryEntry> entries) {
+  final sizes = entries
+      .where((entry) => entry.backupSizeText.isNotEmpty)
+      .map((entry) => entry.backupSizeText)
+      .toList(growable: false);
+
+  if (sizes.isEmpty) {
+    return const <String>[];
+  }
+
+  return sizes.take(2).toList(growable: false);
 }
 
 class _RecentReport {
