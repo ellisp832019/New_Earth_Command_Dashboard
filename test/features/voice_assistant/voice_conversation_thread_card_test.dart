@@ -45,15 +45,14 @@ void main() {
       ),
     );
 
-    expect(find.text('Resume remembered thread'), findsOneWidget);
+    expect(find.text('Pick up this thread'), findsOneWidget);
     expect(find.text('Saved entries: 2'), findsOneWidget);
-    expect(find.text('Resume state'), findsOneWidget);
+    expect(find.text('Latest saved step'), findsOneWidget);
     expect(find.textContaining('2 saved entries'), findsOneWidget);
     expect(
       find.textContaining('Latest capture: Dashboard voice workflow'),
       findsOneWidget,
     );
-    expect(find.text('Latest capture'), findsOneWidget);
     expect(find.text('Reuse latest capture'), findsOneWidget);
     expect(find.text('Dashboard voice workflow'), findsOneWidget);
     expect(
