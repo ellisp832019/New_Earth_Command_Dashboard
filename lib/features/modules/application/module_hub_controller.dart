@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/modules/module_hub_state_repository.dart';
+import '../../../core/modules/module_event_bus.dart';
 import '../../../core/modules/module_loader.dart';
 import '../../../core/modules/module_manifest.dart';
 
@@ -39,10 +40,27 @@ class ModuleHubController extends Notifier<List<ModuleManifest>> {
           .read(moduleHubStateRepositoryProvider)
           .saveEnabledState(moduleId, enabled),
     );
+    ref.read(moduleEventBusProvider).publish(
+      ModuleEvent(
+        moduleId: moduleId,
+        type: ModuleEventType.enabledChanged,
+        timestamp: DateTime.now(),
+        message: enabled ? 'Module enabled locally.' : 'Module disabled locally.',
+        details: <String, dynamic>{'enabled': enabled},
+      ),
+    );
   }
 
   Future<void> reload() async {
     state = _loadModules();
+    ref.read(moduleEventBusProvider).publish(
+      ModuleEvent(
+        moduleId: 'module_hub',
+        type: ModuleEventType.registryReloaded,
+        timestamp: DateTime.now(),
+        message: 'Module registry refreshed.',
+      ),
+    );
   }
 
   List<ModuleManifest> _loadModules() {

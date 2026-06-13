@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/dock/dock_position.dart';
+import '../../core/modules/module_event_bus.dart';
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
@@ -39,6 +40,15 @@ class _ModuleDockingScreenState extends ConsumerState<ModuleDockingScreen> {
     await ref
         .read(moduleHubStateRepositoryProvider)
         .saveDockPosition(widget.module.id, position);
+    ref.read(moduleEventBusProvider).publish(
+      ModuleEvent(
+        moduleId: widget.module.id,
+        type: ModuleEventType.dockPositionChanged,
+        timestamp: DateTime.now(),
+        message: 'Dock position saved locally.',
+        details: <String, dynamic>{'position': position.name},
+      ),
+    );
   }
 
   @override
