@@ -87,6 +87,7 @@ void main() {
                 BackupGuardianHistoryEntry(
                   action: 'Backup Now',
                   mode: 'BackupNow',
+                  backupKind: 'manual',
                   state: 'green',
                   summary: 'Latest backup verified',
                   startedAt: DateTime.parse('2026-06-07T05:55:00Z'),
@@ -106,6 +107,7 @@ void main() {
                 BackupGuardianHistoryEntry(
                   action: 'Backup Now',
                   mode: 'BackupNow',
+                  backupKind: 'manual',
                   state: 'green',
                   summary: 'Latest backup verified',
                   startedAt: DateTime.parse('2026-06-07T05:55:00Z'),
@@ -171,6 +173,9 @@ void main() {
     expect(find.widgetWithText(FilterChip, 'Verification'), findsOneWidget);
     expect(find.widgetWithText(FilterChip, 'Restore points'), findsOneWidget);
     expect(find.text('Pick a restore point'), findsOneWidget);
+    expect(find.textContaining('Action: Backup Now'), findsWidgets);
+    expect(find.textContaining('Kind: manual'), findsWidgets);
+    expect(find.textContaining('Report: latest.log'), findsWidgets);
     expect(find.text('Backup growth'), findsOneWidget);
     expect(find.text('Recent reports'), findsOneWidget);
     expect(find.text('Quick 7'), findsOneWidget);

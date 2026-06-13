@@ -814,6 +814,7 @@ class BackupGuardianHistoryEntry {
   const BackupGuardianHistoryEntry({
     required this.action,
     required this.mode,
+    required this.backupKind,
     required this.state,
     required this.summary,
     required this.startedAt,
@@ -830,6 +831,7 @@ class BackupGuardianHistoryEntry {
 
   final String action;
   final String mode;
+  final String backupKind;
   final String state;
   final String summary;
   final DateTime? startedAt;
@@ -889,6 +891,7 @@ class BackupGuardianHistoryEntry {
     return BackupGuardianHistoryEntry(
       action: readString('action'),
       mode: readString('mode'),
+      backupKind: readString('backup_kind'),
       state: readString('state').isNotEmpty ? readString('state') : readString('result'),
       summary: readString('summary'),
       startedAt: readDate('started_at'),

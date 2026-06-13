@@ -921,16 +921,8 @@ class _RestorePointPickerState extends State<_RestorePointPicker> {
             const SizedBox(height: 12),
             _StatusTile(
               label: 'Selected restore point',
-              value: _backupRestorePointLabel(selectedEntry),
-              detail: [
-                _formatDate(
-                  selectedEntry.finishedAt ?? selectedEntry.startedAt,
-                ),
-                if (selectedEntry.duration != null)
-                  _formatDuration(selectedEntry.duration!),
-                if (selectedEntry.filesCopied != null)
-                  '${selectedEntry.filesCopied} files',
-              ].join(' - '),
+              value: _restorePointTitle(selectedEntry),
+              detail: _restorePointSummary(selectedEntry),
               accent: AppColours.darkSuccess,
             ),
           ],
@@ -1070,6 +1062,8 @@ class _HistoryEntryTile extends StatelessWidget {
             children: [
               if (entry.mode.isNotEmpty)
                 _Badge(label: entry.mode, accent: AppColours.darkPurple),
+              if (entry.backupKind.isNotEmpty)
+                _Badge(label: _restorePointKindLabel(entry), accent: AppColours.darkSuccess),
               _Badge(
                 label: _formatDate(entry.finishedAt ?? entry.startedAt),
                 accent: AppColours.darkSecondary,
@@ -1088,6 +1082,11 @@ class _HistoryEntryTile extends StatelessWidget {
                 _Badge(
                   label: entry.restorePointLabel,
                   accent: AppColours.darkSuccess,
+                ),
+              if (showRestorePointLabel && entry.reportPath.isNotEmpty)
+                _Badge(
+                  label: 'Report: ${p.basename(entry.reportPath)}',
+                  accent: AppColours.darkAmber,
                 ),
             ],
           ),
@@ -1580,6 +1579,34 @@ String _backupRestorePointLabel(BackupGuardianHistoryEntry entry) {
     return entry.restorePointLabel;
   }
   return entry.action.isNotEmpty ? entry.action : entry.mode;
+}
+
+String _restorePointTitle(BackupGuardianHistoryEntry entry) {
+  final label = _backupRestorePointLabel(entry);
+  final kind = _restorePointKindLabel(entry);
+  if (kind.isEmpty || kind == label) {
+    return label;
+  }
+  return '$label · $kind';
+}
+
+String _restorePointSummary(BackupGuardianHistoryEntry entry) {
+  final details = <String>[
+    _formatDate(entry.finishedAt ?? entry.startedAt),
+    if (entry.action.isNotEmpty) 'Action: ${entry.action}',
+    if (entry.backupKind.isNotEmpty) 'Kind: ${_restorePointKindLabel(entry)}',
+    if (entry.duration != null) _formatDuration(entry.duration!),
+    if (entry.filesCopied != null) '${entry.filesCopied} files copied',
+    if (entry.reportPath.isNotEmpty) 'Report: ${p.basename(entry.reportPath)}',
+  ];
+  return details.join(' · ');
+}
+
+String _restorePointKindLabel(BackupGuardianHistoryEntry entry) {
+  if (entry.backupKind.trim().isNotEmpty) {
+    return entry.backupKind.trim();
+  }
+  return entry.mode.isNotEmpty ? entry.mode : 'Restore point';
 }
 
 String _countLabel(int count, String singular) {
