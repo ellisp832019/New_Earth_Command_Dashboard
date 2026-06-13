@@ -259,6 +259,7 @@ void main() {
     expect(find.text('Roadmap / Future work'), findsOneWidget);
     expect(find.text('V2 roadmap'), findsOneWidget);
     expect(find.text('V3 roadmap'), findsOneWidget);
+    expect(find.text('Current run state'), findsOneWidget);
     expect(find.text('Latest manifest path'), findsOneWidget);
     expect(find.text('Verification details'), findsOneWidget);
     expect(find.text('Latest backup matches the manifest fingerprint.'), findsOneWidget);
@@ -267,7 +268,7 @@ void main() {
       findsWidgets,
     );
     expect(
-      find.text('Restore preview stays non-destructive and writes only to the test area.'),
+      find.text('Restore preview stays read-only and writes only to the test area.'),
       findsOneWidget,
     );
     expect(

@@ -223,7 +223,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       BackupGuardianAction.verifyLatest =>
         'Verify Latest launching. Current saved result: ${snapshot.latestBackupStatus}.',
       BackupGuardianAction.restoreDryRun =>
-        'Restore Dry Run opening the preview area at ${snapshot.config.restoreTestFolder}. It stays non-destructive and writes only to the test area.',
+        'Restore Dry Run opening the read-only preview area at ${snapshot.config.restoreTestFolder}. It will not change any backup files.',
       BackupGuardianAction.quickIncremental =>
         'Quick Incremental launching. It will copy only new and changed files into the mirror target.',
       BackupGuardianAction.dailyBackup =>
@@ -247,7 +247,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       BackupGuardianAction.verifyLatest =>
         'Verify Latest started. Saved status: ${snapshot.latestBackupStatus}. Last verification: ${_formatDate(snapshot.lastVerificationAt)}. The page will refresh shortly.',
       BackupGuardianAction.restoreDryRun =>
-        'Restore Dry Run started. Preview area: ${snapshot.config.restoreTestFolder}. It stays non-destructive and the page will refresh shortly.',
+        'Restore Dry Run started. Preview area: ${snapshot.config.restoreTestFolder}. No backup files will be changed, and the page will refresh shortly.',
       BackupGuardianAction.quickIncremental =>
         'Quick Incremental started. Only new and changed files should copy. The page will refresh shortly.',
       BackupGuardianAction.dailyBackup =>
@@ -1148,14 +1148,14 @@ class _StatusGrid extends StatelessWidget {
             ? AppColours.darkSuccess
             : AppColours.darkAmber,
       ),
-      _StatusTile(
-        label: 'Latest backup status',
-        value: snapshot.latestBackupStatus,
-        detail: snapshot.statusFileExists
-            ? 'From latest_status.json'
-            : 'No status file yet',
-        accent: AppColours.darkSecondary,
-      ),
+        _StatusTile(
+          label: 'Current run state',
+          value: snapshot.latestBackupStatus,
+          detail: snapshot.statusFileExists
+              ? 'From the latest local status file'
+              : 'No status file yet',
+          accent: AppColours.darkSecondary,
+        ),
       _StatusTile(
         label: 'Last backup time',
         value: _formatDate(snapshot.lastBackupAt),
@@ -1184,12 +1184,12 @@ class _StatusGrid extends StatelessWidget {
         detail: 'Captured from the latest backup run',
         accent: AppColours.darkPurple,
       ),
-      _StatusTile(
-        label: 'Restore test status',
-        value: snapshot.restoreTestStatus,
-        detail: 'Restore preview stays non-destructive and writes only to the test area.',
-        accent: AppColours.darkPurple,
-      ),
+        _StatusTile(
+          label: 'Restore test status',
+          value: snapshot.restoreTestStatus,
+          detail: 'Restore preview stays read-only and writes only to the test area.',
+          accent: AppColours.darkPurple,
+        ),
       _StatusTile(
         label: 'Latest report path',
         value: p.basename(snapshot.latestReportPath),
