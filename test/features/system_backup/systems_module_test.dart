@@ -91,6 +91,24 @@ void main() {
                   'modules/system_backup/runtime/backup_history.json',
               historyEntries: <BackupGuardianHistoryEntry>[
                 BackupGuardianHistoryEntry(
+                  action: 'Verify Latest',
+                  mode: 'VerifyLatest',
+                  backupKind: 'manual',
+                  state: 'green',
+                  summary: 'Latest backup verified',
+                  startedAt: DateTime.parse('2026-06-08T05:55:00Z'),
+                  finishedAt: DateTime.parse('2026-06-08T06:00:00Z'),
+                  durationMs: 60000,
+                  filesScanned: 12,
+                  filesCopied: 12,
+                  filesSkipped: 0,
+                  backupSizeText: '9.0 KB',
+                  manifestPath:
+                      'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260608_060000.json',
+                  reportPath: '',
+                  restorePointLabel: '',
+                ),
+                BackupGuardianHistoryEntry(
                   action: 'Backup Now',
                   mode: 'BackupNow',
                   backupKind: 'manual',
@@ -191,7 +209,7 @@ void main() {
 
     expect(find.text('Backup Guardian'), findsOneWidget);
     expect(find.text('Dry Run'), findsOneWidget);
-    expect(find.text('Verify Latest'), findsOneWidget);
+    expect(find.text('Verify Latest'), findsWidgets);
     expect(find.text('Restore Dry Run'), findsOneWidget);
     expect(find.text('Quick Incremental'), findsOneWidget);
     expect(find.text('Open Backup Root'), findsOneWidget);
@@ -204,7 +222,7 @@ void main() {
     expect(find.text('Open Latest Report'), findsOneWidget);
     expect(find.text('Latest report: latest.log'), findsAtLeastNWidgets(2));
     expect(find.text('BackupNow'), findsWidgets);
-    expect(find.text('2 events'), findsOneWidget);
+    expect(find.text('3 events'), findsOneWidget);
     expect(find.text('2 restore points'), findsOneWidget);
     expect(
       find.text('Latest restore point: Manual backup - 2026-06-07 06:00'),

@@ -1693,7 +1693,7 @@ class _RoadmapTile extends StatelessWidget {
 
 String _backupSizeTrend(List<BackupGuardianHistoryEntry> entries) {
   final sizes = entries
-      .where((entry) => entry.backupSizeText.isNotEmpty)
+      .where((entry) => entry.backupSizeText.isNotEmpty && _isBackupRun(entry))
       .toList(growable: false);
 
   if (sizes.isEmpty) {
@@ -1711,7 +1711,7 @@ String _backupSizeTrend(List<BackupGuardianHistoryEntry> entries) {
 
 List<String> _backupSizeSamples(List<BackupGuardianHistoryEntry> entries) {
   final sizes = entries
-      .where((entry) => entry.backupSizeText.isNotEmpty)
+      .where((entry) => entry.backupSizeText.isNotEmpty && _isBackupRun(entry))
       .map((entry) => entry.backupSizeText)
       .toList(growable: false);
 

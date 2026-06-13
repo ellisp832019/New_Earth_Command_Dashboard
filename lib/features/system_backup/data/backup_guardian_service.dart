@@ -398,7 +398,7 @@ class BackupGuardianService {
         : backupAge != null && backupAge >= config.staleAfterDays
             ? 'Freshness check: backup is $backupAge day${backupAge == 1 ? '' : 's'} old. A new backup would keep it within the ${config.staleAfterDays}-day window.'
             : !backupDriveExists
-                ? 'Backup drive not connected. Plug in the external drive when you’re ready.'
+                ? "Backup drive not connected. Plug in the external drive when you're ready."
                 : scheduleSummary;
 
     final nextSuggestedRun = _calculateNextSuggestedRun(
@@ -1219,3 +1219,4 @@ class _ParsedHistory {
     );
   }
 }
+
