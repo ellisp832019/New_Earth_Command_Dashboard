@@ -568,6 +568,14 @@ void main() {
       isTrue,
     );
     expect(
+      snapshot.verificationDetails,
+      contains('Verification note: the manifest and current target still differ.'),
+    );
+    expect(
+      snapshot.verificationDetails,
+      contains('Affected areas: fingerprint, file count, and size.'),
+    );
+    expect(
       snapshot.verificationDetails.any((line) => line.contains('Target inventory fingerprint mismatch.')),
       isTrue,
     );

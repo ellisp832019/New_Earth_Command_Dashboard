@@ -763,6 +763,18 @@ class BackupGuardianService {
       );
     }
 
+    final mismatchAreas = _verificationMismatchAreas(status.errors);
+    if (status.errors.isNotEmpty) {
+      details.add(
+        'Verification note: the manifest and current target still differ.',
+      );
+      if (mismatchAreas.isNotEmpty) {
+        details.add(
+          'Affected areas: ${_joinListWithAnd(mismatchAreas)}.',
+        );
+      }
+    }
+
     if (manifest.targetInventoryHash.isNotEmpty) {
       details.add(
         'Fingerprint: ${status.errors.any((item) => item.toLowerCase().contains('fingerprint')) ? 'mismatch reported by Verify Latest' : 'recorded in the manifest'}.',
@@ -809,6 +821,51 @@ class BackupGuardianService {
       summary: summary,
       details: List<String>.unmodifiable(details),
     );
+  }
+
+  List<String> _verificationMismatchAreas(List<String> errors) {
+    final areas = <String>[];
+
+    void addArea(String area) {
+      if (!areas.contains(area)) {
+        areas.add(area);
+      }
+    }
+
+    for (final error in errors) {
+      final lower = error.toLowerCase();
+      if (lower.contains('fingerprint')) {
+        addArea('fingerprint');
+      }
+      if (lower.contains('file count')) {
+        addArea('file count');
+      }
+      if (lower.contains('size')) {
+        addArea('size');
+      }
+      if (lower.contains('path')) {
+        addArea('path');
+      }
+      if (lower.contains('drive')) {
+        addArea('drive');
+      }
+    }
+
+    return List<String>.unmodifiable(areas);
+  }
+
+  String _joinListWithAnd(List<String> items) {
+    if (items.isEmpty) {
+      return '';
+    }
+    if (items.length == 1) {
+      return items.first;
+    }
+    if (items.length == 2) {
+      return '${items.first} and ${items.last}';
+    }
+    final head = items.take(items.length - 1).join(', ');
+    return '$head, and ${items.last}';
   }
 
   int? _backupAgeInDays(DateTime? lastBackupAt) {

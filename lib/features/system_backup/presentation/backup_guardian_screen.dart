@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1346,7 +1346,7 @@ class _VerificationCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
-                      '• $line',
+                      'â€¢ $line',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColours.darkText,
                         height: 1.35,
@@ -1771,7 +1771,7 @@ String _restorePointTitle(BackupGuardianHistoryEntry entry) {
   if (kind.isEmpty || kind == label) {
     return label;
   }
-  return '$label · $kind';
+  return '$label - $kind';
 }
 
 String _restorePointSummary(BackupGuardianHistoryEntry entry) {
@@ -1783,7 +1783,7 @@ String _restorePointSummary(BackupGuardianHistoryEntry entry) {
     if (entry.filesCopied != null) '${entry.filesCopied} files copied',
     if (entry.reportPath.isNotEmpty) 'Report: ${p.basename(entry.reportPath)}',
   ];
-  return details.join(' · ');
+  return details.join(' - ');
 }
 
 String _restorePointKindLabel(BackupGuardianHistoryEntry entry) {
@@ -2085,3 +2085,4 @@ BoxDecoration _panelDecoration(
     border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.85)),
   );
 }
+
