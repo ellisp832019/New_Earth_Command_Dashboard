@@ -245,7 +245,7 @@ void main() {
       findsWidgets,
     );
     expect(
-      find.text('Restore preview stays non-destructive in V1.'),
+      find.text('Restore preview stays non-destructive and writes only to the test area.'),
       findsOneWidget,
     );
     expect(
