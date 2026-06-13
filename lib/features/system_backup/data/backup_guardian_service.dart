@@ -332,8 +332,11 @@ class BackupGuardianService {
         (status.mode == 'VerifyLatest' ? status.updatedAt : null);
     final backupAge = _backupAgeInDays(lastBackupAt);
     if (backupAge != null && backupAge >= config.staleAfterDays) {
+      final overdueDays = backupAge - config.staleAfterDays;
       warnings.add(
-        'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old. A fresh backup would be a good next step.',
+        overdueDays > 0
+            ? 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old, which is $overdueDays day${overdueDays == 1 ? '' : 's'} past the ${config.staleAfterDays}-day freshness window.'
+            : 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and at the freshness window.',
       );
     }
     if (lastBackupAt != null &&
@@ -379,7 +382,9 @@ class BackupGuardianService {
             ? 'Backup age is being tracked.'
             : backupAge <= 0
                 ? 'Backup ran today.'
-                : 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old.';
+                : backupAge < config.staleAfterDays
+                    ? 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and still inside the freshness window.'
+                    : 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and past the ${config.staleAfterDays}-day freshness window.';
 
     final scheduleSummary = config.scheduleEnabled
         ? 'Scheduled daily at ${config.dailyBackupTime}, weekly on ${config.weeklySnapshotDay}, monthly on day ${config.monthlyArchiveDay}.'
@@ -391,10 +396,10 @@ class BackupGuardianService {
     final notificationBanner = history.entries.isEmpty
         ? 'No backup history yet. Run a backup to start the timeline.'
         : backupAge != null && backupAge >= config.staleAfterDays
-            ? 'Backup is older than ${config.staleAfterDays} day${config.staleAfterDays == 1 ? '' : 's'}. A fresh backup would help keep it current.'
-            : backupDriveExists
-                ? scheduleSummary
-                : 'Backup drive not connected. Plug in the external drive to continue.';
+            ? 'Freshness check: backup is $backupAge day${backupAge == 1 ? '' : 's'} old. A new backup would keep it within the ${config.staleAfterDays}-day window.'
+            : !backupDriveExists
+                ? 'Backup drive not connected. Plug in the external drive when you’re ready.'
+                : scheduleSummary;
 
     final nextSuggestedRun = _calculateNextSuggestedRun(
       config: config,

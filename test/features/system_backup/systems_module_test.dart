@@ -195,6 +195,10 @@ void main() {
     expect(find.text('Verification details'), findsOneWidget);
     expect(find.text('Latest backup matches the manifest fingerprint.'), findsOneWidget);
     expect(
+      find.textContaining('Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.'),
+      findsWidgets,
+    );
+    expect(
       find.text(
         'Mirror folder is not ready yet, so I am opening the backup root instead.',
       ),

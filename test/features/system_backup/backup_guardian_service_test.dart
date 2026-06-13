@@ -287,8 +287,16 @@ void main() {
     expect(
       snapshot.warnings.any((warning) =>
           warning.startsWith('Backup is ') &&
-          warning.contains('A fresh backup would be a good next step.')),
+          warning.contains('freshness window')),
       isTrue,
+    );
+    expect(
+      snapshot.freshnessSummary,
+      contains('freshness window'),
+    );
+    expect(
+      snapshot.notificationBanner,
+      contains('Freshness check:'),
     );
     expect(snapshot.healthState, BackupGuardianHealthState.amber);
   });

@@ -55,6 +55,8 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                           onBackToMore: () => context.go(RouteNames.more),
                         ),
                         const SizedBox(height: 20),
+                        _NotificationBanner(snapshot: snapshot),
+                        const SizedBox(height: 20),
                         _ActionCard(
                           isBusy: _isBusy,
                           snapshot: snapshot,
@@ -1346,6 +1348,50 @@ class _VerificationCard extends StatelessWidget {
                 ],
               ],
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotificationBanner extends StatelessWidget {
+  const _NotificationBanner({required this.snapshot});
+
+  final BackupGuardianSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final isFreshnessNote = snapshot.notificationBanner.toLowerCase().contains('freshness') ||
+        snapshot.notificationBanner.toLowerCase().contains('window');
+    final accent = snapshot.backupDriveExists
+        ? (isFreshnessNote ? AppColours.darkAmber : AppColours.darkSuccess)
+        : AppColours.darkAmber;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isFreshnessNote ? Icons.schedule_outlined : Icons.info_outline,
+            color: accent,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              snapshot.notificationBanner,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkText,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
