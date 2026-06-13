@@ -12,6 +12,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(BackButton), findsOneWidget);
+    expect(find.text('Back to More'), findsOneWidget);
     expect(find.text('Module Hub'), findsOneWidget);
   });
 }

@@ -637,6 +637,15 @@ class _HeaderCard extends StatelessWidget {
               'Folder-only entries are shown as Scaffold until they gain a root manifest.',
               style: theme.textTheme.bodySmall,
             ),
+            const SizedBox(height: 14),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.more),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to More'),
+              ),
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 12,
