@@ -4,7 +4,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../data/alexa_voice_gateway_adapter.dart';
 import '../data/alexa_voice_gateway_models.dart';
@@ -692,6 +694,19 @@ class _HeaderCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              TextButton.icon(
+                key: const Key('alexaGatewayBackButton'),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(RouteNames.dashboard);
+                  }
+                },
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back'),
+              ),
+              const SizedBox(width: 12),
               Container(
                 width: 54,
                 height: 54,
@@ -735,6 +750,7 @@ class _HeaderCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 10),
           SelectableText(
             modulePath,
             style: theme.textTheme.bodySmall?.copyWith(

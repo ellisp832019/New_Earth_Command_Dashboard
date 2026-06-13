@@ -12,6 +12,7 @@ class ModuleHealthPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final health = module.health;
+    final color = _stateColor(context, health.state);
 
     return Card(
       child: Padding(
@@ -19,7 +20,22 @@ class ModuleHealthPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Health', style: theme.textTheme.titleMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Health', style: theme.textTheme.titleMedium),
+                ),
+                Chip(
+                  avatar: Icon(Icons.monitor_heart_outlined, color: color),
+                  label: Text(health.state.label),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Local health is a snapshot of the module shell, not a live backend check.',
+              style: theme.textTheme.bodyMedium,
+            ),
             const SizedBox(height: 12),
             _HealthRow(label: 'State', value: health.state.label),
             _HealthRow(label: 'Last checked', value: health.lastCheckedLabel),
@@ -41,6 +57,18 @@ class ModuleHealthPanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _stateColor(BuildContext context, ModuleHealthState state) {
+    final scheme = Theme.of(context).colorScheme;
+    return switch (state) {
+      ModuleHealthState.healthy => scheme.primary,
+      ModuleHealthState.warning => scheme.tertiary,
+      ModuleHealthState.degraded => scheme.secondary,
+      ModuleHealthState.offline => scheme.outline,
+      ModuleHealthState.error => scheme.error,
+      ModuleHealthState.unknown => scheme.onSurfaceVariant,
+    };
   }
 }
 

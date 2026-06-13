@@ -45,6 +45,12 @@ abstract final class RouteNames {
   static const more = '/more';
   static const moduleHub = '/more/module-hub';
   static String moduleHubModule(String moduleId) => '$moduleHub/$moduleId';
+  static String moduleHubModuleOperations(String moduleId) =>
+      '$moduleHub/$moduleId/operations';
+  static String moduleHubModuleDocking(String moduleId) =>
+      '$moduleHub/$moduleId/docking';
+  static String moduleHubModuleGovernance(String moduleId) =>
+      '$moduleHub/$moduleId/governance';
   static String moduleHubModuleSettings(String moduleId) =>
       '$moduleHub/$moduleId/settings';
   static String moduleHubModulePermissions(String moduleId) =>

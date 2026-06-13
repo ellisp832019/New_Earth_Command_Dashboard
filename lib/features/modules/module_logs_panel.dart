@@ -43,18 +43,21 @@ class ModuleLogsPanel extends StatelessWidget {
             Text('Logs', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
             Text(
-              'Placeholder only. Real live logs come later.',
+              'A light local timeline for module activity. Real live logs come later.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
-            ...entries.map(
-              (entry) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(entry.icon),
-                title: Text(entry.title),
-                subtitle: Text(entry.subtitle),
+            if (entries.isEmpty)
+              const Text('No local log entries are available yet.')
+            else
+              ...entries.map(
+                (entry) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(entry.icon),
+                  title: Text(entry.title),
+                  subtitle: Text(entry.subtitle),
+                ),
               ),
-            ),
           ],
         ),
       ),

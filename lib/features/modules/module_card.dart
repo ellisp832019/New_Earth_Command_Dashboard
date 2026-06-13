@@ -95,14 +95,14 @@ class ModuleCard extends StatelessWidget {
                       value: module.enabled,
                       onChanged: onEnabledChanged,
                       title: const Text('Local toggle'),
-                      subtitle: const Text('Persisted locally'),
+                      subtitle: const Text('Saved locally'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.tonal(
                     onPressed: () =>
                         context.push(RouteNames.moduleHubModule(module.id)),
-                    child: const Text('Open'),
+                    child: const Text('Inspect'),
                   ),
                 ],
               ),
@@ -126,8 +126,10 @@ Color _statusColor(ThemeData theme, ModuleStatus status) {
       return theme.colorScheme.secondary;
     case ModuleStatus.error:
       return theme.colorScheme.error;
-    case ModuleStatus.planned:
+    case ModuleStatus.scaffold:
       return theme.colorScheme.surfaceTint;
+    case ModuleStatus.planned:
+      return theme.colorScheme.secondary;
     case ModuleStatus.experimental:
       return theme.colorScheme.primaryContainer;
   }

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/dock/dock_position.dart';
 import '../../core/modules/module_category.dart';
 import '../../core/modules/module_health.dart';
@@ -7,6 +10,7 @@ import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_permissions.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/modules/module_types.dart';
+import '../../core/routing/route_names.dart';
 import 'application/module_hub_controller.dart';
 import 'module_card.dart';
 import 'module_hub_filtering.dart';
@@ -20,13 +24,36 @@ class ModulesScreen extends ConsumerStatefulWidget {
 }
 
 class _ModulesScreenState extends ConsumerState<ModulesScreen> {
-  final _searchController = TextEditingController();
-  ModuleViewMode _viewMode = ModuleViewMode.grid;
+  late final TextEditingController _searchController;
+  late ModuleViewMode _viewMode;
   ModuleCategory? _categoryFilter;
   ModuleStatus? _statusFilter;
   bool? _dockableFilter;
   ModulePermissionType? _permissionFilter;
-  ModuleHubSortMode _sortMode = ModuleHubSortMode.alphabetical;
+  late ModuleHubSortMode _sortMode;
+
+  @override
+  void initState() {
+    super.initState();
+    final persistedState = ref
+        .read(moduleHubStateRepositoryProvider)
+        .loadHubUiState();
+    _searchController = TextEditingController(
+      text: _stringState(persistedState, 'searchQuery'),
+    );
+    _viewMode = _parseViewMode(_stringState(persistedState, 'viewMode'));
+    _categoryFilter = _parseCategoryFilter(
+      _stringState(persistedState, 'categoryFilter'),
+    );
+    _statusFilter = _parseStatusFilter(
+      _stringState(persistedState, 'statusFilter'),
+    );
+    _dockableFilter = _parseBoolFilter(persistedState['dockableFilter']);
+    _permissionFilter = _parsePermissionFilter(
+      _stringState(persistedState, 'permissionFilter'),
+    );
+    _sortMode = _parseSortMode(_stringState(persistedState, 'sortMode'));
+  }
 
   @override
   void dispose() {
@@ -55,13 +82,15 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
         .length;
 
     return Scaffold(
+      appBar: AppBar(
+        leading: BackButton(onPressed: () => context.go(RouteNames.more)),
+        title: const Text('Module Hub'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _HeaderCard(
-            title: 'Module Hub',
-            subtitle:
-                'Install, enable, inspect and manage New Earth Dashboard modules',
+            subtitle: 'Live local module registry',
             summary:
                 'Showing ${filteredModules.length} of ${modules.length} modules',
             enabledCount: enabledCount,
@@ -75,7 +104,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AI Assistant Dock Preview',
+                    'Assistant dock preview',
                     style: theme.textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
@@ -115,7 +144,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     controller: _searchController,
                     decoration: InputDecoration(
                       labelText: 'Search modules',
-                      hintText: 'Name, description, tag, permission or folder',
+                      hintText: 'Name, tag, permission, or folder',
                       prefixIcon: const Icon(Icons.search),
                       border: const OutlineInputBorder(),
                       suffixIcon: _searchController.text.isEmpty
@@ -125,11 +154,15 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                                 setState(() {
                                   _searchController.clear();
                                 });
+                                _saveUiState();
                               },
                               icon: const Icon(Icons.clear),
                             ),
                     ),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) {
+                      setState(() {});
+                      _saveUiState();
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -146,6 +179,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                           ? ModuleViewMode.grid
                           : ModuleViewMode.list;
                     });
+                    _saveUiState();
                   },
                   children: const [
                     Padding(
@@ -189,17 +223,26 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ChoiceChip(
                   label: const Text('All'),
                   selected: _dockableFilter == null,
-                  onSelected: (_) => setState(() => _dockableFilter = null),
+                  onSelected: (_) {
+                    setState(() => _dockableFilter = null);
+                    _saveUiState();
+                  },
                 ),
                 ChoiceChip(
                   label: const Text('Dockable'),
                   selected: _dockableFilter == true,
-                  onSelected: (_) => setState(() => _dockableFilter = true),
+                  onSelected: (_) {
+                    setState(() => _dockableFilter = true);
+                    _saveUiState();
+                  },
                 ),
                 ChoiceChip(
                   label: const Text('Fixed'),
                   selected: _dockableFilter == false,
-                  onSelected: (_) => setState(() => _dockableFilter = false),
+                  onSelected: (_) {
+                    setState(() => _dockableFilter = false);
+                    _saveUiState();
+                  },
                 ),
               ],
             ),
@@ -213,7 +256,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ChoiceChip(
                   label: const Text('All'),
                   selected: _categoryFilter == null,
-                  onSelected: (_) => setState(() => _categoryFilter = null),
+                  onSelected: (_) {
+                    setState(() => _categoryFilter = null);
+                    _saveUiState();
+                  },
                 ),
                 ...ModuleCategory.values.map(
                   (category) => ChoiceChip(
@@ -221,6 +267,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     selected: _categoryFilter == category,
                     onSelected: (_) {
                       setState(() => _categoryFilter = category);
+                      _saveUiState();
                     },
                   ),
                 ),
@@ -236,7 +283,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ChoiceChip(
                   label: const Text('All'),
                   selected: _statusFilter == null,
-                  onSelected: (_) => setState(() => _statusFilter = null),
+                  onSelected: (_) {
+                    setState(() => _statusFilter = null);
+                    _saveUiState();
+                  },
                 ),
                 ...ModuleStatus.values.map(
                   (status) => ChoiceChip(
@@ -244,6 +294,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     selected: _statusFilter == status,
                     onSelected: (_) {
                       setState(() => _statusFilter = status);
+                      _saveUiState();
                     },
                   ),
                 ),
@@ -259,7 +310,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ChoiceChip(
                   label: const Text('All'),
                   selected: _permissionFilter == null,
-                  onSelected: (_) => setState(() => _permissionFilter = null),
+                  onSelected: (_) {
+                    setState(() => _permissionFilter = null);
+                    _saveUiState();
+                  },
                 ),
                 ...ModulePermissionType.values.map(
                   (permissionType) => ChoiceChip(
@@ -267,6 +321,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     selected: _permissionFilter == permissionType,
                     onSelected: (_) {
                       setState(() => _permissionFilter = permissionType);
+                      _saveUiState();
                     },
                   ),
                 ),
@@ -412,6 +467,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
             return;
           }
           setState(() => _sortMode = value);
+          _saveUiState();
         },
         icon: const Icon(Icons.sort),
       ),
@@ -427,6 +483,90 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
       _permissionFilter = null;
       _sortMode = ModuleHubSortMode.alphabetical;
     });
+    _saveUiState();
+  }
+
+  void _saveUiState() {
+    unawaited(
+      ref
+          .read(moduleHubStateRepositoryProvider)
+          .saveHubUiState(<String, dynamic>{
+            'searchQuery': _searchController.text,
+            'viewMode': _viewMode.name,
+            'categoryFilter': _categoryFilter?.name,
+            'statusFilter': _statusFilter?.name,
+            'dockableFilter': _dockableFilter,
+            'permissionFilter': _permissionFilter?.name,
+            'sortMode': _sortMode.name,
+          }),
+    );
+  }
+
+  String _stringState(Map<String, dynamic> state, String key) {
+    final value = state[key];
+    return value?.toString() ?? '';
+  }
+
+  ModuleViewMode _parseViewMode(String value) {
+    switch (value) {
+      case 'list':
+        return ModuleViewMode.list;
+      case 'grid':
+      default:
+        return ModuleViewMode.grid;
+    }
+  }
+
+  ModuleCategory? _parseCategoryFilter(String value) {
+    for (final category in ModuleCategory.values) {
+      if (category.name == value) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  ModuleStatus? _parseStatusFilter(String value) {
+    for (final status in ModuleStatus.values) {
+      if (status.name == value) {
+        return status;
+      }
+    }
+    return null;
+  }
+
+  bool? _parseBoolFilter(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (normalized == 'true') {
+        return true;
+      }
+      if (normalized == 'false') {
+        return false;
+      }
+    }
+    return null;
+  }
+
+  ModulePermissionType? _parsePermissionFilter(String value) {
+    for (final permissionType in ModulePermissionType.values) {
+      if (permissionType.name == value) {
+        return permissionType;
+      }
+    }
+    return null;
+  }
+
+  ModuleHubSortMode _parseSortMode(String value) {
+    for (final sortMode in ModuleHubSortMode.values) {
+      if (sortMode.name == value) {
+        return sortMode;
+      }
+    }
+    return ModuleHubSortMode.alphabetical;
   }
 
   ModuleManifest _assistantDockPreview() {
@@ -466,14 +606,12 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
-    required this.title,
     required this.subtitle,
     required this.summary,
     required this.enabledCount,
     required this.errorCount,
   });
 
-  final String title;
   final String subtitle;
   final String summary;
   final int enabledCount;
@@ -489,11 +627,16 @@ class _HeaderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: theme.textTheme.displaySmall),
-            const SizedBox(height: 8),
-            Text(subtitle, style: theme.textTheme.titleMedium),
+            Text('More · Module Hub', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
+            Text(subtitle, style: theme.textTheme.displaySmall),
             const SizedBox(height: 12),
             Text(summary, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 6),
+            Text(
+              'Folder-only entries are shown as Scaffold until they gain a root manifest.',
+              style: theme.textTheme.bodySmall,
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 12,
@@ -501,8 +644,8 @@ class _HeaderCard extends StatelessWidget {
               children: [
                 _SummaryCard(label: 'Enabled', value: '$enabledCount'),
                 _SummaryCard(label: 'Errors', value: '$errorCount'),
-                const _SummaryCard(label: 'Mode', value: 'Mock registry'),
-                const _SummaryCard(label: 'Path', value: 'Local only'),
+                const _SummaryCard(label: 'Mode', value: 'Live local'),
+                const _SummaryCard(label: 'Path', value: 'Folder-backed'),
               ],
             ),
           ],

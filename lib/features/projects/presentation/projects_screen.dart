@@ -143,11 +143,25 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          FilledButton.icon(
-            key: const Key('addProjectButton'),
-            onPressed: () => context.push(RouteNames.newProject),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Project'),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              TextButton.icon(
+                key: const Key('backToProjectHubButton'),
+                onPressed: () => context.go(RouteNames.projectsIntelligence),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to hub'),
+              ),
+              FilledButton.icon(
+                key: const Key('addProjectButton'),
+                onPressed: () => context.push(RouteNames.newProject),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Project'),
+              ),
+            ],
           ),
         ],
       ),

@@ -36,7 +36,10 @@ class _ModuleSettingsScreenState extends ConsumerState<ModuleSettingsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.module.name} Settings')),
+      appBar: AppBar(
+        leading: const BackButton(),
+        title: Text('${widget.module.name} Settings'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

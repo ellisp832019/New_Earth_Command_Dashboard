@@ -42,12 +42,56 @@ class ModuleHubStateRepository {
   }
 
   Future<void> saveEnabledStates(Map<String, bool> states) async {
+    final payload = _readPayload();
+    payload['enabledById'] = states;
+    payload['updatedAt'] = DateTime.now().toIso8601String();
+
     final file = File(stateFilePath);
     await file.parent.create(recursive: true);
-    final payload = <String, dynamic>{
-      'enabledById': states,
-      'updatedAt': DateTime.now().toIso8601String(),
-    };
     await file.writeAsString(JsonEncoder.withIndent('  ').convert(payload));
+  }
+
+  Map<String, dynamic> loadHubUiState() {
+    final payload = _readPayload();
+    final uiState = payload['hubUiState'];
+    if (uiState is Map<String, dynamic>) {
+      return uiState;
+    }
+    if (uiState is Map) {
+      return uiState.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const <String, dynamic>{};
+  }
+
+  Future<void> saveHubUiState(Map<String, dynamic> state) async {
+    final payload = _readPayload();
+    payload['hubUiState'] = state;
+    payload['updatedAt'] = DateTime.now().toIso8601String();
+
+    final file = File(stateFilePath);
+    await file.parent.create(recursive: true);
+    await file.writeAsString(JsonEncoder.withIndent('  ').convert(payload));
+  }
+
+  Map<String, dynamic> _readPayload() {
+    final file = File(stateFilePath);
+    if (!file.existsSync()) {
+      return <String, dynamic>{};
+    }
+
+    try {
+      final contents = file.readAsStringSync();
+      final decoded = jsonDecode(contents);
+      if (decoded is Map<String, dynamic>) {
+        return Map<String, dynamic>.from(decoded);
+      }
+      if (decoded is Map) {
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
+      }
+    } catch (_) {
+      return <String, dynamic>{};
+    }
+
+    return <String, dynamic>{};
   }
 }

@@ -31,6 +31,42 @@ void main() {
     expect(states['alpha_module'], isFalse);
   });
 
+  test('module hub state repository saves and reloads hub ui state', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('module-hub-ui-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final stateFile = path.join(tempRoot.path, 'module_hub_state.json');
+    final repository = ModuleHubStateRepository(stateFilePath: stateFile);
+
+    await repository.saveHubUiState({
+      'searchQuery': 'voice',
+      'viewMode': 'list',
+      'categoryFilter': 'aiAutomation',
+      'statusFilter': 'scaffold',
+      'dockableFilter': true,
+      'permissionFilter': 'microphone',
+      'sortMode': 'status',
+    });
+
+    final contents =
+        jsonDecode(File(stateFile).readAsStringSync()) as Map<String, dynamic>;
+    expect(contents['hubUiState'], isA<Map>());
+    expect(contents['updatedAt'], isA<String>());
+
+    final uiState = repository.loadHubUiState();
+    expect(uiState['searchQuery'], 'voice');
+    expect(uiState['viewMode'], 'list');
+    expect(uiState['categoryFilter'], 'aiAutomation');
+    expect(uiState['statusFilter'], 'scaffold');
+    expect(uiState['dockableFilter'], isTrue);
+    expect(uiState['permissionFilter'], 'microphone');
+    expect(uiState['sortMode'], 'status');
+  });
+
   test('module loader reapplies persisted enabled state on load', () async {
     final tempRoot = Directory.systemTemp.createTempSync(
       'module-loader-state-',

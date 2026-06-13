@@ -20,11 +20,7 @@ final moduleHubModulesProvider =
 class ModuleHubController extends Notifier<List<ModuleManifest>> {
   @override
   List<ModuleManifest> build() {
-    final loader = const ModuleLoader();
-    final states = ref
-        .read(moduleHubStateRepositoryProvider)
-        .loadEnabledStates();
-    return loader.load(enabledOverrides: states).all;
+    return _loadModules();
   }
 
   Future<void> setModuleEnabled(String moduleId, bool enabled) async {
@@ -43,5 +39,17 @@ class ModuleHubController extends Notifier<List<ModuleManifest>> {
           .read(moduleHubStateRepositoryProvider)
           .saveEnabledState(moduleId, enabled),
     );
+  }
+
+  Future<void> reload() async {
+    state = _loadModules();
+  }
+
+  List<ModuleManifest> _loadModules() {
+    final loader = const ModuleLoader();
+    final states = ref
+        .read(moduleHubStateRepositoryProvider)
+        .loadEnabledStates();
+    return loader.load(enabledOverrides: states).all;
   }
 }

@@ -60,6 +60,9 @@ import '../../features/project_intelligence/presentation/projects_intelligence_s
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_settings_screen.dart';
 import '../../features/modules/module_detail_screen.dart';
+import '../../features/modules/module_docking_screen.dart';
+import '../../features/modules/module_governance_screen.dart';
+import '../../features/modules/module_operations_screen.dart';
 import '../../features/modules/module_permissions_screen.dart';
 import '../../features/modules/module_settings_screen.dart';
 import '../../features/modules/modules_screen.dart';
@@ -371,6 +374,42 @@ final appRouter = GoRouter(
                         return ModuleDetailScreen(module: module);
                       },
                       routes: [
+                        GoRoute(
+                          path: 'operations',
+                          builder: (context, state) {
+                            final registry = const ModuleLoader().load();
+                            final module =
+                                registry.byId(
+                                  state.pathParameters['moduleId']!,
+                                ) ??
+                                registry.all.first;
+                            return ModuleOperationsScreen(module: module);
+                          },
+                        ),
+                        GoRoute(
+                          path: 'docking',
+                          builder: (context, state) {
+                            final registry = const ModuleLoader().load();
+                            final module =
+                                registry.byId(
+                                  state.pathParameters['moduleId']!,
+                                ) ??
+                                registry.all.first;
+                            return ModuleDockingScreen(module: module);
+                          },
+                        ),
+                        GoRoute(
+                          path: 'governance',
+                          builder: (context, state) {
+                            final registry = const ModuleLoader().load();
+                            final module =
+                                registry.byId(
+                                  state.pathParameters['moduleId']!,
+                                ) ??
+                                registry.all.first;
+                            return ModuleGovernanceScreen(module: module);
+                          },
+                        ),
                         GoRoute(
                           path: 'settings',
                           builder: (context, state) {
