@@ -100,6 +100,8 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                         const SizedBox(height: 20),
                         _StatusGrid(snapshot: snapshot),
                         const SizedBox(height: 20),
+                        _VerificationCard(snapshot: snapshot),
+                        const SizedBox(height: 20),
                         _HistoryCard(
                           snapshot: snapshot,
                           historyFilter: _historyFilter,
@@ -1283,6 +1285,67 @@ class _WarningsCard extends StatelessWidget {
               ),
             ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _VerificationCard extends StatelessWidget {
+  const _VerificationCard({required this.snapshot});
+
+  final BackupGuardianSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final detailLines = snapshot.verificationDetails.take(6).toList(
+          growable: false,
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Verification details',
+            icon: Icons.verified_outlined,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            snapshot.verificationSummary,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (detailLines.isEmpty)
+            Text(
+              'No verification details recorded yet.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkSecondary,
+              ),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final line in detailLines) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      '• $line',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
         ],
       ),
     );

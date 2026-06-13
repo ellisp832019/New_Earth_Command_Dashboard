@@ -79,6 +79,12 @@ void main() {
               latestManifestPath:
                   'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
               latestManifestExists: true,
+              verificationSummary: 'Latest backup matches the manifest fingerprint.',
+              verificationDetails: <String>[
+                'Manifest: backup_manifest_20260607_060000.json',
+                'Current mirror: 12 files, 2.0 KB.',
+                'Fingerprint: recorded in the manifest.',
+              ],
               restoreTestStatus: 'Not run yet',
               backupSizeText: 'Not tracked in V1',
               historyFilePath:
@@ -186,6 +192,8 @@ void main() {
     expect(find.text('V2 roadmap'), findsOneWidget);
     expect(find.text('V3 roadmap'), findsOneWidget);
     expect(find.text('Latest manifest path'), findsOneWidget);
+    expect(find.text('Verification details'), findsOneWidget);
+    expect(find.text('Latest backup matches the manifest fingerprint.'), findsOneWidget);
     expect(
       find.text(
         'Mirror folder is not ready yet, so I am opening the backup root instead.',

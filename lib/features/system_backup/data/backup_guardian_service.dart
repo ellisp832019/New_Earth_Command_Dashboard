@@ -174,6 +174,8 @@ class BackupGuardianSnapshot {
     required this.latestReportPath,
     required this.latestManifestPath,
     required this.latestManifestExists,
+    required this.verificationSummary,
+    required this.verificationDetails,
     required this.restoreTestStatus,
     required this.backupSizeText,
     required this.historyFilePath,
@@ -203,6 +205,8 @@ class BackupGuardianSnapshot {
   final String latestReportPath;
   final String latestManifestPath;
   final bool latestManifestExists;
+  final String verificationSummary;
+  final List<String> verificationDetails;
   final String restoreTestStatus;
   final String backupSizeText;
   final String historyFilePath;
@@ -278,6 +282,18 @@ class BackupGuardianService {
     );
     final latestManifestExists = latestManifestPath.isNotEmpty &&
         File(latestManifestPath).existsSync();
+    final mirrorStats = await _loadFolderStats(config.mirrorFolder);
+    final manifest = await _loadManifest(latestManifestPath);
+    final verificationReadout = _buildVerificationReadout(
+      status: status,
+      manifest: manifest,
+      mirrorStats: mirrorStats,
+      latestVerificationHistory: latestVerificationHistory,
+      latestManifestPath: latestManifestPath,
+      latestManifestExists: latestManifestExists,
+      backupDriveRoot: backupDriveRoot,
+      config: config,
+    );
 
     final warnings = <String>[
       ...status.warnings,
@@ -401,6 +417,8 @@ class BackupGuardianService {
           : _fallbackReportPath(config),
       latestManifestPath: latestManifestPath,
       latestManifestExists: latestManifestExists,
+      verificationSummary: verificationReadout.summary,
+      verificationDetails: verificationReadout.details,
       restoreTestStatus: status.restoreTestStatus.isNotEmpty
           ? status.restoreTestStatus
           : 'Not run yet',
@@ -618,6 +636,50 @@ class BackupGuardianService {
     return _ParsedHistory.fromJson(jsonMap);
   }
 
+  Future<_ParsedManifest> _loadManifest(String manifestPath) async {
+    final normalized = manifestPath.trim();
+    if (normalized.isEmpty || !File(normalized).existsSync()) {
+      return const _ParsedManifest();
+    }
+
+    final jsonMap = await _readJsonMap(File(normalized));
+    if (jsonMap == null) {
+      return const _ParsedManifest(exists: true);
+    }
+
+    return _ParsedManifest.fromJson(jsonMap);
+  }
+
+  Future<_FolderStats> _loadFolderStats(String folderPath) async {
+    final normalized = folderPath.trim();
+    if (normalized.isEmpty) {
+      return const _FolderStats();
+    }
+
+    final directory = Directory(normalized);
+    if (!directory.existsSync()) {
+      return const _FolderStats();
+    }
+
+    var fileCount = 0;
+    var sizeBytes = 0;
+    try {
+      for (final entity in directory.listSync(recursive: true, followLinks: false)) {
+        if (entity is File) {
+          fileCount += 1;
+          sizeBytes += entity.lengthSync();
+        }
+      }
+    } catch (_) {
+      return const _FolderStats();
+    }
+
+    return _FolderStats(
+      fileCount: fileCount,
+      sizeBytes: sizeBytes,
+    );
+  }
+
   BackupGuardianHistoryEntry? _latestHistoryEntry(
     List<BackupGuardianHistoryEntry> entries,
     List<String> modes,
@@ -643,6 +705,105 @@ class BackupGuardianService {
     }
 
     return '';
+  }
+
+  _VerificationReadout _buildVerificationReadout({
+    required _ParsedStatus status,
+    required _ParsedManifest manifest,
+    required _FolderStats mirrorStats,
+    required BackupGuardianHistoryEntry? latestVerificationHistory,
+    required String latestManifestPath,
+    required bool latestManifestExists,
+    required String backupDriveRoot,
+    required BackupGuardianConfig config,
+  }) {
+    if (latestVerificationHistory == null && status.mode != 'VerifyLatest') {
+      return const _VerificationReadout(
+        summary: 'No verification run yet.',
+        details: <String>[
+          'Run Verify Latest to compare the current mirror with the latest manifest.',
+        ],
+      );
+    }
+
+    if (!latestManifestExists || latestManifestPath.isEmpty) {
+      return const _VerificationReadout(
+        summary: 'Manifest verification is not available yet.',
+        details: <String>[
+          'The latest backup does not have a readable manifest yet.',
+          'Verify Latest can only fall back to target checks until one appears.',
+        ],
+      );
+    }
+
+    if (!manifest.exists) {
+      return const _VerificationReadout(
+        summary: 'Manifest verification is not available yet.',
+        details: <String>[
+          'The manifest path exists, but the file could not be read.',
+          'Verify Latest needs a readable manifest before it can compare fingerprints.',
+        ],
+      );
+    }
+
+    final details = <String>[
+      'Manifest: ${path.basename(latestManifestPath)}',
+      'Current mirror: ${mirrorStats.fileCount} files, ${mirrorStats.sizeText}.',
+      if (status.summary.isNotEmpty) 'Status: ${status.summary}',
+    ];
+
+    if (status.filesScanned != null || status.backupSizeText.isNotEmpty) {
+      details.add(
+        'Verification output: ${status.filesScanned ?? mirrorStats.fileCount} files scanned, ${status.backupSizeText.isNotEmpty ? status.backupSizeText : mirrorStats.sizeText}.',
+      );
+    }
+
+    if (manifest.targetInventoryHash.isNotEmpty) {
+      details.add(
+        'Fingerprint: ${status.errors.any((item) => item.toLowerCase().contains('fingerprint')) ? 'mismatch reported by Verify Latest' : 'recorded in the manifest'}.',
+      );
+    } else {
+      details.add('Fingerprint: not recorded in the manifest yet.');
+    }
+
+    if (manifest.targetInventoryFileCount != null) {
+      details.add(
+        'File count: manifest expects ${manifest.targetInventoryFileCount}, current mirror has ${mirrorStats.fileCount}.',
+      );
+    }
+    if (manifest.targetSizeBytes != null) {
+      details.add(
+        'Size: manifest expects ${_formatBytes(manifest.targetSizeBytes!)}, current mirror is ${mirrorStats.sizeText}.',
+      );
+    }
+    if (manifest.targetPath.isNotEmpty) {
+      details.add(
+        'Path: manifest expects ${manifest.targetPath}, current mirror is ${config.mirrorFolder}.',
+      );
+    }
+    if (manifest.targetDrive.isNotEmpty) {
+      details.add(
+        'Drive: manifest expects ${manifest.targetDrive}, current backup root is $backupDriveRoot.',
+      );
+    }
+
+    for (final warning in status.warnings) {
+      details.add('Warning: $warning');
+    }
+    for (final error in status.errors) {
+      details.add('Error: $error');
+    }
+
+    final summary = status.summary.isNotEmpty
+        ? status.summary
+        : status.errors.isNotEmpty
+            ? 'Latest backup verification found manifest differences.'
+            : 'Latest backup verification passed.';
+
+    return _VerificationReadout(
+      summary: summary,
+      details: List<String>.unmodifiable(details),
+    );
   }
 
   int? _backupAgeInDays(DateTime? lastBackupAt) {
@@ -721,6 +882,11 @@ class _ParsedStatus {
     this.manifestPath = '',
     this.restoreTestStatus = '',
     this.backupSizeText = '',
+    this.backupKind = '',
+    this.filesScanned,
+    this.filesCopied,
+    this.filesSkipped,
+    this.backupSizeBytes,
     this.warnings = const <String>[],
     this.errors = const <String>[],
     this.lastBackupAt,
@@ -738,6 +904,11 @@ class _ParsedStatus {
   final String manifestPath;
   final String restoreTestStatus;
   final String backupSizeText;
+  final String backupKind;
+  final int? filesScanned;
+  final int? filesCopied;
+  final int? filesSkipped;
+  final int? backupSizeBytes;
   final List<String> warnings;
   final List<String> errors;
   final DateTime? lastBackupAt;
@@ -774,6 +945,11 @@ class _ParsedStatus {
       manifestPath: readString('manifest_path'),
       restoreTestStatus: readString('restore_test_status'),
       backupSizeText: readString('backup_size_text'),
+      backupKind: readString('backup_kind'),
+      filesScanned: _readInt(json, 'files_scanned'),
+      filesCopied: _readInt(json, 'files_copied'),
+      filesSkipped: _readInt(json, 'files_skipped'),
+      backupSizeBytes: _readInt(json, 'backup_size_bytes'),
       warnings: _stringList(json['warnings']),
       errors: _stringList(json['errors']),
       lastBackupAt: _parseDate(
@@ -808,6 +984,109 @@ class _ParsedStatus {
     }
     return DateTime.tryParse(trimmed);
   }
+
+  static int? _readInt(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is String) {
+      return int.tryParse(value.trim());
+    }
+    return null;
+  }
+}
+
+class _ParsedManifest {
+  const _ParsedManifest({
+    this.exists = false,
+    this.backupKind = '',
+    this.targetPath = '',
+    this.targetDrive = '',
+    this.targetInventoryHashAlgorithm = '',
+    this.targetInventoryHash = '',
+    this.targetInventoryFileCount,
+    this.targetSizeBytes,
+  });
+
+  final bool exists;
+  final String backupKind;
+  final String targetPath;
+  final String targetDrive;
+  final String targetInventoryHashAlgorithm;
+  final String targetInventoryHash;
+  final int? targetInventoryFileCount;
+  final int? targetSizeBytes;
+
+  factory _ParsedManifest.fromJson(Map<String, dynamic> json) {
+    return _ParsedManifest(
+      exists: true,
+      backupKind: _stringValue(json, 'backup_kind'),
+      targetPath: _stringValue(json, 'target_path'),
+      targetDrive: _stringValue(json, 'target_drive'),
+      targetInventoryHashAlgorithm: _stringValue(
+        json,
+        'target_inventory_hash_algorithm',
+      ),
+      targetInventoryHash: _stringValue(json, 'target_inventory_hash'),
+      targetInventoryFileCount: _intValue(json, 'target_inventory_file_count'),
+      targetSizeBytes: _intValue(json, 'target_size_bytes'),
+    );
+  }
+}
+
+class _FolderStats {
+  const _FolderStats({
+    this.fileCount = 0,
+    this.sizeBytes = 0,
+  });
+
+  final int fileCount;
+  final int sizeBytes;
+
+  String get sizeText => _formatBytes(sizeBytes);
+}
+
+class _VerificationReadout {
+  const _VerificationReadout({
+    required this.summary,
+    required this.details,
+  });
+
+  final String summary;
+  final List<String> details;
+}
+
+String _stringValue(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value is String) {
+    return value.trim();
+  }
+  return '';
+}
+
+int? _intValue(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value is int) {
+    return value;
+  }
+  if (value is String) {
+    return int.tryParse(value.trim());
+  }
+  return null;
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) {
+    return '$bytes B';
+  }
+  if (bytes < 1024 * 1024) {
+    return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  }
+  if (bytes < 1024 * 1024 * 1024) {
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+  return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
 }
 
 class BackupGuardianHistoryEntry {

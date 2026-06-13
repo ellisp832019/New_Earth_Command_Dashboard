@@ -429,6 +429,143 @@ void main() {
     expect(snapshot.healthSummary, 'Latest backup needs a readable manifest');
   });
 
+  test('backup guardian verification readout explains manifest differences', () async {
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'backup_guardian_verify_mismatch_',
+    );
+    addTearDown(() async {
+      if (await tempRoot.exists()) {
+        await tempRoot.delete(recursive: true);
+      }
+    });
+
+    final moduleRoot = Directory(path.join(tempRoot.path, 'modules', 'system_backup'));
+    final configDir = Directory(path.join(moduleRoot.path, 'config'));
+    final runtimeDir = Directory(path.join(moduleRoot.path, 'runtime'));
+    final sourceDir = Directory(path.join(tempRoot.path, 'source_drive'));
+    final backupDriveDir = Directory(path.join(tempRoot.path, 'backup_drive'));
+    final backupTargetDir = Directory(path.join(backupDriveDir.path, 'NEW_EARTH_BACKUP'));
+    final mirrorDir = Directory(path.join(backupTargetDir.path, 'mirror'));
+    final reportsDir = Directory(path.join(backupTargetDir.path, 'reports'));
+    final manifestsDir = Directory(path.join(backupTargetDir.path, 'manifests'));
+
+    await configDir.create(recursive: true);
+    await runtimeDir.create(recursive: true);
+    await sourceDir.create(recursive: true);
+    await backupDriveDir.create(recursive: true);
+    await mirrorDir.create(recursive: true);
+    await reportsDir.create(recursive: true);
+    await manifestsDir.create(recursive: true);
+
+    await File(path.join(mirrorDir.path, 'alpha.txt')).writeAsString('alpha');
+    await File(path.join(mirrorDir.path, 'beta.txt')).writeAsString('beta');
+
+    final manifestPath = path.join(
+      manifestsDir.path,
+      'backup_manifest_20260610_060000.json',
+    );
+    await File(manifestPath).writeAsString(
+      jsonEncode(<String, Object?>{
+        'backup_kind': 'manual',
+        'target_path': path.join(backupTargetDir.path, 'mirror_expected'),
+        'target_drive': backupDriveDir.path,
+        'target_inventory_hash_algorithm': 'SHA256',
+        'target_inventory_hash': 'expected-hash',
+        'target_inventory_file_count': 3,
+        'target_size_bytes': 4096,
+      }),
+    );
+
+    final config = <String, Object?>{
+      'source_drive': sourceDir.path,
+      'backup_target': backupTargetDir.path,
+      'mirror_folder': mirrorDir.path,
+      'reports_folder': reportsDir.path,
+      'manifests_folder': manifestsDir.path,
+      'restore_test_folder': path.join(tempRoot.path, 'restore_test'),
+      'verify_after_backup': true,
+      'create_manifest': true,
+      'schedule': <String, Object?>{
+        'enabled': true,
+        'daily_time': '02:00',
+        'weekly_day': 'Sunday',
+        'monthly_day': 1,
+        'stale_after_days': 2,
+      },
+      'mode': 'mirror',
+      'retention': <String, Object?>{
+        'daily_keep': 7,
+        'weekly_keep': 4,
+        'monthly_keep': 12,
+      },
+    };
+    await File(
+      path.join(configDir.path, 'backup_paths.local.json'),
+    ).writeAsString(jsonEncode(config));
+
+    final status = <String, Object?>{
+      'module': 'system_backup',
+      'state': 'red',
+      'health_state': 'red',
+      'mode': 'VerifyLatest',
+      'source_drive': sourceDir.path,
+      'backup_target': backupTargetDir.path,
+      'summary': 'Latest backup verification found manifest differences.',
+      'latest_backup_status': 'Latest backup verification found manifest differences.',
+      'last_backup_at': '2026-06-10T05:00:00Z',
+      'last_verification_at': '2026-06-10T06:00:00Z',
+      'restore_test_status': 'Not run yet',
+      'backup_size_text': '2.0 KB',
+      'backup_kind': 'manual',
+      'files_scanned': 2,
+      'files_copied': 2,
+      'files_skipped': 0,
+      'backup_size_bytes': 9,
+      'manifest_path': manifestPath,
+      'latest_report_path': path.join(
+        reportsDir.path,
+        'backup_guardian_20260610_060000.log',
+      ),
+      'warnings': <String>[
+        'Manifest target path is ${path.join(backupTargetDir.path, 'mirror_expected')}, but the current target is ${mirrorDir.path}.',
+      ],
+      'errors': <String>[
+        'Target inventory fingerprint mismatch. Manifest has expected-hash but the current target has actual-hash.',
+        'Target file count mismatch. Manifest expects 3 files but the current target has 2.',
+        'Target size mismatch. Manifest expects 4.0 KB but the current target is 2.0 KB.',
+      ],
+      'updated_at': '2026-06-10T06:00:00Z',
+      'log_path': path.join(
+        reportsDir.path,
+        'backup_guardian_20260610_060000.log',
+      ),
+    };
+    await File(
+      path.join(runtimeDir.path, 'latest_status.json'),
+    ).writeAsString(jsonEncode(status));
+
+    final snapshot = await BackupGuardianService(moduleRoot: moduleRoot).loadSnapshot();
+
+    expect(snapshot.verificationSummary, 'Latest backup verification found manifest differences.');
+    expect(
+      snapshot.verificationDetails,
+      contains('Manifest: backup_manifest_20260610_060000.json'),
+    );
+    expect(
+      snapshot.verificationDetails,
+      contains('Current mirror: 2 files, 9 B.'),
+    );
+    expect(
+      snapshot.verificationDetails.any((line) => line.contains('Fingerprint:')),
+      isTrue,
+    );
+    expect(
+      snapshot.verificationDetails.any((line) => line.contains('Target inventory fingerprint mismatch.')),
+      isTrue,
+    );
+    expect(snapshot.healthState, BackupGuardianHealthState.red);
+  });
+
   test('backup guardian load snapshot waits when the backup drive is missing', () async {
     final tempRoot = await Directory.systemTemp.createTemp(
       'backup_guardian_red_',
