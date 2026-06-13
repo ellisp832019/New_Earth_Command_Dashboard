@@ -4,9 +4,15 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_colours.dart';
 
 class ProjectCard extends StatelessWidget {
-  const ProjectCard({super.key, required this.project, this.onTap});
+  const ProjectCard({
+    super.key,
+    required this.project,
+    this.openTaskCount,
+    this.onTap,
+  });
 
   final Project project;
+  final int? openTaskCount;
   final VoidCallback? onTap;
 
   @override
@@ -67,10 +73,27 @@ class ProjectCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _ProjectBadge(label: 'Priority: ${project.priority}'),
+                  if (openTaskCount != null)
+                    _ProjectBadge(label: 'Open tasks: $openTaskCount'),
                   _ProjectBadge(
                     label: 'Progress: ${project.progressPercentage}%',
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 7,
+                  value:
+                      project.progressPercentage.clamp(0, 100).toDouble() / 100,
+                  backgroundColor: AppColours.darkSurfaceRaised,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    project.progressPercentage >= 75
+                        ? AppColours.darkSuccess
+                        : AppColours.darkPrimary,
+                  ),
+                ),
               ),
               if (project.currentMilestone != null) ...[
                 const SizedBox(height: 12),
@@ -129,7 +152,9 @@ class _ProjectBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceRaised.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),

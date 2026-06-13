@@ -14,6 +14,13 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
   return ref.watch(projectRepositoryProvider).getProjects();
 });
 
+final projectListItemsProvider = FutureProvider<List<ProjectListItem>>((
+  ref,
+) async {
+  await ref.watch(databaseReadyProvider.future);
+  return ref.watch(projectRepositoryProvider).getProjectListItems();
+});
+
 final projectDetailProvider =
     FutureProvider.family<ProjectDetailSnapshot, String>((
       ref,
@@ -69,6 +76,7 @@ class ProjectActionsController {
           notes: notes,
         );
     _ref.invalidate(projectsProvider);
+    _ref.invalidate(projectListItemsProvider);
     _ref.invalidate(projectDetailProvider(project.projectId));
     _ref.invalidate(projectProvider(project.projectId));
     return project;
@@ -103,6 +111,7 @@ class ProjectActionsController {
           notes: notes,
         );
     _ref.invalidate(projectsProvider);
+    _ref.invalidate(projectListItemsProvider);
     _ref.invalidate(projectDetailProvider(projectId));
     _ref.invalidate(projectProvider(projectId));
     return project;
@@ -113,6 +122,7 @@ class ProjectActionsController {
         .read(projectRepositoryProvider)
         .archiveProject(projectId);
     _ref.invalidate(projectsProvider);
+    _ref.invalidate(projectListItemsProvider);
     _ref.invalidate(projectDetailProvider(projectId));
     _ref.invalidate(projectProvider(projectId));
     _ref.invalidate(dashboardSnapshotProvider);

@@ -7,7 +7,10 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/project_filters.dart';
 import '../application/projects_controller.dart';
+import '../data/project_repository.dart';
 import 'widgets/project_card.dart';
+
+enum _ProjectSortMode { priority, name, progress, openTasks }
 
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
@@ -21,6 +24,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   String _statusFilter = 'All';
   String _priorityFilter = 'All';
+  _ProjectSortMode _sortMode = _ProjectSortMode.priority;
 
   @override
   void dispose() {
@@ -31,26 +35,34 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final projects = ref.watch(projectsProvider);
+    final projectItems = ref.watch(projectListItemsProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: projects.when(
+      body: projectItems.when(
         data: (items) {
-          final filteredItems = filterProjects(
-            projects: items,
+          final projects = items.map((item) => item.project).toList();
+          final filteredProjects = filterProjects(
+            projects: projects,
             statusFilter: _statusFilter,
             priorityFilter: _priorityFilter,
             searchQuery: _searchController.text,
           );
-          final statusOptions = _statusOptions(items);
-          final priorityOptions = _priorityOptions(items);
+          final filteredIds = filteredProjects
+              .map((project) => project.projectId)
+              .toSet();
+          final filteredItems = items.where(
+            (item) => filteredIds.contains(item.project.projectId),
+          );
+          final sortedItems = _sortedItems(filteredItems.toList());
+          final statusOptions = _statusOptions(projects);
+          final priorityOptions = _priorityOptions(projects);
 
           return ListView(
             key: const Key('projectsScrollView'),
             padding: const EdgeInsets.all(20),
             children: [
-              _pageHeader(theme, items.length),
+              _pageHeader(theme, projects.length),
               const SizedBox(height: 12),
               _searchAndFilterPanel(
                 theme: theme,
@@ -58,20 +70,21 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 priorityOptions: priorityOptions,
               ),
               const SizedBox(height: 12),
-              _statusSummaryPanel(theme, items, filteredItems),
+              _statusSummaryPanel(theme, items, sortedItems),
               const SizedBox(height: 12),
               if (items.isEmpty)
                 _emptyProjectsCard(theme)
-              else if (filteredItems.isEmpty)
+              else if (sortedItems.isEmpty)
                 _emptyFilteredCard(theme)
               else
-                ...filteredItems.map(
+                ...sortedItems.map(
                   (project) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: ProjectCard(
-                      project: project,
+                      project: project.project,
+                      openTaskCount: project.openTaskCount,
                       onTap: () => context.push(
-                        RouteNames.projectDetail(project.projectId),
+                        RouteNames.projectDetail(project.project.projectId),
                       ),
                     ),
                   ),
@@ -239,6 +252,45 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 ),
             ],
           ),
+          const SizedBox(height: 14),
+          Text(
+            'Sort by',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _selectionChip(
+                label: 'Priority',
+                selected: _sortMode == _ProjectSortMode.priority,
+                onSelected: () =>
+                    setState(() => _sortMode = _ProjectSortMode.priority),
+              ),
+              _selectionChip(
+                label: 'Name',
+                selected: _sortMode == _ProjectSortMode.name,
+                onSelected: () =>
+                    setState(() => _sortMode = _ProjectSortMode.name),
+              ),
+              _selectionChip(
+                label: 'Progress',
+                selected: _sortMode == _ProjectSortMode.progress,
+                onSelected: () =>
+                    setState(() => _sortMode = _ProjectSortMode.progress),
+              ),
+              _selectionChip(
+                label: 'Open tasks',
+                selected: _sortMode == _ProjectSortMode.openTasks,
+                onSelected: () =>
+                    setState(() => _sortMode = _ProjectSortMode.openTasks),
+              ),
+            ],
+          ),
           if (hasFilters) ...[
             const SizedBox(height: 14),
             Align(
@@ -263,15 +315,19 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   Widget _statusSummaryPanel(
     ThemeData theme,
-    List<Project> items,
-    List<Project> filteredItems,
+    List<ProjectListItem> items,
+    List<ProjectListItem> filteredItems,
   ) {
     if (items.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final statusCounts = _countBy(items, (project) => project.status);
-    final priorityCounts = _countBy(items, (project) => project.priority);
+    final statusCounts = _countBy(items, (item) => item.project.status);
+    final priorityCounts = _countBy(items, (item) => item.project.priority);
+    final openTaskTotal = items.fold<int>(
+      0,
+      (sum, item) => sum + item.openTaskCount,
+    );
     final topStatuses = _topCounts(statusCounts);
     final topPriorities = _topCounts(priorityCounts);
 
@@ -295,6 +351,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             children: [
               _summaryChip('Total', '${items.length}'),
               _summaryChip('Showing', '${filteredItems.length}'),
+              _summaryChip('Open tasks', '$openTaskTotal'),
               _summaryChip('High priority', '${priorityCounts['High'] ?? 0}'),
               _summaryChip(
                 'Most common',
@@ -483,8 +540,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   Map<String, int> _countBy(
-    List<Project> items,
-    String Function(Project project) selector,
+    List<ProjectListItem> items,
+    String Function(ProjectListItem item) selector,
   ) {
     final counts = <String, int>{};
     for (final item in items) {
@@ -505,6 +562,58 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       });
     return entries;
   }
+
+  List<ProjectListItem> _sortedItems(List<ProjectListItem> items) {
+    final sorted = [...items];
+    sorted.sort((left, right) {
+      final priorityCompare = _priorityRank(
+        left.project.priority,
+      ).compareTo(_priorityRank(right.project.priority));
+
+      if (_sortMode == _ProjectSortMode.priority && priorityCompare != 0) {
+        return priorityCompare;
+      }
+
+      if (_sortMode == _ProjectSortMode.name) {
+        return left.project.name.toLowerCase().compareTo(
+          right.project.name.toLowerCase(),
+        );
+      }
+
+      if (_sortMode == _ProjectSortMode.progress) {
+        return right.project.progressPercentage.compareTo(
+          left.project.progressPercentage,
+        );
+      }
+
+      if (_sortMode == _ProjectSortMode.openTasks) {
+        final openTaskCompare = right.openTaskCount.compareTo(
+          left.openTaskCount,
+        );
+        if (openTaskCompare != 0) {
+          return openTaskCompare;
+        }
+      }
+
+      if (priorityCompare != 0) {
+        return priorityCompare;
+      }
+
+      return left.project.name.toLowerCase().compareTo(
+        right.project.name.toLowerCase(),
+      );
+    });
+
+    return sorted;
+  }
+
+  int _priorityRank(String priority) => switch (priority) {
+    'High' => 0,
+    'Medium' => 1,
+    'Low' => 2,
+    'Someday' => 3,
+    _ => 4,
+  };
 }
 
 BoxDecoration _pagePanelDecoration() {

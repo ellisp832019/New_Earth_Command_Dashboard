@@ -31,6 +31,13 @@ class ProjectDetailSnapshot {
   final int businessOpportunityCount;
 }
 
+class ProjectListItem {
+  const ProjectListItem({required this.project, required this.openTaskCount});
+
+  final Project project;
+  final int openTaskCount;
+}
+
 class ProjectLinkedJournalEntry {
   const ProjectLinkedJournalEntry({
     required this.journalEntryId,
@@ -102,25 +109,59 @@ class ProjectRepository {
   final Uuid _uuid;
   final DateTime Function() _now;
 
-  Future<List<Project>> getProjects() async {
+  Future<List<ProjectListItem>> getProjectListItems() async {
     final projects =
         await (_database.select(_database.projects)
               ..where((table) => table.isArchived.equals(false))
-              ..orderBy([(table) => OrderingTerm.asc(table.name)]))
+              ..orderBy([
+                (table) => OrderingTerm.desc(table.priority),
+                (table) => OrderingTerm.asc(table.name),
+              ]))
             .get();
 
-    projects.sort((left, right) {
-      final priorityCompare = _priorityRank(
-        left.priority,
-      ).compareTo(_priorityRank(right.priority));
-      if (priorityCompare != 0) {
-        return priorityCompare;
+    final openTaskCountExpression = _database.tasks.taskId.count();
+    final taskCountRows =
+        await (_database.selectOnly(_database.tasks)
+              ..addColumns([_database.tasks.projectId, openTaskCountExpression])
+              ..where(_database.tasks.isArchived.equals(false))
+              ..where(
+                _database.tasks.status.isNotIn(['Done', 'Parked', 'Blocked']),
+              )
+              ..groupBy([_database.tasks.projectId]))
+            .get();
+
+    final openTaskCounts = <String, int>{};
+    for (final row in taskCountRows) {
+      final projectId = row.read(_database.tasks.projectId);
+      final count = row.read(openTaskCountExpression) ?? 0;
+      if (projectId != null) {
+        openTaskCounts[projectId] = count;
       }
+    }
 
-      return left.name.compareTo(right.name);
-    });
+    return projects
+        .map(
+          (project) => ProjectListItem(
+            project: project,
+            openTaskCount: openTaskCounts[project.projectId] ?? 0,
+          ),
+        )
+        .toList()
+      ..sort((left, right) {
+        final priorityCompare = _priorityRank(
+          left.project.priority,
+        ).compareTo(_priorityRank(right.project.priority));
+        if (priorityCompare != 0) {
+          return priorityCompare;
+        }
 
-    return projects;
+        return left.project.name.compareTo(right.project.name);
+      });
+  }
+
+  Future<List<Project>> getProjects() async {
+    final items = await getProjectListItems();
+    return items.map((item) => item.project).toList();
   }
 
   Future<Project> getProject(String projectId) {
@@ -359,7 +400,8 @@ class ProjectRepository {
     'High' => 0,
     'Medium' => 1,
     'Low' => 2,
-    _ => 3,
+    'Someday' => 3,
+    _ => 4,
   };
 
   String? _normalizeText(String? value) {

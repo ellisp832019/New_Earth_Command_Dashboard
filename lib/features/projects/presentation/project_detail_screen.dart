@@ -20,7 +20,10 @@ class ProjectDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('Project Detail')),
+      appBar: AppBar(
+        title: const Text('Project Detail'),
+        leading: BackButton(onPressed: () => context.pop()),
+      ),
       body: projectDetail.when(
         data: (detail) {
           final project = detail.project;

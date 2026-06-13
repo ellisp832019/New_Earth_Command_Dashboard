@@ -122,6 +122,46 @@ void main() {
   });
 
   test(
+    'project repository returns open task counts for project summaries',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final projectRepository = ProjectRepository(database);
+      final taskRepository = TaskRepository(database);
+
+      final project = await projectRepository.createProject(
+        name: 'Project Summary Count',
+        status: 'Active',
+        priority: 'High',
+      );
+
+      await taskRepository.createTask(
+        title: 'Open task one',
+        projectId: project.projectId,
+        status: 'Today',
+      );
+      await taskRepository.createTask(
+        title: 'Completed task',
+        projectId: project.projectId,
+        status: 'Done',
+      );
+      await taskRepository.createTask(
+        title: 'Parked task',
+        projectId: project.projectId,
+        status: 'Parked',
+      );
+
+      final items = await projectRepository.getProjectListItems();
+      final summary = items.firstWhere(
+        (item) => item.project.projectId == project.projectId,
+      );
+
+      expect(summary.openTaskCount, 1);
+    },
+  );
+
+  test(
     'project repository archives a project without removing linked tasks',
     () async {
       final database = AppDatabase(NativeDatabase.memory());
