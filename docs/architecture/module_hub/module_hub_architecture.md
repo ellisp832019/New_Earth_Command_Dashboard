@@ -8,6 +8,16 @@ The Module Hub is designed to allow future dashboard modules to be registered, e
 
 ![New Earth Dashboard Module Hub Architecture](./visuals/new_earth_module_hub_architecture.png)
 
+## Build Proof
+
+The latest annotated build-proof image is kept alongside the clean reference:
+
+- `visuals/new_earth_module_hub_architecture_status.png`
+
+Previous annotated passes are preserved in:
+
+- `visuals/build_proof/`
+
 ## Purpose
 
 This visual should be used as the build reference for:
@@ -42,10 +52,12 @@ It should become a modular command centre where every major feature is added as 
 
 ```text
 docs/architecture/module_hub/
-├── README.md
-├── module_hub_architecture.md
+|-- README.md
+|-- module_hub_architecture.md
 └── visuals/
-    └── new_earth_module_hub_architecture.png
+    |-- new_earth_module_hub_architecture.png
+    |-- new_earth_module_hub_architecture_status.png
+    └── build_proof/
 ```
 
 ## Codex Instruction
@@ -53,4 +65,3 @@ docs/architecture/module_hub/
 Use this architecture visual as the reference for building the Module Hub UI, module registry, dock manager, permission system, health monitor, event bus, local backend bridge, Omega OS integration, and future plugin/module shell.
 
 Do not hard-code modules directly into the dashboard. Build the shell so future modules can be registered through manifests and mounted into the UI.
-
