@@ -97,6 +97,7 @@ obsidian_sync/.sync_state.json
 
 # Launchpad runtime state
 modules/new_earth_launchpad_module/dashboard_module/data/runtime/
+modules/module_hub_state.json
 
 # Personal / sensitive data
 private_receipts/

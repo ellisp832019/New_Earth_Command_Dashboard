@@ -48,6 +48,7 @@ V0.1 foundation is live:
 - [Meeting System module](modules/meeting_system/README.md)
 - [Voice Intelligence module pack](modules/voice_intelligence_module/README.md)
 - [Launchpad module](modules/new_earth_launchpad_module/README.md)
+- [Module Hub architecture](docs/architecture/module_hub/module_hub_architecture.md)
 - [MVP Roadmap](docs/roadmap/mvp_roadmap.md)
 - [Architecture Decisions](docs/architecture/architecture_decisions.md)
 - [Visual Direction](docs/design/visual_direction.md)

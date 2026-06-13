@@ -1,0 +1,22 @@
+{
+  "id": "newearth.grants_tracker",
+  "name": "Grants Tracker",
+  "version": "0.1.0",
+  "category": "Project Management",
+  "description": "Tracks innovation grants, applications, deadlines, evidence packs and Omega OS exports.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "left",
+  "permissions": [
+    "file_read",
+    "file_write_project_only",
+    "calendar_optional",
+    "web_search_optional"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/GRANTS_TRACKER",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "UI shell only. Backend integration comes in a later phase."
+  }
+}

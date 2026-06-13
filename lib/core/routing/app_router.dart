@@ -59,6 +59,10 @@ import '../../features/alexa_voice_gateway/presentation/alexa_voice_gateway_scre
 import '../../features/project_intelligence/presentation/projects_intelligence_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_settings_screen.dart';
+import '../../features/modules/module_detail_screen.dart';
+import '../../features/modules/module_permissions_screen.dart';
+import '../../features/modules/module_settings_screen.dart';
+import '../../features/modules/modules_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
@@ -80,6 +84,7 @@ import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart'
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
 import '../widgets/app_shell.dart';
 import 'route_names.dart';
+import '../modules/module_loader.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorDashboardKey = GlobalKey<NavigatorState>();
@@ -352,6 +357,48 @@ final appRouter = GoRouter(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
               routes: [
+                GoRoute(
+                  path: 'module-hub',
+                  builder: (context, state) => const ModulesScreen(),
+                  routes: [
+                    GoRoute(
+                      path: ':moduleId',
+                      builder: (context, state) {
+                        final registry = const ModuleLoader().load();
+                        final module =
+                            registry.byId(state.pathParameters['moduleId']!) ??
+                            registry.all.first;
+                        return ModuleDetailScreen(module: module);
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'settings',
+                          builder: (context, state) {
+                            final registry = const ModuleLoader().load();
+                            final module =
+                                registry.byId(
+                                  state.pathParameters['moduleId']!,
+                                ) ??
+                                registry.all.first;
+                            return ModuleSettingsScreen(module: module);
+                          },
+                        ),
+                        GoRoute(
+                          path: 'permissions',
+                          builder: (context, state) {
+                            final registry = const ModuleLoader().load();
+                            final module =
+                                registry.byId(
+                                  state.pathParameters['moduleId']!,
+                                ) ??
+                                registry.all.first;
+                            return ModulePermissionsScreen(module: module);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 GoRoute(
                   path: 'systems',
                   builder: (context, state) => const SystemsScreen(),

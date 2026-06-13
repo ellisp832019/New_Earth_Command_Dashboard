@@ -19,6 +19,7 @@ The app is built local-first, offline-first, and clarity-first. Documentation sh
 - [Dashboard Phase 1 Build Checklist](roadmap/dashboard_phase_1_build_checklist.md)
 - [Meeting System module](../modules/meeting_system/README.md)
 - [Voice Intelligence module pack](../modules/voice_intelligence_module/README.md)
+- [Module Hub architecture](architecture/module_hub/module_hub_architecture.md)
 - [Architecture Decisions](architecture/architecture_decisions.md)
 - [Visual Direction](design/visual_direction.md)
 - [Asset Index](assets/asset_index.md)

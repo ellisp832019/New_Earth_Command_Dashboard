@@ -1,0 +1,22 @@
+{
+  "id": "newearth.finance_treasury",
+  "name": "Finance & Treasury",
+  "version": "0.1.0",
+  "category": "Finance & Treasury",
+  "description": "Omega OS finance and treasury module linked to the locked finance folder path.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "left",
+  "permissions": [
+    "file_read",
+    "file_write_project_only",
+    "finance_records",
+    "audit_log"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/FINANCE_&_TREASURY",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "UI shell only. Backend integration comes in a later phase."
+  }
+}

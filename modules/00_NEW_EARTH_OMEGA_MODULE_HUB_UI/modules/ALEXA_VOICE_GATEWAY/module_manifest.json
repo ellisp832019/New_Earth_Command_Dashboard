@@ -1,0 +1,22 @@
+{
+  "id": "newearth.alexa_voice_gateway",
+  "name": "Alexa Voice Gateway",
+  "version": "0.1.0",
+  "category": "Voice & Hardware",
+  "description": "Secure bridge for using existing Alexa hardware as a gated voice trigger into the dashboard.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "permissions": [
+    "voice_trigger",
+    "local_api_access",
+    "network_access",
+    "audit_log"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/ALEXA_VOICE_GATEWAY",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "UI shell only. Backend integration comes in a later phase."
+  }
+}

@@ -1,0 +1,13 @@
+# Module Hub Architecture Reference
+
+This folder contains the architecture reference for the New Earth Dashboard Module Hub UI.
+
+## Files
+
+- `module_hub_architecture.md` explains the module hub shell, registry, dock, permission, and health placeholders.
+- `visuals/new_earth_module_hub_architecture.png` is the visual reference image for the shell.
+
+## Use
+
+Keep this folder inside the dashboard repo as the build reference for the Module Hub slice and future contributors.
+

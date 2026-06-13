@@ -1,0 +1,22 @@
+{
+  "id": "newearth.obsidian_sync",
+  "name": "Obsidian Sync",
+  "version": "0.1.0",
+  "category": "Knowledge & Research",
+  "description": "Connects project folders and Omega OS records into an Obsidian vault workflow.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": [
+    "file_read",
+    "file_write_project_only",
+    "vault_access",
+    "scheduled_sync"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/OBSIDIAN_SYNC",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "UI shell only. Backend integration comes in a later phase."
+  }
+}

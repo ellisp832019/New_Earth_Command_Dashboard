@@ -43,6 +43,12 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const moduleHub = '/more/module-hub';
+  static String moduleHubModule(String moduleId) => '$moduleHub/$moduleId';
+  static String moduleHubModuleSettings(String moduleId) =>
+      '$moduleHub/$moduleId/settings';
+  static String moduleHubModulePermissions(String moduleId) =>
+      '$moduleHub/$moduleId/permissions';
   static const systems = '/more/systems';
   static const backupGuardian = '/more/systems/backup-guardian';
   static const repoResearchEngine = '/more/repo-research-engine';

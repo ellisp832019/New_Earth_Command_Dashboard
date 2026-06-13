@@ -1,0 +1,21 @@
+{
+  "id": "newearth.local_ai_runtime",
+  "name": "Local AI Runtime",
+  "version": "0.1.0",
+  "category": "AI & Automation",
+  "description": "Ollama/local model runtime monitor for local-first AI services and model profiles.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "permissions": [
+    "local_network",
+    "model_registry",
+    "system_health"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/LOCAL_AI_RUNTIME",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "UI shell only. Backend integration comes in a later phase."
+  }
+}

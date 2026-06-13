@@ -30,6 +30,13 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.systems,
     ),
     _MoreItem(
+      title: 'Module Hub',
+      description:
+          'Inspect, enable, dock, and review dashboard modules from one calm registry.',
+      icon: Icons.extension_outlined,
+      route: RouteNames.moduleHub,
+    ),
+    _MoreItem(
       title: 'Meeting System',
       description:
           'Plan meetings, capture actions, track decisions, and keep follow-ups in Omega OS.',
