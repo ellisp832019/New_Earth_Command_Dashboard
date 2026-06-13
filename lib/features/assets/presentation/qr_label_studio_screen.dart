@@ -607,6 +607,13 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       });
       ref.invalidate(assetQrPrintQueueProvider);
       ref.invalidate(assetQrLabelTemplateRegisterProvider);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _statusMessage = _friendlyErrorMessage(error);
+      });
     } finally {
       if (mounted) {
         setState(() => _isBusy = false);
@@ -637,6 +644,13 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       }
       setState(() {
         _statusMessage = 'Print dialog opened. Mark the queue row when done.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _statusMessage = _friendlyErrorMessage(error);
       });
     } finally {
       if (mounted) {
@@ -1128,6 +1142,13 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
         _statusMessage =
             'Sent the label to ${printer.name}. Mark the queue row when done.';
       });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _statusMessage = _friendlyErrorMessage(error);
+      });
     } finally {
       if (mounted) {
         setState(() => _isBusy = false);
@@ -1167,6 +1188,13 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
       priority: _priority,
       printerProfileId: printerProfileId,
     );
+  }
+
+  String _friendlyErrorMessage(Object error) {
+    if (error is StateError) {
+      return error.message;
+    }
+    return error.toString();
   }
 
   String _selectedPrinterProfile(List<Map<String, String>> profiles) {

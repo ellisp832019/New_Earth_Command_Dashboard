@@ -265,16 +265,26 @@ class QrPrintQueueScreen extends ConsumerWidget {
     WidgetRef ref,
     String assetsRootPath,
   ) async {
-    final service = ref.read(assetQrLabelPrintServiceProvider);
-    final bytes = await service.buildReadyQueuePdfBytes(assetsRootPath);
-    await Printing.layoutPdf(onLayout: (_) async => bytes);
-    if (!context.mounted) {
-      return;
-    }
+    try {
+      final service = ref.read(assetQrLabelPrintServiceProvider);
+      final bytes = await service.buildReadyQueuePdfBytes(assetsRootPath);
+      await Printing.layoutPdf(onLayout: (_) async => bytes);
+      if (!context.mounted) {
+        return;
+      }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opened ready queue print layout.')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Opened ready queue print layout.')),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyErrorMessage(error))),
+      );
+    }
   }
 
   List<Map<String, String>> _rowsByStatus(
@@ -287,6 +297,13 @@ class QrPrintQueueScreen extends ConsumerWidget {
           return statuses.contains(status);
         })
         .toList(growable: false);
+  }
+
+  String _friendlyErrorMessage(Object error) {
+    if (error is StateError) {
+      return error.message;
+    }
+    return error.toString();
   }
 }
 

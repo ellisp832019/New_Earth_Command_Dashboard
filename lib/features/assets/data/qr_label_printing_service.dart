@@ -268,6 +268,11 @@ class QrLabelPrintService {
     String? generatedFilePath,
   }) async {
     final normalizedDraft = draft.normalized();
+    if (generatedFilePath != null &&
+        generatedFilePath.trim().isNotEmpty &&
+        !await File(generatedFilePath).exists()) {
+      throw FileSystemException('Generated PDF not found', generatedFilePath);
+    }
     final preview = generatedFilePath == null
         ? await generateLabelArtifacts(assetsRootPath, normalizedDraft)
         : null;
@@ -308,6 +313,9 @@ class QrLabelPrintService {
   }
 
   Future<bool> printLabelToPrinter(QrLabelDraft draft, Printer printer) async {
+    if (!printer.isAvailable) {
+      throw StateError('The selected printer is not available.');
+    }
     final normalizedDraft = draft.normalized();
     final pdfBytes = await buildLabelPdfBytes(normalizedDraft);
     return Printing.directPrintPdf(
@@ -682,18 +690,7 @@ class QrLabelPrintService {
         })
         .toList(growable: false);
     if (readyRows.isEmpty) {
-      return buildLabelPdfBytes(
-        const QrLabelDraft(
-          assetId: 'No ready labels',
-          labelType: 'asset',
-          labelSize: '50x30',
-          labelText: 'No ready labels',
-          location: '',
-          notes: '',
-          priority: 'normal',
-          printerProfileId: '',
-        ),
-      );
+      throw StateError('No ready QR labels are queued for printing.');
     }
 
     final labelTable = await readLabelRegister(assetsRootPath);
