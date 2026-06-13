@@ -40,16 +40,16 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
 
   Timer? _debounceTimer;
   bool _isStarted = false;
+  bool _hasQueuedInitialArm = false;
   String _lastDispatchedTranscript = '';
   bool _wakeOnlyRouteConsumed = false;
-  bool _startupGreetingQueued = false;
-  bool _startupGreetingCompleted = false;
 
   @override
   void initState() {
     super.initState();
     _turnCoordinator = ref.read(voiceAssistantTurnCoordinatorProvider);
     _captureController.addListener(_handleCaptureChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _queueHandsfreeArm());
   }
 
   @override
@@ -60,19 +60,6 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     _captureController.dispose();
     _captureFocusNode.dispose();
     super.dispose();
-  }
-
-  Future<void> _armHandsfreeListener() async {
-    await Future<void>.delayed(
-      WindowsVoiceTypingService.isSupported
-          ? const Duration(milliseconds: 1200)
-          : const Duration(milliseconds: 350),
-    );
-    if (!mounted) {
-      return;
-    }
-
-    await _startHandsfreeListener();
   }
 
   Future<void> _startHandsfreeListener() async {
@@ -229,55 +216,38 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         }
 
         _isStarted = false;
-        unawaited(_startHandsfreeListener());
+        unawaited(_queueHandsfreeArm(force: true));
       },
     );
   }
 
-  Future<void> _runStartupGreetingAndArm() async {
-    if (isRunningUnderTest()) {
-      return;
-    }
-
-    if (_startupGreetingCompleted || !mounted) {
-      return;
-    }
-
-    _startupGreetingCompleted = true;
-
-    final settingsSnapshot = ref
-        .read(settingsSnapshotProvider)
-        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
-
-    if (settingsSnapshot?.settings.voiceAssistantEnabled != true) {
-      return;
-    }
-
-    if (settingsSnapshot?.settings.voiceRepliesEnabled ?? false) {
-      try {
-        await _turnCoordinator.speak(
-          VoiceAssistantTurnPlan(
-            kind: VoiceAssistantTurnKind.wake,
-            owner: VoiceSessionOwner.handsfree,
-            speakingLabel: 'Gaia greeting',
-            speakingDetail: 'Getting ready to listen',
-            followUpLabel: 'Gaia ready',
-            followUpDetail: 'Handsfree listener armed',
-            text: 'Gaia is here and ready.',
-            settings: settingsSnapshot!.settings,
-            tone: VoiceSpeechTone.wake,
-          ),
-        );
-      } catch (_) {
-        // Best-effort greeting only.
-      }
-    }
-
+  Future<void> _queueHandsfreeArm({bool force = false}) async {
     if (!mounted) {
       return;
     }
 
-    unawaited(_armHandsfreeListener());
+    final settingsSnapshot = ref
+        .read(settingsSnapshotProvider)
+        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    if (settingsSnapshot?.settings.voiceAssistantEnabled != true) {
+      return;
+    }
+
+    if (!force && (_hasQueuedInitialArm || _isStarted)) {
+      return;
+    }
+
+    _hasQueuedInitialArm = true;
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) {
+      return;
+    }
+
+    if (_isStarted) {
+      return;
+    }
+
+    await _startHandsfreeListener();
   }
 
   void _handleCaptureChanged() {
@@ -337,6 +307,56 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       projectName: suggestion.suggestedProjectName,
       previous: previousConversationContext,
     );
+
+    final routeAction = _service.resolveFollowUpAction(
+      transcript: transcriptToOpen,
+      conversationContext: conversationContext,
+    );
+    final destinationRoute = routeAction?.route;
+    if (destinationRoute != null) {
+      _wakeOnlyRouteConsumed = false;
+      _lastDispatchedTranscript = transcriptToOpen;
+      final target = _navigationDestinationLabel(routeAction);
+      final response = VoiceCommandAssistantResponse(
+        summary: 'Opening $target now.',
+        nextStep: 'You can continue from there.',
+      );
+
+      ref.read(voiceSessionProvider.notifier).handoff(
+            from: VoiceSessionOwner.handsfree,
+            to: VoiceSessionOwner.assistant,
+            phase: VoiceSessionPhase.awaitingFollowUp,
+            label: 'Gaia ready',
+            detail: 'Opening $target',
+            opacity: 0.82,
+          );
+      context.go(destinationRoute);
+      _isStarted = false;
+      _scheduleRearm();
+      unawaited(_speakConversationResponse(response));
+      return;
+    }
+
+    if (_service.isDashboardNavigationRequest(transcriptToOpen)) {
+      _wakeOnlyRouteConsumed = false;
+      _lastDispatchedTranscript = transcriptToOpen;
+      ref
+          .read(voiceSessionProvider.notifier)
+          .handoff(
+            from: VoiceSessionOwner.handsfree,
+            to: VoiceSessionOwner.assistant,
+            phase: VoiceSessionPhase.awaitingFollowUp,
+            label: 'Gaia ready',
+            detail: 'Opening dashboard',
+            opacity: 0.82,
+          );
+      context.go(RouteNames.dashboard);
+      _isStarted = false;
+      _scheduleRearm();
+      unawaited(_speakConversationResponse(response));
+      return;
+    }
+
     _showConversationDock(
       transcript: transcriptToOpen.isEmpty
           ? (suggestion.wakePhrase ?? transcript.trim())
@@ -388,11 +408,11 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           detail: 'Conversation dock visible',
           opacity: 0.82,
         );
-    final route = Uri(
+    final voiceAssistantRoute = Uri(
       path: RouteNames.voiceAssistant,
       queryParameters: {'transcript': transcriptToOpen},
     ).toString();
-    context.go(route);
+    context.go(voiceAssistantRoute);
 
     _isStarted = false;
     _scheduleRearm();
@@ -446,6 +466,20 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     if (status == 'done') {
       _scheduleRearm();
     }
+  }
+
+  String _navigationDestinationLabel(VoiceCommandQuickAction? action) {
+    if (action == null) {
+      return 'the dashboard';
+    }
+
+    return action.label.replaceFirst(
+      RegExp(
+        r'^(Open|Show|Go to|Take me to|Navigate to|Bring up)\s+',
+        caseSensitive: false,
+      ),
+      '',
+    );
   }
 
   void _showConversationDock({
@@ -516,19 +550,13 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         _speech.cancel();
         _isStarted = false;
       }
+      _hasQueuedInitialArm = false;
       return widget.child;
     }
 
-    if (settingsSnapshot != null &&
-        !_startupGreetingQueued &&
-        !_startupGreetingCompleted) {
-      _startupGreetingQueued = true;
+    if (!_isStarted && !_hasQueuedInitialArm) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-
-        unawaited(_runStartupGreetingAndArm());
+        unawaited(_queueHandsfreeArm());
       });
     }
 

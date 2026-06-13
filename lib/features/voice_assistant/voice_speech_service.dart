@@ -233,6 +233,49 @@ class VoiceAssistantSpeechService {
     await pending;
   }
 
+  Future<void> speakWithPowerShellFallback(
+    String text, {
+    required bool enabled,
+    double rate = 0.5,
+    double pitch = 1.0,
+    VoiceTtsVoiceOption? voice,
+    VoiceSpeechTone tone = VoiceSpeechTone.neutral,
+  }) async {
+    if (!enabled || text.trim().isEmpty || !_isVoiceOutputSupported) {
+      return;
+    }
+
+    final requestText = normalizeAssistantSpeechText(text);
+    final normalizedRate = normalizeVoiceSpeechRate(rate);
+    final normalizedPitch = normalizeVoiceSpeechPitch(pitch);
+    final pending = _speechQueue.then((_) async {
+      await _speakWithPowerShellFallback(
+        requestText,
+        rate: normalizedRate,
+        pitch: normalizedPitch,
+        voiceName: voice?.name,
+      );
+    });
+
+    _speechQueue = pending.catchError((_) {});
+    await pending;
+  }
+
+  Future<void> primeSpeechOutput({
+    required bool enabled,
+  }) async {
+    if (!enabled || !_isVoiceOutputSupported) {
+      return;
+    }
+
+    final pending = _speechQueue.then((_) async {
+      await _speakSilentPowerShellFallback();
+    });
+
+    _speechQueue = pending.catchError((_) {});
+    await pending;
+  }
+
   Future<void> stop() async {
     if (_fallbackSpeechProcess != null) {
       _fallbackSpeechProcess!.kill(ProcessSignal.sigterm);
@@ -361,6 +404,37 @@ class VoiceAssistantSpeechService {
     }
   }
 
+  Future<void> _speakSilentPowerShellFallback() async {
+    if (!Platform.isWindows) {
+      return;
+    }
+
+    try {
+      await stop();
+      final script = [
+        'Add-Type -AssemblyName System.Speech',
+        r'$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer',
+        r'try {',
+        r'  $synth.SpeakSsml("<speak version=''1.0'' xml:lang=''en-US''><break time=''700ms''/></speak>")',
+        r'} finally {',
+        r'  $synth.Dispose()',
+        r'}',
+      ].join('\n');
+
+      await Process.run('powershell', <String>[
+        '-NoLogo',
+        '-NoProfile',
+        '-NonInteractive',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-EncodedCommand',
+        _encodePowerShellCommand(script),
+      ], runInShell: true);
+    } catch (_) {
+      // Best-effort only. This is only to prime the speech engine.
+    }
+  }
+
   Future<void> _speakWithOpenAiRealtimeBridge(
     String text, {
     required double rate,
@@ -452,7 +526,9 @@ class VoiceAssistantSpeechService {
     String? voiceName,
   }) {
     final normalizedText = text.replaceAll(RegExp(r'\s+'), ' ').trim();
-    final safeText = _escapePowerShellSingleQuoted(normalizedText);
+    final safeText = _escapePowerShellSingleQuoted(
+      _buildSpeechSsml(normalizedText),
+    );
     final safeVoiceName = _escapePowerShellSingleQuoted(voiceName ?? '');
     final rateValue = ((rate.clamp(0.0, 1.0) - 0.5) * 20).round();
 
@@ -472,12 +548,28 @@ class VoiceAssistantSpeechService {
     buffer
       ..writeln('  \$synth.Rate = $rateValue')
       ..writeln(r'  $synth.Volume = 100')
-      ..writeln("  \$synth.Speak('$safeText')")
+      ..writeln("  \$synth.SpeakSsml('$safeText')")
       ..writeln(r'} finally {')
       ..writeln(r'  $synth.Dispose()')
       ..writeln(r'}');
 
     return buffer.toString();
+  }
+
+  String _buildSpeechSsml(String text) {
+    final escapedText = text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll("'", '&apos;')
+        .replaceAll('"', '&quot;');
+
+    return [
+      "<speak version='1.0' xml:lang='en-US'>",
+      "<break time='500ms'/>",
+      escapedText,
+      '</speak>',
+    ].join();
   }
 
   String _escapePowerShellSingleQuoted(String value) {

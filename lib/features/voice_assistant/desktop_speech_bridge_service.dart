@@ -19,6 +19,42 @@ class DesktopSpeechBridgeCapture {
   final List<DesktopSpeechBridgeSegment> segments;
 }
 
+class DesktopSpeechBridgeDiagnostics {
+  const DesktopSpeechBridgeDiagnostics({
+    required this.ok,
+    required this.pythonVersion,
+    required this.bridgeModel,
+    required this.defaultInputDevice,
+    required this.inputDevices,
+    required this.recommendation,
+  });
+
+  final bool ok;
+  final String pythonVersion;
+  final String bridgeModel;
+  final Map<String, dynamic>? defaultInputDevice;
+  final List<Map<String, dynamic>> inputDevices;
+  final String recommendation;
+
+  factory DesktopSpeechBridgeDiagnostics.fromJson(Map<String, dynamic> json) {
+    final devices = (json['input_devices'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((device) => Map<String, dynamic>.from(device))
+        .toList();
+    final defaultDevice = json['default_input_device'];
+    return DesktopSpeechBridgeDiagnostics(
+      ok: json['ok'] == true,
+      pythonVersion: json['python_version']?.toString() ?? 'unknown',
+      bridgeModel: json['bridge_model']?.toString() ?? 'unknown',
+      defaultInputDevice: defaultDevice is Map
+          ? Map<String, dynamic>.from(defaultDevice)
+          : null,
+      inputDevices: devices,
+      recommendation: json['recommendation']?.toString() ?? '',
+    );
+  }
+}
+
 class DesktopSpeechBridgeJob {
   const DesktopSpeechBridgeJob({
     required this.result,
@@ -74,6 +110,82 @@ class DesktopSpeechBridgeService {
       draftOutputPath: draftOutputPath,
     );
     return job.result;
+  }
+
+  Future<DesktopSpeechBridgeDiagnostics?> diagnoseAudio({
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    if (!isSupported) {
+      return null;
+    }
+
+    final script = _locateBridgeScript();
+    if (script == null) {
+      return null;
+    }
+
+    final python = await _resolvePythonCommand();
+    if (python == null) {
+      return null;
+    }
+
+    final args = <String>[
+      ...python.args,
+      script.path,
+      'diagnose-audio',
+      '--json',
+    ];
+
+    final stdoutBuffer = StringBuffer();
+    final stderrBuffer = StringBuffer();
+    var cancelled = false;
+    Process? process;
+
+    try {
+      process = await Process.start(
+        python.command,
+        args,
+        runInShell: true,
+      );
+
+      final stdoutDone = process.stdout
+          .transform(utf8.decoder)
+          .listen(stdoutBuffer.write)
+          .asFuture<void>();
+      final stderrDone = process.stderr
+          .transform(utf8.decoder)
+          .listen(stderrBuffer.write)
+          .asFuture<void>();
+
+      final exitCode = await process.exitCode.timeout(
+        timeout,
+        onTimeout: () {
+          cancelled = true;
+          process?.kill(ProcessSignal.sigterm);
+          return -1;
+        },
+      );
+
+      await Future.wait([stdoutDone, stderrDone]);
+
+      if (cancelled || exitCode != 0) {
+        return null;
+      }
+
+      final payload = stdoutBuffer.toString().trim();
+      if (payload.isEmpty) {
+        return null;
+      }
+
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+
+      return DesktopSpeechBridgeDiagnostics.fromJson(decoded);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<DesktopSpeechBridgeJob> startTranscribeFile(

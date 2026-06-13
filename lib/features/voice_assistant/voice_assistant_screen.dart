@@ -11,6 +11,7 @@ import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import 'gaia_bridge.dart';
 import 'application/voice_conversation_dock_controller.dart';
 import 'application/voice_assistant_turn_coordinator.dart';
 import 'application/voice_ai_assist_controller.dart';
@@ -21,6 +22,7 @@ import 'desktop_speech_bridge_service.dart';
 import 'voice_command_model.dart';
 import 'voice_command_service.dart';
 import 'voice_speech_service.dart';
+import 'voice_speech_diagnostics_service.dart';
 import 'windows_voice_typing_service.dart';
 import '../voice_intelligence/application/voice_module_providers.dart';
 import '../voice_intelligence/application/voice_thread_controller.dart';
@@ -163,6 +165,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   final VoiceCommandService _service = VoiceCommandService();
   final DesktopSpeechBridgeService _desktopSpeechBridgeService =
       DesktopSpeechBridgeService();
+  final GaiaBridge _gaiaBridge = GaiaBridge();
   final SpeechToText _speech = SpeechToText();
   final TextEditingController _transcriptController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
@@ -182,7 +185,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   final TextEditingController _businessNextActionController =
       TextEditingController();
   final TextEditingController _wizardAnswerController = TextEditingController();
+  final TextEditingController _gaiaConversationController = TextEditingController();
   final FocusNode _transcriptFocusNode = FocusNode();
+  final FocusNode _gaiaConversationFocusNode = FocusNode();
   final FocusNode _wizardAnswerFocusNode = FocusNode();
   late final VoiceSessionNotifier _voiceSessionNotifier;
   late final VoiceAssistantTurnCoordinator _turnCoordinator;
@@ -212,6 +217,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   String? _manualWizardAnswerBeforeAi;
   String _speechStatus = 'Ready when you are.';
   String? _speechError;
+  bool _showAdvancedAssistantDetails = false;
   bool _isSaving = false;
   bool _speechAvailable = false;
   bool _isInitializingSpeech = false;
@@ -222,10 +228,12 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   bool _wakeAcknowledgeSpoken = false;
   bool _wakeAutoListenQueued = false;
   bool _handsfreeSessionActive = false;
+  bool _voiceDiagnosticsShown = false;
+  String? _lastAutoNavigatedSpeechTranscript;
 
   String get _speechStateLabel {
     if (_isInitializingSpeech) {
-      return 'Preparing';
+      return 'Preparing mic';
     }
     if (_isListening) {
       return 'Listening';
@@ -235,6 +243,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
     if (_speechStatus.toLowerCase().contains('review')) {
       return 'Review';
+    }
+    if (_speechStatus.toLowerCase().contains('handsfree')) {
+      return 'Handsfree';
     }
     return 'Ready';
   }
@@ -279,6 +290,92 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     );
   }
 
+  Future<void> _showVoiceDiagnostics() async {
+    final diagnostics = await VoiceSpeechDiagnosticsService().run();
+    if (!mounted) {
+      return;
+    }
+
+    final bridge = diagnostics.bridgeDiagnostics;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Voice diagnostics'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  diagnostics.headsetStatus,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  diagnostics.bridgeStatus,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (bridge != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Python: ${bridge.pythonVersion}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  Text(
+                    'Bridge model: ${bridge.bridgeModel}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (bridge.defaultInputDevice != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Default input: ${bridge.defaultInputDevice!['name']}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  if (bridge.inputDevices.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Available inputs:',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    ...bridge.inputDevices.map(
+                      (device) => Text(
+                        '• ${device['name']}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  diagnostics.recommendation,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showVoiceDiagnosticsOnce() async {
+    if (_voiceDiagnosticsShown || !mounted) {
+      return;
+    }
+
+    _voiceDiagnosticsShown = true;
+    await _showVoiceDiagnostics();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -317,6 +414,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       );
       ref.read(voiceConversationDockProvider.notifier).hide();
     });
+    if (!(widget.wakeTriggered || widget.handsfreeTriggered)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        _gaiaConversationFocusNode.requestFocus();
+      });
+    }
     if (widget.wakeTriggered || widget.handsfreeTriggered) {
       _speechStatus = widget.wakeTriggered
           ? 'Wake phrase heard. Tell me what to create, open, summarize, or continue.'
@@ -391,8 +497,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   @override
   void dispose() {
     _speech.cancel();
+    _gaiaBridge.dispose();
     _transcriptController.removeListener(_handleTranscriptChanged);
     _transcriptController.dispose();
+    _gaiaConversationController.dispose();
     _titleController.dispose();
     _projectVisionController.dispose();
     _projectNextActionController.dispose();
@@ -404,6 +512,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _businessNextActionController.dispose();
     _wizardAnswerController.dispose();
     _transcriptFocusNode.dispose();
+    _gaiaConversationFocusNode.dispose();
     _wizardAnswerFocusNode.dispose();
     super.dispose();
   }
@@ -481,6 +590,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final transcript = _transcriptController.text.trim();
 
     if (transcript.isEmpty) {
+      _lastAutoNavigatedSpeechTranscript = null;
       if (!mounted) {
         return;
       }
@@ -527,6 +637,26 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       transcript: transcript,
       projectOptions: projectOptions,
     );
+
+    final isVoiceCaptureActive =
+        _isListening || _isInitializingSpeech || _usingWindowsVoiceTyping;
+    final isNavigationRequest = _service.isDashboardNavigationRequest(transcript);
+    if (isVoiceCaptureActive && isNavigationRequest) {
+      if (_lastAutoNavigatedSpeechTranscript == transcript) {
+        return;
+      }
+
+      _lastAutoNavigatedSpeechTranscript = transcript;
+      unawaited(
+        _handleCapturedSpeechTranscript(
+          transcript,
+          source: 'transcript listener',
+        ),
+      );
+      return;
+    }
+
+    _lastAutoNavigatedSpeechTranscript = null;
 
     if (!mounted) {
       return;
@@ -872,19 +1002,24 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       }
 
       setState(() {
-        _speechStatus = 'Another voice session is already active.';
+        _speechStatus = 'Voice is already active somewhere else.';
       });
       return;
     }
 
     _setVoicePresence(
       label: 'Gaia listening',
-      detail: 'Preparing microphone',
+      detail: 'I\'m listening',
       isActive: true,
       opacity: 0.72,
     );
 
-    if (WindowsVoiceTypingService.isSupported) {
+    setState(() {
+      _speechStatus = "Listening. Okay, Peter. What's next?";
+    });
+    await _speakListeningGreeting();
+
+    if (WindowsVoiceTypingService.isSupported && preferDesktopBridge) {
       await _startWindowsDesktopCapture(
         preferDesktopBridge: preferDesktopBridge,
       );
@@ -894,7 +1029,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     setState(() {
       _speechError = null;
       _isInitializingSpeech = true;
-      _speechStatus = 'Preparing microphone...';
+      _speechStatus = 'Preparing microphone for capture...';
     });
 
     final available = await _speech.initialize(
@@ -913,15 +1048,16 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     if (!available) {
       setState(() {
-        _speechStatus = 'Microphone speech capture is not available here.';
+        _speechStatus = 'Windows speech could not start. Open diagnostics.';
         _speechError =
-            'Check microphone permission, speech services, or use Paste Transcript.';
+            'Windows did not start speech capture. Run Voice diagnostics to check the offline bridge and default input device.';
       });
       session.release(
         owner: VoiceSessionOwner.assistant,
         label: 'Gaia idle',
         detail: 'Microphone unavailable',
       );
+      unawaited(_showVoiceDiagnosticsOnce());
       return;
     }
 
@@ -943,7 +1079,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _isListening = true;
-      _speechStatus = 'Listening...';
+      _speechStatus = 'Listening for your voice...';
     });
     _setVoicePresence(
       label: 'Gaia listening',
@@ -982,11 +1118,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _isListening = available;
         _usingWindowsVoiceTyping = available;
         _speechStatus = available
-            ? 'Microphone armed. Speak your next command.'
-            : 'Windows voice typing is unavailable, so Gaia is using the local speech recognizer.';
+            ? 'Microphone ready. Speak your next command.'
+            : 'Windows voice typing could not start. Gaia will use the offline bridge or diagnostics.';
         _speechError = available
             ? null
-            : 'Gaia is falling back to the local recognizer. You can still use Paste Transcript if needed.';
+            : 'Windows speech is not ready yet. Run Voice diagnostics to check the headset, bridge, and default input device.';
       });
       if (available) {
         session.beginListening(
@@ -998,10 +1134,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       } else {
         return await _startWindowsSpeechToTextCapture(
           preparingStatus:
-              'Windows voice typing is unavailable, so Gaia is using the local speech recognizer.',
-          unavailableStatus: 'Microphone speech capture is not available here.',
+              'Windows voice typing could not start. Gaia will use diagnostics and the offline bridge.',
+          unavailableStatus: 'Windows speech could not start. Open diagnostics.',
           unavailableError:
-              'Check microphone permission or use Paste Transcript if speech capture remains quiet.',
+              'Run Voice diagnostics to check the headset, offline bridge, and default input device.',
         );
       }
 
@@ -1022,23 +1158,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     if (capture != null && capture.transcript.trim().isNotEmpty) {
-      setState(() {
-        _speechAvailable = true;
-        _isInitializingSpeech = false;
-        _isListening = false;
-        _activeSpeechController.text = capture.transcript.trim();
-        _activeSpeechController.selection = TextSelection.collapsed(
-          offset: _activeSpeechController.text.length,
-        );
-        _speechStatus =
-            'I heard you. Review the transcript or ask for the next step.';
-        _speechError = null;
-      });
-      session.beginProcessing(
-        owner: VoiceSessionOwner.assistant,
-        label: 'Gaia captured',
-        detail: 'Review transcript',
-        opacity: 0.82,
+      await _handleCapturedSpeechTranscript(
+        capture.transcript.trim(),
+        source: 'desktop bridge',
       );
       return;
     }
@@ -1050,6 +1172,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         label: 'Gaia idle',
         detail: 'Mic not available',
       );
+      unawaited(_showVoiceDiagnosticsOnce());
     }
   }
 
@@ -1091,6 +1214,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         label: 'Gaia idle',
         detail: 'Microphone unavailable',
       );
+      unawaited(_showVoiceDiagnosticsOnce());
       return false;
     }
 
@@ -1112,7 +1236,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _isListening = true;
-      _speechStatus = 'Listening...';
+      _speechStatus = 'Listening for your voice...';
     });
     _setVoicePresence(
       label: 'Gaia listening',
@@ -1138,7 +1262,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _handsfreeSessionActive = false;
       if (mounted) {
         setState(() {
-          _speechStatus = 'Another voice session is already active.';
+          _speechStatus = 'Voice is already active somewhere else.';
         });
       }
       return;
@@ -1193,9 +1317,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       session.beginProcessing(
         owner: VoiceSessionOwner.assistant,
         label: 'Gaia captured',
-        detail: 'Conversation transcript',
+        detail: 'Sending to Gaia',
         opacity: 0.84,
       );
+
+      await _handleHandsfreeConversationTurn(transcript);
+      if (!mounted || !_handsfreeSessionActive) {
+        break;
+      }
 
       await Future<void>.delayed(const Duration(milliseconds: 600));
     }
@@ -1209,6 +1338,176 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       owner: VoiceSessionOwner.assistant,
       label: 'Gaia idle',
       detail: 'Ready when you are',
+    );
+  }
+
+  VoiceCommandAssistantResponse _buildConversationAssistantResponse({
+    required VoiceAiAssistResponse aiResponse,
+    required VoiceConversationContext? conversationContext,
+    required VoiceCommandSuggestion suggestion,
+  }) {
+    return VoiceCommandAssistantResponse(
+      summary: aiResponse.summary,
+      nextStep: aiResponse.nextStep,
+      projectContext: aiResponse.projectContext ??
+          conversationContext?.projectName ??
+          suggestion.suggestedProjectName,
+      threadContext: aiResponse.threadContext ??
+          conversationContext?.threadScopeLabel ??
+          suggestion.suggestedTitle,
+      suggestedTitle: aiResponse.suggestedTitle ?? suggestion.suggestedTitle,
+      suggestedSummary:
+          aiResponse.suggestedSummary ?? suggestion.suggestedTitle,
+      suggestedWizardAnswer: aiResponse.suggestedWizardAnswer,
+      suggestedType: aiResponse.suggestedType ?? suggestion.suggestedType,
+      hints: aiResponse.hints,
+    );
+  }
+
+  Future<VoiceCommandAssistantResponse?> _sendGaiaConversationTurn(
+    String transcript, {
+    bool speakReply = true,
+    String source = 'typed',
+  }) async {
+    final cleanedTranscript = transcript.trim();
+    if (cleanedTranscript.isEmpty) {
+      return null;
+    }
+
+    final suggestion = _service.suggestCommand(transcript: cleanedTranscript);
+    final conversationContext = _service.buildConversationContext(
+      transcript: suggestion.transcript,
+      type: suggestion.suggestedType,
+      title: suggestion.suggestedTitle,
+      projectId: suggestion.suggestedProjectId,
+      projectName: suggestion.suggestedProjectName,
+      previous: _conversationContext,
+      navigation: _service.isDashboardNavigationRequest(cleanedTranscript),
+    );
+
+    _conversationContext = conversationContext;
+    _syncSharedConversationThread();
+
+    VoiceCommandAssistantResponse assistantResponse;
+    try {
+      final aiResponse = await ref.read(
+        voiceAiConversationAssistProvider(
+          VoiceAiAssistRequest(
+            transcript: cleanedTranscript,
+            conversationContext: conversationContext,
+            selectedType: suggestion.suggestedType,
+          ),
+        ).future,
+      );
+      assistantResponse = _buildConversationAssistantResponse(
+        aiResponse: aiResponse,
+        conversationContext: conversationContext,
+        suggestion: suggestion,
+      );
+    } catch (_) {
+      assistantResponse = _service.buildAssistantResponse(
+        transcript: cleanedTranscript,
+        suggestion: suggestion,
+        conversationContext: conversationContext,
+      );
+    }
+
+    if (!mounted) {
+      return assistantResponse;
+    }
+
+    if (_service.isDashboardNavigationRequest(cleanedTranscript)) {
+      setState(() {
+        _speechStatus =
+            'Opening the dashboard now. You are back on the main dashboard.';
+      });
+      context.go(RouteNames.dashboard);
+      unawaited(
+        _speakWithCurrentVoice(
+          assistantResponse.summary,
+          tone: VoiceSpeechTone.briefing,
+        ),
+      );
+      return assistantResponse;
+    }
+
+    _showConversationDock(
+      transcript: cleanedTranscript,
+      response: assistantResponse,
+      isWake: suggestion.usedWakePhrase || suggestion.isWakeOnly,
+      conversationContext: conversationContext,
+    );
+
+    setState(() {
+      _speechStatus = source == 'handsfree'
+          ? 'Gaia replied. Keep talking or say stop.'
+          : 'Gaia replied. You can keep typing or speak the next turn.';
+    });
+
+    if (speakReply) {
+      await _speakWithCurrentVoice(
+        assistantResponse.summary,
+        tone: VoiceSpeechTone.briefing,
+      );
+    }
+
+    if (!mounted) {
+      return assistantResponse;
+    }
+
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginAwaitingFollowUp(
+          owner: VoiceSessionOwner.assistant,
+          label: 'Gaia ready',
+          detail: source == 'handsfree'
+              ? 'Handsfree conversation active'
+              : 'Ready for your next turn',
+          opacity: 0.84,
+        );
+
+    return assistantResponse;
+  }
+
+  void _showConversationDock({
+    required String transcript,
+    required VoiceAssistantResponse response,
+    required bool isWake,
+    required VoiceConversationContext conversationContext,
+  }) {
+    ref
+        .read(voiceConversationDockProvider.notifier)
+        .show(
+          title: 'Gaia',
+          summary: response.summary,
+          nextStep: response.nextStep,
+          transcript: transcript,
+          isWake: isWake,
+          projectContext: response.projectContext,
+          threadContext: response.threadContext,
+          conversationContext: conversationContext,
+        );
+  }
+
+  Future<void> _handleHandsfreeConversationTurn(String transcript) async {
+    await _sendGaiaConversationTurn(
+      transcript,
+      speakReply: true,
+      source: 'handsfree',
+    );
+  }
+
+  Future<void> _submitTypedGaiaConversation() async {
+    final transcript = _gaiaConversationController.text.trim();
+    if (transcript.isEmpty) {
+      return;
+    }
+
+    _gaiaConversationController.clear();
+    await _sendGaiaConversationTurn(
+      transcript,
+      speakReply: true,
+      source: 'typed',
     );
   }
 
@@ -1282,7 +1581,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       setState(() {
         _isListening = false;
         _speechStatus =
-            'Dictation ready to review. If Windows voice typing is still open, press Win + H to close it.';
+            'Dictation captured. Review it now. If Windows voice typing is still open, press Win + H to close it.';
       });
       ref
           .read(voiceSessionProvider.notifier)
@@ -1302,7 +1601,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _isListening = false;
-      _speechStatus = 'Stopped. Review the transcript before saving.';
+      _speechStatus = 'Capture stopped. Review the transcript before saving.';
     });
     ref
         .read(voiceSessionProvider.notifier)
@@ -1344,7 +1643,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _isListening = false;
-      _speechStatus = 'Capture cancelled.';
+      _speechStatus = 'Capture cancelled. You can start again anytime.';
     });
     ref
         .read(voiceSessionProvider.notifier)
@@ -1361,26 +1660,22 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       return;
     }
 
+    if (result.finalResult) {
+      unawaited(
+        _handleCapturedSpeechTranscript(
+          result.recognizedWords,
+          source: 'speech',
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _activeSpeechController.text = result.recognizedWords;
       _activeSpeechController.selection = TextSelection.collapsed(
         offset: _activeSpeechController.text.length,
       );
-      if (result.finalResult) {
-        _isListening = false;
-        _speechStatus = _mode == _VoiceInteractionMode.wizard
-            ? 'Wizard answer captured. Use the answer to continue.'
-            : 'Transcript captured. Review before saving.';
-      }
     });
-    if (result.finalResult) {
-      _setVoicePresence(
-        label: 'Gaia captured',
-        detail: 'Review transcript',
-        isActive: true,
-        opacity: 0.82,
-      );
-    }
   }
 
   void _onSpeechError(SpeechRecognitionError error) {
@@ -1393,8 +1688,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _isInitializingSpeech = false;
       _speechError = error.errorMsg;
       _speechStatus = error.permanent
-          ? 'Speech capture needs attention before it can run.'
-          : 'Speech capture paused. You can try again.';
+          ? 'Speech capture needs attention. Open diagnostics.'
+          : 'Speech capture paused. Try again or open diagnostics.';
     });
     _setVoicePresence(
       label: 'Gaia idle',
@@ -1402,6 +1697,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       isActive: false,
       opacity: 0.28,
     );
+    if (error.permanent) {
+      unawaited(_showVoiceDiagnosticsOnce());
+    }
   }
 
   void _onSpeechStatus(String status) {
@@ -1412,6 +1710,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     setState(() {
       _isListening = _speech.isListening;
       if (!_isListening && status == 'done') {
+        if (_service.isDashboardNavigationRequest(
+          _activeSpeechController.text,
+        )) {
+          return;
+        }
         _speechStatus = 'Transcript captured. Review before saving.';
       }
     });
@@ -1445,10 +1748,80 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         tone: VoiceSpeechTone.calmConfirmation,
       );
       final editableSuggestion = _buildEditableSuggestion();
+      final normalizedTranscript = editableSuggestion?.transcript ?? transcript;
+      final gaiaDecision = await _gaiaBridge.sendCommand(
+        GaiaCommand(
+          intent: _currentType.name,
+          module: 'voice_assistant',
+          action: 'save_command',
+          payload: {
+            'transcript': normalizedTranscript,
+            'type': _currentType.name,
+            'project_id': _selectedProjectId,
+            'title_override': _titleController.text.trim(),
+          },
+          requiresConfirmation: false,
+          sensitivity: 'medium',
+        ),
+      );
+
+      if (gaiaDecision.isBlocked) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'GAIA blocked this command: ${gaiaDecision.reason}',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (gaiaDecision.isConfirm) {
+        if (!mounted) {
+          return;
+        }
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Confirm command'),
+              content: Text(
+                'GAIA wants confirmation before saving this command. ${gaiaDecision.reason}',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (confirmed != true) {
+          if (!mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Save canceled by GAIA confirmation.'),
+            ),
+          );
+          return;
+        }
+      }
+
       await ref
           .read(voiceCommandActionsControllerProvider)
           .saveCommand(
-            transcript: editableSuggestion?.transcript ?? transcript,
+            transcript: normalizedTranscript,
             type: _currentType,
             projectId: _selectedProjectId,
             titleOverride: _titleController.text.trim(),
@@ -1897,6 +2270,48 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
   }
 
+  Future<void> _speakListeningGreeting() async {
+    final settingsSnapshot = ref
+        .read(settingsSnapshotProvider)
+        .maybeWhen(data: (snapshot) => snapshot, orElse: () => null);
+    if (settingsSnapshot == null) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Listening. Okay, Peter. What's next?"),
+      ),
+    );
+
+    try {
+      final service = ref.read(voiceAssistantSpeechServiceProvider);
+      final voices = await ref.read(voiceAssistantVoicesProvider.future);
+      final selectedVoice = resolveConfiguredVoiceOption(
+        voices: voices,
+        preferredName: settingsSnapshot.settings.preferredTtsVoiceName,
+        preferredLocale: settingsSnapshot.settings.preferredTtsVoiceLocale,
+        preferredGender: settingsSnapshot.settings.preferredTtsVoiceGender,
+        preferredIdentifier: settingsSnapshot.settings.preferredTtsVoiceIdentifier,
+      );
+      await service.primeSpeechOutput(enabled: true);
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      await service.speakWithPowerShellFallback(
+        "Okay, Peter. What's next?",
+        enabled: true,
+        rate: settingsSnapshot.settings.preferredTtsVoiceRate,
+        pitch: settingsSnapshot.settings.preferredTtsVoicePitch,
+        voice: selectedVoice,
+      );
+    } catch (_) {
+      // Best effort only. The visible status still confirms listening.
+    }
+  }
+
   void _setVoicePresence({
     required String label,
     required String detail,
@@ -2162,16 +2577,81 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               const SizedBox(height: 16),
             ],
             Card(
+              key: const Key('voiceGaiaChatCard'),
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                      size: 32,
-                      color: _isListening
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.primary,
+                    Text('Ask Gaia', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Type a question here and Gaia will answer from the same local conversation runtime used by voice.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('voiceGaiaChatField'),
+                      controller: _gaiaConversationController,
+                      focusNode: _gaiaConversationFocusNode,
+                      minLines: 2,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        labelText: 'Message Gaia',
+                        hintText: 'Ask for a summary, next step, or thread follow-up...',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          key: const Key('voiceGaiaChatSendIconButton'),
+                          onPressed: _submitTypedGaiaConversation,
+                          icon: const Icon(Icons.send_outlined),
+                        ),
+                      ),
+                      onSubmitted: (_) => _submitTypedGaiaConversation(),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          key: const Key('voiceGaiaChatSendButton'),
+                          onPressed: _submitTypedGaiaConversation,
+                          icon: const Icon(Icons.send_outlined),
+                          label: const Text('Send to Gaia'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _isListening
+                              ? Icons.mic_rounded
+                              : Icons.mic_none_rounded,
+                          size: 20,
+                          color: _isListening
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _speechStatus,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
@@ -2192,93 +2672,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                               )
                             : const Icon(Icons.mic_rounded),
                         label: Text(
-                          _isInitializingSpeech
-                              ? 'Preparing'
-                              : 'Capture Speech',
+                          _isInitializingSpeech ? 'Preparing' : 'Start speech',
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        FilledButton.tonalIcon(
-                          key: const Key('voiceStopListeningButton'),
-                          onPressed: _isListening ? _stopListening : null,
-                          icon: const Icon(Icons.stop_circle_outlined),
-                          label: const Text('Stop'),
-                        ),
-                        TextButton.icon(
-                          key: const Key('voiceCancelListeningButton'),
-                          onPressed: _isListening ? _cancelListening : null,
-                          icon: const Icon(Icons.close),
-                          label: const Text('Cancel'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: _speechStateColor(
-                            theme,
-                          ).withValues(alpha: 0.28),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              Chip(
-                                label: Text(_speechStateLabel),
-                                side: BorderSide.none,
-                                backgroundColor: _speechStateColor(
-                                  theme,
-                                ).withValues(alpha: 0.16),
-                              ),
-                              if (_usingWindowsVoiceTyping)
-                                Chip(
-                                  label: const Text('Windows dictation'),
-                                  side: BorderSide.none,
-                                  backgroundColor: theme
-                                      .colorScheme
-                                      .secondaryContainer
-                                      .withValues(alpha: 0.72),
-                                ),
-                              if (!_usingWindowsVoiceTyping &&
-                                  !_isInitializingSpeech &&
-                                  !_isListening)
-                                Chip(
-                                  label: const Text('Review mode'),
-                                  side: BorderSide.none,
-                                  backgroundColor: theme
-                                      .colorScheme
-                                      .primaryContainer
-                                      .withValues(alpha: 0.72),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _speechStatus,
-                            style: theme.textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _showVoiceDiagnostics,
+                      icon: const Icon(Icons.health_and_safety_outlined),
+                      label: const Text('Run voice diagnostics'),
                     ),
                     if (_speechError != null) ...[
                       const SizedBox(height: 8),
@@ -2287,100 +2689,355 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.error,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
-                    if (!_speechAvailable && _speechError != null) ...[
-                      const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showAdvancedAssistantDetails =
+                        !_showAdvancedAssistantDetails;
+                  });
+                },
+                icon: Icon(
+                  _showAdvancedAssistantDetails
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                ),
+                label: Text(
+                  _showAdvancedAssistantDetails
+                      ? 'Hide advanced voice tools'
+                      : 'Show advanced voice tools',
+                ),
+              ),
+            ),
+            if (_showAdvancedAssistantDetails) ...[
+              const SizedBox(height: 8),
+              Card(
+                key: const Key('voiceAssistantAdvancedCard'),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        'Paste Transcript and mock capture still work without microphone access.',
-                        style: theme.textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    ExpansionTile(
-                      key: const Key('voiceMoreCaptureToolsTile'),
-                      tilePadding: EdgeInsets.zero,
-                      childrenPadding: EdgeInsets.zero,
-                      title: Text(
-                        'More capture tools',
+                        'Advanced voice tools',
                         style: theme.textTheme.titleSmall,
                       ),
-                      subtitle: Text(
-                        'Use these if you want a different capture path.',
+                      const SizedBox(height: 8),
+                      Text(
+                        'Use these when you want capture paths, wizard mode, and local command tools.',
                         style: theme.textTheme.bodySmall,
                       ),
-                      children: [
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            FilledButton.icon(
-                              key: const Key('voiceMockTranscriptButton'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor:
-                                    theme.colorScheme.secondaryContainer,
-                                foregroundColor:
-                                    theme.colorScheme.onSecondaryContainer,
+                      const SizedBox(height: 12),
+                      Text(
+                        'Capture',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              Icon(
+                                _isListening
+                                    ? Icons.mic_rounded
+                                    : Icons.mic_none_rounded,
+                                size: 32,
+                                color: _isListening
+                                    ? theme.colorScheme.error
+                                    : theme.colorScheme.primary,
                               ),
-                              onPressed: _mockRecordCommand,
-                              icon: const Icon(Icons.graphic_eq),
-                              label: const Text('Use Mock Transcript'),
-                            ),
-                            FilledButton.tonalIcon(
-                              key: const Key('voicePasteTranscriptButton'),
-                              onPressed: _pasteFromClipboard,
-                              icon: const Icon(Icons.content_paste),
-                              label: const Text('Paste Transcript'),
-                            ),
-                          ],
+                              const SizedBox(height: 10),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  FilledButton.tonalIcon(
+                                    key: const Key('voiceStopListeningButton'),
+                                    onPressed: _isListening
+                                        ? _stopListening
+                                        : null,
+                                    icon:
+                                        const Icon(Icons.stop_circle_outlined),
+                                    label: const Text('Stop'),
+                                  ),
+                                  TextButton.icon(
+                                    key: const Key(
+                                      'voiceCancelListeningButton',
+                                    ),
+                                    onPressed: _isListening
+                                        ? _cancelListening
+                                        : null,
+                                    icon: const Icon(Icons.close),
+                                    label: const Text('Cancel'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surfaceContainerHighest
+                                      .withValues(alpha: 0.55),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _speechStateColor(
+                                      theme,
+                                    ).withValues(alpha: 0.28),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Wrap(
+                                      alignment: WrapAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        Chip(
+                                          label: Text(_speechStateLabel),
+                                          side: BorderSide.none,
+                                          backgroundColor: _speechStateColor(
+                                            theme,
+                                          ).withValues(alpha: 0.16),
+                                        ),
+                                        if (_usingWindowsVoiceTyping)
+                                          Chip(
+                                            label: const Text(
+                                              'Windows dictation',
+                                            ),
+                                            side: BorderSide.none,
+                                            backgroundColor: theme
+                                                .colorScheme
+                                                .secondaryContainer
+                                                .withValues(alpha: 0.72),
+                                          ),
+                                        if (!_usingWindowsVoiceTyping &&
+                                            !_isInitializingSpeech &&
+                                            !_isListening)
+                                          Chip(
+                                            label: const Text('Review mode'),
+                                            side: BorderSide.none,
+                                            backgroundColor: theme
+                                                .colorScheme
+                                                .primaryContainer
+                                                .withValues(alpha: 0.72),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _speechStatus,
+                                      style: theme.textTheme.bodySmall,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (_speechError != null) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  _speechError!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                              if (!_speechAvailable && _speechError != null) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Paste Transcript and mock capture still work without microphone access.',
+                                  style: theme.textTheme.bodySmall,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                              const SizedBox(height: 12),
+                              ExpansionTile(
+                                key: const Key('voiceMoreCaptureToolsTile'),
+                                tilePadding: EdgeInsets.zero,
+                                childrenPadding: EdgeInsets.zero,
+                                title: Text(
+                                  'More capture tools',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                subtitle: Text(
+                                  'Use these if you want a different capture path.',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    alignment: WrapAlignment.center,
+                                    children: [
+                                      FilledButton.icon(
+                                        key: const Key(
+                                          'voiceMockTranscriptButton',
+                                        ),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor:
+                                              theme.colorScheme.secondaryContainer,
+                                          foregroundColor:
+                                              theme.colorScheme.onSecondaryContainer,
+                                        ),
+                                        onPressed: _mockRecordCommand,
+                                        icon: const Icon(Icons.graphic_eq),
+                                        label: const Text('Use Mock Transcript'),
+                                      ),
+                                      FilledButton.tonalIcon(
+                                        key: const Key(
+                                          'voicePasteTranscriptButton',
+                                        ),
+                                        onPressed: _pasteFromClipboard,
+                                        icon: const Icon(Icons.content_paste),
+                                        label: const Text('Paste Transcript'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ExpansionTile(
-              key: const Key('voiceAdvancedModesTile'),
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: EdgeInsets.zero,
-              title: Text(
-                'Advanced voice modes',
-                style: theme.textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                'Wizard mode stays here so quick capture stays the default path.',
-                style: theme.textTheme.bodySmall,
-              ),
-              children: [
-                const SizedBox(height: 12),
-                SegmentedButton<_VoiceInteractionMode>(
-                  key: const Key('voiceInteractionModeSegmentedButton'),
-                  segments: const [
-                    ButtonSegment(
-                      value: _VoiceInteractionMode.quick,
-                      label: Text('Quick'),
-                      icon: Icon(Icons.flash_on_outlined),
-                    ),
-                    ButtonSegment(
-                      value: _VoiceInteractionMode.wizard,
-                      label: Text('Wizard'),
-                      icon: Icon(Icons.auto_fix_high_outlined),
-                    ),
-                  ],
-                  selected: {_mode},
-                  onSelectionChanged: (selection) {
-                    _setVoiceMode(selection.first);
-                  },
+              ExpansionTile(
+                key: const Key('voiceAssistantDebugTile'),
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                title: Text(
+                  'Debug, history, and wizard',
+                  style: theme.textTheme.titleSmall,
                 ),
-              ],
-            ),
-            if (_mode == _VoiceInteractionMode.wizard) ...[
+                subtitle: Text(
+                  'Everything else lives here: thread context, guide cards, wizard mode, and save/history tools.',
+                  style: theme.textTheme.bodySmall,
+                ),
+                children: [
+                  const SizedBox(height: 12),
+                  Text(
+                    'Review + history',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Keep the transcript, review cards, save flow, and command history together here.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  if (conversationContext != null) ...[
+                    VoiceConversationThreadCard(
+                      conversationContext: conversationContext,
+                      onResumeThread: _continueCurrentThread,
+                      onReuseLatestCapture: _restoreLatestCommandFromHistory,
+                      onStartFresh: _startNewThread,
+                      onCopySummary: _copyConversationSummary,
+                      onOpenSharedConversation: () =>
+                          context.go(RouteNames.voiceConversation),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Card(
+                    key: const Key('voiceFlowGuideCard'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Start here', style: theme.textTheme.titleSmall),
+                          const SizedBox(height: 4),
+                          Text(
+                            'The simplest path is Capture, Review, then Speak or Save. Whisper is tried first on Windows, then the local recognizer, and the extra tools stay lower on the page.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: const [
+                              Chip(label: Text('Capture')),
+                              Chip(label: Text('Review')),
+                              Chip(label: Text('Save')),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.tonalIcon(
+                      key: const Key('voiceGuidePdfButton'),
+                      onPressed: _openVoiceGuidePdf,
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Voice Guide PDF'),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Wizard',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Wizard mode stays here so quick capture stays the default path.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  ExpansionTile(
+                    key: const Key('voiceAdvancedModesTile'),
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Advanced voice modes',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    subtitle: Text(
+                      'Wizard mode stays here so quick capture stays the default path.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    children: [
+                      const SizedBox(height: 12),
+                      SegmentedButton<_VoiceInteractionMode>(
+                        key: const Key('voiceInteractionModeSegmentedButton'),
+                        segments: const [
+                          ButtonSegment(
+                            value: _VoiceInteractionMode.quick,
+                            label: Text('Quick'),
+                            icon: Icon(Icons.flash_on_outlined),
+                          ),
+                          ButtonSegment(
+                            value: _VoiceInteractionMode.wizard,
+                            label: Text('Wizard'),
+                            icon: Icon(Icons.auto_fix_high_outlined),
+                          ),
+                        ],
+                        selected: {_mode},
+                        onSelectionChanged: (selection) {
+                          _setVoiceMode(selection.first);
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_mode == _VoiceInteractionMode.wizard) ...[
               const SizedBox(height: 16),
               Card(
                 key: const Key('voiceWizardCard'),
@@ -3282,9 +3939,131 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               commands: _history,
               onCommandSelected: _restoreCommandFromHistory,
             ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _handleCapturedSpeechTranscript(
+    String transcript, {
+    required String source,
+  }) async {
+    final cleanedTranscript = transcript.trim();
+    if (cleanedTranscript.isEmpty || !mounted) {
+      return;
+    }
+
+    final suggestion = _service.suggestCommand(transcript: cleanedTranscript);
+    final followUpAction = _service.resolveFollowUpAction(
+      transcript: cleanedTranscript,
+      conversationContext: _conversationContext,
+    );
+    final route = followUpAction?.route;
+    final navigationRequest =
+        route != null || _service.isDashboardNavigationRequest(cleanedTranscript);
+    _lastAutoNavigatedSpeechTranscript = navigationRequest
+        ? cleanedTranscript
+        : null;
+
+    setState(() {
+      _speechAvailable = true;
+      _isInitializingSpeech = false;
+      _isListening = false;
+      _activeSpeechController.text = cleanedTranscript;
+      _activeSpeechController.selection = TextSelection.collapsed(
+        offset: _activeSpeechController.text.length,
+      );
+      _speechError = null;
+      _speechStatus = navigationRequest
+          ? _navigationStatusForAction(followUpAction)
+          : _mode == _VoiceInteractionMode.wizard
+          ? 'Wizard answer captured. Review before continuing.'
+          : 'Transcript captured. Review before saving.';
+    });
+
+    if (navigationRequest) {
+      final destinationLabel = _navigationDestinationLabel(followUpAction);
+      ref.read(voiceSessionProvider.notifier).release(
+            owner: VoiceSessionOwner.assistant,
+            label: 'Gaia ready',
+            detail: route != null
+                ? 'Opening $destinationLabel'
+                : 'Opening dashboard',
+          );
+      _setVoicePresence(
+        label: 'Gaia ready',
+        detail: route != null
+            ? 'Opening $destinationLabel'
+            : 'Opening dashboard',
+        isActive: true,
+        opacity: 0.82,
+      );
+      final assistantResponse = route != null
+          ? VoiceCommandAssistantResponse(
+              summary: _navigationStatusForAction(followUpAction),
+              nextStep: 'You can continue from there.',
+            )
+          : _service.buildAssistantResponse(
+              transcript: cleanedTranscript,
+              suggestion: suggestion,
+              conversationContext: _conversationContext,
+            );
+      unawaited(
+        _speakWithCurrentVoice(
+          assistantResponse.summary,
+          tone: VoiceSpeechTone.briefing,
+        ),
+      );
+      if (route != null) {
+        context.go(route);
+      } else {
+        context.go(RouteNames.dashboard);
+      }
+      return;
+    }
+
+    ref
+        .read(voiceSessionProvider.notifier)
+        .beginProcessing(
+          owner: VoiceSessionOwner.assistant,
+          label: 'Gaia captured',
+          detail: source == 'speech'
+              ? 'Review transcript'
+              : 'Review transcript',
+          opacity: 0.82,
+        );
+    _setVoicePresence(
+      label: 'Gaia captured',
+      detail: 'Review transcript',
+      isActive: true,
+      opacity: 0.82,
+    );
+  }
+
+  String _navigationStatusForAction(VoiceCommandQuickAction? action) {
+    if (action == null) {
+      return 'Opening the dashboard now. You are back on the main dashboard.';
+    }
+
+    final target = _navigationDestinationLabel(action);
+    return 'Opening $target now.';
+  }
+
+  String _navigationDestinationLabel(VoiceCommandQuickAction? action) {
+    if (action == null) {
+      return 'the dashboard';
+    }
+
+    return action.label.replaceFirst(
+      RegExp(
+        r'^(Open|Show|Go to|Take me to|Navigate to|Bring up)\s+',
+        caseSensitive: false,
+      ),
+      '',
     );
   }
 

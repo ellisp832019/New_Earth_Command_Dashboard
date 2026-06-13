@@ -16,6 +16,7 @@ void main() {
 
     expect(result.isReady, isTrue);
     expect(result.message, contains('Headset detected'));
+    expect(result.resolvedState.name, 'ready');
   });
 
   test('startup gate blocks when only a generic microphone is present', () {
@@ -27,7 +28,16 @@ void main() {
     ]);
 
     expect(result.isReady, isFalse);
-    expect(result.message, contains('no headset-like device'));
+    expect(result.message, contains('did not see a headset-like device'));
+    expect(result.resolvedState.name, 'microphoneOnly');
+  });
+
+  test('startup gate blocks when no devices are available', () {
+    final result = VoiceStartupGateResult.fromDevices(const []);
+
+    expect(result.isReady, isFalse);
+    expect(result.message, contains('No active microphone or headset'));
+    expect(result.resolvedState.name, 'noDevices');
   });
 
   test('headset detection looks for bluetooth and headset keywords', () {

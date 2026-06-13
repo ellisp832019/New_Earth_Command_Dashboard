@@ -1,0 +1,9 @@
+{
+  "source": "gaia",
+  "intent": "open_module",
+  "module": "microgrow",
+  "action": "view_status",
+  "payload": {},
+  "requires_confirmation": false,
+  "sensitivity": "low"
+}

@@ -48,16 +48,48 @@ class VoiceInputDevice {
   }
 }
 
+enum VoiceStartupGateState {
+  ready,
+  noDevices,
+  microphoneOnly,
+  checkFailed,
+  bypassed,
+}
+
 class VoiceStartupGateResult {
   const VoiceStartupGateResult({
     required this.isReady,
     required this.message,
     required this.devices,
+    this.state,
   });
 
   final bool isReady;
   final String message;
   final List<VoiceInputDevice> devices;
+  final VoiceStartupGateState? state;
+
+  VoiceStartupGateState get resolvedState {
+    if (state != null) {
+      return state!;
+    }
+
+    if (isReady) {
+      return VoiceStartupGateState.ready;
+    }
+
+    if (devices.isEmpty) {
+      return VoiceStartupGateState.noDevices;
+    }
+
+    final headsetDevices =
+        devices.where((device) => device.isHeadsetLike).toList();
+    if (headsetDevices.isNotEmpty) {
+      return VoiceStartupGateState.ready;
+    }
+
+    return VoiceStartupGateState.microphoneOnly;
+  }
 
   factory VoiceStartupGateResult.fromDevices(List<VoiceInputDevice> devices) {
     final headsetDevices =
@@ -68,6 +100,7 @@ class VoiceStartupGateResult {
         isReady: true,
         message: 'Headset detected: $names. Gaia is ready.',
         devices: devices,
+        state: VoiceStartupGateState.ready,
       );
     }
 
@@ -77,6 +110,7 @@ class VoiceStartupGateResult {
         message:
             'No active microphone or headset was detected. Connect a Bluetooth headset or headset microphone, then retry.',
         devices: <VoiceInputDevice>[],
+        state: VoiceStartupGateState.noDevices,
       );
     }
 
@@ -84,8 +118,9 @@ class VoiceStartupGateResult {
     return VoiceStartupGateResult(
       isReady: false,
       message:
-          'A microphone is available, but no headset-like device was detected yet. Found: $deviceNames. Connect a Bluetooth headset or headset microphone, then retry.',
+          'A microphone is available, but Gaia did not see a headset-like device yet. Found: $deviceNames. If this is your headset mic, you can still try Use headset anyway.',
       devices: devices,
+      state: VoiceStartupGateState.microphoneOnly,
     );
   }
 }
@@ -115,6 +150,7 @@ class VoiceStartupGateService {
         isReady: true,
         message: 'Voice startup gate is bypassed on this platform.',
         devices: <VoiceInputDevice>[],
+        state: VoiceStartupGateState.bypassed,
       );
     }
 
@@ -131,8 +167,9 @@ class VoiceStartupGateService {
       return const VoiceStartupGateResult(
         isReady: false,
         message:
-            'Gaia could not check for a headset right now. Please make sure one is connected, then try again.',
+            'Gaia could not check for audio devices right now. The headset may still work, but the device query needs another look. Open Voice diagnostics for the bridge and default input check.',
         devices: <VoiceInputDevice>[],
+        state: VoiceStartupGateState.checkFailed,
       );
     }
   }

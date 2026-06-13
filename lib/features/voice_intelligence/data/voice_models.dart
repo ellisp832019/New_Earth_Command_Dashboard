@@ -2,7 +2,9 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 
-enum VoiceProviderMode { mock, openAi, realtimeLater }
+import 'voice_usb_config_discovery.dart';
+
+enum VoiceProviderMode { mock, ollama, openAi, realtimeLater }
 
 enum VoiceSessionMode { voiceNote, meeting, assistant, microgrowStatus }
 
@@ -59,40 +61,128 @@ class VoiceRuntimeConfig {
     required this.providerMode,
     required this.apiKey,
     required this.transcriptionModel,
+    required this.assistantModel,
     required this.realtimeModel,
     required this.ttsModel,
+    required this.chatBaseUrl,
+    this.configSourceLabel = 'environment',
   });
 
   final VoiceProviderMode providerMode;
   final String? apiKey;
   final String transcriptionModel;
+  final String assistantModel;
   final String realtimeModel;
   final String ttsModel;
+  final String chatBaseUrl;
+  final String configSourceLabel;
 
   bool get hasApiKey => apiKey?.trim().isNotEmpty == true;
   bool get canUseOpenAi =>
-      providerMode != VoiceProviderMode.mock && hasApiKey;
+      (providerMode == VoiceProviderMode.openAi ||
+          providerMode == VoiceProviderMode.realtimeLater) &&
+      hasApiKey;
 
-  factory VoiceRuntimeConfig.fromEnvironment() {
-    final platformEnvironment = kIsWeb ? const <String, String>{} : Platform.environment;
+  bool get canUseOllama => providerMode == VoiceProviderMode.ollama;
 
-    final providerName = platformEnvironment['VOICE_PROVIDER']?.toLowerCase();
+  bool get canUseChat => canUseOpenAi || canUseOllama;
+
+  factory VoiceRuntimeConfig.fromEnvironment({
+    Map<String, String>? environment,
+    Iterable<String>? usbCandidateRoots,
+  }) {
+    final platformEnvironment =
+        environment ??
+        (kIsWeb ? const <String, String>{} : Platform.environment);
+    final usbEnvironment = VoiceUsbConfigDiscovery.discoverOllamaEnvironment(
+      environment: platformEnvironment,
+      candidateRoots: usbCandidateRoots,
+    );
+    final resolvedEnvironment = <String, String>{
+      ...usbEnvironment,
+      ...platformEnvironment,
+    };
+
+    final providerName =
+        resolvedEnvironment['VOICE_PROVIDER']?.trim().toLowerCase() ??
+        resolvedEnvironment['VOICE_AI_PROVIDER']?.trim().toLowerCase();
     final providerMode = switch (providerName) {
       'openai' => VoiceProviderMode.openAi,
+      'ollama' => VoiceProviderMode.ollama,
       'realtime' => VoiceProviderMode.realtimeLater,
-      _ => VoiceProviderMode.mock,
+      _ => _defaultProviderMode(resolvedEnvironment),
     };
+
+    final chatBaseUrl = _chatBaseUrlFor(
+      providerMode: providerMode,
+      environment: resolvedEnvironment,
+    );
 
     return VoiceRuntimeConfig(
       providerMode: providerMode,
-      apiKey: platformEnvironment['OPENAI_API_KEY'],
+      apiKey: resolvedEnvironment['OPENAI_API_KEY'],
       transcriptionModel:
-          platformEnvironment['VOICE_TRANSCRIPTION_MODEL'] ?? 'gpt-4o-mini-transcribe',
+          resolvedEnvironment['VOICE_TRANSCRIPTION_MODEL'] ??
+          'gpt-4o-mini-transcribe',
+      assistantModel:
+          resolvedEnvironment['VOICE_ASSISTANT_MODEL'] ??
+          (providerMode == VoiceProviderMode.ollama
+              ? resolvedEnvironment['VOICE_OLLAMA_MODEL'] ?? 'qwen2.5:7b'
+              : resolvedEnvironment['VOICE_CHAT_MODEL'] ?? 'gpt-4o-mini'),
       realtimeModel:
-          platformEnvironment['VOICE_REALTIME_MODEL'] ?? 'gpt-realtime-2',
-      ttsModel: platformEnvironment['VOICE_TTS_MODEL'] ?? 'tts-1',
+          resolvedEnvironment['VOICE_REALTIME_MODEL'] ?? 'gpt-realtime-2',
+      ttsModel: resolvedEnvironment['VOICE_TTS_MODEL'] ?? 'tts-1',
+      chatBaseUrl: chatBaseUrl,
+      configSourceLabel:
+          resolvedEnvironment['VOICE_CONFIG_SOURCE'] ?? 'environment',
     );
   }
+}
+
+VoiceProviderMode _defaultProviderMode(Map<String, String> environment) {
+  final ollamaConfigured =
+      environment['VOICE_OLLAMA_URL']?.trim().isNotEmpty == true ||
+      environment['OLLAMA_URL']?.trim().isNotEmpty == true ||
+      environment['VOICE_OLLAMA_MODEL']?.trim().isNotEmpty == true;
+  if (ollamaConfigured) {
+    return VoiceProviderMode.ollama;
+  }
+
+  return VoiceProviderMode.mock;
+}
+
+String _chatBaseUrlFor({
+  required VoiceProviderMode providerMode,
+  required Map<String, String> environment,
+}) {
+  final rawBaseUrl = switch (providerMode) {
+    VoiceProviderMode.ollama =>
+      environment['VOICE_OLLAMA_URL'] ??
+          environment['OLLAMA_URL'] ??
+          'http://localhost:11434',
+    VoiceProviderMode.openAi || VoiceProviderMode.realtimeLater =>
+      environment['VOICE_CHAT_BASE_URL'] ?? 'https://api.openai.com/v1',
+    VoiceProviderMode.mock =>
+      environment['VOICE_CHAT_BASE_URL'] ?? 'https://api.openai.com/v1',
+  };
+
+  return _ensureChatApiBaseUrl(rawBaseUrl);
+}
+
+String _ensureChatApiBaseUrl(String rawBaseUrl) {
+  final trimmed = rawBaseUrl.trim();
+  if (trimmed.isEmpty) {
+    return 'https://api.openai.com/v1';
+  }
+
+  final normalized = trimmed.endsWith('/')
+      ? trimmed.substring(0, trimmed.length - 1)
+      : trimmed;
+  if (normalized.endsWith('/v1')) {
+    return normalized;
+  }
+
+  return '$normalized/v1';
 }
 
 class VoiceSessionRecord {

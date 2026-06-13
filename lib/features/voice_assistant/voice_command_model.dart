@@ -351,6 +351,7 @@ class VoiceConversationContext {
     this.title,
     this.transcript,
     this.entryCount = 0,
+    this.navigation = false,
   });
 
   VoiceConversationContext copyWith({
@@ -362,6 +363,7 @@ class VoiceConversationContext {
     String? title,
     String? transcript,
     int? entryCount,
+    bool? navigation,
   }) {
     return VoiceConversationContext(
       label: label ?? this.label,
@@ -372,6 +374,7 @@ class VoiceConversationContext {
       title: title ?? this.title,
       transcript: transcript ?? this.transcript,
       entryCount: entryCount ?? this.entryCount,
+      navigation: navigation ?? this.navigation,
     );
   }
 
@@ -383,8 +386,13 @@ class VoiceConversationContext {
   final String? title;
   final String? transcript;
   final int entryCount;
+  final bool navigation;
 
   String get threadScopeLabel {
+    if (navigation) {
+      return label;
+    }
+
     final parts = <String>[
       if (projectName != null && projectName!.isNotEmpty) projectName!,
       type?.label ?? label,

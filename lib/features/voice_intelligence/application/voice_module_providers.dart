@@ -43,7 +43,9 @@ class VoiceFeatureFlagsNotifier extends Notifier<VoiceFeatureFlags> {
     }
 
     _hasHydrated = true;
-    final repository = VoiceModulePreferencesRepository(ref.read(appDatabaseProvider));
+    final repository = VoiceModulePreferencesRepository(
+      ref.read(appDatabaseProvider),
+    );
     final snapshot = await repository.loadPreferences();
     if (snapshot == null || _hasDirtyChanges) {
       return;
@@ -58,10 +60,13 @@ class VoiceFeatureFlagsNotifier extends Notifier<VoiceFeatureFlags> {
   }
 
   Future<void> _save() async {
-    final repository = VoiceModulePreferencesRepository(ref.read(appDatabaseProvider));
+    final repository = VoiceModulePreferencesRepository(
+      ref.read(appDatabaseProvider),
+    );
     final existing = await repository.loadPreferences();
     await repository.savePreferences(
-      providerMode: existing?.providerMode ?? ref.read(voiceProviderModeProvider),
+      providerMode:
+          existing?.providerMode ?? ref.read(voiceProviderModeProvider),
       featureFlags: state,
     );
   }
@@ -89,7 +94,9 @@ class VoiceProviderModeNotifier extends Notifier<VoiceProviderMode> {
     }
 
     _hasHydrated = true;
-    final repository = VoiceModulePreferencesRepository(ref.read(appDatabaseProvider));
+    final repository = VoiceModulePreferencesRepository(
+      ref.read(appDatabaseProvider),
+    );
     final snapshot = await repository.loadPreferences();
     if (snapshot == null || _hasDirtyChanges) {
       return;
@@ -104,11 +111,14 @@ class VoiceProviderModeNotifier extends Notifier<VoiceProviderMode> {
   }
 
   Future<void> _save() async {
-    final repository = VoiceModulePreferencesRepository(ref.read(appDatabaseProvider));
+    final repository = VoiceModulePreferencesRepository(
+      ref.read(appDatabaseProvider),
+    );
     final existing = await repository.loadPreferences();
     await repository.savePreferences(
       providerMode: state,
-      featureFlags: existing?.featureFlags ?? ref.read(voiceFeatureFlagsProvider),
+      featureFlags:
+          existing?.featureFlags ?? ref.read(voiceFeatureFlagsProvider),
     );
   }
 }
@@ -134,9 +144,10 @@ final voiceSessionControllerProvider =
     );
 
 final voiceConversationThreadProvider =
-    NotifierProvider<VoiceConversationThreadController, VoiceConversationThreadState>(
-      VoiceConversationThreadController.new,
-    );
+    NotifierProvider<
+      VoiceConversationThreadController,
+      VoiceConversationThreadState
+    >(VoiceConversationThreadController.new);
 
 final voiceSafetyGatewayProvider = Provider<SafetyCommandGateway>((ref) {
   return const SafetyCommandGateway();
@@ -144,13 +155,15 @@ final voiceSafetyGatewayProvider = Provider<SafetyCommandGateway>((ref) {
 
 final voiceOpenAiTransportProvider = Provider<VoiceOpenAiTransport>((ref) {
   final runtime = ref.watch(voiceModuleConfigProvider).runtime;
-  return VoiceOpenAiTransport(apiKey: runtime.apiKey);
+  return VoiceOpenAiTransport(
+    apiKey: runtime.canUseOpenAi ? runtime.apiKey : null,
+    baseUrl: runtime.chatBaseUrl,
+  );
 });
 
 final voiceAiProviderProvider = Provider<VoiceAiProvider>((ref) {
   final runtime = ref.watch(voiceModuleConfigProvider).runtime;
-  if (runtime.canUseOpenAi &&
-      runtime.providerMode != VoiceProviderMode.mock) {
+  if (runtime.canUseChat) {
     return OpenAiVoiceAiProvider(
       runtimeConfig: runtime,
       transport: ref.watch(voiceOpenAiTransportProvider),
@@ -160,20 +173,26 @@ final voiceAiProviderProvider = Provider<VoiceAiProvider>((ref) {
   return const MockVoiceAiProvider();
 });
 
-final voiceTranscriptionServiceProvider =
-    Provider<VoiceTranscriptionService>((ref) {
-  return VoiceTranscriptionService(provider: ref.watch(voiceAiProviderProvider));
+final voiceTranscriptionServiceProvider = Provider<VoiceTranscriptionService>((
+  ref,
+) {
+  return VoiceTranscriptionService(
+    provider: ref.watch(voiceAiProviderProvider),
+  );
 });
 
-final voiceMeetingSummaryServiceProvider =
-    Provider<MeetingSummaryService>((ref) {
+final voiceMeetingSummaryServiceProvider = Provider<MeetingSummaryService>((
+  ref,
+) {
   return MeetingSummaryService(provider: ref.watch(voiceAiProviderProvider));
 });
 
 final voiceMicroGrowStatusServiceProvider =
     Provider<MicroGrowVoiceStatusService>((ref) {
-  return MicroGrowVoiceStatusService(provider: ref.watch(voiceAiProviderProvider));
-});
+      return MicroGrowVoiceStatusService(
+        provider: ref.watch(voiceAiProviderProvider),
+      );
+    });
 
 final voiceAssistantServiceProvider = Provider<VoiceAssistantService>((ref) {
   return VoiceAssistantService(

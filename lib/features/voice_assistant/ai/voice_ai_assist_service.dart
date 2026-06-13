@@ -96,6 +96,8 @@ abstract class VoiceAiAssistAdapter {
   Future<VoiceAiAssistResponse> guideWizard(VoiceAiAssistRequest request);
 
   Future<VoiceAiAssistResponse> summarizeMemory(VoiceAiAssistRequest request);
+
+  Future<VoiceAiAssistResponse> conversationTurn(VoiceAiAssistRequest request);
 }
 
 abstract class VoiceAiAssistService extends VoiceAiAssistAdapter {
@@ -196,6 +198,37 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
         context: context,
         transcript: transcript,
       ),
+    );
+  }
+
+  @override
+  Future<VoiceAiAssistResponse> conversationTurn(
+    VoiceAiAssistRequest request,
+  ) async {
+    final transcript = _normalizeText(request.transcript);
+    final inferredType = _inferType(request, transcript);
+    final context = request.conversationContext;
+    final conversationTone = _conversationSummaryFor(
+      transcript: transcript,
+      inferredType: inferredType,
+      context: context,
+    );
+
+    return VoiceAiAssistResponse(
+      summary: conversationTone,
+      nextStep: _conversationNextStepFor(inferredType, context),
+      suggestedTitle: _suggestedTitle(request, transcript),
+      suggestedSummary: _suggestedSummary(request, transcript),
+      suggestedType: inferredType,
+      hints: [
+        'Local AI adapter active.',
+        'Conversation mode active.',
+        if (context?.hasMemory == true) 'Remembered thread is available.',
+        if (transcript.isNotEmpty)
+          'Draft title: ${_buildFallbackTitle(transcript)}',
+      ],
+      projectContext: context?.projectName ?? request.conversationContext?.projectName,
+      threadContext: context?.threadScopeLabel ?? request.conversationContext?.threadScopeLabel,
     );
   }
 }
@@ -577,4 +610,73 @@ String _memoryNextStepFor(
 
   final label = _keywordLabel(inferredType);
   return 'Reopen the $label flow, review the latest entry, and keep the next move small.';
+}
+
+String _conversationSummaryFor({
+  required String transcript,
+  required VoiceCommandType? inferredType,
+  required VoiceConversationContext? context,
+}) {
+  final cleanedTranscript = _normalizeText(transcript);
+  final topicLabel = _keywordLabel(inferredType);
+  final memoryLabel = _normalizeText(
+    context?.projectName ?? context?.threadScopeLabel ?? '',
+  );
+
+  if (cleanedTranscript.isEmpty) {
+    if (memoryLabel.isNotEmpty) {
+      return 'Okay. I’m with you on $memoryLabel. What would you like to do next?';
+    }
+    return 'Okay. I’m here. What would you like Gaia to handle?';
+  }
+
+  if (context != null && context.hasMemory) {
+    return 'Okay. I’m keeping this $topicLabel with the remembered thread at $memoryLabel.';
+  }
+
+  return switch (inferredType) {
+    VoiceCommandType.project =>
+      'Okay. That sounds like a project thread, and I can keep it moving calmly.',
+    VoiceCommandType.task =>
+      'Okay. That sounds like a task, and I can help shape the next step.',
+    VoiceCommandType.journalEntry =>
+      'Okay. That sounds reflective, and I can keep the note short and useful.',
+    VoiceCommandType.contentIdea =>
+      'Okay. That sounds like a content idea, and I can help keep it publish-ready.',
+    VoiceCommandType.businessOpportunity =>
+      'Okay. That sounds like a business follow-up, and I can keep it practical.',
+    VoiceCommandType.codexPrompt =>
+      'Okay. That sounds like a Codex prompt, and I’ll keep it review-first.',
+    VoiceCommandType.idea =>
+      'Okay. That sounds like an idea worth parking for later.',
+    null =>
+      'Okay. I heard you, and I can help turn that into the next step.',
+  };
+}
+
+String _conversationNextStepFor(
+  VoiceCommandType? inferredType,
+  VoiceConversationContext? context,
+) {
+  if (context != null && context.hasMemory) {
+    return 'Keep talking or ask me to open the saved thread again.';
+  }
+
+  return switch (inferredType) {
+    VoiceCommandType.project =>
+      'Tell me the project name, status, or first move if you want to refine it.',
+    VoiceCommandType.task =>
+      'Give me the owner, priority, or first action if you want to tighten it.',
+    VoiceCommandType.journalEntry =>
+      'Add one short reflection if you want the note to feel complete.',
+    VoiceCommandType.contentIdea =>
+      'Tell me the platform or format if you want a sharper content draft.',
+    VoiceCommandType.businessOpportunity =>
+      'Add the contact or follow-up if you want the thread to stay practical.',
+    VoiceCommandType.codexPrompt =>
+      'Say the change you want reviewed, and I’ll keep it safe and concise.',
+    VoiceCommandType.idea =>
+      'Say where you want to park it, or keep it as a light idea for later.',
+    null => 'Say the next thing you want Gaia to handle.',
+  };
 }

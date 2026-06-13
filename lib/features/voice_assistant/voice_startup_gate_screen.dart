@@ -7,6 +7,7 @@ import 'desktop_speech_bridge_service.dart';
 import '../settings/application/settings_controller.dart';
 import 'application/voice_startup_gate_controller.dart';
 import 'voice_startup_gate_service.dart';
+import 'voice_speech_diagnostics_service.dart';
 
 class VoiceStartupGateScreen extends ConsumerStatefulWidget {
   const VoiceStartupGateScreen({super.key, required this.result});
@@ -21,17 +22,20 @@ class VoiceStartupGateScreen extends ConsumerStatefulWidget {
 class _VoiceStartupGateScreenState
     extends ConsumerState<VoiceStartupGateScreen> {
   Timer? _refreshTimer;
+  bool _voiceDiagnosticsShown = false;
 
   @override
   void initState() {
     super.initState();
     _scheduleRefresh();
+    _maybeShowVoiceDiagnostics();
   }
 
   @override
   void didUpdateWidget(covariant VoiceStartupGateScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     _scheduleRefresh();
+    _maybeShowVoiceDiagnostics();
   }
 
   @override
@@ -55,9 +59,112 @@ class _VoiceStartupGateScreenState
     });
   }
 
+  void _maybeShowVoiceDiagnostics() {
+    if (widget.result.isReady || _voiceDiagnosticsShown) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.result.isReady || _voiceDiagnosticsShown) {
+        return;
+      }
+
+      _voiceDiagnosticsShown = true;
+      unawaited(_showVoiceDiagnostics());
+    });
+  }
+
+  Future<void> _showVoiceDiagnostics() async {
+    final diagnostics = await VoiceSpeechDiagnosticsService().run();
+    if (!mounted) {
+      return;
+    }
+
+    final bridge = diagnostics.bridgeDiagnostics;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Voice diagnostics'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(diagnostics.headsetStatus),
+                const SizedBox(height: 12),
+                Text(diagnostics.bridgeStatus),
+                if (bridge != null) ...[
+                  const SizedBox(height: 12),
+                  Text('Python: ${bridge.pythonVersion}'),
+                  Text('Bridge model: ${bridge.bridgeModel}'),
+                  if (bridge.defaultInputDevice != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Default input: ${bridge.defaultInputDevice!['name']}',
+                    ),
+                  ],
+                ],
+                const SizedBox(height: 12),
+                Text(diagnostics.recommendation),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _headlineForResult(VoiceStartupGateResult result) {
+    return switch (result.resolvedState) {
+      VoiceStartupGateState.ready => 'Headset detected',
+      VoiceStartupGateState.noDevices => 'No microphone or headset found',
+      VoiceStartupGateState.microphoneOnly =>
+        'Microphone found, but not a headset-like device',
+      VoiceStartupGateState.checkFailed => 'Could not check audio devices',
+      VoiceStartupGateState.bypassed => 'Voice gate bypassed',
+    };
+  }
+
+  String _explanationForResult(VoiceStartupGateResult result) {
+    return switch (result.resolvedState) {
+      VoiceStartupGateState.ready =>
+        'Gaia can start hands-free voice with the headset you connected.',
+      VoiceStartupGateState.noDevices =>
+        'No audio input is showing up yet. Connect a Bluetooth headset or headset microphone, then try again.',
+      VoiceStartupGateState.microphoneOnly =>
+        'Windows can see a microphone, but not one that looks like a headset. If this is your headset mic, you can still try Use headset anyway.',
+      VoiceStartupGateState.checkFailed =>
+        'Gaia could not verify the audio devices from Windows right now. Open diagnostics to check the offline bridge and default input path.',
+      VoiceStartupGateState.bypassed =>
+        'The startup gate is bypassed on this platform, so Gaia will continue without blocking.',
+    };
+  }
+
+  String _nextStepForResult(VoiceStartupGateResult result) {
+    return switch (result.resolvedState) {
+      VoiceStartupGateState.ready => 'You can continue into Gaia now.',
+      VoiceStartupGateState.noDevices =>
+        'If a headset is already connected, unplug and reconnect it, then retry.',
+      VoiceStartupGateState.microphoneOnly =>
+        'Try Use headset anyway if this microphone is actually the one on your headset.',
+      VoiceStartupGateState.checkFailed =>
+        'Run diagnostics to see whether the bridge can still reach the input device.',
+      VoiceStartupGateState.bypassed =>
+        'You can continue to the dashboard without waiting for the gate.',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final result = widget.result;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -73,15 +180,40 @@ class _VoiceStartupGateScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Gaia is waiting for your headset',
+                      _headlineForResult(result),
                       style: theme.textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 12),
-                    Text(widget.result.message, style: theme.textTheme.bodyLarge),
+                    Text(result.message, style: theme.textTheme.bodyLarge),
                     const SizedBox(height: 8),
                     Text(
                       'Gaia keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
                       style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 14),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'What Gaia sees',
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _explanationForResult(result),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _nextStepForResult(result),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Card(
@@ -106,13 +238,13 @@ class _VoiceStartupGateScreenState
                       ),
                     ),
                     const SizedBox(height: 20),
-                    if (widget.result.devices.isNotEmpty) ...[
+                    if (result.devices.isNotEmpty) ...[
                       Text(
                         'Detected audio inputs',
                         style: theme.textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
-                      ...widget.result.devices.map(
+                      ...result.devices.map(
                         (device) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
@@ -169,11 +301,16 @@ class _VoiceStartupGateScreenState
                           icon: const Icon(Icons.volume_off_outlined),
                           label: const Text('Continue without Voice'),
                         ),
+                        TextButton.icon(
+                          onPressed: _showVoiceDiagnostics,
+                          icon: const Icon(Icons.health_and_safety_outlined),
+                          label: const Text('Run diagnostics'),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Gaia will continue only after it sees a connected headset or headset microphone, but it keeps rechecking while this screen is open.',
+                      'Gaia keeps rechecking while this screen is open, and you can still use diagnostics or bypass if your headset mic is the correct input.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),

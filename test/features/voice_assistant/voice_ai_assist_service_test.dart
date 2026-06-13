@@ -11,11 +11,13 @@ class _FakeVoiceAiAssistService implements VoiceAiAssistService {
     required this.reviewResponse,
     required this.wizardResponse,
     required this.memoryResponse,
+    required this.conversationResponse,
   });
 
   final VoiceAiAssistResponse reviewResponse;
   final VoiceAiAssistResponse wizardResponse;
   final VoiceAiAssistResponse memoryResponse;
+  final VoiceAiAssistResponse conversationResponse;
 
   VoiceAiAssistRequest? lastRequest;
   String? lastMethod;
@@ -46,6 +48,15 @@ class _FakeVoiceAiAssistService implements VoiceAiAssistService {
     lastMethod = 'memory';
     return memoryResponse;
   }
+
+  @override
+  Future<VoiceAiAssistResponse> conversationTurn(
+    VoiceAiAssistRequest request,
+  ) async {
+    lastRequest = request;
+    lastMethod = 'conversation';
+    return conversationResponse;
+  }
 }
 
 class _FakeVoiceAiAssistAdapter implements VoiceAiAssistAdapter {
@@ -69,6 +80,13 @@ class _FakeVoiceAiAssistAdapter implements VoiceAiAssistAdapter {
 
   @override
   Future<VoiceAiAssistResponse> summarizeMemory(
+    VoiceAiAssistRequest request,
+  ) async {
+    return response;
+  }
+
+  @override
+  Future<VoiceAiAssistResponse> conversationTurn(
     VoiceAiAssistRequest request,
   ) async {
     return response;
@@ -259,6 +277,10 @@ void main() {
           summary: 'memory summary',
           nextStep: 'memory next',
         ),
+        conversationResponse: const VoiceAiAssistResponse(
+          summary: 'conversation summary',
+          nextStep: 'conversation next',
+        ),
       );
       final container = ProviderContainer(
         overrides: [
@@ -306,6 +328,20 @@ void main() {
       );
       expect(fakeService.lastMethod, 'review');
       expect(reviewResponse.summary, 'review summary');
+
+      final conversationResponse = await container.read(
+        voiceAiConversationAssistProvider(
+          const VoiceAiAssistRequest(
+            transcript: 'Open dashboard',
+            conversationContext: VoiceConversationContext(
+              label: 'Dashboard',
+              summary: 'Shared voice thread',
+            ),
+          ),
+        ).future,
+      );
+      expect(fakeService.lastMethod, 'conversation');
+      expect(conversationResponse.summary, 'conversation summary');
     },
   );
 

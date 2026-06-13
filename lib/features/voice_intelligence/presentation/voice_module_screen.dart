@@ -110,8 +110,7 @@ class VoiceModuleScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               _SharedVoiceSessionBanner(
                 session: legacyVoiceSession,
-                thread:
-                    ref.watch(voiceConversationThreadProvider),
+                thread: ref.watch(voiceConversationThreadProvider),
               ),
               const SizedBox(height: 16),
               if (session.recordingActive) ...[
@@ -322,8 +321,8 @@ class _SharedVoiceSessionBanner extends StatelessWidget {
     final detail = isActive
         ? 'The same calm voice session now carries the dashboard conversation.'
         : thread.threadTitle == 'No thread yet'
-            ? 'Open a voice page to start the shared thread.'
-            : 'The shared thread is saved and ready to resume.';
+        ? 'Open a voice page to start the shared thread.'
+        : 'The shared thread is saved and ready to resume.';
 
     return Container(
       width: double.infinity,
@@ -336,9 +335,7 @@ class _SharedVoiceSessionBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isActive
-                ? Icons.graphic_eq_outlined
-                : Icons.forum_outlined,
+            isActive ? Icons.graphic_eq_outlined : Icons.forum_outlined,
             color: accent,
             size: 18,
           ),
@@ -906,7 +903,8 @@ class _HomeResumeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasSavedThread = thread.threadTitle != 'No thread yet' ||
+    final hasSavedThread =
+        thread.threadTitle != 'No thread yet' ||
         thread.conversationEntries.isNotEmpty ||
         thread.lastThingYouSaid.trim().isNotEmpty;
 
@@ -940,7 +938,9 @@ class _HomeResumeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasSavedThread ? 'Resume saved thread' : 'No saved thread yet',
+                  hasSavedThread
+                      ? 'Resume saved thread'
+                      : 'No saved thread yet',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: AppColours.darkText,
                   ),
@@ -1019,10 +1019,7 @@ class _VoiceSectionConversationCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.forum_outlined,
-                color: AppColours.darkSecondary,
-              ),
+              const Icon(Icons.forum_outlined, color: AppColours.darkSecondary),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -2363,11 +2360,8 @@ class _VoiceAuditLogPageState extends ConsumerState<_VoiceAuditLogPage> {
   Widget build(BuildContext context) {
     final loggerEntries = ref.watch(voiceAuditLoggerProvider);
     final filteredEntries = _filteredEntries(loggerEntries);
-    final sectionOptions = loggerEntries
-        .map((entry) => entry.section)
-        .toSet()
-        .toList()
-      ..sort();
+    final sectionOptions =
+        loggerEntries.map((entry) => entry.section).toSet().toList()..sort();
     final threadState = ref.watch(voiceConversationThreadProvider);
 
     return ListView(
@@ -2443,7 +2437,8 @@ class _VoiceAuditLogPageState extends ConsumerState<_VoiceAuditLogPage> {
                         ),
                       ),
                     ],
-                    onChanged: (value) => setState(() => _sectionFilter = value),
+                    onChanged: (value) =>
+                        setState(() => _sectionFilter = value),
                     decoration: const InputDecoration(
                       labelText: 'Section filter',
                     ),
@@ -2524,7 +2519,8 @@ class _VoiceAuditLogPageState extends ConsumerState<_VoiceAuditLogPage> {
             (entry) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _sectionPanel(
-                title: '${entry.section} â€¢ ${_formatDateTime(entry.timestamp)}',
+                title:
+                    '${entry.section} â€¢ ${_formatDateTime(entry.timestamp)}',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2548,8 +2544,7 @@ class _VoiceAuditLogPageState extends ConsumerState<_VoiceAuditLogPage> {
                       children: [
                         FilledButton.tonalIcon(
                           key: const Key('voiceAuditJumpBackButton'),
-                          onPressed: () =>
-                              context.go(_auditEntryRoute(entry)),
+                          onPressed: () => context.go(_auditEntryRoute(entry)),
                           icon: const Icon(Icons.open_in_new),
                           label: const Text('Jump back'),
                         ),
@@ -2575,29 +2570,31 @@ class _VoiceAuditLogPageState extends ConsumerState<_VoiceAuditLogPage> {
     final search = _searchController.text.trim().toLowerCase();
     final intentFilter = _intentController.text.trim().toLowerCase();
 
-    return entries.where((entry) {
-      if (_sectionFilter != null && entry.section != _sectionFilter) {
-        return false;
-      }
+    return entries
+        .where((entry) {
+          if (_sectionFilter != null && entry.section != _sectionFilter) {
+            return false;
+          }
 
-      if (intentFilter.isNotEmpty &&
-          !entry.intent.toLowerCase().contains(intentFilter)) {
-        return false;
-      }
+          if (intentFilter.isNotEmpty &&
+              !entry.intent.toLowerCase().contains(intentFilter)) {
+            return false;
+          }
 
-      if (search.isEmpty) {
-        return true;
-      }
+          if (search.isEmpty) {
+            return true;
+          }
 
-      final haystack = <String>[
-        entry.section,
-        entry.intent,
-        entry.userText,
-        entry.resultSummary,
-        entry.safetyDecision.reason,
-      ].join(' ').toLowerCase();
-      return haystack.contains(search);
-    }).toList(growable: false);
+          final haystack = <String>[
+            entry.section,
+            entry.intent,
+            entry.userText,
+            entry.resultSummary,
+            entry.safetyDecision.reason,
+          ].join(' ').toLowerCase();
+          return haystack.contains(search);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -2657,6 +2654,10 @@ class _VoiceSettingsPage extends ConsumerWidget {
           child: SegmentedButton<VoiceProviderMode>(
             segments: const [
               ButtonSegment(value: VoiceProviderMode.mock, label: Text('Mock')),
+              ButtonSegment(
+                value: VoiceProviderMode.ollama,
+                label: Text('Ollama'),
+              ),
               ButtonSegment(
                 value: VoiceProviderMode.openAi,
                 label: Text('OpenAI'),
@@ -2751,6 +2752,12 @@ class _VoiceSettingsPage extends ConsumerWidget {
             children: [
               Text(
                 'OpenAI API key configured: ${config.runtime.hasApiKey ? 'yes' : 'no'}',
+              ),
+              Text(
+                switch (config.runtime.configSourceLabel) {
+                  'gaia_usb' => 'Config source: GAIA USB (Ollama detected)',
+                  _ => 'Config source: ${config.runtime.configSourceLabel}',
+                },
               ),
               Text('Transcription model: ${config.runtime.transcriptionModel}'),
               Text('Realtime model: ${config.runtime.realtimeModel}'),

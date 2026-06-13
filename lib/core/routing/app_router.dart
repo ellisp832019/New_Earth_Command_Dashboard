@@ -91,7 +91,7 @@ final _shellNavigatorMoreKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: RouteNames.dashboard,
+  initialLocation: RouteNames.voiceAssistant,
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {

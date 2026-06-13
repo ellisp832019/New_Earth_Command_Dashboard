@@ -88,7 +88,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   label: Text(
-                    'Type: ${conversationContext.type?.label ?? 'Saved'}',
+                    'Type: ${conversationContext.navigation ? 'Navigation' : conversationContext.type?.label ?? 'Saved'}',
                   ),
                 ),
                 if (conversationContext.projectName != null &&

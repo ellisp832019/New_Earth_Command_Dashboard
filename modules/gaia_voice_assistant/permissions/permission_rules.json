@@ -1,0 +1,34 @@
+{
+  "low_risk": [
+    "open_module",
+    "read_status",
+    "search_notes",
+    "summarise",
+    "draft_text"
+  ],
+  "confirmation_required": [
+    "create_task",
+    "edit_file",
+    "send_message",
+    "microgrow_control",
+    "change_settings",
+    "publish_content"
+  ],
+  "blocked_by_default": [
+    "delete_files",
+    "move_money",
+    "share_private_data",
+    "disable_security",
+    "format_drive"
+  ],
+  "microgrow_rules": {
+    "read_status": "allow",
+    "relay_control": "confirm",
+    "safety_override": "block"
+  },
+  "finance_rules": {
+    "read_summary": "confirm",
+    "edit_records": "confirm",
+    "payments": "block"
+  }
+}

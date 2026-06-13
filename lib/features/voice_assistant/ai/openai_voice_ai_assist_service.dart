@@ -6,13 +6,15 @@ import 'package:flutter/foundation.dart';
 import '../voice_command_model.dart';
 import 'voice_ai_assist_service.dart';
 
-enum VoiceAiAssistRequestKind { review, wizard, memory }
+enum VoiceAiAssistRequestKind { review, wizard, memory, conversation }
 
 class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
   OpenAIVoiceAiAssistService({
     HttpClient? httpClient,
     String? apiKey,
     String? model,
+    String? baseUrl,
+    bool allowMissingApiKey = false,
     Duration timeout = const Duration(seconds: 25),
   }) : _httpClient = httpClient ?? HttpClient(),
        _ownsHttpClient = httpClient == null,
@@ -21,15 +23,24 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
            model ??
            Platform.environment['OPENAI_VOICE_MODEL'] ??
            'gpt-realtime-2',
+       _baseUrl = _normalizeVoiceAiBaseUrl(
+         baseUrl ??
+             Platform.environment['OPENAI_BASE_URL'] ??
+             'https://api.openai.com/v1',
+       ),
+       _allowMissingApiKey = allowMissingApiKey,
        _timeout = timeout;
 
   final HttpClient _httpClient;
   final bool _ownsHttpClient;
   final String? _apiKey;
   final String _model;
+  final String _baseUrl;
+  final bool _allowMissingApiKey;
   final Duration _timeout;
 
-  bool get isConfigured => _apiKey?.trim().isNotEmpty == true && !kIsWeb;
+  bool get isConfigured =>
+      !kIsWeb && (_allowMissingApiKey || _apiKey?.trim().isNotEmpty == true);
 
   @override
   Future<VoiceAiAssistResponse> reviewTranscript(
@@ -67,6 +78,18 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
     );
   }
 
+  @override
+  Future<VoiceAiAssistResponse> conversationTurn(
+    VoiceAiAssistRequest request,
+  ) async {
+    final fallback = LocalVoiceAiAssistService().conversationTurn(request);
+    return _complete(
+      requestKind: VoiceAiAssistRequestKind.conversation,
+      request: request,
+      fallback: await fallback,
+    );
+  }
+
   Future<VoiceAiAssistResponse> _complete({
     required VoiceAiAssistRequestKind requestKind,
     required VoiceAiAssistRequest request,
@@ -86,7 +109,13 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
         fallback: fallback,
       );
 
-      final hints = <String>[...parsed.hints, 'OpenAI GPT Realtime 2 active.'];
+      final hints = <String>[
+        ...parsed.hints,
+        if (_allowMissingApiKey)
+          'Local Ollama chat mode active.'
+        else
+          'OpenAI chat mode active.',
+      ];
       return parsed.copyWith(hints: hints);
     } catch (_) {
       return fallback;
@@ -98,11 +127,11 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
     required VoiceAiAssistRequest request,
   }) async {
     final apiKey = _apiKey?.trim();
-    if (apiKey == null || apiKey.isEmpty) {
+    if (!_allowMissingApiKey && (apiKey == null || apiKey.isEmpty)) {
       throw StateError('OpenAI API key is missing.');
     }
 
-    final uri = Uri.parse('https://api.openai.com/v1/chat/completions');
+    final uri = Uri.parse('$_baseUrl/chat/completions');
     final payload = jsonEncode(<String, Object?>{
       'model': _model,
       'temperature': 0.35,
@@ -121,10 +150,12 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
 
     final clientRequest = await _httpClient.postUrl(uri).timeout(_timeout);
     clientRequest.headers.contentType = ContentType.json;
-    clientRequest.headers.set(
-      HttpHeaders.authorizationHeader,
-      'Bearer $apiKey',
-    );
+    if (apiKey != null && apiKey.isNotEmpty) {
+      clientRequest.headers.set(
+        HttpHeaders.authorizationHeader,
+        'Bearer $apiKey',
+      );
+    }
     clientRequest.write(payload);
 
     final response = await clientRequest.close().timeout(_timeout);
@@ -188,6 +219,7 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
     return [
       'You are Gaia, a calm local-first voice copilot for the New Earth Command Dashboard.',
       'Keep replies short, warm, practical, and review-first.',
+      'When the user is speaking conversationally, answer naturally but stay brief and helpful.',
       'Prefer Parked or Carry Forward over failure language.',
       'Do not overwrite the raw transcript.',
       'Do not sound chatty or dramatic.',
@@ -239,6 +271,11 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
           'Focus on summarizing the remembered thread and the next small move.',
         );
         break;
+      case VoiceAiAssistRequestKind.conversation:
+        buffer.writeln(
+          'Focus on a calm conversational reply that sounds like a helpful assistant, then keep the next step short and practical.',
+        );
+        break;
     }
 
     return buffer.toString().trim();
@@ -270,6 +307,22 @@ class OpenAIVoiceAiAssistService extends VoiceAiAssistService {
       _httpClient.close(force: true);
     }
   }
+}
+
+String _normalizeVoiceAiBaseUrl(String rawBaseUrl) {
+  final trimmed = rawBaseUrl.trim();
+  if (trimmed.isEmpty) {
+    return 'https://api.openai.com/v1';
+  }
+
+  final withoutTrailingSlash = trimmed.endsWith('/')
+      ? trimmed.substring(0, trimmed.length - 1)
+      : trimmed;
+  if (withoutTrailingSlash.endsWith('/v1')) {
+    return withoutTrailingSlash;
+  }
+
+  return '$withoutTrailingSlash/v1';
 }
 
 @visibleForTesting

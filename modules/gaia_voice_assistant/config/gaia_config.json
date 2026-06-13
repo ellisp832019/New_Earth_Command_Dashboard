@@ -1,0 +1,21 @@
+{
+  "assistant_name": "GAIA",
+  "assistant_meaning": "Guardian AI Assistant",
+  "wake_name": "Gaia",
+  "runtime_mode": "portable_usb",
+  "dashboard_api_url": "http://localhost:3000",
+  "gaia_runtime_url": "http://localhost:8765",
+  "ollama_url": "http://localhost:11434",
+  "default_model": "qwen2.5:7b",
+  "stt_engine": "whisper",
+  "tts_engine": "kokoro",
+  "permission_mode": "guarded",
+  "require_confirmation_for": [
+    "finance",
+    "file_delete",
+    "messaging",
+    "microgrow_control",
+    "system_settings",
+    "publishing"
+  ]
+}

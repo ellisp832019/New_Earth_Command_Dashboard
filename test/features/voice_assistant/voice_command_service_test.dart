@@ -231,6 +231,36 @@ void main() {
     expect(briefing.actions.first.label, contains('Dashboard'));
   });
 
+  test('voice command service recognizes dashboard navigation from noisy speech', () {
+    final service = VoiceCommandService();
+
+    expect(service.isDashboardNavigationRequest('open dashboard'), isTrue);
+    expect(service.isDashboardNavigationRequest('show me the dashboard'), isTrue);
+    expect(service.isDashboardNavigationRequest('vopen dashboard'), isTrue);
+    expect(service.isDashboardNavigationRequest('open dashbaord'), isTrue);
+    expect(service.isDashboardNavigationRequest('go home'), isTrue);
+    expect(service.isDashboardNavigationRequest('take me to dashboard'), isTrue);
+  });
+
+  test('voice command service treats generic open window wording as dashboard navigation', () {
+    final service = VoiceCommandService();
+
+    expect(service.isDashboardNavigationRequest('open a window'), isTrue);
+    expect(service.isDashboardNavigationRequest('bring up the app'), isTrue);
+  });
+
+  test('voice command service resolves common navigation commands', () {
+    final service = VoiceCommandService();
+
+    expect(service.resolveFollowUpAction(transcript: 'open planner')?.route, '/planner');
+    expect(service.resolveFollowUpAction(transcript: 'open planet')?.route, '/planner');
+    expect(service.resolveFollowUpAction(transcript: 'open tasks')?.route, '/tasks');
+    expect(service.resolveFollowUpAction(transcript: 'open journal')?.route, '/journal');
+    expect(service.resolveFollowUpAction(transcript: 'open content')?.route, '/content');
+    expect(service.resolveFollowUpAction(transcript: 'open business')?.route, '/business');
+    expect(service.resolveFollowUpAction(transcript: 'open inbox')?.route, '/inbox');
+  });
+
   test('voice command service builds memory and action planning guidance', () {
     final service = VoiceCommandService(now: () => DateTime(2026, 5, 10, 9, 0));
 

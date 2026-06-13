@@ -486,9 +486,6 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
     final response = ref
         .read(voiceConversationDockProvider.notifier)
         .respondToFollowUp(reply);
-    if (response == null) {
-      return;
-    }
 
     final action = service.resolveFollowUpAction(
       transcript: reply,
@@ -497,19 +494,62 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
 
     _followUpController.clear();
     _followUpFocusNode.requestFocus();
-    await _speakResponse(response);
 
-    if (!mounted) {
+    if (service.isDashboardNavigationRequest(reply)) {
+      if (response != null) {
+        await _speakResponse(response);
+      }
+      if (!mounted) {
+        return;
+      }
+      context.go(RouteNames.dashboard);
       return;
     }
 
     if (action != null) {
+      if (action.route != null) {
+        final routeLabel = _dockActionLabel(action);
+        final routeResponse = VoiceCommandAssistantResponse(
+          summary: 'Opening $routeLabel now.',
+          nextStep: 'You can continue from there.',
+        );
+        await _speakResponse(routeResponse);
+
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _followUpStatus = 'Gaia is opening $routeLabel.';
+        });
+        _handleDockAction(context, action, dock, service, suggestion);
+        return;
+      }
+
+      if (response != null) {
+        await _speakResponse(response);
+      }
+
+      if (!mounted) {
+        return;
+      }
+
       if (mounted) {
         setState(() {
           _followUpStatus = 'Gaia is acting on that follow-up.';
         });
       }
       _handleDockAction(context, action, dock, service, suggestion);
+      return;
+    }
+
+    if (response == null) {
+      return;
+    }
+
+    await _speakResponse(response);
+
+    if (!mounted) {
       return;
     }
 
@@ -706,6 +746,30 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         },
       ).toString(),
     );
+  }
+
+  String _dockActionLabel(VoiceCommandQuickAction action) {
+    switch (action.id) {
+      case 'open-dashboard':
+        return 'dashboard';
+      case 'open-planner':
+      case 'open-planner-summary':
+        return 'planner';
+      case 'open-tasks':
+        return 'tasks';
+      case 'open-projects':
+        return 'projects';
+      case 'open-journal':
+        return 'journal';
+      case 'open-content':
+        return 'content';
+      case 'open-business':
+        return 'business';
+      case 'open-inbox':
+        return 'inbox';
+      default:
+        return action.label.toLowerCase();
+    }
   }
 
   IconData _dockActionIcon(VoiceCommandQuickAction action) {

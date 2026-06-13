@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,8 +71,10 @@ void main() {
         providerMode: VoiceProviderMode.mock,
         apiKey: null,
         transcriptionModel: 'mock',
+        assistantModel: 'mock',
         realtimeModel: 'mock',
         ttsModel: 'mock',
+        chatBaseUrl: 'http://localhost:11434/v1',
       ),
     );
 
@@ -84,6 +88,53 @@ void main() {
     expect(summary.summary, contains('MicroGrow planning'));
     expect(summary.actions, isNotEmpty);
     expect(summary.risks, isNotEmpty);
+  });
+
+  test('voice runtime config can target local Ollama', () {
+    final config = VoiceRuntimeConfig.fromEnvironment(
+      environment: {
+        'VOICE_PROVIDER': 'ollama',
+        'VOICE_OLLAMA_URL': 'http://127.0.0.1:11434',
+        'VOICE_OLLAMA_MODEL': 'qwen2.5:7b',
+      },
+    );
+
+    expect(config.providerMode, VoiceProviderMode.ollama);
+    expect(config.canUseChat, isTrue);
+    expect(config.assistantModel, 'qwen2.5:7b');
+    expect(config.chatBaseUrl, 'http://127.0.0.1:11434/v1');
+  });
+
+  test('voice runtime config can auto-detect ollama from usb config', () async {
+    final tempDir = await Directory.systemTemp.createTemp('gaia-usb-test');
+    addTearDown(() => tempDir.deleteSync(recursive: true));
+
+    final configDir = Directory(
+      '${tempDir.path}${Platform.pathSeparator}modules${Platform.pathSeparator}gaia_voice_assistant${Platform.pathSeparator}config',
+    );
+    await configDir.create(recursive: true);
+
+    final configFile = File(
+      '${configDir.path}${Platform.pathSeparator}gaia_config.json',
+    );
+    await configFile.writeAsString('''
+{
+  "assistant_name": "GAIA",
+  "runtime_mode": "portable_usb",
+  "ollama_url": "http://127.0.0.1:11434",
+  "default_model": "qwen2.5:7b"
+}
+''');
+
+    final config = VoiceRuntimeConfig.fromEnvironment(
+      environment: const {},
+      usbCandidateRoots: [tempDir.path],
+    );
+
+    expect(config.providerMode, VoiceProviderMode.ollama);
+    expect(config.canUseChat, isTrue);
+    expect(config.assistantModel, 'qwen2.5:7b');
+    expect(config.chatBaseUrl, 'http://127.0.0.1:11434/v1');
   });
 
   test(
@@ -128,7 +179,9 @@ void main() {
       overrides: [appDatabaseProvider.overrideWithValue(database)],
     );
     addTearDown(container.dispose);
-    container.read(voiceConversationThreadProvider.notifier).rememberThread(
+    container
+        .read(voiceConversationThreadProvider.notifier)
+        .rememberThread(
           threadTitle: 'Dashboard Assistant',
           summary: 'We are continuing the shared voice thread.',
           nextStep: 'Resume the latest saved step.',
@@ -247,22 +300,24 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    container.read(voiceAuditLoggerProvider.notifier).record(
-      VoiceAuditEntry(
-        id: 'audit-1',
-        timestamp: DateTime(2026, 6, 10, 12),
-        section: 'Voice Conversation',
-        userText: 'What should I do next?',
-        intent: 'dashboard.assistant.reply',
-        safetyDecision: const SafetyDecision(
-          allowed: true,
-          riskLevel: VoiceRiskLevel.low,
-          requiresConfirmation: false,
-          reason: 'Mock assistant reply is safe.',
-        ),
-        resultSummary: 'Continue the calm thread.',
-      ),
-    );
+    container
+        .read(voiceAuditLoggerProvider.notifier)
+        .record(
+          VoiceAuditEntry(
+            id: 'audit-1',
+            timestamp: DateTime(2026, 6, 10, 12),
+            section: 'Voice Conversation',
+            userText: 'What should I do next?',
+            intent: 'dashboard.assistant.reply',
+            safetyDecision: const SafetyDecision(
+              allowed: true,
+              riskLevel: VoiceRiskLevel.low,
+              requiresConfirmation: false,
+              reason: 'Mock assistant reply is safe.',
+            ),
+            resultSummary: 'Continue the calm thread.',
+          ),
+        );
     await tester.pumpAndSettle();
 
     expect(find.text('Search and filters'), findsOneWidget);
@@ -281,16 +336,16 @@ void main() {
     addTearDown(database.close);
 
     final firstContainer = ProviderContainer(
-      overrides: [
-        appDatabaseProvider.overrideWithValue(database),
-      ],
+      overrides: [appDatabaseProvider.overrideWithValue(database)],
     );
     addTearDown(firstContainer.dispose);
 
-    firstContainer.read(voiceProviderModeProvider.notifier).setMode(
-          VoiceProviderMode.openAi,
-        );
-    firstContainer.read(voiceFeatureFlagsProvider.notifier).update(
+    firstContainer
+        .read(voiceProviderModeProvider.notifier)
+        .setMode(VoiceProviderMode.openAi);
+    firstContainer
+        .read(voiceFeatureFlagsProvider.notifier)
+        .update(
           const VoiceFeatureFlags(
             voiceNotesEnabled: false,
             meetingTranscriberEnabled: true,
@@ -308,9 +363,7 @@ void main() {
     );
 
     final secondContainer = ProviderContainer(
-      overrides: [
-        appDatabaseProvider.overrideWithValue(database),
-      ],
+      overrides: [appDatabaseProvider.overrideWithValue(database)],
     );
     addTearDown(secondContainer.dispose);
 
@@ -322,8 +375,14 @@ void main() {
           currentFlags.alwaysOnWakeWordEnabled == true;
     });
 
-    expect(secondContainer.read(voiceProviderModeProvider), VoiceProviderMode.openAi);
-    expect(secondContainer.read(voiceFeatureFlagsProvider).voiceNotesEnabled, isFalse);
+    expect(
+      secondContainer.read(voiceProviderModeProvider),
+      VoiceProviderMode.openAi,
+    );
+    expect(
+      secondContainer.read(voiceFeatureFlagsProvider).voiceNotesEnabled,
+      isFalse,
+    );
     expect(
       secondContainer.read(voiceFeatureFlagsProvider).alwaysOnWakeWordEnabled,
       isTrue,

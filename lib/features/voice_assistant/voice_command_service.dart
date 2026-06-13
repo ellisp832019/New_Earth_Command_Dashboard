@@ -436,7 +436,7 @@ class VoiceCommandService {
     required String transcript,
     VoiceConversationContext? conversationContext,
   }) {
-    final normalizedTranscript = transcript.toLowerCase();
+    final normalizedTranscript = _normalizeCommandText(transcript);
     final macros = buildMacroActions(conversationContext: conversationContext);
 
     VoiceCommandQuickAction? findAction(String id) {
@@ -598,7 +598,7 @@ class VoiceCommandService {
 
     VoiceCommandQuickAction? findRouteAction(String id, List<String> phrases) {
       for (final phrase in phrases) {
-        if (normalizedTranscript.contains(phrase)) {
+        if (_matchesNavigationPhrase(normalizedTranscript, phrase)) {
           for (final action in routeAndTemplateActions) {
             if (action.id == id) {
               return action;
@@ -609,14 +609,101 @@ class VoiceCommandService {
       return null;
     }
 
-    return findRouteAction('open-dashboard', ['open dashboard']) ??
-        findRouteAction('open-planner', ['open planner']) ??
-        findRouteAction('open-tasks', ['open tasks', 'show tasks']) ??
-        findRouteAction('open-projects', ['open projects', 'show projects']) ??
-        findRouteAction('open-journal', ['open journal', 'show journal']) ??
-        findRouteAction('open-content', ['open content', 'show content']) ??
-        findRouteAction('open-business', ['open business', 'show business']) ??
-        findRouteAction('open-inbox', ['open inbox', 'show inbox']) ??
+    return findRouteAction('open-dashboard', [
+          'open dashboard',
+          'open the dashboard',
+          'show dashboard',
+          'show the dashboard',
+          'show me dashboard',
+          'show me the dashboard',
+          'bring up dashboard',
+          'bring up the dashboard',
+          'take me to dashboard',
+          'take me to the dashboard',
+          'switch to dashboard',
+          'switch to the dashboard',
+          'navigate to dashboard',
+          'navigate to the dashboard',
+          'go home',
+          'take me home',
+          'dashboard home',
+          'dashboard screen',
+          'dashboard page',
+          'home dashboard',
+        ]) ??
+        findRouteAction('open-planner', [
+          'open planner',
+          'show planner',
+          'planner',
+          'open the planner',
+          'show the planner',
+          'take me to planner',
+          'take me to the planner',
+          'planner screen',
+          'planner page',
+        ]) ??
+        findRouteAction('open-tasks', [
+          'open tasks',
+          'show tasks',
+          'tasks',
+          'open the tasks',
+          'show the tasks',
+          'take me to tasks',
+          'take me to the tasks',
+          'task list',
+          'tasks screen',
+        ]) ??
+        findRouteAction('open-projects', [
+          'open projects',
+          'show projects',
+          'projects',
+          'open the projects',
+          'show the projects',
+          'take me to projects',
+          'take me to the projects',
+          'project list',
+          'projects screen',
+        ]) ??
+        findRouteAction('open-journal', [
+          'open journal',
+          'show journal',
+          'journal',
+          'open the journal',
+          'show the journal',
+          'take me to journal',
+          'take me to the journal',
+          'journal screen',
+        ]) ??
+        findRouteAction('open-content', [
+          'open content',
+          'show content',
+          'content',
+          'open the content',
+          'show the content',
+          'take me to content',
+          'take me to the content',
+          'content screen',
+        ]) ??
+        findRouteAction('open-business', [
+          'open business',
+          'show business',
+          'business',
+          'open the business',
+          'show the business',
+          'take me to business',
+          'take me to the business',
+          'business screen',
+        ]) ??
+        findRouteAction('open-inbox', [
+          'open inbox',
+          'show inbox',
+          'inbox',
+          'open the inbox',
+          'show the inbox',
+          'take me to inbox',
+          'take me to the inbox',
+          'inbox screen',
+        ]) ??
         findRouteAction('load-project', [
           'create a project',
           'create project',
@@ -1102,6 +1189,15 @@ class VoiceCommandService {
       );
     }
 
+    if (isDashboardNavigationRequest(lowerTranscript)) {
+      return VoiceCommandAssistantResponse(
+        summary: 'Opening the dashboard now. You are back on the main dashboard.',
+        nextStep: 'You can keep going from the dashboard.',
+        projectContext: projectContext,
+        threadContext: 'Dashboard',
+      );
+    }
+
     if (lowerTranscript.contains('build day')) {
       return VoiceCommandAssistantResponse(
         summary:
@@ -1334,6 +1430,7 @@ class VoiceCommandService {
     String? projectId,
     String? projectName,
     VoiceConversationContext? previous,
+    bool navigation = false,
   }) {
     final normalizedTitle = title?.trim();
     final normalizedProjectName = projectName?.trim();
@@ -1342,7 +1439,7 @@ class VoiceCommandService {
     if (normalizedProjectName != null && normalizedProjectName.isNotEmpty) {
       contextParts.add(normalizedProjectName);
     }
-    contextParts.add(type.label);
+    contextParts.add(navigation ? 'Dashboard' : type.label);
 
     final entryParts = <String>[...contextParts];
     if (normalizedTitle != null && normalizedTitle.isNotEmpty) {
@@ -1350,13 +1447,19 @@ class VoiceCommandService {
     }
 
     final contextLabel = contextParts.join(' · ');
-    final label = entryParts.join(' · ');
+    final label = navigation
+        ? 'Dashboard'
+        : entryParts.join(' · ');
     final previousLabel = previous?.label;
     final entryCount = (previous?.entryCount ?? 0) + 1;
     final latestEntry = normalizedTitle ?? transcript.trim();
-    final summary = previousLabel == null
-        ? 'Starting a new thread around $contextLabel. Latest entry: $latestEntry.'
-        : 'Continuing the $contextLabel thread. Latest entry: $latestEntry.';
+    final summary = navigation
+        ? (previousLabel == null
+              ? 'Opening the dashboard. Latest entry: $latestEntry.'
+              : 'Returning to the dashboard. Latest entry: $latestEntry.')
+        : (previousLabel == null
+              ? 'Starting a new thread around $contextLabel. Latest entry: $latestEntry.'
+              : 'Continuing the $contextLabel thread. Latest entry: $latestEntry.');
 
     return VoiceConversationContext(
       label: label,
@@ -1367,6 +1470,7 @@ class VoiceCommandService {
       title: normalizedTitle,
       transcript: transcript.trim(),
       entryCount: entryCount,
+      navigation: navigation,
     );
   }
 
@@ -1538,6 +1642,9 @@ Rules:
 
   VoiceCommandType _inferTypeFromKeywords(String transcript) {
     final lowerTranscript = transcript.toLowerCase();
+    if (isDashboardNavigationRequest(lowerTranscript)) {
+      return VoiceCommandType.idea;
+    }
     final scores = <VoiceCommandType, int>{
       VoiceCommandType.task: 0,
       VoiceCommandType.project: 0,
@@ -1639,6 +1746,75 @@ Rules:
     }
 
     return VoiceCommandType.task;
+  }
+
+  bool isDashboardNavigationRequest(String lowerTranscript) {
+    final normalizedTranscript = _normalizeCommandText(lowerTranscript);
+    final phrases = <String>[
+      'open a window',
+      'open window',
+      'open the app window',
+      'open the window',
+      'open app',
+      'open the app',
+      'bring up a window',
+      'bring up window',
+      'bring up the app window',
+      'bring up the window',
+      'bring up app',
+      'bring up the app',
+      'open dashboard',
+      'open the dashboard',
+      'show dashboard',
+      'show the dashboard',
+      'show me dashboard',
+      'show me the dashboard',
+      'bring up dashboard',
+      'bring up the dashboard',
+      'take me to dashboard',
+      'take me to the dashboard',
+      'switch to dashboard',
+      'switch to the dashboard',
+      'navigate to dashboard',
+      'navigate to the dashboard',
+      'go to dashboard',
+      'go to the dashboard',
+      'return to dashboard',
+      'return to the dashboard',
+      'back to dashboard',
+      'back to the dashboard',
+      'go home',
+      'take me home',
+      'home screen',
+      'main dashboard',
+      'dashboard home',
+      'dashboard screen',
+      'dashboard page',
+      'home dashboard',
+    ];
+
+    return phrases.any(
+      (phrase) => _matchesNavigationPhrase(normalizedTranscript, phrase),
+    );
+  }
+
+  String _normalizeCommandText(String transcript) {
+    var normalized = transcript.toLowerCase().trim();
+    normalized = normalized.replaceAll('dashbaord', 'dashboard');
+    normalized = normalized.replaceAll('dash board', 'dashboard');
+    normalized = normalized.replaceAll('planet', 'planner');
+    normalized = normalized.replaceAll(RegExp(r'\s+'), ' ');
+    normalized = normalized.replaceFirst(
+      RegExp(r'^[a-z](?=open\b)'),
+      '',
+    );
+    return normalized.trim();
+  }
+
+  bool _matchesNavigationPhrase(String transcript, String phrase) {
+    return _normalizeCommandText(transcript).contains(
+      _normalizeCommandText(phrase),
+    );
   }
 
   String _titleFromTranscript(String transcript) {

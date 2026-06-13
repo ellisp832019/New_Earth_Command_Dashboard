@@ -6,7 +6,7 @@ import 'package:new_earth_command_dashboard/features/voice_assistant/voice_start
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_service.dart';
 
 void main() {
-  testWidgets('startup gate screen explains automatic rechecking', (
+  testWidgets('startup gate screen explains the no-device state', (
     tester,
   ) async {
     const result = VoiceStartupGateResult(
@@ -21,8 +21,9 @@ void main() {
       ),
     );
 
-    expect(find.text('Gaia is waiting for your headset'), findsOneWidget);
-    expect(find.textContaining('connect the headset'), findsOneWidget);
+    expect(find.text('No microphone or headset found'), findsOneWidget);
+    expect(find.textContaining('No audio input is showing up yet'), findsOneWidget);
+    expect(find.text('What Gaia sees'), findsOneWidget);
     expect(find.text('Capture path'), findsOneWidget);
     expect(
       find.textContaining('falls back to the local microphone recognizer'),

@@ -43,6 +43,16 @@ class CaptureResult:
     segments: list[dict[str, Any]]
 
 
+@dataclass
+class AudioDiagnosticResult:
+    ok: bool
+    python_version: str
+    bridge_model: str
+    default_input_device: dict[str, Any] | None
+    input_devices: list[dict[str, Any]]
+    recommendation: str
+
+
 def format_codex_prompt(transcript: str) -> str:
     return PROMPT_TEMPLATE.format(transcript=transcript.strip())
 
@@ -144,6 +154,86 @@ def _load_transcription_stack() -> tuple[Any, Any, Any]:
         ) from exc
 
     return np, sd, WhisperModel
+
+
+def diagnose_audio() -> AudioDiagnosticResult:
+    _, sd, WhisperModel = _load_transcription_stack()
+    try:
+        python_version = sys.version.split()[0]
+    except Exception:
+        python_version = "unknown"
+
+    try:
+        default_input_index = sd.default.device[0]
+    except Exception:
+        default_input_index = None
+
+    try:
+        devices = sd.query_devices()
+    except Exception as exc:
+        return AudioDiagnosticResult(
+            ok=False,
+            python_version=python_version,
+            bridge_model=os.environ.get("VOICE_BRIDGE_MODEL", "base.en"),
+            default_input_device=None,
+            input_devices=[],
+            recommendation=f"sounddevice could not query audio devices: {exc}",
+        )
+
+    input_devices: list[dict[str, Any]] = []
+    default_input_device: dict[str, Any] | None = None
+    for index, device in enumerate(devices):
+        try:
+            input_channels = int(device.get("max_input_channels", 0))
+        except Exception:
+            input_channels = 0
+        if input_channels <= 0:
+            continue
+
+        payload = {
+            "index": index,
+            "name": device.get("name", f"Device {index}"),
+            "hostapi": device.get("hostapi"),
+            "default_samplerate": device.get("default_samplerate"),
+            "max_input_channels": input_channels,
+        }
+        input_devices.append(payload)
+        if default_input_index == index:
+            default_input_device = payload
+
+    if not input_devices:
+        recommendation = (
+            "No input devices were returned by sounddevice. Check Windows microphone "
+            "privacy settings, the headset connection, and the default recording device."
+        )
+        return AudioDiagnosticResult(
+            ok=False,
+            python_version=python_version,
+            bridge_model=os.environ.get("VOICE_BRIDGE_MODEL", "base.en"),
+            default_input_device=default_input_device,
+            input_devices=input_devices,
+            recommendation=recommendation,
+        )
+
+    if default_input_device is None:
+        recommendation = (
+            "An input device is available, but no default recording device is set. "
+            "Choose the headset as the default Windows recording device and retry."
+        )
+    else:
+        recommendation = (
+            "Audio input is available. If Gaia still hears nothing, check whether "
+            "the headset is the default recording device or reduce the capture duration."
+        )
+
+    return AudioDiagnosticResult(
+        ok=True,
+        python_version=python_version,
+        bridge_model=os.environ.get("VOICE_BRIDGE_MODEL", "base.en"),
+        default_input_device=default_input_device,
+        input_devices=input_devices,
+        recommendation=recommendation,
+    )
 
 
 def _ensure_ffmpeg_on_path() -> None:
@@ -329,50 +419,50 @@ async def _speak_realtime(
 
     try:
         async with client.realtime.connect(model=model_label) as conn:
-          session_payload: dict[str, Any] = {
-              "type": "realtime",
-              "output_modalities": ["audio", "text"],
-              "instructions": _build_realtime_speech_instructions(instructions),
-          }
-          if voice_label:
-              session_payload["voice"] = voice_label
+            session_payload: dict[str, Any] = {
+                "type": "realtime",
+                "output_modalities": ["audio", "text"],
+                "instructions": _build_realtime_speech_instructions(instructions),
+            }
+            if voice_label:
+                session_payload["voice"] = voice_label
 
-          await conn.session.update(session=session_payload)
-          await conn.conversation.item.create(
-              item={
-                  "type": "message",
-                  "role": "user",
-                  "content": [
-                      {
-                          "type": "input_text",
-                          "text": text.strip(),
-                      }
-                  ],
-              }
-          )
-          await conn.response.create()
+            await conn.session.update(session=session_payload)
+            await conn.conversation.item.create(
+                item={
+                    "type": "message",
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": text.strip(),
+                        }
+                    ],
+                }
+            )
+            await conn.response.create()
 
-          async for event in conn:
-              if event.type == "response.output_audio.delta":
-                  await player.write(base64.b64decode(event.delta))
-                  continue
+            async for event in conn:
+                if event.type == "response.output_audio.delta":
+                    await player.write(base64.b64decode(event.delta))
+                    continue
 
-              if event.type == "response.output_text.delta":
-                  if event.delta:
-                      spoken_text_parts.append(event.delta)
-                  continue
+                if event.type == "response.output_text.delta":
+                    if event.delta:
+                        spoken_text_parts.append(event.delta)
+                    continue
 
-              if event.type == "response.output_audio_transcript.delta":
-                  if event.delta:
-                      transcript_parts.append(event.delta)
-                  continue
+                if event.type == "response.output_audio_transcript.delta":
+                    if event.delta:
+                        transcript_parts.append(event.delta)
+                    continue
 
-              if event.type == "error":
-                  saw_error = getattr(event.error, "message", None) or "Realtime API error"
-                  break
+                if event.type == "error":
+                    saw_error = getattr(event.error, "message", None) or "Realtime API error"
+                    break
 
-              if event.type == "response.done":
-                  break
+                if event.type == "response.done":
+                    break
     finally:
         player.close()
 
@@ -434,6 +524,12 @@ def main() -> int:
     )
     speak_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
 
+    diagnose_parser = subparsers.add_parser(
+        "diagnose-audio",
+        help="Inspect local audio capture devices and bridge prerequisites",
+    )
+    diagnose_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+
     args = parser.parse_args()
 
     if args.command == "listen-once":
@@ -465,6 +561,33 @@ def main() -> int:
             _print_json(payload)
         else:
             print(capture.transcript)
+        return 0
+
+    if args.command == "diagnose-audio":
+        try:
+            diagnostics = diagnose_audio()
+        except Exception as exc:
+            if args.json:
+                _print_json({
+                    "ok": False,
+                    "error": str(exc),
+                })
+            else:
+                print(f"Audio diagnostics failed: {exc}", file=sys.stderr)
+            return 1
+
+        payload = {
+            "ok": diagnostics.ok,
+            "python_version": diagnostics.python_version,
+            "bridge_model": diagnostics.bridge_model,
+            "default_input_device": diagnostics.default_input_device,
+            "input_devices": diagnostics.input_devices,
+            "recommendation": diagnostics.recommendation,
+        }
+        if args.json:
+            _print_json(payload)
+        else:
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
         return 0
 
     if args.command == "prompt":

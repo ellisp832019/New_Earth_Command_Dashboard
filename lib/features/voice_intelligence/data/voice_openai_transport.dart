@@ -46,22 +46,22 @@ class VoiceOpenAiTransport {
       return decoded;
     }
 
-    throw const FormatException('OpenAI response did not return a JSON object.');
+    throw const FormatException(
+      'OpenAI response did not return a JSON object.',
+    );
   }
 
   Future<Map<String, dynamic>> _postJson({
     required String path,
     required Map<String, Object?> body,
   }) async {
-    final key = apiKey?.trim();
-    if (key == null || key.isEmpty) {
-      throw StateError('OpenAI API key is missing.');
-    }
-
     final client = _client ?? HttpClient();
     final request = await client.postUrl(Uri.parse('$baseUrl$path'));
-    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $key');
     request.headers.contentType = ContentType.json;
+    final key = apiKey?.trim();
+    if (key != null && key.isNotEmpty) {
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $key');
+    }
     request.add(utf8.encode(jsonEncode(body)));
 
     final response = await request.close();
