@@ -138,6 +138,7 @@ class FolderTemplateService {
   }
 
   static const Map<String, String> _templateFileMap = {
+    'README.md': 'README.md',
     'application.md': 'application_template.md',
     'budget.md': 'budget_template.md',
     'evidence_pack.md': 'evidence_pack_template.md',

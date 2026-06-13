@@ -1,0 +1,17 @@
+{
+  "module_id": "gaia_voice_assistant",
+  "module_name": "GAIA Voice Assistant",
+  "version": "0.1.0",
+  "purpose": "Local-first GAIA bridge, permissions, and voice/runtime notes for the New Earth Dashboard.",
+  "dashboard_surfaces": [
+    "lib/features/voice_assistant",
+    "lib/features/voice_intelligence"
+  ],
+  "runtime_endpoints": {
+    "gaia_runtime": "http://localhost:8765",
+    "ollama": "http://localhost:11434",
+    "dashboard_api": "http://localhost:3000"
+  },
+  "usb_runtime": "GAIA_USB",
+  "status": "bridge_ready"
+}

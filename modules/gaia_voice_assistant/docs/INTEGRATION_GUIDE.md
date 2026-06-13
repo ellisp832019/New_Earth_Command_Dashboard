@@ -55,7 +55,7 @@ Ollama:       http://localhost:11434
 
 The dashboard module talks to GAIA runtime, not directly to Ollama.
 
-For runtime startup and USB path layout, see `GAIA_CORE/README.md`.
+For runtime startup and USB path layout, see the GAIA bridge notes in this module and the existing dashboard voice code under `lib/features/voice_assistant`.
 
 ## Step 5 — Sensitive actions
 

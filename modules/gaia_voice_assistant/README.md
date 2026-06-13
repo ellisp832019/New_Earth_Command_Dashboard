@@ -15,10 +15,11 @@ The dashboard module must remain the authority for permissions. GAIA should neve
 
 ## Keep existing dashboard voice work
 
-Do not delete the current voice module. Move or wrap it into:
+Do not delete the current voice module. The live Flutter voice work already exists in:
 
 ```text
-modules/gaia_voice_assistant/gaia_core/existing_dashboard_voice/
+lib/features/voice_assistant
+lib/features/voice_intelligence
 ```
 
-Then route its transcript output into the GAIA bridge.
+Route its transcript output into the GAIA bridge.
