@@ -11,6 +11,7 @@ import 'features/meeting_system/presentation/meeting_notification_bridge.dart';
 import 'features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'features/voice_assistant/voice_startup_gate_service.dart';
 import 'features/voice_assistant/voice_startup_gate_screen.dart';
+import 'features/system_backup/presentation/backup_guardian_dock_host.dart';
 import 'features/voice_assistant/widgets/voice_conversation_dock.dart';
 import 'features/voice_assistant/widgets/voice_handsfree_layer.dart';
 import 'features/voice_assistant/widgets/voice_presence_chip.dart';
@@ -78,6 +79,7 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 fit: StackFit.expand,
                 children: [
                   VoiceHandsfreeLayer(child: routedChild),
+                  const BackupGuardianDockHost(),
                   const Positioned(
                     top: 16,
                     right: 16,
