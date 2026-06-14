@@ -349,10 +349,12 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               statusMessage: _statusMessage,
                                             ),
                                             const SizedBox(height: 20),
-                                            _PreviewCard(
-                                              preview: _preview,
-                                              currentDraft: currentDraft,
-                                            ),
+                      _PreviewCard(
+                        preview: _preview,
+                        currentDraft: currentDraft,
+                        selectedPrinterProfile: selectedPrinterProfile,
+                        printerProfileCount: printerProfiles.length,
+                      ),
                                           ],
                                         );
 
@@ -1868,10 +1870,17 @@ class _BuildCard extends StatelessWidget {
 }
 
 class _PreviewCard extends StatelessWidget {
-  const _PreviewCard({required this.preview, required this.currentDraft});
+  const _PreviewCard({
+    required this.preview,
+    required this.currentDraft,
+    required this.selectedPrinterProfile,
+    required this.printerProfileCount,
+  });
 
   final QrLabelPreview? preview;
   final QrLabelDraft currentDraft;
+  final String selectedPrinterProfile;
+  final int printerProfileCount;
 
   @override
   Widget build(BuildContext context) {
@@ -1887,12 +1896,31 @@ class _PreviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (preview == null)
-            Text(
-              'Generate a preview to see the QR code, title, asset ID, and saved print-ready files.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-                height: 1.4,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Generate a preview to see the QR code, title, asset ID, and saved print-ready files.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Printer profile: ${selectedPrinterProfile.isEmpty ? 'Manual / Windows dialog' : selectedPrinterProfile}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Printer profiles available: $printerProfileCount',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+                ),
+              ],
             )
           else
             LayoutBuilder(
@@ -1943,6 +1971,20 @@ class _PreviewCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColours.darkSecondary,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Printer profile: ${selectedPrinterProfile.isEmpty ? 'Manual / Windows dialog' : selectedPrinterProfile}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Printer profiles available: $printerProfileCount',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
                       ),
                     ),
                     const SizedBox(height: 4),
