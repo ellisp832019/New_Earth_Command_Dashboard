@@ -14,6 +14,7 @@ import '../application/backup_guardian_controller.dart';
 import '../data/backup_guardian_service.dart';
 
 const _backupGuardianDockModuleId = 'backup_guardian_dock';
+const _floatingHintDismissedKey = 'backupGuardianFloatingHintDismissed';
 
 class BackupGuardianDockHost extends ConsumerStatefulWidget {
   const BackupGuardianDockHost({super.key, this.currentPath});
@@ -45,6 +46,11 @@ class _BackupGuardianDockHostState
     _floatingAnchor =
         layoutState.floatingAnchorFor(_backupGuardianDockModuleId) ??
         DockAnchor.bottomRight;
+    final hintDismissed = ref
+        .read(moduleHubStateRepositoryProvider)
+        .loadHubUiFlag(_floatingHintDismissedKey);
+    _showFloatingHint = !hintDismissed;
+    _hasDraggedFloating = hintDismissed;
     _floatingBreatheController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2800),
@@ -216,6 +222,12 @@ class _BackupGuardianDockHostState
       _hasDraggedFloating = true;
       _showFloatingHint = false;
     });
+
+    unawaited(
+      ref
+          .read(moduleHubStateRepositoryProvider)
+          .saveHubUiFlag(_floatingHintDismissedKey, true),
+    );
   }
 }
 
@@ -533,6 +545,7 @@ class _FloatingDockFrame extends StatefulWidget {
 class _FloatingDockFrameState extends State<_FloatingDockFrame> {
   Offset _dragOffset = Offset.zero;
   bool _isDragging = false;
+  bool _isHovered = false;
 
   @override
   void didUpdateWidget(covariant _FloatingDockFrame oldWidget) {
@@ -578,36 +591,55 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              AnimatedPositioned(
-                duration: _isDragging
-                    ? Duration.zero
-                    : const Duration(milliseconds: 420),
-                curve: _isDragging ? Curves.linear : Curves.easeOutBack,
-                left: clampedOffset.dx,
-                top: clampedOffset.dy,
-                width: frameWidth,
-                child: AnimatedScale(
-                  scale: _isDragging ? 1.03 : 1.0,
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _FloatingDragHandle(
-                        onPanStart: _handlePanStart,
-                        onPanUpdate: _handlePanUpdate,
-                        onPanEnd: (_) => _handlePanEnd(
-                          size: size,
-                          frameWidth: frameWidth,
-                          frameHeight: frameHeight.toDouble(),
+              MouseRegion(
+                onEnter: (_) {
+                  if (_isHovered) {
+                    return;
+                  }
+                  setState(() {
+                    _isHovered = true;
+                  });
+                },
+                onExit: (_) {
+                  if (!_isHovered) {
+                    return;
+                  }
+                  setState(() {
+                    _isHovered = false;
+                  });
+                },
+                child: AnimatedPositioned(
+                  duration: _isDragging
+                      ? Duration.zero
+                      : const Duration(milliseconds: 420),
+                  curve: _isDragging ? Curves.linear : Curves.easeOutBack,
+                  left: clampedOffset.dx,
+                  top: clampedOffset.dy,
+                  width: frameWidth,
+                  child: AnimatedScale(
+                    scale: _isDragging ? 1.03 : 1.0,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _FloatingDragHandle(
+                          onPanStart: _handlePanStart,
+                          onPanUpdate: _handlePanUpdate,
+                          onPanEnd: (_) => _handlePanEnd(
+                            size: size,
+                            frameWidth: frameWidth,
+                            frameHeight: frameHeight.toDouble(),
+                          ),
                         ),
-                      ),
-                      _FloatingFrameShell(
-                        isDragging: _isDragging,
-                        child: widget.child,
-                      ),
-                    ],
+                        _FloatingFrameShell(
+                          isHovered: _isHovered,
+                          isDragging: _isDragging,
+                          child: widget.child,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -629,6 +661,7 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
   void _handlePanStart(DragStartDetails details) {
     setState(() {
       _isDragging = true;
+      _isHovered = true;
     });
     if (widget.breathe.isAnimating) {
       widget.breathe.stop();
@@ -690,10 +723,12 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
 class _FloatingFrameShell extends StatelessWidget {
   const _FloatingFrameShell({
     required this.child,
+    required this.isHovered,
     required this.isDragging,
   });
 
   final Widget child;
+  final bool isHovered;
   final bool isDragging;
 
   @override
@@ -717,6 +752,13 @@ class _FloatingFrameShell extends StatelessWidget {
               color: AppColours.darkOutline.withValues(alpha: 0.72),
             ),
             boxShadow: [
+              BoxShadow(
+                color: AppColours.darkPrimary.withValues(
+                  alpha: isHovered || isDragging ? 0.16 : 0.06,
+                ),
+                blurRadius: isHovered || isDragging ? 64 : 34,
+                offset: const Offset(0, 0),
+              ),
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDragging ? 0.42 : 0.34),
                 blurRadius: isDragging ? 54 : 42,
@@ -753,16 +795,30 @@ class _FloatingDragHandle extends StatelessWidget {
       onPanUpdate: onPanUpdate,
       onPanEnd: onPanEnd,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Center(
-          child: Container(
-            width: 48,
-            height: 6,
-            decoration: BoxDecoration(
-              color: AppColours.darkText.withValues(alpha: 0.24),
-              borderRadius: BorderRadius.circular(999),
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 58,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppColours.darkPrimary.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
+            Text(
+              'Drag',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColours.darkPrimary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+            ),
+          ],
         ),
       ),
     );

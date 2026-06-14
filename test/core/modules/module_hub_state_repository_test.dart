@@ -68,6 +68,27 @@ void main() {
     expect(uiState['sortMode'], 'status');
   });
 
+  test('module hub state repository saves and reloads hub ui flags', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('module-hub-flag-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final stateFile = path.join(tempRoot.path, 'module_hub_state.json');
+    final repository = ModuleHubStateRepository(stateFilePath: stateFile);
+
+    await repository.saveHubUiFlag('backupGuardianHintDismissed', true);
+
+    expect(repository.loadHubUiFlag('backupGuardianHintDismissed'), isTrue);
+
+    final contents =
+        jsonDecode(File(stateFile).readAsStringSync()) as Map<String, dynamic>;
+    expect(contents['hubUiState'], isA<Map>());
+    expect(contents['hubUiState']['backupGuardianHintDismissed'], isTrue);
+  });
+
   test('module hub state repository saves and reloads dock layout state', ()
       async {
     final tempRoot = Directory.systemTemp.createTempSync('module-hub-dock-');

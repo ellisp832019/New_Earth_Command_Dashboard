@@ -76,6 +76,17 @@ class ModuleHubStateRepository {
     await file.writeAsString(JsonEncoder.withIndent('  ').convert(payload));
   }
 
+  bool loadHubUiFlag(String key) {
+    final uiState = loadHubUiState();
+    return uiState[key] == true;
+  }
+
+  Future<void> saveHubUiFlag(String key, bool value) async {
+    final state = Map<String, dynamic>.from(loadHubUiState());
+    state[key] = value;
+    await saveHubUiState(state);
+  }
+
   DockLayoutState loadDockLayoutState() {
     final payload = _readPayload();
     final dockLayoutState = payload['dockLayoutState'];
