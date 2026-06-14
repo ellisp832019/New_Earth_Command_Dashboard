@@ -373,6 +373,14 @@ class _VisualCaptureInboxCard extends StatelessWidget {
               height: 1.4,
             ),
           ),
+          const SizedBox(height: 10),
+          Text(
+            'Inbox summary',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 14),
           inboxSnapshot.when(
             loading: () => const LinearProgressIndicator(),
@@ -406,6 +414,12 @@ class _VisualCaptureInboxCard extends StatelessWidget {
                         label:
                             '${items.length} indexed capture${items.length == 1 ? '' : 's'}',
                         accent: AppColours.darkSecondary,
+                        foreground: AppColours.darkText,
+                      ),
+                      _InlineTag(
+                        label:
+                            '${VisualCaptureFolderService.inboxCaptureTypes.length} capture types',
+                        accent: AppColours.darkPurple,
                         foreground: AppColours.darkText,
                       ),
                     ],

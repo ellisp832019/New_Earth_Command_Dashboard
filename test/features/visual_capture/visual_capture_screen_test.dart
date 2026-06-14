@@ -74,5 +74,15 @@ void main() {
     expect(find.text('Ready'), findsOneWidget);
     expect(find.text('Source path'), findsOneWidget);
     expect(find.text('Visual Capture is linked and calm'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Inbox summary', skipOffstage: false),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Inbox summary'), findsOneWidget);
+    expect(find.text('1 file in inbox'), findsOneWidget);
+    expect(find.text('1 indexed capture'), findsOneWidget);
+    expect(find.text('9 capture types'), findsOneWidget);
   });
 }
