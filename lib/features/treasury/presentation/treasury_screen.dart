@@ -262,6 +262,7 @@ class _TreasurySetupScreen extends StatelessWidget {
               theme: theme,
               snapshot: snapshot,
               onReload: onReload,
+              onOpenSettings: () => context.push(RouteNames.treasurySettings),
               onOpenSetupWizard: onOpenSetupWizard,
             ),
           ],
@@ -1949,12 +1950,14 @@ class _SetupStepsCard extends StatelessWidget {
     required this.theme,
     required this.snapshot,
     required this.onReload,
+    required this.onOpenSettings,
     required this.onOpenSetupWizard,
   });
 
   final ThemeData theme;
   final TreasuryWorkspaceSnapshot snapshot;
   final VoidCallback onReload;
+  final VoidCallback onOpenSettings;
   final VoidCallback onOpenSetupWizard;
 
   @override
@@ -1971,10 +1974,16 @@ class _SetupStepsCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ...[
-            'Make sure `config/local_paths.json` exists in the dashboard repo.',
-            'Set `finance_treasury_path` to the external Omega OS folder.',
-            'Open the setup wizard to create any missing folders and starter templates.',
-            'Return here and reload Treasury after the wizard finishes.',
+            snapshot.financeRootPath == null
+                ? 'Open folder link settings first so Treasury knows where the live finance pack lives.'
+                : 'Make sure `config/local_paths.json` exists in the dashboard repo.',
+            snapshot.financeRootPath == null
+                ? 'Set `finance_treasury_path` to the external Omega OS folder.'
+                : 'Review the missing folders and templates before creating anything.',
+            snapshot.financeRootPath == null
+                ? 'Come back here after the link is saved, then open the setup wizard.'
+                : 'Open the setup wizard to create any missing folders and starter templates.',
+            'Reload Treasury after the wizard finishes so the health state updates.',
           ].map(
             (step) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -2006,18 +2015,25 @@ class _SetupStepsCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               FilledButton.tonalIcon(
-                onPressed:
-                    snapshot.missingFiles.isEmpty &&
-                        snapshot.missingFolders.isEmpty
+                onPressed: snapshot.financeRootPath == null
+                    ? onOpenSettings
+                    : snapshot.missingFiles.isEmpty &&
+                          snapshot.missingFolders.isEmpty
                     ? null
                     : onOpenSetupWizard,
-                icon: const Icon(Icons.auto_awesome_outlined),
-                label: const Text('Open setup wizard'),
+                icon: snapshot.financeRootPath == null
+                    ? const Icon(Icons.link_outlined)
+                    : const Icon(Icons.auto_awesome_outlined),
+                label: Text(
+                  snapshot.financeRootPath == null
+                      ? 'Open folder link settings'
+                      : 'Open setup wizard',
+                ),
               ),
               TextButton.icon(
                 onPressed: onReload,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Reload Treasury'),
+                label: const Text('Reload health'),
               ),
             ],
           ),

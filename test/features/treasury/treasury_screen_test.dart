@@ -8,6 +8,7 @@ import 'package:new_earth_command_dashboard/features/more/presentation/more_scre
 import 'package:new_earth_command_dashboard/features/treasury/application/treasury_controller.dart';
 import 'package:new_earth_command_dashboard/features/treasury/data/treasury_folder_service.dart';
 import 'package:new_earth_command_dashboard/features/treasury/presentation/treasury_screen.dart';
+import 'package:new_earth_command_dashboard/features/treasury/presentation/treasury_settings_screen.dart';
 
 void main() {
   TreasuryWorkspaceSnapshot buildWorkspace() {
@@ -107,4 +108,77 @@ void main() {
     expect(find.text('More'), findsOneWidget);
     expect(find.text('Supporting modules'), findsOneWidget);
   });
+
+  testWidgets(
+    'treasury setup routes missing link users to folder link settings',
+    (tester) async {
+      final workspace = TreasuryWorkspaceSnapshot(
+        configPath: 'config/local_paths.json',
+        financeRootPath: null,
+        isReady: false,
+        issues: const <String>[
+          'finance_treasury_path is missing from config/local_paths.json.',
+        ],
+        requiredFolders: TreasuryFolderService.requiredFolders,
+        missingFolders: const <String>['00_FINANCE_DASHBOARD'],
+        missingFiles: const <String>[
+          '00_FINANCE_DASHBOARD/dashboard_state.json',
+        ],
+        stateSummaries: const <TreasuryStateSummary>[],
+        receiptsToSortCount: 0,
+        weeklyRitualSteps: TreasuryFolderService.weeklyRitualSteps,
+        lowEnergySteps: TreasuryFolderService.lowEnergySteps,
+        guidanceNote: 'Waiting for a saved folder path.',
+      );
+
+      final router = GoRouter(
+        initialLocation: RouteNames.treasury,
+        routes: [
+          GoRoute(
+            path: RouteNames.treasury,
+            builder: (context, state) => const TreasuryScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.treasurySettings,
+            builder: (context, state) => const TreasurySettingsScreen(),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            treasuryWorkspaceProvider.overrideWith((ref) async => workspace),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.scrollUntilVisible(
+        find.text('Open folder link settings', skipOffstage: false),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+
+      expect(
+        find.text('Open folder link settings', skipOffstage: false),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.text('Open folder link settings', skipOffstage: false),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Treasury settings', skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(find.text('Setup state', skipOffstage: false), findsOneWidget);
+    },
+  );
 }
