@@ -736,6 +736,14 @@ class _HistoryCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
+          Text(
+            'Use filters to focus on backups, verification, restore points, or health states.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,

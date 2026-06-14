@@ -766,7 +766,7 @@ class BackupGuardianService {
     final mismatchAreas = _verificationMismatchAreas(status.errors);
     if (status.errors.isNotEmpty) {
       details.add(
-        'Verification note: the manifest and current target still differ.',
+        'Verification note: the manifest and current target do not match yet.',
       );
       if (mismatchAreas.isNotEmpty) {
         details.add(
@@ -814,7 +814,7 @@ class BackupGuardianService {
     final summary = status.summary.isNotEmpty
         ? status.summary
         : status.errors.isNotEmpty
-            ? 'Latest backup verification found manifest differences.'
+            ? 'Latest backup verification found mismatches between the manifest and current target.'
             : 'Latest backup verification passed.';
 
     return _VerificationReadout(

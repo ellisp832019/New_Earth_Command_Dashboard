@@ -518,8 +518,8 @@ void main() {
       'mode': 'VerifyLatest',
       'source_drive': sourceDir.path,
       'backup_target': backupTargetDir.path,
-      'summary': 'Latest backup verification found manifest differences.',
-      'latest_backup_status': 'Latest backup verification found manifest differences.',
+      'summary': 'Latest backup verification found mismatches between the manifest and current target.',
+      'latest_backup_status': 'Latest backup verification found mismatches between the manifest and current target.',
       'last_backup_at': '2026-06-10T05:00:00Z',
       'last_verification_at': '2026-06-10T06:00:00Z',
       'restore_test_status': 'Not run yet',
@@ -554,7 +554,7 @@ void main() {
 
     final snapshot = await BackupGuardianService(moduleRoot: moduleRoot).loadSnapshot();
 
-    expect(snapshot.verificationSummary, 'Latest backup verification found manifest differences.');
+    expect(snapshot.verificationSummary, 'Latest backup verification found mismatches between the manifest and current target.');
     expect(
       snapshot.verificationDetails,
       contains('Manifest: backup_manifest_20260610_060000.json'),
@@ -569,7 +569,7 @@ void main() {
     );
     expect(
       snapshot.verificationDetails,
-      contains('Verification note: the manifest and current target still differ.'),
+      contains('Verification note: the manifest and current target do not match yet.'),
     );
     expect(
       snapshot.verificationDetails,

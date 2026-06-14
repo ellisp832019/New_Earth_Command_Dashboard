@@ -234,6 +234,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Showing all runs.'), findsOneWidget);
+    expect(
+      find.text(
+        'Use filters to focus on backups, verification, restore points, or health states.',
+      ),
+      findsOneWidget,
+    );
     expect(find.widgetWithText(FilterChip, 'Backups (2)'), findsOneWidget);
     expect(find.widgetWithText(FilterChip, 'Verification (1)'), findsOneWidget);
     expect(find.widgetWithText(FilterChip, 'Restore points (3)'), findsOneWidget);
