@@ -756,7 +756,7 @@ class _TreasuryQuickActionsCard extends StatelessWidget {
               FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.treasuryBudgetPots),
                 icon: const Icon(Icons.account_balance_wallet_outlined),
-                label: const Text('Budget Pots overview'),
+                label: const Text('Open Budget Pots overview'),
               ),
               FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.treasurySettings),

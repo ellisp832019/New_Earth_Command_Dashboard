@@ -20,7 +20,7 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Budget Pots'),
         leading: IconButton(
-          tooltip: 'Back to Treasury',
+          tooltip: 'Back to Treasury Home',
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (context.canPop()) {
@@ -32,6 +32,12 @@ class TreasuryBudgetPotsScreen extends ConsumerWidget {
           },
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () => context.go(RouteNames.treasury),
+            icon: const Icon(Icons.home_outlined),
+            label: const Text('Treasury Home'),
+          ),
+          const SizedBox(width: 4),
           IconButton(
             tooltip: 'Add pot',
             onPressed: () => _showAddPotDialog(context, ref),
