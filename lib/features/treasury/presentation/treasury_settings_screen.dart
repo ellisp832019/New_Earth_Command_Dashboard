@@ -62,6 +62,8 @@ class _TreasurySettingsScreenState
               children: [
                 _SettingsHeroCard(snapshot: snapshot),
                 const SizedBox(height: 16),
+                _SettingsSetupStateCard(snapshot: snapshot),
+                const SizedBox(height: 16),
                 _SettingsPathCard(snapshot: snapshot),
                 const SizedBox(height: 16),
                 _SettingsHealthCard(snapshot: snapshot),
@@ -223,6 +225,80 @@ class _SettingsHeroCard extends StatelessWidget {
   }
 }
 
+class _SettingsSetupStateCard extends StatelessWidget {
+  const _SettingsSetupStateCard({required this.snapshot});
+
+  final TreasuryWorkspaceSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLinkedPath = snapshot.financeRootPath != null;
+    final hasMissingFolders = snapshot.missingFolders.isNotEmpty;
+    final hasMissingFiles = snapshot.missingFiles.isNotEmpty;
+
+    return _SettingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            icon: Icons.verified_outlined,
+            title: 'Setup state',
+          ),
+          const SizedBox(height: 12),
+          Text(
+            snapshot.isReady
+                ? 'Treasury is ready. The external finance folder is linked and the required files are in place.'
+                : hasLinkedPath
+                ? 'Treasury is close. The folder is linked, but a few required items still need attention before the screen becomes fully ready.'
+                : 'Treasury is waiting for a saved finance folder path in `config/local_paths.json`.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusPill(
+                label: hasLinkedPath ? 'Linked path saved' : 'Path missing',
+                accent: hasLinkedPath
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
+              ),
+              _StatusPill(
+                label: hasMissingFolders
+                    ? _pluralCount(
+                        snapshot.missingFolders.length,
+                        'folder missing',
+                        'folders missing',
+                      )
+                    : 'All folders present',
+                accent: hasMissingFolders
+                    ? AppColours.darkAmber
+                    : AppColours.darkSuccess,
+              ),
+              _StatusPill(
+                label: hasMissingFiles
+                    ? _pluralCount(
+                        snapshot.missingFiles.length,
+                        'file missing',
+                        'files missing',
+                      )
+                    : 'All files present',
+                accent: hasMissingFiles
+                    ? AppColours.darkAmber
+                    : AppColours.darkSuccess,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SettingsPathCard extends StatelessWidget {
   const _SettingsPathCard({required this.snapshot});
 
@@ -245,6 +321,16 @@ class _SettingsPathCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkText,
               height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            snapshot.financeRootPath == null
+                ? 'Save the external Omega OS finance folder into `config/local_paths.json` so Treasury can read the live folder instead of a local copy.'
+                : 'Treasury reads the live finance folder from local config and keeps the data outside the repo.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
             ),
           ),
           const SizedBox(height: 12),
@@ -647,4 +733,8 @@ class _StatusPill extends StatelessWidget {
       ),
     );
   }
+}
+
+String _pluralCount(int count, String singular, String plural) {
+  return '$count ${count == 1 ? singular : plural}';
 }
