@@ -156,6 +156,8 @@ class _FolderBootstrapWizardDialogState
                       _StageChip(label: 'Finish', active: stageIndex == 2),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  _StageSummaryCard(plan: plan, stage: _stage),
                   const SizedBox(height: 20),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 220),
@@ -203,7 +205,9 @@ class _FolderBootstrapWizardDialogState
                         child: Text(
                           _stage == _BootstrapWizardStage.review
                               ? 'Back to setup'
-                              : 'Back',
+                              : _stage == _BootstrapWizardStage.create
+                              ? 'Back to review'
+                              : 'Back to create',
                         ),
                       ),
                       const Spacer(),
@@ -216,7 +220,7 @@ class _FolderBootstrapWizardDialogState
                                     () => _stage = _BootstrapWizardStage.create,
                                   );
                                 },
-                          child: const Text('Continue'),
+                          child: const Text('Review setup'),
                         )
                       else if (_stage == _BootstrapWizardStage.create)
                         FilledButton(
@@ -282,6 +286,92 @@ class _FolderBootstrapWizardDialogState
         setState(() => _isBusy = false);
       }
     }
+  }
+}
+
+class _StageSummaryCard extends StatelessWidget {
+  const _StageSummaryCard({required this.plan, required this.stage});
+
+  final FolderBootstrapWizardPlan plan;
+  final _BootstrapWizardStage stage;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final stageIndex = switch (stage) {
+      _BootstrapWizardStage.review => 1,
+      _BootstrapWizardStage.create => 2,
+      _BootstrapWizardStage.finish => 3,
+    };
+    final stageTitle = switch (stage) {
+      _BootstrapWizardStage.review => 'Review the folder link',
+      _BootstrapWizardStage.create => 'Create only what is missing',
+      _BootstrapWizardStage.finish => 'Confirm the result',
+    };
+    final stageBody = switch (stage) {
+      _BootstrapWizardStage.review =>
+        'Check the source-of-truth folder, look at the missing items, then continue when it feels right.',
+      _BootstrapWizardStage.create =>
+        'The wizard will create only the missing folders and starter files. Existing finance data stays untouched.',
+      _BootstrapWizardStage.finish =>
+        'Review what was created, then reload the folder health so the main Treasury screen can update.',
+    };
+    final missingLabel = [
+      if (plan.missingFolders.isNotEmpty)
+        '${plan.missingFolders.length} folder${plan.missingFolders.length == 1 ? '' : 's'} missing',
+      if (plan.missingFiles.isNotEmpty)
+        '${plan.missingFiles.length} file${plan.missingFiles.length == 1 ? '' : 's'} missing',
+    ].join(' • ');
+    final statusLabel = missingLabel.isEmpty
+        ? 'Nothing is missing right now'
+        : missingLabel;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.16),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'Step $stageIndex of 3',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              _StageChip(label: statusLabel, active: true),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            stageTitle,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            stageBody,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

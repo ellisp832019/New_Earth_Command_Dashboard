@@ -181,4 +181,62 @@ void main() {
       expect(find.text('Setup state', skipOffstage: false), findsOneWidget);
     },
   );
+
+  testWidgets('treasury setup opens a guided wizard when a link exists', (
+    tester,
+  ) async {
+    final workspace = TreasuryWorkspaceSnapshot(
+      configPath: 'config/local_paths.json',
+      financeRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/17_FINANCE_AND_TREASURY',
+      isReady: false,
+      issues: const <String>['Missing starter files.'],
+      requiredFolders: TreasuryFolderService.requiredFolders,
+      missingFolders: const <String>['00_FINANCE_DASHBOARD'],
+      missingFiles: const <String>[
+        '00_FINANCE_DASHBOARD/dashboard_state.json',
+        '04_PROJECT_SPEND_TRACKERS/project_spend_tracker.csv',
+      ],
+      stateSummaries: const <TreasuryStateSummary>[],
+      receiptsToSortCount: 0,
+      weeklyRitualSteps: TreasuryFolderService.weeklyRitualSteps,
+      lowEnergySteps: TreasuryFolderService.lowEnergySteps,
+      guidanceNote: 'Waiting for repair.',
+    );
+
+    final router = GoRouter(
+      initialLocation: RouteNames.treasury,
+      routes: [
+        GoRoute(
+          path: RouteNames.treasury,
+          builder: (context, state) => const TreasuryScreen(),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          treasuryWorkspaceProvider.overrideWith((ref) async => workspace),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.scrollUntilVisible(
+      find.text('Open setup wizard', skipOffstage: false),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Open setup wizard', skipOffstage: false));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Treasury setup wizard'), findsOneWidget);
+    expect(find.text('Step 1 of 3'), findsOneWidget);
+    expect(find.text('Review the folder link'), findsOneWidget);
+  });
 }
