@@ -297,9 +297,7 @@ class _VisualCaptureHomeScreen extends StatelessWidget {
             24,
           ),
           children: [
-            _BackRow(
-              onBackToDashboard: () => context.go(RouteNames.dashboard),
-            ),
+            _BackRow(onBackToDashboard: () => context.go(RouteNames.dashboard)),
             const SizedBox(height: 14),
             _VisualCaptureHeroCard(
               snapshot: snapshot,
@@ -661,10 +659,34 @@ class _InboxPreviewList extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${item.captureType.replaceAll('_', ' ')} · ${path.basename(item.filePath)}',
+                          '${item.captureType.replaceAll('_', ' ')} | ${path.basename(item.filePath)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColours.darkMutedText,
                           ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _InlineTag(
+                              label:
+                                  'Linked domain: ${_formatLinkedDomain(item.linkedDomain)}',
+                              accent: item.linkedDomain.isEmpty
+                                  ? AppColours.darkAmber
+                                  : AppColours.darkSurfaceRaised,
+                              foreground: AppColours.darkText,
+                            ),
+                            _InlineTag(
+                              label: item.linkedId.isEmpty
+                                  ? 'Linked id: not linked yet'
+                                  : 'Linked id: ${item.linkedId}',
+                              accent: item.linkedId.isEmpty
+                                  ? AppColours.darkAmber
+                                  : AppColours.darkSuccess,
+                              foreground: AppColours.darkText,
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -673,6 +695,23 @@ class _InboxPreviewList extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String _formatLinkedDomain(String linkedDomain) {
+  if (linkedDomain.isEmpty) {
+    return 'not linked yet';
+  }
+
+  switch (linkedDomain) {
+    case 'visual_capture':
+      return 'Visual Capture';
+    case 'treasury':
+      return 'Treasury';
+    case 'assets':
+      return 'Assets';
+    default:
+      return linkedDomain.replaceAll('_', ' ');
   }
 }
 
@@ -1057,9 +1096,7 @@ class _VisualCaptureSetupScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _BackRow(
-              onBackToDashboard: () => context.go(RouteNames.dashboard),
-            ),
+            _BackRow(onBackToDashboard: () => context.go(RouteNames.dashboard)),
             const SizedBox(height: 14),
             Container(
               decoration: _panelDecoration(highlighted: true),

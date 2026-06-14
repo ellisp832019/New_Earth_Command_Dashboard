@@ -48,6 +48,8 @@ void main() {
     expect(inbox.queuedFileCount, 1);
     expect(inbox.items, hasLength(1));
     expect(inbox.items.single.captureType, 'receipt');
+    expect(inbox.items.single.linkedDomain, 'visual_capture');
+    expect(inbox.items.single.linkedId, isEmpty);
     expect(inbox.items.single.project, 'MicroGrow');
     expect(inbox.items.single.status, 'inbox');
     expect(

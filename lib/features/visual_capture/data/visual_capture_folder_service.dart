@@ -14,6 +14,8 @@ class VisualCaptureInboxItem {
     required this.sourcePath,
     required this.filePath,
     required this.captureType,
+    required this.linkedDomain,
+    required this.linkedId,
     required this.project,
     required this.status,
     required this.dateAdded,
@@ -24,6 +26,8 @@ class VisualCaptureInboxItem {
   final String sourcePath;
   final String filePath;
   final String captureType;
+  final String linkedDomain;
+  final String linkedId;
   final String project;
   final String status;
   final String dateAdded;
@@ -487,6 +491,8 @@ class VisualCaptureFolderService {
       sourcePath: row['source']?.trim() ?? '',
       filePath: row['file_path']?.trim() ?? '',
       captureType: row['capture_type']?.trim() ?? '',
+      linkedDomain: row['linked_domain']?.trim() ?? '',
+      linkedId: row['linked_id']?.trim() ?? '',
       project: row['project']?.trim() ?? '',
       status: row['status']?.trim() ?? '',
       dateAdded: row['date_added']?.trim() ?? '',
