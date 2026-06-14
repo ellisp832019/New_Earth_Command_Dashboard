@@ -8,6 +8,7 @@ import 'core/routing/route_names.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/application/settings_controller.dart';
 import 'features/meeting_system/presentation/meeting_notification_bridge.dart';
+import 'features/knowledge_library/presentation/knowledge_library_dock_host.dart';
 import 'features/treasury/presentation/treasury_dock_host.dart';
 import 'features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'features/voice_assistant/voice_startup_gate_service.dart';
@@ -92,6 +93,9 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                             currentPath: routeInfo.uri.path,
                           ),
                           TreasuryDockHost(
+                            currentPath: routeInfo.uri.path,
+                          ),
+                          KnowledgeLibraryDockHost(
                             currentPath: routeInfo.uri.path,
                           ),
                         ],

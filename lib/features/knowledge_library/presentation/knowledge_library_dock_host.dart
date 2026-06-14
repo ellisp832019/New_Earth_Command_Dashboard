@@ -10,43 +10,50 @@ import '../../../core/modules/module_event_bus.dart';
 import '../../modules/application/module_hub_controller.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
-import '../application/treasury_controller.dart';
-import '../data/treasury_folder_service.dart';
-import '../data/treasury_wizard_flow.dart';
+import '../data/knowledge_library_repository.dart';
 
-const _treasuryDockModuleId = 'treasury_dock';
+const _knowledgeLibraryDockModuleId = 'knowledge_library_dock';
 
-class TreasuryDockHost extends ConsumerStatefulWidget {
-  const TreasuryDockHost({super.key, this.currentPath});
+class KnowledgeLibraryDockHost extends ConsumerStatefulWidget {
+  const KnowledgeLibraryDockHost({super.key, this.currentPath});
 
   final String? currentPath;
 
   @override
-  ConsumerState<TreasuryDockHost> createState() => _TreasuryDockHostState();
+  ConsumerState<KnowledgeLibraryDockHost> createState() =>
+      _KnowledgeLibraryDockHostState();
 }
 
-class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
+class _KnowledgeLibraryDockHostState
+    extends ConsumerState<KnowledgeLibraryDockHost>
     with SingleTickerProviderStateMixin {
+  late final KnowledgeLibraryRepository _repository;
   late DockPosition _position;
   late DockAnchor _floatingAnchor;
   late final AnimationController _floatingBreatheController;
+  late Future<_KnowledgeLibraryDockSnapshot> _snapshotFuture;
 
   @override
   void initState() {
     super.initState();
+    _repository = KnowledgeLibraryRepository();
     final layoutState = ref.read(moduleHubStateRepositoryProvider).loadDockLayoutState();
-    _position = layoutState.positionFor(_treasuryDockModuleId) ?? DockPosition.left;
+    _position =
+        layoutState.positionFor(_knowledgeLibraryDockModuleId) ?? DockPosition.right;
     _floatingAnchor =
-        layoutState.floatingAnchorFor(_treasuryDockModuleId) ?? DockAnchor.bottomLeft;
+        layoutState.floatingAnchorFor(_knowledgeLibraryDockModuleId) ??
+        DockAnchor.bottomRight;
     _floatingBreatheController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3200),
+      duration: const Duration(milliseconds: 3000),
     );
+    _snapshotFuture = _loadSnapshot();
     _syncFloatingAnimation();
   }
 
   @override
   void dispose() {
+    _repository.dispose();
     _floatingBreatheController.dispose();
     super.dispose();
   }
@@ -59,39 +66,38 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
     }
 
     final currentPath = widget.currentPath ?? '';
-    if (currentPath == RouteNames.treasury ||
-        currentPath.startsWith('${RouteNames.treasury}/')) {
+    if (currentPath == RouteNames.dashboard ||
+        currentPath == RouteNames.knowledgeLibrary) {
       return const SizedBox.shrink();
     }
 
-    final snapshotAsync = ref.watch(treasuryWorkspaceProvider);
+    return FutureBuilder<_KnowledgeLibraryDockSnapshot>(
+      future: _snapshotFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
 
-    return snapshotAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (error, stackTrace) => const SizedBox.shrink(),
-      data: (snapshot) {
-        final accent = snapshot.isReady
+        final data = snapshot.data!;
+        final accent = data.health.isHealthy
             ? AppColours.darkSuccess
             : AppColours.darkAmber;
-        final stateCounts = {
-          for (final summary in snapshot.stateSummaries) summary.kind: summary.count,
-        };
-        final body = _TreasuryDockBody(
-          snapshot: snapshot,
+        final body = _KnowledgeLibraryDockBody(
+          snapshot: data,
           accent: accent,
-          stateCounts: stateCounts,
           position: _position,
           floating: _position == DockPosition.floating,
-          onOpenTreasury: () => context.go(RouteNames.treasury),
-          onOpenWeeklyRitual: () =>
-              context.push(RouteNames.treasuryWizardFor(
-            TreasuryWizardFlow.weeklyRitual.routeValue,
-          )),
-          onOpenMonthlySummary: () => context.push(RouteNames.treasuryMonthlySummary),
-          onOpenSettings: () => context.push(RouteNames.treasurySettings),
-          onRefresh: () => ref.invalidate(treasuryWorkspaceProvider),
+          onOpenLibrary: () => context.go(RouteNames.knowledgeLibrary),
+          onOpenRepoResearch: () => context.push(RouteNames.repoResearchEngine),
+          onRefresh: _refresh,
           onPositionSelected: _savePosition,
-          onOpenDecisionReview: () => context.push(RouteNames.treasuryDecisions),
+          onOpenFailureReport: data.extractionStatus.reportPath.isEmpty
+              ? null
+              : () async {
+                  await _repository.openFailureReport(
+                    data.extractionStatus.reportPath,
+                  );
+                },
         );
 
         if (_position == DockPosition.floating) {
@@ -124,6 +130,26 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
     );
   }
 
+  Future<_KnowledgeLibraryDockSnapshot> _loadSnapshot() async {
+    final results = await Future.wait([
+      _repository.loadHealth(),
+      _repository.loadStats(),
+      _repository.loadExtractionStatus(),
+    ]);
+
+    return _KnowledgeLibraryDockSnapshot(
+      health: results[0] as KnowledgeLibraryHealth,
+      stats: results[1] as KnowledgeLibraryStats,
+      extractionStatus: results[2] as KnowledgeLibraryExtractionStatus,
+    );
+  }
+
+  void _refresh() {
+    setState(() {
+      _snapshotFuture = _loadSnapshot();
+    });
+  }
+
   void _syncFloatingAnimation() {
     if (_position == DockPosition.floating) {
       if (!_floatingBreatheController.isAnimating) {
@@ -150,13 +176,13 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
 
     await ref
         .read(moduleHubStateRepositoryProvider)
-        .saveDockPosition(_treasuryDockModuleId, position);
+        .saveDockPosition(_knowledgeLibraryDockModuleId, position);
     ref.read(moduleEventBusProvider).publish(
           ModuleEvent(
-            moduleId: _treasuryDockModuleId,
+            moduleId: _knowledgeLibraryDockModuleId,
             type: ModuleEventType.dockPositionChanged,
             timestamp: DateTime.now(),
-            message: 'Treasury dock position saved locally.',
+            message: 'Knowledge Library dock position saved locally.',
             details: <String, dynamic>{'position': position.name},
           ),
         );
@@ -174,14 +200,14 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
     final repository = ref.read(moduleHubStateRepositoryProvider);
     final current = repository.loadDockLayoutState();
     await repository.saveDockLayoutState(
-      current.setFloatingAnchor(_treasuryDockModuleId, anchor),
+      current.setFloatingAnchor(_knowledgeLibraryDockModuleId, anchor),
     );
     ref.read(moduleEventBusProvider).publish(
           ModuleEvent(
-            moduleId: _treasuryDockModuleId,
+            moduleId: _knowledgeLibraryDockModuleId,
             type: ModuleEventType.dockPositionChanged,
             timestamp: DateTime.now(),
-            message: 'Treasury floating anchor saved locally.',
+            message: 'Knowledge Library floating anchor saved locally.',
             details: <String, dynamic>{'anchor': anchor.name},
           ),
         );
@@ -197,40 +223,49 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
   }
 }
 
-class _TreasuryDockBody extends StatelessWidget {
-  const _TreasuryDockBody({
-    required this.snapshot,
-    required this.accent,
-    required this.stateCounts,
-    required this.position,
-    required this.floating,
-    required this.onOpenTreasury,
-    required this.onOpenWeeklyRitual,
-    required this.onOpenMonthlySummary,
-    required this.onOpenSettings,
-    required this.onRefresh,
-    required this.onPositionSelected,
-    required this.onOpenDecisionReview,
+class _KnowledgeLibraryDockSnapshot {
+  const _KnowledgeLibraryDockSnapshot({
+    required this.health,
+    required this.stats,
+    required this.extractionStatus,
   });
 
-  final TreasuryWorkspaceSnapshot snapshot;
+  final KnowledgeLibraryHealth health;
+  final KnowledgeLibraryStats stats;
+  final KnowledgeLibraryExtractionStatus extractionStatus;
+}
+
+class _KnowledgeLibraryDockBody extends StatelessWidget {
+  const _KnowledgeLibraryDockBody({
+    required this.snapshot,
+    required this.accent,
+    required this.position,
+    required this.floating,
+    required this.onOpenLibrary,
+    required this.onOpenRepoResearch,
+    required this.onRefresh,
+    required this.onPositionSelected,
+    required this.onOpenFailureReport,
+  });
+
+  final _KnowledgeLibraryDockSnapshot snapshot;
   final Color accent;
-  final Map<TreasuryStatusKind, int> stateCounts;
   final DockPosition position;
   final bool floating;
-  final VoidCallback onOpenTreasury;
-  final VoidCallback onOpenWeeklyRitual;
-  final VoidCallback onOpenMonthlySummary;
-  final VoidCallback onOpenSettings;
+  final VoidCallback onOpenLibrary;
+  final VoidCallback onOpenRepoResearch;
   final VoidCallback onRefresh;
   final ValueChanged<DockPosition> onPositionSelected;
-  final VoidCallback onOpenDecisionReview;
+  final VoidCallback? onOpenFailureReport;
 
   @override
   Widget build(BuildContext context) {
-    final issueLabel = snapshot.issues.isEmpty
-        ? 'No blockers'
-        : '${snapshot.issues.length} issue${snapshot.issues.length == 1 ? '' : 's'}';
+    final stats = snapshot.stats;
+    final extraction = snapshot.extractionStatus;
+    final statusLabel = snapshot.health.isHealthy ? 'Ready' : 'Needs attention';
+    final statusDetail = snapshot.health.message.isEmpty
+        ? 'Live knowledge catalogue snapshot'
+        : snapshot.health.message;
 
     return Material(
       color: AppColours.darkSurfaceAlt.withValues(alpha: floating ? 0.86 : 0.93),
@@ -256,61 +291,43 @@ class _TreasuryDockBody extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.account_balance_wallet_outlined,
-                        color: accent,
-                      ),
+                      Icon(Icons.library_books_outlined, color: accent),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Treasury Dock',
+                          'Knowledge Library Dock',
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 color: AppColours.darkText,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
                       ),
-                      _StatusPill(
-                        label: snapshot.isReady ? 'Ready' : 'Setup needed',
-                        accent: accent,
-                      ),
+                      _StatusPill(label: statusLabel, accent: accent),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    snapshot.guidanceNote,
+                    statusDetail,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColours.darkMutedText,
                           height: 1.35,
                         ),
                   ),
                   const SizedBox(height: 12),
-                  _DockStatLine(label: 'Finance root', value: snapshot.financeRootPath ?? 'Not linked yet'),
-                  _DockStatLine(label: 'Receipts to sort', value: '${snapshot.receiptsToSortCount}'),
-                  _DockStatLine(label: 'Health', value: issueLabel),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _StatusPill(
-                        label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
-                        accent: AppColours.darkSuccess,
-                      ),
-                      _StatusPill(
-                        label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
-                        accent: AppColours.darkAmber,
-                      ),
-                      _StatusPill(
-                        label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
-                        accent: const Color(0xFFE26B6B),
-                      ),
-                      _StatusPill(
-                        label: 'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
-                        accent: AppColours.darkSecondary,
-                      ),
-                    ],
+                  _DockStatLine(label: 'PDFs', value: '${stats.totalPdfs}'),
+                  _DockStatLine(label: 'Text extractable', value: '${stats.textExtractable}'),
+                  _DockStatLine(label: 'OCR needed', value: '${stats.ocrRequired}'),
+                  _DockStatLine(label: 'Audio generated', value: '${stats.audioGenerated}'),
+                  _DockStatLine(
+                    label: 'Extraction',
+                    value:
+                        '${extraction.extracted} extracted, ${extraction.failed} failed, ${extraction.pending} pending',
                   ),
+                  if (extraction.lastRunAt != null)
+                    _DockStatLine(
+                      label: 'Last run',
+                      value: extraction.lastRunAt!.toLocal().toString(),
+                    ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -326,14 +343,14 @@ class _TreasuryDockBody extends StatelessWidget {
                         onPositionSelected: onPositionSelected,
                       ),
                       FilledButton.tonalIcon(
-                        onPressed: onOpenTreasury,
-                        icon: const Icon(Icons.open_in_new_outlined),
-                        label: const Text('Open Treasury'),
+                        onPressed: onOpenLibrary,
+                        icon: const Icon(Icons.menu_book_outlined),
+                        label: const Text('Open Library'),
                       ),
                       FilledButton.icon(
-                        onPressed: onOpenWeeklyRitual,
-                        icon: const Icon(Icons.view_agenda_outlined),
-                        label: const Text('Weekly ritual'),
+                        onPressed: onOpenRepoResearch,
+                        icon: const Icon(Icons.travel_explore_outlined),
+                        label: const Text('Repo Research'),
                       ),
                       TextButton.icon(
                         onPressed: onRefresh,
@@ -342,28 +359,14 @@ class _TreasuryDockBody extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      TextButton.icon(
-                        onPressed: onOpenMonthlySummary,
-                        icon: const Icon(Icons.calendar_month_outlined),
-                        label: const Text('Monthly summary'),
-                      ),
-                      TextButton.icon(
-                        onPressed: onOpenDecisionReview,
-                        icon: const Icon(Icons.gavel_outlined),
-                        label: const Text('Decisions'),
-                      ),
-                      TextButton.icon(
-                        onPressed: onOpenSettings,
-                        icon: const Icon(Icons.settings_outlined),
-                        label: const Text('Settings'),
-                      ),
-                    ],
-                  ),
+                  if (onOpenFailureReport != null) ...[
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: onOpenFailureReport,
+                      icon: const Icon(Icons.description_outlined),
+                      label: const Text('Open failure report'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -829,7 +832,7 @@ DockAnchor _nearestAnchorFor({
     ),
   };
 
-  var closest = DockAnchor.bottomLeft;
+  var closest = DockAnchor.bottomRight;
   var closestDistance = double.infinity;
   for (final entry in candidates.entries) {
     final dx = currentOffset.dx - entry.value.dx;
