@@ -30,6 +30,7 @@ class _BackupGuardianDockHostState
     with SingleTickerProviderStateMixin {
   bool _isBusy = false;
   bool _showFloatingHint = true;
+  bool _hasDraggedFloating = false;
   late DockPosition _position;
   late DockAnchor _floatingAnchor;
   late final AnimationController _floatingBreatheController;
@@ -48,13 +49,6 @@ class _BackupGuardianDockHostState
       vsync: this,
       duration: const Duration(milliseconds: 2800),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _showFloatingHint = false;
-        });
-      }
-    });
     _syncFloatingAnimation();
   }
 
@@ -104,6 +98,7 @@ class _BackupGuardianDockHostState
               child: _FloatingDockFrame(
                 anchor: _floatingAnchor,
                 breathe: _floatingBreatheController,
+                onDraggedOnce: _markFloatingDragged,
                 onAnchorChanged: _saveFloatingAnchor,
                 child: dockBody,
               ),
@@ -210,6 +205,17 @@ class _BackupGuardianDockHostState
             details: <String, dynamic>{'anchor': anchor.name},
           ),
         );
+  }
+
+  void _markFloatingDragged() {
+    if (_hasDraggedFloating) {
+      return;
+    }
+
+    setState(() {
+      _hasDraggedFloating = true;
+      _showFloatingHint = false;
+    });
   }
 }
 
@@ -509,12 +515,14 @@ class _FloatingDockFrame extends StatefulWidget {
   const _FloatingDockFrame({
     required this.anchor,
     required this.breathe,
+    required this.onDraggedOnce,
     required this.onAnchorChanged,
     required this.child,
   });
 
   final DockAnchor anchor;
   final AnimationController breathe;
+  final VoidCallback onDraggedOnce;
   final Future<void> Function(DockAnchor anchor) onAnchorChanged;
   final Widget child;
 
@@ -525,6 +533,14 @@ class _FloatingDockFrame extends StatefulWidget {
 class _FloatingDockFrameState extends State<_FloatingDockFrame> {
   Offset _dragOffset = Offset.zero;
   bool _isDragging = false;
+
+  @override
+  void didUpdateWidget(covariant _FloatingDockFrame oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.anchor != widget.anchor && !_isDragging) {
+      _dragOffset = Offset.zero;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -565,14 +581,14 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
               AnimatedPositioned(
                 duration: _isDragging
                     ? Duration.zero
-                    : const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
+                    : const Duration(milliseconds: 420),
+                curve: _isDragging ? Curves.linear : Curves.easeOutBack,
                 left: clampedOffset.dx,
                 top: clampedOffset.dy,
                 width: frameWidth,
                 child: AnimatedScale(
-                  scale: _isDragging ? 1.02 : 1.0,
-                  duration: const Duration(milliseconds: 180),
+                  scale: _isDragging ? 1.03 : 1.0,
+                  duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -587,7 +603,10 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
                           frameHeight: frameHeight.toDouble(),
                         ),
                       ),
-                      _FloatingFrameShell(child: widget.child),
+                      _FloatingFrameShell(
+                        isDragging: _isDragging,
+                        child: widget.child,
+                      ),
                     ],
                   ),
                 ),
@@ -618,7 +637,7 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
 
   void _handlePanUpdate(DragUpdateDetails details) {
     setState(() {
-      _dragOffset += details.delta * 0.92;
+      _dragOffset += details.delta * 0.9;
     });
   }
 
@@ -663,22 +682,19 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
       widget.breathe.repeat(reverse: true);
     }
 
+    widget.onDraggedOnce();
     unawaited(widget.onAnchorChanged(snappedAnchor));
-    Future<void>.delayed(const Duration(milliseconds: 180), () {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _dragOffset = Offset.zero;
-      });
-    });
   }
 }
 
 class _FloatingFrameShell extends StatelessWidget {
-  const _FloatingFrameShell({required this.child});
+  const _FloatingFrameShell({
+    required this.child,
+    required this.isDragging,
+  });
 
   final Widget child;
+  final bool isDragging;
 
   @override
   Widget build(BuildContext context) {
@@ -702,9 +718,9 @@ class _FloatingFrameShell extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.34),
-                blurRadius: 42,
-                offset: const Offset(0, 18),
+                color: Colors.black.withValues(alpha: isDragging ? 0.42 : 0.34),
+                blurRadius: isDragging ? 54 : 42,
+                offset: Offset(0, isDragging ? 26 : 18),
               ),
             ],
           ),
