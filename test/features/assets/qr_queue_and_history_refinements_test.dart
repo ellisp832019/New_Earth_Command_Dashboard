@@ -71,6 +71,17 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
+    expect(find.text('Queue summary'), findsOneWidget);
+    expect(
+      find.text(
+        'The queue stays readable by separating labels ready to print, labels that need another try, and labels already completed.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Ready: 1'), findsOneWidget);
+    expect(find.text('Retry: 1'), findsOneWidget);
+    expect(find.text('Printed: 0'), findsOneWidget);
+    expect(find.text('Applied: 0'), findsOneWidget);
     expect(find.text('Open History'), findsOneWidget);
     expect(find.text('Ready'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);

@@ -2409,6 +2409,47 @@ class _PrinterProfilesCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          Text(
+            profiles.isEmpty
+                ? 'No printer profiles are saved yet. Add the PM260 preset or another thermal profile to keep printing smooth.'
+                : 'Printer profiles stay local so the PM260 preset and any other thermal drivers are easy to reuse.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusPill(
+                label: '${profiles.length} profile${profiles.length == 1 ? '' : 's'}',
+                accent: AppColours.darkSecondary,
+              ),
+              _StatusPill(
+                label: profiles.any((row) {
+                  final name = (row['printer_name'] ?? '').trim().toLowerCase();
+                  final id = (row['profile_id'] ?? '').trim().toLowerCase();
+                  return name.contains('pm260') ||
+                      id == QrLabelPrintService.pm260Preset.profileId
+                          .toLowerCase();
+                })
+                    ? 'PM260 preset ready'
+                    : 'PM260 preset missing',
+                accent: profiles.any((row) {
+                  final name = (row['printer_name'] ?? '').trim().toLowerCase();
+                  final id = (row['profile_id'] ?? '').trim().toLowerCase();
+                  return name.contains('pm260') ||
+                      id == QrLabelPrintService.pm260Preset.profileId
+                          .toLowerCase();
+                })
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           if (profiles.isEmpty)
             Text(
               'No printer profiles yet. Add one for the PM260 or your chosen thermal printer.',

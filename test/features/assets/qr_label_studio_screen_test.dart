@@ -124,6 +124,8 @@ void main() {
     expect(find.text('ETIKEZ PM260 (Default)'), findsOneWidget);
     expect(find.text('PM260 profile selected'), findsOneWidget);
     expect(find.text('PM260 printer detected'), findsOneWidget);
+    expect(find.text('1 profile'), findsOneWidget);
+    expect(find.text('PM260 preset ready'), findsOneWidget);
     expect(find.text('Printer profile: pm260_default'), findsOneWidget);
     expect(find.text('Printer profiles available: 1'), findsOneWidget);
     expect(find.text('Matched'), findsOneWidget);

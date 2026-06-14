@@ -81,6 +81,13 @@ class QrPrintQueueScreen extends ConsumerWidget {
                               workspacePath: workspace.assetsRootPath,
                             ),
                             const SizedBox(height: 20),
+                            _QueueSummaryCard(
+                              readyCount: readyRows.length,
+                              retryCount: retryRows.length,
+                              printedCount: printedRows.length,
+                              appliedCount: appliedRows.length,
+                            ),
+                            const SizedBox(height: 20),
                             _QueueSection(
                               title: 'Ready to print',
                               subtitle:
@@ -653,6 +660,95 @@ class _InlineBadge extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+class _QueueSummaryCard extends StatelessWidget {
+  const _QueueSummaryCard({
+    required this.readyCount,
+    required this.retryCount,
+    required this.printedCount,
+    required this.appliedCount,
+  });
+
+  final int readyCount;
+  final int retryCount;
+  final int printedCount;
+  final int appliedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _QueueSectionTitle(
+            title: 'Queue summary',
+            icon: Icons.summarize_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'The queue stays readable by separating labels ready to print, labels that need another try, and labels already completed.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InlineBadge(
+                count: readyCount,
+                label: 'Ready: $readyCount',
+                accent: AppColours.darkSuccess,
+              ),
+              _InlineBadge(
+                count: retryCount,
+                label: 'Retry: $retryCount',
+                accent: const Color(0xFFE26B6B),
+              ),
+              _InlineBadge(
+                count: printedCount,
+                label: 'Printed: $printedCount',
+                accent: AppColours.darkAmber,
+              ),
+              _InlineBadge(
+                count: appliedCount,
+                label: 'Applied: $appliedCount',
+                accent: AppColours.darkSecondary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QueueSectionTitle extends StatelessWidget {
+  const _QueueSectionTitle({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColours.darkSecondary, size: 20),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
+        ),
+      ],
     );
   }
 }
