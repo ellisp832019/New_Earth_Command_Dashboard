@@ -591,31 +591,31 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              MouseRegion(
-                onEnter: (_) {
-                  if (_isHovered) {
-                    return;
-                  }
-                  setState(() {
-                    _isHovered = true;
-                  });
-                },
-                onExit: (_) {
-                  if (!_isHovered) {
-                    return;
-                  }
-                  setState(() {
-                    _isHovered = false;
-                  });
-                },
-                child: AnimatedPositioned(
-                  duration: _isDragging
-                      ? Duration.zero
-                      : const Duration(milliseconds: 420),
-                  curve: _isDragging ? Curves.linear : Curves.easeOutBack,
-                  left: clampedOffset.dx,
-                  top: clampedOffset.dy,
-                  width: frameWidth,
+              AnimatedPositioned(
+                duration: _isDragging
+                    ? Duration.zero
+                    : const Duration(milliseconds: 420),
+                curve: _isDragging ? Curves.linear : Curves.easeOutBack,
+                left: clampedOffset.dx,
+                top: clampedOffset.dy,
+                width: frameWidth,
+                child: MouseRegion(
+                  onEnter: (_) {
+                    if (_isHovered) {
+                      return;
+                    }
+                    setState(() {
+                      _isHovered = true;
+                    });
+                  },
+                  onExit: (_) {
+                    if (!_isHovered) {
+                      return;
+                    }
+                    setState(() {
+                      _isHovered = false;
+                    });
+                  },
                   child: AnimatedScale(
                     scale: _isDragging ? 1.03 : 1.0,
                     duration: const Duration(milliseconds: 220),
