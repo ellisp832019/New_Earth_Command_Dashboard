@@ -47,12 +47,7 @@ class TreasuryScreen extends ConsumerWidget {
         snapshot: _treasuryUnavailableSnapshot,
         onReload: () => ref.invalidate(treasuryWorkspaceProvider),
         onBack: () {
-          if (context.canPop()) {
-            context.pop();
-            return;
-          }
-
-          context.go(RouteNames.dashboard);
+          context.go(RouteNames.more);
         },
         onOpenSetupWizard: () =>
             _openSetupWizard(context, ref, _treasuryUnavailableSnapshot),
@@ -66,12 +61,7 @@ class TreasuryScreen extends ConsumerWidget {
             snapshot: data,
             onReload: () => ref.invalidate(treasuryWorkspaceProvider),
             onBack: () {
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-
-              context.go(RouteNames.dashboard);
+              context.go(RouteNames.more);
             },
             onOpenSetupWizard: () => _openSetupWizard(context, ref, data),
           );
@@ -110,6 +100,11 @@ class _TreasuryHomeScreen extends StatelessWidget {
             24,
           ),
           children: [
+            _TreasuryNavigationStrip(
+              snapshot: snapshot,
+              onBackToMore: () => context.go(RouteNames.more),
+            ),
+            const SizedBox(height: 18),
             _TreasuryHeroCard(
               snapshot: snapshot,
               dateLabel: dateLabel,
@@ -245,6 +240,11 @@ class _TreasurySetupScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            _TreasuryNavigationStrip(
+              snapshot: snapshot,
+              onBackToMore: () => context.go(RouteNames.more),
+            ),
+            const SizedBox(height: 14),
             _SetupHeaderCard(
               title: title,
               body: body,
@@ -266,6 +266,93 @@ class _TreasurySetupScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TreasuryNavigationStrip extends StatelessWidget {
+  const _TreasuryNavigationStrip({
+    required this.snapshot,
+    required this.onBackToMore,
+  });
+
+  final TreasuryWorkspaceSnapshot snapshot;
+  final VoidCallback onBackToMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final financeLabel = snapshot.financeRootPath ?? 'Not linked yet';
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWideLayout = constraints.maxWidth >= 820;
+
+          final left = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Back where Treasury belongs',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Treasury stays inside the More shell and reads the external finance pack from local config.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          final right = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _StatusPill(
+                label: snapshot.isReady ? 'Ready' : 'Setup needed',
+                accent: snapshot.isReady
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
+              ),
+              _StatusPill(label: financeLabel, accent: AppColours.darkPrimary),
+              TextButton.icon(
+                onPressed: onBackToMore,
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to More'),
+              ),
+            ],
+          );
+
+          if (!useWideLayout) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                left,
+                const SizedBox(height: 12),
+                Align(alignment: Alignment.centerLeft, child: right),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: left),
+              const SizedBox(width: 16),
+              right,
+            ],
+          );
+        },
       ),
     );
   }
@@ -845,9 +932,9 @@ class _MonthlySummaryPreviewCard extends ConsumerWidget {
                       alignment: WrapAlignment.end,
                       children: [
                         TextButton.icon(
-                          onPressed: () => context.push(RouteNames.dashboard),
-                          icon: const Icon(Icons.dashboard_outlined),
-                          label: const Text('Back to Dashboard'),
+                          onPressed: () => context.go(RouteNames.more),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Back to More'),
                         ),
                         TextButton.icon(
                           onPressed: () =>
@@ -1096,11 +1183,13 @@ class _DecisionReviewCard extends ConsumerWidget {
                     accent: AppColours.darkSuccess,
                   ),
                   _StatusPill(
-                    label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                    label:
+                        'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
                     accent: AppColours.darkAmber,
                   ),
                   _StatusPill(
-                    label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                    label:
+                        'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
                     accent: const Color(0xFFE26B6B),
                   ),
                   _StatusPill(
@@ -1679,7 +1768,7 @@ class _SetupHeaderCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: onBack,
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Back to Dashboard'),
+                label: const Text('Back to More'),
               ),
               FilledButton.icon(
                 onPressed: onReload,
