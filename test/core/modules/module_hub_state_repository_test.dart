@@ -92,6 +92,32 @@ void main() {
     expect(contents['dockLayoutState'], isA<Map>());
   });
 
+  test('module hub state repository saves and reloads floating dock anchors',
+      () async {
+    final tempRoot = Directory.systemTemp.createTempSync('module-hub-anchor-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final stateFile = path.join(tempRoot.path, 'module_hub_state.json');
+    final repository = ModuleHubStateRepository(stateFilePath: stateFile);
+
+    final layoutState = repository
+        .loadDockLayoutState()
+        .setFloatingAnchor('alpha_module', DockAnchor.topLeft);
+    await repository.saveDockLayoutState(layoutState);
+
+    final restored = repository.loadDockLayoutState();
+    expect(restored.floatingAnchorFor('alpha_module'), DockAnchor.topLeft);
+
+    final contents =
+        jsonDecode(File(stateFile).readAsStringSync()) as Map<String, dynamic>;
+    expect(contents['dockLayoutState'], isA<Map>());
+    expect(contents['dockLayoutState']['floatingAnchorsByModuleId'], isA<Map>());
+  });
+
   test('module loader reapplies persisted enabled state on load', () async {
     final tempRoot = Directory.systemTemp.createTempSync(
       'module-loader-state-',

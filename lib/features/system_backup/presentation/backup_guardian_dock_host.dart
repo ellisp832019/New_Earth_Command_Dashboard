@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -25,19 +26,34 @@ class BackupGuardianDockHost extends ConsumerStatefulWidget {
 }
 
 class _BackupGuardianDockHostState
-    extends ConsumerState<BackupGuardianDockHost> {
+    extends ConsumerState<BackupGuardianDockHost>
+    with SingleTickerProviderStateMixin {
   bool _isBusy = false;
   late DockPosition _position;
+  late DockAnchor _floatingAnchor;
+  late final AnimationController _floatingBreatheController;
 
   @override
   void initState() {
     super.initState();
+    final layoutState = ref.read(moduleHubStateRepositoryProvider).loadDockLayoutState();
     _position =
-        ref
-            .read(moduleHubStateRepositoryProvider)
-            .loadDockLayoutState()
-            .positionFor(_backupGuardianDockModuleId) ??
+        layoutState.positionFor(_backupGuardianDockModuleId) ??
         DockPosition.right;
+    _floatingAnchor =
+        layoutState.floatingAnchorFor(_backupGuardianDockModuleId) ??
+        DockAnchor.bottomRight;
+    _floatingBreatheController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    );
+    _syncFloatingAnimation();
+  }
+
+  @override
+  void dispose() {
+    _floatingBreatheController.dispose();
+    super.dispose();
   }
 
   @override
@@ -66,6 +82,7 @@ class _BackupGuardianDockHostState
           healthAccent: healthAccent,
           position: _position,
           isBusy: _isBusy,
+          floating: _position == DockPosition.floating,
           onOpenFullView: () => context.go(RouteNames.backupGuardian),
           onVerifyNow: () => _runVerifyNow(snapshot),
           onRefresh: () => ref.invalidate(backupGuardianSnapshotProvider),
@@ -73,43 +90,13 @@ class _BackupGuardianDockHostState
         );
 
         if (_position == DockPosition.floating) {
-          return Positioned(
-            left: 24,
-            right: 24,
-            bottom: 128,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Transform.translate(
-                  offset: const Offset(0, -12),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 380),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: AppColours.darkSurfaceAlt.withValues(
-                              alpha: 0.76,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: AppColours.darkOutline.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: dockBody,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+          return Positioned.fill(
+            child: SafeArea(
+              child: _FloatingDockFrame(
+                anchor: _floatingAnchor,
+                breathe: _floatingBreatheController,
+                onAnchorChanged: _saveFloatingAnchor,
+                child: dockBody,
               ),
             ),
           );
@@ -129,6 +116,20 @@ class _BackupGuardianDockHostState
         );
       },
     );
+  }
+
+  void _syncFloatingAnimation() {
+    if (_position == DockPosition.floating) {
+      if (!_floatingBreatheController.isAnimating) {
+        _floatingBreatheController.repeat(reverse: true);
+      }
+      return;
+    }
+
+    if (_floatingBreatheController.isAnimating) {
+      _floatingBreatheController.stop();
+    }
+    _floatingBreatheController.value = 0;
   }
 
   Future<void> _runVerifyNow(BackupGuardianSnapshot snapshot) async {
@@ -157,6 +158,7 @@ class _BackupGuardianDockHostState
     setState(() {
       _position = position;
     });
+    _syncFloatingAnimation();
 
     await ref
         .read(moduleHubStateRepositoryProvider)
@@ -173,6 +175,33 @@ class _BackupGuardianDockHostState
           ),
         );
   }
+
+  Future<void> _saveFloatingAnchor(DockAnchor anchor) async {
+    if (_floatingAnchor == anchor) {
+      return;
+    }
+
+    setState(() {
+      _floatingAnchor = anchor;
+    });
+
+    final repository = ref.read(moduleHubStateRepositoryProvider);
+    final current = repository.loadDockLayoutState();
+    await repository.saveDockLayoutState(
+      current.setFloatingAnchor(_backupGuardianDockModuleId, anchor),
+    );
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
+          ModuleEvent(
+            moduleId: _backupGuardianDockModuleId,
+            type: ModuleEventType.dockPositionChanged,
+            timestamp: DateTime.now(),
+            message: 'Backup Guardian floating anchor saved locally.',
+            details: <String, dynamic>{'anchor': anchor.name},
+          ),
+        );
+  }
 }
 
 class _DockBody extends StatelessWidget {
@@ -181,6 +210,7 @@ class _DockBody extends StatelessWidget {
     required this.healthAccent,
     required this.position,
     required this.isBusy,
+    required this.floating,
     required this.onOpenFullView,
     required this.onVerifyNow,
     required this.onRefresh,
@@ -191,6 +221,7 @@ class _DockBody extends StatelessWidget {
   final Color healthAccent;
   final DockPosition position;
   final bool isBusy;
+  final bool floating;
   final VoidCallback onOpenFullView;
   final VoidCallback onVerifyNow;
   final VoidCallback onRefresh;
@@ -199,9 +230,11 @@ class _DockBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
-      elevation: position == DockPosition.floating ? 28 : 10,
-      shadowColor: Colors.black.withValues(alpha: 0.3),
+      color: AppColours.darkSurfaceAlt.withValues(
+        alpha: floating ? 0.84 : 0.92,
+      ),
+      elevation: floating ? 18 : 10,
+      shadowColor: Colors.black.withValues(alpha: floating ? 0.38 : 0.3),
       borderRadius: BorderRadius.circular(22),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 320),
@@ -238,6 +271,32 @@ class _DockBody extends StatelessWidget {
                       label: snapshot.healthSummary,
                       accent: healthAccent,
                     ),
+                    if (floating) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColours.darkPrimary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: AppColours.darkPrimary.withValues(
+                              alpha: 0.45,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Drag to a corner',
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: AppColours.darkText,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -419,6 +478,329 @@ class _DockStatLine extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+const _floatingDockMargin = 20.0;
+const _floatingDockMinWidth = 320.0;
+const _floatingDockMaxWidth = 400.0;
+const _floatingDockEstimatedHeight = 372.0;
+
+class _FloatingDockFrame extends StatefulWidget {
+  const _FloatingDockFrame({
+    required this.anchor,
+    required this.breathe,
+    required this.onAnchorChanged,
+    required this.child,
+  });
+
+  final DockAnchor anchor;
+  final AnimationController breathe;
+  final Future<void> Function(DockAnchor anchor) onAnchorChanged;
+  final Widget child;
+
+  @override
+  State<_FloatingDockFrame> createState() => _FloatingDockFrameState();
+}
+
+class _FloatingDockFrameState extends State<_FloatingDockFrame> {
+  Offset _dragOffset = Offset.zero;
+  bool _isDragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest;
+        final frameWidth = _resolveFloatingWidth(size.width);
+        final frameHeight = _floatingDockEstimatedHeight.clamp(
+          _floatingDockMinWidth,
+          size.height - (_floatingDockMargin * 2),
+        );
+        final baseOffset = _baseOffsetForAnchor(
+          widget.anchor,
+          size,
+          frameWidth,
+          frameHeight.toDouble(),
+        );
+        final clampedOffset = (baseOffset + _dragOffset).clampToBounds(
+          size,
+          frameWidth,
+          frameHeight.toDouble(),
+        );
+
+        return AnimatedBuilder(
+          animation: widget.breathe,
+          builder: (context, child) {
+            final bob = _isDragging
+                ? 0.0
+                : (Curves.easeInOut.transform(widget.breathe.value) - 0.5) * 8;
+            return Transform.translate(
+              offset: Offset(0, bob),
+              child: child,
+            );
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedPositioned(
+                duration: _isDragging
+                    ? Duration.zero
+                    : const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                left: clampedOffset.dx,
+                top: clampedOffset.dy,
+                width: frameWidth,
+                child: AnimatedScale(
+                  scale: _isDragging ? 1.02 : 1.0,
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _FloatingDragHandle(
+                        onPanStart: _handlePanStart,
+                        onPanUpdate: _handlePanUpdate,
+                        onPanEnd: (_) => _handlePanEnd(
+                          size: size,
+                          frameWidth: frameWidth,
+                          frameHeight: frameHeight.toDouble(),
+                        ),
+                      ),
+                      _FloatingFrameShell(child: widget.child),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  double _resolveFloatingWidth(double maxWidth) {
+    final available = maxWidth - (_floatingDockMargin * 2);
+    if (available < _floatingDockMinWidth) {
+      return _floatingDockMinWidth;
+    }
+    return available.clamp(_floatingDockMinWidth, _floatingDockMaxWidth).toDouble();
+  }
+
+  void _handlePanStart(DragStartDetails details) {
+    setState(() {
+      _isDragging = true;
+    });
+    if (widget.breathe.isAnimating) {
+      widget.breathe.stop();
+    }
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset += details.delta;
+    });
+  }
+
+  Future<void> _handlePanEnd({
+    required Size size,
+    required double frameWidth,
+    required double frameHeight,
+  }) async {
+    final currentOffset = (_baseOffsetForAnchor(
+          widget.anchor,
+          size,
+          frameWidth,
+          frameHeight,
+        ) +
+        _dragOffset).clampToBounds(size, frameWidth, frameHeight);
+
+    final snappedAnchor = _nearestAnchorFor(
+      currentOffset: currentOffset,
+      size: size,
+      frameWidth: frameWidth,
+      frameHeight: frameHeight,
+    );
+
+    setState(() {
+      _dragOffset = Offset.zero;
+      _isDragging = false;
+    });
+
+    if (!widget.breathe.isAnimating) {
+      widget.breathe.repeat(reverse: true);
+    }
+
+    unawaited(widget.onAnchorChanged(snappedAnchor));
+  }
+}
+
+class _FloatingFrameShell extends StatelessWidget {
+  const _FloatingFrameShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(26),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+                AppColours.darkSurfaceAlt.withValues(alpha: 0.76),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: AppColours.darkOutline.withValues(alpha: 0.72),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.34),
+                blurRadius: 42,
+                offset: const Offset(0, 18),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingDragHandle extends StatelessWidget {
+  const _FloatingDragHandle({
+    required this.onPanStart,
+    required this.onPanUpdate,
+    required this.onPanEnd,
+  });
+
+  final GestureDragStartCallback onPanStart;
+  final GestureDragUpdateCallback onPanUpdate;
+  final GestureDragEndCallback onPanEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanStart: onPanStart,
+      onPanUpdate: onPanUpdate,
+      onPanEnd: onPanEnd,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Center(
+          child: Container(
+            width: 48,
+            height: 6,
+            decoration: BoxDecoration(
+              color: AppColours.darkText.withValues(alpha: 0.24),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Offset _baseOffsetForAnchor(
+  DockAnchor anchor,
+  Size size,
+  double frameWidth,
+  double frameHeight,
+) {
+  final maxX = (size.width - frameWidth - _floatingDockMargin)
+      .clamp(_floatingDockMargin, double.infinity)
+      .toDouble();
+  final maxY = (size.height - frameHeight - _floatingDockMargin)
+      .clamp(_floatingDockMargin, double.infinity)
+      .toDouble();
+
+  return switch (anchor) {
+    DockAnchor.topLeft => const Offset(_floatingDockMargin, _floatingDockMargin),
+    DockAnchor.topRight => Offset(maxX, _floatingDockMargin),
+    DockAnchor.bottomLeft => Offset(_floatingDockMargin, maxY),
+    DockAnchor.bottomRight => Offset(maxX, maxY),
+  };
+}
+
+DockAnchor _nearestAnchorFor({
+  required Offset currentOffset,
+  required Size size,
+  required double frameWidth,
+  required double frameHeight,
+}) {
+  final candidates = <DockAnchor, Offset>{
+    DockAnchor.topLeft: _baseOffsetForAnchor(
+      DockAnchor.topLeft,
+      size,
+      frameWidth,
+      frameHeight,
+    ),
+    DockAnchor.topRight: _baseOffsetForAnchor(
+      DockAnchor.topRight,
+      size,
+      frameWidth,
+      frameHeight,
+    ),
+    DockAnchor.bottomLeft: _baseOffsetForAnchor(
+      DockAnchor.bottomLeft,
+      size,
+      frameWidth,
+      frameHeight,
+    ),
+    DockAnchor.bottomRight: _baseOffsetForAnchor(
+      DockAnchor.bottomRight,
+      size,
+      frameWidth,
+      frameHeight,
+    ),
+  };
+
+  var closest = DockAnchor.bottomRight;
+  var closestDistance = double.infinity;
+  for (final entry in candidates.entries) {
+    final dx = currentOffset.dx - entry.value.dx;
+    final dy = currentOffset.dy - entry.value.dy;
+    final distance = dx * dx + dy * dy;
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closest = entry.key;
+    }
+  }
+  return closest;
+}
+
+extension on Offset {
+  Offset clampToBounds(
+    Size size,
+    double frameWidth,
+    double frameHeight,
+  ) {
+    final minX = _floatingDockMargin;
+    final minY = _floatingDockMargin;
+    final maxX = (size.width - frameWidth - _floatingDockMargin)
+        .clamp(minX, double.infinity)
+        .toDouble();
+    final maxY = (size.height - frameHeight - _floatingDockMargin)
+        .clamp(minY, double.infinity)
+        .toDouble();
+
+    return Offset(
+      dx.clamp(minX, maxX).toDouble(),
+      dy.clamp(minY, maxY).toDouble(),
     );
   }
 }

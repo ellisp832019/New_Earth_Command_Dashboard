@@ -77,6 +77,7 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
 
               return Stack(
                 fit: StackFit.expand,
+                clipBehavior: Clip.none,
                 children: [
                   VoiceHandsfreeLayer(child: routedChild),
                   ValueListenableBuilder<RouteInformation>(

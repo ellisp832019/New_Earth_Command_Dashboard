@@ -16,3 +16,20 @@ extension DockPositionLabel on DockPosition {
     }
   }
 }
+
+enum DockAnchor { topLeft, topRight, bottomLeft, bottomRight }
+
+extension DockAnchorLabel on DockAnchor {
+  String get label {
+    switch (this) {
+      case DockAnchor.topLeft:
+        return 'Top left';
+      case DockAnchor.topRight:
+        return 'Top right';
+      case DockAnchor.bottomLeft:
+        return 'Bottom left';
+      case DockAnchor.bottomRight:
+        return 'Bottom right';
+    }
+  }
+}
