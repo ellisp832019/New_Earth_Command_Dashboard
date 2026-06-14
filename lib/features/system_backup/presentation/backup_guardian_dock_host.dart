@@ -26,6 +26,11 @@ class _BackupGuardianDockHostState
       return const SizedBox.shrink();
     }
 
+    final currentPath = GoRouterState.of(context).uri.path;
+    if (currentPath == RouteNames.backupGuardian) {
+      return const SizedBox.shrink();
+    }
+
     final snapshotAsync = ref.watch(backupGuardianSnapshotProvider);
 
     return snapshotAsync.when(
