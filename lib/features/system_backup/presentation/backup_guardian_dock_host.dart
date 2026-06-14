@@ -4,11 +4,18 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../modules/application/module_hub_controller.dart';
+import '../../../core/dock/dock_position.dart';
+import '../../../core/modules/module_event_bus.dart';
 import '../application/backup_guardian_controller.dart';
 import '../data/backup_guardian_service.dart';
 
+const _backupGuardianDockModuleId = 'backup_guardian_dock';
+
 class BackupGuardianDockHost extends ConsumerStatefulWidget {
-  const BackupGuardianDockHost({super.key});
+  const BackupGuardianDockHost({super.key, this.currentPath});
+
+  final String? currentPath;
 
   @override
   ConsumerState<BackupGuardianDockHost> createState() =>
@@ -18,6 +25,18 @@ class BackupGuardianDockHost extends ConsumerStatefulWidget {
 class _BackupGuardianDockHostState
     extends ConsumerState<BackupGuardianDockHost> {
   bool _isBusy = false;
+  late DockPosition _position;
+
+  @override
+  void initState() {
+    super.initState();
+    _position =
+        ref
+            .read(moduleHubStateRepositoryProvider)
+            .loadDockLayoutState()
+            .positionFor(_backupGuardianDockModuleId) ??
+        DockPosition.right;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +45,8 @@ class _BackupGuardianDockHostState
       return const SizedBox.shrink();
     }
 
-    final currentPath = GoRouterState.of(context).uri.path;
+    final currentPath =
+        widget.currentPath ?? GoRouterState.of(context).uri.path;
     if (currentPath == RouteNames.backupGuardian) {
       return const SizedBox.shrink();
     }
@@ -38,12 +58,14 @@ class _BackupGuardianDockHostState
       error: (error, stackTrace) => const SizedBox.shrink(),
       data: (snapshot) {
         final healthAccent = _healthAccent(snapshot.healthState);
+        final dockInsets = _dockInsetsForPosition(_position);
+        final dockAlignment = _dockAlignmentForPosition(_position);
 
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(172, 20, 20, 20),
+            padding: dockInsets,
             child: Align(
-              alignment: Alignment.bottomLeft,
+              alignment: dockAlignment,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 360),
                 child: Material(
@@ -124,6 +146,10 @@ class _BackupGuardianDockHostState
                               spacing: 8,
                               runSpacing: 8,
                               children: [
+                                _DockPositionChipRow(
+                                  position: _position,
+                                  onPositionSelected: _savePosition,
+                                ),
                                 FilledButton.tonalIcon(
                                   onPressed: () =>
                                       context.go(RouteNames.backupGuardian),
@@ -187,6 +213,31 @@ class _BackupGuardianDockHostState
       }
     }
   }
+
+  Future<void> _savePosition(DockPosition position) async {
+    if (_position == position) {
+      return;
+    }
+
+    setState(() {
+      _position = position;
+    });
+
+    await ref
+        .read(moduleHubStateRepositoryProvider)
+        .saveDockPosition(_backupGuardianDockModuleId, position);
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
+          ModuleEvent(
+            moduleId: _backupGuardianDockModuleId,
+            type: ModuleEventType.dockPositionChanged,
+            timestamp: DateTime.now(),
+            message: 'Backup Guardian dock position saved locally.',
+            details: <String, dynamic>{'position': position.name},
+          ),
+        );
+  }
 }
 
 Color _healthAccent(BackupGuardianHealthState state) {
@@ -196,6 +247,52 @@ Color _healthAccent(BackupGuardianHealthState state) {
     BackupGuardianHealthState.red => AppColours.darkSecondary,
     BackupGuardianHealthState.grey => AppColours.darkPurple,
   };
+}
+
+Alignment _dockAlignmentForPosition(DockPosition position) {
+  return switch (position) {
+    DockPosition.left => Alignment.bottomLeft,
+    DockPosition.right => Alignment.bottomRight,
+    DockPosition.bottom => Alignment.bottomCenter,
+    DockPosition.floating => Alignment.bottomCenter,
+    DockPosition.fullscreen => Alignment.center,
+  };
+}
+
+EdgeInsets _dockInsetsForPosition(DockPosition position) {
+  return switch (position) {
+    DockPosition.left => const EdgeInsets.fromLTRB(172, 20, 20, 20),
+    DockPosition.right => const EdgeInsets.fromLTRB(20, 20, 172, 20),
+    DockPosition.bottom => const EdgeInsets.fromLTRB(20, 20, 20, 20),
+    DockPosition.floating => const EdgeInsets.fromLTRB(172, 20, 172, 20),
+    DockPosition.fullscreen => const EdgeInsets.all(20),
+  };
+}
+
+class _DockPositionChipRow extends StatelessWidget {
+  const _DockPositionChipRow({
+    required this.position,
+    required this.onPositionSelected,
+  });
+
+  final DockPosition position;
+  final ValueChanged<DockPosition> onPositionSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final candidate in DockPosition.values)
+          ChoiceChip(
+            label: Text(candidate.label),
+            selected: position == candidate,
+            onSelected: (_) => onPositionSelected(candidate),
+          ),
+      ],
+    );
+  }
 }
 
 class _StatusPill extends StatelessWidget {
