@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/dock/dock_lane_hints.dart';
 import '../../../core/dock/dock_position.dart';
 import '../../../core/modules/module_event_bus.dart';
 import '../../modules/application/module_hub_controller.dart';
@@ -106,6 +107,7 @@ class _KnowledgeLibraryDockHostState
               child: _FloatingDockFrame(
                 anchor: _floatingAnchor,
                 breathe: _floatingBreatheController,
+                accentColor: accent,
                 onDraggedOnce: _markFloatingDragged,
                 onAnchorChanged: _saveFloatingAnchor,
                 child: body,
@@ -496,6 +498,7 @@ class _FloatingDockFrame extends StatefulWidget {
   const _FloatingDockFrame({
     required this.anchor,
     required this.breathe,
+    required this.accentColor,
     required this.onDraggedOnce,
     required this.onAnchorChanged,
     required this.child,
@@ -503,6 +506,7 @@ class _FloatingDockFrame extends StatefulWidget {
 
   final DockAnchor anchor;
   final AnimationController breathe;
+  final Color accentColor;
   final VoidCallback onDraggedOnce;
   final Future<void> Function(DockAnchor anchor) onAnchorChanged;
   final Widget child;
@@ -552,6 +556,10 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              DockLaneHintsOverlay(
+                intensity: _isDragging ? 0.7 : (_isHovered ? 0.28 : 0.0),
+                accentColor: widget.accentColor,
+              ),
               AnimatedPositioned(
                 duration:
                     _isDragging ? Duration.zero : const Duration(milliseconds: 420),
