@@ -57,6 +57,8 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
                         const SizedBox(height: 20),
                         _NotificationBanner(snapshot: snapshot),
                         const SizedBox(height: 20),
+                        _RunStateSummaryCard(snapshot: snapshot),
+                        const SizedBox(height: 20),
                         _ActionCard(
                           isBusy: _isBusy,
                           snapshot: snapshot,
@@ -1413,6 +1415,62 @@ class _NotificationBanner extends StatelessWidget {
                 height: 1.4,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RunStateSummaryCard extends StatelessWidget {
+  const _RunStateSummaryCard({required this.snapshot});
+
+  final BackupGuardianSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final latestReport = p.basename(snapshot.latestReportPath);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            title: 'Run state summary',
+            icon: Icons.summarize_outlined,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'The latest backup, verification result, restore points, and report stay together here for quick review.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Badge(
+                label: 'State: ${snapshot.latestBackupStatus}',
+                accent: AppColours.darkSecondary,
+              ),
+              _Badge(
+                label: 'Health: ${_healthLabel(snapshot.healthState)}',
+                accent: _healthAccent(snapshot.healthState),
+              ),
+              _Badge(
+                label: 'Restore points: ${snapshot.restorePoints.length}',
+                accent: AppColours.darkSuccess,
+              ),
+              _Badge(
+                label: 'Latest report: $latestReport',
+                accent: AppColours.darkPurple,
+              ),
+            ],
           ),
         ],
       ),

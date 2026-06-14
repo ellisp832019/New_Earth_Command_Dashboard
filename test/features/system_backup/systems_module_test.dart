@@ -212,6 +212,11 @@ void main() {
     expect(find.text('Verify Latest'), findsWidgets);
     expect(find.text('Restore Dry Run'), findsOneWidget);
     expect(find.text('Quick Incremental'), findsOneWidget);
+    expect(find.text('Run state summary'), findsOneWidget);
+    expect(find.textContaining('State: Latest backup verified'), findsOneWidget);
+    expect(find.textContaining('Health: Green'), findsOneWidget);
+    expect(find.textContaining('Restore points: 2'), findsOneWidget);
+    expect(find.textContaining('Latest report: latest.log'), findsAtLeastNWidgets(1));
     expect(find.text('Open Backup Root'), findsOneWidget);
     expect(
       find.text(
