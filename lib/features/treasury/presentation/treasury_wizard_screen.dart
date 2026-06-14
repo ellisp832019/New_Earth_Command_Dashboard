@@ -11,7 +11,11 @@ import '../data/treasury_wizard_draft.dart';
 import '../data/treasury_wizard_flow.dart';
 
 class TreasuryWizardScreen extends ConsumerStatefulWidget {
-  const TreasuryWizardScreen({super.key, this.initialFlow, this.initialStepIndex});
+  const TreasuryWizardScreen({
+    super.key,
+    this.initialFlow,
+    this.initialStepIndex,
+  });
 
   final String? initialFlow;
   final int? initialStepIndex;
@@ -25,26 +29,13 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
   late final TreasuryWizardFlow _flow;
   late final List<TextEditingController> _controllers;
   int _stepIndex = 0;
+  bool _didPrimeDraft = false;
 
   @override
   void initState() {
     super.initState();
     _flow = resolveTreasuryWizardFlow(widget.initialFlow);
     _controllers = _buildControllers(_flow);
-    final draftController = ref.read(treasuryWizardDraftsProvider.notifier);
-    draftController.ensureLength(_flow, _stepsFor(_flow).length);
-    final draft = ref.read(
-      treasuryWizardDraftsProvider.select((drafts) => drafts[_flow]),
-    );
-    if (draft != null) {
-      for (
-        var index = 0;
-        index < _controllers.length && index < draft.values.length;
-        index++
-      ) {
-        _controllers[index].text = draft.values[index];
-      }
-    }
     final requestedStep = widget.initialStepIndex ?? 0;
     _stepIndex = requestedStep.clamp(0, _stepsFor(_flow).length);
     for (var index = 0; index < _controllers.length; index++) {
@@ -55,6 +46,29 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
             .setField(_flow, stepIndex, _controllers[stepIndex].text);
       });
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _didPrimeDraft) {
+        return;
+      }
+
+      _didPrimeDraft = true;
+      final draftController = ref.read(treasuryWizardDraftsProvider.notifier);
+      draftController.ensureLength(_flow, _stepsFor(_flow).length);
+      final draft = ref.read(
+        treasuryWizardDraftsProvider.select((drafts) => drafts[_flow]),
+      );
+      if (draft == null) {
+        return;
+      }
+
+      for (
+        var index = 0;
+        index < _controllers.length && index < draft.values.length;
+        index++
+      ) {
+        _controllers[index].text = draft.values[index];
+      }
+    });
   }
 
   @override
@@ -94,6 +108,14 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
                   _WizardDraftBanner(
                     draft: draft,
                     onContinue: () => _goToStep(draft.nextStepIndex),
+                  ),
+                ],
+                if (_flow == TreasuryWizardFlow.weeklyRitual) ...[
+                  const SizedBox(height: 14),
+                  _WeeklyRitualGuideCard(
+                    steps: steps,
+                    currentStepIndex: _stepIndex,
+                    totalSteps: totalSteps,
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -844,6 +866,14 @@ class _WizardReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWeeklyRitual = flow == TreasuryWizardFlow.weeklyRitual;
+    final reviewTitle = isWeeklyRitual
+        ? 'Weekly review summary'
+        : 'Review your draft before saving';
+    final reviewSubtitle = isWeeklyRitual
+        ? 'Safe / Watch / Pause / Decision stays easy to scan here before the review is saved.'
+        : flow.subtitle;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.95),
@@ -859,6 +889,37 @@ class _WizardReviewCard extends StatelessWidget {
           const _WizardFlowChip(
             label: 'Review',
             accent: AppColours.darkSecondary,
+          ),
+          const SizedBox(height: 14),
+          if (isWeeklyRitual) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _WizardFlowChip(label: '${steps.length} prompts'),
+                const _WizardFlowChip(label: 'Safe / Watch / Pause / Decision'),
+                const _WizardFlowChip(
+                  label: 'Local-first save',
+                  accent: AppColours.darkSuccess,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+          ],
+          Text(
+            reviewTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            reviewSubtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 14),
           ...List.generate(steps.length, (index) {
@@ -889,12 +950,113 @@ class _WizardReviewCard extends StatelessWidget {
             );
           }),
           Text(
-            flow.subtitle,
+            isWeeklyRitual
+                ? 'Everything is lined up for a calm save once the note feels complete.'
+                : flow.subtitle,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WeeklyRitualGuideCard extends StatelessWidget {
+  const _WeeklyRitualGuideCard({
+    required this.steps,
+    required this.currentStepIndex,
+    required this.totalSteps,
+  });
+
+  final List<_WizardStepDefinition> steps;
+  final int currentStepIndex;
+  final int totalSteps;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentLabel = currentStepIndex < steps.length
+        ? steps[currentStepIndex].label
+        : 'Review';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColours.darkSuccess.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColours.darkSuccess.withValues(alpha: 0.18),
+        ),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWide = constraints.maxWidth >= 860;
+
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _WizardFlowChip(
+                label: 'Weekly ritual',
+                accent: AppColours.darkSuccess,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'This flow runs one calm question at a time, then finishes with a review page.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _WizardFlowChip(
+                    label: 'Step ${currentStepIndex + 1} of $totalSteps',
+                  ),
+                  _WizardFlowChip(label: 'Current: $currentLabel'),
+                  const _WizardFlowChip(
+                    label: 'Save review',
+                    accent: AppColours.darkPrimary,
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          final stepsList = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final step in steps)
+                _WizardFlowChip(
+                  label: step.label,
+                  accent: step.label == currentLabel
+                      ? AppColours.darkSuccess
+                      : AppColours.darkSecondary,
+                ),
+            ],
+          );
+
+          if (!useWide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [content, const SizedBox(height: 14), stepsList],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: content),
+              const SizedBox(width: 16),
+              Expanded(child: stepsList),
+            ],
+          );
+        },
       ),
     );
   }
