@@ -107,6 +107,7 @@ Planned:
 - add a shell-level dock host in the app shell
 - mount one real docked module into the host
 - persist dock position and restore it on app start
+- add Treasury as the second live docked module once the first dock is stable
 - keep the preview screen as the place to choose layout, not the place where docking actually happens
 
 ## Recommended Rollout Order
@@ -114,7 +115,7 @@ Planned:
 1. Add the shell-level dock host.
 2. Mount `Backup Guardian` as the first live docked module.
 3. Persist and restore the saved dock position.
-4. Add the second real docked module after the first one feels stable.
+4. Add `Treasury` as the second live docked module after the first one feels stable.
 5. Keep drag-and-drop or multi-window behavior for a later phase.
 
 ## Recommended Next Order

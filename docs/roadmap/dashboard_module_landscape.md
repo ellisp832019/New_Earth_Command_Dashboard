@@ -10,6 +10,8 @@ It is a synthesis of the current roadmap and module docs, not a line-by-line cod
 - `In roadmap` means the module has a clear build plan and should be treated as a current target.
 - `Parked` means it should wait until the local-first core is stronger or a future expansion trigger is met.
 
+If a module already has a real screen or working slice in the app, it should be described as `Active now` even when a deeper polish roadmap is still open. `Planned` is for modules that are not yet surfaced in the app.
+
 ## Core Dashboard Surfaces
 
 These are the main app areas from the FSD and app roadmap.
@@ -34,7 +36,7 @@ These modules sit beside the core app and extend it into the wider New Earth sys
 
 | Module | Where it is now | Next roadmap | Later direction |
 | --- | --- | --- | --- |
-| Treasury | Strong active roadmap with a 20-task plan focused on safe local drafts, folder health, receipts, spend, subscriptions, decisions, summaries, and calm state surfacing. | Finish the home, wizard, drafts, file safety, and review surfaces in order. | Keep it local-first and expand only after the calm workflow is stable. |
+| Treasury | Active now in the app with a 20-task roadmap focused on safe local drafts, folder health, receipts, spend, subscriptions, decisions, summaries, and calm state surfacing. | Finish the home, wizard, drafts, file safety, and review surfaces in order. | Keep it local-first and expand only after the calm workflow is stable. |
 | Voice Assistant | Active roadmap with desktop hardening, history, templates, remembered threads, briefings, follow-up chips, and shared session state. | Finish the next 10-task voice roadmap in order, starting with reliability and reuse. | Add AI only through a safe adapter after the local voice flow is stable. |
 | Module Hub | Active local registry and control surface for discovering modules, persisting enable state, and opening module detail/settings views. | Add browsing, search, detail depth, and safe module operations in small slices. | Grow into docking, layout, and governance once the registry is steady. |
 | Knowledge Engine | Working local module for scanning, cataloguing, extracting, searching, and preparing the Omega OS PDF library. | Finish dashboard integration for library, search, item details, health, and extraction progress. | Add OCR, semantic search, summary generation, and audio later. |

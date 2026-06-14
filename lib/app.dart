@@ -8,6 +8,7 @@ import 'core/routing/route_names.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/application/settings_controller.dart';
 import 'features/meeting_system/presentation/meeting_notification_bridge.dart';
+import 'features/treasury/presentation/treasury_dock_host.dart';
 import 'features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'features/voice_assistant/voice_startup_gate_service.dart';
 import 'features/voice_assistant/voice_startup_gate_screen.dart';
@@ -83,8 +84,17 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                   ValueListenableBuilder<RouteInformation>(
                     valueListenable: appRouter.routeInformationProvider,
                     builder: (context, routeInfo, _) {
-                      return BackupGuardianDockHost(
-                        currentPath: routeInfo.uri.path,
+                      return Stack(
+                        fit: StackFit.expand,
+                        clipBehavior: Clip.none,
+                        children: [
+                          BackupGuardianDockHost(
+                            currentPath: routeInfo.uri.path,
+                          ),
+                          TreasuryDockHost(
+                            currentPath: routeInfo.uri.path,
+                          ),
+                        ],
                       );
                     },
                   ),

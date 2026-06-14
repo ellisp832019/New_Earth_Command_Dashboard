@@ -56,7 +56,7 @@ Use this order when the Module Hub moves from preview-only docking into a real s
 2. Mount `Backup Guardian` as the first live docked module.
 3. Persist the chosen dock position locally and restore it on startup.
 4. Keep the docking screen as the place to choose layout and preview placement.
-5. Add the next real docked module only after the first dock feels stable.
+5. Add `Treasury` as the next live docked module after the first dock feels stable.
 6. Leave drag-and-drop and multi-window behavior for a later phase.
 
 ## Recommended Repo Location
