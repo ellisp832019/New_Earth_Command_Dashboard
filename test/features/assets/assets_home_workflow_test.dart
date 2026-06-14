@@ -34,6 +34,7 @@ void main() {
     expect(find.text('Priority focus'), findsOneWidget);
     expect(find.text('Low stock needs attention'), findsOneWidget);
     expect(find.text('Top 3 focus'), findsOneWidget);
+    expect(find.text('Configuration file'), findsOneWidget);
     expect(find.text('CONFIG'), findsOneWidget);
     expect(find.text('local_paths.json'), findsWidgets);
     expect(find.text('17 required folders'), findsOneWidget);

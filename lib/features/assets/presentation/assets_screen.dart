@@ -402,6 +402,22 @@ class _AssetHealthCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
+                'Configuration file',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                snapshot.configPath,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
                 'Source path',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColours.darkSecondary,
@@ -414,6 +430,14 @@ class _AssetHealthCard extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColours.darkText,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'The dashboard reads this path locally and checks it against the Omega OS asset folder.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
                 ),
               ),
               const SizedBox(height: 12),
