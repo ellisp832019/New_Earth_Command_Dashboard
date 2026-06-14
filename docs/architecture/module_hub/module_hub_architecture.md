@@ -48,6 +48,17 @@ It should become a modular command centre where every major feature is added as 
 5. Permission-gate powerful actions before enabling them.
 6. Keep Omega OS records linked to every module.
 
+## Live Dock Rollout
+
+Use this order when the Module Hub moves from preview-only docking into a real shell-hosted dock:
+
+1. Add a dock host to the main app shell.
+2. Mount `Backup Guardian` as the first live docked module.
+3. Persist the chosen dock position locally and restore it on startup.
+4. Keep the docking screen as the place to choose layout and preview placement.
+5. Add the next real docked module only after the first dock feels stable.
+6. Leave drag-and-drop and multi-window behavior for a later phase.
+
 ## Recommended Repo Location
 
 ```text

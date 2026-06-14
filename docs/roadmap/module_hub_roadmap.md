@@ -101,9 +101,24 @@ The Module Hub is pleasant to use, stays honest about module state, remembers ho
 
 ## Later
 
-No later items yet.
+### Live Dock Rollout
+
+Planned:
+- add a shell-level dock host in the app shell
+- mount one real docked module into the host
+- persist dock position and restore it on app start
+- keep the preview screen as the place to choose layout, not the place where docking actually happens
+
+## Recommended Rollout Order
+
+1. Add the shell-level dock host.
+2. Mount `Backup Guardian` as the first live docked module.
+3. Persist and restore the saved dock position.
+4. Add the second real docked module after the first one feels stable.
+5. Keep drag-and-drop or multi-window behavior for a later phase.
 
 ## Recommended Next Order
 
-1. Module Hub is complete for now.
-2. Resume with the next active product slice when ready.
+1. Start the live dock rollout with `Backup Guardian`.
+2. Keep the dock host narrow and trustworthy.
+3. Return to the next active product slice after the dock baseline is working.
