@@ -1040,6 +1040,13 @@ class _WeeklyDraftStateCard extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
+                '${draft.filledStepCount} of ${draft.totalStepCount} steps filled • ${draft.remainingStepCount} remaining',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 draft.savedAt == null
                     ? 'Draft updated ${DateFormat('h:mm a').format(draft.updatedAt)}'
                     : 'Saved ${DateFormat('h:mm a').format(draft.savedAt!)}',
@@ -1070,6 +1077,12 @@ class _WeeklyDraftStateCard extends ConsumerWidget {
                     .read(treasuryWizardDraftsProvider.notifier)
                     .markSaved(TreasuryWizardFlow.weeklyRitual),
                 child: const Text('Mark saved'),
+              ),
+              TextButton(
+                onPressed: () => ref
+                    .read(treasuryWizardDraftsProvider.notifier)
+                    .clear(TreasuryWizardFlow.weeklyRitual),
+                child: const Text('Clear draft'),
               ),
             ],
           );

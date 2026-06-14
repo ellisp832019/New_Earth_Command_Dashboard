@@ -141,6 +141,34 @@ void main() {
   );
 
   test(
+    'writeTextFileWithBackup refreshes the backup from the previous content',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'treasury_file_backup_refresh_test_',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
+
+      final service = TreasuryFolderService(workingDirectory: tempRoot);
+      final targetFile = File(p.join(tempRoot.path, 'notes', 'file.txt'));
+      await targetFile.parent.create(recursive: true);
+      await targetFile.writeAsString('first content');
+
+      await service.writeTextFileWithBackup(targetFile, 'second content');
+      await service.writeTextFileWithBackup(targetFile, 'third content');
+
+      expect(await targetFile.readAsString(), 'third content');
+      expect(
+        await File('${targetFile.path}.bak').readAsString(),
+        'second content',
+      );
+    },
+  );
+
+  test(
     'saveWeeklyReview writes the weekly note and updates dashboard files',
     () async {
       final tempRoot = await Directory.systemTemp.createTemp(

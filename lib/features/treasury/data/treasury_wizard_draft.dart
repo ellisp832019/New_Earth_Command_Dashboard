@@ -29,6 +29,13 @@ class TreasuryWizardDraft {
 
   bool get hasContent => values.any((value) => value.trim().isNotEmpty);
 
+  int get filledStepCount =>
+      values.where((value) => value.trim().isNotEmpty).length;
+
+  int get totalStepCount => values.length;
+
+  int get remainingStepCount => totalStepCount - filledStepCount;
+
   int get nextStepIndex {
     for (var index = 0; index < values.length; index++) {
       if (values[index].trim().isEmpty) {
