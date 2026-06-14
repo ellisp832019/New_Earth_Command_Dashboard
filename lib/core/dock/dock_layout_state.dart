@@ -116,6 +116,14 @@ class DockLayoutState {
       case 'top_right':
       case 'top right':
         return DockAnchor.topRight;
+      case 'middleleft':
+      case 'middle_left':
+      case 'middle left':
+        return DockAnchor.middleLeft;
+      case 'middleright':
+      case 'middle_right':
+      case 'middle right':
+        return DockAnchor.middleRight;
       case 'bottomleft':
       case 'bottom_left':
       case 'bottom left':

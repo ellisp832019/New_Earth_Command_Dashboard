@@ -108,18 +108,41 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
           );
         }
 
-        return SafeArea(
-          child: Padding(
-            padding: _dockInsetsForPosition(_position),
-            child: Align(
-              alignment: _dockAlignmentForPosition(_position),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
+        return switch (_position) {
+          DockPosition.left => Positioned(
+            left: 20,
+            bottom: 20,
+            child: SafeArea(
+              child: SizedBox(width: 380, child: body),
+            ),
+          ),
+          DockPosition.right => Positioned(
+            right: 20,
+            bottom: 20,
+            child: SafeArea(
+              child: SizedBox(width: 380, child: body),
+            ),
+          ),
+          DockPosition.bottom => Positioned(
+            left: 20,
+            right: 20,
+            bottom: 20,
+            child: SafeArea(
+              child: Center(
+                child: SizedBox(width: 380, child: body),
+              ),
+            ),
+          ),
+          DockPosition.fullscreen => Positioned.fill(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: body,
               ),
             ),
           ),
-        );
+          DockPosition.floating => const SizedBox.shrink(),
+        };
       },
     );
   }
@@ -372,26 +395,6 @@ class _TreasuryDockBody extends StatelessWidget {
       ),
     );
   }
-}
-
-Alignment _dockAlignmentForPosition(DockPosition position) {
-  return switch (position) {
-    DockPosition.left => Alignment.bottomLeft,
-    DockPosition.right => Alignment.bottomRight,
-    DockPosition.bottom => Alignment.bottomCenter,
-    DockPosition.floating => Alignment.bottomCenter,
-    DockPosition.fullscreen => Alignment.center,
-  };
-}
-
-EdgeInsets _dockInsetsForPosition(DockPosition position) {
-  return switch (position) {
-    DockPosition.left => const EdgeInsets.fromLTRB(20, 20, 180, 20),
-    DockPosition.right => const EdgeInsets.fromLTRB(180, 20, 20, 20),
-    DockPosition.bottom => const EdgeInsets.fromLTRB(20, 20, 20, 20),
-    DockPosition.floating => const EdgeInsets.fromLTRB(20, 20, 20, 20),
-    DockPosition.fullscreen => const EdgeInsets.all(20),
-  };
 }
 
 class _DockPositionChipRow extends StatelessWidget {
@@ -787,10 +790,15 @@ Offset _baseOffsetForAnchor(
   final maxY = (size.height - frameHeight - _floatingDockMargin)
       .clamp(_floatingDockMargin, double.infinity)
       .toDouble();
+  final midY = ((size.height - frameHeight) / 2)
+      .clamp(_floatingDockMargin, maxY)
+      .toDouble();
 
   return switch (anchor) {
     DockAnchor.topLeft => const Offset(_floatingDockMargin, _floatingDockMargin),
     DockAnchor.topRight => Offset(maxX, _floatingDockMargin),
+    DockAnchor.middleLeft => Offset(_floatingDockMargin, midY),
+    DockAnchor.middleRight => Offset(maxX, midY),
     DockAnchor.bottomLeft => Offset(_floatingDockMargin, maxY),
     DockAnchor.bottomRight => Offset(maxX, maxY),
   };
@@ -811,6 +819,18 @@ DockAnchor _nearestAnchorFor({
     ),
     DockAnchor.topRight: _baseOffsetForAnchor(
       DockAnchor.topRight,
+      size,
+      frameWidth,
+      frameHeight,
+    ),
+    DockAnchor.middleLeft: _baseOffsetForAnchor(
+      DockAnchor.middleLeft,
+      size,
+      frameWidth,
+      frameHeight,
+    ),
+    DockAnchor.middleRight: _baseOffsetForAnchor(
+      DockAnchor.middleRight,
       size,
       frameWidth,
       frameHeight,
