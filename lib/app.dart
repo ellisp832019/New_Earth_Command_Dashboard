@@ -79,7 +79,14 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 fit: StackFit.expand,
                 children: [
                   VoiceHandsfreeLayer(child: routedChild),
-                  const BackupGuardianDockHost(),
+                  ValueListenableBuilder<RouteInformation>(
+                    valueListenable: appRouter.routeInformationProvider,
+                    builder: (context, routeInfo, _) {
+                      return BackupGuardianDockHost(
+                        currentPath: routeInfo.uri.path,
+                      );
+                    },
+                  ),
                   const Positioned(
                     top: 16,
                     right: 16,
