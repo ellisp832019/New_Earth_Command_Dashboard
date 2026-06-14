@@ -29,6 +29,7 @@ class _BackupGuardianDockHostState
     extends ConsumerState<BackupGuardianDockHost>
     with SingleTickerProviderStateMixin {
   bool _isBusy = false;
+  bool _showFloatingHint = true;
   late DockPosition _position;
   late DockAnchor _floatingAnchor;
   late final AnimationController _floatingBreatheController;
@@ -47,6 +48,13 @@ class _BackupGuardianDockHostState
       vsync: this,
       duration: const Duration(milliseconds: 2800),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _showFloatingHint = false;
+        });
+      }
+    });
     _syncFloatingAnimation();
   }
 
@@ -83,6 +91,7 @@ class _BackupGuardianDockHostState
           position: _position,
           isBusy: _isBusy,
           floating: _position == DockPosition.floating,
+          showFloatingHint: _showFloatingHint,
           onOpenFullView: () => context.go(RouteNames.backupGuardian),
           onVerifyNow: () => _runVerifyNow(snapshot),
           onRefresh: () => ref.invalidate(backupGuardianSnapshotProvider),
@@ -211,6 +220,7 @@ class _DockBody extends StatelessWidget {
     required this.position,
     required this.isBusy,
     required this.floating,
+    required this.showFloatingHint,
     required this.onOpenFullView,
     required this.onVerifyNow,
     required this.onRefresh,
@@ -222,6 +232,7 @@ class _DockBody extends StatelessWidget {
   final DockPosition position;
   final bool isBusy;
   final bool floating;
+  final bool showFloatingHint;
   final VoidCallback onOpenFullView;
   final VoidCallback onVerifyNow;
   final VoidCallback onRefresh;
@@ -233,7 +244,7 @@ class _DockBody extends StatelessWidget {
       color: AppColours.darkSurfaceAlt.withValues(
         alpha: floating ? 0.84 : 0.92,
       ),
-      elevation: floating ? 18 : 10,
+      elevation: floating ? 20 : 10,
       shadowColor: Colors.black.withValues(alpha: floating ? 0.38 : 0.3),
       borderRadius: BorderRadius.circular(22),
       child: ConstrainedBox(
@@ -273,27 +284,34 @@ class _DockBody extends StatelessWidget {
                     ),
                     if (floating) ...[
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColours.darkPrimary.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
+                      AnimatedOpacity(
+                        opacity: showFloatingHint ? 1 : 0.18,
+                        duration: const Duration(milliseconds: 260),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
                             color: AppColours.darkPrimary.withValues(
-                              alpha: 0.45,
+                              alpha: 0.14,
+                            ),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: AppColours.darkPrimary.withValues(
+                                alpha: 0.45,
+                              ),
                             ),
                           ),
-                        ),
-                        child: Text(
-                          'Drag to a corner',
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: AppColours.darkText,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          child: Text(
+                            'Drag to a corner',
+                            style:
+                                Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppColours.darkText,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                          ),
                         ),
                       ),
                     ],
@@ -600,7 +618,7 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
 
   void _handlePanUpdate(DragUpdateDetails details) {
     setState(() {
-      _dragOffset += details.delta;
+      _dragOffset += details.delta * 0.92;
     });
   }
 
@@ -624,8 +642,20 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
       frameHeight: frameHeight,
     );
 
+    final snappedOffset = _baseOffsetForAnchor(
+      snappedAnchor,
+      size,
+      frameWidth,
+      frameHeight,
+    );
+
     setState(() {
-      _dragOffset = Offset.zero;
+      _dragOffset = snappedOffset - _baseOffsetForAnchor(
+        widget.anchor,
+        size,
+        frameWidth,
+        frameHeight,
+      );
       _isDragging = false;
     });
 
@@ -634,6 +664,14 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     }
 
     unawaited(widget.onAnchorChanged(snappedAnchor));
+    Future<void>.delayed(const Duration(milliseconds: 180), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _dragOffset = Offset.zero;
+      });
+    });
   }
 }
 
