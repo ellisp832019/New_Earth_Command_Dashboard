@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 import 'package:new_earth_command_dashboard/features/treasury/application/treasury_controller.dart';
 import 'package:new_earth_command_dashboard/features/treasury/application/treasury_decisions_controller.dart';
 import 'package:new_earth_command_dashboard/features/treasury/application/treasury_monthly_summary_controller.dart';
 import 'package:new_earth_command_dashboard/features/treasury/data/treasury_folder_service.dart';
 import 'package:new_earth_command_dashboard/features/treasury/presentation/treasury_decisions_board_screen.dart';
 import 'package:new_earth_command_dashboard/features/treasury/presentation/treasury_monthly_summary_screen.dart';
+import 'package:new_earth_command_dashboard/features/treasury/presentation/treasury_settings_screen.dart';
 
 void main() {
   TreasuryWorkspaceSnapshot buildWorkspace() {
@@ -113,12 +116,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          treasuryWorkspaceProvider.overrideWith(
-            (ref) async => workspace,
-          ),
-          treasuryMonthlySummaryProvider.overrideWith(
-            (ref) async => summary,
-          ),
+          treasuryWorkspaceProvider.overrideWith((ref) async => workspace),
+          treasuryMonthlySummaryProvider.overrideWith((ref) async => summary),
         ],
         child: const MaterialApp(home: TreasuryMonthlySummaryScreen()),
       ),
@@ -129,6 +128,17 @@ void main() {
     expect(find.text('Monthly Summary'), findsWidgets);
     expect(find.textContaining('30.00'), findsWidgets);
     expect(find.textContaining('12.99'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.textContaining('Top project', skipOffstage: false),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(find.textContaining('Top project'), findsWidgets);
+    expect(find.textContaining('New Earth Dashboard'), findsWidgets);
+    expect(find.textContaining('Weekly'), findsWidgets);
+    expect(find.textContaining('2026-05-28'), findsWidgets);
 
     await tester.scrollUntilVisible(
       find.text('Project spend', skipOffstage: false),
@@ -152,6 +162,74 @@ void main() {
     expect(find.textContaining('120.00'), findsWidgets);
   });
 
+  testWidgets('treasury monthly summary offers setup help when unready', (
+    tester,
+  ) async {
+    final workspace = buildWorkspace();
+    final unreadyWorkspace = TreasuryWorkspaceSnapshot(
+      configPath: workspace.configPath,
+      financeRootPath: workspace.financeRootPath,
+      isReady: false,
+      issues: const <String>['Missing weekly_status.json.'],
+      requiredFolders: workspace.requiredFolders,
+      missingFolders: const <String>['00_FINANCE_DASHBOARD'],
+      missingFiles: const <String>['00_FINANCE_DASHBOARD/weekly_status.json'],
+      stateSummaries: workspace.stateSummaries,
+      receiptsToSortCount: workspace.receiptsToSortCount,
+      weeklyRitualSteps: workspace.weeklyRitualSteps,
+      lowEnergySteps: workspace.lowEnergySteps,
+      guidanceNote: workspace.guidanceNote,
+    );
+
+    final router = GoRouter(
+      initialLocation: RouteNames.treasuryMonthlySummary,
+      routes: [
+        GoRoute(
+          path: RouteNames.treasuryMonthlySummary,
+          builder: (context, state) => const TreasuryMonthlySummaryScreen(),
+        ),
+        GoRoute(
+          path: RouteNames.treasurySettings,
+          builder: (context, state) => const TreasurySettingsScreen(),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          treasuryWorkspaceProvider.overrideWith(
+            (ref) async => unreadyWorkspace,
+          ),
+          treasuryMonthlySummaryProvider.overrideWith(
+            (ref) async => buildSummary(workspace: unreadyWorkspace),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.textContaining('Setup still needs attention', skipOffstage: false),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(
+      find.textContaining('Setup still needs attention', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.text('Open settings'), findsOneWidget);
+
+    await tester.tap(find.text('Open settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Treasury settings'), findsOneWidget);
+  });
+
   testWidgets('treasury decisions board reads like a review queue', (
     tester,
   ) async {
@@ -160,9 +238,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          treasuryWorkspaceProvider.overrideWith(
-            (ref) async => workspace,
-          ),
+          treasuryWorkspaceProvider.overrideWith((ref) async => workspace),
           treasuryDecisionRecordsProvider.overrideWith(
             (ref) async => const [
               TreasuryDecisionRecord(
@@ -200,3 +276,4 @@ void main() {
     expect(find.text('Open monthly summary'), findsWidgets);
   });
 }
+

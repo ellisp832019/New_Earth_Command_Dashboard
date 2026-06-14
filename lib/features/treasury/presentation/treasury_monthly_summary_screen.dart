@@ -65,6 +65,8 @@ class TreasuryMonthlySummaryScreen extends ConsumerWidget {
               children: [
                 _MonthlySummaryHeroCard(summary: summary),
                 const SizedBox(height: 16),
+                _MonthlySnapshotStrip(summary: summary),
+                const SizedBox(height: 16),
                 _MonthlySummaryQuickNavCard(),
                 const SizedBox(height: 16),
                 if (!summary.workspace.isReady) ...[
@@ -240,6 +242,71 @@ class _MonthlySummaryQuickNavCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MonthlySnapshotStrip extends StatelessWidget {
+  const _MonthlySnapshotStrip({required this.summary});
+
+  final TreasuryMonthlySummarySnapshot summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final topProject = summary.topProjectSpends.isEmpty
+        ? 'No project spend yet'
+        : summary.topProjectSpends.first.project;
+    final weeklyDate = summary.weeklyReviewDate ?? 'No weekly review yet';
+    final decisionCount = summary.recentDecisions.length;
+    final receiptsLabel = summary.workspace.receiptsToSortCount == 0
+        ? 'No receipts waiting'
+        : '${summary.workspace.receiptsToSortCount} receipts waiting';
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWide = constraints.maxWidth >= 960;
+
+          final chips = [
+            _StatusPill(
+              label: summary.workspace.isReady ? 'Ready' : 'Setup needed',
+              accent: summary.workspace.isReady
+                  ? AppColours.darkSuccess
+                  : AppColours.darkAmber,
+            ),
+            _StatusPill(
+              label: 'Top project: $topProject',
+              accent: AppColours.darkSecondary,
+            ),
+            _StatusPill(
+              label: 'Weekly: $weeklyDate',
+              accent: AppColours.darkPrimary,
+            ),
+            _StatusPill(
+              label: decisionCount == 0
+                  ? 'No decisions yet'
+                  : '$decisionCount decisions to review',
+              accent: AppColours.darkPurple,
+            ),
+            _StatusPill(label: receiptsLabel, accent: AppColours.darkAccent),
+          ];
+
+          if (!useWide) {
+            return Wrap(spacing: 10, runSpacing: 10, children: chips);
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Wrap(spacing: 10, runSpacing: 10, children: chips),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -774,6 +841,23 @@ class _SummarySetupNoticeCard extends StatelessWidget {
               color: AppColours.darkMutedText,
               height: 1.4,
             ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => context.push(RouteNames.treasurySettings),
+                icon: const Icon(Icons.tune_outlined),
+                label: const Text('Open settings'),
+              ),
+              TextButton.icon(
+                onPressed: () => context.go(RouteNames.treasury),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Treasury'),
+              ),
+            ],
           ),
         ],
       ),
