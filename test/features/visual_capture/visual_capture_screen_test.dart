@@ -84,5 +84,14 @@ void main() {
     expect(find.text('1 file in inbox'), findsOneWidget);
     expect(find.text('1 indexed capture'), findsOneWidget);
     expect(find.text('9 capture types'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Review and route', skipOffstage: false),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Review and route'), findsOneWidget);
+    expect(find.text('Open Treasury'), findsOneWidget);
+    expect(find.text('Open Assets'), findsOneWidget);
   });
 }

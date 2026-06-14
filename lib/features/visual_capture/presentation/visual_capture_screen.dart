@@ -321,11 +321,92 @@ class _VisualCaptureHomeScreen extends StatelessWidget {
               onOpenInboxFolder: onOpenInboxFolder,
             ),
             const SizedBox(height: 18),
+            _VisualCaptureBridgeCard(
+              onOpenTreasury: () => context.go(RouteNames.treasury),
+              onOpenAssets: () => context.go(RouteNames.assets),
+            ),
+            const SizedBox(height: 18),
             _VisualCaptureFoundationCard(snapshot: snapshot),
             const SizedBox(height: 18),
             _VisualCaptureFooterCard(theme: theme, snapshot: snapshot),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _VisualCaptureBridgeCard extends StatelessWidget {
+  const _VisualCaptureBridgeCard({
+    required this.onOpenTreasury,
+    required this.onOpenAssets,
+  });
+
+  final VoidCallback onOpenTreasury;
+  final VoidCallback onOpenAssets;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: _panelDecoration(highlighted: true),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PanelTitle(
+            title: 'Review and route',
+            icon: Icons.compare_arrows_rounded,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Use this bridge when a capture becomes evidence, spending context, or an asset record. Treasury can review receipts and budget proof, while Assets can review equipment, repair, and inventory photos.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _InlineTag(
+                label: 'Capture stays local-first',
+                accent: AppColours.darkSurfaceRaised,
+                foreground: AppColours.darkText,
+              ),
+              _InlineTag(
+                label: 'Treasury review path',
+                accent: AppColours.darkSuccess,
+                foreground: AppColours.darkText,
+              ),
+              _InlineTag(
+                label: 'Assets review path',
+                accent: AppColours.darkPurple,
+                foreground: AppColours.darkText,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onOpenTreasury,
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const Text('Open Treasury'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onOpenAssets,
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Open Assets'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -936,7 +1017,7 @@ class _VisualCaptureFooterCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Text(
         snapshot.isReady
-            ? 'The capture foundation is ready. Next we can add the inbox, import flow, and photo linking without changing the Omega OS source folders.'
+            ? 'The capture foundation is ready. Next we can keep routing captures into Treasury or Assets review without changing the Omega OS source folders.'
             : 'Open the setup helper to create only the missing folders and starter CSVs. Existing visual capture data stays outside the repo.',
         style: theme.textTheme.bodyMedium?.copyWith(
           color: AppColours.darkMutedText,
