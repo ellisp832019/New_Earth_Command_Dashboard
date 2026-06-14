@@ -73,9 +73,13 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
         final accent = snapshot.isReady
             ? AppColours.darkSuccess
             : AppColours.darkAmber;
+        final stateCounts = {
+          for (final summary in snapshot.stateSummaries) summary.kind: summary.count,
+        };
         final body = _TreasuryDockBody(
           snapshot: snapshot,
           accent: accent,
+          stateCounts: stateCounts,
           position: _position,
           floating: _position == DockPosition.floating,
           onOpenTreasury: () => context.go(RouteNames.treasury),
@@ -197,6 +201,7 @@ class _TreasuryDockBody extends StatelessWidget {
   const _TreasuryDockBody({
     required this.snapshot,
     required this.accent,
+    required this.stateCounts,
     required this.position,
     required this.floating,
     required this.onOpenTreasury,
@@ -210,6 +215,7 @@ class _TreasuryDockBody extends StatelessWidget {
 
   final TreasuryWorkspaceSnapshot snapshot;
   final Color accent;
+  final Map<TreasuryStatusKind, int> stateCounts;
   final DockPosition position;
   final bool floating;
   final VoidCallback onOpenTreasury;
@@ -250,7 +256,10 @@ class _TreasuryDockBody extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.account_balance_wallet_outlined, color: AppColours.darkSecondary),
+                      Icon(
+                        Icons.account_balance_wallet_outlined,
+                        color: accent,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -279,6 +288,29 @@ class _TreasuryDockBody extends StatelessWidget {
                   _DockStatLine(label: 'Finance root', value: snapshot.financeRootPath ?? 'Not linked yet'),
                   _DockStatLine(label: 'Receipts to sort', value: '${snapshot.receiptsToSortCount}'),
                   _DockStatLine(label: 'Health', value: issueLabel),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _StatusPill(
+                        label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
+                        accent: AppColours.darkSuccess,
+                      ),
+                      _StatusPill(
+                        label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                        accent: AppColours.darkAmber,
+                      ),
+                      _StatusPill(
+                        label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                        accent: const Color(0xFFE26B6B),
+                      ),
+                      _StatusPill(
+                        label: 'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
+                        accent: AppColours.darkSecondary,
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,

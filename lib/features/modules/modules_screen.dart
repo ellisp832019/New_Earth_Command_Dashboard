@@ -66,11 +66,17 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final modules = ref.watch(moduleHubModulesProvider);
+    final visibleStatusFilters = ModuleStatus.values
+        .where((status) => modules.any((module) => module.status == status))
+        .toList(growable: false);
+    final effectiveStatusFilter = visibleStatusFilters.contains(_statusFilter)
+        ? _statusFilter
+        : null;
     final filteredModules = filterAndSortModuleHubModules(
       modules: modules,
       query: _searchController.text,
       categoryFilter: _categoryFilter,
-      statusFilter: _statusFilter,
+      statusFilter: effectiveStatusFilter,
       dockableFilter: _dockableFilter,
       permissionFilter: _permissionFilter,
       sortMode: _sortMode,
@@ -130,7 +136,11 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
           const SizedBox(height: 16),
           _buildSearchAndViewControls(theme),
           const SizedBox(height: 12),
-          _buildFilterChips(theme),
+          _buildFilterChips(
+            theme,
+            visibleStatusFilters: visibleStatusFilters,
+            effectiveStatusFilter: effectiveStatusFilter,
+          ),
           const SizedBox(height: 16),
           _buildSummaryRow(filteredModules),
           const SizedBox(height: 16),
@@ -215,7 +225,11 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
     );
   }
 
-  Widget _buildFilterChips(ThemeData theme) {
+  Widget _buildFilterChips(
+    ThemeData theme, {
+    required List<ModuleStatus> visibleStatusFilters,
+    required ModuleStatus? effectiveStatusFilter,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -298,10 +312,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     _saveUiState();
                   },
                 ),
-                ...ModuleStatus.values.map(
+                ...visibleStatusFilters.map(
                   (status) => ChoiceChip(
                     label: Text(status.label),
-                    selected: _statusFilter == status,
+                    selected: effectiveStatusFilter == status,
                     onSelected: (_) {
                       setState(() => _statusFilter = status);
                       _saveUiState();

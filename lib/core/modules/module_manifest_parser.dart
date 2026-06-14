@@ -260,7 +260,7 @@ class ModuleManifestParser {
       if (status == ModuleStatus.scaffold)
         'This module is a scaffold and still needs a manifest.',
       if (status == ModuleStatus.planned)
-        'This module is planned but not yet built.',
+        'This module is roadmap-only and not yet surfaced in the app.',
       if (status == ModuleStatus.needsConfiguration)
         'This module needs configuration before it can be enabled.',
     ];

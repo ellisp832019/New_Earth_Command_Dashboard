@@ -25,7 +25,7 @@ extension ModuleStatusLabel on ModuleStatus {
       case ModuleStatus.scaffold:
         return 'Scaffold';
       case ModuleStatus.planned:
-        return 'Planned';
+        return 'Roadmap';
       case ModuleStatus.experimental:
         return 'Experimental';
     }
