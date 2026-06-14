@@ -51,6 +51,9 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Save path'), findsOneWidget);
+    expect(find.textContaining('weekly_status.json'), findsWidgets);
+    expect(find.textContaining('dashboard_state.json'), findsWidgets);
     expect(find.text('Local-first save'), findsWidgets);
     expect(find.text('Save review'), findsWidgets);
     expect(find.text('Return to Treasury'), findsWidgets);

@@ -440,9 +440,13 @@ class _TreasuryWizardScreenState extends ConsumerState<TreasuryWizardScreen> {
     ref.invalidate(treasuryWorkspaceProvider);
 
     final savedName = result.reviewPath.split(Platform.pathSeparator).last;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Weekly review saved: $savedName')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Weekly review saved to Weekly_Finance_Queen_Reviews/$savedName and dashboard state was refreshed.',
+        ),
+      ),
+    );
     context.pop();
   }
 
@@ -905,6 +909,56 @@ class _WizardReviewCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColours.darkSurface.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColours.darkOutline.withValues(alpha: 0.8),
+                ),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Save path',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'The review writes one Markdown note and refreshes two dashboard files. Backup copies are kept before each overwrite.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _SavePathLine(
+                    label: 'Review note',
+                    path:
+                        '10_FINANCE_MEETING_NOTES/Weekly_Finance_Queen_Reviews',
+                    accent: AppColours.darkSuccess,
+                  ),
+                  const SizedBox(height: 8),
+                  _SavePathLine(
+                    label: 'Weekly status',
+                    path: '00_FINANCE_DASHBOARD/weekly_status.json',
+                    accent: AppColours.darkSecondary,
+                  ),
+                  const SizedBox(height: 8),
+                  _SavePathLine(
+                    label: 'Dashboard state',
+                    path: '00_FINANCE_DASHBOARD/dashboard_state.json',
+                    accent: AppColours.darkPrimary,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
           ],
           Text(
             reviewTitle,
@@ -959,6 +1013,38 @@ class _WizardReviewCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SavePathLine extends StatelessWidget {
+  const _SavePathLine({
+    required this.label,
+    required this.path,
+    required this.accent,
+  });
+
+  final String label;
+  final String path;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _WizardFlowChip(label: label, accent: accent),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            path,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
