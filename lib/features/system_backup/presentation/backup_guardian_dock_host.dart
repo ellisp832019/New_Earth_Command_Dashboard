@@ -46,7 +46,8 @@ class _BackupGuardianDockHostState
     }
 
     final currentPath =
-        widget.currentPath ?? GoRouterState.of(context).uri.path;
+        widget.currentPath ??
+        GoRouter.of(context).routeInformationProvider.value.uri.path;
     if (currentPath == RouteNames.backupGuardian) {
       return const SizedBox.shrink();
     }
