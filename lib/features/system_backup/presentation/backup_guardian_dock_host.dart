@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -59,136 +61,68 @@ class _BackupGuardianDockHostState
       error: (error, stackTrace) => const SizedBox.shrink(),
       data: (snapshot) {
         final healthAccent = _healthAccent(snapshot.healthState);
-        final dockInsets = _dockInsetsForPosition(_position);
-        final dockAlignment = _dockAlignmentForPosition(_position);
+        final dockBody = _DockBody(
+          snapshot: snapshot,
+          healthAccent: healthAccent,
+          position: _position,
+          isBusy: _isBusy,
+          onOpenFullView: () => context.go(RouteNames.backupGuardian),
+          onVerifyNow: () => _runVerifyNow(snapshot),
+          onRefresh: () => ref.invalidate(backupGuardianSnapshotProvider),
+          onPositionSelected: _savePosition,
+        );
 
-        return SafeArea(
-          child: Padding(
-            padding: dockInsets,
+        if (_position == DockPosition.floating) {
+          return Positioned(
+            left: 24,
+            right: 24,
+            bottom: 128,
             child: Align(
-              alignment: dockAlignment,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 360),
-                child: Material(
-                  color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
-                  elevation: 10,
-                  shadowColor: Colors.black.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(22),
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Transform.translate(
+                  offset: const Offset(0, -12),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 320),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: AppColours.darkOutline.withValues(
-                              alpha: 0.92,
+                    constraints: const BoxConstraints(maxWidth: 380),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColours.darkSurfaceAlt.withValues(
+                              alpha: 0.76,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: AppColours.darkOutline.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                           ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.backup_outlined,
-                                  color: AppColours.darkPrimary,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'Backup Guardian Dock',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(
-                                          color: AppColours.darkText,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                  ),
-                                ),
-                                _StatusPill(
-                                  label: snapshot.healthSummary,
-                                  accent: healthAccent,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              snapshot.notificationBanner,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: AppColours.darkMutedText,
-                                    height: 1.35,
-                                  ),
-                            ),
-                            const SizedBox(height: 10),
-                            _DockStatLine(
-                              label: 'Latest status',
-                              value: snapshot.latestBackupStatus,
-                            ),
-                            _DockStatLine(
-                              label: 'Freshness',
-                              value: snapshot.freshnessSummary,
-                            ),
-                            _DockStatLine(
-                              label: 'Next run',
-                              value: snapshot.nextSuggestedRun == null
-                                  ? 'Not scheduled yet'
-                                  : snapshot.nextSuggestedRun!
-                                        .toLocal()
-                                        .toString(),
-                            ),
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                _DockPositionChipRow(
-                                  position: _position,
-                                  onPositionSelected: _savePosition,
-                                ),
-                                FilledButton.tonalIcon(
-                                  onPressed: () =>
-                                      context.go(RouteNames.backupGuardian),
-                                  icon: const Icon(Icons.open_in_full_rounded),
-                                  label: const Text('Open full view'),
-                                ),
-                                FilledButton.icon(
-                                  onPressed: _isBusy
-                                      ? null
-                                      : () => _runVerifyNow(snapshot),
-                                  icon: _isBusy
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.verified_outlined),
-                                  label: const Text('Verify now'),
-                                ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    ref.invalidate(
-                                      backupGuardianSnapshotProvider,
-                                    );
-                                  },
-                                  icon: const Icon(Icons.refresh),
-                                  label: const Text('Refresh'),
-                                ),
-                              ],
-                            ),
-                          ],
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: dockBody,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: _dockInsetsForPosition(_position),
+            child: Align(
+              alignment: _dockAlignmentForPosition(_position),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: dockBody,
               ),
             ),
           ),
@@ -241,6 +175,137 @@ class _BackupGuardianDockHostState
   }
 }
 
+class _DockBody extends StatelessWidget {
+  const _DockBody({
+    required this.snapshot,
+    required this.healthAccent,
+    required this.position,
+    required this.isBusy,
+    required this.onOpenFullView,
+    required this.onVerifyNow,
+    required this.onRefresh,
+    required this.onPositionSelected,
+  });
+
+  final BackupGuardianSnapshot snapshot;
+  final Color healthAccent;
+  final DockPosition position;
+  final bool isBusy;
+  final VoidCallback onOpenFullView;
+  final VoidCallback onVerifyNow;
+  final VoidCallback onRefresh;
+  final ValueChanged<DockPosition> onPositionSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+      elevation: position == DockPosition.floating ? 28 : 10,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(22),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 320),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: AppColours.darkOutline.withValues(alpha: 0.92),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.backup_outlined,
+                      color: AppColours.darkPrimary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Backup Guardian Dock',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: AppColours.darkText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ),
+                    _StatusPill(
+                      label: snapshot.healthSummary,
+                      accent: healthAccent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  snapshot.notificationBanner,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                _DockStatLine(
+                  label: 'Latest status',
+                  value: snapshot.latestBackupStatus,
+                ),
+                _DockStatLine(
+                  label: 'Freshness',
+                  value: snapshot.freshnessSummary,
+                ),
+                _DockStatLine(
+                  label: 'Next run',
+                  value: snapshot.nextSuggestedRun == null
+                      ? 'Not scheduled yet'
+                      : snapshot.nextSuggestedRun!.toLocal().toString(),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _DockPositionChipRow(
+                      position: position,
+                      onPositionSelected: onPositionSelected,
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: onOpenFullView,
+                      icon: const Icon(Icons.open_in_full_rounded),
+                      label: const Text('Open full view'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: isBusy ? null : onVerifyNow,
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.verified_outlined),
+                      label: const Text('Verify now'),
+                    ),
+                    TextButton.icon(
+                      onPressed: onRefresh,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Color _healthAccent(BackupGuardianHealthState state) {
   return switch (state) {
     BackupGuardianHealthState.green => AppColours.darkSuccess,
@@ -265,7 +330,7 @@ EdgeInsets _dockInsetsForPosition(DockPosition position) {
     DockPosition.left => const EdgeInsets.fromLTRB(172, 20, 20, 20),
     DockPosition.right => const EdgeInsets.fromLTRB(20, 20, 172, 20),
     DockPosition.bottom => const EdgeInsets.fromLTRB(20, 20, 20, 20),
-    DockPosition.floating => const EdgeInsets.fromLTRB(172, 20, 172, 20),
+    DockPosition.floating => const EdgeInsets.fromLTRB(20, 20, 20, 20),
     DockPosition.fullscreen => const EdgeInsets.all(20),
   };
 }
