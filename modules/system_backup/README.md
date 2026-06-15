@@ -56,6 +56,8 @@ Later upgrade to a 2TB SSD.
 - Weekly Snapshot
 - Monthly Archive
 - Quick Incremental
+- Setup Scheduler
+- Verify Scheduler
 - Refresh Status
 
 ## Build order
@@ -130,6 +132,8 @@ The current module build adds the first Phase 2 automation layer:
 - quick incremental backup
 - weekly snapshot
 - monthly archive
+- local Windows Task Scheduler setup for the timed backup actions
+- local scheduler verification written to `runtime/scheduler_status.json`
 - backup history file
 - retention settings
 - freshness warnings

@@ -35,10 +35,14 @@
 
 ## Test 6: Phase 2 automation
 
+- Run `scripts/windows/setup_scheduled_backups.bat`.
+- Run `scripts/windows/verify_scheduled_backups.bat`.
 - Run `scripts/windows/quick_incremental.bat`.
 - Run `scripts/windows/daily_backup.bat`.
 - Run `scripts/windows/weekly_snapshot.bat`.
 - Run `scripts/windows/monthly_archive.bat`.
+- Confirm the Windows Task Scheduler entries are created for the daily, weekly, and monthly actions.
+- Confirm `modules/system_backup/runtime/scheduler_status.json` is written after setup and verify.
 - Confirm `modules/system_backup/runtime/backup_history.json` updates.
 - Confirm the quick incremental run preserves deleted source files in the target mirror.
 - Confirm restore point folders are created under `E:\NEW_EARTH_BACKUP\daily`, `weekly`, and `monthly`.

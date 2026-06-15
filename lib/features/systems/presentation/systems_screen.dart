@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../system_backup/application/backup_guardian_controller.dart';
+import '../../system_backup/data/backup_guardian_service.dart';
 
 class SystemsScreen extends ConsumerWidget {
   const SystemsScreen({super.key});
@@ -55,11 +56,22 @@ class SystemsScreen extends ConsumerWidget {
                       height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  _InlineTag(
-                    label: 'Safe to close',
-                    accent: AppColours.darkSecondary,
-                    icon: Icons.lock_open_outlined,
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _InlineTag(
+                        label: 'Safe to close',
+                        accent: AppColours.darkSecondary,
+                        icon: Icons.lock_open_outlined,
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.go(RouteNames.dashboard),
+                        icon: const Icon(Icons.dashboard_outlined),
+                        label: const Text('Back to Dashboard'),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -80,6 +92,11 @@ class SystemsScreen extends ConsumerWidget {
                   'Reports',
                   'Restore dry run',
                 ],
+                highlightedTagLabel: null,
+                highlightedTagAccent: AppColours.darkPurple,
+                highlightedTagIcon: null,
+                footerText: 'Last verified pending',
+                footerAccent: AppColours.darkPurple,
                 onTap: () => context.push(RouteNames.backupGuardian),
               ),
               error: (error, stackTrace) => _BackupGuardianCard(
@@ -96,6 +113,11 @@ class SystemsScreen extends ConsumerWidget {
                   'Reports',
                   'Restore dry run',
                 ],
+                highlightedTagLabel: null,
+                highlightedTagAccent: AppColours.darkPurple,
+                highlightedTagIcon: null,
+                footerText: 'Last verified pending',
+                footerAccent: AppColours.darkPurple,
                 onTap: () => context.push(RouteNames.backupGuardian),
               ),
               data: (snapshot) {
@@ -103,6 +125,7 @@ class SystemsScreen extends ConsumerWidget {
                 final statusAccent = driveReady
                     ? AppColours.darkSuccess
                     : AppColours.darkAmber;
+                final schedulerAccent = _schedulerAccent(snapshot);
                 return _BackupGuardianCard(
                   title: 'Backup Guardian',
                   subtitle:
@@ -121,6 +144,11 @@ class SystemsScreen extends ConsumerWidget {
                     'Restore dry run',
                     'Safe to close',
                   ],
+                  highlightedTagLabel: _schedulerLabel(snapshot),
+                  highlightedTagAccent: schedulerAccent,
+                  highlightedTagIcon: _schedulerIcon(snapshot.schedulerHealthState),
+                  footerText: _schedulerFooterText(snapshot),
+                  footerAccent: schedulerAccent,
                   onTap: () => context.push(RouteNames.backupGuardian),
                 );
               },
@@ -188,7 +216,6 @@ class SystemsScreen extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 class _BackupGuardianCard extends StatelessWidget {
@@ -200,6 +227,11 @@ class _BackupGuardianCard extends StatelessWidget {
     required this.statusBanner,
     required this.stripAnimate,
     required this.tags,
+    required this.highlightedTagLabel,
+    required this.highlightedTagAccent,
+    required this.highlightedTagIcon,
+    required this.footerText,
+    required this.footerAccent,
     required this.onTap,
   });
 
@@ -210,6 +242,11 @@ class _BackupGuardianCard extends StatelessWidget {
   final String statusBanner;
   final bool stripAnimate;
   final List<String> tags;
+  final String? highlightedTagLabel;
+  final Color highlightedTagAccent;
+  final IconData? highlightedTagIcon;
+  final String footerText;
+  final Color footerAccent;
   final VoidCallback onTap;
 
   @override
@@ -229,10 +266,7 @@ class _BackupGuardianCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StatusPulseStrip(
-                    color: statusAccent,
-                    animate: stripAnimate,
-                  ),
+                  _StatusPulseStrip(color: statusAccent, animate: stripAnimate),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -247,10 +281,7 @@ class _BackupGuardianCard extends StatelessWidget {
                           ),
                         ),
                         alignment: Alignment.center,
-                        child: Icon(
-                          Icons.backup_outlined,
-                          color: statusAccent,
-                        ),
+                        child: Icon(Icons.backup_outlined, color: statusAccent),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -306,17 +337,26 @@ class _BackupGuardianCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
+                      if (highlightedTagLabel != null)
+                        _InlineTag(
+                          label: highlightedTagLabel!,
+                          accent: highlightedTagAccent,
+                          icon: highlightedTagIcon,
+                        ),
                       for (final tag in tags) _InlineTag(label: tag),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  _InlineTag(
+                    label: footerText,
+                    accent: footerAccent,
+                    icon: Icons.schedule_send_outlined,
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColours.darkMutedText,
-            ),
+            const Icon(Icons.chevron_right, color: AppColours.darkMutedText),
           ],
         ),
       ),
@@ -366,17 +406,17 @@ class _PlannedSystemCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColours.darkText,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: AppColours.darkText,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColours.darkMutedText,
-                            height: 1.4,
-                          ),
+                        color: AppColours.darkMutedText,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -387,9 +427,7 @@ class _PlannedSystemCard extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [
-              for (final tag in tags) _InlineTag(label: tag),
-            ],
+            children: [for (final tag in tags) _InlineTag(label: tag)],
           ),
         ],
       ),
@@ -453,11 +491,67 @@ BoxDecoration _systemsPanelDecoration() {
   );
 }
 
+String _schedulerLabel(BackupGuardianSnapshot snapshot) {
+  return switch (snapshot.schedulerHealthState) {
+    BackupGuardianHealthState.green => 'Scheduler Ready',
+    BackupGuardianHealthState.amber => 'Scheduler Check',
+    BackupGuardianHealthState.red => 'Scheduler Red',
+    BackupGuardianHealthState.grey => 'Scheduler Pending',
+  };
+}
+
+String _schedulerFooterText(BackupGuardianSnapshot snapshot) {
+  final value = snapshot.lastVerificationAt;
+  if (value == null) {
+    return 'Last verified pending';
+  }
+  final local = value.toLocal();
+  return 'Last verified ${local.day.toString().padLeft(2, '0')} ${_monthAbbreviation(local.month)} ${local.year}, ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+}
+
+String _monthAbbreviation(int month) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  final index = month < 1
+      ? 0
+      : month > 12
+      ? 11
+      : month - 1;
+  return months[index];
+}
+
+Color _schedulerAccent(BackupGuardianSnapshot snapshot) {
+  return switch (snapshot.schedulerHealthState) {
+    BackupGuardianHealthState.green => AppColours.darkSuccess,
+    BackupGuardianHealthState.amber => AppColours.darkAmber,
+    BackupGuardianHealthState.red => AppColours.darkSecondary,
+    BackupGuardianHealthState.grey => AppColours.darkPurple,
+  };
+}
+
+IconData _schedulerIcon(BackupGuardianHealthState state) {
+  return switch (state) {
+    BackupGuardianHealthState.green => Icons.verified_outlined,
+    BackupGuardianHealthState.amber => Icons.schedule_outlined,
+    BackupGuardianHealthState.red => Icons.error_outline,
+    BackupGuardianHealthState.grey => Icons.help_outline,
+  };
+}
+
 class _StatusPulseStrip extends StatefulWidget {
-  const _StatusPulseStrip({
-    required this.color,
-    required this.animate,
-  });
+  const _StatusPulseStrip({required this.color, required this.animate});
 
   final Color color;
   final bool animate;
@@ -500,10 +594,7 @@ class _StatusPulseStripState extends State<_StatusPulseStrip>
 
   @override
   Widget build(BuildContext context) {
-    final animation = Tween<double>(
-      begin: 0.55,
-      end: 1.0,
-    ).animate(_controller);
+    final animation = Tween<double>(begin: 0.55, end: 1.0).animate(_controller);
 
     return AnimatedBuilder(
       animation: _controller,

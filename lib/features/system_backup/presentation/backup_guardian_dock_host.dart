@@ -27,26 +27,16 @@ class BackupGuardianDockHost extends ConsumerStatefulWidget {
       _BackupGuardianDockHostState();
 }
 
-class _BackupGuardianDockHostState
-    extends ConsumerState<BackupGuardianDockHost>
+class _BackupGuardianDockHostState extends ConsumerState<BackupGuardianDockHost>
     with SingleTickerProviderStateMixin {
   bool _isBusy = false;
   bool _showFloatingHint = true;
   bool _hasDraggedFloating = false;
-  late DockPosition _position;
-  late DockAnchor _floatingAnchor;
   late final AnimationController _floatingBreatheController;
 
   @override
   void initState() {
     super.initState();
-    final layoutState = ref.read(moduleHubStateRepositoryProvider).loadDockLayoutState();
-    _position =
-        layoutState.positionFor(_backupGuardianDockModuleId) ??
-        DockPosition.right;
-    _floatingAnchor =
-        layoutState.floatingAnchorFor(_backupGuardianDockModuleId) ??
-        DockAnchor.bottomRight;
     final hintDismissed = ref
         .read(moduleHubStateRepositoryProvider)
         .loadHubUiFlag(_floatingHintDismissedKey);
@@ -56,7 +46,11 @@ class _BackupGuardianDockHostState
       vsync: this,
       duration: const Duration(milliseconds: 2800),
     );
-    _syncFloatingAnimation();
+    final layoutState = ref.read(dockLayoutStateProvider);
+    final initialPosition =
+        layoutState.positionFor(_backupGuardianDockModuleId) ??
+        DockPosition.right;
+    _syncFloatingAnimationFor(initialPosition);
   }
 
   @override
@@ -71,6 +65,14 @@ class _BackupGuardianDockHostState
     if (width < 1280) {
       return const SizedBox.shrink();
     }
+
+    final layoutState = ref.watch(dockLayoutStateProvider);
+    final position =
+        layoutState.positionFor(_backupGuardianDockModuleId) ??
+        DockPosition.right;
+    final floatingAnchor =
+        layoutState.floatingAnchorFor(_backupGuardianDockModuleId) ??
+        DockAnchor.bottomRight;
 
     final currentPath =
         widget.currentPath ??
@@ -89,9 +91,9 @@ class _BackupGuardianDockHostState
         final dockBody = _DockBody(
           snapshot: snapshot,
           healthAccent: healthAccent,
-          position: _position,
+          position: position,
           isBusy: _isBusy,
-          floating: _position == DockPosition.floating,
+          floating: position == DockPosition.floating,
           showFloatingHint: _showFloatingHint,
           onOpenFullView: () => context.go(RouteNames.backupGuardian),
           onVerifyNow: () => _runVerifyNow(snapshot),
@@ -99,11 +101,11 @@ class _BackupGuardianDockHostState
           onPositionSelected: _savePosition,
         );
 
-        if (_position == DockPosition.floating) {
+        if (position == DockPosition.floating) {
           return Positioned.fill(
             child: SafeArea(
               child: _FloatingDockFrame(
-                anchor: _floatingAnchor,
+                anchor: floatingAnchor,
                 breathe: _floatingBreatheController,
                 accentColor: healthAccent,
                 onDraggedOnce: _markFloatingDragged,
@@ -114,29 +116,23 @@ class _BackupGuardianDockHostState
           );
         }
 
-        return switch (_position) {
+        return switch (position) {
           DockPosition.left => Positioned(
             left: 20,
             bottom: 20,
-            child: SafeArea(
-              child: SizedBox(width: 360, child: dockBody),
-            ),
+            child: SafeArea(child: SizedBox(width: 360, child: dockBody)),
           ),
           DockPosition.right => Positioned(
             right: 20,
             bottom: 20,
-            child: SafeArea(
-              child: SizedBox(width: 360, child: dockBody),
-            ),
+            child: SafeArea(child: SizedBox(width: 360, child: dockBody)),
           ),
           DockPosition.bottom => Positioned(
             left: 20,
             right: 20,
             bottom: 20,
             child: SafeArea(
-              child: Center(
-                child: SizedBox(width: 360, child: dockBody),
-              ),
+              child: Center(child: SizedBox(width: 360, child: dockBody)),
             ),
           ),
           DockPosition.fullscreen => Positioned.fill(
@@ -153,8 +149,8 @@ class _BackupGuardianDockHostState
     );
   }
 
-  void _syncFloatingAnimation() {
-    if (_position == DockPosition.floating) {
+  void _syncFloatingAnimationFor(DockPosition position) {
+    if (position == DockPosition.floating) {
       if (!_floatingBreatheController.isAnimating) {
         _floatingBreatheController.repeat(reverse: true);
       }
@@ -186,18 +182,10 @@ class _BackupGuardianDockHostState
   }
 
   Future<void> _savePosition(DockPosition position) async {
-    if (_position == position) {
-      return;
-    }
-
-    setState(() {
-      _position = position;
-    });
-    _syncFloatingAnimation();
-
     await ref
-        .read(moduleHubStateRepositoryProvider)
-        .saveDockPosition(_backupGuardianDockModuleId, position);
+        .read(dockLayoutStateProvider.notifier)
+        .setPosition(_backupGuardianDockModuleId, position);
+    _syncFloatingAnimationFor(position);
     ref
         .read(moduleEventBusProvider)
         .publish(
@@ -212,19 +200,9 @@ class _BackupGuardianDockHostState
   }
 
   Future<void> _saveFloatingAnchor(DockAnchor anchor) async {
-    if (_floatingAnchor == anchor) {
-      return;
-    }
-
-    setState(() {
-      _floatingAnchor = anchor;
-    });
-
-    final repository = ref.read(moduleHubStateRepositoryProvider);
-    final current = repository.loadDockLayoutState();
-    await repository.saveDockLayoutState(
-      current.setFloatingAnchor(_backupGuardianDockModuleId, anchor),
-    );
+    await ref
+        .read(dockLayoutStateProvider.notifier)
+        .setFloatingAnchor(_backupGuardianDockModuleId, anchor);
     ref
         .read(moduleEventBusProvider)
         .publish(
@@ -239,7 +217,12 @@ class _BackupGuardianDockHostState
   }
 
   void _markFloatingDragged() {
-    if (_hasDraggedFloating) {
+    final position =
+        ref
+            .read(dockLayoutStateProvider)
+            .positionFor(_backupGuardianDockModuleId) ??
+        DockPosition.right;
+    if (position != DockPosition.floating || _hasDraggedFloating) {
       return;
     }
 
@@ -316,9 +299,9 @@ class _DockBody extends StatelessWidget {
                       child: Text(
                         'Backup Guardian Dock',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppColours.darkText,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: AppColours.darkText,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     _StatusPill(
@@ -349,11 +332,11 @@ class _DockBody extends StatelessWidget {
                           ),
                           child: Text(
                             'Drag to a corner',
-                            style:
-                                Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: AppColours.darkText,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: AppColours.darkText,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ),
                       ),
@@ -364,9 +347,9 @@ class _DockBody extends StatelessWidget {
                 Text(
                   snapshot.notificationBanner,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColours.darkMutedText,
-                        height: 1.35,
-                      ),
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 _DockStatLine(
@@ -403,9 +386,7 @@ class _DockBody extends StatelessWidget {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.verified_outlined),
                       label: const Text('Verify now'),
@@ -590,10 +571,7 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
             final bob = _isDragging
                 ? 0.0
                 : (Curves.easeInOut.transform(widget.breathe.value) - 0.5) * 8;
-            return Transform.translate(
-              offset: Offset(0, bob),
-              child: child,
-            );
+            return Transform.translate(offset: Offset(0, bob), child: child);
           },
           child: Stack(
             clipBehavior: Clip.none,
@@ -666,7 +644,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     if (available < _floatingDockMinWidth) {
       return _floatingDockMinWidth;
     }
-    return available.clamp(_floatingDockMinWidth, _floatingDockMaxWidth).toDouble();
+    return available
+        .clamp(_floatingDockMinWidth, _floatingDockMaxWidth)
+        .toDouble();
   }
 
   void _handlePanStart(DragStartDetails details) {
@@ -690,13 +670,10 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     required double frameWidth,
     required double frameHeight,
   }) async {
-    final currentOffset = (_baseOffsetForAnchor(
-          widget.anchor,
-          size,
-          frameWidth,
-          frameHeight,
-        ) +
-        _dragOffset).clampToBounds(size, frameWidth, frameHeight);
+    final currentOffset =
+        (_baseOffsetForAnchor(widget.anchor, size, frameWidth, frameHeight) +
+                _dragOffset)
+            .clampToBounds(size, frameWidth, frameHeight);
 
     final snappedAnchor = _nearestAnchorFor(
       currentOffset: currentOffset,
@@ -713,12 +690,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     );
 
     setState(() {
-      _dragOffset = snappedOffset - _baseOffsetForAnchor(
-        widget.anchor,
-        size,
-        frameWidth,
-        frameHeight,
-      );
+      _dragOffset =
+          snappedOffset -
+          _baseOffsetForAnchor(widget.anchor, size, frameWidth, frameHeight);
       _isDragging = false;
     });
 
@@ -777,10 +751,7 @@ class _FloatingFrameShell extends StatelessWidget {
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(2), child: child),
         ),
       ),
     );
@@ -824,10 +795,10 @@ class _FloatingDragHandle extends StatelessWidget {
             Text(
               'Drag',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColours.darkPrimary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
+                color: AppColours.darkPrimary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
             ),
           ],
         ),
@@ -853,7 +824,10 @@ Offset _baseOffsetForAnchor(
       .toDouble();
 
   return switch (anchor) {
-    DockAnchor.topLeft => const Offset(_floatingDockMargin, _floatingDockMargin),
+    DockAnchor.topLeft => const Offset(
+      _floatingDockMargin,
+      _floatingDockMargin,
+    ),
     DockAnchor.topRight => Offset(maxX, _floatingDockMargin),
     DockAnchor.middleLeft => Offset(_floatingDockMargin, midY),
     DockAnchor.middleRight => Offset(maxX, midY),
@@ -922,11 +896,7 @@ DockAnchor _nearestAnchorFor({
 }
 
 extension on Offset {
-  Offset clampToBounds(
-    Size size,
-    double frameWidth,
-    double frameHeight,
-  ) {
+  Offset clampToBounds(Size size, double frameWidth, double frameHeight) {
     final minX = _floatingDockMargin;
     final minY = _floatingDockMargin;
     final maxX = (size.width - frameWidth - _floatingDockMargin)

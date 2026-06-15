@@ -79,7 +79,8 @@ void main() {
               latestManifestPath:
                   'E:/NEW_EARTH_BACKUP/manifests/backup_manifest_20260607_060000.json',
               latestManifestExists: true,
-              verificationSummary: 'Latest backup matches the manifest fingerprint.',
+              verificationSummary:
+                  'Latest backup matches the manifest fingerprint.',
               verificationDetails: <String>[
                 'Manifest: backup_manifest_20260607_060000.json',
                 'Current mirror: 12 files, 2.0 KB.',
@@ -185,6 +186,14 @@ void main() {
               ],
               scheduleSummary:
                   'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
+              schedulerHealthState: BackupGuardianHealthState.green,
+              schedulerSummary:
+                  'Scheduler verified. Daily, weekly, and monthly tasks are present and enabled.',
+              schedulerDetails: <String>[
+                'Daily backup task: Ready',
+                'Weekly snapshot task: Ready',
+                'Monthly archive task: Ready',
+              ],
               retentionSummary:
                   'Quick keep 7, daily keep 7, weekly keep 4, monthly keep 12.',
               freshnessSummary: 'Backup ran today.',
@@ -196,6 +205,7 @@ void main() {
               statusUpdatedAt: null,
               warnings: <String>['Robocopy exit code: 1'],
               errors: <String>[],
+              verificationMismatchAreas: <String>[],
               healthSummary: 'Latest backup verified',
             ),
           ),
@@ -213,10 +223,16 @@ void main() {
     expect(find.text('Restore Dry Run'), findsOneWidget);
     expect(find.text('Quick Incremental'), findsOneWidget);
     expect(find.text('Run state summary'), findsOneWidget);
-    expect(find.textContaining('State: Latest backup verified'), findsOneWidget);
+    expect(
+      find.textContaining('State: Latest backup verified'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Health: Green'), findsOneWidget);
     expect(find.textContaining('Restore points: 2'), findsOneWidget);
-    expect(find.textContaining('Latest report: latest.log'), findsAtLeastNWidgets(1));
+    expect(
+      find.textContaining('Latest report: latest.log'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('Open Backup Root'), findsOneWidget);
     expect(
       find.text(
@@ -242,7 +258,10 @@ void main() {
     );
     expect(find.widgetWithText(FilterChip, 'Backups (2)'), findsOneWidget);
     expect(find.widgetWithText(FilterChip, 'Verification (1)'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Restore points (3)'), findsOneWidget);
+    expect(
+      find.widgetWithText(FilterChip, 'Restore points (3)'),
+      findsOneWidget,
+    );
     expect(find.text('Pick a restore point'), findsOneWidget);
     expect(find.textContaining('Action: Backup Now'), findsWidgets);
     expect(find.textContaining('Kind: manual'), findsWidgets);
@@ -251,7 +270,9 @@ void main() {
     expect(find.textContaining('Latest backup size: 2.0 KB'), findsOneWidget);
     expect(find.textContaining('Previous backup size: 1.5 KB'), findsOneWidget);
     expect(
-      find.textContaining('Backup size grew by 512 B compared with the previous run.'),
+      find.textContaining(
+        'Backup size grew by 512 B compared with the previous run.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Latest report'), findsOneWidget);
@@ -273,13 +294,20 @@ void main() {
     expect(find.text('Current run state'), findsOneWidget);
     expect(find.text('Latest manifest path'), findsOneWidget);
     expect(find.text('Verification details'), findsOneWidget);
-    expect(find.text('Latest backup matches the manifest fingerprint.'), findsOneWidget);
     expect(
-      find.textContaining('Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.'),
+      find.text('Latest backup matches the manifest fingerprint.'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Scheduled daily at 02:00, weekly on Sunday, monthly on day 1.',
+      ),
       findsWidgets,
     );
     expect(
-      find.text('Restore preview stays read-only and writes only to the test area.'),
+      find.text(
+        'Restore preview stays read-only and writes only to the test area.',
+      ),
       findsOneWidget,
     );
     expect(

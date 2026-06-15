@@ -42,6 +42,8 @@ Windows entry points:
 - `scripts/windows/backup_now.bat`
 - `scripts/windows/verify_latest.bat`
 - `scripts/windows/restore_dry_run.bat`
+- `scripts/windows/setup_scheduled_backups.bat`
+- `scripts/windows/verify_scheduled_backups.bat`
 
 These wrappers resolve the module root internally, so they can be run directly without changing the current directory first.
 
@@ -53,11 +55,14 @@ Dashboard-controlled scheduling:
 - Daily backup
 - Weekly snapshot
 - Monthly archive
+- Windows Task Scheduler setup for the existing timed actions
+- Windows Task Scheduler verification for the existing timed actions
 - Backup history
 - Retention rules
 - Freshness warnings
 - Restore point list
 - Schedule summary
+- Scheduler status file at `modules/system_backup/runtime/scheduler_status.json`
 
 Phase 2 runtime data:
 

@@ -26,6 +26,7 @@ import '../../planner/application/planner_controller.dart';
 import '../../repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../../system_backup/application/backup_guardian_controller.dart';
+import '../../system_backup/data/backup_guardian_service.dart';
 import '../application/dashboard_controller.dart';
 import '../data/dashboard_repository.dart';
 import '../../treasury/application/treasury_controller.dart';
@@ -217,9 +218,8 @@ class _DashboardHero extends StatelessWidget {
                 label: const Text('Open Treasury'),
               ),
               TextButton.icon(
-                onPressed: () => context.push(
-                  RouteNames.fundingGrantsCommandCentre,
-                ),
+                onPressed: () =>
+                    context.push(RouteNames.fundingGrantsCommandCentre),
                 icon: const Icon(Icons.receipt_long_outlined),
                 label: const Text('Open Grants'),
               ),
@@ -775,9 +775,9 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
             Expanded(
               child: Text(
                 'Backup Guardian could not load right now.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
               ),
             ),
           ],
@@ -852,9 +852,8 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             '$bannerLabel: ${snapshot.backupTarget}',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
                                   color: AppColours.darkText,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -874,10 +873,20 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                   Text(
                     snapshot.notificationBanner,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColours.darkSecondary,
-                          height: 1.35,
-                        ),
+                      color: AppColours.darkSecondary,
+                      height: 1.35,
+                    ),
                   ),
+                  if (snapshot.errors.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Mismatch detected: ${snapshot.verificationMismatchSummary}. If the mirror itself is still the right baseline, use Rebaseline. If the files really changed, use Backup Now.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 760),
@@ -895,9 +904,9 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                   Text(
                     'After you launch a backup, you can close the dashboard and let the script continue on its own.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColours.darkSecondary,
-                          height: 1.35,
-                        ),
+                      color: AppColours.darkSecondary,
+                      height: 1.35,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   Wrap(
@@ -938,13 +947,39 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
               final actions = Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                alignment: useWideLayout ? WrapAlignment.end : WrapAlignment.start,
+                alignment: useWideLayout
+                    ? WrapAlignment.end
+                    : WrapAlignment.start,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   FilledButton.icon(
                     onPressed: () => context.push(RouteNames.backupGuardian),
                     icon: const Icon(Icons.open_in_new),
                     label: const Text('Open Backup'),
                   ),
+                  snapshot.errors.isNotEmpty
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            await ref
+                                .read(backupGuardianServiceProvider)
+                                .runAction(BackupGuardianAction.rebaseline);
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColours.darkAmber,
+                            foregroundColor: AppColours.darkBackground,
+                          ),
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('Rebaseline'),
+                        )
+                      : OutlinedButton.icon(
+                          onPressed: () async {
+                            await ref
+                                .read(backupGuardianServiceProvider)
+                                .runAction(BackupGuardianAction.rebaseline);
+                          },
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('Rebaseline'),
+                        ),
                   OutlinedButton.icon(
                     onPressed: () => context.push(RouteNames.systems),
                     icon: const Icon(Icons.apps_outlined),
@@ -956,11 +991,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
               if (!useWideLayout) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    content,
-                    const SizedBox(height: 16),
-                    actions,
-                  ],
+                  children: [content, const SizedBox(height: 16), actions],
                 );
               }
 
@@ -3908,10 +3939,7 @@ BoxDecoration _panelDecoration(
 }
 
 class _StatusPulseStrip extends StatefulWidget {
-  const _StatusPulseStrip({
-    required this.color,
-    required this.animate,
-  });
+  const _StatusPulseStrip({required this.color, required this.animate});
 
   final Color color;
   final bool animate;
@@ -3954,10 +3982,7 @@ class _StatusPulseStripState extends State<_StatusPulseStrip>
 
   @override
   Widget build(BuildContext context) {
-    final animation = Tween<double>(
-      begin: 0.55,
-      end: 1.0,
-    ).animate(_controller);
+    final animation = Tween<double>(begin: 0.55, end: 1.0).animate(_controller);
 
     return AnimatedBuilder(
       animation: _controller,

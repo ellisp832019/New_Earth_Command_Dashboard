@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory=$true)]
-  [ValidateSet("DryRun","BackupNow","VerifyLatest","RestoreDryRun","QuickIncremental","DailyBackup","WeeklySnapshot","MonthlyArchive")]
+  [ValidateSet("DryRun","BackupNow","VerifyLatest","Rebaseline","RestoreDryRun","QuickIncremental","DailyBackup","WeeklySnapshot","MonthlyArchive")]
   [string]$Mode
 )
 
@@ -244,6 +244,7 @@ function Get-ActionLabel([string]$CurrentMode) {
     'DryRun' { $Label = 'Dry Run'; break }
     'BackupNow' { $Label = 'Backup Now'; break }
     'VerifyLatest' { $Label = 'Verify Latest'; break }
+    'Rebaseline' { $Label = 'Rebaseline'; break }
     'RestoreDryRun' { $Label = 'Restore Dry Run'; break }
     'QuickIncremental' { $Label = 'Quick Incremental'; break }
     'DailyBackup' { $Label = 'Scheduled Daily Backup'; break }
@@ -275,6 +276,59 @@ function Get-RetentionValue([string]$Kind, [int]$Fallback) {
     'monthly' { $Value = Get-IntValue (Get-ConfigValue $Config 'retention.monthly_keep' $Fallback) $Fallback; break }
   }
   return $Value
+}
+
+function Get-VerificationMismatchAreas([string[]]$Errors) {
+  $Areas = @()
+
+  foreach ($Error in $Errors) {
+    $Lower = $Error.ToLowerInvariant()
+    if ($Lower.Contains('fingerprint') -and -not $Areas.Contains('fingerprint')) {
+      $Areas += 'fingerprint'
+    }
+    if ($Lower.Contains('file count') -and -not $Areas.Contains('file count')) {
+      $Areas += 'file count'
+    }
+    if ($Lower.Contains('size') -and -not $Areas.Contains('size')) {
+      $Areas += 'size'
+    }
+    if ($Lower.Contains('path') -and -not $Areas.Contains('path')) {
+      $Areas += 'path'
+    }
+    if ($Lower.Contains('drive') -and -not $Areas.Contains('drive')) {
+      $Areas += 'drive'
+    }
+  }
+
+  return $Areas
+}
+
+function Join-WithAnd([string[]]$Items) {
+  if ($Items.Count -eq 0) { return '' }
+  if ($Items.Count -eq 1) { return $Items[0] }
+  if ($Items.Count -eq 2) { return "$($Items[0]) and $($Items[1])" }
+  return ($Items[0..($Items.Count - 2)] -join ', ') + ", and $($Items[-1])"
+}
+
+function Get-VerificationSummary([string]$BaseSummary, [string[]]$Errors) {
+  $Summary = [string]$BaseSummary
+  if (-not [string]::IsNullOrWhiteSpace($Summary)) {
+    $LowerSummary = $Summary.ToLowerInvariant()
+    if (-not ($LowerSummary.Contains('failed') -or $LowerSummary.Contains('verification'))) {
+      return $Summary
+    }
+  }
+
+  if ($Errors.Count -eq 0) {
+    return $Summary
+  }
+
+  $MismatchAreas = Get-VerificationMismatchAreas -Errors $Errors
+  if ($MismatchAreas.Count -eq 0) {
+    return 'Latest backup verification found manifest differences.'
+  }
+
+  return "Latest backup verification found $(Join-WithAnd $MismatchAreas) differences."
 }
 
 function Write-Manifest(
@@ -846,9 +900,9 @@ switch ($Mode) {
         exit 0
       }
 
-      $Summary = 'Latest backup verification failed.'
-      if ($Warnings.Count -gt 0) {
-        $Summary = 'Latest backup verification found manifest differences.'
+      $Summary = Get-VerificationSummary -BaseSummary 'Latest backup verification failed.' -Errors $Errors
+      if ($Warnings.Count -gt 0 -and $Errors.Count -eq 0) {
+        $Summary = 'Latest backup verification found warnings.'
       }
       Write-Status "red" $Summary $Warnings $Errors $LastBackupAt (Get-Date).ToString("o") (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') $TargetStats.file_count $TargetStats.file_count 0 $TargetStats.size_bytes 0 $BackupKind $ManifestPath $null
       Write-HistoryEntry ([ordered]@{
@@ -894,6 +948,120 @@ switch ($Mode) {
       })
       exit 1
     }
+  }
+  'Rebaseline' {
+    if (!(Test-Path $Target)) {
+      Write-Status "red" "Backup mirror missing." @() @("Missing mirror folder: $Target")
+      Write-HistoryEntry ([ordered]@{
+        action = 'Rebaseline'
+        mode = $Mode
+        backup_kind = 'manual'
+        state = 'red'
+        summary = "Missing mirror folder: $Target"
+        started_at = (Get-Date).ToString('o')
+        finished_at = (Get-Date).ToString('o')
+        duration_ms = 0
+        files_scanned = 0
+        files_copied = 0
+        files_skipped = 0
+        backup_size_bytes = 0
+        backup_size_text = '0 B'
+        manifest_path = ''
+        report_path = $LogPath
+        restore_point_label = ''
+        restore_point_path = ''
+      })
+      exit 1
+    }
+
+    if (-not $Config.create_manifest) {
+      Write-Status "red" "Rebaseline needs manifest creation." @() @("Turn on create_manifest before refreshing the baseline manifest.")
+      Write-HistoryEntry ([ordered]@{
+        action = 'Rebaseline'
+        mode = $Mode
+        backup_kind = 'manual'
+        state = 'red'
+        summary = 'Rebaseline needs manifest creation.'
+        started_at = (Get-Date).ToString('o')
+        finished_at = (Get-Date).ToString('o')
+        duration_ms = 0
+        files_scanned = 0
+        files_copied = 0
+        files_skipped = 0
+        backup_size_bytes = 0
+        backup_size_text = '0 B'
+        manifest_path = ''
+        report_path = $LogPath
+        restore_point_label = ''
+        restore_point_path = ''
+      })
+      exit 1
+    }
+
+    $RunStartedAt = Get-Date
+    $Timer = [System.Diagnostics.Stopwatch]::StartNew()
+    Write-StepMessage "Reading current mirror snapshot..."
+    $TargetStats = Get-FolderStats -Path $Target
+    $TargetFingerprint = Get-PathFingerprint -Path $Target
+    $BackupKind = [string](Get-ConfigValue $ExistingStatus 'backup_kind' 'manual')
+    if ([string]::IsNullOrWhiteSpace($BackupKind)) {
+      $BackupKind = 'manual'
+    }
+
+    $ManifestPath = Get-ManifestPath -Stamp $RunStartedAt.ToString('yyyyMMdd_HHmmss')
+    $Summary = 'Mirror baseline refreshed successfully.'
+    try {
+      Write-Manifest -Path $ManifestPath -Action 'Rebaseline' -Kind $BackupKind -Summary $Summary -SourceStats $TargetStats -TargetStats $TargetStats -TargetFingerprint $TargetFingerprint -ReportPath $LogPath
+    } catch {
+      if ($ManifestPath -and (Test-Path $ManifestPath)) {
+        Remove-Item -LiteralPath $ManifestPath -Force -ErrorAction SilentlyContinue
+      }
+
+      Write-Status "red" "Rebaseline failed." @() @("Could not write the baseline manifest: $($_.Exception.Message)")
+      Write-HistoryEntry ([ordered]@{
+        action = 'Rebaseline'
+        mode = $Mode
+        backup_kind = $BackupKind
+        state = 'red'
+        summary = 'Rebaseline failed.'
+        started_at = $RunStartedAt.ToString('o')
+        finished_at = (Get-Date).ToString('o')
+        duration_ms = $Timer.ElapsedMilliseconds
+        files_scanned = $TargetStats.file_count
+        files_copied = 0
+        files_skipped = 0
+        backup_size_bytes = $TargetStats.size_bytes
+        backup_size_text = $TargetStats.size_text
+        manifest_path = ''
+        report_path = $LogPath
+        restore_point_label = ''
+        restore_point_path = ''
+      })
+      exit 1
+    }
+
+    $Timer.Stop()
+    Write-Status "green" $Summary @() @() (Get-ConfigValue $ExistingStatus 'last_backup_at' $null) (Get-Date).ToString("o") (Get-ConfigValue $ExistingStatus 'restore_test_status' 'Not run yet') $TargetStats.file_count $TargetStats.file_count 0 $TargetStats.size_bytes 0 $BackupKind $ManifestPath $null
+    Write-HistoryEntry ([ordered]@{
+      action = 'Rebaseline'
+      mode = $Mode
+      backup_kind = $BackupKind
+      state = 'green'
+      summary = $Summary
+      started_at = $RunStartedAt.ToString('o')
+      finished_at = (Get-Date).ToString('o')
+      duration_ms = $Timer.ElapsedMilliseconds
+      files_scanned = $TargetStats.file_count
+      files_copied = $TargetStats.file_count
+      files_skipped = 0
+      backup_size_bytes = $TargetStats.size_bytes
+      backup_size_text = $TargetStats.size_text
+      manifest_path = $ManifestPath
+      report_path = $LogPath
+      restore_point_label = ''
+      restore_point_path = ''
+    })
+    exit 0
   }
   'RestoreDryRun' {
     if (!(Test-Path $Target)) {

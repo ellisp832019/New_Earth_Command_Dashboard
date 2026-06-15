@@ -7,8 +7,12 @@ enum BackupGuardianAction {
   dryRun,
   backupNow,
   verifyLatest,
+  rebaseline,
+  compareSourceMirror,
   restoreDryRun,
   quickIncremental,
+  setupScheduledBackups,
+  verifyScheduledBackups,
   dailyBackup,
   weeklySnapshot,
   monthlyArchive,
@@ -107,10 +111,7 @@ class BackupGuardianConfig {
     return BackupGuardianConfig(
       sourceDrive: readString('source_drive', 'D:/'),
       backupTarget: readString('backup_target', 'E:/NEW_EARTH_BACKUP'),
-      mirrorFolder: readString(
-        'mirror_folder',
-        'E:/NEW_EARTH_BACKUP/mirror',
-      ),
+      mirrorFolder: readString('mirror_folder', 'E:/NEW_EARTH_BACKUP/mirror'),
       reportsFolder: readString(
         'reports_folder',
         'E:/NEW_EARTH_BACKUP/reports',
@@ -126,13 +127,15 @@ class BackupGuardianConfig {
       verifyAfterBackup: readBool('verify_after_backup', true),
       createManifest: readBool('create_manifest', true),
       scheduleEnabled: (schedule['enabled'] is bool
-              ? schedule['enabled'] as bool
-              : readBool('schedule_enabled', false)),
-      dailyBackupTime: schedule['daily_time'] is String &&
+          ? schedule['enabled'] as bool
+          : readBool('schedule_enabled', false)),
+      dailyBackupTime:
+          schedule['daily_time'] is String &&
               (schedule['daily_time'] as String).trim().isNotEmpty
           ? (schedule['daily_time'] as String).trim()
           : readString('daily_backup_time', '02:00'),
-      weeklySnapshotDay: schedule['weekly_day'] is String &&
+      weeklySnapshotDay:
+          schedule['weekly_day'] is String &&
               (schedule['weekly_day'] as String).trim().isNotEmpty
           ? (schedule['weekly_day'] as String).trim()
           : readString('weekly_snapshot_day', 'Sunday'),
@@ -182,6 +185,9 @@ class BackupGuardianSnapshot {
     required this.historyEntries,
     required this.restorePoints,
     required this.scheduleSummary,
+    required this.schedulerHealthState,
+    required this.schedulerSummary,
+    required this.schedulerDetails,
     required this.retentionSummary,
     required this.freshnessSummary,
     required this.notificationBanner,
@@ -191,6 +197,7 @@ class BackupGuardianSnapshot {
     required this.statusUpdatedAt,
     required this.warnings,
     required this.errors,
+    required this.verificationMismatchAreas,
     required this.healthSummary,
   });
 
@@ -213,6 +220,9 @@ class BackupGuardianSnapshot {
   final List<BackupGuardianHistoryEntry> historyEntries;
   final List<BackupGuardianHistoryEntry> restorePoints;
   final String scheduleSummary;
+  final BackupGuardianHealthState schedulerHealthState;
+  final String schedulerSummary;
+  final List<String> schedulerDetails;
   final String retentionSummary;
   final String freshnessSummary;
   final String notificationBanner;
@@ -222,7 +232,12 @@ class BackupGuardianSnapshot {
   final DateTime? statusUpdatedAt;
   final List<String> warnings;
   final List<String> errors;
+  final List<String> verificationMismatchAreas;
   final String healthSummary;
+
+  String get verificationMismatchSummary => verificationMismatchAreas.isEmpty
+      ? 'No specific mismatch area identified.'
+      : _joinListWithAnd(verificationMismatchAreas);
 
   String get sourceDrive => config.sourceDrive;
   String get backupTarget => config.backupTarget;
@@ -232,8 +247,11 @@ class BackupGuardianSnapshot {
 
 class BackupGuardianService {
   BackupGuardianService({Directory? moduleRoot})
-    : _moduleRoot = moduleRoot ??
-          Directory(path.join(Directory.current.path, 'modules', 'system_backup'));
+    : _moduleRoot =
+          moduleRoot ??
+          Directory(
+            path.join(Directory.current.path, 'modules', 'system_backup'),
+          );
 
   final Directory _moduleRoot;
 
@@ -250,26 +268,27 @@ class BackupGuardianService {
   File get _historyFile =>
       File(path.join(_moduleRoot.path, 'runtime', 'backup_history.json'));
 
+  File get _schedulerStatusFile =>
+      File(path.join(_moduleRoot.path, 'runtime', 'scheduler_status.json'));
+
   Future<BackupGuardianSnapshot> loadSnapshot() async {
     final config = await _loadConfig();
     final status = await _loadStatus();
     final history = await _loadHistory();
+    final schedulerStatus = await _loadSchedulerStatus();
     final sourceExists = Directory(config.sourceDrive).existsSync();
     final mirrorFolderExists = Directory(config.mirrorFolder).existsSync();
     final backupDriveRoot = path.dirname(
       config.backupTarget.replaceAll('\\', '/').trimRight(),
     );
     final backupDriveExists = Directory(backupDriveRoot).existsSync();
-    final latestBackupHistory = _latestHistoryEntry(
-      history.entries,
-      const [
-        'BackupNow',
-        'QuickIncremental',
-        'DailyBackup',
-        'WeeklySnapshot',
-        'MonthlyArchive',
-      ],
-    );
+    final latestBackupHistory = _latestHistoryEntry(history.entries, const [
+      'BackupNow',
+      'QuickIncremental',
+      'DailyBackup',
+      'WeeklySnapshot',
+      'MonthlyArchive',
+    ]);
     final latestVerificationHistory = _latestHistoryEntry(
       history.entries,
       const ['VerifyLatest'],
@@ -280,8 +299,8 @@ class BackupGuardianService {
       status: status,
       latestBackupHistory: latestBackupHistory,
     );
-    final latestManifestExists = latestManifestPath.isNotEmpty &&
-        File(latestManifestPath).existsSync();
+    final latestManifestExists =
+        latestManifestPath.isNotEmpty && File(latestManifestPath).existsSync();
     final mirrorStats = await _loadFolderStats(config.mirrorFolder);
     final manifest = await _loadManifest(latestManifestPath);
     final verificationReadout = _buildVerificationReadout(
@@ -294,17 +313,19 @@ class BackupGuardianService {
       backupDriveRoot: backupDriveRoot,
       config: config,
     );
+    final schedulerReadout = _buildSchedulerReadout(schedulerStatus);
+    final schedulerHealthState = _schedulerHealthStateFrom(schedulerStatus.state);
 
     final warnings = <String>[
       ...status.warnings,
+      ...schedulerStatus.warnings,
       if (!config.isLocalConfig)
         'Using the module example config until backup_paths.local.json is created locally.',
       if (!status.exists)
         'No status file found yet. Run Dry Run or Backup Now to create one.',
       if (sourceExists && !backupDriveExists)
         'Waiting for the external backup drive to appear.',
-      if (history.entries.isEmpty)
-        'No backup history has been recorded yet.',
+      if (history.entries.isEmpty) 'No backup history has been recorded yet.',
       if (statusManifestPath.isNotEmpty &&
           historyManifestPath.isNotEmpty &&
           statusManifestPath != historyManifestPath)
@@ -315,19 +336,24 @@ class BackupGuardianService {
           (status.exists || latestBackupHistory != null) &&
           config.verifyAfterBackup)
         'The latest backup does not have a recorded manifest yet. Verify Latest will fall back to target checks until one appears.',
+      if (!schedulerStatus.exists)
+        'Scheduler status has not been checked yet. Run Setup Scheduler or Verify Scheduler to confirm the timed tasks.',
     ];
 
     final errors = <String>[
       ...status.errors,
       if (!sourceExists) 'Source drive not found: ${config.sourceDrive}',
+      ...schedulerStatus.errors,
     ];
 
-    final lastBackupAt = status.lastBackupAt ??
+    final lastBackupAt =
+        status.lastBackupAt ??
         latestBackupHistory?.finishedAt ??
         (status.mode == 'BackupNow' || status.mode == 'QuickIncremental'
             ? status.updatedAt
             : null);
-    final lastVerificationAt = status.lastVerificationAt ??
+    final lastVerificationAt =
+        status.lastVerificationAt ??
         latestVerificationHistory?.finishedAt ??
         (status.mode == 'VerifyLatest' ? status.updatedAt : null);
     final backupAge = _backupAgeInDays(lastBackupAt);
@@ -357,34 +383,44 @@ class BackupGuardianService {
       staleAfterDays: config.staleAfterDays,
     );
 
+    final redHealthSummary = _summarizeVerificationFailure(
+      status.summary,
+      status.errors,
+    );
+    final verificationMismatchAreas = _verificationMismatchAreas(status.errors);
     final healthSummary = switch (healthState) {
       BackupGuardianHealthState.green => 'Latest backup verified',
-      BackupGuardianHealthState.amber when latestManifestPath.isNotEmpty &&
-          !latestManifestExists =>
+      BackupGuardianHealthState.amber
+          when latestManifestPath.isNotEmpty && !latestManifestExists =>
         'Latest backup needs a readable manifest',
-      BackupGuardianHealthState.amber when latestManifestPath.isEmpty &&
-          (status.exists || latestBackupHistory != null) =>
+      BackupGuardianHealthState.amber
+          when latestManifestPath.isEmpty &&
+              (status.exists || latestBackupHistory != null) =>
         'Latest backup is waiting for manifest-backed verification',
-      BackupGuardianHealthState.amber => sourceExists && !backupDriveExists
-          ? 'Backup drive not connected'
-          : backupAge != null && backupAge >= config.staleAfterDays
-              ? 'Backup is past the freshness threshold'
-              : 'Backup exists but still needs a quick review',
-      BackupGuardianHealthState.red => !backupDriveExists
-          ? 'Backup drive not connected'
-          : 'Backup mirror missing or backup failed',
+      BackupGuardianHealthState.amber =>
+        sourceExists && !backupDriveExists
+            ? 'Backup drive not connected'
+            : backupAge != null && backupAge >= config.staleAfterDays
+            ? 'Backup is past the freshness threshold'
+            : 'Backup exists but still needs a quick review',
+      BackupGuardianHealthState.red =>
+        redHealthSummary.isNotEmpty
+            ? redHealthSummary
+            : !backupDriveExists
+            ? 'Backup drive not connected'
+            : 'Backup mirror missing or backup failed',
       BackupGuardianHealthState.grey => 'No backup run yet',
     };
 
     final freshnessSummary = lastBackupAt == null
         ? 'No backup age recorded yet.'
         : backupAge == null
-            ? 'Backup age is being tracked.'
-            : backupAge <= 0
-                ? 'Backup ran today.'
-                : backupAge < config.staleAfterDays
-                    ? 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and still inside the freshness window.'
-                    : 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and past the ${config.staleAfterDays}-day freshness window.';
+        ? 'Backup age is being tracked.'
+        : backupAge <= 0
+        ? 'Backup ran today.'
+        : backupAge < config.staleAfterDays
+        ? 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and still inside the freshness window.'
+        : 'Backup is $backupAge day${backupAge == 1 ? '' : 's'} old and past the ${config.staleAfterDays}-day freshness window.';
 
     final scheduleSummary = config.scheduleEnabled
         ? 'Scheduled daily at ${config.dailyBackupTime}, weekly on ${config.weeklySnapshotDay}, monthly on day ${config.monthlyArchiveDay}.'
@@ -396,10 +432,10 @@ class BackupGuardianService {
     final notificationBanner = history.entries.isEmpty
         ? 'No backup history yet. Run a backup to start the timeline.'
         : backupAge != null && backupAge >= config.staleAfterDays
-            ? 'Freshness check: backup is $backupAge day${backupAge == 1 ? '' : 's'} old. A new backup would keep it within the ${config.staleAfterDays}-day window.'
-            : !backupDriveExists
-                ? "Backup drive not connected. Plug in the external drive when you're ready."
-                : scheduleSummary;
+        ? 'Freshness check: backup is $backupAge day${backupAge == 1 ? '' : 's'} old. A new backup would keep it within the ${config.staleAfterDays}-day window.'
+        : !backupDriveExists
+        ? "Backup drive not connected. Plug in the external drive when you're ready."
+        : scheduleSummary;
 
     final nextSuggestedRun = _calculateNextSuggestedRun(
       config: config,
@@ -436,6 +472,9 @@ class BackupGuardianService {
           .where((entry) => entry.isRestorePoint)
           .toList(growable: false),
       scheduleSummary: scheduleSummary,
+      schedulerHealthState: schedulerHealthState,
+      schedulerSummary: schedulerReadout.summary,
+      schedulerDetails: schedulerReadout.details,
       retentionSummary: retentionSummary,
       freshnessSummary: freshnessSummary,
       notificationBanner: notificationBanner,
@@ -445,6 +484,7 @@ class BackupGuardianService {
       statusUpdatedAt: status.updatedAt,
       warnings: warnings,
       errors: errors,
+      verificationMismatchAreas: verificationMismatchAreas,
       healthSummary: healthSummary,
     );
   }
@@ -454,12 +494,18 @@ class BackupGuardianService {
       BackupGuardianAction.dryRun => 'scripts/windows/dry_run.bat',
       BackupGuardianAction.backupNow => 'scripts/windows/backup_now.bat',
       BackupGuardianAction.verifyLatest => 'scripts/windows/verify_latest.bat',
+      BackupGuardianAction.rebaseline => 'scripts/windows/rebaseline.bat',
+      BackupGuardianAction.compareSourceMirror =>
+        'scripts/windows/compare_source_mirror.bat',
       BackupGuardianAction.restoreDryRun =>
         'scripts/windows/restore_dry_run.bat',
       BackupGuardianAction.quickIncremental =>
         'scripts/windows/quick_incremental.bat',
-      BackupGuardianAction.dailyBackup =>
-        'scripts/windows/daily_backup.bat',
+      BackupGuardianAction.setupScheduledBackups =>
+        'scripts/windows/setup_scheduled_backups.bat',
+      BackupGuardianAction.verifyScheduledBackups =>
+        'scripts/windows/verify_scheduled_backups.bat',
+      BackupGuardianAction.dailyBackup => 'scripts/windows/daily_backup.bat',
       BackupGuardianAction.weeklySnapshot =>
         'scripts/windows/weekly_snapshot.bat',
       BackupGuardianAction.monthlyArchive =>
@@ -521,6 +567,20 @@ class BackupGuardianService {
     }
 
     await _openPath(path.dirname(normalized));
+  }
+
+  Future<void> openCompareReport() async {
+    final reportPath = path.join(
+      _moduleRoot.path,
+      'runtime',
+      'source_mirror_diff.txt',
+    );
+    if (File(reportPath).existsSync()) {
+      await _openFile(reportPath);
+      return;
+    }
+
+    await _openPath(path.join(_moduleRoot.path, 'runtime'));
   }
 
   Future<BackupGuardianConfig> _loadConfig() async {
@@ -595,7 +655,8 @@ class BackupGuardianService {
     }
 
     if (status.exists && lastBackupAt != null) {
-      if (lastVerificationAt == null || lastBackupAt.isAfter(lastVerificationAt)) {
+      if (lastVerificationAt == null ||
+          lastBackupAt.isAfter(lastVerificationAt)) {
         return BackupGuardianHealthState.amber;
       }
     }
@@ -641,6 +702,19 @@ class BackupGuardianService {
     return _ParsedHistory.fromJson(jsonMap);
   }
 
+  Future<_ParsedSchedulerStatus> _loadSchedulerStatus() async {
+    if (!_schedulerStatusFile.existsSync()) {
+      return const _ParsedSchedulerStatus();
+    }
+
+    final jsonMap = await _readJsonMap(_schedulerStatusFile);
+    if (jsonMap == null) {
+      return const _ParsedSchedulerStatus(exists: true);
+    }
+
+    return _ParsedSchedulerStatus.fromJson(jsonMap);
+  }
+
   Future<_ParsedManifest> _loadManifest(String manifestPath) async {
     final normalized = manifestPath.trim();
     if (normalized.isEmpty || !File(normalized).existsSync()) {
@@ -669,7 +743,10 @@ class BackupGuardianService {
     var fileCount = 0;
     var sizeBytes = 0;
     try {
-      for (final entity in directory.listSync(recursive: true, followLinks: false)) {
+      for (final entity in directory.listSync(
+        recursive: true,
+        followLinks: false,
+      )) {
         if (entity is File) {
           fileCount += 1;
           sizeBytes += entity.lengthSync();
@@ -679,10 +756,7 @@ class BackupGuardianService {
       return const _FolderStats();
     }
 
-    return _FolderStats(
-      fileCount: fileCount,
-      sizeBytes: sizeBytes,
-    );
+    return _FolderStats(fileCount: fileCount, sizeBytes: sizeBytes);
   }
 
   BackupGuardianHistoryEntry? _latestHistoryEntry(
@@ -705,7 +779,8 @@ class BackupGuardianService {
       return status.manifestPath;
     }
 
-    if (latestBackupHistory != null && latestBackupHistory.manifestPath.isNotEmpty) {
+    if (latestBackupHistory != null &&
+        latestBackupHistory.manifestPath.isNotEmpty) {
       return latestBackupHistory.manifestPath;
     }
 
@@ -751,6 +826,10 @@ class BackupGuardianService {
       );
     }
 
+    final redHealthSummary = _summarizeVerificationFailure(
+      status.summary,
+      status.errors,
+    );
     final details = <String>[
       'Manifest: ${path.basename(latestManifestPath)}',
       'Current mirror: ${mirrorStats.fileCount} files, ${mirrorStats.sizeText}.',
@@ -769,10 +848,11 @@ class BackupGuardianService {
         'Verification note: the manifest and current target do not match yet.',
       );
       if (mismatchAreas.isNotEmpty) {
-        details.add(
-          'Affected areas: ${_joinListWithAnd(mismatchAreas)}.',
-        );
+        details.add('Affected areas: ${_joinListWithAnd(mismatchAreas)}.');
       }
+      details.add(
+        'Next step: run Backup Now to refresh the mirror baseline, or open Compare Mirror to review the drift.',
+      );
     }
 
     if (manifest.targetInventoryHash.isNotEmpty) {
@@ -811,16 +891,41 @@ class BackupGuardianService {
       details.add('Error: $error');
     }
 
-    final summary = status.summary.isNotEmpty
-        ? status.summary
-        : status.errors.isNotEmpty
-            ? 'Latest backup verification found mismatches between the manifest and current target.'
-            : 'Latest backup verification passed.';
+    final summary = redHealthSummary.isNotEmpty
+        ? redHealthSummary
+        : 'Latest backup verification passed.';
 
     return _VerificationReadout(
       summary: summary,
       details: List<String>.unmodifiable(details),
     );
+  }
+
+  _SchedulerReadout _buildSchedulerReadout(_ParsedSchedulerStatus scheduler) {
+    if (!scheduler.exists) {
+      return const _SchedulerReadout(
+        summary: 'Scheduler status has not been checked yet.',
+        details: <String>[
+          'Run Setup Scheduler or Verify Scheduler to confirm the timed tasks.',
+        ],
+      );
+    }
+
+    return _SchedulerReadout(
+      summary: scheduler.summary.isNotEmpty
+          ? scheduler.summary
+          : 'Scheduler status is ready.',
+      details: scheduler.details,
+    );
+  }
+
+  BackupGuardianHealthState _schedulerHealthStateFrom(String state) {
+    return switch (state.toLowerCase()) {
+      'green' => BackupGuardianHealthState.green,
+      'amber' => BackupGuardianHealthState.amber,
+      'red' => BackupGuardianHealthState.red,
+      _ => BackupGuardianHealthState.grey,
+    };
   }
 
   List<String> _verificationMismatchAreas(List<String> errors) {
@@ -854,18 +959,25 @@ class BackupGuardianService {
     return List<String>.unmodifiable(areas);
   }
 
-  String _joinListWithAnd(List<String> items) {
-    if (items.isEmpty) {
-      return '';
+  String _summarizeVerificationFailure(String summary, List<String> errors) {
+    final trimmedSummary = summary.trim();
+    final loweredSummary = trimmedSummary.toLowerCase();
+    if (trimmedSummary.isNotEmpty &&
+        !loweredSummary.contains('failed') &&
+        !loweredSummary.contains('verification')) {
+      return trimmedSummary;
     }
-    if (items.length == 1) {
-      return items.first;
+
+    if (errors.isEmpty) {
+      return trimmedSummary;
     }
-    if (items.length == 2) {
-      return '${items.first} and ${items.last}';
+
+    final mismatchAreas = _verificationMismatchAreas(errors);
+    if (mismatchAreas.isEmpty) {
+      return 'Latest backup verification found manifest differences.';
     }
-    final head = items.take(items.length - 1).join(', ');
-    return '$head, and ${items.last}';
+
+    return 'Latest backup verification found ${_joinListWithAnd(mismatchAreas)} differences.';
   }
 
   int? _backupAgeInDays(DateTime? lastBackupAt) {
@@ -885,18 +997,10 @@ class BackupGuardianService {
 
     final timeParts = config.dailyBackupTime.split(':');
     final hour = timeParts.isNotEmpty ? int.tryParse(timeParts.first) ?? 2 : 2;
-    final minute = timeParts.length > 1
-        ? int.tryParse(timeParts.last) ?? 0
-        : 0;
+    final minute = timeParts.length > 1 ? int.tryParse(timeParts.last) ?? 0 : 0;
 
     final base = lastBackupAt?.toLocal() ?? DateTime.now().toLocal();
-    var candidate = DateTime(
-      base.year,
-      base.month,
-      base.day,
-      hour,
-      minute,
-    );
+    var candidate = DateTime(base.year, base.month, base.day, hour, minute);
     if (!candidate.isAfter(base)) {
       candidate = candidate.add(const Duration(days: 1));
     }
@@ -924,7 +1028,9 @@ class BackupGuardianService {
 
   Future<void> _openFile(String filePath) async {
     if (Platform.isWindows) {
-      await Process.start('explorer.exe', ['/select,$filePath'], runInShell: true);
+      await Process.start('explorer.exe', [
+        '/select,$filePath',
+      ], runInShell: true);
       return;
     }
 
@@ -1098,10 +1204,7 @@ class _ParsedManifest {
 }
 
 class _FolderStats {
-  const _FolderStats({
-    this.fileCount = 0,
-    this.sizeBytes = 0,
-  });
+  const _FolderStats({this.fileCount = 0, this.sizeBytes = 0});
 
   final int fileCount;
   final int sizeBytes;
@@ -1110,10 +1213,14 @@ class _FolderStats {
 }
 
 class _VerificationReadout {
-  const _VerificationReadout({
-    required this.summary,
-    required this.details,
-  });
+  const _VerificationReadout({required this.summary, required this.details});
+
+  final String summary;
+  final List<String> details;
+}
+
+class _SchedulerReadout {
+  const _SchedulerReadout({required this.summary, required this.details});
 
   final String summary;
   final List<String> details;
@@ -1199,7 +1306,8 @@ class BackupGuardianHistoryEntry {
   Duration? get duration =>
       durationMs == null ? null : Duration(milliseconds: durationMs!);
 
-  DateTime get sortKey => finishedAt ?? startedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime get sortKey =>
+      finishedAt ?? startedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
   factory BackupGuardianHistoryEntry.fromJson(Map<String, dynamic> json) {
     String readString(String key) {
@@ -1233,7 +1341,9 @@ class BackupGuardianHistoryEntry {
       action: readString('action'),
       mode: readString('mode'),
       backupKind: readString('backup_kind'),
-      state: readString('state').isNotEmpty ? readString('state') : readString('result'),
+      state: readString('state').isNotEmpty
+          ? readString('state')
+          : readString('result'),
       summary: readString('summary'),
       startedAt: readDate('started_at'),
       finishedAt: readDate('finished_at'),
@@ -1277,3 +1387,47 @@ class _ParsedHistory {
   }
 }
 
+class _ParsedSchedulerStatus {
+  const _ParsedSchedulerStatus({
+    this.exists = false,
+    this.state = 'grey',
+    this.summary = '',
+    this.details = const <String>[],
+    this.errors = const <String>[],
+    this.warnings = const <String>[],
+  });
+
+  final bool exists;
+  final String state;
+  final String summary;
+  final List<String> details;
+  final List<String> errors;
+  final List<String> warnings;
+
+  factory _ParsedSchedulerStatus.fromJson(Map<String, dynamic> json) {
+    return _ParsedSchedulerStatus(
+      exists: true,
+      state: _stringValue(json, 'state').isNotEmpty
+          ? _stringValue(json, 'state')
+          : 'grey',
+      summary: _stringValue(json, 'summary'),
+      details: _ParsedStatus._stringList(json['details']),
+      errors: _ParsedStatus._stringList(json['errors']),
+      warnings: _ParsedStatus._stringList(json['warnings']),
+    );
+  }
+}
+
+String _joinListWithAnd(List<String> items) {
+  if (items.isEmpty) {
+    return '';
+  }
+  if (items.length == 1) {
+    return items.first;
+  }
+  if (items.length == 2) {
+    return '${items.first} and ${items.last}';
+  }
+  final head = items.take(items.length - 1).join(', ');
+  return '$head, and ${items.last}';
+}
