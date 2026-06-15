@@ -23,6 +23,10 @@ It is designed to stay:
 - Obsidian-plugin-free
 - the canonical home for the Obsidian sync module
 
+For the Dashboard active-project folder, use the dedicated profile:
+
+- `modules/NE_OBSIDIAN_SYNC_MODULE/profiles/new_earth_dashboard.json`
+
 ## What It Produces
 
 Core generated notes:
@@ -61,6 +65,18 @@ Core generated notes:
 
 Repo docs are also mirrored into the vault project folder under a `docs/` subfolder.
 
+The generated hub notes are intentionally cross-linked so the vault graph has a strong center:
+
+- `PROJECT_HOME.md`
+- `PROJECT_INDEX.md`
+- `MOC_HOME.md`
+- `START_HERE.md`
+- `INDEX.md`
+- `DOC_REGISTRY.md`
+- `PROJECT_GRAPH.md`
+- `PROJECT_MAP.md`
+- `sync_report.md`
+
 ## Setup
 
 1. Keep this module under `modules/NE_OBSIDIAN_SYNC_MODULE`.
@@ -87,6 +103,16 @@ Repo docs are also mirrored into the vault project folder under a `docs/` subfol
 }
 ```
 
+### Dashboard Profile
+
+Use these Dashboard-specific values:
+
+- project folder: `01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD`
+- docs folder: `01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs`
+- project type: `command-centre / dashboard / operating system hub`
+- dashboard export path: `01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/exports`
+- compatibility alias: `01_ACTIVE_PROJECTS/docs`
+
 ### Sync Modes
 
 - `manual` - run on demand
@@ -109,6 +135,32 @@ Or use the PowerShell wrapper:
 .\scripts\sync_to_obsidian.ps1
 ```
 
+To open a visible PowerShell window that stays open after the sync finishes:
+
+```powershell
+.\scripts\sync_to_obsidian_terminal.ps1
+```
+
+## Dashboard Migration
+
+Compare only:
+
+```powershell
+python .\scripts\obsidian_sync\migrate_dashboard_docs.py --compare
+```
+
+Dry run:
+
+```powershell
+python .\scripts\obsidian_sync\migrate_dashboard_docs.py --dry-run
+```
+
+Apply:
+
+```powershell
+python .\scripts\obsidian_sync\migrate_dashboard_docs.py --apply
+```
+
 ## Watch Mode
 
 ```powershell
@@ -119,6 +171,12 @@ Or:
 
 ```powershell
 python .\scripts\sync_obsidian.py watch
+```
+
+Visible terminal window:
+
+```powershell
+.\scripts\sync_to_obsidian_terminal.ps1 -Watch
 ```
 
 ## Optional Git Hook Usage
@@ -148,6 +206,8 @@ The sync writes `modules/NE_OBSIDIAN_SYNC_MODULE/exports/dashboard_status.json` 
 
 If `dashboard_export_path` is set, the same JSON is mirrored there too.
 
+That means the sync bundle is not just copying notes. It is also rebuilding the project index and backlinks that make Obsidian easier to navigate.
+
 ## Troubleshooting
 
 - If nothing syncs, check `obsidian_vault_path` and `obsidian_project_folder`.
@@ -155,6 +215,7 @@ If `dashboard_export_path` is set, the same JSON is mirrored there too.
 - If wiki links are flagged as broken, either add the target note, update the link, or add the related project to the config.
 - If PowerShell says Python is missing, install Python or point the wrapper at the correct interpreter.
 - If dashboard export is empty, confirm the export path exists and is writable.
+- If Dashboard notes still sit under the legacy `01_ACTIVE_PROJECTS/docs` alias, compare first, then dry-run, then apply.
 
 ## Backward Compatibility
 

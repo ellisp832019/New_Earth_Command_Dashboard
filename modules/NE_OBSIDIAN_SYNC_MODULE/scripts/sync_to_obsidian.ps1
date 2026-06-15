@@ -23,6 +23,17 @@ if ($null -eq $pythonPath -or $pythonPath.Trim().Length -eq 0) {
     $pythonPath = $python.Source
 }
 
+$modeLabel = if ($Watch) { "watch" } else { "sync" }
+Write-Host "=== Obsidian Sync Module ==="
+Write-Host "Mode: $modeLabel"
+Write-Host "Script: $pythonScript"
+if ($ConfigPath -and $ConfigPath.Trim().Length -gt 0) {
+    Write-Host "Config: $ConfigPath"
+} else {
+    Write-Host "Config: default module config"
+}
+Write-Host ""
+
 $args = @($pythonPath, $pythonScript)
 if ($Watch) {
     $args += "watch"
@@ -38,3 +49,8 @@ if ($ConfigPath -and $ConfigPath.Trim().Length -gt 0) {
 }
 
 & $args[0] @($args[1..($args.Length - 1)])
+
+if (-not $Watch) {
+    Write-Host ""
+    Write-Host "Obsidian sync wrapper finished."
+}

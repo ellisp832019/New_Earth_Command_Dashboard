@@ -1427,6 +1427,9 @@ def generate_project_home(
                     vault_link(config, "MOC_HOME.md"),
                     vault_link(config, "START_HERE.md"),
                     vault_link(config, "INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "sync_report.md"),
                 ]
             ),
@@ -1505,6 +1508,9 @@ def generate_moc_home(context: Dict[str, object], config: SyncConfig) -> str:
                     vault_link(config, "PROJECT_INDEX.md"),
                     vault_link(config, "INDEX.md"),
                     vault_link(config, "START_HERE.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                 ]
             ),
             "",
@@ -1516,6 +1522,9 @@ def generate_moc_home(context: Dict[str, object], config: SyncConfig) -> str:
                 [
                     vault_link(config, "PROJECT_HOME.md"),
                     vault_link(config, "PROJECT_INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "sync_report.md"),
                 ]
             ),
@@ -1572,6 +1581,9 @@ def generate_session_note(
                 [
                     vault_link(config, "PROJECT_HOME.md"),
                     vault_link(config, "PROJECT_INDEX.md"),
+                    vault_link(config, "DOC_REGISTRY.md"),
+                    vault_link(config, "PROJECT_GRAPH.md"),
+                    vault_link(config, "PROJECT_MAP.md"),
                     vault_link(config, "sync_report.md"),
                 ]
             ),

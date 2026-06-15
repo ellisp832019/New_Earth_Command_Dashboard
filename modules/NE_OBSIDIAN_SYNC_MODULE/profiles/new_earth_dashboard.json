@@ -1,0 +1,29 @@
+{
+  "project_name": "New Earth Dashboard",
+  "project_type": "command-centre / dashboard / operating system hub",
+  "repo_path": "../..",
+  "source_repo_path": "../..",
+  "docs_source_path": "docs",
+  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT",
+  "obsidian_project_folder": "01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD",
+  "dashboard_export_path": "01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/exports",
+  "vault_note_prefix": "NEW_EARTH_DASHBOARD_",
+  "sync_mode": "manual",
+  "tags": [
+    "dashboard",
+    "active-project",
+    "command-centre",
+    "local-first",
+    "obsidian"
+  ],
+  "related_projects": [
+    "New Earth",
+    "MicroGrow",
+    "Omega OS",
+    "Finance & Treasury",
+    "AI and Automation"
+  ],
+  "compatibility_aliases": [
+    "01_ACTIVE_PROJECTS/docs"
+  ]
+}
