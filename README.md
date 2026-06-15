@@ -1,6 +1,6 @@
-# Gaia
+# New Earth Command Dashboard
 
-![Gaia](assets/repo/01_repo_banner_new_earth_command_dashboard.png)
+![New Earth Command Dashboard](assets/repo/01_repo_banner_new_earth_command_dashboard.png)
 
 Local-first Flutter app for managing New Earth projects, tasks, daily focus, learning, content, business, wellbeing and build progress.
 
@@ -33,18 +33,22 @@ V0.1 foundation is live:
 - Inbox list and add-item foundation are live
 - Dashboard Quick Capture saves directly into Inbox
 - Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
-- Voice Assistant v0.1 scaffold is present and intentionally parked for later expansion
-- Voice Intelligence V1 is now integrated as a new `/voice` module with mock transcription, a full `/voice/conversation` loop, locally persisted shared thread memory and audit logging, remembered voice settings, meeting summaries, MicroGrow read-only status, safety gating, and no hidden hardware writes
-- On Windows, Gaia now waits for a connected headset or headset microphone before the main dashboard loads
+- Voice Assistant / Voice Intelligence now includes wake handling, startup gating, a dashboard conversation dock, shared session flow, and review-first local capture
+- Voice Intelligence V1 is integrated as a new `/voice` module with mock transcription, a full `/voice/conversation` loop, locally persisted shared thread memory and audit logging, remembered voice settings, meeting summaries, MicroGrow read-only status, safety gating, and no hidden hardware writes
+- On Windows, the dashboard now waits for a connected headset or headset microphone before the main dashboard loads
 - Meeting System phase 1 is live with dashboard, meeting index, wizard, detail, and trackers
 - Launchpad module phase 1 is live with campaign manager, rewards, story builder, readiness tracker, finance modeller, and JSON seed import; phase 2 now adds media, grants, investors, partners, manufacturing, community, timeline, analytics, launch checklist, backer updates, fulfilment, and impact records; phase 3 is polishing the overview, summary cards, reward cards, and archive flow
 - If you move the repo to a new folder, clear `build/windows/x64` and `.dart_tool`, then run `flutter clean` and `flutter pub get` before building Windows again
 
 ## Documentation
 
+- [Project Index](PROJECT_INDEX.md)
 - [Documentation Home](docs/README.md)
 - [Getting Started](docs/user_guide/getting_started.md)
 - [App Roadmap](docs/roadmap/app_roadmap.md)
+- [Roadmap Index](docs/roadmap/README.md)
+- [Visual Project Map](docs/roadmap/visual_project_map.md)
+- [Documentation Audit](docs/roadmap/documentation_audit.md)
 - [Meeting System module](modules/meeting_system/README.md)
 - [Voice Intelligence module pack](modules/voice_intelligence_module/README.md)
 - [Launchpad module](modules/new_earth_launchpad_module/README.md)
