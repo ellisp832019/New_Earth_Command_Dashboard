@@ -59,6 +59,15 @@ V0.1 foundation is live:
 - [Asset Index](docs/assets/asset_index.md)
 - [Local Build Guide](docs/developer_guide/local_build.md)
 
+## Active Project Home
+
+The Dashboard now has an Obsidian-facing active project folder:
+
+- [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md)
+- [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md)
+
+Use that folder as the working home for dashboard-aligned notes, indices, and sync outputs.
+
 ## How To Use The App
 
 This app is now far enough along to support a real daily workflow.

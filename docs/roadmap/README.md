@@ -11,27 +11,16 @@ Use this page as the entry point when you want to understand the project at a gl
 3. [`release_readiness_summary.md`](release_readiness_summary.md)
 4. [`subsystem_status_audit.md`](subsystem_status_audit.md)
 5. [`future_architecture_map.md`](future_architecture_map.md)
-6. [`visual_project_map.md`](visual_project_map.md)
-7. [`documentation_audit.md`](documentation_audit.md)
+6. [`module_hub_roadmap.md`](module_hub_roadmap.md)
+7. [`visual_program_plan.md`](visual_program_plan.md)
 
-## Planning Layers
+## Planning Views
 
-### Current Direction
+These are the main roadmap views worth checking first:
 
 - [`app_roadmap.md`](app_roadmap.md)
 - [`mvp_roadmap.md`](mvp_roadmap.md)
 - [`mvp_execution_plan.md`](mvp_execution_plan.md)
-- [`future_tasks.md`](future_tasks.md)
-
-### Module And Slice Roadmaps
-
-- [`module_hub_roadmap.md`](module_hub_roadmap.md)
-- [`voice_10_task_roadmap.md`](voice_10_task_roadmap.md)
-- [`ai_10_task_roadmap.md`](ai_10_task_roadmap.md)
-- [`treasury_20_task_roadmap.md`](treasury_20_task_roadmap.md)
-
-### Dashboard Module Planning
-
 - [`dashboard_module_landscape.md`](dashboard_module_landscape.md)
 - [`dashboard_module_map.md`](dashboard_module_map.md)
 - [`dashboard_ranked_roadmap.md`](dashboard_ranked_roadmap.md)
@@ -41,6 +30,12 @@ Use this page as the entry point when you want to understand the project at a gl
 - [`dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
 - [`dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
 - [`next_20_task_workflow.md`](next_20_task_workflow.md)
+- [`voice_10_task_roadmap.md`](voice_10_task_roadmap.md)
+- [`ai_10_task_roadmap.md`](ai_10_task_roadmap.md)
+- [`treasury_20_task_roadmap.md`](treasury_20_task_roadmap.md)
+- [`future_tasks.md`](future_tasks.md)
+- [`documentation_audit.md`](documentation_audit.md)
+- [`visual_project_map.md`](visual_project_map.md)
 
 ## Source Of Truth
 

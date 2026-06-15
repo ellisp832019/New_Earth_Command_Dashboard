@@ -123,3 +123,10 @@ Planned:
 1. Start the live dock rollout with `Backup Guardian`.
 2. Keep the dock host narrow and trustworthy.
 3. Return to the next active product slice after the dock baseline is working.
+
+## Knowledge Fabric Alignment
+
+Planned:
+- keep the Module Hub docs and the Obsidian knowledge fabric on the same anchors
+- make sure `PROJECT_HOME`, `PROJECT_INDEX`, `MOC_HOME`, `DOC_REGISTRY`, `PROJECT_GRAPH`, and `PROJECT_MAP` point at each other cleanly
+- keep the Obsidian sync module and repo intelligence bridge aligned with the Module Hub release notes

@@ -11,24 +11,13 @@ Use it when you want a quick map of what exists, where the docs live, and what t
 3. [`TASK.md`](TASK.md)
 4. [`docs/fsd/00_master_index.md`](docs/fsd/00_master_index.md)
 5. [`docs/roadmap/README.md`](docs/roadmap/README.md)
+6. [`docs/architecture/visual_index.md`](docs/architecture/visual_index.md)
 
-## Current Core
+## Active Project Space
 
-- Dashboard
-- Tasks
-- Planner
-- Projects
-- Journal
-- Inbox
-- Learning
-- Content
-- Business
-- Wellbeing
-- Treasury
-- Assets and QR labels
-- Knowledge Library
-- Voice Assistant / Voice Intelligence
-- Module Hub
+- [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md)
+- [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md)
+- [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_INDEX.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_INDEX.md)
 
 ## Where We Are Now
 
@@ -41,6 +30,7 @@ Active focus areas:
 - Module Hub browsing, docking, and module governance
 - Knowledge Library and repository intelligence cleanup
 - Treasury and backup reliability work
+- Obsidian sync and local documentation memory
 
 ## What Is Next
 
@@ -51,61 +41,7 @@ The most useful next slices are:
 3. Keep Module Hub docking and module activation calm
 4. Keep Obsidian sync and Repo Intelligence Bridge reusable
 5. Defer broader AI and live integration work until the local core stays stable
-
-## Key Module Areas
-
-- [`modules/meeting_system/README.md`](modules/meeting_system/README.md)
-- [`modules/voice_intelligence_module/README.md`](modules/voice_intelligence_module/README.md)
-- [`modules/new_earth_launchpad_module/README.md`](modules/new_earth_launchpad_module/README.md)
-- [`docs/architecture/module_hub/README.md`](docs/architecture/module_hub/README.md)
-- [`modules/NE_REPO_INTELLIGENCE_BRIDGE/README.md`](modules/NE_REPO_INTELLIGENCE_BRIDGE/README.md)
-- [`modules/NE_OBSIDIAN_SYNC_MODULE/README.md`](modules/NE_OBSIDIAN_SYNC_MODULE/README.md)
-
-## Documentation Families
-
-### Product And Requirements
-
-- [`docs/fsd/00_master_index.md`](docs/fsd/00_master_index.md)
-- [`docs/fsd/01_product_vision.md`](docs/fsd/01_product_vision.md)
-- [`docs/fsd/02_scope_and_mvp.md`](docs/fsd/02_scope_and_mvp.md)
-- [`docs/fsd/03_user_roles_navigation.md`](docs/fsd/03_user_roles_navigation.md)
-- [`docs/fsd/04_screen_specification.md`](docs/fsd/04_screen_specification.md)
-- [`docs/fsd/05_data_model.md`](docs/fsd/05_data_model.md)
-- [`docs/fsd/06_functional_requirements.md`](docs/fsd/06_functional_requirements.md)
-- [`docs/fsd/07_non_functional_requirements.md`](docs/fsd/07_non_functional_requirements.md)
-- [`docs/fsd/08_technical_architecture.md`](docs/fsd/08_technical_architecture.md)
-- [`docs/fsd/09_mvp_roadmap.md`](docs/fsd/09_mvp_roadmap.md)
-- [`docs/fsd/10_testing_release.md`](docs/fsd/10_testing_release.md)
-- [`docs/fsd/11_build_instructions.md`](docs/fsd/11_build_instructions.md)
-
-### Roadmaps
-
-- [`docs/roadmap/README.md`](docs/roadmap/README.md)
-- [`docs/roadmap/project_now_next_later.md`](docs/roadmap/project_now_next_later.md)
-- [`docs/roadmap/built_vs_planned_checklist.md`](docs/roadmap/built_vs_planned_checklist.md)
-- [`docs/roadmap/release_readiness_summary.md`](docs/roadmap/release_readiness_summary.md)
-- [`docs/roadmap/subsystem_status_audit.md`](docs/roadmap/subsystem_status_audit.md)
-- [`docs/roadmap/future_architecture_map.md`](docs/roadmap/future_architecture_map.md)
-- [`docs/roadmap/app_roadmap.md`](docs/roadmap/app_roadmap.md)
-- [`docs/roadmap/mvp_roadmap.md`](docs/roadmap/mvp_roadmap.md)
-- [`docs/roadmap/mvp_execution_plan.md`](docs/roadmap/mvp_execution_plan.md)
-
-### Architecture
-
-- [`docs/architecture/architecture_decisions.md`](docs/architecture/architecture_decisions.md)
-- [`docs/architecture/module_hub/README.md`](docs/architecture/module_hub/README.md)
-- [`docs/architecture/module_hub/module_hub_architecture.md`](docs/architecture/module_hub/module_hub_architecture.md)
-- [`docs/architecture/TREASURY_ARCHITECTURE_OVERVIEW.md`](docs/architecture/TREASURY_ARCHITECTURE_OVERVIEW.md)
-- [`docs/architecture/TREASURY_SECURITY_AND_PRIVACY.md`](docs/architecture/TREASURY_SECURITY_AND_PRIVACY.md)
-
-### Guides
-
-- [`docs/user_guide/getting_started.md`](docs/user_guide/getting_started.md)
-- [`docs/user_guide/voice_assistant_guide.md`](docs/user_guide/voice_assistant_guide.md)
-- [`docs/developer_guide/codex_workflow.md`](docs/developer_guide/codex_workflow.md)
-- [`docs/developer_guide/local_build.md`](docs/developer_guide/local_build.md)
-- [`docs/design/visual_direction.md`](docs/design/visual_direction.md)
-- [`docs/assets/asset_index.md`](docs/assets/asset_index.md)
+6. Use the Dashboard active-project folder as the new Obsidian-facing home for repo notes
 
 ## Reading Order
 
@@ -115,7 +51,8 @@ If you are new here:
 2. Open `docs/README.md`.
 3. Review `docs/fsd/00_master_index.md`.
 4. Read `docs/roadmap/README.md`.
-5. Check `TASK.md` for the current slice.
+5. Open `docs/architecture/visual_index.md` if you need the image map.
+6. Check `TASK.md` for the current slice.
 
 ## Rule
 
