@@ -33,7 +33,8 @@ class VoiceCommandService {
     VoiceCommandTemplate(
       id: 'recall-thread',
       label: 'Recall Memory',
-      description: 'Ask Gaia what she remembers about the current thread.',
+      description:
+          'Ask the assistant what it remembers about the current thread.',
       transcript:
           'What do you remember about this thread? Tell me the thread, recent captures, and the next useful move.',
       type: VoiceCommandType.journalEntry,
@@ -219,7 +220,7 @@ class VoiceCommandService {
       const VoiceCommandQuickAction(
         id: 'recall-memory',
         label: 'Recall Memory',
-        description: 'Ask Gaia what she remembers about the thread.',
+        description: 'Ask the assistant what it remembers about the thread.',
         templateId: 'recall-thread',
       ),
       const VoiceCommandQuickAction(
@@ -816,7 +817,7 @@ class VoiceCommandService {
         const VoiceCommandQuickAction(
           id: 'recall-memory',
           label: 'Recall Memory',
-          description: 'Ask Gaia what she remembers from the thread.',
+          description: 'Ask the assistant what it remembers from the thread.',
           templateId: 'recall-thread',
         ),
         const VoiceCommandQuickAction(
@@ -1191,7 +1192,8 @@ class VoiceCommandService {
 
     if (isDashboardNavigationRequest(lowerTranscript)) {
       return VoiceCommandAssistantResponse(
-        summary: 'Opening the dashboard now. You are back on the main dashboard.',
+        summary:
+            'Opening the dashboard now. You are back on the main dashboard.',
         nextStep: 'You can keep going from the dashboard.',
         projectContext: projectContext,
         threadContext: 'Dashboard',
@@ -1447,9 +1449,7 @@ class VoiceCommandService {
     }
 
     final contextLabel = contextParts.join(' · ');
-    final label = navigation
-        ? 'Dashboard'
-        : entryParts.join(' · ');
+    final label = navigation ? 'Dashboard' : entryParts.join(' · ');
     final previousLabel = previous?.label;
     final entryCount = (previous?.entryCount ?? 0) + 1;
     final latestEntry = normalizedTitle ?? transcript.trim();
@@ -1804,17 +1804,14 @@ Rules:
     normalized = normalized.replaceAll('dash board', 'dashboard');
     normalized = normalized.replaceAll('planet', 'planner');
     normalized = normalized.replaceAll(RegExp(r'\s+'), ' ');
-    normalized = normalized.replaceFirst(
-      RegExp(r'^[a-z](?=open\b)'),
-      '',
-    );
+    normalized = normalized.replaceFirst(RegExp(r'^[a-z](?=open\b)'), '');
     return normalized.trim();
   }
 
   bool _matchesNavigationPhrase(String transcript, String phrase) {
-    return _normalizeCommandText(transcript).contains(
-      _normalizeCommandText(phrase),
-    );
+    return _normalizeCommandText(
+      transcript,
+    ).contains(_normalizeCommandText(phrase));
   }
 
   String _titleFromTranscript(String transcript) {
@@ -1861,7 +1858,8 @@ Rules:
   String _briefingHeadline(String text) {
     final trimmed = text.trim();
     final mappings = <String, String>{
-      'Wake phrase heard. I am here.': 'Wake phrase heard. Gaia is ready.',
+      'Wake phrase heard. I am here.':
+          'Wake phrase heard. The assistant is ready.',
       'I am here with you.': 'Ready to help.',
       'This sounds like a daily review.': 'Daily review ready.',
       'This sounds like a next-step request.': 'Next step ready.',
@@ -1945,19 +1943,19 @@ Rules:
           : '';
 
       if (history.isNotEmpty) {
-        return 'Gaia remembers ${memoryBits.join(', ')}. $latestLine Recent captures are ready to reuse as well.';
+        return 'The assistant remembers ${memoryBits.join(', ')}. $latestLine Recent captures are ready to reuse as well.';
       }
 
       return latestLine.isEmpty
-          ? 'Gaia remembers ${memoryBits.join(', ')}.'
-          : 'Gaia remembers ${memoryBits.join(', ')}. $latestLine';
+          ? 'The assistant remembers ${memoryBits.join(', ')}.'
+          : 'The assistant remembers ${memoryBits.join(', ')}. $latestLine';
     }
 
     if (history.isNotEmpty) {
-      return 'Gaia remembers ${history.length} recent voice capture${history.length == 1 ? '' : 's'} and can keep the next move connected.';
+      return 'The assistant remembers ${history.length} recent voice capture${history.length == 1 ? '' : 's'} and can keep the next move connected.';
     }
 
-    return 'Gaia will build memory from the first saved command in this thread.';
+    return 'The assistant will build memory from the first saved command in this thread.';
   }
 
   List<String> _buildMemoryHighlights(
@@ -1999,24 +1997,24 @@ Rules:
 
     switch (plannerType) {
       case VoiceCommandType.task:
-        return 'Gaia sees a task and the plan is to tighten the title, category, and priority before saving it.';
+        return 'The assistant sees a task and the plan is to tighten the title, category, and priority before saving it.';
       case VoiceCommandType.project:
-        return 'Gaia sees a project and the plan is to confirm the status, vision, and first action before saving it.';
+        return 'The assistant sees a project and the plan is to confirm the status, vision, and first action before saving it.';
       case VoiceCommandType.journalEntry:
-        return 'Gaia sees a journal note and the plan is to capture what moved forward, what was learned, and what comes next.';
+        return 'The assistant sees a journal note and the plan is to capture what moved forward, what was learned, and what comes next.';
       case VoiceCommandType.contentIdea:
-        return 'Gaia sees a content idea and the plan is to confirm the platform, format, and draft angle before saving it.';
+        return 'The assistant sees a content idea and the plan is to confirm the platform, format, and draft angle before saving it.';
       case VoiceCommandType.businessOpportunity:
-        return 'Gaia sees a business lead and the plan is to confirm the contact, status, and next action before saving it.';
+        return 'The assistant sees a business lead and the plan is to confirm the contact, status, and next action before saving it.';
       case VoiceCommandType.codexPrompt:
-        return 'Gaia sees a Codex prompt and the plan is to keep it review-first before any code moves.';
+        return 'The assistant sees a Codex prompt and the plan is to keep it review-first before any code moves.';
       case VoiceCommandType.idea:
-        return 'Gaia sees a future idea and the plan is to keep it light, remembered, and easy to revisit.';
+        return 'The assistant sees a future idea and the plan is to keep it light, remembered, and easy to revisit.';
       case null:
         if (conversationContext != null && conversationContext.hasMemory) {
-          return 'Gaia can use the remembered thread to suggest the next practical move.';
+          return 'The assistant can use the remembered thread to suggest the next practical move.';
         }
-        return 'Gaia is ready to turn the current capture into a practical plan.';
+        return 'The assistant is ready to turn the current capture into a practical plan.';
     }
   }
 

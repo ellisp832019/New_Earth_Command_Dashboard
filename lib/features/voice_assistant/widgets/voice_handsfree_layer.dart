@@ -35,7 +35,9 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       DesktopSpeechBridgeService();
   final SpeechToText _speech = SpeechToText();
   final TextEditingController _captureController = TextEditingController();
-  final FocusNode _captureFocusNode = FocusNode(debugLabel: 'GaiaHandsfree');
+  final FocusNode _captureFocusNode = FocusNode(
+    debugLabel: 'AssistantHandsfree',
+  );
   late final VoiceAssistantTurnCoordinator _turnCoordinator;
 
   Timer? _debounceTimer;
@@ -70,7 +72,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     final session = ref.read(voiceSessionProvider.notifier);
     if (!session.beginListening(
       owner: VoiceSessionOwner.handsfree,
-      label: 'Gaia listening',
+      label: 'Assistant listening',
       detail: 'Arming voice input',
       opacity: 0.72,
     )) {
@@ -90,7 +92,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
       if (capture != null && capture.transcript.trim().isNotEmpty) {
         session.beginProcessing(
           owner: VoiceSessionOwner.handsfree,
-          label: 'Gaia captured',
+          label: 'Assistant captured',
           detail: 'Reviewing transcript',
           opacity: 0.84,
         );
@@ -123,7 +125,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
               .read(voiceSessionProvider.notifier)
               .release(
                 owner: VoiceSessionOwner.handsfree,
-                label: 'Gaia idle',
+                label: 'Assistant idle',
                 detail: 'Mic not available',
               );
           _scheduleRearm();
@@ -167,7 +169,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           .read(voiceSessionProvider.notifier)
           .release(
             owner: VoiceSessionOwner.handsfree,
-            label: 'Gaia idle',
+            label: 'Assistant idle',
             detail: 'Mic not available',
           );
       return;
@@ -322,11 +324,13 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         nextStep: 'You can continue from there.',
       );
 
-      ref.read(voiceSessionProvider.notifier).handoff(
+      ref
+          .read(voiceSessionProvider.notifier)
+          .handoff(
             from: VoiceSessionOwner.handsfree,
             to: VoiceSessionOwner.assistant,
             phase: VoiceSessionPhase.awaitingFollowUp,
-            label: 'Gaia ready',
+            label: 'Assistant ready',
             detail: 'Opening $target',
             opacity: 0.82,
           );
@@ -346,7 +350,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
             from: VoiceSessionOwner.handsfree,
             to: VoiceSessionOwner.assistant,
             phase: VoiceSessionPhase.awaitingFollowUp,
-            label: 'Gaia ready',
+            label: 'Assistant ready',
             detail: 'Opening dashboard',
             opacity: 0.82,
           );
@@ -376,7 +380,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
             from: VoiceSessionOwner.handsfree,
             to: VoiceSessionOwner.assistant,
             phase: VoiceSessionPhase.awaitingFollowUp,
-            label: 'Gaia wake',
+            label: 'Assistant wake',
             detail: 'Opening Voice Assistant',
             opacity: 0.82,
           );
@@ -404,7 +408,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           from: VoiceSessionOwner.handsfree,
           to: VoiceSessionOwner.assistant,
           phase: VoiceSessionPhase.awaitingFollowUp,
-          label: 'Gaia captured',
+          label: 'Assistant captured',
           detail: 'Conversation dock visible',
           opacity: 0.82,
         );
@@ -433,7 +437,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
           .read(voiceSessionProvider.notifier)
           .beginProcessing(
             owner: VoiceSessionOwner.handsfree,
-            label: 'Gaia captured',
+            label: 'Assistant captured',
             detail: 'Reviewing transcript',
             opacity: 0.84,
           );
@@ -451,7 +455,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         .read(voiceSessionProvider.notifier)
         .beginAwaitingFollowUp(
           owner: VoiceSessionOwner.handsfree,
-          label: 'Gaia listening',
+          label: 'Assistant listening',
           detail: 'Speak your next command',
           opacity: 0.84,
         );
@@ -491,7 +495,7 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
     ref
         .read(voiceConversationDockProvider.notifier)
         .show(
-          title: 'Gaia',
+          title: 'Assistant',
           summary: response.summary,
           nextStep: response.nextStep,
           transcript: transcript,
@@ -518,9 +522,9 @@ class _VoiceHandsfreeLayerState extends ConsumerState<VoiceHandsfreeLayer> {
         VoiceAssistantTurnPlan(
           kind: VoiceAssistantTurnKind.dockFollowUp,
           owner: VoiceSessionOwner.handsfree,
-          speakingLabel: 'Gaia speaking',
+          speakingLabel: 'Assistant speaking',
           speakingDetail: 'Reading back the response',
-          followUpLabel: 'Gaia ready',
+          followUpLabel: 'Assistant ready',
           followUpDetail: 'Handsfree listener ready',
           text: VoiceCommandService().buildSpokenReply(response),
           settings: settingsSnapshot.settings,

@@ -22,7 +22,7 @@ class VoiceConversationDockState {
 
   const VoiceConversationDockState.hidden()
     : visible = false,
-      title = 'Gaia',
+      title = 'Assistant',
       summary = '',
       nextStep = '',
       transcript = '',
@@ -110,7 +110,7 @@ class VoiceConversationDockNotifier
         .read(voiceSessionProvider.notifier)
         .release(
           owner: VoiceSessionOwner.dock,
-          label: 'Gaia idle',
+          label: 'Assistant idle',
           detail: 'Ready when you are',
         );
   }
@@ -126,7 +126,7 @@ class VoiceConversationDockNotifier
         .read(voiceSessionProvider.notifier)
         .beginProcessing(
           owner: VoiceSessionOwner.dock,
-          label: 'Gaia processing',
+          label: 'Assistant processing',
           detail: 'Shaping the follow-up',
           opacity: 0.72,
         );
@@ -147,7 +147,7 @@ class VoiceConversationDockNotifier
 
     state = state.copyWith(
       visible: true,
-      title: 'Gaia',
+      title: 'Assistant',
       summary: response.summary,
       nextStep: response.nextStep,
       transcript: suggestion.transcript,
@@ -171,7 +171,7 @@ class VoiceConversationDockNotifier
         .read(voiceSessionProvider.notifier)
         .beginAwaitingFollowUp(
           owner: VoiceSessionOwner.dock,
-          label: 'Gaia ready',
+          label: 'Assistant ready',
           detail: 'Ask another follow-up',
           opacity: 0.64,
         );
@@ -200,7 +200,7 @@ class VoiceConversationDockNotifier
       lastThingYouSaid: transcript,
       reviewPrompt: isWake
           ? 'Review the wake-triggered assistant reply before saving.'
-          : 'Review the legacy assistant reply before saving.',
+          : 'Review the assistant reply before saving.',
       prompts: [
         const VoiceConversationPrompt(
           label: 'Open shared conversation',

@@ -150,7 +150,9 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.play_arrow_outlined),
-                  label: Text(_isProcessing ? 'Processing...' : 'Review & Convert'),
+                  label: Text(
+                    _isProcessing ? 'Processing...' : 'Review & Convert',
+                  ),
                 ),
                 OutlinedButton.icon(
                   key: Key('parkInboxItemButton-${item.item.inboxItemId}'),
@@ -185,7 +187,9 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           children: [
             ListTile(
               title: const Text('Review and Move'),
-              subtitle: const Text('Choose the calmest next home for this capture.'),
+              subtitle: const Text(
+                'Choose the calmest next home for this capture.',
+              ),
             ),
             const Divider(height: 1),
             _ConversionChoiceTile(
@@ -285,6 +289,15 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Inbox item could not be processed. Please try again.'),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);

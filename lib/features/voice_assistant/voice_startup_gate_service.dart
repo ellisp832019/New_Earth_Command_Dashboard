@@ -4,10 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class VoiceInputDevice {
-  const VoiceInputDevice({
-    required this.name,
-    required this.identifier,
-  });
+  const VoiceInputDevice({required this.name, required this.identifier});
 
   factory VoiceInputDevice.fromMap(Map<dynamic, dynamic> device) {
     return VoiceInputDevice(
@@ -82,8 +79,9 @@ class VoiceStartupGateResult {
       return VoiceStartupGateState.noDevices;
     }
 
-    final headsetDevices =
-        devices.where((device) => device.isHeadsetLike).toList();
+    final headsetDevices = devices
+        .where((device) => device.isHeadsetLike)
+        .toList();
     if (headsetDevices.isNotEmpty) {
       return VoiceStartupGateState.ready;
     }
@@ -92,13 +90,14 @@ class VoiceStartupGateResult {
   }
 
   factory VoiceStartupGateResult.fromDevices(List<VoiceInputDevice> devices) {
-    final headsetDevices =
-        devices.where((device) => device.isHeadsetLike).toList();
+    final headsetDevices = devices
+        .where((device) => device.isHeadsetLike)
+        .toList();
     if (headsetDevices.isNotEmpty) {
       final names = headsetDevices.map((device) => device.name).join(', ');
       return VoiceStartupGateResult(
         isReady: true,
-        message: 'Headset detected: $names. Gaia is ready.',
+        message: 'Headset detected: $names. The assistant is ready.',
         devices: devices,
         state: VoiceStartupGateState.ready,
       );
@@ -115,13 +114,13 @@ class VoiceStartupGateResult {
     }
 
     final deviceNames = devices.map((device) => device.name).join(', ');
-      return VoiceStartupGateResult(
-        isReady: false,
-        message:
-            'A microphone is available, but Gaia did not see a headset-like device yet. Found: $deviceNames. If this is your headset mic, choose Have Voice.',
-        devices: devices,
-        state: VoiceStartupGateState.microphoneOnly,
-      );
+    return VoiceStartupGateResult(
+      isReady: false,
+      message:
+          'A microphone is available, but the assistant did not see a headset-like device yet. Found: $deviceNames. If this is your headset mic, choose Have Voice.',
+      devices: devices,
+      state: VoiceStartupGateState.microphoneOnly,
+    );
   }
 }
 
@@ -155,19 +154,21 @@ class VoiceStartupGateService {
     }
 
     try {
-      final rawDevices =
-          await _channel.invokeMethod<List<dynamic>>('listCaptureDevices');
-      final devices = (rawDevices ?? const <dynamic>[])
-          .whereType<Map<dynamic, dynamic>>()
-          .map(VoiceInputDevice.fromMap)
-          .toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+      final rawDevices = await _channel.invokeMethod<List<dynamic>>(
+        'listCaptureDevices',
+      );
+      final devices =
+          (rawDevices ?? const <dynamic>[])
+              .whereType<Map<dynamic, dynamic>>()
+              .map(VoiceInputDevice.fromMap)
+              .toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
       return VoiceStartupGateResult.fromDevices(devices);
     } catch (_) {
       return const VoiceStartupGateResult(
         isReady: false,
         message:
-            'Gaia could not check for audio devices right now. The headset may still work, but the device query needs another look. Open Voice diagnostics for the bridge and default input check.',
+            'The assistant could not check for audio devices right now. The headset may still work, but the device query needs another look. Open Voice diagnostics for the bridge and default input check.',
         devices: <VoiceInputDevice>[],
         state: VoiceStartupGateState.checkFailed,
       );

@@ -26,7 +26,7 @@ void main() {
     container
         .read(voiceConversationDockProvider.notifier)
         .show(
-          title: 'Gaia',
+          title: 'Assistant',
           summary: 'I am here and ready to help.',
           nextStep:
               'Say create a task, create a project, or ask what I can do.',
@@ -46,7 +46,7 @@ void main() {
         );
     await tester.pumpAndSettle();
 
-    expect(find.text('Gaia'), findsOneWidget);
+    expect(find.text('Assistant'), findsOneWidget);
     expect(find.text('I am here and ready to help.'), findsOneWidget);
     expect(find.text('Project context'), findsOneWidget);
     expect(find.text('MicroGrow'), findsOneWidget);
@@ -78,7 +78,7 @@ void main() {
     container
         .read(voiceConversationDockProvider.notifier)
         .show(
-          title: 'Gaia',
+          title: 'Assistant',
           summary:
               'This sounds like a project. I can open Projects or preload a project template.',
           nextStep:
@@ -155,7 +155,7 @@ void main() {
     container
         .read(voiceConversationDockProvider.notifier)
         .show(
-          title: 'Gaia',
+          title: 'Assistant',
           summary: 'I am here and ready to help.',
           nextStep:
               'Ask a short follow-up right here without opening the full screen.',

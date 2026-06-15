@@ -252,7 +252,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
                       textInputAction: TextInputAction.send,
                       decoration: InputDecoration(
                         hintText: dock.transcript.isEmpty
-                            ? 'Ask Gaia what she can do...'
+                            ? 'Ask the assistant what it can do...'
                             : 'Ask a short follow-up about this thread...',
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
@@ -479,7 +479,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         .read(voiceSessionProvider.notifier)
         .beginProcessing(
           owner: VoiceSessionOwner.dock,
-          label: 'Gaia processing',
+          label: 'Assistant processing',
           detail: 'Shaping the follow-up',
           opacity: 0.72,
         );
@@ -520,7 +520,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         }
 
         setState(() {
-          _followUpStatus = 'Gaia is opening $routeLabel.';
+          _followUpStatus = 'Assistant is opening $routeLabel.';
         });
         _handleDockAction(context, action, dock, service, suggestion);
         return;
@@ -536,7 +536,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
 
       if (mounted) {
         setState(() {
-          _followUpStatus = 'Gaia is acting on that follow-up.';
+          _followUpStatus = 'Assistant is acting on that follow-up.';
         });
       }
       _handleDockAction(context, action, dock, service, suggestion);
@@ -563,7 +563,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         .read(voiceSessionProvider.notifier)
         .beginAwaitingFollowUp(
           owner: VoiceSessionOwner.dock,
-          label: 'Gaia ready',
+          label: 'Assistant ready',
           detail: 'Ask another follow-up',
           opacity: 0.64,
         );
@@ -583,7 +583,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
       final session = ref.read(voiceSessionProvider.notifier);
       if (!session.beginListening(
         owner: VoiceSessionOwner.dock,
-        label: 'Gaia listening',
+        label: 'Assistant listening',
         detail: 'Listening for a follow-up',
         opacity: 0.72,
       )) {
@@ -615,7 +615,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
             .read(voiceSessionProvider.notifier)
             .beginAwaitingFollowUp(
               owner: VoiceSessionOwner.dock,
-              label: 'Gaia ready',
+              label: 'Assistant ready',
               detail: 'Ask another follow-up',
               opacity: 0.64,
             );
@@ -633,7 +633,7 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
           .read(voiceSessionProvider.notifier)
           .beginProcessing(
             owner: VoiceSessionOwner.dock,
-            label: 'Gaia captured',
+            label: 'Assistant captured',
             detail: 'Processing the follow-up',
             opacity: 0.84,
           );
@@ -715,9 +715,9 @@ class _VoiceConversationDockState extends ConsumerState<VoiceConversationDock> {
         VoiceAssistantTurnPlan(
           kind: VoiceAssistantTurnKind.dockFollowUp,
           owner: VoiceSessionOwner.dock,
-          speakingLabel: 'Gaia speaking',
+          speakingLabel: 'Assistant speaking',
           speakingDetail: 'Answering the follow-up',
-          followUpLabel: 'Gaia ready',
+          followUpLabel: 'Assistant ready',
           followUpDetail: 'Awaiting the next follow-up',
           text: voiceService.buildSpokenReply(response),
           settings: settingsSnapshot.settings,

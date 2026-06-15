@@ -227,8 +227,11 @@ class LocalVoiceAiAssistService extends VoiceAiAssistService {
         if (transcript.isNotEmpty)
           'Draft title: ${_buildFallbackTitle(transcript)}',
       ],
-      projectContext: context?.projectName ?? request.conversationContext?.projectName,
-      threadContext: context?.threadScopeLabel ?? request.conversationContext?.threadScopeLabel,
+      projectContext:
+          context?.projectName ?? request.conversationContext?.projectName,
+      threadContext:
+          context?.threadScopeLabel ??
+          request.conversationContext?.threadScopeLabel,
     );
   }
 }
@@ -627,7 +630,7 @@ String _conversationSummaryFor({
     if (memoryLabel.isNotEmpty) {
       return 'Okay. I’m with you on $memoryLabel. What would you like to do next?';
     }
-    return 'Okay. I’m here. What would you like Gaia to handle?';
+    return 'Okay. I’m here. What would you like the assistant to handle?';
   }
 
   if (context != null && context.hasMemory) {
@@ -649,8 +652,7 @@ String _conversationSummaryFor({
       'Okay. That sounds like a Codex prompt, and I’ll keep it review-first.',
     VoiceCommandType.idea =>
       'Okay. That sounds like an idea worth parking for later.',
-    null =>
-      'Okay. I heard you, and I can help turn that into the next step.',
+    null => 'Okay. I heard you, and I can help turn that into the next step.',
   };
 }
 
@@ -677,6 +679,6 @@ String _conversationNextStepFor(
       'Say the change you want reviewed, and I’ll keep it safe and concise.',
     VoiceCommandType.idea =>
       'Say where you want to park it, or keep it as a light idea for later.',
-    null => 'Say the next thing you want Gaia to handle.',
+    null => 'Say the next thing you want the assistant to handle.',
   };
 }

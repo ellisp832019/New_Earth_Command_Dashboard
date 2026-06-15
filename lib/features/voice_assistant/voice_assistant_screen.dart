@@ -186,10 +186,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   final TextEditingController _businessNextActionController =
       TextEditingController();
   final TextEditingController _wizardAnswerController = TextEditingController();
-  final TextEditingController _gaiaConversationController =
+  final TextEditingController _assistantConversationController =
       TextEditingController();
   final FocusNode _transcriptFocusNode = FocusNode();
-  final FocusNode _gaiaConversationFocusNode = FocusNode();
+  final FocusNode _assistantConversationFocusNode = FocusNode();
   final FocusNode _wizardAnswerFocusNode = FocusNode();
   late final VoiceSessionNotifier _voiceSessionNotifier;
   late final VoiceAssistantTurnCoordinator _turnCoordinator;
@@ -410,7 +410,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
       _voiceSessionNotifier.beginAwaitingFollowUp(
         owner: VoiceSessionOwner.assistant,
-        label: 'Gaia ready',
+        label: 'Assistant ready',
         detail: 'Review before saving',
         opacity: 0.64,
       );
@@ -422,7 +422,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           return;
         }
 
-        _gaiaConversationFocusNode.requestFocus();
+        _assistantConversationFocusNode.requestFocus();
       });
     }
     if (widget.wakeTriggered || widget.handsfreeTriggered) {
@@ -437,7 +437,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
         _voiceSessionNotifier.beginAwaitingFollowUp(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia ready',
+          label: 'Assistant ready',
           detail: widget.wakeTriggered
               ? 'Wake phrase heard'
               : 'Handsfree capture heard',
@@ -479,7 +479,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           .read(voiceSessionProvider.notifier)
           .beginAwaitingFollowUp(
             owner: VoiceSessionOwner.assistant,
-            label: 'Gaia ready',
+            label: 'Assistant ready',
             detail: widget.wakeTriggered
                 ? 'Wake phrase heard'
                 : 'Handsfree capture heard',
@@ -502,7 +502,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _gaiaBridge.dispose();
     _transcriptController.removeListener(_handleTranscriptChanged);
     _transcriptController.dispose();
-    _gaiaConversationController.dispose();
+    _assistantConversationController.dispose();
     _titleController.dispose();
     _projectVisionController.dispose();
     _projectNextActionController.dispose();
@@ -514,7 +514,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _businessNextActionController.dispose();
     _wizardAnswerController.dispose();
     _transcriptFocusNode.dispose();
-    _gaiaConversationFocusNode.dispose();
+    _assistantConversationFocusNode.dispose();
     _wizardAnswerFocusNode.dispose();
     super.dispose();
   }
@@ -561,9 +561,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       VoiceAssistantTurnPlan(
         kind: VoiceAssistantTurnKind.wake,
         owner: VoiceSessionOwner.assistant,
-        speakingLabel: 'Gaia speaking',
+        speakingLabel: 'Assistant speaking',
         speakingDetail: 'Answering the wake phrase',
-        followUpLabel: 'Gaia ready',
+        followUpLabel: 'Assistant ready',
         followUpDetail: 'Waiting for your next command',
         text: "I'm here. Say task, project, summary, or continue thread.",
         settings: settingsSnapshot.settings,
@@ -997,7 +997,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final session = ref.read(voiceSessionProvider.notifier);
     if (!session.beginListening(
       owner: VoiceSessionOwner.assistant,
-      label: 'Gaia listening',
+      label: 'Assistant listening',
       detail: 'Preparing microphone',
       opacity: 0.72,
     )) {
@@ -1012,7 +1012,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     }
 
     _setVoicePresence(
-      label: 'Gaia listening',
+      label: 'Assistant listening',
       detail: 'I\'m listening',
       isActive: true,
       opacity: 0.72,
@@ -1058,7 +1058,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       });
       session.release(
         owner: VoiceSessionOwner.assistant,
-        label: 'Gaia idle',
+        label: 'Assistant idle',
         detail: 'Microphone unavailable',
       );
       unawaited(_showVoiceDiagnosticsOnce());
@@ -1086,7 +1086,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _speechStatus = 'Listening for your voice...';
     });
     _setVoicePresence(
-      label: 'Gaia listening',
+      label: 'Assistant listening',
       detail: 'Speak your next command',
       isActive: true,
       opacity: 0.84,
@@ -1102,7 +1102,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _speechError = null;
       _isInitializingSpeech = true;
       _speechStatus = preferDesktopBridge
-          ? 'Listening with Gaia. Speak your next command...'
+          ? 'Listening with the assistant. Speak your next command...'
           : 'Arming microphone for conversation...';
       _speechAvailable = true;
       _isListening = true;
@@ -1123,7 +1123,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _usingWindowsVoiceTyping = available;
         _speechStatus = available
             ? 'Microphone ready. Speak your next command.'
-            : 'Windows voice typing could not start. Gaia will use the offline bridge or diagnostics.';
+            : 'Windows voice typing could not start. The assistant will use the offline bridge or diagnostics.';
         _speechError = available
             ? null
             : 'Windows speech is not ready yet. Run Voice diagnostics to check the headset, bridge, and default input device.';
@@ -1131,14 +1131,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       if (available) {
         session.beginListening(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia listening',
+          label: 'Assistant listening',
           detail: 'Speak your next command',
           opacity: 0.82,
         );
       } else {
         return await _startWindowsSpeechToTextCapture(
           preparingStatus:
-              'Windows voice typing could not start. Gaia will use diagnostics and the offline bridge.',
+              'Windows voice typing could not start. The assistant will use diagnostics and the offline bridge.',
           unavailableStatus:
               'Windows speech could not start. Open diagnostics.',
           unavailableError:
@@ -1174,7 +1174,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     if (!available) {
       session.release(
         owner: VoiceSessionOwner.assistant,
-        label: 'Gaia idle',
+        label: 'Assistant idle',
         detail: 'Mic not available',
       );
       unawaited(_showVoiceDiagnosticsOnce());
@@ -1216,7 +1216,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       });
       session.release(
         owner: VoiceSessionOwner.assistant,
-        label: 'Gaia idle',
+        label: 'Assistant idle',
         detail: 'Microphone unavailable',
       );
       unawaited(_showVoiceDiagnosticsOnce());
@@ -1244,7 +1244,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _speechStatus = 'Listening for your voice...';
     });
     _setVoicePresence(
-      label: 'Gaia listening',
+      label: 'Assistant listening',
       detail: 'Speak your next command',
       isActive: true,
       opacity: 0.84,
@@ -1260,7 +1260,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     final session = ref.read(voiceSessionProvider.notifier);
     if (!session.beginListening(
       owner: VoiceSessionOwner.assistant,
-      label: 'Gaia listening',
+      label: 'Assistant listening',
       detail: 'Handsfree conversation',
       opacity: 0.84,
     )) {
@@ -1300,7 +1300,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       if (transcript.isEmpty) {
         session.beginListening(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia listening',
+          label: 'Assistant listening',
           detail: 'Waiting for speech',
           opacity: 0.72,
         );
@@ -1321,8 +1321,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       });
       session.beginProcessing(
         owner: VoiceSessionOwner.assistant,
-        label: 'Gaia captured',
-        detail: 'Sending to Gaia',
+        label: 'Assistant captured',
+        detail: 'Sending to Assistant',
         opacity: 0.84,
       );
 
@@ -1341,7 +1341,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     _handsfreeSessionActive = false;
     session.release(
       owner: VoiceSessionOwner.assistant,
-      label: 'Gaia idle',
+      label: 'Assistant idle',
       detail: 'Ready when you are',
     );
   }
@@ -1371,7 +1371,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     );
   }
 
-  Future<VoiceCommandAssistantResponse?> _sendGaiaConversationTurn(
+  Future<VoiceCommandAssistantResponse?> _sendAssistantConversationTurn(
     String transcript, {
     bool speakReply = true,
     String source = 'typed',
@@ -1447,8 +1447,8 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
 
     setState(() {
       _speechStatus = source == 'handsfree'
-          ? 'Gaia replied. Keep talking or say stop.'
-          : 'Gaia replied. You can keep typing or speak the next turn.';
+          ? 'The assistant replied. Keep talking or say stop.'
+          : 'The assistant replied. You can keep typing or speak the next turn.';
     });
 
     if (speakReply) {
@@ -1466,7 +1466,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         .read(voiceSessionProvider.notifier)
         .beginAwaitingFollowUp(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia ready',
+          label: 'Assistant ready',
           detail: source == 'handsfree'
               ? 'Handsfree conversation active'
               : 'Ready for your next turn',
@@ -1485,7 +1485,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     ref
         .read(voiceConversationDockProvider.notifier)
         .show(
-          title: 'Gaia',
+          title: 'Assistant',
           summary: response.summary,
           nextStep: response.nextStep,
           transcript: transcript,
@@ -1497,21 +1497,21 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
   }
 
   Future<void> _handleHandsfreeConversationTurn(String transcript) async {
-    await _sendGaiaConversationTurn(
+    await _sendAssistantConversationTurn(
       transcript,
       speakReply: true,
       source: 'handsfree',
     );
   }
 
-  Future<void> _submitTypedGaiaConversation() async {
-    final transcript = _gaiaConversationController.text.trim();
+  Future<void> _submitTypedAssistantConversation() async {
+    final transcript = _assistantConversationController.text.trim();
     if (transcript.isEmpty) {
       return;
     }
 
-    _gaiaConversationController.clear();
-    await _sendGaiaConversationTurn(
+    _assistantConversationController.clear();
+    await _sendAssistantConversationTurn(
       transcript,
       speakReply: true,
       source: 'typed',
@@ -1594,7 +1594,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           .read(voiceSessionProvider.notifier)
           .release(
             owner: VoiceSessionOwner.assistant,
-            label: 'Gaia idle',
+            label: 'Assistant idle',
             detail: 'Reviewing dictation',
           );
       _usingWindowsVoiceTyping = false;
@@ -1614,7 +1614,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         .read(voiceSessionProvider.notifier)
         .release(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia idle',
+          label: 'Assistant idle',
           detail: 'Stopped listening',
         );
     _usingWindowsVoiceTyping = false;
@@ -1634,7 +1634,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             'Dictation cancelled in the app. If Windows voice typing is still open, press Win + H to close it.';
       });
       _setVoicePresence(
-        label: 'Gaia idle',
+        label: 'Assistant idle',
         detail: 'Listening cancelled',
         isActive: false,
         opacity: 0.28,
@@ -1656,7 +1656,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         .read(voiceSessionProvider.notifier)
         .release(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia idle',
+          label: 'Assistant idle',
           detail: 'Capture cancelled',
         );
     _usingWindowsVoiceTyping = false;
@@ -1699,7 +1699,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           : 'Speech capture paused. Try again or open diagnostics.';
     });
     _setVoicePresence(
-      label: 'Gaia idle',
+      label: 'Assistant idle',
       detail: 'Speech paused',
       isActive: false,
       opacity: 0.28,
@@ -1756,7 +1756,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       );
       final editableSuggestion = _buildEditableSuggestion();
       final normalizedTranscript = editableSuggestion?.transcript ?? transcript;
-      final gaiaDecision = await _gaiaBridge.sendCommand(
+      final assistantDecision = await _gaiaBridge.sendCommand(
         GaiaCommand(
           intent: _currentType.name,
           module: 'voice_assistant',
@@ -1772,19 +1772,21 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         ),
       );
 
-      if (gaiaDecision.isBlocked) {
+      if (assistantDecision.isBlocked) {
         if (!mounted) {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('GAIA blocked this command: ${gaiaDecision.reason}'),
+            content: Text(
+              'Assistant blocked this command: ${assistantDecision.reason}',
+            ),
           ),
         );
         return;
       }
 
-      if (gaiaDecision.isConfirm) {
+      if (assistantDecision.isConfirm) {
         if (!mounted) {
           return;
         }
@@ -1794,7 +1796,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
             return AlertDialog(
               title: const Text('Confirm command'),
               content: Text(
-                'GAIA wants confirmation before saving this command. ${gaiaDecision.reason}',
+                'Assistant wants confirmation before saving this command. ${assistantDecision.reason}',
               ),
               actions: <Widget>[
                 TextButton(
@@ -1816,7 +1818,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Save canceled by GAIA confirmation.'),
+              content: Text('Save canceled by assistant confirmation.'),
             ),
           );
           return;
@@ -1870,7 +1872,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         _speechStatus = 'Saved locally. Ready for the next move.';
       });
       _setVoicePresence(
-        label: 'Gaia ready',
+        label: 'Assistant ready',
         detail: 'Saved and ready',
         isActive: false,
         opacity: 0.32,
@@ -1920,7 +1922,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           : 'Transcript pasted. Review before saving.';
     });
     _setVoicePresence(
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Transcript pasted',
       isActive: false,
       opacity: 0.32,
@@ -1949,7 +1951,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _speechStatus = 'Codex prompt prepared for review.';
     });
     _setVoicePresence(
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Codex prompt prepared',
       isActive: false,
       opacity: 0.32,
@@ -2023,7 +2025,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _speechStatus = 'Template loaded. Review before saving.';
     });
     _setVoicePresence(
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Template loaded',
       isActive: false,
       opacity: 0.32,
@@ -2051,7 +2053,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
       _speechStatus = 'History item loaded. Review before saving.';
     });
     _setVoicePresence(
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'History item loaded',
       isActive: false,
       opacity: 0.32,
@@ -2190,7 +2192,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           'Continuing the current voice thread. Start the next step here.';
     });
     _setVoicePresence(
-      label: 'Gaia thread',
+      label: 'Assistant thread',
       detail: 'Continuing voice conversation',
       isActive: true,
       opacity: 0.74,
@@ -2212,7 +2214,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     });
     ref.read(voiceConversationThreadProvider.notifier).startFresh();
     _setVoicePresence(
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Started a fresh thread',
       isActive: false,
       opacity: 0.32,
@@ -2261,9 +2263,9 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         VoiceAssistantTurnPlan(
           kind: VoiceAssistantTurnKind.briefing,
           owner: VoiceSessionOwner.assistant,
-          speakingLabel: 'Gaia speaking',
+          speakingLabel: 'Assistant speaking',
           speakingDetail: 'Reading back the current response',
-          followUpLabel: 'Gaia ready',
+          followUpLabel: 'Assistant ready',
           followUpDetail: 'Waiting for your next command',
           text: text,
           settings: settingsSnapshot.settings,
@@ -2337,7 +2339,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
     ref
         .read(voiceSessionProvider.notifier)
         .updatePresence(
-          label: 'Gaia ready',
+          label: 'Assistant ready',
           detail: 'Voice output stopped',
           isActive: true,
           opacity: 0.64,
@@ -2581,38 +2583,41 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
               const SizedBox(height: 16),
             ],
             Card(
-              key: const Key('voiceGaiaChatCard'),
+              key: const Key('voiceAssistantChatCard'),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Ask Gaia', style: theme.textTheme.titleMedium),
+                    Text(
+                      'Ask the assistant',
+                      style: theme.textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 6),
                     Text(
-                      'Type a question here and Gaia will answer from the same local conversation runtime used by voice.',
+                      'Type a question here and the assistant will answer from the same local conversation runtime used by voice.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
                     TextField(
-                      key: const Key('voiceGaiaChatField'),
-                      controller: _gaiaConversationController,
-                      focusNode: _gaiaConversationFocusNode,
+                      key: const Key('voiceAssistantChatField'),
+                      controller: _assistantConversationController,
+                      focusNode: _assistantConversationFocusNode,
                       minLines: 2,
                       maxLines: 4,
                       textInputAction: TextInputAction.send,
                       decoration: InputDecoration(
-                        labelText: 'Message Gaia',
+                        labelText: 'Message Assistant',
                         hintText:
                             'Ask for a summary, next step, or thread follow-up...',
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          key: const Key('voiceGaiaChatSendIconButton'),
-                          onPressed: _submitTypedGaiaConversation,
+                          key: const Key('voiceAssistantChatSendIconButton'),
+                          onPressed: _submitTypedAssistantConversation,
                           icon: const Icon(Icons.send_outlined),
                         ),
                       ),
-                      onSubmitted: (_) => _submitTypedGaiaConversation(),
+                      onSubmitted: (_) => _submitTypedAssistantConversation(),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -2620,10 +2625,10 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                       runSpacing: 8,
                       children: [
                         FilledButton.tonalIcon(
-                          key: const Key('voiceGaiaChatSendButton'),
-                          onPressed: _submitTypedGaiaConversation,
+                          key: const Key('voiceAssistantChatSendButton'),
+                          onPressed: _submitTypedAssistantConversation,
                           icon: const Icon(Icons.send_outlined),
-                          label: const Text('Send to Gaia'),
+                          label: const Text('Send to Assistant'),
                         ),
                       ],
                     ),
@@ -3071,7 +3076,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'One answer at a time. Gaia will move to the next step after each submission.',
+                              'One answer at a time. The assistant will move to the next step after each submission.',
                               style: theme.textTheme.bodySmall,
                             ),
                             const SizedBox(height: 12),
@@ -3342,7 +3347,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 briefing.memorySummary ??
-                                    'Gaia is building memory from the current thread.',
+                                    'The assistant is building memory from the current thread.',
                                 style: theme.textTheme.bodySmall,
                               ),
                               if (briefing.memoryHighlights.isNotEmpty) ...[
@@ -3369,7 +3374,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 briefing.plannerSummary ??
-                                    'Gaia is ready to suggest the next useful move.',
+                                    'The assistant is ready to suggest the next useful move.',
                                 style: theme.textTheme.bodySmall,
                               ),
                               if (briefing.plannerSteps.isNotEmpty) ...[
@@ -3835,7 +3840,7 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
                             if (activeSuggestion.usedWakePhrase) ...[
                               const SizedBox(height: 6),
                               Text(
-                                'Wake phrase detected: ${activeSuggestion.wakePhrase ?? 'Gaia'}',
+                                'Wake phrase detected: ${activeSuggestion.wakePhrase ?? 'Assistant'}',
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -4007,13 +4012,13 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
           .read(voiceSessionProvider.notifier)
           .release(
             owner: VoiceSessionOwner.assistant,
-            label: 'Gaia ready',
+            label: 'Assistant ready',
             detail: route != null
                 ? 'Opening $destinationLabel'
                 : 'Opening dashboard',
           );
       _setVoicePresence(
-        label: 'Gaia ready',
+        label: 'Assistant ready',
         detail: route != null
             ? 'Opening $destinationLabel'
             : 'Opening dashboard',
@@ -4048,14 +4053,14 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen> {
         .read(voiceSessionProvider.notifier)
         .beginProcessing(
           owner: VoiceSessionOwner.assistant,
-          label: 'Gaia captured',
+          label: 'Assistant captured',
           detail: source == 'speech'
               ? 'Review transcript'
               : 'Review transcript',
           opacity: 0.82,
         );
     _setVoicePresence(
-      label: 'Gaia captured',
+      label: 'Assistant captured',
       detail: 'Review transcript',
       isActive: true,
       opacity: 0.82,

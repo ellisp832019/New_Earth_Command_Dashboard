@@ -29,8 +29,6 @@ class _KnowledgeLibraryDockHostState
     extends ConsumerState<KnowledgeLibraryDockHost>
     with SingleTickerProviderStateMixin {
   late final KnowledgeLibraryRepository _repository;
-  late DockPosition _position;
-  late DockAnchor _floatingAnchor;
   late final AnimationController _floatingBreatheController;
   late Future<_KnowledgeLibraryDockSnapshot> _snapshotFuture;
 
@@ -38,18 +36,16 @@ class _KnowledgeLibraryDockHostState
   void initState() {
     super.initState();
     _repository = KnowledgeLibraryRepository();
-    final layoutState = ref.read(moduleHubStateRepositoryProvider).loadDockLayoutState();
-    _position =
-        layoutState.positionFor(_knowledgeLibraryDockModuleId) ?? DockPosition.right;
-    _floatingAnchor =
-        layoutState.floatingAnchorFor(_knowledgeLibraryDockModuleId) ??
-        DockAnchor.bottomRight;
     _floatingBreatheController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3000),
     );
     _snapshotFuture = _loadSnapshot();
-    _syncFloatingAnimation();
+    final layoutState = ref.read(dockLayoutStateProvider);
+    final initialPosition =
+        layoutState.positionFor(_knowledgeLibraryDockModuleId) ??
+        DockPosition.right;
+    _syncFloatingAnimationFor(initialPosition);
   }
 
   @override
@@ -66,6 +62,14 @@ class _KnowledgeLibraryDockHostState
       return const SizedBox.shrink();
     }
 
+    final layoutState = ref.watch(dockLayoutStateProvider);
+    final position =
+        layoutState.positionFor(_knowledgeLibraryDockModuleId) ??
+        DockPosition.right;
+    final floatingAnchor =
+        layoutState.floatingAnchorFor(_knowledgeLibraryDockModuleId) ??
+        DockAnchor.bottomRight;
+
     final currentPath = widget.currentPath ?? '';
     if (currentPath == RouteNames.knowledgeLibrary ||
         currentPath.startsWith('${RouteNames.knowledgeLibrary}/')) {
@@ -75,39 +79,56 @@ class _KnowledgeLibraryDockHostState
     return FutureBuilder<_KnowledgeLibraryDockSnapshot>(
       future: _snapshotFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        final hasData = snapshot.hasData;
+        final hasError = snapshot.hasError;
+        if (!hasData && !hasError) {
           return const SizedBox.shrink();
         }
 
-        final data = snapshot.data!;
-        final accent = data.health.isHealthy
-            ? AppColours.darkSuccess
-            : AppColours.darkAmber;
-        final body = _KnowledgeLibraryDockBody(
-          snapshot: data,
-          accent: accent,
-          position: _position,
-          floating: _position == DockPosition.floating,
-          onOpenLibrary: () => context.go(RouteNames.knowledgeLibrary),
-          onOpenRepoResearch: () => context.push(RouteNames.repoResearchEngine),
-          onRefresh: _refresh,
-          onPositionSelected: _savePosition,
-          onOpenFailureReport: data.extractionStatus.reportPath.isEmpty
-              ? null
-              : () async {
-                  await _repository.openFailureReport(
-                    data.extractionStatus.reportPath,
-                  );
-                },
-        );
+        final floating = position == DockPosition.floating;
+        final body = hasData
+            ? _KnowledgeLibraryDockBody(
+                snapshot: snapshot.data!,
+                accent: snapshot.data!.health.isHealthy
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
+                position: position,
+                floating: floating,
+                onOpenLibrary: () => context.go(RouteNames.knowledgeLibrary),
+                onOpenRepoResearch: () =>
+                    context.push(RouteNames.repoResearchEngine),
+                onRefresh: _refresh,
+                onPositionSelected: _savePosition,
+                onOpenFailureReport:
+                    snapshot.data!.extractionStatus.reportPath.isEmpty
+                    ? null
+                    : () async {
+                        await _repository.openFailureReport(
+                          snapshot.data!.extractionStatus.reportPath,
+                        );
+                      },
+              )
+            : _KnowledgeLibraryDockFallbackBody(
+                errorMessage:
+                    'The local knowledge service at 127.0.0.1:8787 is not ready yet.',
+                position: position,
+                floating: floating,
+                onOpenLibrary: () => context.go(RouteNames.knowledgeLibrary),
+                onOpenRepoResearch: () =>
+                    context.push(RouteNames.repoResearchEngine),
+                onRefresh: _refresh,
+                onPositionSelected: _savePosition,
+              );
 
-        if (_position == DockPosition.floating) {
+        if (floating) {
           return Positioned.fill(
             child: SafeArea(
               child: _FloatingDockFrame(
-                anchor: _floatingAnchor,
+                anchor: floatingAnchor,
                 breathe: _floatingBreatheController,
-                accentColor: accent,
+                accentColor: hasData && snapshot.data!.health.isHealthy
+                    ? AppColours.darkSuccess
+                    : AppColours.darkAmber,
                 onDraggedOnce: _markFloatingDragged,
                 onAnchorChanged: _saveFloatingAnchor,
                 child: body,
@@ -116,37 +137,28 @@ class _KnowledgeLibraryDockHostState
           );
         }
 
-        return switch (_position) {
+        return switch (position) {
           DockPosition.left => Positioned(
             left: 20,
             bottom: 20,
-            child: SafeArea(
-              child: SizedBox(width: 380, child: body),
-            ),
+            child: SafeArea(child: SizedBox(width: 380, child: body)),
           ),
           DockPosition.right => Positioned(
             right: 20,
             bottom: 20,
-            child: SafeArea(
-              child: SizedBox(width: 380, child: body),
-            ),
+            child: SafeArea(child: SizedBox(width: 380, child: body)),
           ),
           DockPosition.bottom => Positioned(
             left: 20,
             right: 20,
             bottom: 20,
             child: SafeArea(
-              child: Center(
-                child: SizedBox(width: 380, child: body),
-              ),
+              child: Center(child: SizedBox(width: 380, child: body)),
             ),
           ),
           DockPosition.fullscreen => Positioned.fill(
             child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: body,
-              ),
+              child: Padding(padding: const EdgeInsets.all(20), child: body),
             ),
           ),
           DockPosition.floating => const SizedBox.shrink(),
@@ -175,8 +187,8 @@ class _KnowledgeLibraryDockHostState
     });
   }
 
-  void _syncFloatingAnimation() {
-    if (_position == DockPosition.floating) {
+  void _syncFloatingAnimationFor(DockPosition position) {
+    if (position == DockPosition.floating) {
       if (!_floatingBreatheController.isAnimating) {
         _floatingBreatheController.repeat(reverse: true);
       }
@@ -190,19 +202,13 @@ class _KnowledgeLibraryDockHostState
   }
 
   Future<void> _savePosition(DockPosition position) async {
-    if (_position == position) {
-      return;
-    }
-
-    setState(() {
-      _position = position;
-    });
-    _syncFloatingAnimation();
-
     await ref
-        .read(moduleHubStateRepositoryProvider)
-        .saveDockPosition(_knowledgeLibraryDockModuleId, position);
-    ref.read(moduleEventBusProvider).publish(
+        .read(dockLayoutStateProvider.notifier)
+        .setPosition(_knowledgeLibraryDockModuleId, position);
+    _syncFloatingAnimationFor(position);
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
           ModuleEvent(
             moduleId: _knowledgeLibraryDockModuleId,
             type: ModuleEventType.dockPositionChanged,
@@ -214,20 +220,12 @@ class _KnowledgeLibraryDockHostState
   }
 
   Future<void> _saveFloatingAnchor(DockAnchor anchor) async {
-    if (_floatingAnchor == anchor) {
-      return;
-    }
-
-    setState(() {
-      _floatingAnchor = anchor;
-    });
-
-    final repository = ref.read(moduleHubStateRepositoryProvider);
-    final current = repository.loadDockLayoutState();
-    await repository.saveDockLayoutState(
-      current.setFloatingAnchor(_knowledgeLibraryDockModuleId, anchor),
-    );
-    ref.read(moduleEventBusProvider).publish(
+    await ref
+        .read(dockLayoutStateProvider.notifier)
+        .setFloatingAnchor(_knowledgeLibraryDockModuleId, anchor);
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
           ModuleEvent(
             moduleId: _knowledgeLibraryDockModuleId,
             type: ModuleEventType.dockPositionChanged,
@@ -239,12 +237,137 @@ class _KnowledgeLibraryDockHostState
   }
 
   void _markFloatingDragged() {
-    if (_position != DockPosition.floating) {
+    final position =
+        ref
+            .read(dockLayoutStateProvider)
+            .positionFor(_knowledgeLibraryDockModuleId) ??
+        DockPosition.right;
+    if (position != DockPosition.floating) {
       return;
     }
     if (!_floatingBreatheController.isAnimating) {
       _floatingBreatheController.repeat(reverse: true);
     }
+  }
+}
+
+class _KnowledgeLibraryDockFallbackBody extends StatelessWidget {
+  const _KnowledgeLibraryDockFallbackBody({
+    required this.errorMessage,
+    required this.position,
+    required this.floating,
+    required this.onOpenLibrary,
+    required this.onOpenRepoResearch,
+    required this.onRefresh,
+    required this.onPositionSelected,
+  });
+
+  final String errorMessage;
+  final DockPosition position;
+  final bool floating;
+  final VoidCallback onOpenLibrary;
+  final VoidCallback onOpenRepoResearch;
+  final VoidCallback onRefresh;
+  final ValueChanged<DockPosition> onPositionSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColours.darkSurfaceAlt.withValues(
+        alpha: floating ? 0.86 : 0.93,
+      ),
+      elevation: floating ? 22 : 11,
+      shadowColor: Colors.black.withValues(alpha: floating ? 0.38 : 0.3),
+      borderRadius: BorderRadius.circular(22),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 340),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: AppColours.darkOutline.withValues(alpha: 0.92),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.library_books_outlined,
+                        color: AppColours.darkAmber,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Knowledge Library Dock',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: AppColours.darkText,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                      _StatusPill(
+                        label: 'Setup needed',
+                        accent: AppColours.darkAmber,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    errorMessage,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'The dock stays visible so the third panel does not disappear when the local service is offline.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _DockPositionChipRow(
+                        position: position,
+                        onPositionSelected: onPositionSelected,
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: onOpenLibrary,
+                        icon: const Icon(Icons.menu_book_outlined),
+                        label: const Text('Open Library'),
+                      ),
+                      FilledButton.icon(
+                        onPressed: onOpenRepoResearch,
+                        icon: const Icon(Icons.travel_explore_outlined),
+                        label: const Text('Repo Research'),
+                      ),
+                      TextButton.icon(
+                        onPressed: onRefresh,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Refresh'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -293,7 +416,9 @@ class _KnowledgeLibraryDockBody extends StatelessWidget {
         : snapshot.health.message;
 
     return Material(
-      color: AppColours.darkSurfaceAlt.withValues(alpha: floating ? 0.86 : 0.93),
+      color: AppColours.darkSurfaceAlt.withValues(
+        alpha: floating ? 0.86 : 0.93,
+      ),
       elevation: floating ? 22 : 11,
       shadowColor: Colors.black.withValues(alpha: floating ? 0.38 : 0.3),
       borderRadius: BorderRadius.circular(22),
@@ -321,7 +446,8 @@ class _KnowledgeLibraryDockBody extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Knowledge Library Dock',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
                                 color: AppColours.darkText,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -334,15 +460,24 @@ class _KnowledgeLibraryDockBody extends StatelessWidget {
                   Text(
                     statusDetail,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColours.darkMutedText,
-                          height: 1.35,
-                        ),
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _DockStatLine(label: 'PDFs', value: '${stats.totalPdfs}'),
-                  _DockStatLine(label: 'Text extractable', value: '${stats.textExtractable}'),
-                  _DockStatLine(label: 'OCR needed', value: '${stats.ocrRequired}'),
-                  _DockStatLine(label: 'Audio generated', value: '${stats.audioGenerated}'),
+                  _DockStatLine(
+                    label: 'Text extractable',
+                    value: '${stats.textExtractable}',
+                  ),
+                  _DockStatLine(
+                    label: 'OCR needed',
+                    value: '${stats.ocrRequired}',
+                  ),
+                  _DockStatLine(
+                    label: 'Audio generated',
+                    value: '${stats.audioGenerated}',
+                  ),
                   _DockStatLine(
                     label: 'Extraction',
                     value:
@@ -446,9 +581,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColours.darkText,
-              fontWeight: FontWeight.w700,
-            ),
+          color: AppColours.darkText,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -548,10 +683,7 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
             final bob = _isDragging
                 ? 0.0
                 : (Curves.easeInOut.transform(widget.breathe.value) - 0.5) * 8;
-            return Transform.translate(
-              offset: Offset(0, bob),
-              child: child,
-            );
+            return Transform.translate(offset: Offset(0, bob), child: child);
           },
           child: Stack(
             clipBehavior: Clip.none,
@@ -561,8 +693,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
                 accentColor: widget.accentColor,
               ),
               AnimatedPositioned(
-                duration:
-                    _isDragging ? Duration.zero : const Duration(milliseconds: 420),
+                duration: _isDragging
+                    ? Duration.zero
+                    : const Duration(milliseconds: 420),
                 curve: _isDragging ? Curves.linear : Curves.easeOutBack,
                 left: clampedOffset.dx,
                 top: clampedOffset.dy,
@@ -619,7 +752,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     if (available < _floatingDockMinWidth) {
       return _floatingDockMinWidth;
     }
-    return available.clamp(_floatingDockMinWidth, _floatingDockMaxWidth).toDouble();
+    return available
+        .clamp(_floatingDockMinWidth, _floatingDockMaxWidth)
+        .toDouble();
   }
 
   void _handlePanStart(DragStartDetails details) {
@@ -643,13 +778,10 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     required double frameWidth,
     required double frameHeight,
   }) async {
-    final currentOffset = (_baseOffsetForAnchor(
-          widget.anchor,
-          size,
-          frameWidth,
-          frameHeight,
-        ) +
-        _dragOffset).clampToBounds(size, frameWidth, frameHeight);
+    final currentOffset =
+        (_baseOffsetForAnchor(widget.anchor, size, frameWidth, frameHeight) +
+                _dragOffset)
+            .clampToBounds(size, frameWidth, frameHeight);
 
     final snappedAnchor = _nearestAnchorFor(
       currentOffset: currentOffset,
@@ -666,12 +798,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     );
 
     setState(() {
-      _dragOffset = snappedOffset - _baseOffsetForAnchor(
-        widget.anchor,
-        size,
-        frameWidth,
-        frameHeight,
-      );
+      _dragOffset =
+          snappedOffset -
+          _baseOffsetForAnchor(widget.anchor, size, frameWidth, frameHeight);
       _isDragging = false;
     });
 
@@ -730,10 +859,7 @@ class _FloatingFrameShell extends StatelessWidget {
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(2), child: child),
         ),
       ),
     );
@@ -777,10 +903,10 @@ class _FloatingDragHandle extends StatelessWidget {
             Text(
               'Drag',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
+                color: AppColours.darkSecondary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
             ),
           ],
         ),
@@ -806,7 +932,10 @@ Offset _baseOffsetForAnchor(
       .toDouble();
 
   return switch (anchor) {
-    DockAnchor.topLeft => const Offset(_floatingDockMargin, _floatingDockMargin),
+    DockAnchor.topLeft => const Offset(
+      _floatingDockMargin,
+      _floatingDockMargin,
+    ),
     DockAnchor.topRight => Offset(maxX, _floatingDockMargin),
     DockAnchor.middleLeft => Offset(_floatingDockMargin, midY),
     DockAnchor.middleRight => Offset(maxX, midY),
@@ -875,11 +1004,7 @@ DockAnchor _nearestAnchorFor({
 }
 
 extension on Offset {
-  Offset clampToBounds(
-    Size size,
-    double frameWidth,
-    double frameHeight,
-  ) {
+  Offset clampToBounds(Size size, double frameWidth, double frameHeight) {
     final minX = _floatingDockMargin;
     final minY = _floatingDockMargin;
     final maxX = (size.width - frameWidth - _floatingDockMargin)

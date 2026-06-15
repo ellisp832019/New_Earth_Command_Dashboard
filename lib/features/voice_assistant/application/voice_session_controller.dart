@@ -63,7 +63,7 @@ class VoiceSessionState {
   const VoiceSessionState.idle()
     : owner = VoiceSessionOwner.none,
       phase = VoiceSessionPhase.idle,
-      label = 'Gaia idle',
+      label = 'Assistant idle',
       detail = 'Ready when you are',
       isActive = false,
       opacity = 0.28;
@@ -262,7 +262,7 @@ class VoiceSessionNotifier extends Notifier<VoiceSessionState> {
       VoiceSessionState(
         owner: VoiceSessionOwner.none,
         phase: VoiceSessionPhase.error,
-        label: 'Gaia idle',
+        label: 'Assistant idle',
         detail: detail,
         isActive: false,
         opacity: 0.28,
@@ -272,7 +272,7 @@ class VoiceSessionNotifier extends Notifier<VoiceSessionState> {
 
   void release({
     required VoiceSessionOwner owner,
-    String label = 'Gaia idle',
+    String label = 'Assistant idle',
     String detail = 'Ready when you are',
     double opacity = 0.28,
   }) {

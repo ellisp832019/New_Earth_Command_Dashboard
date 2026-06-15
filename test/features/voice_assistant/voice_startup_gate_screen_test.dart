@@ -23,8 +23,11 @@ void main() {
     );
 
     expect(find.text('No microphone or headset found'), findsOneWidget);
-    expect(find.textContaining('No audio input is showing up yet'), findsOneWidget);
-    expect(find.text('What Gaia sees'), findsOneWidget);
+    expect(
+      find.textContaining('No audio input is showing up yet'),
+      findsOneWidget,
+    );
+    expect(find.text('What the assistant sees'), findsOneWidget);
     expect(find.text('Capture path'), findsOneWidget);
     expect(
       find.textContaining('falls back to the local microphone recognizer'),
@@ -42,10 +45,7 @@ void main() {
       isReady: false,
       message: 'Checking for a connected headset...',
       devices: <VoiceInputDevice>[
-        VoiceInputDevice(
-          name: 'USB Audio Device',
-          identifier: 'USB\\ROOT',
-        ),
+        VoiceInputDevice(name: 'USB Audio Device', identifier: 'USB\\ROOT'),
       ],
     );
 
@@ -56,12 +56,12 @@ void main() {
             builder: (context) {
               return Consumer(
                 builder: (context, ref, _) {
-                  final landingRoute = ref.watch(voiceStartupGateLandingProvider);
+                  final landingRoute = ref.watch(
+                    voiceStartupGateLandingProvider,
+                  );
                   return Column(
                     children: [
-                      Expanded(
-                        child: VoiceStartupGateScreen(result: result),
-                      ),
+                      Expanded(child: VoiceStartupGateScreen(result: result)),
                       Text('Landing: ${landingRoute ?? "none"}'),
                     ],
                   );
@@ -79,9 +79,7 @@ void main() {
     expect(find.text('Landing: ${RouteNames.voiceAssistant}'), findsOneWidget);
   });
 
-  testWidgets('no voice requests the dashboard landing', (
-    tester,
-  ) async {
+  testWidgets('no voice requests the dashboard landing', (tester) async {
     const result = VoiceStartupGateResult(
       isReady: false,
       message: 'Checking for a connected headset...',
@@ -96,9 +94,7 @@ void main() {
               final landingRoute = ref.watch(voiceStartupGateLandingProvider);
               return Column(
                 children: [
-                  Expanded(
-                    child: VoiceStartupGateScreen(result: result),
-                  ),
+                  Expanded(child: VoiceStartupGateScreen(result: result)),
                   Text('Landing: ${landingRoute ?? "none"}'),
                 ],
               );

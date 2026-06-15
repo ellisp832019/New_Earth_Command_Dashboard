@@ -135,21 +135,21 @@ class _VoiceStartupGateScreenState
   String _explanationForResult(VoiceStartupGateResult result) {
     return switch (result.resolvedState) {
       VoiceStartupGateState.ready =>
-        'Gaia can start hands-free voice with the headset you connected.',
+        'The assistant can start hands-free voice with the headset you connected.',
       VoiceStartupGateState.noDevices =>
         'No audio input is showing up yet. Connect a Bluetooth headset or headset microphone, then try again.',
       VoiceStartupGateState.microphoneOnly =>
         'Windows can see a microphone, but not one that looks like a headset. If this is your headset mic, choose Have Voice.',
       VoiceStartupGateState.checkFailed =>
-        'Gaia could not verify the audio devices from Windows right now. Open diagnostics to check the offline bridge and default input path.',
+        'The assistant could not verify the audio devices from Windows right now. Open diagnostics to check the offline bridge and default input path.',
       VoiceStartupGateState.bypassed =>
-        'The startup gate is bypassed on this platform, so Gaia will continue without blocking.',
+        'The startup gate is bypassed on this platform, so the assistant will continue without blocking.',
     };
   }
 
   String _nextStepForResult(VoiceStartupGateResult result) {
     return switch (result.resolvedState) {
-      VoiceStartupGateState.ready => 'You can continue into Gaia now.',
+      VoiceStartupGateState.ready => 'You can continue into the assistant now.',
       VoiceStartupGateState.noDevices =>
         'If a headset is already connected, unplug and reconnect it, then retry.',
       VoiceStartupGateState.microphoneOnly =>
@@ -187,7 +187,7 @@ class _VoiceStartupGateScreenState
                     Text(result.message, style: theme.textTheme.bodyLarge),
                     const SizedBox(height: 8),
                     Text(
-                      'Gaia keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
+                      'The assistant keeps checking while this screen is open, so you can connect the headset and continue without restarting.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 14),
@@ -198,7 +198,7 @@ class _VoiceStartupGateScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'What Gaia sees',
+                              'What the assistant sees',
                               style: theme.textTheme.titleSmall,
                             ),
                             const SizedBox(height: 6),
@@ -289,9 +289,7 @@ class _VoiceStartupGateScreenState
                                   voiceAssistantEnabled: true,
                                 );
                             ref
-                                .read(
-                                  voiceStartupGateLandingProvider.notifier,
-                                )
+                                .read(voiceStartupGateLandingProvider.notifier)
                                 .requestVoiceAssistant();
                           },
                           icon: const Icon(Icons.headset_mic_outlined),
@@ -305,9 +303,7 @@ class _VoiceStartupGateScreenState
                                   voiceAssistantEnabled: false,
                                 );
                             ref
-                                .read(
-                                  voiceStartupGateLandingProvider.notifier,
-                                )
+                                .read(voiceStartupGateLandingProvider.notifier)
                                 .requestDashboard();
                           },
                           icon: const Icon(Icons.volume_off_outlined),
@@ -322,12 +318,12 @@ class _VoiceStartupGateScreenState
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Gaia keeps rechecking while this screen is open, and you can still use diagnostics or bypass if your headset mic is the correct input.',
+                      'The assistant keeps rechecking while this screen is open, and you can still use diagnostics or bypass if your headset mic is the correct input.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'If your headset shows up as a plain microphone, you can still open Gaia and use it as the input device.',
+                      'If your headset shows up as a plain microphone, you can still open the assistant and use it as the input device.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),

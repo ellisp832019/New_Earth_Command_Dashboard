@@ -87,9 +87,9 @@ void main() {
         VoiceAssistantTurnPlan(
           kind: VoiceAssistantTurnKind.briefing,
           owner: VoiceSessionOwner.assistant,
-          speakingLabel: 'Gaia speaking',
+          speakingLabel: 'Assistant speaking',
           speakingDetail: 'Reading back the response',
-          followUpLabel: 'Gaia ready',
+          followUpLabel: 'Assistant ready',
           followUpDetail: 'Waiting for your next command',
           text: 'Task captured. Next: review the category and save locally.',
           settings: settings,
@@ -111,7 +111,7 @@ void main() {
         container.read(voiceSessionProvider).phase,
         VoiceSessionPhase.awaitingFollowUp,
       );
-      expect(container.read(voiceSessionProvider).label, 'Gaia ready');
+      expect(container.read(voiceSessionProvider).label, 'Assistant ready');
     },
   );
 

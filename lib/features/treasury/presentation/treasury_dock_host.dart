@@ -28,22 +28,19 @@ class TreasuryDockHost extends ConsumerStatefulWidget {
 
 class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
     with SingleTickerProviderStateMixin {
-  late DockPosition _position;
-  late DockAnchor _floatingAnchor;
   late final AnimationController _floatingBreatheController;
 
   @override
   void initState() {
     super.initState();
-    final layoutState = ref.read(moduleHubStateRepositoryProvider).loadDockLayoutState();
-    _position = layoutState.positionFor(_treasuryDockModuleId) ?? DockPosition.left;
-    _floatingAnchor =
-        layoutState.floatingAnchorFor(_treasuryDockModuleId) ?? DockAnchor.bottomLeft;
     _floatingBreatheController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3200),
     );
-    _syncFloatingAnimation();
+    final layoutState = ref.read(dockLayoutStateProvider);
+    final initialPosition =
+        layoutState.positionFor(_treasuryDockModuleId) ?? DockPosition.left;
+    _syncFloatingAnimationFor(initialPosition);
   }
 
   @override
@@ -58,6 +55,13 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
     if (width < 1280) {
       return const SizedBox.shrink();
     }
+
+    final layoutState = ref.watch(dockLayoutStateProvider);
+    final position =
+        layoutState.positionFor(_treasuryDockModuleId) ?? DockPosition.left;
+    final floatingAnchor =
+        layoutState.floatingAnchorFor(_treasuryDockModuleId) ??
+        DockAnchor.bottomLeft;
 
     final currentPath = widget.currentPath ?? '';
     if (currentPath == RouteNames.treasury ||
@@ -75,31 +79,35 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
             ? AppColours.darkSuccess
             : AppColours.darkAmber;
         final stateCounts = {
-          for (final summary in snapshot.stateSummaries) summary.kind: summary.count,
+          for (final summary in snapshot.stateSummaries)
+            summary.kind: summary.count,
         };
         final body = _TreasuryDockBody(
           snapshot: snapshot,
           accent: accent,
           stateCounts: stateCounts,
-          position: _position,
-          floating: _position == DockPosition.floating,
+          position: position,
+          floating: position == DockPosition.floating,
           onOpenTreasury: () => context.go(RouteNames.treasury),
-          onOpenWeeklyRitual: () =>
-              context.push(RouteNames.treasuryWizardFor(
-            TreasuryWizardFlow.weeklyRitual.routeValue,
-          )),
-          onOpenMonthlySummary: () => context.push(RouteNames.treasuryMonthlySummary),
+          onOpenWeeklyRitual: () => context.push(
+            RouteNames.treasuryWizardFor(
+              TreasuryWizardFlow.weeklyRitual.routeValue,
+            ),
+          ),
+          onOpenMonthlySummary: () =>
+              context.push(RouteNames.treasuryMonthlySummary),
           onOpenSettings: () => context.push(RouteNames.treasurySettings),
           onRefresh: () => ref.invalidate(treasuryWorkspaceProvider),
           onPositionSelected: _savePosition,
-          onOpenDecisionReview: () => context.push(RouteNames.treasuryDecisions),
+          onOpenDecisionReview: () =>
+              context.push(RouteNames.treasuryDecisions),
         );
 
-        if (_position == DockPosition.floating) {
+        if (position == DockPosition.floating) {
           return Positioned.fill(
             child: SafeArea(
               child: _FloatingDockFrame(
-                anchor: _floatingAnchor,
+                anchor: floatingAnchor,
                 breathe: _floatingBreatheController,
                 accentColor: accent,
                 onDraggedOnce: _markFloatingDragged,
@@ -110,37 +118,28 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
           );
         }
 
-        return switch (_position) {
+        return switch (position) {
           DockPosition.left => Positioned(
             left: 20,
             bottom: 20,
-            child: SafeArea(
-              child: SizedBox(width: 380, child: body),
-            ),
+            child: SafeArea(child: SizedBox(width: 380, child: body)),
           ),
           DockPosition.right => Positioned(
             right: 20,
             bottom: 20,
-            child: SafeArea(
-              child: SizedBox(width: 380, child: body),
-            ),
+            child: SafeArea(child: SizedBox(width: 380, child: body)),
           ),
           DockPosition.bottom => Positioned(
             left: 20,
             right: 20,
             bottom: 20,
             child: SafeArea(
-              child: Center(
-                child: SizedBox(width: 380, child: body),
-              ),
+              child: Center(child: SizedBox(width: 380, child: body)),
             ),
           ),
           DockPosition.fullscreen => Positioned.fill(
             child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: body,
-              ),
+              child: Padding(padding: const EdgeInsets.all(20), child: body),
             ),
           ),
           DockPosition.floating => const SizedBox.shrink(),
@@ -149,8 +148,8 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
     );
   }
 
-  void _syncFloatingAnimation() {
-    if (_position == DockPosition.floating) {
+  void _syncFloatingAnimationFor(DockPosition position) {
+    if (position == DockPosition.floating) {
       if (!_floatingBreatheController.isAnimating) {
         _floatingBreatheController.repeat(reverse: true);
       }
@@ -164,19 +163,13 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
   }
 
   Future<void> _savePosition(DockPosition position) async {
-    if (_position == position) {
-      return;
-    }
-
-    setState(() {
-      _position = position;
-    });
-    _syncFloatingAnimation();
-
     await ref
-        .read(moduleHubStateRepositoryProvider)
-        .saveDockPosition(_treasuryDockModuleId, position);
-    ref.read(moduleEventBusProvider).publish(
+        .read(dockLayoutStateProvider.notifier)
+        .setPosition(_treasuryDockModuleId, position);
+    _syncFloatingAnimationFor(position);
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
           ModuleEvent(
             moduleId: _treasuryDockModuleId,
             type: ModuleEventType.dockPositionChanged,
@@ -188,20 +181,12 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
   }
 
   Future<void> _saveFloatingAnchor(DockAnchor anchor) async {
-    if (_floatingAnchor == anchor) {
-      return;
-    }
-
-    setState(() {
-      _floatingAnchor = anchor;
-    });
-
-    final repository = ref.read(moduleHubStateRepositoryProvider);
-    final current = repository.loadDockLayoutState();
-    await repository.saveDockLayoutState(
-      current.setFloatingAnchor(_treasuryDockModuleId, anchor),
-    );
-    ref.read(moduleEventBusProvider).publish(
+    await ref
+        .read(dockLayoutStateProvider.notifier)
+        .setFloatingAnchor(_treasuryDockModuleId, anchor);
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
           ModuleEvent(
             moduleId: _treasuryDockModuleId,
             type: ModuleEventType.dockPositionChanged,
@@ -213,7 +198,10 @@ class _TreasuryDockHostState extends ConsumerState<TreasuryDockHost>
   }
 
   void _markFloatingDragged() {
-    if (_position != DockPosition.floating) {
+    final position =
+        ref.read(dockLayoutStateProvider).positionFor(_treasuryDockModuleId) ??
+        DockPosition.left;
+    if (position != DockPosition.floating) {
       return;
     }
     if (!_floatingBreatheController.isAnimating) {
@@ -258,7 +246,9 @@ class _TreasuryDockBody extends StatelessWidget {
         : '${snapshot.issues.length} issue${snapshot.issues.length == 1 ? '' : 's'}';
 
     return Material(
-      color: AppColours.darkSurfaceAlt.withValues(alpha: floating ? 0.86 : 0.93),
+      color: AppColours.darkSurfaceAlt.withValues(
+        alpha: floating ? 0.86 : 0.93,
+      ),
       elevation: floating ? 22 : 11,
       shadowColor: Colors.black.withValues(alpha: floating ? 0.38 : 0.3),
       borderRadius: BorderRadius.circular(22),
@@ -289,7 +279,8 @@ class _TreasuryDockBody extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Treasury Dock',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
                                 color: AppColours.darkText,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -305,13 +296,19 @@ class _TreasuryDockBody extends StatelessWidget {
                   Text(
                     snapshot.guidanceNote,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColours.darkMutedText,
-                          height: 1.35,
-                        ),
+                      color: AppColours.darkMutedText,
+                      height: 1.35,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  _DockStatLine(label: 'Finance root', value: snapshot.financeRootPath ?? 'Not linked yet'),
-                  _DockStatLine(label: 'Receipts to sort', value: '${snapshot.receiptsToSortCount}'),
+                  _DockStatLine(
+                    label: 'Finance root',
+                    value: snapshot.financeRootPath ?? 'Not linked yet',
+                  ),
+                  _DockStatLine(
+                    label: 'Receipts to sort',
+                    value: '${snapshot.receiptsToSortCount}',
+                  ),
                   _DockStatLine(label: 'Health', value: issueLabel),
                   const SizedBox(height: 4),
                   Wrap(
@@ -319,19 +316,23 @@ class _TreasuryDockBody extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       _StatusPill(
-                        label: 'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
+                        label:
+                            'Safe ${stateCounts[TreasuryStatusKind.safe] ?? 0}',
                         accent: AppColours.darkSuccess,
                       ),
                       _StatusPill(
-                        label: 'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
+                        label:
+                            'Watch ${stateCounts[TreasuryStatusKind.watch] ?? 0}',
                         accent: AppColours.darkAmber,
                       ),
                       _StatusPill(
-                        label: 'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
+                        label:
+                            'Pause ${stateCounts[TreasuryStatusKind.pause] ?? 0}',
                         accent: const Color(0xFFE26B6B),
                       ),
                       _StatusPill(
-                        label: 'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
+                        label:
+                            'Decision ${stateCounts[TreasuryStatusKind.decision] ?? 0}',
                         accent: AppColours.darkSecondary,
                       ),
                     ],
@@ -443,9 +444,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColours.darkText,
-              fontWeight: FontWeight.w700,
-            ),
+          color: AppColours.darkText,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -545,10 +546,7 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
             final bob = _isDragging
                 ? 0.0
                 : (Curves.easeInOut.transform(widget.breathe.value) - 0.5) * 8;
-            return Transform.translate(
-              offset: Offset(0, bob),
-              child: child,
-            );
+            return Transform.translate(offset: Offset(0, bob), child: child);
           },
           child: Stack(
             clipBehavior: Clip.none,
@@ -558,8 +556,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
                 accentColor: widget.accentColor,
               ),
               AnimatedPositioned(
-                duration:
-                    _isDragging ? Duration.zero : const Duration(milliseconds: 420),
+                duration: _isDragging
+                    ? Duration.zero
+                    : const Duration(milliseconds: 420),
                 curve: _isDragging ? Curves.linear : Curves.easeOutBack,
                 left: clampedOffset.dx,
                 top: clampedOffset.dy,
@@ -616,7 +615,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     if (available < _floatingDockMinWidth) {
       return _floatingDockMinWidth;
     }
-    return available.clamp(_floatingDockMinWidth, _floatingDockMaxWidth).toDouble();
+    return available
+        .clamp(_floatingDockMinWidth, _floatingDockMaxWidth)
+        .toDouble();
   }
 
   void _handlePanStart(DragStartDetails details) {
@@ -640,13 +641,10 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     required double frameWidth,
     required double frameHeight,
   }) async {
-    final currentOffset = (_baseOffsetForAnchor(
-          widget.anchor,
-          size,
-          frameWidth,
-          frameHeight,
-        ) +
-        _dragOffset).clampToBounds(size, frameWidth, frameHeight);
+    final currentOffset =
+        (_baseOffsetForAnchor(widget.anchor, size, frameWidth, frameHeight) +
+                _dragOffset)
+            .clampToBounds(size, frameWidth, frameHeight);
 
     final snappedAnchor = _nearestAnchorFor(
       currentOffset: currentOffset,
@@ -663,12 +661,9 @@ class _FloatingDockFrameState extends State<_FloatingDockFrame> {
     );
 
     setState(() {
-      _dragOffset = snappedOffset - _baseOffsetForAnchor(
-        widget.anchor,
-        size,
-        frameWidth,
-        frameHeight,
-      );
+      _dragOffset =
+          snappedOffset -
+          _baseOffsetForAnchor(widget.anchor, size, frameWidth, frameHeight);
       _isDragging = false;
     });
 
@@ -727,10 +722,7 @@ class _FloatingFrameShell extends StatelessWidget {
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(2), child: child),
         ),
       ),
     );
@@ -774,10 +766,10 @@ class _FloatingDragHandle extends StatelessWidget {
             Text(
               'Drag',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColours.darkSecondary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
+                color: AppColours.darkSecondary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
             ),
           ],
         ),
@@ -803,7 +795,10 @@ Offset _baseOffsetForAnchor(
       .toDouble();
 
   return switch (anchor) {
-    DockAnchor.topLeft => const Offset(_floatingDockMargin, _floatingDockMargin),
+    DockAnchor.topLeft => const Offset(
+      _floatingDockMargin,
+      _floatingDockMargin,
+    ),
     DockAnchor.topRight => Offset(maxX, _floatingDockMargin),
     DockAnchor.middleLeft => Offset(_floatingDockMargin, midY),
     DockAnchor.middleRight => Offset(maxX, midY),
@@ -872,11 +867,7 @@ DockAnchor _nearestAnchorFor({
 }
 
 extension on Offset {
-  Offset clampToBounds(
-    Size size,
-    double frameWidth,
-    double frameHeight,
-  ) {
+  Offset clampToBounds(Size size, double frameWidth, double frameHeight) {
     final minX = _floatingDockMargin;
     final minY = _floatingDockMargin;
     final maxX = (size.width - frameWidth - _floatingDockMargin)

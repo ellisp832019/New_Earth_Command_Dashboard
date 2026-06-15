@@ -357,7 +357,7 @@ void main() {
     );
 
     final parsed = parseOpenAiVoiceAiAssistResponse('''
-SUMMARY: Gaia heard a task capture.
+SUMMARY: Assistant heard a task capture.
 NEXT_STEP: Confirm the category, priority, and owner.
 TITLE: Dashboard follow-up
 SUGGESTED_SUMMARY: Review the dashboard cards and tighten the wording.
@@ -366,7 +366,7 @@ TYPE: task
 HINTS: calm | review-first | local save
 ''', fallback: fallback);
 
-    expect(parsed.summary, 'Gaia heard a task capture.');
+    expect(parsed.summary, 'Assistant heard a task capture.');
     expect(parsed.nextStep, 'Confirm the category, priority, and owner.');
     expect(parsed.suggestedTitle, 'Dashboard follow-up');
     expect(

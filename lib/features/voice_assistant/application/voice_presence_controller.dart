@@ -9,10 +9,10 @@ class VoicePresenceState {
   });
 
   const VoicePresenceState.idle()
-      : label = 'Gaia idle',
-        detail = 'Ready when you are',
-        isActive = false,
-        opacity = 0.28;
+    : label = 'Assistant idle',
+      detail = 'Ready when you are',
+      isActive = false,
+      opacity = 0.28;
 
   final String label;
   final String detail;

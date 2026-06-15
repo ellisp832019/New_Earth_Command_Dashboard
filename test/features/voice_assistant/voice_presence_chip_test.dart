@@ -22,13 +22,13 @@ void main() {
     final session = container.read(voiceSessionProvider.notifier);
     session.beginProcessing(
       owner: VoiceSessionOwner.dock,
-      label: 'Gaia captured',
+      label: 'Assistant captured',
       detail: 'Processing the follow-up',
       opacity: 0.72,
     );
     await tester.pump();
 
-    expect(find.text('Gaia captured'), findsOneWidget);
+    expect(find.text('Assistant captured'), findsOneWidget);
     expect(find.textContaining('Dock · Processing'), findsOneWidget);
     expect(find.textContaining('Processing the follow-up'), findsOneWidget);
   });
@@ -51,12 +51,12 @@ void main() {
     final session = container.read(voiceSessionProvider.notifier);
     session.beginAwaitingFollowUp(
       owner: VoiceSessionOwner.assistant,
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Waiting for your next command',
       opacity: 0.64,
     );
     await tester.pump();
 
-    expect(find.text('Gaia ready · Awaiting follow-up'), findsOneWidget);
+    expect(find.text('Assistant ready · Awaiting follow-up'), findsOneWidget);
   });
 }

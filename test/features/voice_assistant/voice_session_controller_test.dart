@@ -14,7 +14,7 @@ void main() {
     expect(
       session.beginListening(
         owner: VoiceSessionOwner.handsfree,
-        label: 'Gaia listening',
+        label: 'Assistant listening',
         detail: 'Arming voice input',
       ),
       isTrue,
@@ -24,12 +24,12 @@ void main() {
       container.read(voiceSessionProvider).owner,
       VoiceSessionOwner.handsfree,
     );
-    expect(container.read(voicePresenceProvider).label, 'Gaia listening');
+    expect(container.read(voicePresenceProvider).label, 'Assistant listening');
 
     expect(
       session.beginListening(
         owner: VoiceSessionOwner.dock,
-        label: 'Gaia listening',
+        label: 'Assistant listening',
         detail: 'Listening for a follow-up',
       ),
       isFalse,
@@ -37,16 +37,16 @@ void main() {
 
     session.release(
       owner: VoiceSessionOwner.handsfree,
-      label: 'Gaia idle',
+      label: 'Assistant idle',
       detail: 'Ready when you are',
     );
 
     expect(container.read(voiceSessionProvider).owner, VoiceSessionOwner.none);
-    expect(container.read(voicePresenceProvider).label, 'Gaia idle');
+    expect(container.read(voicePresenceProvider).label, 'Assistant idle');
 
     session.beginAwaitingFollowUp(
       owner: VoiceSessionOwner.assistant,
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Ask another follow-up',
     );
     expect(
@@ -67,19 +67,19 @@ void main() {
 
     session.beginProcessing(
       owner: VoiceSessionOwner.dock,
-      label: 'Gaia captured',
+      label: 'Assistant captured',
       detail: 'Processing the follow-up',
     );
 
     session.release(
       owner: VoiceSessionOwner.dock,
-      label: 'Gaia idle',
+      label: 'Assistant idle',
       detail: 'Ready when you are',
     );
 
     session.beginAwaitingFollowUp(
       owner: VoiceSessionOwner.assistant,
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Ask another follow-up',
     );
     expect(
@@ -100,7 +100,7 @@ void main() {
 
     session.beginSpeaking(
       owner: VoiceSessionOwner.handsfree,
-      label: 'Gaia speaking',
+      label: 'Assistant speaking',
       detail: 'Reading back the response',
     );
 
@@ -108,16 +108,19 @@ void main() {
       from: VoiceSessionOwner.handsfree,
       to: VoiceSessionOwner.assistant,
       phase: VoiceSessionPhase.awaitingFollowUp,
-      label: 'Gaia ready',
+      label: 'Assistant ready',
       detail: 'Review before saving',
     );
 
     expect(handoff, isTrue);
-    expect(container.read(voiceSessionProvider).owner, VoiceSessionOwner.assistant);
+    expect(
+      container.read(voiceSessionProvider).owner,
+      VoiceSessionOwner.assistant,
+    );
     expect(
       container.read(voiceSessionProvider).phase,
       VoiceSessionPhase.awaitingFollowUp,
     );
-    expect(container.read(voicePresenceProvider).label, 'Gaia ready');
+    expect(container.read(voicePresenceProvider).label, 'Assistant ready');
   });
 }
