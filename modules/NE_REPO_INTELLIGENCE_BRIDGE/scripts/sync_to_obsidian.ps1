@@ -3,8 +3,10 @@ param([string]$Profile = "")
 $config = Get-BridgeConfig -Profile $Profile
 $dest = Join-Path $config.obsidian_vault_path $config.obsidian_project_folder
 Ensure-Folder $dest
+Write-Host "Syncing Obsidian notes to: $dest"
 $generatedAt = Get-Date -Format s
 $templates = Join-Path $PSScriptRoot "..\templates"
+$count = 0
 foreach ($template in Get-ChildItem $templates -Filter "*.md") {
     $target = Join-Path $dest $template.Name
     $content = Get-Content $template.FullName -Raw
@@ -20,4 +22,6 @@ foreach ($template in Get-ChildItem $templates -Filter "*.md") {
         Set-Content -Path $target -Value $content -Encoding UTF8
         Write-LogLine "Created Obsidian note: $target"
     }
+    $count++
 }
+Write-Host "Obsidian sync complete. Notes processed: $count"

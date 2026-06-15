@@ -188,9 +188,10 @@ class RepoIntelligenceBridgeService {
     }
   }
 
-  Future<String> runSync({
+  Future<RepoIntelligenceBridgeSyncResult> runSync({
     required RepoIntelligenceBridgeProfile profile,
     required String scriptName,
+    void Function(String line)? onOutputLine,
   }) async {
     if (!Platform.isWindows) {
       throw UnsupportedError('Sync scripts are only wired on Windows.');
@@ -203,7 +204,11 @@ class RepoIntelligenceBridgeService {
       throw FileSystemException('Sync script not found', script.path);
     }
 
-    await Process.run(
+    final startedAt = DateTime.now();
+    final stdoutLines = <String>[];
+    final stderrLines = <String>[];
+
+    final process = await Process.start(
       'powershell.exe',
       <String>[
         '-NoProfile',
@@ -217,7 +222,42 @@ class RepoIntelligenceBridgeService {
       workingDirectory: moduleRootDirectory().path,
       runInShell: false,
     );
-    return script.path;
+
+    void emit(String channel, String line) {
+      if (channel == 'stderr') {
+        stderrLines.add(line);
+        onOutputLine?.call('[stderr] $line');
+        return;
+      }
+
+      stdoutLines.add(line);
+      onOutputLine?.call(line);
+    }
+
+    final stdoutDone = process.stdout
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen((line) => emit('stdout', line)).asFuture<void>();
+    final stderrDone = process.stderr
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen((line) => emit('stderr', line)).asFuture<void>();
+
+    final exitCode = await process.exitCode;
+    await Future.wait<void>([stdoutDone, stderrDone]);
+    final finishedAt = DateTime.now();
+
+    return RepoIntelligenceBridgeSyncResult(
+      scriptName: scriptName,
+      scriptPath: script.path,
+      profilePath: _profilePath(profile),
+      startedAt: startedAt,
+      finishedAt: finishedAt,
+      exitCode: exitCode,
+      stdoutLines: stdoutLines,
+      stderrLines: stderrLines,
+      logPath: _syncLogFile().path,
+    );
   }
 
   Future<void> openPath(String targetPath) async {

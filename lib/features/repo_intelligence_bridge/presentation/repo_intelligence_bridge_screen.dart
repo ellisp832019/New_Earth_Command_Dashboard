@@ -7,6 +7,7 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/repo_intelligence_bridge_controller.dart';
 import '../data/repo_intelligence_bridge_models.dart';
+import 'sync_run_terminal_dialog.dart';
 
 class RepoIntelligenceBridgeScreen extends ConsumerWidget {
   const RepoIntelligenceBridgeScreen({super.key});
@@ -78,11 +79,14 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
                     .openProfilesFolder(),
                 onOpenSyncLog: () =>
                     ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
-                onRunFullSync: () async {
-                  await ref
+                onRunFullSync: () => _runBridgeSyncTerminal(
+                  context,
+                  ref,
+                  title: 'Full Sync Terminal',
+                  run: (onLine) => ref
                       .read(repoIntelligenceBridgeControllerProvider)
-                      .runFullSync();
-                },
+                      .runFullSync(onOutputLine: onLine),
+                ),
               ),
               const SizedBox(height: 16),
               _BridgeSummaryGrid(
@@ -434,9 +438,14 @@ class RepoIntelligenceBridgeDashboardCard extends ConsumerWidget {
                     label: const Text('Open bridge'),
                   ),
                   TextButton.icon(
-                    onPressed: () => ref
-                        .read(repoIntelligenceBridgeControllerProvider)
-                        .runFullSync(),
+                    onPressed: () => _runBridgeSyncTerminal(
+                      context,
+                      ref,
+                      title: 'Full Sync Terminal',
+                      run: (onLine) => ref
+                          .read(repoIntelligenceBridgeControllerProvider)
+                          .runFullSync(onOutputLine: onLine),
+                    ),
                     icon: const Icon(Icons.sync_outlined),
                     label: const Text('Run sync'),
                   ),
@@ -596,7 +605,7 @@ class _BridgeHeroCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: onOpenSyncLog,
                 icon: const Icon(Icons.receipt_long_outlined),
-                label: const Text('Sync log'),
+                label: const Text('Open last sync log'),
               ),
             ],
           );
@@ -1240,6 +1249,25 @@ class _BridgeError extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> _runBridgeSyncTerminal(
+  BuildContext context,
+  WidgetRef ref, {
+  required String title,
+  required Future<RepoIntelligenceBridgeSyncResult> Function(
+    void Function(String line) onOutputLine,
+  ) run,
+}) async {
+  await showRepoIntelligenceBridgeSyncTerminalDialog(
+    context: context,
+    title: title,
+    run: run,
+    onOpenLog: () => ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+  );
+  if (context.mounted) {
+    ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
   }
 }
 

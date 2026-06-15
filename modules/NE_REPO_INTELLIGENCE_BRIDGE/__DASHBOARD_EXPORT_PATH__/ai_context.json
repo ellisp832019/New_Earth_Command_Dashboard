@@ -8,7 +8,7 @@
                                     "licensing/payment changes",
                                     "firmware flashing"
                                 ],
-    "generated_at":  "2026-06-15T10:42:16",
+    "generated_at":  "2026-06-15T14:30:27",
     "source_of_truth":  "local repo + Obsidian exports + dashboard exports",
     "safe_ai_permissions":  [
                                 "read exported markdown",

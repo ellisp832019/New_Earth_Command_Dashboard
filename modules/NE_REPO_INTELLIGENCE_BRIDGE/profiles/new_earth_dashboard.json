@@ -1,11 +1,11 @@
 {
-  "project_name": "__PROJECT_NAME__",
-  "project_type": "__PROJECT_TYPE__",
-  "repo_root": ".",
+  "project_name": "New Earth Dashboard",
+  "project_type": "dashboard",
+  "repo_root": "D:/Dev/Projects/New Earth - Command Dashboard",
   "source_of_truth": "local repo + Obsidian exports + dashboard exports",
-  "obsidian_vault_path": "__OBSIDIAN_VAULT_PATH__",
-  "obsidian_project_folder": "__OBSIDIAN_PROJECT_FOLDER__",
-  "dashboard_export_path": "__DASHBOARD_EXPORT_PATH__",
+  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT",
+  "obsidian_project_folder": "01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD",
+  "dashboard_export_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/exports",
   "ignore": [
     ".git",
     ".dart_tool",

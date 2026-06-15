@@ -423,6 +423,59 @@ class RepoIntelligenceBridgeWorkspace {
   final String obsidianVaultPath;
 }
 
+class RepoIntelligenceBridgeSyncResult {
+  const RepoIntelligenceBridgeSyncResult({
+    required this.scriptName,
+    required this.scriptPath,
+    required this.profilePath,
+    required this.startedAt,
+    required this.finishedAt,
+    required this.exitCode,
+    required this.stdoutLines,
+    required this.stderrLines,
+    required this.logPath,
+  });
+
+  final String scriptName;
+  final String scriptPath;
+  final String profilePath;
+  final DateTime startedAt;
+  final DateTime finishedAt;
+  final int exitCode;
+  final List<String> stdoutLines;
+  final List<String> stderrLines;
+  final String logPath;
+
+  bool get success => exitCode == 0;
+
+  Duration get duration => finishedAt.difference(startedAt);
+
+  List<String> get terminalLines {
+    final lines = <String>[
+      'Command: $scriptName',
+      'Script: $scriptPath',
+      'Profile: $profilePath',
+      'Started: ${startedAt.toIso8601String()}',
+      'Finished: ${finishedAt.toIso8601String()}',
+      'Exit code: $exitCode',
+    ];
+
+    if (stdoutLines.isNotEmpty) {
+      lines.add('--- stdout ---');
+      lines.addAll(stdoutLines);
+    }
+
+    if (stderrLines.isNotEmpty) {
+      lines.add('--- stderr ---');
+      lines.addAll(stderrLines);
+    }
+
+    lines.add('--- log ---');
+    lines.add(logPath);
+    return lines;
+  }
+}
+
 int intValue(Object? value) {
   if (value is int) {
     return value;

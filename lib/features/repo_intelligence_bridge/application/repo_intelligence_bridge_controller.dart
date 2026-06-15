@@ -47,40 +47,56 @@ class RepoIntelligenceBridgeController {
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
   }
 
-  Future<void> runValidateConfig() async {
+  Future<RepoIntelligenceBridgeSyncResult> runValidateConfig({
+    void Function(String line)? onOutputLine,
+  }) async {
     final workspace = await _service.loadWorkspace();
-    await _service.runSync(
+    final result = await _service.runSync(
       profile: workspace.activeProfile,
       scriptName: 'validate_config.ps1',
+      onOutputLine: onOutputLine,
     );
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
+    return result;
   }
 
-  Future<void> runObsidianSync() async {
+  Future<RepoIntelligenceBridgeSyncResult> runObsidianSync({
+    void Function(String line)? onOutputLine,
+  }) async {
     final workspace = await _service.loadWorkspace();
-    await _service.runSync(
+    final result = await _service.runSync(
       profile: workspace.activeProfile,
       scriptName: 'sync_to_obsidian.ps1',
+      onOutputLine: onOutputLine,
     );
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
+    return result;
   }
 
-  Future<void> runDashboardSync() async {
+  Future<RepoIntelligenceBridgeSyncResult> runDashboardSync({
+    void Function(String line)? onOutputLine,
+  }) async {
     final workspace = await _service.loadWorkspace();
-    await _service.runSync(
+    final result = await _service.runSync(
       profile: workspace.activeProfile,
       scriptName: 'sync_to_dashboard.ps1',
+      onOutputLine: onOutputLine,
     );
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
+    return result;
   }
 
-  Future<void> runFullSync() async {
+  Future<RepoIntelligenceBridgeSyncResult> runFullSync({
+    void Function(String line)? onOutputLine,
+  }) async {
     final workspace = await _service.loadWorkspace();
-    await _service.runSync(
+    final result = await _service.runSync(
       profile: workspace.activeProfile,
       scriptName: 'sync_all.ps1',
+      onOutputLine: onOutputLine,
     );
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
+    return result;
   }
 
   Future<void> openModuleHome() => _service.openModuleHome();
@@ -97,4 +113,3 @@ class RepoIntelligenceBridgeController {
 
   Future<void> openStateFile() => _service.openStateFile();
 }
-

@@ -6,6 +6,7 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../application/repo_intelligence_bridge_controller.dart';
 import '../data/repo_intelligence_bridge_models.dart';
+import 'sync_run_terminal_dialog.dart';
 
 class RepoIntelligenceBridgeSettingsScreen extends ConsumerStatefulWidget {
   const RepoIntelligenceBridgeSettingsScreen({super.key});
@@ -29,6 +30,25 @@ class _RepoIntelligenceBridgeSettingsScreenState
     _obsidianVaultController.dispose();
     _moduleHomeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _runSyncTerminal({
+    required String title,
+    required Future<RepoIntelligenceBridgeSyncResult> Function(
+      void Function(String line) onOutputLine,
+    ) run,
+    required VoidCallback openLog,
+  }) async {
+    await showRepoIntelligenceBridgeSyncTerminalDialog(
+      context: context,
+      title: title,
+      run: run,
+      onOpenLog: openLog,
+    );
+    if (!mounted) {
+      return;
+    }
+    ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
   }
 
   void _hydrate(RepoIntelligenceBridgeWorkspace workspace) {
@@ -195,70 +215,50 @@ class _RepoIntelligenceBridgeSettingsScreenState
                   runSpacing: 10,
                   children: [
                     FilledButton.icon(
-                      onPressed: () async {
-                        await ref
+                      onPressed: () => _runSyncTerminal(
+                        title: 'Validate Config Terminal',
+                        run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
-                            .runValidateConfig();
-                        if (!context.mounted) {
-                          return;
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Validate config completed.'),
-                          ),
-                        );
-                      },
+                            .runValidateConfig(onOutputLine: onLine),
+                        openLog: () =>
+                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                      ),
                       icon: const Icon(Icons.verified_outlined),
                       label: const Text('Validate'),
                     ),
                     FilledButton.tonalIcon(
-                      onPressed: () async {
-                        await ref
+                      onPressed: () => _runSyncTerminal(
+                        title: 'Obsidian Sync Terminal',
+                        run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
-                            .runObsidianSync();
-                        if (!context.mounted) {
-                          return;
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Obsidian sync started.'),
-                          ),
-                        );
-                      },
+                            .runObsidianSync(onOutputLine: onLine),
+                        openLog: () =>
+                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                      ),
                       icon: const Icon(Icons.book_outlined),
                       label: const Text('Sync Obsidian'),
                     ),
                     FilledButton.tonalIcon(
-                      onPressed: () async {
-                        await ref
+                      onPressed: () => _runSyncTerminal(
+                        title: 'Dashboard Sync Terminal',
+                        run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
-                            .runDashboardSync();
-                        if (!context.mounted) {
-                          return;
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Dashboard sync started.'),
-                          ),
-                        );
-                      },
+                            .runDashboardSync(onOutputLine: onLine),
+                        openLog: () =>
+                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                      ),
                       icon: const Icon(Icons.dashboard_outlined),
                       label: const Text('Sync Dashboard'),
                     ),
                     FilledButton.icon(
-                      onPressed: () async {
-                        await ref
+                      onPressed: () => _runSyncTerminal(
+                        title: 'Full Sync Terminal',
+                        run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
-                            .runFullSync();
-                        if (!context.mounted) {
-                          return;
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Full sync started.'),
-                          ),
-                        );
-                      },
+                            .runFullSync(onOutputLine: onLine),
+                        openLog: () =>
+                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                      ),
                       icon: const Icon(Icons.play_arrow_outlined),
                       label: const Text('Run full sync'),
                     ),
@@ -419,7 +419,7 @@ class _SettingsHeroCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: onOpenSyncLog,
                 icon: const Icon(Icons.receipt_long_outlined),
-                label: const Text('Sync log'),
+                label: const Text('Open last sync log'),
               ),
               TextButton.icon(
                 onPressed: onOpenStateFile,

@@ -5,6 +5,7 @@ $config = Get-BridgeConfig -Profile $profilePath
 $repoRoot = Resolve-RepoRoot -Config $config -Profile $profilePath
 $dest = $config.dashboard_export_path
 Ensure-Folder $dest
+Write-Host "Syncing dashboard exports to: $dest"
 $generatedAt = Get-Date -Format s
 $files = Get-TextFiles -RepoRoot $repoRoot -Ignore $config.ignore
 $readme = $files | Where-Object { $_.Name -match '^README\.md$' } | Select-Object -First 1
@@ -64,3 +65,4 @@ foreach ($k in $map.Keys) {
     $map[$k] | ConvertTo-Json -Depth 10 | Set-Content -Path $out -Encoding UTF8
     Write-LogLine "Wrote dashboard export: $out"
 }
+Write-Host "Dashboard export sync complete. Files written: $($map.Count)"
