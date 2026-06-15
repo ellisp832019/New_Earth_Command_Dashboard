@@ -1,4 +1,4 @@
-# Module Record — AI Assistant Dock
+# Module Record - AI ASSISTANT DOCK
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.ai_assistant_dock
 
 ## Category
 
-AI & Automation
+Knowledge & Research
 
 ## Purpose
 
-Local J.A.R.V.I.S-style dock for voice, local LLM, automation and hands-free control.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

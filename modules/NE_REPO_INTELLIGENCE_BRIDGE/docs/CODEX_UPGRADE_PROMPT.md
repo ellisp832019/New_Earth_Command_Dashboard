@@ -11,7 +11,7 @@ Rules:
 - Add any missing tests or validation scripts.
 
 Tasks:
-1. Check the project profile in `/profiles` and update `repo_root` for this repo.
+1. Start from `profiles/template.json` or a copy of it, then update `repo_root` for this repo.
 2. Run `scripts/validate_config.ps1`.
 3. Run `scripts/sync_all.ps1`.
 4. Confirm Markdown exports are created in the Obsidian vault.

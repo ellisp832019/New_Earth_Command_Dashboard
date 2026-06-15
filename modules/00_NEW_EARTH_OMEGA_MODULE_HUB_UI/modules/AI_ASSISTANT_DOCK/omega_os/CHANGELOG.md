@@ -1,7 +1,7 @@
-# Changelog — AI Assistant Dock
+# Changelog - AI ASSISTANT DOCK
 
 ## 0.1.0
 
 - Added module shell manifest.
-- Added placeholder docs.
+- Added shell docs.
 - Added Omega OS record files.

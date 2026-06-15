@@ -1,4 +1,4 @@
-# Module Record — Grants Tracker
+# Module Record - GRANTS TRACKER
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.grants_tracker
 
 ## Category
 
-Project Management
+Knowledge & Research
 
 ## Purpose
 
-Tracks innovation grants, applications, deadlines, evidence packs and Omega OS exports.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

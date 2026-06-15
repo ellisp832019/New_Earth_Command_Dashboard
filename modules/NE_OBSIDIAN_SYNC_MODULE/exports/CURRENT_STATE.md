@@ -1,37 +1,21 @@
-# {{PROJECT_NAME}} Current State
+# PROJECT_NAME_HERE CURRENT STATE
 
-## Purpose
+Generic template note for the portable knowledge fabric bundle.
 
-Describe what this project is and why it exists.
+<!-- AUTO-GENERATED:START -->
+## Overview
+- Project: `PROJECT_NAME_HERE`
+- Type: `project_type`
+- Status: `template`
+- Branch: `main`
+- Latest commit: `abcdef0`
+- Sync mode: `manual`
 
-## Current Status
+## Next Step
+- Replace this placeholder content with project-specific guidance.
 
-- Status:
-- Current branch:
-- Current version/tag:
-- Last reviewed:
-
-## What Works
-
-- 
-
-## What Is Incomplete
-
-- 
-
-## Current Risks
-
-- 
-
-## Next Priority Actions
-
-1. 
-2. 
-3. 
-
-## Related Files
-
-- [[ARCHITECTURE]]
-- [[ROADMAP]]
-- [[DECISIONS]]
-- [[BUILD_LOG]]
+## Related Notes
+- [[PROJECT_NAME_HERE_PROJECT_HOME]]
+- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
+- [[PROJECT_NAME_HERE_MOC_HOME]]
+<!-- AUTO-GENERATED:END -->

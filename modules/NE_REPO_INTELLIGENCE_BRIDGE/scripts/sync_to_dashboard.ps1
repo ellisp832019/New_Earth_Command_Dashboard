@@ -1,7 +1,7 @@
 param([string]$Profile = "")
 . "$PSScriptRoot\common.ps1"
-$config = Get-BridgeConfig -Profile $Profile
-$profilePath = if ($Profile) { $Profile } else { Join-Path $PSScriptRoot "..\obsidian_sync_config.json" }
+$profilePath = if ($Profile) { $Profile } else { Join-Path $PSScriptRoot "..\profiles\template.json" }
+$config = Get-BridgeConfig -Profile $profilePath
 $repoRoot = Resolve-RepoRoot -Config $config -Profile $profilePath
 $dest = $config.dashboard_export_path
 Ensure-Folder $dest

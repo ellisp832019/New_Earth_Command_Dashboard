@@ -1,39 +1,21 @@
-# {{PROJECT_NAME}} Roadmap
+# PROJECT_NAME_HERE ROADMAP
 
-## Immediate Next Actions
+Generic template note for the portable knowledge fabric bundle.
 
-1. 
-2. 
-3. 
+<!-- AUTO-GENERATED:START -->
+## Overview
+- Project: `PROJECT_NAME_HERE`
+- Type: `project_type`
+- Status: `template`
+- Branch: `main`
+- Latest commit: `abcdef0`
+- Sync mode: `manual`
 
-## 4 Week Plan
+## Next Step
+- Replace this placeholder content with project-specific guidance.
 
-### Week 1
-
-- 
-
-### Week 2
-
-- 
-
-### Week 3
-
-- 
-
-### Week 4
-
-- 
-
-## 3 Month Direction
-
-- 
-
-## Future Expansion
-
-- 
-
-## Not Yet
-
-These are useful later, but not the current focus:
-
-- 
+## Related Notes
+- [[PROJECT_NAME_HERE_PROJECT_HOME]]
+- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
+- [[PROJECT_NAME_HERE_MOC_HOME]]
+<!-- AUTO-GENERATED:END -->

@@ -1,4 +1,4 @@
-# Module Record — MicroGrow Control
+# Module Record - MICROGROW CONTROL
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.microgrow_control
 
 ## Category
 
-MicroGrow
+Knowledge & Research
 
 ## Purpose
 
-Dashboard control and diagnostics shell for MicroGrow nodes, sensors, relays and firmware status.
+Template module for MicroGrow control, diagnostics, and local-first dashboard integration.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

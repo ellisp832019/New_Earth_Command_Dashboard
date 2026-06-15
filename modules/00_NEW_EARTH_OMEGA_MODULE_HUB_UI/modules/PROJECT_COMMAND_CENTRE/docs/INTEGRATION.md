@@ -2,7 +2,7 @@
 
 ## Current phase
 
-UI shell and manifest registration only.
+Module Hub shell and manifest registration only.
 
 ## Next integration steps
 

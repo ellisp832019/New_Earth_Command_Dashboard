@@ -1,4 +1,4 @@
-# Module Record — XR Workspace
+# Module Record - XR WORKSPACE
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.xr_workspace
 
 ## Category
 
-XR & Visual Systems
+Knowledge & Research
 
 ## Purpose
 
-Visual workspace hub for VR development, Quest setup, asset packs and immersive dashboards.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

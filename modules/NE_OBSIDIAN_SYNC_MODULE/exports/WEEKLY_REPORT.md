@@ -1,27 +1,21 @@
-# {{PROJECT_NAME}} Weekly Report
+# PROJECT_NAME_HERE WEEKLY REPORT
 
-## Summary For Peter
+Generic template note for the portable knowledge fabric bundle.
 
-Short plain-English project summary.
+<!-- AUTO-GENERATED:START -->
+## Overview
+- Project: `PROJECT_NAME_HERE`
+- Type: `project_type`
+- Status: `template`
+- Branch: `main`
+- Latest commit: `abcdef0`
+- Sync mode: `manual`
 
-## Wins
+## Next Step
+- Replace this placeholder content with project-specific guidance.
 
-- 
-
-## Blockers
-
-- 
-
-## Risks
-
-- 
-
-## Next Actions
-
-1. 
-2. 
-3. 
-
-## Recommended Focus
-
-- 
+## Related Notes
+- [[PROJECT_NAME_HERE_PROJECT_HOME]]
+- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
+- [[PROJECT_NAME_HERE_MOC_HOME]]
+<!-- AUTO-GENERATED:END -->

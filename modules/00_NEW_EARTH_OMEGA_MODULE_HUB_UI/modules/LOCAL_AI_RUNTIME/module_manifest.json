@@ -16,6 +16,6 @@
   "backend": {
     "implemented": false,
     "type": "placeholder",
-    "notes": "UI shell only. Backend integration comes in a later phase."
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
   }
 }

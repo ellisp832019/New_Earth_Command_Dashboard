@@ -1,7 +1,7 @@
-# Changelog — MicroGrow Control
+# Changelog - MICROGROW CONTROL
 
 ## 0.1.0
 
 - Added module shell manifest.
-- Added placeholder docs.
+- Added shell docs.
 - Added Omega OS record files.

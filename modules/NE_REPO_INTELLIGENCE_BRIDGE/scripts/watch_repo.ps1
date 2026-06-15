@@ -1,9 +1,10 @@
 param([string]$Profile = "", [int]$DebounceSeconds = 5)
 . "$PSScriptRoot\common.ps1"
-$config = Get-BridgeConfig -Profile $Profile
-$profilePath = if ($Profile) { $Profile } else { Join-Path $PSScriptRoot "..\obsidian_sync_config.json" }
+$profilePath = if ($Profile) { $Profile } else { Join-Path $PSScriptRoot "..\profiles\template.json" }
+$config = Get-BridgeConfig -Profile $profilePath
 $repoRoot = Resolve-RepoRoot -Config $config -Profile $profilePath
 Write-Host "Watching repo: $repoRoot"
+Write-Host "Profile: $profilePath"
 Write-Host "Press Ctrl+C to stop."
 $fsw = New-Object IO.FileSystemWatcher $repoRoot -Property @{ IncludeSubdirectories=$true; EnableRaisingEvents=$true }
 $last = Get-Date "2000-01-01"

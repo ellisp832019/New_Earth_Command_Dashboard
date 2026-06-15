@@ -1,0 +1,13 @@
+﻿{
+    "generated_at":  "2026-06-15T10:42:16",
+    "decisions":  [
+                      {
+                          "decision":  "Use Omega OS as export destination",
+                          "status":  "accepted"
+                      },
+                      {
+                          "decision":  "Use Obsidian for human-readable Markdown and Dashboard for JSON",
+                          "status":  "accepted"
+                      }
+                  ]
+}

@@ -1,9 +1,11 @@
 # Dashboard Integration
 
-The Dashboard should read JSON from:
+The Dashboard should read JSON from the bridge output folder configured in the selected profile or template copy.
+
+Example:
 
 ```text
-D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/01_PROJECT_REPO_BRIDGE/<ProjectName>
+<dashboard_export_path>
 ```
 
 Recommended first files to connect:

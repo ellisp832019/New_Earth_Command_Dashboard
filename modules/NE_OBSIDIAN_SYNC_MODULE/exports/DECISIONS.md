@@ -1,23 +1,21 @@
-# {{PROJECT_NAME}} Decisions
+# PROJECT_NAME_HERE DECISIONS
 
-## Decision Log
+Generic template note for the portable knowledge fabric bundle.
 
-| Date | Decision | Reason | Status |
-|---|---|---|---|
-|  |  |  |  |
+<!-- AUTO-GENERATED:START -->
+## Overview
+- Project: `PROJECT_NAME_HERE`
+- Type: `project_type`
+- Status: `template`
+- Branch: `main`
+- Latest commit: `abcdef0`
+- Sync mode: `manual`
 
-## Key Technical Decisions
+## Next Step
+- Replace this placeholder content with project-specific guidance.
 
-- 
-
-## Alternatives Considered
-
-- 
-
-## Open Decisions
-
-- 
-
-## Needs Peter Review
-
-- 
+## Related Notes
+- [[PROJECT_NAME_HERE_PROJECT_HOME]]
+- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
+- [[PROJECT_NAME_HERE_MOC_HOME]]
+<!-- AUTO-GENERATED:END -->

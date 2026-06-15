@@ -1,7 +1,7 @@
-# Changelog — Visual Asset Index
+# Changelog - VISUAL ASSET INDEX
 
 ## 0.1.0
 
 - Added module shell manifest.
-- Added placeholder docs.
+- Added shell docs.
 - Added Omega OS record files.

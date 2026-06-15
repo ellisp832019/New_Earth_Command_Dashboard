@@ -1,11 +1,11 @@
 {
-  "project_name": "BioCalm",
-  "project_type": "wearable_wellness",
+  "project_name": "__PROJECT_NAME__",
+  "project_type": "__PROJECT_TYPE__",
   "repo_root": ".",
-  "source_of_truth": "local repo + Omega OS + Obsidian exports",
-  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN",
-  "obsidian_project_folder": "03_REPO_KNOWLEDGE_EXPORTS/BioCalm",
-  "dashboard_export_path": "D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/01_PROJECT_REPO_BRIDGE/BioCalm",
+  "source_of_truth": "local repo + Obsidian exports + dashboard exports",
+  "obsidian_vault_path": "__OBSIDIAN_VAULT_PATH__",
+  "obsidian_project_folder": "__OBSIDIAN_PROJECT_FOLDER__",
+  "dashboard_export_path": "__DASHBOARD_EXPORT_PATH__",
   "ignore": [
     ".git",
     ".dart_tool",
@@ -21,10 +21,7 @@
     "No file deletion by sync module",
     "Never overwrite hand-written Obsidian sections",
     "Human approval required for source-code edits",
-    "No secrets copied into Dashboard or AI context exports",
-    "Wellness wearable only, not medical diagnosis",
-    "Sensor data is private/local-first",
-    "Human wellbeing before gamification"
+    "No secrets copied into Dashboard or AI context exports"
   ],
   "safe_ai_permissions": [
     "read exported markdown",

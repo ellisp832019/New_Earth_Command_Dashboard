@@ -1,4 +1,4 @@
-# Module Record — Alexa Voice Gateway
+# Module Record - ALEXA VOICE GATEWAY
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.alexa_voice_gateway
 
 ## Category
 
-Voice & Hardware
+Knowledge & Research
 
 ## Purpose
 
-Secure bridge for using existing Alexa hardware as a gated voice trigger into the dashboard.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

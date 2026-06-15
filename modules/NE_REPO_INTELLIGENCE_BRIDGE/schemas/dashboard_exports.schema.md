@@ -6,8 +6,8 @@ These JSON shapes are intentionally simple for easy Dashboard integration.
 
 ```json
 {
-  "project": "MicroGrow",
-  "type": "firmware_app_hardware",
+  "project": "__PROJECT_NAME__",
+  "type": "__PROJECT_TYPE__",
   "status": "active",
   "phase": "repo intelligence sync",
   "health": "green",
@@ -21,8 +21,8 @@ These JSON shapes are intentionally simple for easy Dashboard integration.
 
 ```json
 {
-  "project_name": "MicroGrow",
-  "source_of_truth": "local repo + Omega OS + Obsidian exports",
+  "project_name": "__PROJECT_NAME__",
+  "source_of_truth": "local repo + Obsidian exports + dashboard exports",
   "locked_rules": [],
   "safe_ai_permissions": [],
   "blocked_ai_permissions": [],

@@ -1,0 +1,18 @@
+{
+  "module_name": "Obsidian Sync",
+  "project_name": "PROJECT_NAME_HERE",
+  "project_type": "dashboard",
+  "status": "example",
+  "sync_mode": "manual",
+  "last_sync_time": "YYYY-MM-DDTHH:MM:SS+00:00",
+  "docs_synced_count": 0,
+  "broken_link_count": 0,
+  "current_branch": "main",
+  "latest_commit": "abcdef0",
+  "latest_commit_message": "example commit message",
+  "dirty_working_tree": false,
+  "changed_file_count": 0,
+  "repo_root": "PATH_TO_REPO",
+  "warnings": [],
+  "errors": []
+}

@@ -1,7 +1,7 @@
-# Changelog — Project Command Centre
+# Changelog - PROJECT COMMAND CENTRE
 
 ## 0.1.0
 
 - Added module shell manifest.
-- Added placeholder docs.
+- Added shell docs.
 - Added Omega OS record files.

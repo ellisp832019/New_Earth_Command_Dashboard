@@ -1,0 +1,20 @@
+﻿{
+    "generated_at":  "2026-06-15T10:42:16",
+    "next_actions":  [
+                         {
+                             "priority":  "high",
+                             "title":  "Review generated Obsidian notes",
+                             "status":  "open"
+                         },
+                         {
+                             "priority":  "high",
+                             "title":  "Connect dashboard to JSON bridge folder",
+                             "status":  "open"
+                         },
+                         {
+                             "priority":  "medium",
+                             "title":  "Review risks and TODO markers",
+                             "status":  "open"
+                         }
+                     ]
+}

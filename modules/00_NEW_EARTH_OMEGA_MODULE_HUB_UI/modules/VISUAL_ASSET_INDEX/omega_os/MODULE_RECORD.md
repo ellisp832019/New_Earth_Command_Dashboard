@@ -1,4 +1,4 @@
-# Module Record — Visual Asset Index
+# Module Record - VISUAL ASSET INDEX
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.visual_asset_index
 
 ## Category
 
-XR & Visual Systems
+Knowledge & Research
 
 ## Purpose
 
-Indexes images, prompts, diagrams, visual packs and dashboard design references.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

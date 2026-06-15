@@ -1,4 +1,4 @@
-# Module Record — Backup System
+# Module Record - BACKUP SYSTEM
 
 ## Module ID
 
@@ -6,16 +6,16 @@ newearth.backup_system
 
 ## Category
 
-Backup & Recovery
+Knowledge & Research
 
 ## Purpose
 
-Daily/weekly backup command centre with restore points, logs and target checks.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

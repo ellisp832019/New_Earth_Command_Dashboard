@@ -1,0 +1,37 @@
+﻿{
+    "human_approval_required":  [
+                                    "source-code edits",
+                                    "file deletion",
+                                    "git commits",
+                                    "git push",
+                                    "secrets access",
+                                    "licensing/payment changes",
+                                    "firmware flashing"
+                                ],
+    "generated_at":  "2026-06-15T10:42:16",
+    "source_of_truth":  "local repo + Obsidian exports + dashboard exports",
+    "safe_ai_permissions":  [
+                                "read exported markdown",
+                                "read dashboard JSON",
+                                "summarise current project state",
+                                "suggest next actions",
+                                "flag risks",
+                                "generate reports"
+                            ],
+    "locked_rules":  [
+                         "Local-first architecture",
+                         "No file deletion by sync module",
+                         "Never overwrite hand-written Obsidian sections",
+                         "Human approval required for source-code edits",
+                         "No secrets copied into Dashboard or AI context exports"
+                     ],
+    "blocked_ai_permissions":  [
+                                   "delete files",
+                                   "edit source code without approval",
+                                   "access secrets",
+                                   "push to GitHub",
+                                   "run destructive commands",
+                                   "change licences or payment logic without approval"
+                               ],
+    "project_name":  "__PROJECT_NAME__"
+}

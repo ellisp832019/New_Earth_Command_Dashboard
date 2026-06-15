@@ -7,43 +7,46 @@ Local-first module for turning any New Earth project repo into a living knowledg
 - **New Earth Dashboard** machine-readable JSON
 - **Safe AI / Voice Layer** controlled context files
 
-This module is designed to sit inside any repo, or live centrally inside the Omega OS automation folder.
+This module is designed to live in `modules/NE_REPO_INTELLIGENCE_BRIDGE` and point at any repo you want to inspect.
 
 ## Core flow
 
 ```text
 Project Repo
-   ↓ scan / sync
+  -> scan / sync
 Obsidian Markdown exports
-   ↓ readable knowledge vault
+  -> readable knowledge vault
 Dashboard JSON exports
-   ↓ live dashboard cards, risks, tasks, timeline
+  -> live dashboard cards, risks, tasks, timeline
 AI context export
-   ↓ safe permission-bounded assistant layer
+  -> safe permission-bounded assistant layer
 ```
 
-## Your recommended Omega OS paths
+## Example local-first paths
 
 ```text
-D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN
-D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/01_PROJECT_REPO_BRIDGE
-D:/NEW_EARTH_OMEGA_OS_PACK/23_AI_AND_AUTOMATION/03_OBSIDIAN_REPO_SYNC_MODULE
+<OBSIDIAN_VAULT_PATH>
+<DASHBOARD_EXPORT_ROOT>
+<OPTIONAL_OMEGA_OS_EXPORT_ROOT>
 ```
+
+These are example destinations only. The real locations come from the selected profile in `profiles/`.
+For a clean starting point, copy `profiles/template.json` and fill in your own paths.
 
 ## Quick start on Windows
 
-From this module folder:
+From the repository root:
 
 ```powershell
-cd .\NE_REPO_INTELLIGENCE_BRIDGE
-.\scripts\validate_config.ps1 -Profile .\profiles\microgrow.json
-.\scripts\sync_all.ps1 -Profile .\profiles\microgrow.json
+cd .\modules\NE_REPO_INTELLIGENCE_BRIDGE
+.\scripts\validate_config.ps1 -Profile .\profiles\template.json
+.\scripts\sync_all.ps1 -Profile .\profiles\template.json
 ```
 
 Watch mode:
 
 ```powershell
-.\scripts\watch_repo.ps1 -Profile .\profiles\microgrow.json
+.\scripts\watch_repo.ps1 -Profile .\profiles\template.json
 ```
 
 ## What gets created
@@ -56,24 +59,12 @@ Markdown notes are written to:
 <obsidian_vault_path>/<obsidian_project_folder>/
 ```
 
-Example:
-
-```text
-D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/03_REPO_KNOWLEDGE_EXPORTS/MicroGrow
-```
-
 ### Dashboard exports
 
 JSON files are written to:
 
 ```text
 <dashboard_export_path>/
-```
-
-Example:
-
-```text
-D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/01_PROJECT_REPO_BRIDGE/MicroGrow
 ```
 
 ## Safety rule

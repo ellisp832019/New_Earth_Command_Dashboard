@@ -1,6 +1,6 @@
 function Get-BridgeConfig {
     param([string]$Profile)
-    if (-not $Profile) { $Profile = Join-Path $PSScriptRoot "..\obsidian_sync_config.json" }
+    if (-not $Profile) { $Profile = Join-Path $PSScriptRoot "..\profiles\template.json" }
     if (-not (Test-Path $Profile)) { throw "Profile/config not found: $Profile" }
     return Get-Content $Profile -Raw | ConvertFrom-Json
 }

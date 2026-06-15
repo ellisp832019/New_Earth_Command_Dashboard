@@ -1,39 +1,21 @@
-# {{PROJECT_NAME}} Architecture
+# PROJECT_NAME_HERE ARCHITECTURE
 
-## System Overview
+Generic template note for the portable knowledge fabric bundle.
 
-Describe the system at a high level.
+<!-- AUTO-GENERATED:START -->
+## Overview
+- Project: `PROJECT_NAME_HERE`
+- Type: `project_type`
+- Status: `template`
+- Branch: `main`
+- Latest commit: `abcdef0`
+- Sync mode: `manual`
 
-## Main Components
+## Next Step
+- Replace this placeholder content with project-specific guidance.
 
-| Component | Purpose | Status |
-|---|---|---|
-|  |  |  |
-
-## Folder Map
-
-```text
-repo_root/
-```
-
-## Data Flow
-
-```text
-Input
-  ↓
-Processing
-  ↓
-Output
-```
-
-## External Dependencies
-
-- 
-
-## Integration Points
-
-- 
-
-## Architecture Risks
-
-- 
+## Related Notes
+- [[PROJECT_NAME_HERE_PROJECT_HOME]]
+- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
+- [[PROJECT_NAME_HERE_MOC_HOME]]
+<!-- AUTO-GENERATED:END -->

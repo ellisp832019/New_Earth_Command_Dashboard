@@ -1,4 +1,4 @@
-# Module Record — Repo Research Engine
+# Module Record - REPO RESEARCH ENGINE
 
 ## Module ID
 
@@ -10,12 +10,12 @@ Knowledge & Research
 
 ## Purpose
 
-Scans repositories, extracts context, indexes docs and creates research-ready knowledge packs.
+Template module for local-first Obsidian vault mirroring and project memory workflows.
 
 ## Status
 
-Shell registration planned.
+Shell registered.
 
 ## Omega decision
 
-This module is included in the first Module Hub shell so it can be seen, governed and integrated later without hard-coding it into the dashboard.
+This module is included in the Module Hub shell so it can be seen, governed and expanded later without hard-coding it into the dashboard.

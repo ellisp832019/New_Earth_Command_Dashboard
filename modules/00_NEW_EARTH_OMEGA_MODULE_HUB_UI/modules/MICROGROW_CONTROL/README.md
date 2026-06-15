@@ -2,15 +2,19 @@
 
 ## Purpose
 
-Dashboard control and diagnostics shell for MicroGrow nodes, sensors, relays and firmware status.
+Template module for MicroGrow control, diagnostics, and local-first dashboard integration.
 
-## First shell version
+## Current state
 
-This module starts as a visible Module Hub card with a detail screen, permissions list, health placeholder, dock option and Omega OS record link.
+This module is intentionally a shell. It can be shown in the Module Hub, governed with a manifest, and expanded later without hard-coding the implementation now.
 
-## Future integration
+## What it should grow into
 
-Real functionality should be connected only after the Module Hub foundation is stable.
+- core workflow implementation
+- local file and vault bridge
+- module-specific health and logging
+- dashboard integration
+- later automation once the shell is stable
 
 ## Requested permissions
 

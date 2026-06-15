@@ -1,11 +1,11 @@
 {
-  "project_name": "MicroGrow",
-  "project_type": "firmware_app_hardware",
+  "project_name": "__PROJECT_NAME__",
+  "project_type": "__PROJECT_TYPE__",
   "repo_root": ".",
-  "source_of_truth": "local repo + Omega OS + Obsidian exports",
-  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN",
-  "obsidian_project_folder": "03_REPO_KNOWLEDGE_EXPORTS/MicroGrow",
-  "dashboard_export_path": "D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/01_PROJECT_REPO_BRIDGE/MicroGrow",
+  "source_of_truth": "local repo + Obsidian exports + dashboard exports",
+  "obsidian_vault_path": "__OBSIDIAN_VAULT_PATH__",
+  "obsidian_project_folder": "__OBSIDIAN_PROJECT_FOLDER__",
+  "dashboard_export_path": "__DASHBOARD_EXPORT_PATH__",
   "ignore": [
     ".git",
     ".dart_tool",
@@ -21,10 +21,7 @@
     "No file deletion by sync module",
     "Never overwrite hand-written Obsidian sections",
     "Human approval required for source-code edits",
-    "No secrets copied into Dashboard or AI context exports",
-    "PCB V0.1 must remain low-voltage only",
-    "Single-node stability before multi-node/cloud work",
-    "Local-first control is the core architecture"
+    "No secrets copied into Dashboard or AI context exports"
   ],
   "safe_ai_permissions": [
     "read exported markdown",
