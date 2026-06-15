@@ -752,6 +752,7 @@ def build_dashboard_status(
     repo_root: Path,
     broken_links: Sequence[str],
     warnings: Sequence[str],
+    errors: Sequence[str],
 ) -> Dict[str, object]:
     git_state = context["git"]
     return {
@@ -770,7 +771,7 @@ def build_dashboard_status(
         "changed_file_count": int(git_state.get("changed_file_count", "0") or 0),
         "repo_root": repo_root.as_posix(),
         "warnings": list(warnings),
-        "errors": list(warnings if sync_result.skipped_copy and warnings else []),
+        "errors": list(errors),
     }
 
 
@@ -1591,6 +1592,7 @@ def generate_sync_report(
     repo_docs: Sequence[str],
     broken_links: Sequence[str],
     warnings: Sequence[str],
+    errors: Sequence[str],
     destination: Path | None,
 ) -> str:
     body = "\n".join(
@@ -1622,6 +1624,9 @@ def generate_sync_report(
             "",
             "## Warnings",
             render_list([f"`{warning}`" for warning in warnings] if warnings else ["No warnings recorded."]),
+            "",
+            "## Errors",
+            render_list([f"`{error}`" for error in errors] if errors else ["No errors recorded."]),
             "",
             "## Notes",
             "- This report stays local-first.",
@@ -2410,6 +2415,7 @@ def run_sync(config_path: Path) -> SyncResult:
     note_timestamp = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
     broken_links, broken_link_count = check_wiki_links(repo_root, config)
     warnings: List[str] = []
+    errors: List[str] = []
 
     generated_docs = {
         "PROJECT_HOME.md": generate_project_home(context, config, git_state, repo_root, note_timestamp),
@@ -2467,15 +2473,14 @@ def run_sync(config_path: Path) -> SyncResult:
             )
         except Exception as exc:  # noqa: BLE001
             skipped_copy = True
-            warnings.append(f"Vault export mirror failed: {exc}")
+            errors.append(f"Vault export mirror failed: {exc}")
         try:
             repo_docs_copied = mirror_repo_docs(repo_root, docs_root, destination or (vault_root / config.obsidian_project_folder))
         except Exception as exc:  # noqa: BLE001
             skipped_copy = True
-            warnings.append(f"Repo docs mirror failed: {exc}")
+            errors.append(f"Repo docs mirror failed: {exc}")
     else:
         skipped_copy = True
-        warnings.append("Vault mirror skipped because the vault path or project folder is not configured.")
 
     synced_payload = [*copied_docs, *repo_docs_copied]
     session_note_name, session_note_content = generate_session_note(
@@ -2493,8 +2498,10 @@ def run_sync(config_path: Path) -> SyncResult:
         f"Broken wiki links: {broken_link_count}. "
         f"Changed watched source files: {len(changed_files)}."
     )
-    if skipped_copy:
+    if skipped_copy and errors:
         base_message += " Vault mirror had one or more issues."
+    elif skipped_copy:
+        base_message += " Vault mirror was skipped because no destination was configured."
     if config.sync_mode != "manual":
         base_message += f" Sync mode: {config.sync_mode}."
 
@@ -2510,6 +2517,7 @@ def run_sync(config_path: Path) -> SyncResult:
         repo_docs_copied,
         broken_links,
         warnings,
+        errors,
         destination,
     )
     if write_text_if_changed(export_root / "sync_report.md", sync_report_content):
@@ -2525,12 +2533,13 @@ def run_sync(config_path: Path) -> SyncResult:
             updated_docs=updated_docs,
             copied_docs=[*copied_docs, *repo_docs_copied, session_note_name, "sync_report.md"],
             skipped_copy=skipped_copy,
-            status="warning" if warnings else ("success" if not skipped_copy else "info"),
+            status="error" if errors else ("warning" if warnings else ("success" if not skipped_copy else "info")),
             message=base_message,
         ),
         repo_root,
         broken_links,
         warnings,
+        errors,
     )
     dashboard_status_path = export_root / "dashboard_status.json"
     if write_json_if_changed(dashboard_status_path, dashboard_status):
@@ -2587,7 +2596,7 @@ def run_sync(config_path: Path) -> SyncResult:
             updated_docs=updated_docs,
             copied_docs=[*copied_docs, *repo_docs_copied],
             skipped_copy=skipped_copy,
-            status="warning" if warnings else ("success" if not skipped_copy else "info"),
+            status="error" if errors else ("warning" if warnings else ("success" if not skipped_copy else "info")),
             message=base_message,
         ),
         repo_root,
@@ -2620,7 +2629,7 @@ def run_sync(config_path: Path) -> SyncResult:
         updated_docs=updated_docs,
         copied_docs=final_copied_docs,
         skipped_copy=skipped_copy,
-        status="warning" if warnings else ("success" if not skipped_copy else "info"),
+        status="error" if errors else ("warning" if warnings else ("success" if not skipped_copy else "info")),
         message=base_message,
     )
 

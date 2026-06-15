@@ -8,8 +8,10 @@ latest_commit: "{{latest_commit}}"
 last_synced: "{{last_synced}}"
 tags:
   - "{{tag_1}}"
+  - "{{tag_2}}"
 related_projects:
   - "{{related_project_1}}"
+  - "{{related_project_2}}"
 ---
 
 # {{project_name}} Home

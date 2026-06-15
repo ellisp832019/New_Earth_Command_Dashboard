@@ -1,21 +1,47 @@
-# PROJECT_NAME_HERE PROJECT HOME
+---
+project_name: "PROJECT_NAME_HERE"
+project_type: "dashboard"
+status: "active"
+repo_path: "D:/Dev/Projects/New Earth - Command Dashboard"
+branch: "feat/asset-intelligence-tab"
+latest_commit: "b8b8e3f chore(sync): refresh generated module exports"
+last_synced: "2026-06-15 11:10:41 GMT Summer Time"
+tags:
+  - "dashboard"
+  - "local-first"
+  - "knowledge-fabric"
+  - "obsidian"
+  - "omega-os"
+related_projects:
+  - "MicroGrow"
+  - "Omega OS"
+  - "XR OS"
+  - "Grants"
+  - "AI Security Layer"
+---
 
-Generic template note for the portable knowledge fabric bundle.
+## What This Is
+- PROJECT_NAME_HERE is the local-first knowledge fabric for New Earth.
+- This note acts as the human-friendly home for the project inside Obsidian.
+- Keep hand-written notes above or below the generated block.
 
-<!-- AUTO-GENERATED:START -->
-## Overview
-- Project: `PROJECT_NAME_HERE`
-- Type: `project_type`
-- Status: `template`
-- Branch: `main`
-- Latest commit: `abcdef0`
+## Project Signals
+- Project type: `dashboard`
 - Sync mode: `manual`
+- Branch: `feat/asset-intelligence-tab`
+- Latest commit: `b8b8e3f`
+- Dirty working tree: `True`
 
-## Next Step
-- Replace this placeholder content with project-specific guidance.
+## Related Projects
+- [[MicroGrow]]
+- [[Omega OS]]
+- [[XR OS]]
+- [[Grants]]
+- [[AI Security Layer]]
 
-## Related Notes
-- [[PROJECT_NAME_HERE_PROJECT_HOME]]
-- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
-- [[PROJECT_NAME_HERE_MOC_HOME]]
-<!-- AUTO-GENERATED:END -->
+## Top Links
+- [[PROJECT_NAME_PROJECT_INDEX]]
+- [[PROJECT_NAME_MOC_HOME]]
+- [[PROJECT_NAME_START_HERE]]
+- [[PROJECT_NAME_INDEX]]
+- [[PROJECT_NAME_sync_report]]

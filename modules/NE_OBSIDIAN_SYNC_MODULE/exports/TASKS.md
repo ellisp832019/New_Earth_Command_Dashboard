@@ -1,21 +1,24 @@
-# PROJECT_NAME_HERE TASKS
+# PROJECT_NAME_HERE Tasks
 
-Generic template note for the portable knowledge fabric bundle.
+Short action list and parked work.
 
 <!-- AUTO-GENERATED:START -->
-## Overview
-- Project: `PROJECT_NAME_HERE`
-- Type: `project_type`
-- Status: `template`
-- Branch: `main`
-- Latest commit: `abcdef0`
-- Sync mode: `manual`
+## Immediate Actions
+- Finish the current local-first slice.
+- Keep the docs and build notes aligned.
+- Avoid widening scope before the current slice is stable.
 
-## Next Step
-- Replace this placeholder content with project-specific guidance.
+## Parked For Now
+These are useful later, but not the current focus:
 
-## Related Notes
-- [[PROJECT_NAME_HERE_PROJECT_HOME]]
-- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
-- [[PROJECT_NAME_HERE_MOC_HOME]]
+- Login.
+- Cloud sync.
+- Full AI assistant.
+- Large UI redesigns.
+- Broad architecture rewrites.
+
+## How To Use This Note
+- This is the short action note, not the roadmap.
+- If you want the 4 week and 3 month plan, open `ROADMAP.md`.
+- If you want the live sync pulse, open `CURRENT_PROGRESS.md`.
 <!-- AUTO-GENERATED:END -->

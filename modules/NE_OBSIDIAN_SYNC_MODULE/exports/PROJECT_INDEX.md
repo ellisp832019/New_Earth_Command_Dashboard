@@ -1,21 +1,34 @@
-# PROJECT_NAME_HERE PROJECT INDEX
+# PROJECT_NAME_HERE Project Index
 
-Generic template note for the portable knowledge fabric bundle.
+Navigator for the New Earth Knowledge Fabric surface.
 
 <!-- AUTO-GENERATED:START -->
-## Overview
-- Project: `PROJECT_NAME_HERE`
-- Type: `project_type`
-- Status: `template`
-- Branch: `main`
-- Latest commit: `abcdef0`
-- Sync mode: `manual`
+## Hub Notes
+- [[PROJECT_NAME_PROJECT_HOME]]
+- [[PROJECT_NAME_MOC_HOME]]
+- [[PROJECT_NAME_START_HERE]]
+- [[PROJECT_NAME_INDEX]]
 
-## Next Step
-- Replace this placeholder content with project-specific guidance.
+## Canonical Knowledge
+- [[PROJECT_NAME_DOC_REGISTRY]]
+- [[PROJECT_NAME_PROJECT_GRAPH]]
+- [[PROJECT_NAME_PROJECT_MAP]]
+- [[PROJECT_NAME_MODULE_STATUS]]
+- [[PROJECT_NAME_MODULE_RELATIONS]]
+- [[PROJECT_NAME_PROJECT_OVERVIEW]]
+- [[PROJECT_NAME_CURRENT_STATE]]
+- [[PROJECT_NAME_CURRENT_PROGRESS]]
 
-## Related Notes
-- [[PROJECT_NAME_HERE_PROJECT_HOME]]
-- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
-- [[PROJECT_NAME_HERE_MOC_HOME]]
+## Logs
+- [[PROJECT_NAME_BUILD_LOG]]
+- [[PROJECT_NAME_BUILD_LOG_SUMMARY]]
+- [[PROJECT_NAME_FULL_BUILD_HISTORY]]
+- [[PROJECT_NAME_DAILY_SYNC_LOG]]
+- [[PROJECT_NAME_SESSION_NOTE]]
+- [[PROJECT_NAME_sync_report]]
+
+## Backlinks
+- [[PROJECT_NAME_PROJECT_HOME]]
+- [[PROJECT_NAME_MOC_HOME]]
+- [[PROJECT_NAME_DOC_REGISTRY]]
 <!-- AUTO-GENERATED:END -->

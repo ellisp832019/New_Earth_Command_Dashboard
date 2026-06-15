@@ -5,8 +5,14 @@ Use this checklist every time you add the module to a repo.
 - [ ] Keep the module in `modules/NE_OBSIDIAN_SYNC_MODULE`
 - [ ] Update `project_name`
 - [ ] Update `project_type`
+- [ ] Update `repo_path` to the repo root
+- [ ] Update `docs_source_path`
 - [ ] Update `obsidian_vault_path`
 - [ ] Update `obsidian_project_folder`
+- [ ] Update `dashboard_export_path` if needed
+- [ ] Update `tags`
+- [ ] Update `related_projects`
+- [ ] Choose a sync mode
 - [ ] Ask Codex to run `CODEX_OBSIDIAN_SYNC_TASK.md`
 - [ ] Review files in `modules/NE_OBSIDIAN_SYNC_MODULE/exports/`
 - [ ] Run the sync script

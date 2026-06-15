@@ -65,7 +65,7 @@ Repo docs are also mirrored into the vault project folder under a `docs/` subfol
 
 1. Keep this module under `modules/NE_OBSIDIAN_SYNC_MODULE`.
 2. Edit `obsidian_sync_config.json` in this folder.
-3. Set your repo path, docs source path, vault path, project folder, related projects, tags, and sync mode.
+3. Set your repo root path, docs source path, vault path, project folder, related projects, tags, dashboard export path, and sync mode.
 4. Make sure Python is installed.
 
 ### Config Example
@@ -74,10 +74,10 @@ Repo docs are also mirrored into the vault project folder under a `docs/` subfol
 {
   "project_name": "PROJECT_NAME_HERE",
   "project_type": "research",
-  "repo_path": ".",
+  "repo_path": "../..",
   "docs_source_path": "docs",
-  "obsidian_vault_path": "D:/NEW_EARTH_OBSIDIAN_VAULT",
-  "obsidian_project_folder": "01_ACTIVE_PROJECTS/PROJECT_NAME_HERE",
+  "obsidian_vault_path": "",
+  "obsidian_project_folder": "",
   "dashboard_export_path": "",
   "vault_note_prefix": "PROJECT_NAME_",
   "sync_mode": "manual",

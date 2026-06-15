@@ -1,21 +1,21 @@
-# PROJECT_NAME_HERE DECISIONS
+# PROJECT_NAME_HERE Decisions
 
-Generic template note for the portable knowledge fabric bundle.
+Short decision summary for quick scanning.
 
 <!-- AUTO-GENERATED:START -->
-## Overview
-- Project: `PROJECT_NAME_HERE`
-- Type: `project_type`
-- Status: `template`
-- Branch: `main`
-- Latest commit: `abcdef0`
-- Sync mode: `manual`
+## Key Technical Decisions
+- Local-first and offline-first for V0.1.
+- Use a feature-based Flutter structure.
+- Use go_router for navigation.
+- Use Riverpod when state is needed.
+- Keep the dashboard calm and review-first.
 
-## Next Step
-- Replace this placeholder content with project-specific guidance.
+## Why They Matter
+- These decisions keep the app local, readable, and easy to extend.
+- They also keep the Obsidian export set understandable by separating the summary from the long-form decision log.
 
-## Related Notes
-- [[PROJECT_NAME_HERE_PROJECT_HOME]]
-- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
-- [[PROJECT_NAME_HERE_MOC_HOME]]
+## See Also
+- [[PROJECT_NAME_DECISIONS_LOG]]
+- [[PROJECT_NAME_INDEX]]
+- [[PROJECT_NAME_DOC_REGISTRY]]
 <!-- AUTO-GENERATED:END -->

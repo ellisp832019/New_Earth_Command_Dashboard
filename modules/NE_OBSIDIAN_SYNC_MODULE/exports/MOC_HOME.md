@@ -1,21 +1,27 @@
-# PROJECT_NAME_HERE MOC HOME
+# PROJECT_NAME_HERE MOC Home
 
-Generic template note for the portable knowledge fabric bundle.
+Map-of-content root for the project knowledge fabric.
 
 <!-- AUTO-GENERATED:START -->
-## Overview
-- Project: `PROJECT_NAME_HERE`
-- Type: `project_type`
-- Status: `template`
-- Branch: `main`
-- Latest commit: `abcdef0`
-- Sync mode: `manual`
+## MOC Home
+- This is the map-of-content home for the project memory layer.
+- Use it to jump between the project home, index, and the other note families.
 
-## Next Step
-- Replace this placeholder content with project-specific guidance.
+## Entry Points
+- [[PROJECT_NAME_PROJECT_HOME]]
+- [[PROJECT_NAME_PROJECT_INDEX]]
+- [[PROJECT_NAME_INDEX]]
+- [[PROJECT_NAME_START_HERE]]
 
-## Related Notes
-- [[PROJECT_NAME_HERE_PROJECT_HOME]]
-- [[PROJECT_NAME_HERE_PROJECT_INDEX]]
-- [[PROJECT_NAME_HERE_MOC_HOME]]
+## Related Projects
+- [[MicroGrow]]
+- [[Omega OS]]
+- [[XR OS]]
+- [[Grants]]
+- [[AI Security Layer]]
+
+## Backlinks
+- [[PROJECT_NAME_PROJECT_HOME]]
+- [[PROJECT_NAME_PROJECT_INDEX]]
+- [[PROJECT_NAME_sync_report]]
 <!-- AUTO-GENERATED:END -->
