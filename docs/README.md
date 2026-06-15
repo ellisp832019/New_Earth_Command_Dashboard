@@ -6,9 +6,13 @@ The app is built local-first, offline-first, and clarity-first. Documentation sh
 
 ## Start Here
 
+- [Project Index](../PROJECT_INDEX.md)
 - [Getting Started](user_guide/getting_started.md)
 - [MVP Roadmap](roadmap/mvp_roadmap.md)
 - [App Roadmap](roadmap/app_roadmap.md)
+- [Roadmap Index](roadmap/README.md)
+- [Visual Project Map](roadmap/visual_project_map.md)
+- [Documentation Audit](roadmap/documentation_audit.md)
 - [Dashboard and Module Landscape](roadmap/dashboard_module_landscape.md)
 - [Dashboard Module Map](roadmap/dashboard_module_map.md)
 - [Dashboard Ranked Roadmap](roadmap/dashboard_ranked_roadmap.md)

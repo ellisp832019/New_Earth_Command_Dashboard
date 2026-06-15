@@ -4,7 +4,9 @@
 
 Complete.
 
-This task refines the voice layer so Gaia sounds steady, brief, and dependable across wake, dock, and assistant surfaces.
+Historical task record. This slice is complete and kept here for reference.
+
+This task refines the voice layer so the dashboard assistant sounds steady, brief, and dependable across wake, dock, and assistant surfaces.
 
 ---
 

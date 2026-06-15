@@ -4,11 +4,13 @@
 
 Complete.
 
+Historical task record. This slice is complete and kept here for reference.
+
 This is the first implementation task for the full AI assistant roadmap.
 
 ## Task Title
 
-Freeze the core assistant turn model so Gaia behaves like one calm, coordinated assistant instead of several competing voice surfaces.
+Freeze the core assistant turn model so the dashboard behaves like one calm, coordinated assistant instead of several competing voice surfaces.
 
 ---
 

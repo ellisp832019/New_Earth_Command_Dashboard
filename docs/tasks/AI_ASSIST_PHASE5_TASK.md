@@ -4,6 +4,8 @@
 
 Complete.
 
+Historical task record. This slice is complete and kept here for reference.
+
 This task makes wizard mode feel like a calm guided conversation instead of a form.
 
 ---

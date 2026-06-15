@@ -4,6 +4,8 @@
 
 Complete. The Voice Bridge v0.1 work has been implemented, verified with `flutter analyze`, `flutter test`, and a Windows build, and kept review-first and local-first.
 
+Historical task record. This slice is complete and kept here for reference.
+
 ## Task Title
 
 Build the first safe version of the New Earth Dashboard Voice Bridge.
@@ -229,7 +231,7 @@ This task is complete when:
 - A reviewed transcript can save as a Business Opportunity.
 - Codex prompts are generated for manual review only.
 - Saved voice history can be reused from the Voice Assistant screen.
-- Gaia can surface a visible conversation dock on the dashboard when wake capture lands there before the full route opens, that dock can speak the captured reply through the configured voice output, it can offer quick follow-up chips that reopen the assistant with a preselected intent, and it can accept a short follow-up directly in the dock so the thread keeps moving without a full route hop.
+- The dashboard can surface a visible conversation dock when wake capture lands there before the full route opens, that dock can speak the captured reply through the configured voice output, it can offer quick follow-up chips that reopen the assistant with a preselected intent, and it can accept a short follow-up directly in the dock so the thread keeps moving without a full route hop.
 - `flutter analyze` passes.
 - `flutter test` passes.
 - Windows startup blocks until a headset or headset microphone is connected.

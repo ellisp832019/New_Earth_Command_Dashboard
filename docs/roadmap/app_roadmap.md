@@ -61,6 +61,7 @@ Focus here:
 - preserve local data
 - keep navigation calm
 - keep the top three task flow honest
+- keep inbox triage clear and recoverable
 - keep voice capture and review predictable
 
 ### 2. Finish The Voice Clean-up

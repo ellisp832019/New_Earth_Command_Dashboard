@@ -4,6 +4,8 @@
 
 Complete.
 
+Historical task record. This slice is complete and kept here for reference.
+
 This task standardizes the response shape used by the local assistant and the AI assist layer.
 
 ---
