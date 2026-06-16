@@ -27,6 +27,7 @@ The app already has working surfaces for:
 - Assets and QR labels
 - Knowledge Library
 - Voice Assistant and Voice Intelligence
+- Omega Experiment Workspace
 
 The strongest active systems right now are:
 
@@ -34,6 +35,7 @@ The strongest active systems right now are:
 - the Knowledge Engine module for PDF library scanning and catalogue work
 - the QR label and print queue workflow
 - the Windows voice capture, legacy voice assistant, and new voice intelligence path
+- the Omega Experiment Workspace for validation, evidence, results, and lessons learned
 
 ## Working Principles
 
@@ -150,6 +152,7 @@ The current Module Hub work is complete for now. Revisit it when a new module sl
 
 Use these docs for the detailed slices:
 
+- [`docs/roadmap/experiment_workspace_roadmap.md`](experiment_workspace_roadmap.md)
 - [`docs/roadmap/dashboard_module_landscape.md`](dashboard_module_landscape.md)
 - [`docs/roadmap/dashboard_module_map.md`](dashboard_module_map.md)
 - [`docs/roadmap/dashboard_ranked_roadmap.md`](dashboard_ranked_roadmap.md)

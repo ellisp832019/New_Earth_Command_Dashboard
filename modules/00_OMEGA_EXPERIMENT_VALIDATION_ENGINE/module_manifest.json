@@ -1,0 +1,40 @@
+{
+  "id": "00_OMEGA_EXPERIMENT_VALIDATION_ENGINE",
+  "name": "Omega Experiment Validation Engine",
+  "version": "0.1.0",
+  "status": "experimental",
+  "category": "Knowledge & Research",
+  "description": "Omega-level experiment, evidence, validation and lessons-learned engine for all New Earth projects.",
+  "enabled": true,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "iconKey": "science_outlined",
+  "routes": [
+    "/experiments",
+    "/experiments/new",
+    "/experiments/evidence",
+    "/experiments/results",
+    "/experiments/lessons",
+    "/experiments/reports",
+    "/experiments/settings",
+    "/experiments/integrations",
+    "/experiments/ai-review"
+  ],
+  "permissions": [
+    "file_read",
+    "file_write",
+    "repo_access",
+    "omega_os_access",
+    "shell_commands"
+  ],
+  "installPath": "modules/00_OMEGA_EXPERIMENT_VALIDATION_ENGINE",
+  "omegaOsPath": "D:\\NEW_EARTH_OMEGA_OS_PACK\\23_AI_AND_AUTOMATION\\OMEGA_EXPERIMENT_ENGINE",
+  "storagePath": "modules/00_OMEGA_EXPERIMENT_VALIDATION_ENGINE/storage",
+  "tags": [
+    "experiments",
+    "validation",
+    "evidence",
+    "lessons-learned"
+  ],
+  "notes": "Safe-first local experimentation module with dry-run friendly automation."
+}

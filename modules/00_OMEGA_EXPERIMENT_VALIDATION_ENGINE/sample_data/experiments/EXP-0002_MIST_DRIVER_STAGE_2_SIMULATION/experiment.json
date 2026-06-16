@@ -1,0 +1,52 @@
+{
+  "experiment_id": "EXP-0002",
+  "title": "Mist Driver Proteus Simulation",
+  "project": "MicroGrow",
+  "project_link": "projects/microgrow",
+  "status": "RUNNING",
+  "category": "PROTEUS_SIMULATION",
+  "owner": "Peter Ellis",
+  "created_date": "2026-06-16",
+  "objective": "Validate the mist driver control circuit in Proteus before firmware handoff.",
+  "hypothesis": "The staged driver circuit will switch cleanly and expose only minor timing adjustments before PCB validation.",
+  "test_plan": "Simulate the load, capture switching waveforms, compare against the expected control profile, and record follow-up actions.",
+  "setup_notes": "Proteus simulation prepared with the current driver schematic and staged load model.",
+  "evidence_files": [
+    "evidence/proteus-screenshot.md",
+    "evidence/simulation-log.md"
+  ],
+  "measurements": [
+    "switch timing",
+    "load current",
+    "control stability"
+  ],
+  "software_used": [
+    "Proteus",
+    "VS Code",
+    "Obsidian"
+  ],
+  "hardware_used": [
+    "PC817",
+    "74HC08",
+    "LM358",
+    "IRFZ44N",
+    "relay coil"
+  ],
+  "results": "Simulation is running with expected timing behaviour.",
+  "conclusion": "Awaiting final comparison against bench results.",
+  "lesson_learned": "Proteus can shorten the path to PCB confidence when the load model is kept simple.",
+  "next_actions": [
+    "Capture final waveform screenshots",
+    "Compare against PCB V0.1 assumptions",
+    "Record design changes"
+  ],
+  "related_repo_commits": [
+    "draft: mist driver proteus update"
+  ],
+  "related_github_issues": [
+    "#102"
+  ],
+  "related_obsidian_notes": [
+    "Mist Driver Proteus Simulation"
+  ]
+}

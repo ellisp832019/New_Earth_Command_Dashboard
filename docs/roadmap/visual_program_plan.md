@@ -4,6 +4,8 @@ This page lays out the image strategy for the whole New Earth Command Dashboard 
 
 The goal is to keep visuals useful, consistent, and easy to expand as the system grows.
 
+For the visual inventory and the current missing-visual plan, see [Visual Master Index](../visual_master_index.md).
+
 ## What We Already Have
 
 - Core architecture overview diagrams in `docs/assets/diagrams/`
@@ -23,12 +25,11 @@ The visual library is past the early planning stage and now has a stable core.
 - A broad module gallery with overview images for the major active modules
 - User guide visuals and repo documentation graphics
 
-### Still Missing Or Parked
+### Recently Rendered
 
-- A dedicated voice session state machine diagram
-- A backup / recovery control flow diagram
-- Wider system-layer maps that show how the major modules fit together
-- Future-only visuals such as AI adapter and live integration diagrams
+The current missing-visual backlog has now been rendered.
+
+See [Visual Master Index](../visual_master_index.md) for the complete list of the new assets and their locations.
 
 ## Current Visual Working Set
 
@@ -54,13 +55,11 @@ Create or maintain diagrams for the core system layers:
 - Treasury / finance control flow
 - Backup / recovery control flow
 
-### Recommended next image order
+### Current maintenance order
 
-1. Voice session state machine
-2. Backup / recovery control flow
-3. Full repo topology map
-4. Shell / module / knowledge / operational layers map
-5. Local-first data flow map
+1. Refresh the core diagrams if the architecture changes.
+2. Add narrower module-specific posters only when a new active module appears.
+3. Add new future concept art only when a future slice becomes real enough to justify it.
 
 ## Phase 2 - Module Images
 

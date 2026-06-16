@@ -1,0 +1,37 @@
+[
+  {
+    "experiment_id": "EXP-0001",
+    "title": "MicroGrow Sensor Comparison",
+    "project": "MicroGrow",
+    "status": "ANALYSING",
+    "category": "SENSOR_VALIDATION"
+  },
+  {
+    "experiment_id": "EXP-0002",
+    "title": "Mist Driver Stage 2 Proteus Simulation",
+    "project": "MicroGrow",
+    "status": "RUNNING",
+    "category": "PROTEUS_SIMULATION"
+  },
+  {
+    "experiment_id": "EXP-0003",
+    "title": "PCB V0.1 Validation",
+    "project": "MicroGrow",
+    "status": "READY",
+    "category": "PCB_VALIDATION"
+  },
+  {
+    "experiment_id": "EXP-0004",
+    "title": "ESP-NOW Testing",
+    "project": "MicroGrow",
+    "status": "PLANNED",
+    "category": "COMMUNICATION_TEST"
+  },
+  {
+    "experiment_id": "EXP-0005",
+    "title": "Enclosure Airflow Testing",
+    "project": "MicroGrow",
+    "status": "IDEA",
+    "category": "ENCLOSURE_TEST"
+  }
+]

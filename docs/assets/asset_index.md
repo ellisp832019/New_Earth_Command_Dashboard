@@ -2,12 +2,14 @@
 
 This page maps the existing PNG assets so they can guide documentation, design, and future app work from the beginning.
 
+For the repo-wide visual overview and missing-visual plan, see [Visual Master Index](../visual_master_index.md).
+
 ## Summary
 
-The repo currently includes 56 PNG assets across:
+The repo currently includes 68 PNG assets across:
 
-- `assets/branding` - 7 brand and palette assets.
-- `assets/diagrams` - 10 architecture and flow diagrams.
+- `assets/branding` - 8 brand and palette assets.
+- `assets/diagrams` - 21 architecture and flow diagrams.
 - `assets/screenshots` - 12 app mockups and screen concepts.
 - `assets/user_guide` - 17 user guide and manual pages.
 - `assets/repo` - 6 GitHub and repository documentation visuals.
@@ -44,7 +46,9 @@ Key files:
 - `40_brand_style_guide.png`
 - `new_earth_command_dashboard_12_colour_palette.png`
 - `new_earth_command_dashboard_01_hero_branding.png`
+- `31_new_earth_dashboard_app_icon_set.png`
 - `24_app_splash_screen.png`
+- `new_earth_command_dashboard_13_desktop_startup_background.png`
 
 ### Screenshots
 

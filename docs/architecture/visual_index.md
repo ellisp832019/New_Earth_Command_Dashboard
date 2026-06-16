@@ -4,6 +4,8 @@ This page is the master index for architecture-related images in the New Earth C
 
 Use it when you want a quick map of the visual references that explain the app shell, module hub, sync flows, and supporting system diagrams.
 
+For the repo-wide visual library and missing-visual plan, see [Visual Master Index](../visual_master_index.md).
+
 ## Current State
 
 The visual set is in a solid working state.
@@ -11,7 +13,7 @@ The visual set is in a solid working state.
 - The core architecture diagrams are in place.
 - The Module Hub and knowledge-fabric visuals are indexed and stable.
 - The module gallery covers the major active modules with overview images.
-- The remaining gaps are broader system maps and dedicated voice / recovery control-flow visuals.
+- The previously missing voice, recovery, and whole-system visuals have now been rendered and are indexed in the master visual page.
 
 ## Core Architecture
 
@@ -24,6 +26,9 @@ The visual set is in a solid working state.
 - [Module hub architecture](module_hub/visuals/new_earth_module_hub_architecture.png)
 - [Module hub build-proof image](module_hub/visuals/new_earth_module_hub_architecture_status.png)
 - [Module hub build-proof history folder](module_hub/visuals/build_proof/)
+- [Voice session state machine](module_hub/visuals/voice_session_state_machine.png)
+- [Local sync, export, and review paths](module_hub/visuals/local_sync_export_review_paths.png)
+- [Module Hub status matrix](module_hub/visuals/module_hub_status_matrix.png)
 
 ## Module Gallery
 
@@ -35,6 +40,7 @@ The visual set is in a solid working state.
 - [Repo Intelligence Bridge control panel](module_hub/visuals/knowledge_fabric_sync_architecture_02_bridge_control_panel.png)
 - [Obsidian Sync module and vault fabric](module_hub/visuals/knowledge_fabric_sync_architecture_03_obsidian_sync.png)
 - [Executive overview](module_hub/visuals/knowledge_fabric_sync_architecture_04_executive_overview.png)
+- [Dashboard to vault feedback loop](../assets/diagrams/dashboard_to_vault_feedback_loop.png)
 
 ## Dashboard Roadmap / Structure
 
@@ -42,6 +48,9 @@ The visual set is in a solid working state.
 - [GitHub docs folder map](../assets/repo/41_github_docs_folder_map.png)
 - [MVP roadmap visual](../assets/repo/03_mvp_roadmap_visual.png)
 - [MVP feature checklist](../assets/repo/42_v01_mvp_feature_checklist.png)
+- [Full repo topology](../assets/diagrams/full_repo_topology.png)
+- [Shell / module / knowledge / operational layers](../assets/diagrams/shell_module_knowledge_operational_layers.png)
+- [Local-first data flow](../assets/diagrams/local_first_data_flow.png)
 
 ## User Guide Visuals
 
@@ -58,4 +67,4 @@ The visual set is in a solid working state.
 - The preserved build-proof history stays in `docs/architecture/module_hub/visuals/build_proof/`.
 - The `docs/README.md` file links here so this page becomes the main visual starting point.
 - The future visual strategy lives in `docs/roadmap/visual_program_plan.md`.
-- The next useful images are the voice session state machine and backup / recovery control flow diagrams.
+- The voice session, backup / recovery, and whole-system visuals now live in the master visual gallery.

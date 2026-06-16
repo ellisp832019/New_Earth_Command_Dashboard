@@ -1,0 +1,54 @@
+{
+  "experiment_id": "EXP-0001",
+  "title": "MicroGrow Sensor Comparison",
+  "project": "MicroGrow",
+  "project_link": "projects/microgrow",
+  "status": "ANALYSING",
+  "category": "SENSOR_VALIDATION",
+  "owner": "Peter Ellis",
+  "created_date": "2026-06-16",
+  "objective": "Compare candidate temperature and humidity sensors for MicroGrow V1/V0.1 PCB direction.",
+  "hypothesis": "SHTC3/SHT-series sensors will be more stable and production-suitable than low-cost DHT22 modules.",
+  "test_plan": "Mount each sensor in the same airflow, log 30 minutes of readings, then compare stability, noise and wiring complexity.",
+  "setup_notes": "ESP32 bench rig, short wiring runs, same sampling interval, indoor ambient conditions.",
+  "evidence_files": [
+    "data/sensor_results.csv",
+    "evidence/bench_notes.md"
+  ],
+  "measurements": [
+    "temperature drift",
+    "humidity drift",
+    "signal stability",
+    "wiring complexity"
+  ],
+  "software_used": [
+    "VS Code",
+    "PlatformIO",
+    "CSV",
+    "Obsidian"
+  ],
+  "hardware_used": [
+    "ESP32",
+    "DHT22",
+    "AHT10",
+    "SHTC3",
+    "SHT1x"
+  ],
+  "results": "Template sample only. Results still pending final bench capture.",
+  "conclusion": "Pending real bench data.",
+  "lesson_learned": "Always keep sensor comparisons on the same test rig so the data stays comparable.",
+  "next_actions": [
+    "Run controlled side-by-side logging",
+    "Capture photos of wiring",
+    "Generate results report"
+  ],
+  "related_repo_commits": [
+    "draft: compare MicroGrow sensors"
+  ],
+  "related_github_issues": [
+    "#101"
+  ],
+  "related_obsidian_notes": [
+    "MicroGrow Sensor Comparison"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "experiment_id": "EXP-0003",
+  "title": "PCB V0.1 Validation",
+  "project": "MicroGrow",
+  "project_link": "projects/microgrow",
+  "status": "READY",
+  "category": "PCB_VALIDATION",
+  "owner": "Peter Ellis",
+  "created_date": "2026-06-16",
+  "objective": "Verify the first PCB revision against the schematic, footprints, and bring-up expectations.",
+  "hypothesis": "V0.1 can be validated with continuity checks, power rail checks, and a small firmware smoke test.",
+  "test_plan": "Inspect the board, log continuity, measure rails, then run a safe smoke test with the minimum firmware.",
+  "setup_notes": "Board received with first-pass assembly notes and a short bring-up checklist.",
+  "evidence_files": [
+    "evidence/board-photos.md",
+    "evidence/continuity-checklist.md"
+  ],
+  "measurements": [
+    "rail voltage",
+    "continuity pass rate",
+    "boot success"
+  ],
+  "software_used": [
+    "KiCad",
+    "VS Code",
+    "CSV"
+  ],
+  "hardware_used": [
+    "MicroGrow PCB V0.1",
+    "Bench supply",
+    "Multimeter"
+  ],
+  "results": "Ready for first bring-up check.",
+  "conclusion": "Validation pending bench execution.",
+  "lesson_learned": "A short checklist prevents avoidable first-power mistakes.",
+  "next_actions": [
+    "Run continuity tests",
+    "Verify all rails",
+    "Capture board photos"
+  ],
+  "related_repo_commits": [
+    "draft: pcb v0.1 validation"
+  ],
+  "related_github_issues": [
+    "#103"
+  ],
+  "related_obsidian_notes": [
+    "PCB V0.1 Validation"
+  ]
+}

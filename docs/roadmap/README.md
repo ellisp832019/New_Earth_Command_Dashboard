@@ -30,6 +30,7 @@ These are the main roadmap views worth checking first:
 - [`dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
 - [`dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
 - [`next_20_task_workflow.md`](next_20_task_workflow.md)
+- [`experiment_workspace_roadmap.md`](experiment_workspace_roadmap.md)
 - [`voice_10_task_roadmap.md`](voice_10_task_roadmap.md)
 - [`ai_10_task_roadmap.md`](ai_10_task_roadmap.md)
 - [`treasury_20_task_roadmap.md`](treasury_20_task_roadmap.md)

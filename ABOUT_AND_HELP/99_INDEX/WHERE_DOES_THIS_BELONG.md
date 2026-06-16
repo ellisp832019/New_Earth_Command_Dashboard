@@ -30,6 +30,6 @@ Belongs in `ABOUT_AND_HELP/04_MODULE_DIRECTORY/`.
 
 Belongs in `ABOUT_AND_HELP/05_SYSTEM_MAPS/` and optionally Omega OS visual folders for final exports.
 
-## Old experiments
+## Archived experiment work
 
 Belongs in archive, with a short summary explaining why it was archived.

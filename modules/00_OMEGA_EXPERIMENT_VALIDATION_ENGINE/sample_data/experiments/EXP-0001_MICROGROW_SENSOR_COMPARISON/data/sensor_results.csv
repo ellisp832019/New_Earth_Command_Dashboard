@@ -1,0 +1,4 @@
+candidate,accuracy_score,stability_score,cost_score,firmware_score,final_score,notes
+DHT22,6,6,9,8,7.25,Cheap and simple but less stable
+SHTC3,9,9,7,8,8.25,Strong candidate for V1
+AHT10,8,8,8,8,8.0,Good backup option

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Omega Result Record",
+  "type": "object",
+  "required": [
+    "experiment_id",
+    "metric",
+    "value"
+  ],
+  "properties": {
+    "experiment_id": {
+      "type": "string"
+    },
+    "candidate": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "value": {
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "unit": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

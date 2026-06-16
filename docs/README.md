@@ -9,6 +9,7 @@ The repo also carries an Obsidian-facing active project mirror under `01_ACTIVE_
 ## Start Here
 
 - [Project Index](../PROJECT_INDEX.md)
+- [Visual Master Index](visual_master_index.md)
 - [About & Help Centre](../ABOUT_AND_HELP/99_INDEX/MASTER_INDEX.md)
 - [Getting Started](user_guide/getting_started.md)
 - [Roadmap Index](roadmap/README.md)
