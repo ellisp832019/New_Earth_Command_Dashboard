@@ -1,0 +1,74 @@
+[
+  {
+    "permission": "dashboard.view",
+    "description": "dashboard view"
+  },
+  {
+    "permission": "users.view",
+    "description": "users view"
+  },
+  {
+    "permission": "users.manage",
+    "description": "users manage"
+  },
+  {
+    "permission": "devices.view",
+    "description": "devices view"
+  },
+  {
+    "permission": "devices.manage",
+    "description": "devices manage"
+  },
+  {
+    "permission": "access.manage",
+    "description": "access manage"
+  },
+  {
+    "permission": "audit.view",
+    "description": "audit view"
+  },
+  {
+    "permission": "finance.view",
+    "description": "finance view"
+  },
+  {
+    "permission": "finance.edit",
+    "description": "finance edit"
+  },
+  {
+    "permission": "finance.admin",
+    "description": "finance admin"
+  },
+  {
+    "permission": "finance.export",
+    "description": "finance export"
+  },
+  {
+    "permission": "microgrow.view",
+    "description": "microgrow view"
+  },
+  {
+    "permission": "microgrow.control",
+    "description": "microgrow control"
+  },
+  {
+    "permission": "ai.request_action",
+    "description": "ai request_action"
+  },
+  {
+    "permission": "ai.execute_system_action",
+    "description": "ai execute_system_action"
+  },
+  {
+    "permission": "backup.run",
+    "description": "backup run"
+  },
+  {
+    "permission": "backup.restore",
+    "description": "backup restore"
+  },
+  {
+    "permission": "voice.request_action",
+    "description": "voice request_action"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "required": [
+    "allowed",
+    "reason"
+  ],
+  "properties": {
+    "allowed": {
+      "type": "boolean"
+    },
+    "requiresApproval": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string"
+    }
+  }
+}

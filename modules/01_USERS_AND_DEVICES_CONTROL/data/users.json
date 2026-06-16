@@ -1,0 +1,67 @@
+[
+  {
+    "id": "user_peter_owner",
+    "display_name": "Peter Ellis",
+    "role": "Owner",
+    "title": "Owner / System Architect",
+    "status": "active",
+    "permissions": ["*"],
+    "linked_devices": ["device_new_earth_dev"],
+    "notes": "Primary system owner."
+  },
+  {
+    "id": "user_hayley_finance",
+    "display_name": "Hayley Arthur",
+    "role": "Co-founder",
+    "title": "Co-founder / Finance / Treasury",
+    "status": "active",
+    "permissions": [
+      "finance.view",
+      "finance.edit",
+      "grants.view",
+      "grants.edit",
+      "docs.view"
+    ],
+    "linked_devices": []
+  },
+  {
+    "id": "user_family_limited",
+    "display_name": "Family User",
+    "role": "Family User",
+    "status": "template",
+    "permissions": ["dashboard.view", "docs.view"],
+    "linked_devices": []
+  },
+  {
+    "id": "user_workshop_learning",
+    "display_name": "Workshop User",
+    "role": "Workshop User",
+    "status": "template",
+    "permissions": ["learning.view", "microgrow.view"],
+    "linked_devices": []
+  },
+  {
+    "id": "user_collaborator",
+    "display_name": "Collaborator",
+    "role": "Project Contributor",
+    "status": "template",
+    "permissions": ["projects.view", "projects.edit", "docs.view"],
+    "linked_devices": []
+  },
+  {
+    "id": "user_guest",
+    "display_name": "Guest",
+    "role": "Guest",
+    "status": "template",
+    "permissions": ["dashboard.view"],
+    "linked_devices": []
+  },
+  {
+    "id": "agent_ai_sandbox",
+    "display_name": "AI Agent",
+    "role": "AI Agent",
+    "status": "template",
+    "permissions": ["ai.request_action", "docs.read_allowed"],
+    "linked_devices": ["device_gaia_usb_assistant"]
+  }
+]

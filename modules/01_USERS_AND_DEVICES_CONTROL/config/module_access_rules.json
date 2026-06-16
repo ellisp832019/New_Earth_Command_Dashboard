@@ -1,0 +1,65 @@
+{
+  "rules": [
+    {
+      "module_id": "17_FINANCE_AND_TREASURY",
+      "view_permission": "finance.view",
+      "edit_permission": "finance.edit",
+      "admin_permission": "finance.admin",
+      "requires_trust_level": 4,
+      "requires_approval_for": [
+        "delete_record",
+        "export_data",
+        "change_bank_details"
+      ]
+    },
+    {
+      "module_id": "MICROGROW",
+      "view_permission": "microgrow.view",
+      "control_permission": "microgrow.control",
+      "requires_trust_level": 3,
+      "requires_approval_for": [
+        "firmware_update",
+        "disable_safety_rule"
+      ]
+    },
+    {
+      "module_id": "GAIA_LOCAL_AI_ASSISTANT",
+      "view_permission": "ai.view",
+      "request_permission": "ai.request_action",
+      "execute_permission": "ai.execute_system_action",
+      "requires_trust_level": 3,
+      "requires_approval_for": [
+        "execute_system_command",
+        "read_private_folder",
+        "write_file"
+      ]
+    },
+    {
+      "module_id": "ALEXA_VOICE_GATEWAY",
+      "view_permission": "voice.view",
+      "request_permission": "voice.request_action",
+      "requires_trust_level": 2,
+      "requires_approval_for": [
+        "control_device",
+        "open_sensitive_module",
+        "execute_automation"
+      ]
+    },
+    {
+      "module_id": "01_USERS_AND_DEVICES_CONTROL",
+      "view_permission": "users.view",
+      "edit_permission": "users.manage",
+      "admin_permission": "access.manage",
+      "request_permission": "access.manage",
+      "requires_trust_level": 4,
+      "requires_approval_for": [
+        "register_user",
+        "register_device",
+        "assign_role",
+        "assign_permission",
+        "approve_request",
+        "deny_request"
+      ]
+    }
+  ]
+}

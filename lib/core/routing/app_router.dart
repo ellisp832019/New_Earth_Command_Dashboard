@@ -68,12 +68,14 @@ import '../../features/modules/module_operations_screen.dart';
 import '../../features/modules/module_permissions_screen.dart';
 import '../../features/modules/module_settings_screen.dart';
 import '../../features/modules/modules_screen.dart';
+import '../../features/users_devices_control/presentation/users_devices_control_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
 import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/omega_os_folder_health_screen.dart';
+import '../../features/security/presentation/security_lock_screen.dart';
 import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/treasury/presentation/treasury_screen.dart';
@@ -910,6 +912,44 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.settings,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.securityLock,
+      builder: (context, state) => const SecurityLockScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.usersDevices,
+      builder: (context, state) => const UsersDevicesControlScreen(),
+      routes: [
+        GoRoute(
+          path: 'users',
+          builder: (context, state) => const UsersDevicesUsersScreen(),
+        ),
+        GoRoute(
+          path: 'devices',
+          builder: (context, state) => const UsersDevicesDevicesScreen(),
+        ),
+        GoRoute(
+          path: 'access-matrix',
+          builder: (context, state) => const UsersDevicesAccessMatrixScreen(),
+        ),
+        GoRoute(
+          path: 'onboarding',
+          builder: (context, state) => const UsersDevicesDeviceOnboardingScreen(),
+        ),
+        GoRoute(
+          path: 'approvals',
+          builder: (context, state) => const UsersDevicesApprovalQueueScreen(),
+        ),
+        GoRoute(
+          path: 'audit',
+          builder: (context, state) => UsersDevicesAuditLogScreen(
+            highlightEventId: state.uri.queryParameters['eventId'],
+          ),
+        ),
+      ],
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

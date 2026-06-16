@@ -1,0 +1,64 @@
+{
+  "module_id": "01_USERS_AND_DEVICES_CONTROL",
+  "module_name": "Users and Devices Control",
+  "category": "Security",
+  "description": "Identity, device trust, access control, approvals, and audit brain for the Dashboard.",
+  "module_type": "core_security_module",
+  "dashboard_category": "Core Systems",
+  "version": "0.1.0",
+  "status": "scaffold",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "local_first": true,
+  "security_first": true,
+  "depends_on": [],
+  "used_by": [
+    "00_NEW_EARTH_OMEGA_MODULE_HUB_UI",
+    "GAIA_LOCAL_AI_ASSISTANT",
+    "ALEXA_VOICE_GATEWAY",
+    "MICROGROW",
+    "OBSIDIAN_SYNC",
+    "BACKUP_MODULE",
+    "GRANTS_MODULE",
+    "FINANCE_AND_TREASURY"
+  ],
+  "entry_points": {
+    "docs": "docs/FSD_USERS_AND_DEVICES.md",
+    "codex": "CODEX_IMPLEMENTATION_PROMPT.md",
+    "rules": "config/module_access_rules.json"
+  },
+  "routes": [
+    "/users-devices",
+    "/users-devices/users",
+    "/users-devices/devices",
+    "/users-devices/access-matrix",
+    "/users-devices/onboarding",
+    "/users-devices/approvals",
+    "/users-devices/audit"
+  ],
+  "permissions": [
+    {
+      "type": "file_read"
+    },
+    {
+      "type": "omega_os_access"
+    }
+  ],
+  "exports": [
+    "canOpenModule",
+    "canPerformAction",
+    "checkPermission",
+    "checkDeviceTrust",
+    "createAuditEvent",
+    "createApprovalRequest",
+    "registerUser",
+    "registerDevice",
+    "getUserById",
+    "getDeviceById",
+    "assignRole",
+    "assignPermission",
+    "approveRequest",
+    "denyRequest"
+  ]
+}

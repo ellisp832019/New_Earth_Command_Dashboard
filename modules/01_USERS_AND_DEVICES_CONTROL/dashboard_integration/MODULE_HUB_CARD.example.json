@@ -1,0 +1,10 @@
+{
+  "module_id": "01_USERS_AND_DEVICES_CONTROL",
+  "title": "Users & Devices Control",
+  "category": "Core Systems",
+  "summary": "Identity, device trust, access control, approvals, and audit brain for the Dashboard.",
+  "route": "/users-devices",
+  "icon": "shield-user",
+  "status": "scaffold",
+  "priority": 1
+}

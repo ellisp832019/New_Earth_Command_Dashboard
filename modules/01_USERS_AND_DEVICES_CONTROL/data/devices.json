@@ -1,0 +1,92 @@
+[
+  {
+    "id": "device_new_earth_dev",
+    "name": "NEW_EARTH_DEV",
+    "type": "pc",
+    "trust_level": 4,
+    "status": "trusted",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["admin.dashboard", "dev.repo", "finance.view", "microgrow.control"],
+    "notes": "Main development PC."
+  },
+  {
+    "id": "device_gaia_usb_assistant",
+    "name": "GAIA USB Assistant",
+    "type": "local_ai_runtime",
+    "trust_level": 3,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["ai.request_action", "docs.read_allowed"],
+    "notes": "Local AI runtime, sandboxed."
+  },
+  {
+    "id": "device_microgrow_node_001",
+    "name": "MicroGrow Node 001",
+    "type": "microgrow_node",
+    "trust_level": 3,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["microgrow.telemetry", "microgrow.receive_allowed_commands"],
+    "notes": "Grow automation node."
+  },
+  {
+    "id": "device_workshop_tablet",
+    "name": "Workshop Tablet",
+    "type": "tablet",
+    "trust_level": 2,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["dashboard.view", "learning.view"],
+    "notes": "Dashboard display."
+  },
+  {
+    "id": "device_alexa_gateway",
+    "name": "Alexa Gateway",
+    "type": "voice_gateway",
+    "trust_level": 2,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["voice.request_action"],
+    "notes": "Voice input only by default."
+  },
+  {
+    "id": "device_obsidian_sync",
+    "name": "Obsidian Vault Sync",
+    "type": "knowledge_bridge",
+    "trust_level": 3,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["docs.sync", "docs.index"],
+    "notes": "Knowledge bridge."
+  },
+  {
+    "id": "device_backup_drive",
+    "name": "Backup Drive",
+    "type": "storage_device",
+    "trust_level": 5,
+    "status": "critical",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["backup.write", "backup.verify"],
+    "notes": "Critical local backup."
+  },
+  {
+    "id": "device_label_printer",
+    "name": "Label Printer",
+    "type": "printer",
+    "trust_level": 2,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["assets.print_label"],
+    "notes": "Asset tagging printer."
+  },
+  {
+    "id": "device_phone_scanner",
+    "name": "Phone Scanner",
+    "type": "mobile_scanner",
+    "trust_level": 2,
+    "status": "registered",
+    "owner_id": "user_peter_owner",
+    "allowed_actions": ["receipts.scan", "qr.scan"],
+    "notes": "Receipt and QR scanner."
+  }
+]

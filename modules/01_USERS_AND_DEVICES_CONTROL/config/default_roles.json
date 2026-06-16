@@ -1,0 +1,18 @@
+[
+  { "role": "Owner", "permissions": ["*"] },
+  {
+    "role": "Admin",
+    "permissions": ["dashboard.admin", "users.manage", "devices.manage", "access.manage", "audit.view"]
+  },
+  {
+    "role": "Co-founder",
+    "permissions": ["dashboard.view", "finance.view", "finance.edit", "grants.view", "grants.edit", "docs.view"]
+  },
+  { "role": "Finance Manager", "permissions": ["finance.view", "finance.edit", "finance.report"] },
+  { "role": "Project Contributor", "permissions": ["projects.view", "projects.edit", "docs.view"] },
+  { "role": "Workshop User", "permissions": ["learning.view", "microgrow.view"] },
+  { "role": "Family User", "permissions": ["dashboard.view", "docs.view"] },
+  { "role": "Guest", "permissions": ["dashboard.view"] },
+  { "role": "AI Agent", "permissions": ["ai.request_action", "docs.read_allowed"] },
+  { "role": "Device Only", "permissions": ["device.report_status"] }
+]

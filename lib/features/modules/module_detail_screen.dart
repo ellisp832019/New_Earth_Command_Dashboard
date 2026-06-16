@@ -140,6 +140,13 @@ class ModuleDetailScreen extends StatelessWidget {
                         },
                         child: const Text('Review governance'),
                       ),
+                      if (module.routes.isNotEmpty)
+                        FilledButton(
+                          onPressed: () {
+                            context.go(module.routes.first);
+                          },
+                          child: const Text('Open module'),
+                        ),
                     ],
                   ),
                 ],

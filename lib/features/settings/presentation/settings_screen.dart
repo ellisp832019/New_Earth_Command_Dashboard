@@ -144,6 +144,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        'Security & Access',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'This is where local identity, device trust, approvals, and future PIN or passkey controls should sit.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          FilledButton.tonalIcon(
+                            onPressed: () {
+                              context.push(RouteNames.securityLock);
+                            },
+                            icon: const Icon(Icons.lock_outline),
+                            label: const Text('Open Security Lock'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.push(RouteNames.usersDevices);
+                            },
+                            icon: const Icon(Icons.shield_outlined),
+                            label: const Text('Open Users & Devices'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.push(RouteNames.moduleHub);
+                            },
+                            icon: const Icon(Icons.extension_outlined),
+                            label: const Text('Open Module Hub'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         'Repo Research Engine Extensions',
                         style: theme.textTheme.titleMedium,
                       ),

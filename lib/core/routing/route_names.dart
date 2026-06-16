@@ -44,6 +44,19 @@ abstract final class RouteNames {
   static const planner = '/planner';
   static const more = '/more';
   static const aboutHelp = '/more/about-help';
+  static const usersDevices = '/users-devices';
+  static const usersDevicesUsers = '/users-devices/users';
+  static const usersDevicesDevices = '/users-devices/devices';
+  static const usersDevicesAccessMatrix = '/users-devices/access-matrix';
+  static const usersDevicesDeviceOnboarding = '/users-devices/onboarding';
+  static const usersDevicesApprovalQueue = '/users-devices/approvals';
+  static const usersDevicesAuditLog = '/users-devices/audit';
+  static String usersDevicesAuditLogFor(String eventId) {
+    return Uri(
+      path: usersDevicesAuditLog,
+      queryParameters: {'eventId': eventId},
+    ).toString();
+  }
   static String aboutHelpSection(String sectionId, {String? documentPath}) {
     final queryParameters = <String, String>{'section': sectionId};
     if (documentPath != null && documentPath.isNotEmpty) {
@@ -141,6 +154,7 @@ abstract final class RouteNames {
   static const inbox = '/inbox';
   static const newInbox = '/inbox/new';
   static const settings = '/settings';
+  static const securityLock = '/security-lock';
   static const voice = '/voice';
   static const voiceConversation = '/voice/conversation';
   static const voiceNotes = '/voice/notes';

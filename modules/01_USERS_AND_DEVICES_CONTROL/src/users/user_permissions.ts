@@ -1,0 +1,3 @@
+import type { RegistryRecord } from '../types';
+export function assignPermission(user: RegistryRecord, permission: string): RegistryRecord { const current = Array.isArray(user.permissions) ? user.permissions as string[] : []; return { ...user, permissions: Array.from(new Set([...current, permission])), updated_at: new Date().toISOString() }; }
+export function userHasPermission(user: RegistryRecord | undefined, permission: string): boolean { if (!user) return false; const permissions = Array.isArray(user.permissions) ? user.permissions as string[] : []; return permissions.includes('*') || permissions.includes(permission); }

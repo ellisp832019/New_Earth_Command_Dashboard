@@ -1,0 +1,1 @@
+export const AUDIT_EVENT_TYPES = ['user_created','user_role_changed','device_created','device_trust_changed','permission_assigned','module_access_allowed','module_access_denied','action_allowed','action_denied','approval_requested','approval_approved','approval_denied','ai_agent_request','voice_gateway_request'] as const;
