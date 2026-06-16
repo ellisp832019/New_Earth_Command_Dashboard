@@ -33,6 +33,10 @@ class SleepToTrayIntent extends Intent {
   const SleepToTrayIntent();
 }
 
+class WakeDashboardIntent extends Intent {
+  const WakeDashboardIntent();
+}
+
 class NewEarthCommandDashboardApp extends ConsumerWidget {
   const NewEarthCommandDashboardApp({super.key});
 
@@ -63,6 +67,11 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                     control: true,
                     shift: true,
                   ): SleepToTrayIntent(),
+                  SingleActivator(
+                    LogicalKeyboardKey.keyW,
+                    control: true,
+                    alt: true,
+                  ): WakeDashboardIntent(),
                   SingleActivator(LogicalKeyboardKey.escape):
                       CloseCommandPaletteIntent(),
                 },
@@ -92,6 +101,16 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                         return null;
                       },
                     ),
+                    WakeDashboardIntent:
+                        CallbackAction<WakeDashboardIntent>(
+                          onInvoke: (intent) {
+                            unawaited(
+                              DesktopPresenceController.instance
+                                  .openDashboard(),
+                            );
+                            return null;
+                          },
+                        ),
                   },
                   child: child ?? const SizedBox.shrink(),
                 ),

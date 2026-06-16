@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 
 import 'app.dart';
 import 'core/windowing/desktop_presence_controller.dart';
@@ -8,6 +9,7 @@ import 'core/windowing/desktop_window_api.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (DesktopWindowApi.isSupported) {
+    await hotKeyManager.unregisterAll();
     await DesktopWindowApi.initialize();
     await DesktopWindowApi.waitUntilReadyToShow(
       size: const Size(1280, 720),

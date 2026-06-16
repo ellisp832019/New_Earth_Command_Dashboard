@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart' as wm;
 import 'package:tray_manager/tray_manager.dart';
 
@@ -18,9 +20,16 @@ class DesktopPresenceController with TrayListener, wm.WindowListener {
   static const String _trayAwakeTooltip = 'New Earth is awake';
   static const String _traySleepTooltip = 'New Earth is sleeping';
   static const String _trayAssetWindows =
-      'windows/runner/resources/new_earth_command_dashboard_tray_icon_v7.ico';
+      'windows/runner/resources/new_earth_command_dashboard_tray_icon_v8.ico';
   static const String _trayAssetOther =
-      'assets/branding/new_earth_command_dashboard_tray_icon_v7.png';
+      'assets/branding/new_earth_command_dashboard_tray_icon_v8.png';
+  static final HotKey _wakeHotKey = HotKey(
+    key: PhysicalKeyboardKey.keyW,
+    modifiers: const [
+      HotKeyModifier.control,
+      HotKeyModifier.alt,
+    ],
+  );
 
   bool _initialized = false;
   bool _allowClose = false;
@@ -71,6 +80,12 @@ class DesktopPresenceController with TrayListener, wm.WindowListener {
           ),
         ],
       ),
+    );
+    await hotKeyManager.register(
+      _wakeHotKey,
+      keyDownHandler: (_) {
+        unawaited(openDashboard());
+      },
     );
   }
 
@@ -197,6 +212,7 @@ class DesktopPresenceController with TrayListener, wm.WindowListener {
       return;
     }
 
+    await hotKeyManager.unregister(_wakeHotKey);
     wm.windowManager.removeListener(this);
     trayManager.removeListener(this);
     await _messageController.close();

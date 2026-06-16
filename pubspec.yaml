@@ -51,6 +51,7 @@ dependencies:
   xml: ^6.6.1
   window_manager: ^0.5.1
   tray_manager: ^0.5.3
+  hotkey_manager: ^0.2.3
 
 dev_dependencies:
   flutter_test:
@@ -90,8 +91,8 @@ flutter:
   assets:
     - assets/branding/new_earth_command_dashboard_13_desktop_startup_background.png
     - assets/branding/new_earth_command_dashboard_07_app_icon_set.png
-    - assets/branding/new_earth_command_dashboard_tray_icon_v7.png
-    - windows/runner/resources/new_earth_command_dashboard_tray_icon_v7.ico
+    - assets/branding/new_earth_command_dashboard_tray_icon_v8.png
+    - windows/runner/resources/new_earth_command_dashboard_tray_icon_v8.ico
     - windows/runner/resources/app_icon.ico
 
   # To add assets to your application, add an assets section, like this:

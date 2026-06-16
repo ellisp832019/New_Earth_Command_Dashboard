@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  hotkey_manager_linux
   printing
   screen_retriever_linux
   tray_manager
