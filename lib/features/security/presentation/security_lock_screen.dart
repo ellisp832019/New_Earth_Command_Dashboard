@@ -213,6 +213,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                               status: _status,
                               detail: _detail,
                               auditSummary: _auditSummary,
+                              hasLatestAuditEvent: _latestAuditEventId != null,
                               selectedUserLabel: selectedUser?.displayName ??
                                   'No local user selected',
                               selectedDeviceLabel: selectedDevice?.name ??
@@ -296,6 +297,7 @@ class _SecurityHero extends StatelessWidget {
     required this.status,
     required this.detail,
     required this.auditSummary,
+    required this.hasLatestAuditEvent,
     required this.selectedUserLabel,
     required this.selectedDeviceLabel,
     required this.onUnlock,
@@ -308,6 +310,7 @@ class _SecurityHero extends StatelessWidget {
   final String status;
   final String detail;
   final String auditSummary;
+  final bool hasLatestAuditEvent;
   final String selectedUserLabel;
   final String selectedDeviceLabel;
   final VoidCallback onUnlock;
@@ -319,57 +322,14 @@ class _SecurityHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      padding: const EdgeInsets.all(24),
+    return _VisualPanel(
+      title: 'Security Lock',
+      subtitle:
+          'This is the local entry point for identity, device trust, approvals, and sensitive module access. Cloud login stays out of V0.1.',
+      icon: Icons.lock_outline,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Icon(
-                  Icons.lock_outline,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Security Lock',
-                      style: theme.textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This is the local entry point for identity, device trust, approvals, and sensitive module access. Cloud login stays out of V0.1.',
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
           Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -381,53 +341,132 @@ class _SecurityHero extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          Text('Session state', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          Text(status, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Text(detail, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              Chip(label: Text('User: $selectedUserLabel')),
-              Chip(label: Text('Device: $selectedDeviceLabel')),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 700;
+              final stats = [
+                _MetricTile(
+                  label: 'State',
+                  value: status,
+                  icon: Icons.lock_clock_outlined,
+                ),
+                _MetricTile(
+                  label: 'Audit',
+                  value: hasLatestAuditEvent ? 'Recorded' : 'None yet',
+                  icon: Icons.receipt_long_outlined,
+                ),
+                _MetricTile(
+                  label: 'Action',
+                  value: canContinue ? 'Open' : 'Review',
+                  icon: Icons.arrow_forward_outlined,
+                ),
+              ];
+
+              if (isWide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            detail,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              Chip(label: Text('User: $selectedUserLabel')),
+                              Chip(label: Text('Device: $selectedDeviceLabel')),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _VisualPanel(
+                            title: 'Latest audit event',
+                            subtitle: auditSummary,
+                            icon: Icons.verified_outlined,
+                            compact: true,
+                            child: TextButton.icon(
+                              onPressed: onOpenAuditLog,
+                              icon: const Icon(Icons.receipt_long_outlined),
+                              label: const Text('Open audit log'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: Column(children: stats),
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Latest audit event',
-                    style: theme.textTheme.titleSmall,
+                  Text(detail, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      Chip(label: Text('User: $selectedUserLabel')),
+                      Chip(label: Text('Device: $selectedDeviceLabel')),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(auditSummary),
-                  const SizedBox(height: 10),
-                  TextButton.icon(
-                    onPressed: onOpenAuditLog,
-                    icon: const Icon(Icons.receipt_long_outlined),
-                    label: const Text('Open audit log'),
+                  const SizedBox(height: 14),
+                  _VisualPanel(
+                    title: 'Latest audit event',
+                    subtitle: auditSummary,
+                    icon: Icons.verified_outlined,
+                    compact: true,
+                    child: TextButton.icon(
+                      onPressed: onOpenAuditLog,
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: const Text('Open audit log'),
+                    ),
                   ),
+                  const SizedBox(height: 14),
+                  ...stats,
                 ],
-              ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          _VisualPanel(
+            title: 'Gate layers',
+            subtitle: 'Identity, trust, scope, and audit all stay visible',
+            icon: Icons.shield_outlined,
+            compact: true,
+            child: const Column(
+              children: [
+                _LayerRow(
+                  title: 'Identity',
+                  body: 'Who is requesting access?',
+                ),
+                _LayerRow(
+                  title: 'Device trust',
+                  body: 'Is this device known and trusted enough?',
+                ),
+                _LayerRow(
+                  title: 'Role + permission',
+                  body: 'Does the user have the right scope?',
+                ),
+                _LayerRow(
+                  title: 'Audit trail',
+                  body: 'Was the decision written locally?',
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 18),
-          Text(
-            'How this will evolve:',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '1. Identity check\n2. Local PIN or passkey\n3. Device trust check\n4. Approval gate for sensitive actions\n5. Audit trail write',
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -485,116 +524,109 @@ class _SecuritySidePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Unlock options', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 10),
-                const Text(
-                  'This placeholder keeps the future login surface in one calm place.',
+        _VisualPanel(
+          title: 'Unlock options',
+          subtitle:
+              'This placeholder keeps the future login surface in one calm place.',
+          icon: Icons.login_outlined,
+          compact: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                value: showPin,
+                onChanged: (_) => onTogglePin(),
+                title: const Text('Show local PIN field'),
+                subtitle: const Text('Future PIN/passkey entry'),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: selectedUserId,
+                decoration: const InputDecoration(
+                  labelText: 'Local user',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 14),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  value: showPin,
-                  onChanged: (_) => onTogglePin(),
-                  title: const Text('Show local PIN field'),
-                  subtitle: const Text('Future PIN/passkey entry'),
+                items: users
+                    .map(
+                      (user) => DropdownMenuItem<String>(
+                        value: user.id,
+                        child: Text(user.displayName),
+                      ),
+                    )
+                    .toList(),
+                onChanged: onUserChanged,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: selectedDeviceId,
+                decoration: const InputDecoration(
+                  labelText: 'Trusted device',
+                  border: OutlineInputBorder(),
                 ),
+                items: devices
+                    .map(
+                      (device) => DropdownMenuItem<String>(
+                        value: device.id,
+                        child: Text('${device.name} (T${device.trustLevel})'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: onDeviceChanged,
+              ),
+              if (showPin) ...[
                 const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedUserId,
+                TextField(
+                  controller: pinController,
+                  obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Local user',
-                    border: OutlineInputBorder(),
+                    labelText: 'Local PIN',
+                    hintText: 'Demo placeholder only',
                   ),
-                  items: users
-                      .map(
-                        (user) => DropdownMenuItem<String>(
-                          value: user.id,
-                          child: Text(user.displayName),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: onUserChanged,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedDeviceId,
-                  decoration: const InputDecoration(
-                    labelText: 'Trusted device',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: devices
-                      .map(
-                        (device) => DropdownMenuItem<String>(
-                          value: device.id,
-                          child: Text('${device.name} (T${device.trustLevel})'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: onDeviceChanged,
-                ),
-                if (showPin) ...[
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: pinController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Local PIN',
-                      hintText: 'Demo placeholder only',
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                FilledButton.tonalIcon(
-                  onPressed: isBusy ? null : onUnlock,
-                  icon: isBusy
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.verified_outlined),
-                  label: Text(isBusy ? 'Checking...' : 'Unlock locally'),
                 ),
               ],
-            ),
+              const SizedBox(height: 14),
+              FilledButton.tonalIcon(
+                onPressed: isBusy ? null : onUnlock,
+                icon: isBusy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.verified_outlined),
+                label: Text(isBusy ? 'Checking...' : 'Unlock locally'),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Gate layers', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
-                const _LayerRow(
-                  title: 'Identity',
-                  body: 'Who is requesting access?',
-                ),
-                const _LayerRow(
-                  title: 'Device trust',
-                  body: 'Is this device known and trusted enough?',
-                ),
-                const _LayerRow(
-                  title: 'Role + permission',
-                  body: 'Does the user have the right scope?',
-                ),
-                const _LayerRow(
-                  title: 'Audit trail',
-                  body: 'Was the decision written locally?',
-                ),
-              ],
-            ),
+        _VisualPanel(
+          title: 'Gate layers',
+          subtitle: 'The unlock check stays easy to inspect',
+          icon: Icons.stacked_line_chart_outlined,
+          compact: true,
+          child: const Column(
+            children: [
+              _LayerRow(
+                title: 'Identity',
+                body: 'Who is requesting access?',
+              ),
+              _LayerRow(
+                title: 'Device trust',
+                body: 'Is this device known and trusted enough?',
+              ),
+              _LayerRow(
+                title: 'Role + permission',
+                body: 'Does the user have the right scope?',
+              ),
+              _LayerRow(
+                title: 'Audit trail',
+                body: 'Was the decision written locally?',
+              ),
+            ],
           ),
         ),
       ],
@@ -641,5 +673,125 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(label: Text(label));
+  }
+}
+
+class _VisualPanel extends StatelessWidget {
+  const _VisualPanel({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.child,
+    this.compact = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget child;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.46),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(compact ? 16 : 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: compact ? 40 : 46,
+                    height: compact ? 40 : 46,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, size: compact ? 20 : 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        Text(subtitle),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (!compact) const SizedBox(height: 16),
+              const SizedBox(height: 14),
+              child,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 3),
+                  Text(value, style: theme.textTheme.titleLarge),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -689,55 +689,34 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('More - Module Hub', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 6),
-            Text(subtitle, style: theme.textTheme.displaySmall),
-            const SizedBox(height: 12),
-            Text(summary, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 6),
-            Text(
-              'Folder-only entries are shown as Scaffold until they gain a root manifest.',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                    return;
-                  }
-                  context.go(RouteNames.dashboard);
-                },
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Back'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _SummaryCard(label: 'Enabled', value: '$enabledCount'),
-                _SummaryCard(label: 'Errors', value: '$errorCount'),
-                _SummaryCard(label: 'Manifest', value: '$manifestCount'),
-                _SummaryCard(label: 'Inferred', value: '$inferredCount'),
-                const _SummaryCard(label: 'Mode', value: 'Live local'),
-                const _SummaryCard(label: 'Path', value: 'Folder-backed'),
-              ],
-            ),
-          ],
+    return _HubPanel(
+      icon: Icons.grid_view_outlined,
+      title: 'More - Module Hub',
+      subtitle: subtitle,
+      body: summary,
+      footer: 'Folder-only entries are shown as Scaffold until they gain a root manifest.',
+      action: Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+            context.go(RouteNames.dashboard);
+          },
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Back'),
         ),
       ),
+      metrics: [
+        _SummaryCard(label: 'Enabled', value: '$enabledCount'),
+        _SummaryCard(label: 'Errors', value: '$errorCount'),
+        _SummaryCard(label: 'Manifest', value: '$manifestCount'),
+        _SummaryCard(label: 'Inferred', value: '$inferredCount'),
+        const _SummaryCard(label: 'Mode', value: 'Live local'),
+        const _SummaryCard(label: 'Path', value: 'Folder-backed'),
+      ],
     );
   }
 }
@@ -749,67 +728,19 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                switch (event.type) {
-                  ModuleEventType.enabledChanged => Icons.toggle_on,
-                  ModuleEventType.dockPositionChanged => Icons.view_sidebar,
-                  ModuleEventType.registryReloaded => Icons.refresh,
-                },
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.type.label,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    event.message.isEmpty
-                        ? event.moduleId
-                        : '${event.moduleId} - ${event.message}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    event.timestamp.toLocal().toIso8601String(),
-                    style: theme.textTheme.labelSmall,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return _HubPanel(
+      icon: switch (event.type) {
+        ModuleEventType.enabledChanged => Icons.toggle_on,
+        ModuleEventType.dockPositionChanged => Icons.view_sidebar,
+        ModuleEventType.registryReloaded => Icons.refresh,
+      },
+      title: event.type.label,
+      subtitle: event.message.isEmpty ? event.moduleId : event.message,
+      body: event.timestamp.toLocal().toIso8601String(),
+      compact: true,
+      metrics: [
+        _SummaryCard(label: 'Module', value: event.moduleId),
+      ],
     );
   }
 }
@@ -822,16 +753,111 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: Theme.of(context).textTheme.labelMedium),
+            Text(label, style: theme.textTheme.labelMedium),
             const SizedBox(height: 4),
-            Text(value, style: Theme.of(context).textTheme.titleMedium),
+            Text(value, style: theme.textTheme.titleMedium),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HubPanel extends StatelessWidget {
+  const _HubPanel({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.body,
+    required this.metrics,
+    this.footer,
+    this.action,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String body;
+  final List<Widget> metrics;
+  final String? footer;
+  final Widget? action;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.46),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(compact ? 14 : 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: compact ? 38 : 46,
+                    height: compact ? 38 : 46,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, size: compact ? 20 : 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        Text(subtitle, style: theme.textTheme.headlineSmall),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(body, style: theme.textTheme.bodyMedium),
+              if (footer != null) ...[
+                const SizedBox(height: 6),
+                Text(footer!, style: theme.textTheme.bodySmall),
+              ],
+              if (action != null) ...[
+                const SizedBox(height: 14),
+                action!,
+              ],
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: metrics,
+              ),
+            ],
+          ),
         ),
       ),
     );

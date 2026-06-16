@@ -28,6 +28,8 @@ class UsersDevicesControlScreen extends ConsumerWidget {
           final pending = data.approvalQueue
               .where((request) => request.status == 'pending')
               .length;
+          final trustedDevices =
+              data.devices.where((device) => device.trustLevel >= 3).length;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,6 +37,7 @@ class UsersDevicesControlScreen extends ConsumerWidget {
               _HeroPanel(
                 data: data,
                 pendingRequests: pending,
+                trustedDevices: trustedDevices,
               ),
               const SizedBox(height: 16),
               _ActionStrip(
@@ -151,25 +154,30 @@ class UsersDevicesUsersScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            ...data.users.map((user) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(
-                      user.displayName.isNotEmpty
-                          ? user.displayName[0].toUpperCase()
-                          : '?',
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final user in data.users)
+                  SizedBox(
+                    width: 360,
+                    child: _EntityCard(
+                      icon: Icons.person_outline,
+                      title: user.displayName,
+                      subtitle:
+                          '${user.role}${user.title.isNotEmpty ? ' · ${user.title}' : ''}',
+                      body:
+                          '${user.permissions.length} permissions · ${user.linkedDevices.length} linked devices',
+                      trailing: Chip(label: Text(user.status)),
+                      chips: [
+                        _CardChip(label: user.role),
+                        if (user.permissions.isNotEmpty)
+                          _CardChip(label: user.permissions.first),
+                      ],
                     ),
                   ),
-                  title: Text(user.displayName),
-                  subtitle: Text(
-                    '${user.role}${user.title.isNotEmpty ? ' - ${user.title}' : ''}',
-                  ),
-                  trailing: Chip(label: Text(user.status)),
-                ),
-              ),
-            )),
+              ],
+            ),
           ],
         ),
       ),
@@ -218,19 +226,29 @@ class UsersDevicesDevicesScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            ...data.devices.map((device) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Card(
-                child: ListTile(
-                  leading: const Icon(Icons.devices_outlined),
-                  title: Text(device.name),
-                  subtitle: Text(
-                    '${device.type} - ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final device in data.devices)
+                  SizedBox(
+                    width: 360,
+                    child: _EntityCard(
+                      icon: Icons.devices_outlined,
+                      title: device.name,
+                      subtitle: device.type,
+                      body:
+                          'Trust ${device.trustLevel} · ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
+                      trailing: Chip(label: Text(device.status)),
+                      chips: [
+                        _CardChip(label: 'T${device.trustLevel}'),
+                        if (device.ownerId.isNotEmpty)
+                          const _CardChip(label: 'Assigned'),
+                      ],
+                    ),
                   ),
-                  trailing: Chip(label: Text('Trust ${device.trustLevel}')),
-                ),
-              ),
-            )),
+              ],
+            ),
           ],
         ),
       ),
@@ -271,50 +289,69 @@ class UsersDevicesAccessMatrixScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Role permissions', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 12),
-                    ...data.roles.map((role) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(role.role),
-                        subtitle: Text(role.permissions.join(', ')),
-                        leading: const Icon(Icons.badge_outlined),
-                      ),
-                    )),
-                  ],
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: 430,
+                  child: _VisualPanel(
+                    title: 'Role permissions',
+                    subtitle: 'What each identity can do locally',
+                    icon: Icons.badge_outlined,
+                    child: Column(
+                      children: [
+                        for (final role in data.roles)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _EntityCard(
+                              icon: Icons.badge_outlined,
+                              title: role.role,
+                              subtitle:
+                                  '${role.permissions.length} permissions',
+                              body: role.permissions.join(' · '),
+                              chips: [
+                                if (role.permissions.isNotEmpty)
+                                  _CardChip(label: role.permissions.first),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Module rules', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 12),
-                    ...data.accessRules.map((rule) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(rule.moduleId),
-                        subtitle: Text(
-                          'View: ${rule.viewPermission.isEmpty ? 'none' : rule.viewPermission} - Trust: ${rule.requiresTrustLevel} - Approvals: ${rule.requiresApprovalFor.length}',
-                        ),
-                        leading: const Icon(Icons.shield_outlined),
-                      ),
-                    )),
-                  ],
+                SizedBox(
+                  width: 430,
+                  child: _VisualPanel(
+                    title: 'Module rules',
+                    subtitle: 'Trust and approval thresholds',
+                    icon: Icons.shield_outlined,
+                    child: Column(
+                      children: [
+                        for (final rule in data.accessRules)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _EntityCard(
+                              icon: Icons.shield_outlined,
+                              title: rule.moduleId,
+                              subtitle:
+                                  'Trust floor ${rule.requiresTrustLevel}',
+                              body:
+                                  'View: ${rule.viewPermission.isEmpty ? 'none' : rule.viewPermission} · Approvals: ${rule.requiresApprovalFor.length}',
+                              trailing: Chip(
+                                label: Text(
+                                  rule.requiresApprovalFor.isEmpty
+                                      ? 'Open'
+                                      : 'Gated',
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -374,22 +411,25 @@ class UsersDevicesDeviceOnboardingScreen extends ConsumerWidget {
               body: 'Attach the owner identity and write an audit event for the onboarding decision.',
             ),
             const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Trust levels', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 12),
-                    ...data.trustLevels.map((level) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(child: Text('${level.level}')),
-                      title: Text(level.name),
-                      subtitle: Text(level.description),
-                    )),
-                  ],
-                ),
+            _VisualPanel(
+              title: 'Trust levels',
+              subtitle: 'The local scale that shapes access decisions',
+              icon: Icons.verified_outlined,
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final level in data.trustLevels)
+                    SizedBox(
+                      width: 280,
+                      child: _EntityCard(
+                        icon: Icons.verified_outlined,
+                        title: '${level.level} · ${level.name}',
+                        subtitle: 'Trust band',
+                        body: level.description,
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -416,103 +456,50 @@ class UsersDevicesApprovalQueueScreen extends ConsumerWidget {
         title: 'Approval Queue',
         subtitle: 'Review actions that need a second look',
         onBack: () => context.go(RouteNames.usersDevices),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: data.approvalQueue.map((request) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  request.action,
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${request.targetModule} - ${request.riskLevel} risk',
-                                ),
-                              ],
-                            ),
-                          ),
-                          Chip(label: Text(request.status)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(request.reason),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          FilledButton.tonal(
-                            onPressed: request.status == 'pending'
-                                ? () async {
-                                    await ref
-                                        .read(
-                                          usersDevicesControlRepositoryProvider,
-                                        )
-                                        .approveRequest(
-                                          request.requestId,
-                                          reviewedBy: 'user_peter_owner',
-                                        );
-                                    ref.invalidate(
-                                      usersDevicesControlSnapshotProvider,
-                                    );
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Request approved.'),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                : null,
-                            child: const Text('Approve'),
-                          ),
-                          OutlinedButton(
-                            onPressed: request.status == 'pending'
-                                ? () async {
-                                    await ref
-                                        .read(
-                                          usersDevicesControlRepositoryProvider,
-                                        )
-                                        .denyRequest(
-                                          request.requestId,
-                                          reviewedBy: 'user_peter_owner',
-                                        );
-                                    ref.invalidate(
-                                      usersDevicesControlSnapshotProvider,
-                                    );
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Request denied.'),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                : null,
-                            child: const Text('Deny'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final request in data.approvalQueue)
+              SizedBox(
+                width: 450,
+                child: _ApprovalRequestCard(
+                  request: request,
+                  onApprove: request.status == 'pending'
+                      ? () async {
+                          await ref
+                              .read(usersDevicesControlRepositoryProvider)
+                              .approveRequest(
+                                request.requestId,
+                                reviewedBy: 'user_peter_owner',
+                              );
+                          ref.invalidate(usersDevicesControlSnapshotProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Request approved.')),
+                            );
+                          }
+                        }
+                      : null,
+                  onDeny: request.status == 'pending'
+                      ? () async {
+                          await ref
+                              .read(usersDevicesControlRepositoryProvider)
+                              .denyRequest(
+                                request.requestId,
+                                reviewedBy: 'user_peter_owner',
+                              );
+                          ref.invalidate(usersDevicesControlSnapshotProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Request denied.')),
+                            );
+                          }
+                        }
+                      : null,
                 ),
               ),
-            );
-          }).toList(),
+          ],
         ),
       ),
     );
@@ -562,52 +549,40 @@ class _UsersDevicesAuditLogScreenState
           children: [
             if (highlightEventId != null &&
                 data.auditLog.any((event) => event.eventId == highlightEventId))
-                _HighlightedAuditBanner(
-                  key: _highlightKey,
-                  event: data.auditLog.firstWhere(
-                    (event) => event.eventId == highlightEventId,
-                  ),
-                  sourceLabel: 'From Security Lock',
+              _HighlightedAuditBanner(
+                key: _highlightKey,
+                event: data.auditLog.firstWhere(
+                  (event) => event.eventId == highlightEventId,
                 ),
+                sourceLabel: 'From Security Lock',
+              ),
             if (highlightEventId != null &&
                 data.auditLog.any((event) => event.eventId == highlightEventId))
               const SizedBox(height: 16),
             _SummaryRow(
               items: [
                 ('Events', data.auditLog.length),
-                ('Allowed', data.auditLog.where((event) => event.result == 'allowed').length),
-                ('Denied', data.auditLog.where((event) => event.result == 'denied').length),
+                (
+                  'Allowed',
+                  data.auditLog
+                      .where((event) => event.result == 'allowed')
+                      .length,
+                ),
+                (
+                  'Denied',
+                  data.auditLog
+                      .where((event) => event.result == 'denied')
+                      .length,
+                ),
               ],
             ),
             const SizedBox(height: 16),
             ...data.auditLog.map(
               (event) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Card(
-                  child: ListTile(
-                    leading: Icon(
-                      event.eventId == highlightEventId
-                          ? Icons.verified_outlined
-                          : Icons.receipt_long_outlined,
-                    ),
-                    tileColor: event.eventId == highlightEventId
-                        ? Theme.of(context).colorScheme.primaryContainer
-                            .withValues(alpha: 0.35)
-                        : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: event.eventId == highlightEventId
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.transparent,
-                      ),
-                    ),
-                    title: Text(event.eventType),
-                    subtitle: Text(
-                      '${event.actorId} - ${event.targetModule} - ${event.reason}',
-                    ),
-                    trailing: Chip(label: Text(event.result)),
-                  ),
+                child: _AuditEventCard(
+                  event: event,
+                  highlighted: event.eventId == highlightEventId,
                 ),
               ),
             ),
@@ -853,40 +828,127 @@ class _ErrorState extends StatelessWidget {
 }
 
 class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({required this.data, required this.pendingRequests});
+  const _HeroPanel({
+    required this.data,
+    required this.pendingRequests,
+    required this.trustedDevices,
+  });
 
   final UsersDevicesControlSnapshot data;
   final int pendingRequests;
+  final int trustedDevices;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Security-first local control',
-              style: Theme.of(context).textTheme.headlineSmall,
+    return _VisualPanel(
+      title: 'Security-first local control',
+      subtitle:
+          'Identity, device trust, approvals, and audit evidence stay local and calm.',
+      icon: Icons.shield_outlined,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 720;
+          final stats = [
+            _MetricTile(
+              label: 'Users',
+              value: data.users.length.toString(),
+              icon: Icons.people_outline,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Every module access request should have identity, role, permission, trust, and audit evidence before it is allowed.',
+            _MetricTile(
+              label: 'Devices',
+              value: data.devices.length.toString(),
+              icon: Icons.devices_outlined,
             ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            _MetricTile(
+              label: 'Trusted',
+              value: trustedDevices.toString(),
+              icon: Icons.verified_outlined,
+            ),
+            _MetricTile(
+              label: 'Pending',
+              value: pendingRequests.toString(),
+              icon: Icons.rule_folder_outlined,
+            ),
+          ];
+
+          if (isWide) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Chip(label: Text('${data.users.length} users')),
-                Chip(label: Text('${data.devices.length} devices')),
-                Chip(label: Text('$pendingRequests pending approvals')),
-                Chip(label: Text('${data.auditLog.length} audit events')),
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: const [
+                          _Badge(label: 'Local-first'),
+                          _Badge(label: 'No cloud login'),
+                          _Badge(label: 'Audit required'),
+                          _Badge(label: 'Trust checked'),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Every sensitive action needs identity, role, permission, trust, and audit trail.',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Chip(label: Text('${data.users.length} users')),
+                          Chip(label: Text('${data.devices.length} devices')),
+                          Chip(label: Text('$pendingRequests pending approvals')),
+                          Chip(label: Text('${data.auditLog.length} audit events')),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: Column(children: stats)),
               ],
-            ),
-          ],
-        ),
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: const [
+                  _Badge(label: 'Local-first'),
+                  _Badge(label: 'No cloud login'),
+                  _Badge(label: 'Audit required'),
+                  _Badge(label: 'Trust checked'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Every sensitive action needs identity, role, permission, trust, and audit trail.',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(label: Text('${data.users.length} users')),
+                  Chip(label: Text('${data.devices.length} devices')),
+                  Chip(label: Text('$pendingRequests pending approvals')),
+                  Chip(label: Text('${data.auditLog.length} audit events')),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...stats,
+            ],
+          );
+        },
       ),
     );
   }
@@ -905,23 +967,15 @@ class _ActionStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(subtitle),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: actions,
-            ),
-          ],
-        ),
+    return _VisualPanel(
+      title: title,
+      subtitle: subtitle,
+      icon: Icons.auto_awesome_outlined,
+      compact: true,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: actions,
       ),
     );
   }
@@ -970,19 +1024,55 @@ class _NavigationGrid extends StatelessWidget {
               SizedBox(
                 width: (constraints.maxWidth - (columns - 1) * 12) / columns,
                 child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  elevation: 0,
                   child: InkWell(
                     onTap: () => context.go(tile.route),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(tile.icon),
-                          const SizedBox(height: 12),
-                          Text(tile.title, style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: 6),
-                          Text(tile.subtitle),
-                        ],
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.surface,
+                            Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(tile.icon),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              tile.title,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(tile.subtitle),
+                            const SizedBox(height: 12),
+                            const Align(
+                              alignment: Alignment.centerRight,
+                              child: Icon(Icons.arrow_forward_outlined, size: 18),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1021,21 +1111,14 @@ class _StaticRulePanel extends StatelessWidget {
       orElse: () => data.trustLevels.last,
     );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Core rule', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            const Text(
-              'No user, device, AI agent, script, or voice gateway can reach a sensitive module without identity, role, permission, trust level, and audit trail.',
-            ),
-            const SizedBox(height: 12),
-            Text('Recommended admin trust floor: ${trustLevel.level} (${trustLevel.name})'),
-          ],
-        ),
+    return _VisualPanel(
+      title: 'Core rule',
+      subtitle:
+          'No user, device, AI agent, script, or voice gateway can reach a sensitive module without identity, role, permission, trust level, and audit trail.',
+      icon: Icons.shield_outlined,
+      child: Text(
+        'Recommended admin trust floor: ${trustLevel.level} (${trustLevel.name})',
+        style: Theme.of(context).textTheme.titleMedium,
       ),
     );
   }
@@ -1054,12 +1137,12 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: CircleAvatar(child: Text(step)),
-        title: Text(title),
-        subtitle: Text(body),
-      ),
+    return _VisualPanel(
+      title: '$step. $title',
+      subtitle: body,
+      icon: Icons.looks_one_outlined,
+      compact: true,
+      child: const SizedBox.shrink(),
     );
   }
 }
@@ -1071,25 +1154,380 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        for (final item in items)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 760 ? 4 : 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: (constraints.maxWidth - (columns - 1) * 12) / columns,
+                child: _MetricTile(
+                  label: item.$1,
+                  value: item.$2.toString(),
+                  icon: Icons.stacked_line_chart_outlined,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _EntityCard extends StatelessWidget {
+  const _EntityCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.body,
+    this.trailing,
+    this.chips = const [],
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String body;
+  final Widget? trailing;
+  final List<Widget> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        Text(subtitle),
+                      ],
+                    ),
+                  ),
+                  trailing ?? const SizedBox.shrink(),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(body),
+              if (chips.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(spacing: 8, runSpacing: 8, children: chips),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardChip extends StatelessWidget {
+  const _CardChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(label: Text(label));
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.$1, style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: 4),
-                  Text('${item.$2}', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(label, style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 3),
+                  Text(value, style: theme.textTheme.titleLarge),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VisualPanel extends StatelessWidget {
+  const _VisualPanel({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.child,
+    this.compact = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget child;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.44),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-      ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(compact ? 14 : 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: compact ? 36 : 44,
+                    height: compact ? 36 : 44,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, size: compact ? 18 : 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        Text(subtitle),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (!compact) const SizedBox(height: 16),
+              child,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(label: Text(label));
+  }
+}
+
+class _ApprovalRequestCard extends StatelessWidget {
+  const _ApprovalRequestCard({
+    required this.request,
+    required this.onApprove,
+    required this.onDeny,
+  });
+
+  final UsersDevicesControlApprovalRequest request;
+  final VoidCallback? onApprove;
+  final VoidCallback? onDeny;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final riskColor = request.riskLevel == 'high'
+        ? theme.colorScheme.error
+        : request.riskLevel == 'medium'
+            ? theme.colorScheme.tertiary
+            : theme.colorScheme.primary;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(color: riskColor, width: 5),
+          ),
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.46),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(request.action, style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 6),
+                        Text('${request.targetModule} · ${request.riskLevel} risk'),
+                      ],
+                    ),
+                  ),
+                  Chip(label: Text(request.status)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(request.reason),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _CardChip(label: 'Requested by ${request.requestedBy}'),
+                  _CardChip(label: 'Device ${request.deviceId}'),
+                  _CardChip(label: request.timestamp),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: onApprove,
+                    child: const Text('Approve'),
+                  ),
+                  OutlinedButton(
+                    onPressed: onDeny,
+                    child: const Text('Deny'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuditEventCard extends StatelessWidget {
+  const _AuditEventCard({
+    required this.event,
+    required this.highlighted,
+  });
+
+  final UsersDevicesControlAuditEvent event;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: highlighted
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.28)
+              : null,
+          border: Border.all(
+            color: highlighted
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: ListTile(
+          leading: Icon(
+            highlighted ? Icons.verified_outlined : Icons.receipt_long_outlined,
+          ),
+          title: Text(event.eventType),
+          subtitle: Text(
+            '${event.actorId} · ${event.targetModule} · ${event.reason}',
+          ),
+          trailing: Chip(label: Text(event.result)),
+        ),
+      ),
     );
   }
 }

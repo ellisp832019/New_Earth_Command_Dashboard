@@ -26,109 +26,124 @@ class ModuleCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         side: BorderSide(color: borderColor),
       ),
       child: InkWell(
         onTap: () => context.push(RouteNames.moduleHubModule(module.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.surface,
+                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.48),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        moduleIconFor(module.iconKey, category: module.category),
+                        color: statusColor,
+                        size: 22,
+                      ),
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      moduleIconFor(module.iconKey, category: module.category),
-                      color: statusColor,
-                      size: 22,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(module.name, style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 4),
+                          Text(
+                            module.category.label,
+                            style: theme.textTheme.labelMedium,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(module.name, style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 4),
-                        Text(
-                          module.category.label,
-                          style: theme.textTheme.labelMedium,
+                        _StatusBadge(
+                          label: module.status.label,
+                          color: statusColor,
                         ),
+                        const SizedBox(height: 8),
+                        _SourceBadge(module: module),
                       ],
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _StatusBadge(label: module.status.label, color: statusColor),
-                      const SizedBox(height: 8),
-                      _SourceBadge(module: module),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                module.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium,
-              ),
-              const Spacer(),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _CompactChip(
-                    label: module.enabled ? 'Enabled' : 'Disabled',
-                    icon: module.enabled ? Icons.toggle_on : Icons.toggle_off,
-                  ),
-                  _CompactChip(
-                    label: module.health.state.label,
-                    icon: Icons.health_and_safety_outlined,
-                  ),
-                  if (module.dockable)
-                    const _CompactChip(
-                      label: 'Dockable',
-                      icon: Icons.view_sidebar_outlined,
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  module.description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _CompactChip(
+                      label: module.enabled ? 'Enabled' : 'Disabled',
+                      icon: module.enabled ? Icons.toggle_on : Icons.toggle_off,
                     ),
-                  _CompactChip(
-                    label: '${module.permissions.length} permissions',
-                    icon: Icons.verified_user_outlined,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      value: module.enabled,
-                      onChanged: onEnabledChanged,
-                      title: const Text('Local toggle'),
-                      subtitle: const Text('Saved locally'),
+                    _CompactChip(
+                      label: module.health.state.label,
+                      icon: Icons.health_and_safety_outlined,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.tonal(
-                    onPressed: () =>
-                        context.push(RouteNames.moduleHubModule(module.id)),
-                    child: const Text('Inspect'),
-                  ),
-                ],
-              ),
-            ],
+                    if (module.dockable)
+                      const _CompactChip(
+                        label: 'Dockable',
+                        icon: Icons.view_sidebar_outlined,
+                      ),
+                    _CompactChip(
+                      label: '${module.permissions.length} permissions',
+                      icon: Icons.verified_user_outlined,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: module.enabled,
+                        onChanged: onEnabledChanged,
+                        title: const Text('Local toggle'),
+                        subtitle: const Text('Saved locally'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton.tonal(
+                      onPressed: () =>
+                          context.push(RouteNames.moduleHubModule(module.id)),
+                      child: const Text('Inspect'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
