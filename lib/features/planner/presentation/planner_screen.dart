@@ -245,7 +245,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'A calm place to set the day and review it gently.',
+                'A calm place to set the day, choose the Top 3, and review it gently.',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColours.darkMutedText,
                 ),

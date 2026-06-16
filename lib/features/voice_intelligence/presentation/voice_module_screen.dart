@@ -168,19 +168,19 @@ class _ModuleHero extends StatelessWidget {
     final theme = Theme.of(context);
     final subtitle = switch (section) {
       VoiceModuleSection.home =>
-        'A mock-first voice module with safe defaults, audit logging, and read-only MicroGrow status.',
+        'A local-first voice module with safe defaults, audit logging, and read-only MicroGrow status.',
       VoiceModuleSection.notes =>
-        'Capture a note, review the transcript, and save it locally after you are happy with it.',
+        'Capture a note, review the transcript, and save it locally when it feels ready.',
       VoiceModuleSection.meetings =>
         'Paste a meeting transcript and shape it into decisions, actions, risks, and follow-ups.',
       VoiceModuleSection.assistant =>
-        'Ask the dashboard a question and see the safe mock response before any future AI wiring.',
+        'Ask the dashboard a question and preview a safe response before any future AI wiring.',
       VoiceModuleSection.microgrow =>
         'Read MicroGrow status only. Hardware writes stay blocked by the safety gateway.',
       VoiceModuleSection.audit =>
-        'Review every voice intent the module has processed during this session.',
+        'Review the voice intents processed during this session.',
       VoiceModuleSection.settings =>
-        'Tune feature flags and provider mode without committing any secret keys into the app.',
+        'Adjust feature flags and provider mode without exposing secret keys in the app.',
     };
 
     return LayoutBuilder(
@@ -2753,12 +2753,10 @@ class _VoiceSettingsPage extends ConsumerWidget {
               Text(
                 'OpenAI API key configured: ${config.runtime.hasApiKey ? 'yes' : 'no'}',
               ),
-              Text(
-                switch (config.runtime.configSourceLabel) {
-                  'gaia_usb' => 'Config source: GAIA USB (Ollama detected)',
-                  _ => 'Config source: ${config.runtime.configSourceLabel}',
-                },
-              ),
+              Text(switch (config.runtime.configSourceLabel) {
+                'gaia_usb' => 'Config source: GAIA USB (Ollama detected)',
+                _ => 'Config source: ${config.runtime.configSourceLabel}',
+              }),
               Text('Transcription model: ${config.runtime.transcriptionModel}'),
               Text('Realtime model: ${config.runtime.realtimeModel}'),
               Text('TTS model: ${config.runtime.ttsModel}'),

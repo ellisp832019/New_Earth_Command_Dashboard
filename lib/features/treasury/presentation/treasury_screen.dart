@@ -297,14 +297,14 @@ class _TreasuryNavigationStrip extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Back where Treasury belongs',
+                'Treasury in the More hub',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColours.darkText,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Treasury stays inside the More shell and reads the external finance pack from local config.',
+                'Treasury stays within the More hub and reads the external finance pack from local config.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.35,

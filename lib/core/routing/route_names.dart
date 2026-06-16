@@ -43,6 +43,15 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const aboutHelp = '/more/about-help';
+  static String aboutHelpSection(String sectionId, {String? documentPath}) {
+    final queryParameters = <String, String>{'section': sectionId};
+    if (documentPath != null && documentPath.isNotEmpty) {
+      queryParameters['doc'] = documentPath;
+    }
+    return Uri(path: aboutHelp, queryParameters: queryParameters).toString();
+  }
+
   static const moduleHub = '/more/module-hub';
   static String moduleHubModule(String moduleId) => '$moduleHub/$moduleId';
   static String moduleHubModuleOperations(String moduleId) =>

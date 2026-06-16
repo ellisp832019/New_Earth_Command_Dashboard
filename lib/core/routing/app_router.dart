@@ -25,6 +25,7 @@ import '../../features/assets/presentation/inventory_session_screen.dart';
 import '../../features/assets/presentation/scan_lookup_screen.dart';
 import '../../features/assets/presentation/valuation_summary_screen.dart';
 import '../../features/visual_capture/presentation/visual_capture_screen.dart';
+import '../../features/about_help/presentation/about_help_screen.dart';
 import '../../features/business/presentation/add_business_opportunity_screen.dart';
 import '../../features/business/presentation/business_screen.dart';
 import '../../features/content/presentation/add_content_item_screen.dart';
@@ -437,6 +438,13 @@ final appRouter = GoRouter(
                       ],
                     ),
                   ],
+                ),
+                GoRoute(
+                  path: 'about-help',
+                  builder: (context, state) => AboutHelpScreen(
+                    initialSectionId: state.uri.queryParameters['section'],
+                    initialDocumentPath: state.uri.queryParameters['doc'],
+                  ),
                 ),
                 GoRoute(
                   path: 'systems',

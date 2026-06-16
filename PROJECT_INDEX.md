@@ -12,6 +12,7 @@ Use it when you want a quick map of what exists, where the docs live, and what t
 4. [`docs/fsd/00_master_index.md`](docs/fsd/00_master_index.md)
 5. [`docs/roadmap/README.md`](docs/roadmap/README.md)
 6. [`docs/architecture/visual_index.md`](docs/architecture/visual_index.md)
+7. [`ABOUT_AND_HELP/99_INDEX/MASTER_INDEX.md`](ABOUT_AND_HELP/99_INDEX/MASTER_INDEX.md)
 
 ## Active Project Space
 

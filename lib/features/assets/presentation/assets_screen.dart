@@ -227,11 +227,11 @@ class _AssetHero extends StatelessWidget {
     final theme = Theme.of(context);
     final statusLabel = snapshot.isReady ? 'Ready' : 'Setup needed';
     final headline = snapshot.isReady
-        ? 'Asset Intelligence is linked and calm'
-        : 'Set up the asset folder to begin tracking';
+        ? 'Asset Intelligence is linked and ready'
+        : 'Link the asset folder to begin tracking';
     final supportingCopy = snapshot.isReady
-        ? 'Use this tab to keep equipment, parts, locations, and repair decisions clear without turning it into warehouse software.'
-        : 'This tab stays local-first and only becomes fully useful once the external Omega OS assets folder is connected.';
+        ? 'Use this space to keep equipment, parts, locations, and repair decisions clear without turning it into warehouse software.'
+        : 'This space stays local-first and becomes fully useful once the external Omega OS assets folder is connected.';
     final lowStockCount = _summaryCount(snapshot, AssetSummaryKind.lowStock);
     final brokenCount = _summaryCount(snapshot, AssetSummaryKind.brokenRepair);
     final projectSummaryCount = _summaryCount(

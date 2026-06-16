@@ -239,6 +239,13 @@ class _Sidebar extends StatelessWidget {
               icon: Icons.space_dashboard_outlined,
               route: RouteNames.commandDeck,
             ),
+            _SidebarLink(
+              label: 'About & Help',
+              icon: Icons.help_outline,
+              route: RouteNames.aboutHelp,
+              accent: AppColours.darkSecondary,
+              badge: 'Docs',
+            ),
             const SizedBox(height: 16),
             Text(
               'Local-first',

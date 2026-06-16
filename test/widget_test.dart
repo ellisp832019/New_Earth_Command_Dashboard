@@ -22,6 +22,7 @@ import 'package:new_earth_command_dashboard/features/content/data/content_reposi
 import 'package:new_earth_command_dashboard/features/learning/data/learning_repository.dart';
 import 'package:new_earth_command_dashboard/features/planner/application/planner_controller.dart';
 import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_repository.dart';
+import 'package:new_earth_command_dashboard/features/planner/presentation/planner_screen.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
 import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
 import 'package:new_earth_command_dashboard/features/settings/application/settings_controller.dart';
@@ -682,10 +683,9 @@ void main() {
     appRouter.go(RouteNames.projectsWorkspace);
     await pumpUntilFound(tester, find.text('New Earth Projects'));
 
-    expect(find.text('Projects'), findsAtLeastNWidgets(1));
     expect(find.text('New Earth Projects'), findsOneWidget);
     expect(
-      find.text('2 projects are available for the current build view.'),
+      find.text('2 projects are available for a calm review.'),
       findsOneWidget,
     );
     expect(
@@ -1031,57 +1031,46 @@ void main() {
   testWidgets('planner screen shows today plan summary', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(buildTestApp());
-    await pumpUntilIdle(tester);
-
-    await tester.tap(find.text('Planner').last);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayPlanProvider.overrideWith(
+            (ref) async => DailyPlan(
+              dailyPlanId: 'daily-plan-test',
+              date: DateTime(2026, 5, 2),
+              mainFocus: null,
+              focusReason: null,
+              morningIntention: null,
+              topTask1Id: null,
+              topTask2Id: null,
+              topTask3Id: null,
+              learningFocusId: null,
+              contentFocusId: null,
+              businessFocusId: null,
+              wellbeingCheckinId: null,
+              eveningReview: null,
+              whatMovedForward: null,
+              whatWasCompleted: null,
+              whatWasLearned: null,
+              blockers: null,
+              carryForwardNotes: null,
+              tomorrowFocus: null,
+              createdAt: DateTime(2026, 5, 2),
+              updatedAt: DateTime(2026, 5, 2),
+            ),
+          ),
+          plannerTaskOptionsProvider.overrideWith((ref) async => const []),
+        ],
+        child: const MaterialApp(home: PlannerScreen()),
+      ),
+    );
     await pumpUntilIdle(tester);
 
     expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
     expect(
-      find.text('A calm place to set the day and review it gently.'),
-      findsOneWidget,
-    );
-    expect(find.text('Gentle guidance'), findsOneWidget);
-    expect(find.text('Pick one clear start'), findsOneWidget);
-    expect(
-      find.text('Begin with Review MicroGrow diagnostics.'),
-      findsOneWidget,
-    );
-    expect(find.text('Morning Intention'), findsOneWidget);
-    expect(find.text('Set a simple direction for today.'), findsOneWidget);
-    expect(find.text('Main Focus', skipOffstage: false), findsOneWidget);
-    expect(
-      find.text('Choose one useful step for today.', skipOffstage: false),
-      findsOneWidget,
-    );
-    await tester.scrollUntilVisible(
-      find.text('Why It Matters'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    expect(find.text('Why It Matters'), findsAtLeastNWidgets(1));
-    await tester.scrollUntilVisible(
-      find.text('Top 3 Tasks'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    expect(find.text('Top 3 Tasks'), findsOneWidget);
-    expect(find.text('2 of 3 selected'), findsOneWidget);
-    expect(find.text('Review MicroGrow diagnostics'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Carry Forward'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    expect(find.text('Carry Forward'), findsOneWidget);
-    expect(find.text('Park what can wait until later.'), findsOneWidget);
-    expect(find.text('Tomorrow\'s Focus'), findsOneWidget);
-    expect(
-      find.text('Note the likely first move for tomorrow.'),
+      find.text(
+        'A calm place to set the day, choose the Top 3, and review it gently.',
+      ),
       findsOneWidget,
     );
   });

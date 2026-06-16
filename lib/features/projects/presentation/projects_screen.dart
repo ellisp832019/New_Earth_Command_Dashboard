@@ -134,7 +134,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'There are $totalProjects active project${totalProjects == 1 ? '' : 's'} ready to browse.',
+                  'There are $totalProjects active project${totalProjects == 1 ? '' : 's'} ready for a calm review.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                   ),

@@ -44,6 +44,7 @@ V0.1 foundation is live:
 
 - [Project Index](PROJECT_INDEX.md)
 - [Documentation Home](docs/README.md)
+- [About & Help Centre](ABOUT_AND_HELP/99_INDEX/MASTER_INDEX.md)
 - [Getting Started](docs/user_guide/getting_started.md)
 - [App Roadmap](docs/roadmap/app_roadmap.md)
 - [Roadmap Index](docs/roadmap/README.md)

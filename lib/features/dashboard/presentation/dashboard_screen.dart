@@ -291,7 +291,7 @@ class _TopTaskShowcase extends StatelessWidget {
             ),
             const _ShowcaseTaskState(
               badge: '3',
-              title: 'Keep the dashboard calm',
+              title: 'Keep the dashboard clear',
               subtitle: 'Only three priorities live here at a time.',
               label: 'Focus',
               accent: AppColours.darkPurple,

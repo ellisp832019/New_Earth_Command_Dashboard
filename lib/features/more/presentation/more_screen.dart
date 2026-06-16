@@ -9,6 +9,14 @@ class MoreScreen extends StatelessWidget {
 
   static const _items = [
     _MoreItem(
+      title: 'About & Help',
+      description:
+          'Open the Dashboard guide centre, support links, templates, and helper pages.',
+      icon: Icons.help_outline,
+      route: RouteNames.aboutHelp,
+      badge: 'Docs',
+    ),
+    _MoreItem(
       title: 'Command Deck',
       description:
           'Run the local command centre for Stream Deck workflows, scripts, and setup.',
@@ -169,27 +177,44 @@ class MoreScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'More',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    color: AppColours.darkText,
-                    fontSize: 28,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Supporting modules',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: AppColours.darkText,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Journal, learning, content, business, wellbeing, inbox, voice, repo research, settings, projects intelligence, systems, and active system links all live here.',
-                  // keep line under 120? okay
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'More',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              color: AppColours.darkText,
+                              fontSize: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Supporting modules',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppColours.darkText,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'A calm home for supporting modules, reference tools, and dashboard-adjacent workflows.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColours.darkMutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    TextButton.icon(
+                      onPressed: () => context.go(RouteNames.dashboard),
+                      icon: const Icon(Icons.dashboard_outlined, size: 18),
+                      label: const Text('Back to Dashboard'),
+                    ),
+                  ],
                 ),
               ],
             ),
