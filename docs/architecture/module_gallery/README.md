@@ -96,6 +96,42 @@ Shows the full system backup pipeline, verification, restore paths, scheduler, a
 
 Shows the entire dashboard ecosystem, current modules, cross-cutting services, and future module family map.
 
+### 16. Learning Module
+
+![Learning Module Overview](visuals/learning_module_overview.png)
+
+Shows the learning workflow, study plan, spaced repetition, and local knowledge growth loop.
+
+### 17. Inbox Module
+
+![Inbox Module Overview](visuals/inbox_module_overview.png)
+
+Shows intake, triage, routing, follow-up, and clear-state workflow for calm capture.
+
+### 18. Treasury Module
+
+![Treasury Module Overview](visuals/treasury_module_overview.png)
+
+Shows the local finance workspace, capture to archive flow, and dashboard-controlled decision view.
+
+### 19. Wellbeing Module
+
+![Wellbeing Module Overview](visuals/wellbeing_module_overview.png)
+
+Shows the calm check-in workflow, personal progress, reminders, and private local storage.
+
+### 20. Assets & QR Labels Module
+
+![Assets & QR Labels Module Overview](visuals/assets_qr_labels_module_overview.png)
+
+Shows the asset register, QR generation, print queue, scan workflow, and local inventory control.
+
+### 21. Command Deck Workflow Overview
+
+![Command Deck Workflow Overview](visuals/command_deck_workflow_overview.png)
+
+Shows the software-first command deck, command routing, quick actions, and local command history.
+
 ## How This Gallery Grows
 
 - Add one overview image per active module.

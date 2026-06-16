@@ -4,6 +4,15 @@ This page is the master index for architecture-related images in the New Earth C
 
 Use it when you want a quick map of the visual references that explain the app shell, module hub, sync flows, and supporting system diagrams.
 
+## Current State
+
+The visual set is in a solid working state.
+
+- The core architecture diagrams are in place.
+- The Module Hub and knowledge-fabric visuals are indexed and stable.
+- The module gallery covers the major active modules with overview images.
+- The remaining gaps are broader system maps and dedicated voice / recovery control-flow visuals.
+
 ## Core Architecture
 
 - [Architecture overview diagram](../assets/diagrams/02_architecture_overview_diagram.png)
@@ -49,3 +58,4 @@ Use it when you want a quick map of the visual references that explain the app s
 - The preserved build-proof history stays in `docs/architecture/module_hub/visuals/build_proof/`.
 - The `docs/README.md` file links here so this page becomes the main visual starting point.
 - The future visual strategy lives in `docs/roadmap/visual_program_plan.md`.
+- The next useful images are the voice session state machine and backup / recovery control flow diagrams.

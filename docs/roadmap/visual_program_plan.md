@@ -12,6 +12,24 @@ The goal is to keep visuals useful, consistent, and easy to expand as the system
 - Knowledge fabric sync diagrams in `docs/architecture/module_hub/visuals/`
 - Roadmap and user-guide illustrations in `docs/assets/repo/`, `docs/assets/screenshots/`, and `docs/assets/user_guide/`
 
+## Current Status
+
+The visual library is past the early planning stage and now has a stable core.
+
+### Already Stable
+
+- Core architecture overview, database, and local-first privacy diagrams
+- Module Hub shell, status, and knowledge-fabric sync diagrams
+- A broad module gallery with overview images for the major active modules
+- User guide visuals and repo documentation graphics
+
+### Still Missing Or Parked
+
+- A dedicated voice session state machine diagram
+- A backup / recovery control flow diagram
+- Wider system-layer maps that show how the major modules fit together
+- Future-only visuals such as AI adapter and live integration diagrams
+
 ## Current Visual Working Set
 
 These are the visual families already worth keeping current:
@@ -35,6 +53,14 @@ Create or maintain diagrams for the core system layers:
 - Voice session state machine
 - Treasury / finance control flow
 - Backup / recovery control flow
+
+### Recommended next image order
+
+1. Voice session state machine
+2. Backup / recovery control flow
+3. Full repo topology map
+4. Shell / module / knowledge / operational layers map
+5. Local-first data flow map
 
 ## Phase 2 - Module Images
 
@@ -107,6 +133,10 @@ For new module visuals, prefer:
 2. Add one overview image per active module.
 3. Add one layer map for the whole system.
 4. Add future visuals only when the module or system slice is real enough to support them.
+
+## Practical Next Step
+
+If we are continuing the visual program now, the best use of effort is to close the remaining core-system gaps first, starting with voice session state and backup / recovery, then move on to the broader whole-system maps.
 
 ## Why This Matters
 
