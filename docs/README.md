@@ -4,6 +4,8 @@ This folder is the working documentation home for the New Earth Command Dashboar
 
 The app is built local-first, offline-first, and clarity-first. Documentation should follow the same rule: help the reader understand what matters next without adding noise.
 
+The repo also carries an Obsidian-facing active project mirror under `01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD` so dashboard-aligned notes and sync outputs stay easy to find.
+
 ## Start Here
 
 - [Project Index](../PROJECT_INDEX.md)

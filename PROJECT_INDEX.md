@@ -15,6 +15,10 @@ Use it when you want a quick map of what exists, where the docs live, and what t
 
 ## Active Project Space
 
+This folder tree is intentionally present in the repo so the Obsidian vault and the dashboard docs can share the same active-project structure.
+
+Start at [`01_ACTIVE_PROJECTS/README.md`](01_ACTIVE_PROJECTS/README.md) if you want the shared active-project workspace.
+
 - [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md)
 - [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md)
 - [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_INDEX.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_INDEX.md)

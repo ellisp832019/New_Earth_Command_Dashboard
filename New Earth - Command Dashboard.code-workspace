@@ -1,7 +1,8 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": ".",
+			"name": "New Earth Dashboard (Repo + Vault Mirror)"
 		}
 	],
 	"settings": {}

@@ -61,12 +61,12 @@ V0.1 foundation is live:
 
 ## Active Project Home
 
-The Dashboard now has an Obsidian-facing active project folder:
+The Dashboard now has an Obsidian-facing active project folder. This is a mirrored documentation/workspace area, not Flutter app source:
 
 - [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/README.md)
 - [`01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md`](01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/docs/NEW_EARTH_DASHBOARD_PROJECT_HOME.md)
 
-Use that folder as the working home for dashboard-aligned notes, indices, and sync outputs.
+Use that folder as the working home for dashboard-aligned notes, indices, and sync outputs that stay aligned with the Obsidian vault.
 
 ## How To Use The App
 
