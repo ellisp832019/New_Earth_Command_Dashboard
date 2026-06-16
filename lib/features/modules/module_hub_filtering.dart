@@ -23,6 +23,10 @@ List<ModuleManifest> filterAndSortModuleHubModules({
             module.description.toLowerCase().contains(normalizedQuery) ||
             module.installPath.toLowerCase().contains(normalizedQuery) ||
             module.omegaOsPath.toLowerCase().contains(normalizedQuery) ||
+            module.storagePath.toLowerCase().contains(normalizedQuery) ||
+            module.routes.any(
+              (route) => route.toLowerCase().contains(normalizedQuery),
+            ) ||
             module.tags.any(
               (tag) => tag.toLowerCase().contains(normalizedQuery),
             ) ||

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_permissions.dart';
+import '../../core/routing/route_names.dart';
 
 class ModulePermissionsScreen extends StatefulWidget {
   const ModulePermissionsScreen({super.key, required this.module});
@@ -40,7 +42,7 @@ class _ModulePermissionsScreenState extends State<ModulePermissionsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(),
+        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
         title: Text('${widget.module.name} Permissions'),
       ),
       body: ListView(

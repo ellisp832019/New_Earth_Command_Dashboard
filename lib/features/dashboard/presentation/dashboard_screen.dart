@@ -19,6 +19,7 @@ import '../../launchpad/application/launchpad_controller.dart';
 import '../../launchpad/data/launchpad_calculator.dart';
 import '../../launchpad/data/launchpad_phase2_models.dart';
 import '../../launchpad/data/launchpad_models.dart';
+import '../../experiments/presentation/omega_experiment_dashboard_card.dart';
 import '../../meeting_system/application/meeting_system_controller.dart';
 import '../../meeting_system/data/meeting_folder_service.dart';
 import '../../meeting_system/presentation/meeting_system_widgets.dart';
@@ -718,6 +719,8 @@ class _SupportModuleGrid extends StatelessWidget {
             const BackupGuardianDashboardCard(),
             const SizedBox(height: 14),
             const RepoIntelligenceBridgeDashboardCard(),
+            const SizedBox(height: 14),
+            const OmegaExperimentDashboardCard(),
             const SizedBox(height: 14),
             GridView.builder(
               shrinkWrap: true,

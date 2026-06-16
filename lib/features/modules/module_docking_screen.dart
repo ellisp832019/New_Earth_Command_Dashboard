@@ -57,7 +57,7 @@ class _ModuleDockingScreenState extends ConsumerState<ModuleDockingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(),
+        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
         title: Text('${widget.module.name} Docking'),
       ),
       body: ListView(

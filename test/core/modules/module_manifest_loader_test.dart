@@ -26,6 +26,9 @@ void main() {
           'status': 'bridge_ready',
           'dockable': true,
           'defaultDockPosition': 'right',
+          'iconKey': 'science_outlined',
+          'routes': ['/experiments'],
+          'storagePath': 'modules/gaia_voice_assistant/storage',
           'permissions': ['microphone', 'speaker', 'local_network'],
           'omegaOsPath': 'OMEGA_OS/MODULES/GAIA_VOICE_ASSISTANT',
           'backend': {
@@ -46,6 +49,9 @@ void main() {
       expect(manifest.status.label, 'Scaffold');
       expect(manifest.source.label, 'Manifest');
       expect(manifest.enabled, isFalse);
+      expect(manifest.iconKey, 'science_outlined');
+      expect(manifest.routes, contains('/experiments'));
+      expect(manifest.storagePath, 'modules/gaia_voice_assistant/storage');
       expect(manifest.permissions, hasLength(3));
       expect(manifest.health.warnings, isNotEmpty);
     },
@@ -73,6 +79,9 @@ void main() {
           'status': 'enabled',
           'dockable': true,
           'defaultDockPosition': 'left',
+          'iconKey': 'folder_outlined',
+          'routes': ['/alpha'],
+          'storagePath': 'modules/alpha_module/storage',
           'permissions': ['file_read'],
           'omegaOsPath': 'OMEGA_OS/MODULES/ALPHA_MODULE',
         }),
@@ -101,6 +110,9 @@ void main() {
       expect(beta?.status.label, 'Scaffold');
       expect(alpha?.source.label, 'Manifest');
       expect(beta?.source.label, 'Inferred scaffold');
+      expect(alpha?.iconKey, 'folder_outlined');
+      expect(alpha?.routes, contains('/alpha'));
+      expect(alpha?.storagePath, 'modules/alpha_module/storage');
       expect(beta?.description, contains('inferred'));
     },
   );
@@ -128,5 +140,15 @@ void main() {
       registry.byId('knowledge_engine')?.status,
       isNot(ModuleStatus.scaffold),
     );
+  });
+
+  test('omega experiment engine manifest is discoverable from the module tree', () {
+    final registry = ModuleLoader().load();
+    final manifest = registry.byId('00_OMEGA_EXPERIMENT_VALIDATION_ENGINE');
+
+    expect(manifest, isNotNull);
+    expect(manifest?.name, contains('Omega Experiment'));
+    expect(manifest?.routes, contains('/experiments'));
+    expect(manifest?.iconKey, isNotEmpty);
   });
 }

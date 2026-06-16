@@ -8,10 +8,24 @@ import '../../projects/application/projects_controller.dart';
 import '../application/learning_controller.dart';
 
 class AddLearningItemScreen extends ConsumerStatefulWidget {
-  const AddLearningItemScreen({super.key, this.learningItemId, this.projectId});
+  const AddLearningItemScreen({
+    super.key,
+    this.learningItemId,
+    this.projectId,
+    this.initialTopic,
+    this.initialReason,
+    this.initialResourceLink,
+    this.initialNotes,
+    this.initialNextStep,
+  });
 
   final String? learningItemId;
   final String? projectId;
+  final String? initialTopic;
+  final String? initialReason;
+  final String? initialResourceLink;
+  final String? initialNotes;
+  final String? initialNextStep;
 
   bool get isEditing => learningItemId != null;
 
@@ -47,11 +61,15 @@ class _AddLearningItemScreenState extends ConsumerState<AddLearningItemScreen> {
   @override
   void initState() {
     super.initState();
-    _topicController = TextEditingController();
-    _reasonController = TextEditingController();
-    _resourceLinkController = TextEditingController();
-    _notesController = TextEditingController();
-    _nextStepController = TextEditingController();
+    _topicController = TextEditingController(text: widget.initialTopic ?? '');
+    _reasonController = TextEditingController(text: widget.initialReason ?? '');
+    _resourceLinkController = TextEditingController(
+      text: widget.initialResourceLink ?? '',
+    );
+    _notesController = TextEditingController(text: widget.initialNotes ?? '');
+    _nextStepController = TextEditingController(
+      text: widget.initialNextStep ?? '',
+    );
     _projectId = widget.projectId;
   }
 

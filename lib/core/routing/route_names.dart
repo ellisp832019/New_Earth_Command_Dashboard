@@ -53,6 +53,37 @@ abstract final class RouteNames {
   }
 
   static const moduleHub = '/more/module-hub';
+  static const experimentModuleId = 'experiments';
+  static const experimentWorkspace = '/experiments';
+  static const experimentWorkspaceRegistry = experimentWorkspace;
+  static const experimentWorkspaceCreate = '/experiments/new';
+  static const experimentWorkspaceEvidence = '/experiments/evidence';
+  static const experimentWorkspaceResults = '/experiments/results';
+  static const experimentWorkspaceLessons = '/experiments/lessons';
+  static const experimentWorkspaceReports = '/experiments/reports';
+  static const experimentWorkspaceSettings = '/experiments/settings';
+  static const experimentWorkspaceIntegrations = '/experiments/integrations';
+  static const experimentWorkspaceAiReview = '/experiments/ai-review';
+  @Deprecated('Use experimentWorkspace')
+  static const experiments = experimentWorkspace;
+  @Deprecated('Use experimentWorkspaceRegistry')
+  static const experimentsRegistry = experimentWorkspaceRegistry;
+  @Deprecated('Use experimentWorkspaceCreate')
+  static const experimentsCreate = experimentWorkspaceCreate;
+  @Deprecated('Use experimentWorkspaceEvidence')
+  static const experimentsEvidence = experimentWorkspaceEvidence;
+  @Deprecated('Use experimentWorkspaceResults')
+  static const experimentsResults = experimentWorkspaceResults;
+  @Deprecated('Use experimentWorkspaceLessons')
+  static const experimentsLessons = experimentWorkspaceLessons;
+  @Deprecated('Use experimentWorkspaceReports')
+  static const experimentsReports = experimentWorkspaceReports;
+  @Deprecated('Use experimentWorkspaceSettings')
+  static const experimentsSettings = experimentWorkspaceSettings;
+  @Deprecated('Use experimentWorkspaceIntegrations')
+  static const experimentsIntegrations = experimentWorkspaceIntegrations;
+  @Deprecated('Use experimentWorkspaceAiReview')
+  static const experimentsAiReview = experimentWorkspaceAiReview;
   static String moduleHubModule(String moduleId) => '$moduleHub/$moduleId';
   static String moduleHubModuleOperations(String moduleId) =>
       '$moduleHub/$moduleId/operations';
@@ -64,6 +95,11 @@ abstract final class RouteNames {
       '$moduleHub/$moduleId/settings';
   static String moduleHubModulePermissions(String moduleId) =>
       '$moduleHub/$moduleId/permissions';
+  static String experimentWorkspaceDetail(String experimentId) =>
+      '$experimentWorkspace/$experimentId';
+  @Deprecated('Use experimentWorkspaceDetail')
+  static String experimentDetail(String experimentId) =>
+      experimentWorkspaceDetail(experimentId);
   static const systems = '/more/systems';
   static const backupGuardian = '/more/systems/backup-guardian';
   static const repoResearchEngine = '/more/repo-research-engine';
@@ -186,6 +222,33 @@ abstract final class RouteNames {
     ).toString();
   }
 
+  static String newJournalWithContext({
+    String? projectId,
+    String? title,
+    String? whatIWorkedOn,
+    String? whatILearned,
+    String? nextActions,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (title != null && title.isNotEmpty) {
+      queryParameters['title'] = title;
+    }
+    if (whatIWorkedOn != null && whatIWorkedOn.isNotEmpty) {
+      queryParameters['whatIWorkedOn'] = whatIWorkedOn;
+    }
+    if (whatILearned != null && whatILearned.isNotEmpty) {
+      queryParameters['whatILearned'] = whatILearned;
+    }
+    if (nextActions != null && nextActions.isNotEmpty) {
+      queryParameters['nextActions'] = nextActions;
+    }
+
+    return Uri(path: newJournal, queryParameters: queryParameters).toString();
+  }
+
   static String newLearningForProject(String projectId) {
     return Uri(
       path: newLearning,
@@ -193,11 +256,69 @@ abstract final class RouteNames {
     ).toString();
   }
 
+  static String newLearningWithContext({
+    String? projectId,
+    String? topic,
+    String? reason,
+    String? resourceLink,
+    String? notes,
+    String? nextStep,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (topic != null && topic.isNotEmpty) {
+      queryParameters['topic'] = topic;
+    }
+    if (reason != null && reason.isNotEmpty) {
+      queryParameters['reason'] = reason;
+    }
+    if (resourceLink != null && resourceLink.isNotEmpty) {
+      queryParameters['resourceLink'] = resourceLink;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      queryParameters['notes'] = notes;
+    }
+    if (nextStep != null && nextStep.isNotEmpty) {
+      queryParameters['nextStep'] = nextStep;
+    }
+
+    return Uri(path: newLearning, queryParameters: queryParameters).toString();
+  }
+
   static String newContentForProject(String projectId) {
     return Uri(
       path: newContent,
       queryParameters: {'projectId': projectId},
     ).toString();
+  }
+
+  static String newContentWithContext({
+    String? projectId,
+    String? title,
+    String? draftText,
+    String? imagePrompt,
+    String? notes,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (title != null && title.isNotEmpty) {
+      queryParameters['title'] = title;
+    }
+    if (draftText != null && draftText.isNotEmpty) {
+      queryParameters['draftText'] = draftText;
+    }
+    if (imagePrompt != null && imagePrompt.isNotEmpty) {
+      queryParameters['imagePrompt'] = imagePrompt;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      queryParameters['notes'] = notes;
+    }
+
+    return Uri(path: newContent, queryParameters: queryParameters).toString();
   }
 
   static String newBusinessForProject(String projectId) {

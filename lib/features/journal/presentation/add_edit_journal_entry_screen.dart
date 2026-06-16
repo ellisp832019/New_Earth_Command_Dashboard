@@ -14,10 +14,18 @@ class AddEditJournalEntryScreen extends ConsumerStatefulWidget {
     super.key,
     this.journalEntryId,
     this.projectId,
+    this.initialTitle,
+    this.initialWhatIWorkedOn,
+    this.initialWhatILearned,
+    this.initialNextActions,
   });
 
   final String? journalEntryId;
   final String? projectId;
+  final String? initialTitle;
+  final String? initialWhatIWorkedOn;
+  final String? initialWhatILearned;
+  final String? initialNextActions;
 
   bool get isEditing => journalEntryId != null;
 
@@ -57,9 +65,18 @@ class _AddEditJournalEntryScreenState
   void initState() {
     super.initState();
     _titleController = TextEditingController();
-    _whatIWorkedOnController = TextEditingController();
-    _whatILearnedController = TextEditingController();
-    _nextActionsController = TextEditingController();
+    _whatIWorkedOnController = TextEditingController(
+      text: widget.initialWhatIWorkedOn ?? '',
+    );
+    _whatILearnedController = TextEditingController(
+      text: widget.initialWhatILearned ?? '',
+    );
+    _nextActionsController = TextEditingController(
+      text: widget.initialNextActions ?? '',
+    );
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
     _projectId = widget.projectId;
   }
 

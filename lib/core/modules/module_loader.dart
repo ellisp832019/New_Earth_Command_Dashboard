@@ -10,6 +10,7 @@ import '../dock/dock_position.dart';
 import 'module_category.dart';
 import 'module_health.dart';
 import 'module_permissions.dart';
+import '../routing/route_names.dart';
 
 class ModuleLoader {
   const ModuleLoader({this.modulesRootPath = 'modules'});
@@ -120,12 +121,15 @@ class ModuleLoader {
       enabled: true,
       dockable: false,
       defaultDockPosition: DockPosition.fullscreen,
+      iconKey: 'hub_outlined',
+      routes: [RouteNames.moduleHub],
       permissions: [
         ModulePermission(type: ModulePermissionType.fileRead),
         ModulePermission(type: ModulePermissionType.omegaOsAccess),
       ],
       installPath: 'lib/features/modules',
       omegaOsPath: 'docs/architecture/module_hub',
+      storagePath: 'lib/features/modules/storage',
       health: ModuleHealthSnapshot(
         state: ModuleHealthState.healthy,
         lastCheckedLabel: 'Placeholder: just now',

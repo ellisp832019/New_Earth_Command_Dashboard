@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'application/module_hub_controller.dart';
 import '../../core/modules/module_manifest.dart';
+import '../../core/routing/route_names.dart';
 
 class ModuleSettingsScreen extends ConsumerStatefulWidget {
   const ModuleSettingsScreen({super.key, required this.module});
@@ -37,7 +39,7 @@ class _ModuleSettingsScreenState extends ConsumerState<ModuleSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(),
+        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
         title: Text('${widget.module.name} Settings'),
       ),
       body: ListView(

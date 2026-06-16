@@ -137,8 +137,8 @@ class _AboutHelpScreenState extends State<AboutHelpScreen> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         leading: IconButton(
-          tooltip: 'Back to Dashboard',
-          onPressed: () => context.go(RouteNames.dashboard),
+          tooltip: 'Back',
+          onPressed: () => _goBack(context),
           icon: const Icon(Icons.arrow_back),
         ),
         title: const Text('About & Help'),
@@ -298,6 +298,15 @@ class _AboutHelpScreenState extends State<AboutHelpScreen> {
 
   String _normalizeHelpPath(String value) {
     return value.replaceAll('\\', '/').replaceAll(RegExp(r'^/+'), '');
+  }
+
+  void _goBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.go(RouteNames.more);
   }
 }
 

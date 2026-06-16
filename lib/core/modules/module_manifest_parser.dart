@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../dock/dock_position.dart';
 import 'module_category.dart';
 import 'module_health.dart';
@@ -22,11 +24,21 @@ class ModuleManifestParser {
     ], fallback: _inferCategoryLabel(folderName));
     final rawStatus = _string(data, const ['status'], fallback: 'installed');
     final backend = _map(data['backend']);
+    final iconKey = _string(data, const [
+      'iconKey',
+      'icon_key',
+      'icon',
+      'iconName',
+    ], fallback: _inferIconKey(folderName));
     final omegaOsPath = _string(data, const [
       'omegaOsPath',
       'omega_os_path',
       'omega_os_source_path',
     ], fallback: 'OMEGA_OS/MODULES/${_screamingSnake(folderName)}');
+    final storagePath = _string(data, const [
+      'storagePath',
+      'storage_path',
+    ], fallback: '$installPath${Platform.pathSeparator}storage');
     final permissions = _parsePermissions(data['permissions']);
     final status = _parseStatus(rawStatus, backend);
     final enabled = _bool(
@@ -61,6 +73,9 @@ class ModuleManifestParser {
       permissions: permissions,
       installPath: installPath,
       omegaOsPath: omegaOsPath,
+      storagePath: storagePath,
+      iconKey: iconKey,
+      routes: _parseRoutes(data['routes']),
       health: _parseHealth(data, status, backend),
       source: ModuleManifestSource.manifest,
       tags: _parseTags(data),
@@ -86,6 +101,9 @@ class ModuleManifestParser {
       permissions: const [],
       installPath: installPath,
       omegaOsPath: 'OMEGA_OS/MODULES/${_screamingSnake(folderName)}',
+      storagePath: '$installPath${Platform.pathSeparator}storage',
+      iconKey: _inferIconKey(folderName),
+      routes: const [],
       health: const ModuleHealthSnapshot(
         state: ModuleHealthState.warning,
         lastCheckedLabel: 'Manifest missing',
@@ -435,6 +453,18 @@ class ModuleManifestParser {
     return const [];
   }
 
+  List<String> _parseRoutes(dynamic rawRoutes) {
+    if (rawRoutes is! List) {
+      return const [];
+    }
+
+    return rawRoutes
+        .whereType<Object?>()
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+  }
+
   String _buildNotes(Map<String, dynamic> data, Map<String, dynamic> backend) {
     final notes = <String>[];
     final rawNotes = _string(data, const ['notes'], fallback: '');
@@ -541,5 +571,22 @@ class ModuleManifestParser {
 
   String _inferCategoryLabel(String folderName) {
     return _inferCategory(folderName).label;
+  }
+
+  String _inferIconKey(String folderName) {
+    final lower = folderName.toLowerCase();
+    if (lower.contains('experiment') || lower.contains('validation')) {
+      return 'science_outlined';
+    }
+    if (lower.contains('backup')) {
+      return 'backup_outlined';
+    }
+    if (lower.contains('knowledge') || lower.contains('library')) {
+      return 'travel_explore_outlined';
+    }
+    if (lower.contains('project') || lower.contains('task')) {
+      return 'folder_outlined';
+    }
+    return 'hub_outlined';
   }
 }

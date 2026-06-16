@@ -18,7 +18,7 @@ class ModuleOperationsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(),
+        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
         title: Text('${module.name} Operations'),
       ),
       body: ListView(

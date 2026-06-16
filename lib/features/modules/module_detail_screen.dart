@@ -21,7 +21,10 @@ class ModuleDetailScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: Text(module.name)),
+      appBar: AppBar(
+        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
+        title: Text(module.name),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -33,9 +36,42 @@ class ModuleDetailScreen extends StatelessWidget {
                 children: [
                   Text('Module dossier', style: theme.textTheme.labelLarge),
                   const SizedBox(height: 8),
-                  Text(module.name, style: theme.textTheme.headlineSmall),
-                  const SizedBox(height: 8),
-                  Text(module.description, style: theme.textTheme.bodyLarge),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer
+                              .withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          moduleIconFor(
+                            module.iconKey,
+                            category: module.category,
+                          ),
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(module.name, style: theme.textTheme.headlineSmall),
+                            const SizedBox(height: 8),
+                            Text(
+                              module.description,
+                              style: theme.textTheme.bodyLarge,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Wrap(
                     spacing: 8,
@@ -140,6 +176,18 @@ class ModuleDetailScreen extends StatelessWidget {
                   ),
                   _InfoRow(label: 'Install path', value: module.installPath),
                   _InfoRow(label: 'Omega OS path', value: module.omegaOsPath),
+                  _InfoRow(
+                    label: 'Storage path',
+                    value: module.storagePath.isEmpty
+                        ? 'Not configured'
+                        : module.storagePath,
+                  ),
+                  _InfoRow(
+                    label: 'Routes',
+                    value: module.routes.isEmpty
+                        ? 'No explicit routes'
+                        : module.routes.join('\n'),
+                  ),
                   _InfoRow(
                     label: 'Tags',
                     value: module.tags.isEmpty

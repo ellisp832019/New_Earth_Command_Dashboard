@@ -95,7 +95,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.more)),
+        leading: BackButton(onPressed: () => _goBack(context)),
         title: const Text('Module Hub'),
       ),
       body: ListView(
@@ -659,6 +659,15 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
           'Synthetic preview used to satisfy the dock placeholder requirement.',
     );
   }
+
+  void _goBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.go(RouteNames.dashboard);
+  }
 }
 
 class _HeaderCard extends StatelessWidget {
@@ -702,9 +711,15 @@ class _HeaderCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
-                onPressed: () => context.go(RouteNames.more),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.go(RouteNames.dashboard);
+                },
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Back to More'),
+                label: const Text('Back'),
               ),
             ),
             const SizedBox(height: 16),

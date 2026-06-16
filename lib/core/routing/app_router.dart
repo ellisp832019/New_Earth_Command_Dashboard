@@ -57,6 +57,7 @@ import '../../features/meeting_system/presentation/meeting_settings_screen.dart'
 import '../../features/meeting_system/presentation/meeting_templates_screen.dart';
 import '../../features/meeting_system/presentation/new_meeting_wizard_screen.dart';
 import '../../features/alexa_voice_gateway/presentation/alexa_voice_gateway_screen.dart';
+import '../../features/experiments/presentation/omega_experiment_screen.dart';
 import '../../features/project_intelligence/presentation/projects_intelligence_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../features/repo_intelligence_bridge/presentation/repo_intelligence_bridge_settings_screen.dart';
@@ -87,10 +88,11 @@ import '../../features/voice_assistant/voice_assistant_screen.dart';
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
 import '../widgets/app_shell.dart';
+import 'router_keys.dart';
 import 'route_names.dart';
 import '../modules/module_loader.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _rootNavigatorKey = rootNavigatorKey;
 final _shellNavigatorDashboardKey = GlobalKey<NavigatorState>();
 final _shellNavigatorAssetsKey = GlobalKey<NavigatorState>();
 final _shellNavigatorTreasuryKey = GlobalKey<NavigatorState>();
@@ -365,6 +367,81 @@ final appRouter = GoRouter(
                   path: 'module-hub',
                   builder: (context, state) => const ModulesScreen(),
                   routes: [
+                    GoRoute(
+                      path: 'experiments',
+                      builder: (context, state) => const OmegaExperimentScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'new',
+                          builder: (context, state) => const OmegaExperimentScreen(
+                            initialSection: OmegaExperimentScreenSection.create,
+                          ),
+                        ),
+                        GoRoute(
+                          path: 'evidence',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.evidence,
+                              ),
+                        ),
+                        GoRoute(
+                          path: 'results',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.results,
+                              ),
+                        ),
+                        GoRoute(
+                          path: 'lessons',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.lessons,
+                              ),
+                        ),
+                        GoRoute(
+                          path: 'reports',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.reports,
+                              ),
+                        ),
+                        GoRoute(
+                          path: 'integrations',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.integrations,
+                              ),
+                        ),
+                        GoRoute(
+                          path: 'ai-review',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.aiReview,
+                              ),
+                        ),
+                        GoRoute(
+                          path: 'settings',
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.settings,
+                              ),
+                        ),
+                        GoRoute(
+                          path: ':experimentId',
+                          builder: (context, state) => OmegaExperimentScreen(
+                            initialExperimentId:
+                                state.pathParameters['experimentId'],
+                          ),
+                        ),
+                      ],
+                    ),
                     GoRoute(
                       path: ':moduleId',
                       builder: (context, state) {
@@ -660,6 +737,66 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.experimentWorkspace,
+      redirect: (context, state) =>
+          RouteNames.moduleHubModule(RouteNames.experimentModuleId),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/new',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/new',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/evidence',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/evidence',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/results',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/results',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/lessons',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/lessons',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/reports',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/reports',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/integrations',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/integrations',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/ai-review',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/ai-review',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/settings',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/settings',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/experiments/:experimentId',
+      redirect: (context, state) =>
+          '${RouteNames.moduleHubModule(RouteNames.experimentModuleId)}/${state.pathParameters['experimentId']!}',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.journal,
       builder: (context, state) => const JournalScreen(),
       routes: [
@@ -667,6 +804,10 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => AddEditJournalEntryScreen(
             projectId: state.uri.queryParameters['projectId'],
+            initialTitle: state.uri.queryParameters['title'],
+            initialWhatIWorkedOn: state.uri.queryParameters['whatIWorkedOn'],
+            initialWhatILearned: state.uri.queryParameters['whatILearned'],
+            initialNextActions: state.uri.queryParameters['nextActions'],
           ),
         ),
         GoRoute(
@@ -686,6 +827,11 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => AddLearningItemScreen(
             projectId: state.uri.queryParameters['projectId'],
+            initialTopic: state.uri.queryParameters['topic'],
+            initialReason: state.uri.queryParameters['reason'],
+            initialResourceLink: state.uri.queryParameters['resourceLink'],
+            initialNotes: state.uri.queryParameters['notes'],
+            initialNextStep: state.uri.queryParameters['nextStep'],
           ),
         ),
         GoRoute(
@@ -705,6 +851,10 @@ final appRouter = GoRouter(
           path: 'new',
           builder: (context, state) => AddContentItemScreen(
             projectId: state.uri.queryParameters['projectId'],
+            initialTitle: state.uri.queryParameters['title'],
+            initialDraftText: state.uri.queryParameters['draftText'],
+            initialImagePrompt: state.uri.queryParameters['imagePrompt'],
+            initialNotes: state.uri.queryParameters['notes'],
           ),
         ),
         GoRoute(

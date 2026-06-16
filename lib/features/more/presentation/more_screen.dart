@@ -45,6 +45,14 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.moduleHub,
     ),
     _MoreItem(
+      title: 'Omega Experiment Workspace',
+      description:
+          'Open the experiment workspace for validation, evidence, results, and lessons.',
+      icon: Icons.science_outlined,
+      route: RouteNames.experimentWorkspace,
+      badge: 'Lab',
+    ),
+    _MoreItem(
       title: 'Meeting System',
       description:
           'Plan meetings, capture actions, track decisions, and keep follow-ups in Omega OS.',
