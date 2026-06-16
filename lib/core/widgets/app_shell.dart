@@ -7,11 +7,49 @@ import 'package:go_router/go_router.dart';
 
 import '../routing/route_names.dart';
 import '../theme/app_colours.dart';
+import '../windowing/desktop_presence_controller.dart';
+import '../windowing/desktop_window_api.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  StreamSubscription<String>? _desktopMessageSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _desktopMessageSubscription =
+        DesktopPresenceController.instance.messages.listen(_showDesktopToast);
+  }
+
+  @override
+  void dispose() {
+    _desktopMessageSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _showDesktopToast(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +64,14 @@ class AppShell extends StatelessWidget {
           const _ShellBackground(),
           SafeArea(
             child: isWide
-                ? _DesktopShell(navigationShell: navigationShell)
-                : _MobileShell(navigationShell: navigationShell),
+                ? _DesktopShell(navigationShell: widget.navigationShell)
+                : _MobileShell(navigationShell: widget.navigationShell),
           ),
         ],
       ),
       bottomNavigationBar: isWide
           ? null
-          : _MobileNavigationBar(navigationShell: navigationShell),
+          : _MobileNavigationBar(navigationShell: widget.navigationShell),
     );
   }
 }
@@ -65,16 +103,27 @@ class _DesktopShell extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _Sidebar(navigationShell: navigationShell),
+                _DesktopWindowBar(
+                  title: 'New Earth Command Dashboard',
+                  subtitle: 'Local-first command center',
+                ),
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(32),
-                      bottomRight: Radius.circular(32),
-                    ),
-                    child: navigationShell,
+                  child: Row(
+                    children: [
+                      _Sidebar(navigationShell: navigationShell),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(32),
+                            bottomRight: Radius.circular(32),
+                          ),
+                          child: navigationShell,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -238,6 +287,13 @@ class _Sidebar extends StatelessWidget {
               label: 'Command Deck',
               icon: Icons.space_dashboard_outlined,
               route: RouteNames.commandDeck,
+            ),
+            _SidebarLink(
+              label: 'Experiments',
+              icon: Icons.science_outlined,
+              route: RouteNames.experimentWorkspace,
+              accent: AppColours.darkSecondary,
+              badge: 'Lab',
             ),
             _SidebarLink(
               label: 'About & Help',
@@ -452,6 +508,178 @@ class _SidebarLink extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopWindowBar extends StatefulWidget {
+  const _DesktopWindowBar({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  State<_DesktopWindowBar> createState() => _DesktopWindowBarState();
+}
+
+class _DesktopWindowBarState extends State<_DesktopWindowBar> {
+  bool _isMaximized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncMaximizedState();
+  }
+
+  Future<void> _syncMaximizedState() async {
+    if (!DesktopWindowApi.isSupported) {
+      return;
+    }
+
+    final isMaximized = await DesktopWindowApi.isMaximized();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isMaximized = isMaximized;
+    });
+  }
+
+  Future<void> _toggleMaximize() async {
+    if (!DesktopWindowApi.isSupported) {
+      return;
+    }
+
+    if (_isMaximized) {
+      await DesktopWindowApi.restore();
+    } else {
+      await DesktopWindowApi.maximize();
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isMaximized = !_isMaximized;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SizedBox(
+      height: 56,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColours.darkBackground.withValues(alpha: 0.78),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+          border: Border(
+            bottom: BorderSide(
+              color: AppColours.darkOutline.withValues(alpha: 0.9),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: DesktopDragToMoveArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Row(
+                    children: [
+                      const _BrandMark(size: 28),
+                      const SizedBox(width: 14),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: AppColours.darkText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            widget.subtitle,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: AppColours.darkMutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            _DesktopWindowButton(
+              icon: Icons.bedtime_outlined,
+              tooltip: 'Sleep quietly',
+              onPressed: () async {
+                await DesktopPresenceController.instance.sleep();
+              },
+            ),
+            _DesktopWindowButton(
+              icon: _isMaximized
+                  ? Icons.filter_none_rounded
+                  : Icons.crop_square_rounded,
+              tooltip: _isMaximized ? 'Restore' : 'Maximize',
+              onPressed: _toggleMaximize,
+            ),
+            _DesktopWindowButton(
+              icon: Icons.power_settings_new_rounded,
+              tooltip: 'Exit completely',
+              accent: true,
+              onPressed: () async {
+                await DesktopPresenceController.instance.requestShutdown();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopWindowButton extends StatelessWidget {
+  const _DesktopWindowButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.accent = false,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final Future<void> Function() onPressed;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = accent
+        ? AppColours.darkAmber
+        : AppColours.darkText.withValues(alpha: 0.88);
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        child: SizedBox(
+          width: 46,
+          height: 56,
+          child: Icon(icon, size: 18, color: foreground),
         ),
       ),
     );

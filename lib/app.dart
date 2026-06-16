@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +19,7 @@ import 'features/system_backup/presentation/backup_guardian_dock_host.dart';
 import 'features/voice_assistant/widgets/voice_conversation_dock.dart';
 import 'features/voice_assistant/widgets/voice_handsfree_layer.dart';
 import 'features/voice_assistant/widgets/voice_presence_chip.dart';
+import 'core/windowing/desktop_presence_controller.dart';
 
 class OpenCommandPaletteIntent extends Intent {
   const OpenCommandPaletteIntent();
@@ -24,6 +27,10 @@ class OpenCommandPaletteIntent extends Intent {
 
 class CloseCommandPaletteIntent extends Intent {
   const CloseCommandPaletteIntent();
+}
+
+class SleepToTrayIntent extends Intent {
+  const SleepToTrayIntent();
 }
 
 class NewEarthCommandDashboardApp extends ConsumerWidget {
@@ -51,6 +58,11 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 shortcuts: const {
                   SingleActivator(LogicalKeyboardKey.keyK, control: true):
                       OpenCommandPaletteIntent(),
+                  SingleActivator(
+                    LogicalKeyboardKey.keyS,
+                    control: true,
+                    shift: true,
+                  ): SleepToTrayIntent(),
                   SingleActivator(LogicalKeyboardKey.escape):
                       CloseCommandPaletteIntent(),
                 },
@@ -72,6 +84,14 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                             return null;
                           },
                         ),
+                    SleepToTrayIntent: CallbackAction<SleepToTrayIntent>(
+                      onInvoke: (intent) {
+                        unawaited(
+                          DesktopPresenceController.instance.sleep(),
+                        );
+                        return null;
+                      },
+                    ),
                   },
                   child: child ?? const SizedBox.shrink(),
                 ),
