@@ -173,6 +173,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           OutlinedButton.icon(
                             onPressed: () {
+                              context.push(RouteNames.usersDevicesUsers);
+                            },
+                            icon: const Icon(Icons.people_outline),
+                            label: const Text('Manage Users'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.push(RouteNames.usersDevicesDevices);
+                            },
+                            icon: const Icon(Icons.devices_outlined),
+                            label: const Text('Manage Devices'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
                               context.push(RouteNames.moduleHub);
                             },
                             icon: const Icon(Icons.extension_outlined),

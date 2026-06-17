@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -136,11 +138,16 @@ class UsersDevicesUsersScreen extends ConsumerWidget {
             _ActionStrip(
               title: 'User actions',
               subtitle:
-                  'Add a local identity and write the audit trail immediately.',
+                  'Add or update a local identity and write the audit trail immediately.',
               actions: [
                 _ActionChip(
-                  label: 'Register sample user',
+                  label: 'Add user',
                   icon: Icons.person_add_alt_1_outlined,
+                  onPressed: () => _openUserEditor(context, ref),
+                ),
+                _ActionChip(
+                  label: 'Seed sample user',
+                  icon: Icons.auto_fix_high_outlined,
                   onPressed: () => _registerSampleUser(context, ref),
                 ),
               ],
@@ -168,7 +175,31 @@ class UsersDevicesUsersScreen extends ConsumerWidget {
                           '${user.role}${user.title.isNotEmpty ? ' · ${user.title}' : ''}',
                       body:
                           '${user.permissions.length} permissions · ${user.linkedDevices.length} linked devices',
-                      trailing: Chip(label: Text(user.status)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Chip(label: Text(user.status)),
+                          const SizedBox(width: 8),
+                          _EntityActionsMenu(
+                            isArchived: user.status == 'archived',
+                            onEdit: () => _openUserEditor(
+                              context,
+                              ref,
+                              user: user,
+                            ),
+                            onArchiveToggle: () => _toggleUserArchive(
+                              context,
+                              ref,
+                              user,
+                            ),
+                            onDelete: () => _confirmDeleteUser(
+                              context,
+                              ref,
+                              user,
+                            ),
+                          ),
+                        ],
+                      ),
                       chips: [
                         _CardChip(label: user.role),
                         if (user.permissions.isNotEmpty)
@@ -208,11 +239,16 @@ class UsersDevicesDevicesScreen extends ConsumerWidget {
             _ActionStrip(
               title: 'Device actions',
               subtitle:
-                  'Register a local device and give it a starting trust level.',
+                  'Add or update a local device and keep the trust trail local.',
               actions: [
                 _ActionChip(
-                  label: 'Register sample device',
+                  label: 'Add device',
                   icon: Icons.devices_outlined,
+                  onPressed: () => _openDeviceEditor(context, ref),
+                ),
+                _ActionChip(
+                  label: 'Seed sample device',
+                  icon: Icons.auto_fix_high_outlined,
                   onPressed: () => _registerSampleDevice(context, ref),
                 ),
               ],
@@ -239,7 +275,31 @@ class UsersDevicesDevicesScreen extends ConsumerWidget {
                       subtitle: device.type,
                       body:
                           'Trust ${device.trustLevel} · ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
-                      trailing: Chip(label: Text(device.status)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Chip(label: Text(device.status)),
+                          const SizedBox(width: 8),
+                          _EntityActionsMenu(
+                            isArchived: device.status == 'archived',
+                            onEdit: () => _openDeviceEditor(
+                              context,
+                              ref,
+                              device: device,
+                            ),
+                            onArchiveToggle: () => _toggleDeviceArchive(
+                              context,
+                              ref,
+                              device,
+                            ),
+                            onDelete: () => _confirmDeleteDevice(
+                              context,
+                              ref,
+                              device,
+                            ),
+                          ),
+                        ],
+                      ),
                       chips: [
                         _CardChip(label: 'T${device.trustLevel}'),
                         if (device.ownerId.isNotEmpty)
@@ -1267,6 +1327,82 @@ class _CardChip extends StatelessWidget {
   }
 }
 
+class _PickerSection extends StatelessWidget {
+  const _PickerSection({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return _VisualPanel(
+      title: title,
+      subtitle: subtitle,
+      icon: Icons.tune_outlined,
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _EntityActionsMenu extends StatelessWidget {
+  const _EntityActionsMenu({
+    required this.isArchived,
+    required this.onEdit,
+    required this.onArchiveToggle,
+    required this.onDelete,
+  });
+
+  final bool isArchived;
+  final VoidCallback onEdit;
+  final VoidCallback onArchiveToggle;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (value) {
+        switch (value) {
+          case 'edit':
+            onEdit();
+            break;
+          case 'archive':
+            onArchiveToggle();
+            break;
+          case 'delete':
+            onDelete();
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Text('Edit'),
+        ),
+        PopupMenuItem<String>(
+          value: 'archive',
+          child: Text(isArchived ? 'Restore' : 'Archive'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Text('Delete'),
+        ),
+      ],
+    );
+  }
+}
+
 class _MetricTile extends StatelessWidget {
   const _MetricTile({
     required this.label,
@@ -1599,6 +1735,684 @@ Future<void> _createSampleApproval(
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sample approval created.')),
+    );
+  }
+}
+
+Future<void> _openUserEditor(
+  BuildContext context,
+  WidgetRef ref, {
+  UsersDevicesControlUser? user,
+}) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+  final roleItems = <String>{
+    ...snapshot.roles.map((role) => role.role),
+    if (user != null) user.role,
+  }.toList(growable: false);
+  final availableRoles = roleItems.isNotEmpty ? roleItems : <String>['Guest'];
+  final availablePermissions = snapshot.permissions
+      .map((permission) => permission.permission)
+      .where((permission) => permission.isNotEmpty)
+      .toList(growable: false);
+  final availableDevices = snapshot.devices;
+  final idController = TextEditingController(text: user?.id ?? '');
+  final displayNameController = TextEditingController(text: user?.displayName ?? '');
+  final titleController = TextEditingController(text: user?.title ?? '');
+  final notesController = TextEditingController(text: user?.notes ?? '');
+  final formKey = GlobalKey<FormState>();
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  var role = user?.role.isNotEmpty == true
+      ? user!.role
+      : availableRoles.first;
+  var status = user?.status ?? 'active';
+  final selectedPermissions = <String>{
+    ...(user?.permissions ?? const <String>[]),
+  };
+  final selectedLinkedDevices = <String>{
+    ...(user?.linkedDevices ?? const <String>[]),
+  };
+
+  try {
+    final result = await showDialog<UsersDevicesControlUser>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(user == null ? 'Add user' : 'Edit user'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: idController,
+                          readOnly: user != null,
+                          decoration: const InputDecoration(
+                            labelText: 'User ID',
+                            hintText: 'user_unique_id',
+                          ),
+                          validator: (value) => (value == null || value.trim().isEmpty)
+                              ? 'Enter a user ID'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: displayNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Display name',
+                          ),
+                          validator: (value) => (value == null || value.trim().isEmpty)
+                              ? 'Enter a display name'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            initialValue: role,
+                            decoration: const InputDecoration(
+                              labelText: 'Role',
+                            ),
+                            items: availableRoles
+                              .map(
+                                (item) => DropdownMenuItem<String>(
+                                  value: item,
+                                  child: Text(item),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() => role = value);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: status,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'active', child: Text('active')),
+                            DropdownMenuItem(value: 'template', child: Text('template')),
+                            DropdownMenuItem(value: 'disabled', child: Text('disabled')),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() => status = value);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: titleController,
+                          decoration: const InputDecoration(
+                            labelText: 'Title',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _PickerSection(
+                          title: 'Permissions',
+                          subtitle: 'Pick local permissions for this identity',
+                          children: [
+                            if (availablePermissions.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final permission in availablePermissions)
+                                    FilterChip(
+                                      label: Text(permission),
+                                      selected: selectedPermissions.contains(permission),
+                                      onSelected: (value) {
+                                        setState(() {
+                                          if (value) {
+                                            selectedPermissions.add(permission);
+                                          } else {
+                                            selectedPermissions.remove(permission);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              )
+                            else
+                              const Text('No permission definitions are available yet.'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _PickerSection(
+                          title: 'Linked devices',
+                          subtitle: 'Connect this user to the trusted devices they use',
+                          children: [
+                            if (availableDevices.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final device in availableDevices)
+                                    FilterChip(
+                                      label: Text(device.name),
+                                      selected: selectedLinkedDevices.contains(device.id),
+                                      onSelected: (value) {
+                                        setState(() {
+                                          if (value) {
+                                            selectedLinkedDevices.add(device.id);
+                                          } else {
+                                            selectedLinkedDevices.remove(device.id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              )
+                            else
+                              const Text('No devices are available yet.'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: notesController,
+                          minLines: 2,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            labelText: 'Notes',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (!(formKey.currentState?.validate() ?? false)) {
+                  return;
+                }
+                Navigator.pop(
+                  dialogContext,
+                  UsersDevicesControlUser(
+                    id: idController.text.trim(),
+                    displayName: displayNameController.text.trim(),
+                    role: role,
+                    title: titleController.text.trim(),
+                    status: status,
+                    permissions: selectedPermissions.toList(growable: false),
+                    linkedDevices: selectedLinkedDevices.toList(growable: false),
+                    notes: notesController.text.trim(),
+                  ),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    await repository.registerUser(result);
+    ref.invalidate(usersDevicesControlSnapshotProvider);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(
+          user == null ? 'User added locally.' : 'User updated locally.',
+        ),
+      ),
+    );
+  } finally {
+    idController.dispose();
+    displayNameController.dispose();
+    titleController.dispose();
+    notesController.dispose();
+  }
+}
+
+Future<void> _openDeviceEditor(
+  BuildContext context,
+  WidgetRef ref, {
+  UsersDevicesControlDevice? device,
+}) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+  final availableUsers = snapshot.users;
+  final availableTrustLevels = snapshot.trustLevels.isNotEmpty
+      ? snapshot.trustLevels
+      : const [
+          UsersDevicesControlTrustLevelDefinition(
+            level: 0,
+            name: 'Unknown',
+            description: 'No trust levels are configured yet.',
+          ),
+        ];
+  final trustLevelItems = <UsersDevicesControlTrustLevelDefinition>[
+    ...availableTrustLevels,
+    if (!availableTrustLevels.any((level) => level.level == (device?.trustLevel ?? availableTrustLevels.first.level)))
+      UsersDevicesControlTrustLevelDefinition(
+        level: device?.trustLevel ?? availableTrustLevels.first.level,
+        name: 'Custom',
+        description: 'Current device trust level.',
+      ),
+  ];
+  final availableActions = <String>{
+    ...snapshot.permissions.map((permission) => permission.permission),
+    ...snapshot.accessRules.expand(
+      (rule) => [
+        rule.viewPermission,
+        rule.editPermission,
+        rule.adminPermission,
+        rule.requestPermission,
+        rule.executePermission,
+        rule.controlPermission,
+      ],
+    ),
+    ...(device?.allowedActions ?? const <String>[]),
+  }.where((action) => action.trim().isNotEmpty).toList(growable: false);
+  final idController = TextEditingController(text: device?.id ?? '');
+  final nameController = TextEditingController(text: device?.name ?? '');
+  final typeController = TextEditingController(text: device?.type ?? '');
+  final notesController = TextEditingController(text: device?.notes ?? '');
+  final formKey = GlobalKey<FormState>();
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  var status = device?.status ?? 'registered';
+  var ownerId = device?.ownerId ?? (availableUsers.isNotEmpty ? availableUsers.first.id : '');
+  var trustLevel = device?.trustLevel ?? availableTrustLevels.first.level;
+  final selectedActions = <String>{
+    ...(device?.allowedActions ?? const <String>[]),
+  };
+  final customActionController = TextEditingController();
+
+  try {
+    final result = await showDialog<UsersDevicesControlDevice>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(device == null ? 'Add device' : 'Edit device'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: idController,
+                          readOnly: device != null,
+                          decoration: const InputDecoration(
+                            labelText: 'Device ID',
+                            hintText: 'device_unique_id',
+                          ),
+                          validator: (value) => (value == null || value.trim().isEmpty)
+                              ? 'Enter a device ID'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Device name',
+                          ),
+                          validator: (value) => (value == null || value.trim().isEmpty)
+                              ? 'Enter a device name'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: typeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Device type',
+                          ),
+                          validator: (value) => (value == null || value.trim().isEmpty)
+                              ? 'Enter a device type'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int>(
+                          initialValue: trustLevel,
+                          decoration: const InputDecoration(
+                            labelText: 'Trust level',
+                          ),
+                          items: trustLevelItems
+                              .map(
+                                (level) => DropdownMenuItem<int>(
+                                  value: level.level,
+                                  child: Text('${level.level} - ${level.name}'),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() => trustLevel = value);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: status,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'registered', child: Text('registered')),
+                            DropdownMenuItem(value: 'trusted', child: Text('trusted')),
+                            DropdownMenuItem(value: 'critical', child: Text('critical')),
+                            DropdownMenuItem(value: 'blocked', child: Text('blocked')),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() => status = value);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: ownerId.isEmpty ? null : ownerId,
+                          decoration: const InputDecoration(
+                            labelText: 'Owner',
+                          ),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: '',
+                              child: Text('Unassigned'),
+                            ),
+                            ...availableUsers.map(
+                              (userOption) => DropdownMenuItem<String>(
+                                value: userOption.id,
+                                child: Text('${userOption.displayName} (${userOption.id})'),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() => ownerId = value ?? '');
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _PickerSection(
+                          title: 'Allowed actions',
+                          subtitle: 'Pick known action scopes or add a custom one',
+                          children: [
+                            if (availableActions.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final action in availableActions)
+                                    FilterChip(
+                                      label: Text(action),
+                                      selected: selectedActions.contains(action),
+                                      onSelected: (value) {
+                                        setState(() {
+                                          if (value) {
+                                            selectedActions.add(action);
+                                          } else {
+                                            selectedActions.remove(action);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              )
+                            else
+                              const Text('No suggested actions are available yet.'),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: customActionController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Add custom action',
+                                      hintText: 'e.g. assets.print_label',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                FilledButton.tonal(
+                                  onPressed: () {
+                                    final action = customActionController.text.trim();
+                                    if (action.isEmpty) {
+                                      return;
+                                    }
+                                    setState(() {
+                                      selectedActions.add(action);
+                                      customActionController.clear();
+                                    });
+                                  },
+                                  child: const Text('Add'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            if (selectedActions.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final action in selectedActions)
+                                    InputChip(
+                                      label: Text(action),
+                                      onDeleted: () {
+                                        setState(() {
+                                          selectedActions.remove(action);
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: notesController,
+                          minLines: 2,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            labelText: 'Notes',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (!(formKey.currentState?.validate() ?? false)) {
+                  return;
+                }
+                Navigator.pop(
+                  dialogContext,
+                  UsersDevicesControlDevice(
+                    id: idController.text.trim(),
+                    name: nameController.text.trim(),
+                    type: typeController.text.trim(),
+                    trustLevel: trustLevel,
+                    status: status,
+                    ownerId: ownerId,
+                    allowedActions: selectedActions.toList(growable: false),
+                    notes: notesController.text.trim(),
+                  ),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    await repository.registerDevice(result);
+    ref.invalidate(usersDevicesControlSnapshotProvider);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(
+          device == null ? 'Device added locally.' : 'Device updated locally.',
+        ),
+      ),
+    );
+  } finally {
+    idController.dispose();
+    nameController.dispose();
+    typeController.dispose();
+    notesController.dispose();
+    customActionController.dispose();
+  }
+}
+
+Future<void> _toggleUserArchive(
+  BuildContext context,
+  WidgetRef ref,
+  UsersDevicesControlUser user,
+) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  if (user.status == 'archived') {
+    await repository.restoreUser(user.id);
+  } else {
+    await repository.archiveUser(user.id);
+  }
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          user.status == 'archived'
+              ? 'User restored locally.'
+              : 'User archived locally.',
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _toggleDeviceArchive(
+  BuildContext context,
+  WidgetRef ref,
+  UsersDevicesControlDevice device,
+) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  if (device.status == 'archived') {
+    await repository.restoreDevice(device.id);
+  } else {
+    await repository.archiveDevice(device.id);
+  }
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          device.status == 'archived'
+              ? 'Device restored locally.'
+              : 'Device archived locally.',
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _confirmDeleteUser(
+  BuildContext context,
+  WidgetRef ref,
+  UsersDevicesControlUser user,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete user?'),
+      content: Text(
+        'Delete ${user.displayName} from the local registry? This also writes an audit event.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) {
+    return;
+  }
+
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  await repository.deleteUser(user.id);
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('User deleted locally.')),
+    );
+  }
+}
+
+Future<void> _confirmDeleteDevice(
+  BuildContext context,
+  WidgetRef ref,
+  UsersDevicesControlDevice device,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete device?'),
+      content: Text(
+        'Delete ${device.name} from the local registry? This also writes an audit event.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) {
+    return;
+  }
+
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  await repository.deleteDevice(device.id);
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Device deleted locally.')),
     );
   }
 }

@@ -96,6 +96,47 @@ class ModuleDetailScreen extends StatelessWidget {
             ],
             child: const SizedBox.shrink(),
           ),
+          if (module.id == '01_USERS_AND_DEVICES_CONTROL') ...[
+            const SizedBox(height: 16),
+            _DetailPanel(
+              title: 'Access control shortcuts',
+              subtitle: 'Jump straight into the local identity workflow',
+              icon: Icons.shield_outlined,
+              body: 'Open the screens that edit users, devices, trust, approvals, and audit trail.',
+              chips: const [
+                'Users',
+                'Devices',
+                'Access Matrix',
+                'Approvals',
+                'Audit Log',
+              ],
+              actions: [
+                FilledButton.tonal(
+                  onPressed: () => context.push(RouteNames.usersDevicesUsers),
+                  child: const Text('Open Users'),
+                ),
+                FilledButton.tonal(
+                  onPressed: () => context.push(RouteNames.usersDevicesDevices),
+                  child: const Text('Open Devices'),
+                ),
+                FilledButton.tonal(
+                  onPressed: () =>
+                      context.push(RouteNames.usersDevicesAccessMatrix),
+                  child: const Text('Open Access Matrix'),
+                ),
+                FilledButton.tonal(
+                  onPressed: () =>
+                      context.push(RouteNames.usersDevicesApprovalQueue),
+                  child: const Text('Open Approvals'),
+                ),
+                FilledButton.tonal(
+                  onPressed: () => context.push(RouteNames.usersDevicesAuditLog),
+                  child: const Text('Open Audit Log'),
+                ),
+              ],
+              child: const SizedBox.shrink(),
+            ),
+          ],
           const SizedBox(height: 16),
           _DetailPanel(
             title: 'Health',

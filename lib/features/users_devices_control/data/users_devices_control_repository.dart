@@ -471,6 +471,77 @@ class UsersDevicesControlRepository {
     return device;
   }
 
+  Future<void> archiveDevice(
+    String deviceId, {
+    String reason = 'Device archived locally.',
+  }) async {
+    final devices = await _readDevices();
+    final index = devices.indexWhere((device) => device.id == deviceId);
+    if (index < 0) {
+      throw StateError('Device not found: $deviceId');
+    }
+
+    final updated = devices[index].copyWith(status: 'archived');
+    devices[index] = updated;
+    await _writeDevices(devices);
+    await createAuditEvent(
+      actorId: updated.ownerId,
+      deviceId: updated.id,
+      eventType: 'device_archived',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'archive_device',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
+  Future<void> restoreDevice(
+    String deviceId, {
+    String reason = 'Device restored locally.',
+  }) async {
+    final devices = await _readDevices();
+    final index = devices.indexWhere((device) => device.id == deviceId);
+    if (index < 0) {
+      throw StateError('Device not found: $deviceId');
+    }
+
+    final updated = devices[index].copyWith(status: 'trusted');
+    devices[index] = updated;
+    await _writeDevices(devices);
+    await createAuditEvent(
+      actorId: updated.ownerId,
+      deviceId: updated.id,
+      eventType: 'device_restored',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'restore_device',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
+  Future<void> deleteDevice(
+    String deviceId, {
+    String reason = 'Device deleted locally.',
+  }) async {
+    final devices = await _readDevices();
+    final index = devices.indexWhere((device) => device.id == deviceId);
+    if (index < 0) {
+      throw StateError('Device not found: $deviceId');
+    }
+
+    final removed = devices.removeAt(index);
+    await _writeDevices(devices);
+    await createAuditEvent(
+      actorId: removed.ownerId,
+      deviceId: removed.id,
+      eventType: 'device_deleted',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'delete_device',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
   Future<UsersDevicesControlUser> assignRole(
     String userId,
     String role,
@@ -525,6 +596,80 @@ class UsersDevicesControlRepository {
     return updated;
   }
 
+  Future<void> archiveUser(
+    String userId, {
+    String reason = 'User archived locally.',
+  }) async {
+    final users = await _readUsers();
+    final index = users.indexWhere((user) => user.id == userId);
+    if (index < 0) {
+      throw StateError('User not found: $userId');
+    }
+
+    final updated = users[index].copyWith(status: 'archived');
+    users[index] = updated;
+    await _writeUsers(users);
+    await createAuditEvent(
+      actorId: userId,
+      deviceId:
+          updated.linkedDevices.isNotEmpty ? updated.linkedDevices.first : '',
+      eventType: 'user_archived',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'archive_user',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
+  Future<void> restoreUser(
+    String userId, {
+    String reason = 'User restored locally.',
+  }) async {
+    final users = await _readUsers();
+    final index = users.indexWhere((user) => user.id == userId);
+    if (index < 0) {
+      throw StateError('User not found: $userId');
+    }
+
+    final updated = users[index].copyWith(status: 'active');
+    users[index] = updated;
+    await _writeUsers(users);
+    await createAuditEvent(
+      actorId: userId,
+      deviceId:
+          updated.linkedDevices.isNotEmpty ? updated.linkedDevices.first : '',
+      eventType: 'user_restored',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'restore_user',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
+  Future<void> deleteUser(
+    String userId, {
+    String reason = 'User deleted locally.',
+  }) async {
+    final users = await _readUsers();
+    final index = users.indexWhere((user) => user.id == userId);
+    if (index < 0) {
+      throw StateError('User not found: $userId');
+    }
+
+    final removed = users.removeAt(index);
+    await _writeUsers(users);
+    await createAuditEvent(
+      actorId: removed.id,
+      deviceId:
+          removed.linkedDevices.isNotEmpty ? removed.linkedDevices.first : '',
+      eventType: 'user_deleted',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'delete_user',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
   Future<bool> checkPermission(
     String userId,
     String permission, {
@@ -532,6 +677,10 @@ class UsersDevicesControlRepository {
   }) async {
     final user = await getUserById(userId);
     if (user == null) {
+      return false;
+    }
+
+    if (user.status == 'archived' || user.status == 'disabled') {
       return false;
     }
 
@@ -554,6 +703,10 @@ class UsersDevicesControlRepository {
   ) async {
     final device = await getDeviceById(deviceId);
     if (device == null) {
+      return false;
+    }
+
+    if (device.status == 'archived' || device.status == 'blocked') {
       return false;
     }
 
@@ -730,6 +883,42 @@ class UsersDevicesControlRepository {
         requiresApproval: false,
         reason: 'Unknown device.',
       );
+    }
+
+    if (user.status == 'archived' || user.status == 'disabled') {
+      final decision = const UsersDevicesControlAccessDecision(
+        allowed: false,
+        requiresApproval: false,
+        reason: 'User is archived or disabled.',
+      );
+      await createAuditEvent(
+        actorId: userId,
+        deviceId: deviceId,
+        eventType: 'module_access_checked',
+        targetModule: moduleId,
+        action: action,
+        result: 'denied',
+        reason: decision.reason,
+      );
+      return decision;
+    }
+
+    if (device.status == 'archived' || device.status == 'blocked') {
+      final decision = const UsersDevicesControlAccessDecision(
+        allowed: false,
+        requiresApproval: false,
+        reason: 'Device is archived or blocked.',
+      );
+      await createAuditEvent(
+        actorId: userId,
+        deviceId: deviceId,
+        eventType: 'module_access_checked',
+        targetModule: moduleId,
+        action: action,
+        result: 'denied',
+        reason: decision.reason,
+      );
+      return decision;
     }
 
     final rule = await _ruleFor(moduleId);
