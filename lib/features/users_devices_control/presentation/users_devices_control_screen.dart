@@ -1288,6 +1288,9 @@ class UsersDevicesRouteGateScreen extends ConsumerStatefulWidget {
 
 class _UsersDevicesRouteGateScreenState
     extends ConsumerState<UsersDevicesRouteGateScreen> {
+  static String? _rememberedUserId;
+  static String? _rememberedDeviceId;
+
   bool _seededDefaults = false;
   bool _busy = false;
   bool _unlocked = false;
@@ -1303,13 +1306,19 @@ class _UsersDevicesRouteGateScreenState
       return;
     }
 
-    if (snapshot.users.isNotEmpty) {
+    if (_rememberedUserId != null &&
+        snapshot.users.any((user) => user.id == _rememberedUserId)) {
+      _selectedUserId = _rememberedUserId;
+    } else if (snapshot.users.isNotEmpty) {
       _selectedUserId = snapshot.users.firstWhere(
         (user) => user.status == 'active',
         orElse: () => snapshot.users.first,
       ).id;
     }
-    if (snapshot.devices.isNotEmpty) {
+    if (_rememberedDeviceId != null &&
+        snapshot.devices.any((device) => device.id == _rememberedDeviceId)) {
+      _selectedDeviceId = _rememberedDeviceId;
+    } else if (snapshot.devices.isNotEmpty) {
       _selectedDeviceId = snapshot.devices.firstWhere(
         (device) => device.status == 'trusted' || device.trustLevel >= 3,
         orElse: () => snapshot.devices.first,
@@ -1529,7 +1538,10 @@ class _UsersDevicesRouteGateScreenState
                                         ),
                                     ],
                                     onChanged: (value) =>
-                                        setState(() => _selectedUserId = value),
+                                        setState(() {
+                                          _selectedUserId = value;
+                                          _rememberedUserId = value;
+                                        }),
                                   ),
                                   const SizedBox(height: 12),
                                   DropdownButtonFormField<String>(
@@ -1545,7 +1557,10 @@ class _UsersDevicesRouteGateScreenState
                                         ),
                                     ],
                                     onChanged: (value) =>
-                                        setState(() => _selectedDeviceId = value),
+                                        setState(() {
+                                          _selectedDeviceId = value;
+                                          _rememberedDeviceId = value;
+                                        }),
                                   ),
                                   const SizedBox(height: 12),
                                   Wrap(
@@ -1559,6 +1574,17 @@ class _UsersDevicesRouteGateScreenState
                                       OutlinedButton(
                                         onPressed: () => context.go(RouteNames.securityLock),
                                         child: const Text('Open Security Lock'),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: _latestAuditEventId == null
+                                            ? null
+                                            : () => context.go(
+                                                  RouteNames.usersDevicesAuditLogFor(
+                                                    _latestAuditEventId!,
+                                                  ),
+                                                ),
+                                        icon: const Icon(Icons.receipt_long_outlined),
+                                        label: const Text('Open latest audit'),
                                       ),
                                       TextButton(
                                         onPressed: () {
@@ -1632,6 +1658,8 @@ class _UsersDevicesRouteGateScreenState
                                     _CardChip(label: 'T${selectedDevice.trustLevel}'),
                                     _CardChip(label: selectedDevice.status),
                                   ],
+                                  if (_latestAuditEventId != null)
+                                    _CardChip(label: 'Audit: $_latestAuditEventId'),
                                 ],
                               ),
                             ),
