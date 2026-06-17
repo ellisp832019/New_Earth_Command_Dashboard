@@ -22,6 +22,7 @@ class ModuleCard extends StatelessWidget {
     final theme = Theme.of(context);
     final statusColor = _statusColor(theme, module.status);
     final borderColor = statusColor.withValues(alpha: 0.42);
+    final isSensitiveModule = _isSensitiveModule(module.id);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -120,6 +121,11 @@ class ModuleCard extends StatelessWidget {
                       label: '${module.permissions.length} permissions',
                       icon: Icons.verified_user_outlined,
                     ),
+                    if (isSensitiveModule)
+                      const _CompactChip(
+                        label: 'Access gate',
+                        icon: Icons.lock_outline,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -142,12 +148,36 @@ class ModuleCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (isSensitiveModule && module.routes.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonalIcon(
+                      onPressed: () => context.go(module.routes.first),
+                      icon: const Icon(Icons.lock_open_outlined),
+                      label: const Text('Open gate'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+bool _isSensitiveModule(String moduleId) {
+  switch (moduleId) {
+    case '01_USERS_AND_DEVICES_CONTROL':
+    case 'newearth.finance_treasury':
+    case 'repo_research_engine':
+    case 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE':
+    case 'gaia_voice_assistant':
+      return true;
+    default:
+      return false;
   }
 }
 

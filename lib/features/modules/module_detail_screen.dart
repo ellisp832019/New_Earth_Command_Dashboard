@@ -20,6 +20,7 @@ class ModuleDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final showGateShortcuts = _isSensitiveModule(module.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -96,43 +97,49 @@ class ModuleDetailScreen extends StatelessWidget {
             ],
             child: const SizedBox.shrink(),
           ),
-          if (module.id == '01_USERS_AND_DEVICES_CONTROL') ...[
+          if (showGateShortcuts) ...[
             const SizedBox(height: 16),
             _DetailPanel(
               title: 'Access control shortcuts',
-              subtitle: 'Jump straight into the local identity workflow',
+              subtitle: 'Jump straight into the local access gate and review paths',
               icon: Icons.shield_outlined,
-              body: 'Open the screens that edit users, devices, trust, approvals, and audit trail.',
+              body: 'Open the gate or the module route directly, depending on what you need to inspect.',
               chips: const [
-                'Users',
-                'Devices',
-                'Access Matrix',
-                'Approvals',
-                'Audit Log',
+                'Access gate',
+                'Local route',
+                'Audit aware',
               ],
               actions: [
-                FilledButton.tonal(
-                  onPressed: () => context.push(RouteNames.usersDevicesUsers),
-                  child: const Text('Open Users'),
+                FilledButton(
+                  onPressed: module.routes.isEmpty
+                      ? null
+                      : () => context.go(module.routes.first),
+                  child: const Text('Open module route'),
                 ),
-                FilledButton.tonal(
-                  onPressed: () => context.push(RouteNames.usersDevicesDevices),
-                  child: const Text('Open Devices'),
-                ),
-                FilledButton.tonal(
-                  onPressed: () =>
-                      context.push(RouteNames.usersDevicesAccessMatrix),
-                  child: const Text('Open Access Matrix'),
-                ),
-                FilledButton.tonal(
-                  onPressed: () =>
-                      context.push(RouteNames.usersDevicesApprovalQueue),
-                  child: const Text('Open Approvals'),
-                ),
-                FilledButton.tonal(
-                  onPressed: () => context.push(RouteNames.usersDevicesAuditLog),
-                  child: const Text('Open Audit Log'),
-                ),
+                if (module.id == '01_USERS_AND_DEVICES_CONTROL') ...[
+                  FilledButton.tonal(
+                    onPressed: () => context.push(RouteNames.usersDevicesUsers),
+                    child: const Text('Open Users'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: () => context.push(RouteNames.usersDevicesDevices),
+                    child: const Text('Open Devices'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: () =>
+                        context.push(RouteNames.usersDevicesAccessMatrix),
+                    child: const Text('Open Access Matrix'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: () =>
+                        context.push(RouteNames.usersDevicesApprovalQueue),
+                    child: const Text('Open Approvals'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: () => context.push(RouteNames.usersDevicesAuditLog),
+                    child: const Text('Open Audit Log'),
+                  ),
+                ],
               ],
               child: const SizedBox.shrink(),
             ),
@@ -334,6 +341,19 @@ class ModuleDetailScreen extends StatelessWidget {
       ModulePermissionType.omegaOsAccess =>
         'Omega OS access links the module back to the wider New Earth operating surface.',
     };
+  }
+}
+
+bool _isSensitiveModule(String moduleId) {
+  switch (moduleId) {
+    case '01_USERS_AND_DEVICES_CONTROL':
+    case 'newearth.finance_treasury':
+    case 'repo_research_engine':
+    case 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE':
+    case 'gaia_voice_assistant':
+      return true;
+    default:
+      return false;
   }
 }
 
