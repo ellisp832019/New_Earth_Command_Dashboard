@@ -914,6 +914,14 @@ class _UsersDevicesDeviceOnboardingScreenState
       ),
       data: (data) {
         final trustBands = data.trustLevels;
+        final trustedDevices = [...data.devices]
+          ..sort(
+            (a, b) => b.trustLevel.compareTo(a.trustLevel),
+          );
+        final trustEvents = data.auditLog
+            .where((event) => event.eventType == 'device_trust_confirmed')
+            .toList(growable: false)
+          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
         return _SectionScaffold(
           title: 'Device Onboarding',
@@ -1031,6 +1039,109 @@ class _UsersDevicesDeviceOnboardingScreenState
                       ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: 430,
+                    child: _VisualPanel(
+                      title: 'Recent trust confirmations',
+                      subtitle:
+                          'Review the latest pairings and the local confirmation audit.',
+                      icon: Icons.history_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (trustEvents.isEmpty)
+                            const _EmptyCollectionState(
+                              icon: Icons.history_outlined,
+                              title: 'No trust confirmations yet',
+                              body:
+                                  'Start onboarding a device to record the first local pairing.',
+                            )
+                          else
+                            Column(
+                              children: [
+                                for (final event in trustEvents.take(5))
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _EntityCard(
+                                      icon: Icons.verified_user_outlined,
+                                      title: event.deviceId,
+                                      subtitle:
+                                          '${event.actorId} confirmed ${event.result}',
+                                      body:
+                                          '${event.timestamp}\n${event.reason}',
+                                      trailing: Chip(
+                                        label: Text(event.result),
+                                      ),
+                                      chips: [
+                                        _CardChip(label: event.targetModule),
+                                        _CardChip(label: event.action),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 430,
+                    child: _VisualPanel(
+                      title: 'Trusted devices',
+                      subtitle:
+                          'Quick review of higher-trust devices already paired locally.',
+                      icon: Icons.devices_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (trustedDevices.where((device) => device.trustLevel >= 3).isEmpty)
+                            const _EmptyCollectionState(
+                              icon: Icons.devices_outlined,
+                              title: 'No trusted devices yet',
+                              body:
+                                  'Onboard a higher-trust device to see it appear here.',
+                            )
+                          else
+                            Column(
+                              children: [
+                                for (final device in trustedDevices
+                                    .where((device) => device.trustLevel >= 3)
+                                    .take(5))
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _EntityCard(
+                                      icon: Icons.devices_outlined,
+                                      title: device.name,
+                                      subtitle: device.type,
+                                      body:
+                                          'Trust ${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
+                                      trailing: FilledButton.tonal(
+                                        onPressed: () => _openDeviceEditor(
+                                          context,
+                                          ref,
+                                          device: device,
+                                        ),
+                                        child: const Text('Review'),
+                                      ),
+                                      chips: [
+                                        _CardChip(label: 'T${device.trustLevel}'),
+                                        _CardChip(label: device.status),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
