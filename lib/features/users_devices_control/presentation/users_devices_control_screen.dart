@@ -1488,6 +1488,22 @@ class _UsersDevicesRouteGateScreenState
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _Badge(label: _status),
+                                      _Badge(
+                                        label: selectedUser?.displayName ??
+                                            'No user selected',
+                                      ),
+                                      _Badge(
+                                        label: selectedDevice?.name ??
+                                            'No device selected',
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -1544,6 +1560,22 @@ class _UsersDevicesRouteGateScreenState
                                         onPressed: () => context.go(RouteNames.securityLock),
                                         child: const Text('Open Security Lock'),
                                       ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _seededDefaults = false;
+                                            _selectedUserId = null;
+                                            _selectedDeviceId = null;
+                                            _unlocked = false;
+                                            _status = 'Locked';
+                                            _detail = 'Waiting for local verification.';
+                                            _auditSummary =
+                                                'No audit decision recorded yet.';
+                                            _latestAuditEventId = null;
+                                          });
+                                        },
+                                        child: const Text('Reset selection'),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
@@ -1559,6 +1591,24 @@ class _UsersDevicesRouteGateScreenState
                                       style: Theme.of(context).textTheme.bodySmall,
                                     ),
                                   ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _VisualPanel(
+                              title: 'What this gate checks',
+                              subtitle:
+                                  'The access path stays closed until each local guard passes.',
+                              icon: Icons.fact_check_outlined,
+                              child: Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: const [
+                                  _CardChip(label: 'Identity'),
+                                  _CardChip(label: 'Role'),
+                                  _CardChip(label: 'Permission'),
+                                  _CardChip(label: 'Trust'),
+                                  _CardChip(label: 'Audit'),
                                 ],
                               ),
                             ),
