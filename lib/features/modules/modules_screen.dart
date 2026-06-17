@@ -111,6 +111,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
             inferredCount: inferredCount,
           ),
           const SizedBox(height: 16),
+          _PinnedStartHereCard(
+            module: modules.where((module) => module.id == '01_USERS_AND_DEVICES_CONTROL').cast<ModuleManifest?>().firstOrNull,
+          ),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -667,6 +671,125 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
     }
 
     context.go(RouteNames.dashboard);
+  }
+}
+
+extension _FirstOrNullExtension<T> on Iterable<T> {
+  T? get firstOrNull {
+    final iterator = this.iterator;
+    if (!iterator.moveNext()) {
+      return null;
+    }
+    return iterator.current;
+  }
+}
+
+class _PinnedStartHereCard extends StatelessWidget {
+  const _PinnedStartHereCard({required this.module});
+
+  final ModuleManifest? module;
+
+  @override
+  Widget build(BuildContext context) {
+    if (module == null) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: 0.12),
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.56),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(
+                moduleIconFor(module!.iconKey, category: module!.category),
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: const [
+                      Chip(label: Text('Start here')),
+                      Chip(label: Text('Sensitive module')),
+                      Chip(label: Text('Local access gate')),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    module!.name,
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'This is the easiest launch point for identity, device trust, approvals, and audit.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    module!.description,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.push(RouteNames.moduleHubModule(module!.id)),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Open module home'),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.go(RouteNames.usersDevices),
+                        icon: const Icon(Icons.shield_outlined),
+                        label: const Text('Open access gate'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(RouteNames.usersDevicesUsers),
+                        icon: const Icon(Icons.people_outline),
+                        label: const Text('Open Users'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(RouteNames.usersDevicesDevices),
+                        icon: const Icon(Icons.devices_outlined),
+                        label: const Text('Open Devices'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
