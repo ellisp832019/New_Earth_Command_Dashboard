@@ -61,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -128,20 +128,174 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 8) {
-            await migrator.createTable(usersDevicesControlUsers);
-            await migrator.createTable(usersDevicesControlDevices);
-            await migrator.createTable(usersDevicesControlApprovalRequests);
-            await migrator.createTable(usersDevicesControlAuditEvents);
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlUsers,
+              'users_devices_control_users',
+            );
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlDevices,
+              'users_devices_control_devices',
+            );
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlApprovalRequests,
+              'users_devices_control_approval_requests',
+            );
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlAuditEvents,
+              'users_devices_control_audit_events',
+            );
           }
 
           if (from < 9) {
-            await migrator.createTable(usersDevicesControlRoles);
-            await migrator.createTable(usersDevicesControlPermissions);
-            await migrator.createTable(usersDevicesControlTrustLevels);
-            await migrator.createTable(usersDevicesControlAccessRules);
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlRoles,
+              'users_devices_control_roles',
+            );
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlPermissions,
+              'users_devices_control_permissions',
+            );
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlTrustLevels,
+              'users_devices_control_trust_levels',
+            );
+            await _createTableIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'users_devices_control_access_rules',
+            );
+          }
+
+          if (from < 10) {
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlRoles,
+              'permissions_json',
+              usersDevicesControlRoles.permissionsJson,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlPermissions,
+              'description',
+              usersDevicesControlPermissions.description,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlTrustLevels,
+              'name',
+              usersDevicesControlTrustLevels.name,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlTrustLevels,
+              'description',
+              usersDevicesControlTrustLevels.description,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'view_permission',
+              usersDevicesControlAccessRules.viewPermission,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'edit_permission',
+              usersDevicesControlAccessRules.editPermission,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'admin_permission',
+              usersDevicesControlAccessRules.adminPermission,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'request_permission',
+              usersDevicesControlAccessRules.requestPermission,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'execute_permission',
+              usersDevicesControlAccessRules.executePermission,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'control_permission',
+              usersDevicesControlAccessRules.controlPermission,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'requires_trust_level',
+              usersDevicesControlAccessRules.requiresTrustLevel,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              usersDevicesControlAccessRules,
+              'requires_approval_for_json',
+              usersDevicesControlAccessRules.requiresApprovalForJson,
+            );
           }
         },
       );
+}
+
+Future<void> _createTableIfMissing(
+  Migrator migrator,
+  TableInfo table,
+  String tableName,
+) async {
+  if (await _tableExists(migrator, tableName)) {
+    return;
+  }
+  await migrator.createTable(table);
+}
+
+Future<void> _addColumnIfMissing(
+  Migrator migrator,
+  TableInfo table,
+  String columnName,
+  GeneratedColumn column,
+) async {
+  if (await _columnExists(migrator, table.actualTableName, columnName)) {
+    return;
+  }
+  await migrator.addColumn(table, column);
+}
+
+Future<bool> _tableExists(Migrator migrator, String tableName) async {
+  final result = await migrator.database.customSelect(
+    "SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+    variables: [Variable<String>(tableName)],
+  ).getSingleOrNull();
+  return result != null;
+}
+
+Future<bool> _columnExists(
+  Migrator migrator,
+  String tableName,
+  String columnName,
+) async {
+  final rows = await migrator.database.customSelect(
+    'PRAGMA table_info($tableName)',
+  ).get();
+  for (final row in rows) {
+    if (row.read<String>('name') == columnName) {
+      return true;
+    }
+  }
+  return false;
 }
 
 LazyDatabase _openConnection() {

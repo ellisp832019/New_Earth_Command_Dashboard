@@ -143,4 +143,47 @@ void main() {
     expect(denied.allowed, isFalse);
     expect(denied.requiresApproval, isTrue);
   });
+
+  test('access checks deny unknown users and low trust devices with clear reasons', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    final unknownUserDecision = await repository.canOpenModule(
+      'user_missing',
+      'device_new_earth_dev',
+      '01_USERS_AND_DEVICES_CONTROL',
+    );
+    final lowTrustDecision = await repository.canOpenModule(
+      'user_peter_owner',
+      'device_workshop_tablet',
+      '01_USERS_AND_DEVICES_CONTROL',
+    );
+
+    expect(unknownUserDecision.allowed, isFalse);
+    expect(unknownUserDecision.reason, contains('Unknown user'));
+    expect(lowTrustDecision.allowed, isFalse);
+    expect(lowTrustDecision.reason, contains('trust must be at least level 4'));
+  });
+
+  test('high risk actions require approval in the access workflow', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    final decision = await repository.canPerformAction(
+      'user_peter_owner',
+      'device_new_earth_dev',
+      '01_USERS_AND_DEVICES_CONTROL',
+      'assign_role',
+    );
+
+    expect(decision.allowed, isFalse);
+    expect(decision.requiresApproval, isTrue);
+    expect(decision.reason, contains('approval'));
+  });
 }

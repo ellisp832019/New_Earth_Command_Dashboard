@@ -11006,6 +11006,18 @@ class $UsersDevicesControlRolesTable extends UsersDevicesControlRoles
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _permissionsJsonMeta = const VerificationMeta(
+    'permissionsJson',
+  );
+  @override
+  late final GeneratedColumn<String> permissionsJson = GeneratedColumn<String>(
+    'permissions_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
     'payloadJson',
   );
@@ -11042,6 +11054,7 @@ class $UsersDevicesControlRolesTable extends UsersDevicesControlRoles
   @override
   List<GeneratedColumn> get $columns => [
     roleName,
+    permissionsJson,
     payloadJson,
     createdAt,
     updatedAt,
@@ -11065,6 +11078,15 @@ class $UsersDevicesControlRolesTable extends UsersDevicesControlRoles
       );
     } else if (isInserting) {
       context.missing(_roleNameMeta);
+    }
+    if (data.containsKey('permissions_json')) {
+      context.handle(
+        _permissionsJsonMeta,
+        permissionsJson.isAcceptableOrUnknown(
+          data['permissions_json']!,
+          _permissionsJsonMeta,
+        ),
+      );
     }
     if (data.containsKey('payload_json')) {
       context.handle(
@@ -11109,6 +11131,10 @@ class $UsersDevicesControlRolesTable extends UsersDevicesControlRoles
         DriftSqlType.string,
         data['${effectivePrefix}role_name'],
       )!,
+      permissionsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}permissions_json'],
+      )!,
       payloadJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payload_json'],
@@ -11133,11 +11159,13 @@ class $UsersDevicesControlRolesTable extends UsersDevicesControlRoles
 class UsersDevicesControlRole extends DataClass
     implements Insertable<UsersDevicesControlRole> {
   final String roleName;
+  final String permissionsJson;
   final String payloadJson;
   final DateTime createdAt;
   final DateTime updatedAt;
   const UsersDevicesControlRole({
     required this.roleName,
+    required this.permissionsJson,
     required this.payloadJson,
     required this.createdAt,
     required this.updatedAt,
@@ -11146,6 +11174,7 @@ class UsersDevicesControlRole extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['role_name'] = Variable<String>(roleName);
+    map['permissions_json'] = Variable<String>(permissionsJson);
     map['payload_json'] = Variable<String>(payloadJson);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -11155,6 +11184,7 @@ class UsersDevicesControlRole extends DataClass
   UsersDevicesControlRolesCompanion toCompanion(bool nullToAbsent) {
     return UsersDevicesControlRolesCompanion(
       roleName: Value(roleName),
+      permissionsJson: Value(permissionsJson),
       payloadJson: Value(payloadJson),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -11168,6 +11198,7 @@ class UsersDevicesControlRole extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UsersDevicesControlRole(
       roleName: serializer.fromJson<String>(json['roleName']),
+      permissionsJson: serializer.fromJson<String>(json['permissionsJson']),
       payloadJson: serializer.fromJson<String>(json['payloadJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -11178,6 +11209,7 @@ class UsersDevicesControlRole extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'roleName': serializer.toJson<String>(roleName),
+      'permissionsJson': serializer.toJson<String>(permissionsJson),
       'payloadJson': serializer.toJson<String>(payloadJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -11186,11 +11218,13 @@ class UsersDevicesControlRole extends DataClass
 
   UsersDevicesControlRole copyWith({
     String? roleName,
+    String? permissionsJson,
     String? payloadJson,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UsersDevicesControlRole(
     roleName: roleName ?? this.roleName,
+    permissionsJson: permissionsJson ?? this.permissionsJson,
     payloadJson: payloadJson ?? this.payloadJson,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -11200,6 +11234,9 @@ class UsersDevicesControlRole extends DataClass
   ) {
     return UsersDevicesControlRole(
       roleName: data.roleName.present ? data.roleName.value : this.roleName,
+      permissionsJson: data.permissionsJson.present
+          ? data.permissionsJson.value
+          : this.permissionsJson,
       payloadJson: data.payloadJson.present
           ? data.payloadJson.value
           : this.payloadJson,
@@ -11212,6 +11249,7 @@ class UsersDevicesControlRole extends DataClass
   String toString() {
     return (StringBuffer('UsersDevicesControlRole(')
           ..write('roleName: $roleName, ')
+          ..write('permissionsJson: $permissionsJson, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -11220,12 +11258,14 @@ class UsersDevicesControlRole extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(roleName, payloadJson, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(roleName, permissionsJson, payloadJson, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UsersDevicesControlRole &&
           other.roleName == this.roleName &&
+          other.permissionsJson == this.permissionsJson &&
           other.payloadJson == this.payloadJson &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -11234,12 +11274,14 @@ class UsersDevicesControlRole extends DataClass
 class UsersDevicesControlRolesCompanion
     extends UpdateCompanion<UsersDevicesControlRole> {
   final Value<String> roleName;
+  final Value<String> permissionsJson;
   final Value<String> payloadJson;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const UsersDevicesControlRolesCompanion({
     this.roleName = const Value.absent(),
+    this.permissionsJson = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -11247,6 +11289,7 @@ class UsersDevicesControlRolesCompanion
   });
   UsersDevicesControlRolesCompanion.insert({
     required String roleName,
+    this.permissionsJson = const Value.absent(),
     required String payloadJson,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -11257,6 +11300,7 @@ class UsersDevicesControlRolesCompanion
        updatedAt = Value(updatedAt);
   static Insertable<UsersDevicesControlRole> custom({
     Expression<String>? roleName,
+    Expression<String>? permissionsJson,
     Expression<String>? payloadJson,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -11264,6 +11308,7 @@ class UsersDevicesControlRolesCompanion
   }) {
     return RawValuesInsertable({
       if (roleName != null) 'role_name': roleName,
+      if (permissionsJson != null) 'permissions_json': permissionsJson,
       if (payloadJson != null) 'payload_json': payloadJson,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -11273,6 +11318,7 @@ class UsersDevicesControlRolesCompanion
 
   UsersDevicesControlRolesCompanion copyWith({
     Value<String>? roleName,
+    Value<String>? permissionsJson,
     Value<String>? payloadJson,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -11280,6 +11326,7 @@ class UsersDevicesControlRolesCompanion
   }) {
     return UsersDevicesControlRolesCompanion(
       roleName: roleName ?? this.roleName,
+      permissionsJson: permissionsJson ?? this.permissionsJson,
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -11292,6 +11339,9 @@ class UsersDevicesControlRolesCompanion
     final map = <String, Expression>{};
     if (roleName.present) {
       map['role_name'] = Variable<String>(roleName.value);
+    }
+    if (permissionsJson.present) {
+      map['permissions_json'] = Variable<String>(permissionsJson.value);
     }
     if (payloadJson.present) {
       map['payload_json'] = Variable<String>(payloadJson.value);
@@ -11312,6 +11362,7 @@ class UsersDevicesControlRolesCompanion
   String toString() {
     return (StringBuffer('UsersDevicesControlRolesCompanion(')
           ..write('roleName: $roleName, ')
+          ..write('permissionsJson: $permissionsJson, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -11342,6 +11393,18 @@ class $UsersDevicesControlPermissionsTable
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
   );
   static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
     'payloadJson',
@@ -11379,6 +11442,7 @@ class $UsersDevicesControlPermissionsTable
   @override
   List<GeneratedColumn> get $columns => [
     permissionName,
+    description,
     payloadJson,
     createdAt,
     updatedAt,
@@ -11405,6 +11469,15 @@ class $UsersDevicesControlPermissionsTable
       );
     } else if (isInserting) {
       context.missing(_permissionNameMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
     }
     if (data.containsKey('payload_json')) {
       context.handle(
@@ -11449,6 +11522,10 @@ class $UsersDevicesControlPermissionsTable
         DriftSqlType.string,
         data['${effectivePrefix}permission_name'],
       )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      )!,
       payloadJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payload_json'],
@@ -11473,11 +11550,13 @@ class $UsersDevicesControlPermissionsTable
 class UsersDevicesControlPermission extends DataClass
     implements Insertable<UsersDevicesControlPermission> {
   final String permissionName;
+  final String description;
   final String payloadJson;
   final DateTime createdAt;
   final DateTime updatedAt;
   const UsersDevicesControlPermission({
     required this.permissionName,
+    required this.description,
     required this.payloadJson,
     required this.createdAt,
     required this.updatedAt,
@@ -11486,6 +11565,7 @@ class UsersDevicesControlPermission extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['permission_name'] = Variable<String>(permissionName);
+    map['description'] = Variable<String>(description);
     map['payload_json'] = Variable<String>(payloadJson);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -11495,6 +11575,7 @@ class UsersDevicesControlPermission extends DataClass
   UsersDevicesControlPermissionsCompanion toCompanion(bool nullToAbsent) {
     return UsersDevicesControlPermissionsCompanion(
       permissionName: Value(permissionName),
+      description: Value(description),
       payloadJson: Value(payloadJson),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -11508,6 +11589,7 @@ class UsersDevicesControlPermission extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UsersDevicesControlPermission(
       permissionName: serializer.fromJson<String>(json['permissionName']),
+      description: serializer.fromJson<String>(json['description']),
       payloadJson: serializer.fromJson<String>(json['payloadJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -11518,6 +11600,7 @@ class UsersDevicesControlPermission extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'permissionName': serializer.toJson<String>(permissionName),
+      'description': serializer.toJson<String>(description),
       'payloadJson': serializer.toJson<String>(payloadJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -11526,11 +11609,13 @@ class UsersDevicesControlPermission extends DataClass
 
   UsersDevicesControlPermission copyWith({
     String? permissionName,
+    String? description,
     String? payloadJson,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UsersDevicesControlPermission(
     permissionName: permissionName ?? this.permissionName,
+    description: description ?? this.description,
     payloadJson: payloadJson ?? this.payloadJson,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -11542,6 +11627,9 @@ class UsersDevicesControlPermission extends DataClass
       permissionName: data.permissionName.present
           ? data.permissionName.value
           : this.permissionName,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       payloadJson: data.payloadJson.present
           ? data.payloadJson.value
           : this.payloadJson,
@@ -11554,6 +11642,7 @@ class UsersDevicesControlPermission extends DataClass
   String toString() {
     return (StringBuffer('UsersDevicesControlPermission(')
           ..write('permissionName: $permissionName, ')
+          ..write('description: $description, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -11562,13 +11651,19 @@ class UsersDevicesControlPermission extends DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(permissionName, payloadJson, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    permissionName,
+    description,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UsersDevicesControlPermission &&
           other.permissionName == this.permissionName &&
+          other.description == this.description &&
           other.payloadJson == this.payloadJson &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -11577,12 +11672,14 @@ class UsersDevicesControlPermission extends DataClass
 class UsersDevicesControlPermissionsCompanion
     extends UpdateCompanion<UsersDevicesControlPermission> {
   final Value<String> permissionName;
+  final Value<String> description;
   final Value<String> payloadJson;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const UsersDevicesControlPermissionsCompanion({
     this.permissionName = const Value.absent(),
+    this.description = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -11590,6 +11687,7 @@ class UsersDevicesControlPermissionsCompanion
   });
   UsersDevicesControlPermissionsCompanion.insert({
     required String permissionName,
+    this.description = const Value.absent(),
     required String payloadJson,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -11600,6 +11698,7 @@ class UsersDevicesControlPermissionsCompanion
        updatedAt = Value(updatedAt);
   static Insertable<UsersDevicesControlPermission> custom({
     Expression<String>? permissionName,
+    Expression<String>? description,
     Expression<String>? payloadJson,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -11607,6 +11706,7 @@ class UsersDevicesControlPermissionsCompanion
   }) {
     return RawValuesInsertable({
       if (permissionName != null) 'permission_name': permissionName,
+      if (description != null) 'description': description,
       if (payloadJson != null) 'payload_json': payloadJson,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -11616,6 +11716,7 @@ class UsersDevicesControlPermissionsCompanion
 
   UsersDevicesControlPermissionsCompanion copyWith({
     Value<String>? permissionName,
+    Value<String>? description,
     Value<String>? payloadJson,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -11623,6 +11724,7 @@ class UsersDevicesControlPermissionsCompanion
   }) {
     return UsersDevicesControlPermissionsCompanion(
       permissionName: permissionName ?? this.permissionName,
+      description: description ?? this.description,
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -11635,6 +11737,9 @@ class UsersDevicesControlPermissionsCompanion
     final map = <String, Expression>{};
     if (permissionName.present) {
       map['permission_name'] = Variable<String>(permissionName.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
     }
     if (payloadJson.present) {
       map['payload_json'] = Variable<String>(payloadJson.value);
@@ -11655,6 +11760,7 @@ class UsersDevicesControlPermissionsCompanion
   String toString() {
     return (StringBuffer('UsersDevicesControlPermissionsCompanion(')
           ..write('permissionName: $permissionName, ')
+          ..write('description: $description, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -11685,6 +11791,28 @@ class $UsersDevicesControlTrustLevelsTable
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
   );
   static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
     'payloadJson',
@@ -11722,6 +11850,8 @@ class $UsersDevicesControlTrustLevelsTable
   @override
   List<GeneratedColumn> get $columns => [
     trustLevel,
+    name,
+    description,
     payloadJson,
     createdAt,
     updatedAt,
@@ -11742,6 +11872,21 @@ class $UsersDevicesControlTrustLevelsTable
       context.handle(
         _trustLevelMeta,
         trustLevel.isAcceptableOrUnknown(data['trust_level']!, _trustLevelMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
       );
     }
     if (data.containsKey('payload_json')) {
@@ -11787,6 +11932,14 @@ class $UsersDevicesControlTrustLevelsTable
         DriftSqlType.int,
         data['${effectivePrefix}trust_level'],
       )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      )!,
       payloadJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payload_json'],
@@ -11811,11 +11964,15 @@ class $UsersDevicesControlTrustLevelsTable
 class UsersDevicesControlTrustLevel extends DataClass
     implements Insertable<UsersDevicesControlTrustLevel> {
   final int trustLevel;
+  final String name;
+  final String description;
   final String payloadJson;
   final DateTime createdAt;
   final DateTime updatedAt;
   const UsersDevicesControlTrustLevel({
     required this.trustLevel,
+    required this.name,
+    required this.description,
     required this.payloadJson,
     required this.createdAt,
     required this.updatedAt,
@@ -11824,6 +11981,8 @@ class UsersDevicesControlTrustLevel extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['trust_level'] = Variable<int>(trustLevel);
+    map['name'] = Variable<String>(name);
+    map['description'] = Variable<String>(description);
     map['payload_json'] = Variable<String>(payloadJson);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -11833,6 +11992,8 @@ class UsersDevicesControlTrustLevel extends DataClass
   UsersDevicesControlTrustLevelsCompanion toCompanion(bool nullToAbsent) {
     return UsersDevicesControlTrustLevelsCompanion(
       trustLevel: Value(trustLevel),
+      name: Value(name),
+      description: Value(description),
       payloadJson: Value(payloadJson),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -11846,6 +12007,8 @@ class UsersDevicesControlTrustLevel extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UsersDevicesControlTrustLevel(
       trustLevel: serializer.fromJson<int>(json['trustLevel']),
+      name: serializer.fromJson<String>(json['name']),
+      description: serializer.fromJson<String>(json['description']),
       payloadJson: serializer.fromJson<String>(json['payloadJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -11856,6 +12019,8 @@ class UsersDevicesControlTrustLevel extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'trustLevel': serializer.toJson<int>(trustLevel),
+      'name': serializer.toJson<String>(name),
+      'description': serializer.toJson<String>(description),
       'payloadJson': serializer.toJson<String>(payloadJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -11864,11 +12029,15 @@ class UsersDevicesControlTrustLevel extends DataClass
 
   UsersDevicesControlTrustLevel copyWith({
     int? trustLevel,
+    String? name,
+    String? description,
     String? payloadJson,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UsersDevicesControlTrustLevel(
     trustLevel: trustLevel ?? this.trustLevel,
+    name: name ?? this.name,
+    description: description ?? this.description,
     payloadJson: payloadJson ?? this.payloadJson,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -11880,6 +12049,10 @@ class UsersDevicesControlTrustLevel extends DataClass
       trustLevel: data.trustLevel.present
           ? data.trustLevel.value
           : this.trustLevel,
+      name: data.name.present ? data.name.value : this.name,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       payloadJson: data.payloadJson.present
           ? data.payloadJson.value
           : this.payloadJson,
@@ -11892,6 +12065,8 @@ class UsersDevicesControlTrustLevel extends DataClass
   String toString() {
     return (StringBuffer('UsersDevicesControlTrustLevel(')
           ..write('trustLevel: $trustLevel, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -11900,13 +12075,21 @@ class UsersDevicesControlTrustLevel extends DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(trustLevel, payloadJson, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    trustLevel,
+    name,
+    description,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UsersDevicesControlTrustLevel &&
           other.trustLevel == this.trustLevel &&
+          other.name == this.name &&
+          other.description == this.description &&
           other.payloadJson == this.payloadJson &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -11915,17 +12098,23 @@ class UsersDevicesControlTrustLevel extends DataClass
 class UsersDevicesControlTrustLevelsCompanion
     extends UpdateCompanion<UsersDevicesControlTrustLevel> {
   final Value<int> trustLevel;
+  final Value<String> name;
+  final Value<String> description;
   final Value<String> payloadJson;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const UsersDevicesControlTrustLevelsCompanion({
     this.trustLevel = const Value.absent(),
+    this.name = const Value.absent(),
+    this.description = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   UsersDevicesControlTrustLevelsCompanion.insert({
     this.trustLevel = const Value.absent(),
+    this.name = const Value.absent(),
+    this.description = const Value.absent(),
     required String payloadJson,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -11934,12 +12123,16 @@ class UsersDevicesControlTrustLevelsCompanion
        updatedAt = Value(updatedAt);
   static Insertable<UsersDevicesControlTrustLevel> custom({
     Expression<int>? trustLevel,
+    Expression<String>? name,
+    Expression<String>? description,
     Expression<String>? payloadJson,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (trustLevel != null) 'trust_level': trustLevel,
+      if (name != null) 'name': name,
+      if (description != null) 'description': description,
       if (payloadJson != null) 'payload_json': payloadJson,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -11948,12 +12141,16 @@ class UsersDevicesControlTrustLevelsCompanion
 
   UsersDevicesControlTrustLevelsCompanion copyWith({
     Value<int>? trustLevel,
+    Value<String>? name,
+    Value<String>? description,
     Value<String>? payloadJson,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
     return UsersDevicesControlTrustLevelsCompanion(
       trustLevel: trustLevel ?? this.trustLevel,
+      name: name ?? this.name,
+      description: description ?? this.description,
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -11965,6 +12162,12 @@ class UsersDevicesControlTrustLevelsCompanion
     final map = <String, Expression>{};
     if (trustLevel.present) {
       map['trust_level'] = Variable<int>(trustLevel.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
     }
     if (payloadJson.present) {
       map['payload_json'] = Variable<String>(payloadJson.value);
@@ -11982,6 +12185,8 @@ class UsersDevicesControlTrustLevelsCompanion
   String toString() {
     return (StringBuffer('UsersDevicesControlTrustLevelsCompanion(')
           ..write('trustLevel: $trustLevel, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -12012,6 +12217,104 @@ class $UsersDevicesControlAccessRulesTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _viewPermissionMeta = const VerificationMeta(
+    'viewPermission',
+  );
+  @override
+  late final GeneratedColumn<String> viewPermission = GeneratedColumn<String>(
+    'view_permission',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _editPermissionMeta = const VerificationMeta(
+    'editPermission',
+  );
+  @override
+  late final GeneratedColumn<String> editPermission = GeneratedColumn<String>(
+    'edit_permission',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _adminPermissionMeta = const VerificationMeta(
+    'adminPermission',
+  );
+  @override
+  late final GeneratedColumn<String> adminPermission = GeneratedColumn<String>(
+    'admin_permission',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _requestPermissionMeta = const VerificationMeta(
+    'requestPermission',
+  );
+  @override
+  late final GeneratedColumn<String> requestPermission =
+      GeneratedColumn<String>(
+        'request_permission',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _executePermissionMeta = const VerificationMeta(
+    'executePermission',
+  );
+  @override
+  late final GeneratedColumn<String> executePermission =
+      GeneratedColumn<String>(
+        'execute_permission',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _controlPermissionMeta = const VerificationMeta(
+    'controlPermission',
+  );
+  @override
+  late final GeneratedColumn<String> controlPermission =
+      GeneratedColumn<String>(
+        'control_permission',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _requiresTrustLevelMeta =
+      const VerificationMeta('requiresTrustLevel');
+  @override
+  late final GeneratedColumn<int> requiresTrustLevel = GeneratedColumn<int>(
+    'requires_trust_level',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _requiresApprovalForJsonMeta =
+      const VerificationMeta('requiresApprovalForJson');
+  @override
+  late final GeneratedColumn<String> requiresApprovalForJson =
+      GeneratedColumn<String>(
+        'requires_approval_for_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
     'payloadJson',
   );
@@ -12048,6 +12351,14 @@ class $UsersDevicesControlAccessRulesTable
   @override
   List<GeneratedColumn> get $columns => [
     moduleId,
+    viewPermission,
+    editPermission,
+    adminPermission,
+    requestPermission,
+    executePermission,
+    controlPermission,
+    requiresTrustLevel,
+    requiresApprovalForJson,
     payloadJson,
     createdAt,
     updatedAt,
@@ -12071,6 +12382,78 @@ class $UsersDevicesControlAccessRulesTable
       );
     } else if (isInserting) {
       context.missing(_moduleIdMeta);
+    }
+    if (data.containsKey('view_permission')) {
+      context.handle(
+        _viewPermissionMeta,
+        viewPermission.isAcceptableOrUnknown(
+          data['view_permission']!,
+          _viewPermissionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('edit_permission')) {
+      context.handle(
+        _editPermissionMeta,
+        editPermission.isAcceptableOrUnknown(
+          data['edit_permission']!,
+          _editPermissionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('admin_permission')) {
+      context.handle(
+        _adminPermissionMeta,
+        adminPermission.isAcceptableOrUnknown(
+          data['admin_permission']!,
+          _adminPermissionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('request_permission')) {
+      context.handle(
+        _requestPermissionMeta,
+        requestPermission.isAcceptableOrUnknown(
+          data['request_permission']!,
+          _requestPermissionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('execute_permission')) {
+      context.handle(
+        _executePermissionMeta,
+        executePermission.isAcceptableOrUnknown(
+          data['execute_permission']!,
+          _executePermissionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('control_permission')) {
+      context.handle(
+        _controlPermissionMeta,
+        controlPermission.isAcceptableOrUnknown(
+          data['control_permission']!,
+          _controlPermissionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('requires_trust_level')) {
+      context.handle(
+        _requiresTrustLevelMeta,
+        requiresTrustLevel.isAcceptableOrUnknown(
+          data['requires_trust_level']!,
+          _requiresTrustLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('requires_approval_for_json')) {
+      context.handle(
+        _requiresApprovalForJsonMeta,
+        requiresApprovalForJson.isAcceptableOrUnknown(
+          data['requires_approval_for_json']!,
+          _requiresApprovalForJsonMeta,
+        ),
+      );
     }
     if (data.containsKey('payload_json')) {
       context.handle(
@@ -12115,6 +12498,38 @@ class $UsersDevicesControlAccessRulesTable
         DriftSqlType.string,
         data['${effectivePrefix}module_id'],
       )!,
+      viewPermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}view_permission'],
+      )!,
+      editPermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}edit_permission'],
+      )!,
+      adminPermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}admin_permission'],
+      )!,
+      requestPermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}request_permission'],
+      )!,
+      executePermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}execute_permission'],
+      )!,
+      controlPermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}control_permission'],
+      )!,
+      requiresTrustLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}requires_trust_level'],
+      )!,
+      requiresApprovalForJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}requires_approval_for_json'],
+      )!,
       payloadJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payload_json'],
@@ -12139,11 +12554,27 @@ class $UsersDevicesControlAccessRulesTable
 class UsersDevicesControlAccessRule extends DataClass
     implements Insertable<UsersDevicesControlAccessRule> {
   final String moduleId;
+  final String viewPermission;
+  final String editPermission;
+  final String adminPermission;
+  final String requestPermission;
+  final String executePermission;
+  final String controlPermission;
+  final int requiresTrustLevel;
+  final String requiresApprovalForJson;
   final String payloadJson;
   final DateTime createdAt;
   final DateTime updatedAt;
   const UsersDevicesControlAccessRule({
     required this.moduleId,
+    required this.viewPermission,
+    required this.editPermission,
+    required this.adminPermission,
+    required this.requestPermission,
+    required this.executePermission,
+    required this.controlPermission,
+    required this.requiresTrustLevel,
+    required this.requiresApprovalForJson,
     required this.payloadJson,
     required this.createdAt,
     required this.updatedAt,
@@ -12152,6 +12583,16 @@ class UsersDevicesControlAccessRule extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['module_id'] = Variable<String>(moduleId);
+    map['view_permission'] = Variable<String>(viewPermission);
+    map['edit_permission'] = Variable<String>(editPermission);
+    map['admin_permission'] = Variable<String>(adminPermission);
+    map['request_permission'] = Variable<String>(requestPermission);
+    map['execute_permission'] = Variable<String>(executePermission);
+    map['control_permission'] = Variable<String>(controlPermission);
+    map['requires_trust_level'] = Variable<int>(requiresTrustLevel);
+    map['requires_approval_for_json'] = Variable<String>(
+      requiresApprovalForJson,
+    );
     map['payload_json'] = Variable<String>(payloadJson);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -12161,6 +12602,14 @@ class UsersDevicesControlAccessRule extends DataClass
   UsersDevicesControlAccessRulesCompanion toCompanion(bool nullToAbsent) {
     return UsersDevicesControlAccessRulesCompanion(
       moduleId: Value(moduleId),
+      viewPermission: Value(viewPermission),
+      editPermission: Value(editPermission),
+      adminPermission: Value(adminPermission),
+      requestPermission: Value(requestPermission),
+      executePermission: Value(executePermission),
+      controlPermission: Value(controlPermission),
+      requiresTrustLevel: Value(requiresTrustLevel),
+      requiresApprovalForJson: Value(requiresApprovalForJson),
       payloadJson: Value(payloadJson),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -12174,6 +12623,16 @@ class UsersDevicesControlAccessRule extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UsersDevicesControlAccessRule(
       moduleId: serializer.fromJson<String>(json['moduleId']),
+      viewPermission: serializer.fromJson<String>(json['viewPermission']),
+      editPermission: serializer.fromJson<String>(json['editPermission']),
+      adminPermission: serializer.fromJson<String>(json['adminPermission']),
+      requestPermission: serializer.fromJson<String>(json['requestPermission']),
+      executePermission: serializer.fromJson<String>(json['executePermission']),
+      controlPermission: serializer.fromJson<String>(json['controlPermission']),
+      requiresTrustLevel: serializer.fromJson<int>(json['requiresTrustLevel']),
+      requiresApprovalForJson: serializer.fromJson<String>(
+        json['requiresApprovalForJson'],
+      ),
       payloadJson: serializer.fromJson<String>(json['payloadJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -12184,6 +12643,16 @@ class UsersDevicesControlAccessRule extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'moduleId': serializer.toJson<String>(moduleId),
+      'viewPermission': serializer.toJson<String>(viewPermission),
+      'editPermission': serializer.toJson<String>(editPermission),
+      'adminPermission': serializer.toJson<String>(adminPermission),
+      'requestPermission': serializer.toJson<String>(requestPermission),
+      'executePermission': serializer.toJson<String>(executePermission),
+      'controlPermission': serializer.toJson<String>(controlPermission),
+      'requiresTrustLevel': serializer.toJson<int>(requiresTrustLevel),
+      'requiresApprovalForJson': serializer.toJson<String>(
+        requiresApprovalForJson,
+      ),
       'payloadJson': serializer.toJson<String>(payloadJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -12192,11 +12661,28 @@ class UsersDevicesControlAccessRule extends DataClass
 
   UsersDevicesControlAccessRule copyWith({
     String? moduleId,
+    String? viewPermission,
+    String? editPermission,
+    String? adminPermission,
+    String? requestPermission,
+    String? executePermission,
+    String? controlPermission,
+    int? requiresTrustLevel,
+    String? requiresApprovalForJson,
     String? payloadJson,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UsersDevicesControlAccessRule(
     moduleId: moduleId ?? this.moduleId,
+    viewPermission: viewPermission ?? this.viewPermission,
+    editPermission: editPermission ?? this.editPermission,
+    adminPermission: adminPermission ?? this.adminPermission,
+    requestPermission: requestPermission ?? this.requestPermission,
+    executePermission: executePermission ?? this.executePermission,
+    controlPermission: controlPermission ?? this.controlPermission,
+    requiresTrustLevel: requiresTrustLevel ?? this.requiresTrustLevel,
+    requiresApprovalForJson:
+        requiresApprovalForJson ?? this.requiresApprovalForJson,
     payloadJson: payloadJson ?? this.payloadJson,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -12206,6 +12692,30 @@ class UsersDevicesControlAccessRule extends DataClass
   ) {
     return UsersDevicesControlAccessRule(
       moduleId: data.moduleId.present ? data.moduleId.value : this.moduleId,
+      viewPermission: data.viewPermission.present
+          ? data.viewPermission.value
+          : this.viewPermission,
+      editPermission: data.editPermission.present
+          ? data.editPermission.value
+          : this.editPermission,
+      adminPermission: data.adminPermission.present
+          ? data.adminPermission.value
+          : this.adminPermission,
+      requestPermission: data.requestPermission.present
+          ? data.requestPermission.value
+          : this.requestPermission,
+      executePermission: data.executePermission.present
+          ? data.executePermission.value
+          : this.executePermission,
+      controlPermission: data.controlPermission.present
+          ? data.controlPermission.value
+          : this.controlPermission,
+      requiresTrustLevel: data.requiresTrustLevel.present
+          ? data.requiresTrustLevel.value
+          : this.requiresTrustLevel,
+      requiresApprovalForJson: data.requiresApprovalForJson.present
+          ? data.requiresApprovalForJson.value
+          : this.requiresApprovalForJson,
       payloadJson: data.payloadJson.present
           ? data.payloadJson.value
           : this.payloadJson,
@@ -12218,6 +12728,14 @@ class UsersDevicesControlAccessRule extends DataClass
   String toString() {
     return (StringBuffer('UsersDevicesControlAccessRule(')
           ..write('moduleId: $moduleId, ')
+          ..write('viewPermission: $viewPermission, ')
+          ..write('editPermission: $editPermission, ')
+          ..write('adminPermission: $adminPermission, ')
+          ..write('requestPermission: $requestPermission, ')
+          ..write('executePermission: $executePermission, ')
+          ..write('controlPermission: $controlPermission, ')
+          ..write('requiresTrustLevel: $requiresTrustLevel, ')
+          ..write('requiresApprovalForJson: $requiresApprovalForJson, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -12226,12 +12744,33 @@ class UsersDevicesControlAccessRule extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(moduleId, payloadJson, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    moduleId,
+    viewPermission,
+    editPermission,
+    adminPermission,
+    requestPermission,
+    executePermission,
+    controlPermission,
+    requiresTrustLevel,
+    requiresApprovalForJson,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UsersDevicesControlAccessRule &&
           other.moduleId == this.moduleId &&
+          other.viewPermission == this.viewPermission &&
+          other.editPermission == this.editPermission &&
+          other.adminPermission == this.adminPermission &&
+          other.requestPermission == this.requestPermission &&
+          other.executePermission == this.executePermission &&
+          other.controlPermission == this.controlPermission &&
+          other.requiresTrustLevel == this.requiresTrustLevel &&
+          other.requiresApprovalForJson == this.requiresApprovalForJson &&
           other.payloadJson == this.payloadJson &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -12240,12 +12779,28 @@ class UsersDevicesControlAccessRule extends DataClass
 class UsersDevicesControlAccessRulesCompanion
     extends UpdateCompanion<UsersDevicesControlAccessRule> {
   final Value<String> moduleId;
+  final Value<String> viewPermission;
+  final Value<String> editPermission;
+  final Value<String> adminPermission;
+  final Value<String> requestPermission;
+  final Value<String> executePermission;
+  final Value<String> controlPermission;
+  final Value<int> requiresTrustLevel;
+  final Value<String> requiresApprovalForJson;
   final Value<String> payloadJson;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const UsersDevicesControlAccessRulesCompanion({
     this.moduleId = const Value.absent(),
+    this.viewPermission = const Value.absent(),
+    this.editPermission = const Value.absent(),
+    this.adminPermission = const Value.absent(),
+    this.requestPermission = const Value.absent(),
+    this.executePermission = const Value.absent(),
+    this.controlPermission = const Value.absent(),
+    this.requiresTrustLevel = const Value.absent(),
+    this.requiresApprovalForJson = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -12253,6 +12808,14 @@ class UsersDevicesControlAccessRulesCompanion
   });
   UsersDevicesControlAccessRulesCompanion.insert({
     required String moduleId,
+    this.viewPermission = const Value.absent(),
+    this.editPermission = const Value.absent(),
+    this.adminPermission = const Value.absent(),
+    this.requestPermission = const Value.absent(),
+    this.executePermission = const Value.absent(),
+    this.controlPermission = const Value.absent(),
+    this.requiresTrustLevel = const Value.absent(),
+    this.requiresApprovalForJson = const Value.absent(),
     required String payloadJson,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -12263,6 +12826,14 @@ class UsersDevicesControlAccessRulesCompanion
        updatedAt = Value(updatedAt);
   static Insertable<UsersDevicesControlAccessRule> custom({
     Expression<String>? moduleId,
+    Expression<String>? viewPermission,
+    Expression<String>? editPermission,
+    Expression<String>? adminPermission,
+    Expression<String>? requestPermission,
+    Expression<String>? executePermission,
+    Expression<String>? controlPermission,
+    Expression<int>? requiresTrustLevel,
+    Expression<String>? requiresApprovalForJson,
     Expression<String>? payloadJson,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -12270,6 +12841,16 @@ class UsersDevicesControlAccessRulesCompanion
   }) {
     return RawValuesInsertable({
       if (moduleId != null) 'module_id': moduleId,
+      if (viewPermission != null) 'view_permission': viewPermission,
+      if (editPermission != null) 'edit_permission': editPermission,
+      if (adminPermission != null) 'admin_permission': adminPermission,
+      if (requestPermission != null) 'request_permission': requestPermission,
+      if (executePermission != null) 'execute_permission': executePermission,
+      if (controlPermission != null) 'control_permission': controlPermission,
+      if (requiresTrustLevel != null)
+        'requires_trust_level': requiresTrustLevel,
+      if (requiresApprovalForJson != null)
+        'requires_approval_for_json': requiresApprovalForJson,
       if (payloadJson != null) 'payload_json': payloadJson,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -12279,6 +12860,14 @@ class UsersDevicesControlAccessRulesCompanion
 
   UsersDevicesControlAccessRulesCompanion copyWith({
     Value<String>? moduleId,
+    Value<String>? viewPermission,
+    Value<String>? editPermission,
+    Value<String>? adminPermission,
+    Value<String>? requestPermission,
+    Value<String>? executePermission,
+    Value<String>? controlPermission,
+    Value<int>? requiresTrustLevel,
+    Value<String>? requiresApprovalForJson,
     Value<String>? payloadJson,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -12286,6 +12875,15 @@ class UsersDevicesControlAccessRulesCompanion
   }) {
     return UsersDevicesControlAccessRulesCompanion(
       moduleId: moduleId ?? this.moduleId,
+      viewPermission: viewPermission ?? this.viewPermission,
+      editPermission: editPermission ?? this.editPermission,
+      adminPermission: adminPermission ?? this.adminPermission,
+      requestPermission: requestPermission ?? this.requestPermission,
+      executePermission: executePermission ?? this.executePermission,
+      controlPermission: controlPermission ?? this.controlPermission,
+      requiresTrustLevel: requiresTrustLevel ?? this.requiresTrustLevel,
+      requiresApprovalForJson:
+          requiresApprovalForJson ?? this.requiresApprovalForJson,
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -12298,6 +12896,32 @@ class UsersDevicesControlAccessRulesCompanion
     final map = <String, Expression>{};
     if (moduleId.present) {
       map['module_id'] = Variable<String>(moduleId.value);
+    }
+    if (viewPermission.present) {
+      map['view_permission'] = Variable<String>(viewPermission.value);
+    }
+    if (editPermission.present) {
+      map['edit_permission'] = Variable<String>(editPermission.value);
+    }
+    if (adminPermission.present) {
+      map['admin_permission'] = Variable<String>(adminPermission.value);
+    }
+    if (requestPermission.present) {
+      map['request_permission'] = Variable<String>(requestPermission.value);
+    }
+    if (executePermission.present) {
+      map['execute_permission'] = Variable<String>(executePermission.value);
+    }
+    if (controlPermission.present) {
+      map['control_permission'] = Variable<String>(controlPermission.value);
+    }
+    if (requiresTrustLevel.present) {
+      map['requires_trust_level'] = Variable<int>(requiresTrustLevel.value);
+    }
+    if (requiresApprovalForJson.present) {
+      map['requires_approval_for_json'] = Variable<String>(
+        requiresApprovalForJson.value,
+      );
     }
     if (payloadJson.present) {
       map['payload_json'] = Variable<String>(payloadJson.value);
@@ -12318,6 +12942,14 @@ class UsersDevicesControlAccessRulesCompanion
   String toString() {
     return (StringBuffer('UsersDevicesControlAccessRulesCompanion(')
           ..write('moduleId: $moduleId, ')
+          ..write('viewPermission: $viewPermission, ')
+          ..write('editPermission: $editPermission, ')
+          ..write('adminPermission: $adminPermission, ')
+          ..write('requestPermission: $requestPermission, ')
+          ..write('executePermission: $executePermission, ')
+          ..write('controlPermission: $controlPermission, ')
+          ..write('requiresTrustLevel: $requiresTrustLevel, ')
+          ..write('requiresApprovalForJson: $requiresApprovalForJson, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -18542,6 +19174,7 @@ typedef $$UsersDevicesControlAuditEventsTableProcessedTableManager =
 typedef $$UsersDevicesControlRolesTableCreateCompanionBuilder =
     UsersDevicesControlRolesCompanion Function({
       required String roleName,
+      Value<String> permissionsJson,
       required String payloadJson,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -18550,6 +19183,7 @@ typedef $$UsersDevicesControlRolesTableCreateCompanionBuilder =
 typedef $$UsersDevicesControlRolesTableUpdateCompanionBuilder =
     UsersDevicesControlRolesCompanion Function({
       Value<String> roleName,
+      Value<String> permissionsJson,
       Value<String> payloadJson,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -18567,6 +19201,11 @@ class $$UsersDevicesControlRolesTableFilterComposer
   });
   ColumnFilters<String> get roleName => $composableBuilder(
     column: $table.roleName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get permissionsJson => $composableBuilder(
+    column: $table.permissionsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18600,6 +19239,11 @@ class $$UsersDevicesControlRolesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get permissionsJson => $composableBuilder(
+    column: $table.permissionsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payloadJson => $composableBuilder(
     column: $table.payloadJson,
     builder: (column) => ColumnOrderings(column),
@@ -18627,6 +19271,11 @@ class $$UsersDevicesControlRolesTableAnnotationComposer
   });
   GeneratedColumn<String> get roleName =>
       $composableBuilder(column: $table.roleName, builder: (column) => column);
+
+  GeneratedColumn<String> get permissionsJson => $composableBuilder(
+    column: $table.permissionsJson,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get payloadJson => $composableBuilder(
     column: $table.payloadJson,
@@ -18687,12 +19336,14 @@ class $$UsersDevicesControlRolesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> roleName = const Value.absent(),
+                Value<String> permissionsJson = const Value.absent(),
                 Value<String> payloadJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UsersDevicesControlRolesCompanion(
                 roleName: roleName,
+                permissionsJson: permissionsJson,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18701,12 +19352,14 @@ class $$UsersDevicesControlRolesTableTableManager
           createCompanionCallback:
               ({
                 required String roleName,
+                Value<String> permissionsJson = const Value.absent(),
                 required String payloadJson,
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => UsersDevicesControlRolesCompanion.insert(
                 roleName: roleName,
+                permissionsJson: permissionsJson,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18744,6 +19397,7 @@ typedef $$UsersDevicesControlRolesTableProcessedTableManager =
 typedef $$UsersDevicesControlPermissionsTableCreateCompanionBuilder =
     UsersDevicesControlPermissionsCompanion Function({
       required String permissionName,
+      Value<String> description,
       required String payloadJson,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -18752,6 +19406,7 @@ typedef $$UsersDevicesControlPermissionsTableCreateCompanionBuilder =
 typedef $$UsersDevicesControlPermissionsTableUpdateCompanionBuilder =
     UsersDevicesControlPermissionsCompanion Function({
       Value<String> permissionName,
+      Value<String> description,
       Value<String> payloadJson,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -18769,6 +19424,11 @@ class $$UsersDevicesControlPermissionsTableFilterComposer
   });
   ColumnFilters<String> get permissionName => $composableBuilder(
     column: $table.permissionName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18802,6 +19462,11 @@ class $$UsersDevicesControlPermissionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payloadJson => $composableBuilder(
     column: $table.payloadJson,
     builder: (column) => ColumnOrderings(column),
@@ -18829,6 +19494,11 @@ class $$UsersDevicesControlPermissionsTableAnnotationComposer
   });
   GeneratedColumn<String> get permissionName => $composableBuilder(
     column: $table.permissionName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => column,
   );
 
@@ -18891,12 +19561,14 @@ class $$UsersDevicesControlPermissionsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> permissionName = const Value.absent(),
+                Value<String> description = const Value.absent(),
                 Value<String> payloadJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UsersDevicesControlPermissionsCompanion(
                 permissionName: permissionName,
+                description: description,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18905,12 +19577,14 @@ class $$UsersDevicesControlPermissionsTableTableManager
           createCompanionCallback:
               ({
                 required String permissionName,
+                Value<String> description = const Value.absent(),
                 required String payloadJson,
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => UsersDevicesControlPermissionsCompanion.insert(
                 permissionName: permissionName,
+                description: description,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18948,6 +19622,8 @@ typedef $$UsersDevicesControlPermissionsTableProcessedTableManager =
 typedef $$UsersDevicesControlTrustLevelsTableCreateCompanionBuilder =
     UsersDevicesControlTrustLevelsCompanion Function({
       Value<int> trustLevel,
+      Value<String> name,
+      Value<String> description,
       required String payloadJson,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -18955,6 +19631,8 @@ typedef $$UsersDevicesControlTrustLevelsTableCreateCompanionBuilder =
 typedef $$UsersDevicesControlTrustLevelsTableUpdateCompanionBuilder =
     UsersDevicesControlTrustLevelsCompanion Function({
       Value<int> trustLevel,
+      Value<String> name,
+      Value<String> description,
       Value<String> payloadJson,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -18971,6 +19649,16 @@ class $$UsersDevicesControlTrustLevelsTableFilterComposer
   });
   ColumnFilters<int> get trustLevel => $composableBuilder(
     column: $table.trustLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19004,6 +19692,16 @@ class $$UsersDevicesControlTrustLevelsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payloadJson => $composableBuilder(
     column: $table.payloadJson,
     builder: (column) => ColumnOrderings(column),
@@ -19031,6 +19729,14 @@ class $$UsersDevicesControlTrustLevelsTableAnnotationComposer
   });
   GeneratedColumn<int> get trustLevel => $composableBuilder(
     column: $table.trustLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => column,
   );
 
@@ -19093,11 +19799,15 @@ class $$UsersDevicesControlTrustLevelsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> trustLevel = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> description = const Value.absent(),
                 Value<String> payloadJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UsersDevicesControlTrustLevelsCompanion(
                 trustLevel: trustLevel,
+                name: name,
+                description: description,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -19105,11 +19815,15 @@ class $$UsersDevicesControlTrustLevelsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> trustLevel = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> description = const Value.absent(),
                 required String payloadJson,
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => UsersDevicesControlTrustLevelsCompanion.insert(
                 trustLevel: trustLevel,
+                name: name,
+                description: description,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -19146,6 +19860,14 @@ typedef $$UsersDevicesControlTrustLevelsTableProcessedTableManager =
 typedef $$UsersDevicesControlAccessRulesTableCreateCompanionBuilder =
     UsersDevicesControlAccessRulesCompanion Function({
       required String moduleId,
+      Value<String> viewPermission,
+      Value<String> editPermission,
+      Value<String> adminPermission,
+      Value<String> requestPermission,
+      Value<String> executePermission,
+      Value<String> controlPermission,
+      Value<int> requiresTrustLevel,
+      Value<String> requiresApprovalForJson,
       required String payloadJson,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -19154,6 +19876,14 @@ typedef $$UsersDevicesControlAccessRulesTableCreateCompanionBuilder =
 typedef $$UsersDevicesControlAccessRulesTableUpdateCompanionBuilder =
     UsersDevicesControlAccessRulesCompanion Function({
       Value<String> moduleId,
+      Value<String> viewPermission,
+      Value<String> editPermission,
+      Value<String> adminPermission,
+      Value<String> requestPermission,
+      Value<String> executePermission,
+      Value<String> controlPermission,
+      Value<int> requiresTrustLevel,
+      Value<String> requiresApprovalForJson,
       Value<String> payloadJson,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -19171,6 +19901,46 @@ class $$UsersDevicesControlAccessRulesTableFilterComposer
   });
   ColumnFilters<String> get moduleId => $composableBuilder(
     column: $table.moduleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get viewPermission => $composableBuilder(
+    column: $table.viewPermission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get editPermission => $composableBuilder(
+    column: $table.editPermission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get adminPermission => $composableBuilder(
+    column: $table.adminPermission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get requestPermission => $composableBuilder(
+    column: $table.requestPermission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get executePermission => $composableBuilder(
+    column: $table.executePermission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get controlPermission => $composableBuilder(
+    column: $table.controlPermission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get requiresTrustLevel => $composableBuilder(
+    column: $table.requiresTrustLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get requiresApprovalForJson => $composableBuilder(
+    column: $table.requiresApprovalForJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19204,6 +19974,46 @@ class $$UsersDevicesControlAccessRulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get viewPermission => $composableBuilder(
+    column: $table.viewPermission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get editPermission => $composableBuilder(
+    column: $table.editPermission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get adminPermission => $composableBuilder(
+    column: $table.adminPermission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get requestPermission => $composableBuilder(
+    column: $table.requestPermission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get executePermission => $composableBuilder(
+    column: $table.executePermission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get controlPermission => $composableBuilder(
+    column: $table.controlPermission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get requiresTrustLevel => $composableBuilder(
+    column: $table.requiresTrustLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get requiresApprovalForJson => $composableBuilder(
+    column: $table.requiresApprovalForJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payloadJson => $composableBuilder(
     column: $table.payloadJson,
     builder: (column) => ColumnOrderings(column),
@@ -19231,6 +20041,46 @@ class $$UsersDevicesControlAccessRulesTableAnnotationComposer
   });
   GeneratedColumn<String> get moduleId =>
       $composableBuilder(column: $table.moduleId, builder: (column) => column);
+
+  GeneratedColumn<String> get viewPermission => $composableBuilder(
+    column: $table.viewPermission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get editPermission => $composableBuilder(
+    column: $table.editPermission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get adminPermission => $composableBuilder(
+    column: $table.adminPermission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get requestPermission => $composableBuilder(
+    column: $table.requestPermission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get executePermission => $composableBuilder(
+    column: $table.executePermission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get controlPermission => $composableBuilder(
+    column: $table.controlPermission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get requiresTrustLevel => $composableBuilder(
+    column: $table.requiresTrustLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get requiresApprovalForJson => $composableBuilder(
+    column: $table.requiresApprovalForJson,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get payloadJson => $composableBuilder(
     column: $table.payloadJson,
@@ -19291,12 +20141,28 @@ class $$UsersDevicesControlAccessRulesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> moduleId = const Value.absent(),
+                Value<String> viewPermission = const Value.absent(),
+                Value<String> editPermission = const Value.absent(),
+                Value<String> adminPermission = const Value.absent(),
+                Value<String> requestPermission = const Value.absent(),
+                Value<String> executePermission = const Value.absent(),
+                Value<String> controlPermission = const Value.absent(),
+                Value<int> requiresTrustLevel = const Value.absent(),
+                Value<String> requiresApprovalForJson = const Value.absent(),
                 Value<String> payloadJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UsersDevicesControlAccessRulesCompanion(
                 moduleId: moduleId,
+                viewPermission: viewPermission,
+                editPermission: editPermission,
+                adminPermission: adminPermission,
+                requestPermission: requestPermission,
+                executePermission: executePermission,
+                controlPermission: controlPermission,
+                requiresTrustLevel: requiresTrustLevel,
+                requiresApprovalForJson: requiresApprovalForJson,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -19305,12 +20171,28 @@ class $$UsersDevicesControlAccessRulesTableTableManager
           createCompanionCallback:
               ({
                 required String moduleId,
+                Value<String> viewPermission = const Value.absent(),
+                Value<String> editPermission = const Value.absent(),
+                Value<String> adminPermission = const Value.absent(),
+                Value<String> requestPermission = const Value.absent(),
+                Value<String> executePermission = const Value.absent(),
+                Value<String> controlPermission = const Value.absent(),
+                Value<int> requiresTrustLevel = const Value.absent(),
+                Value<String> requiresApprovalForJson = const Value.absent(),
                 required String payloadJson,
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => UsersDevicesControlAccessRulesCompanion.insert(
                 moduleId: moduleId,
+                viewPermission: viewPermission,
+                editPermission: editPermission,
+                adminPermission: adminPermission,
+                requestPermission: requestPermission,
+                executePermission: executePermission,
+                controlPermission: controlPermission,
+                requiresTrustLevel: requiresTrustLevel,
+                requiresApprovalForJson: requiresApprovalForJson,
                 payloadJson: payloadJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

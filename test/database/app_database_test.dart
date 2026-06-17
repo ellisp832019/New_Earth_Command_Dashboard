@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,8 @@ import 'package:new_earth_command_dashboard/core/constants/default_seed_data.dar
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
+import 'package:path/path.dart' as path;
+import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 void main() {
   test('database opens and creates MVP tables', () async {
@@ -153,5 +157,38 @@ void main() {
       'daily-plan-2026-05-02',
       'daily-plan-2026-05-03',
     ]);
+  });
+
+  test('database migration tolerates legacy user_version values', () async {
+    final tempDir = await Directory.systemTemp.createTemp(
+      'new_earth_dashboard_migration_',
+    );
+    addTearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final dbFile = File(path.join(tempDir.path, 'dashboard.db'));
+
+    final bootstrap = AppDatabase(NativeDatabase(dbFile));
+    await bootstrap.customSelect('SELECT 1').getSingle();
+    await bootstrap.close();
+
+    final rawDatabase = sqlite3.sqlite3.open(dbFile.path);
+    rawDatabase.execute('PRAGMA user_version = 7');
+    rawDatabase.close();
+
+    final migrated = AppDatabase(NativeDatabase(dbFile));
+    addTearDown(migrated.close);
+
+    await migrated.customSelect('SELECT 1').getSingle();
+
+    final userVersion = await migrated
+        .customSelect('PRAGMA user_version')
+        .map((row) => row.read<int>('user_version'))
+        .getSingle();
+
+    expect(userVersion, 10);
   });
 }

@@ -1146,11 +1146,20 @@ class UsersDevicesControlRepository {
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlRoles).get();
       return rows
-          .map(
-            (row) => UsersDevicesControlRoleDefinition.fromJson(
-              _decodePayload(row.payloadJson),
-            ),
-          )
+          .map((row) {
+            final payload = row.payloadJson.isNotEmpty
+                ? _decodePayload(row.payloadJson)
+                : <String, dynamic>{};
+            final permissions = row.permissionsJson.isNotEmpty
+                ? _decodeStringList(row.permissionsJson)
+                : _stringList(payload['permissions']);
+            return UsersDevicesControlRoleDefinition.fromJson({
+              'role': row.roleName.isNotEmpty
+                  ? row.roleName
+                  : payload['role']?.toString() ?? '',
+              'permissions': permissions,
+            });
+          })
           .toList(growable: false);
     }
 
@@ -1165,11 +1174,19 @@ class UsersDevicesControlRepository {
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlPermissions).get();
       return rows
-          .map(
-            (row) => UsersDevicesControlPermissionDefinition.fromJson(
-              _decodePayload(row.payloadJson),
-            ),
-          )
+          .map((row) {
+            final payload = row.payloadJson.isNotEmpty
+                ? _decodePayload(row.payloadJson)
+                : <String, dynamic>{};
+            return UsersDevicesControlPermissionDefinition.fromJson({
+              'permission': row.permissionName.isNotEmpty
+                  ? row.permissionName
+                  : payload['permission']?.toString() ?? '',
+              'description': row.description.isNotEmpty
+                  ? row.description
+                  : payload['description']?.toString() ?? '',
+            });
+          })
           .toList(growable: false);
     }
 
@@ -1187,11 +1204,20 @@ class UsersDevicesControlRepository {
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlTrustLevels).get();
       return rows
-          .map(
-            (row) => UsersDevicesControlTrustLevelDefinition.fromJson(
-              _decodePayload(row.payloadJson),
-            ),
-          )
+          .map((row) {
+            final payload = row.payloadJson.isNotEmpty
+                ? _decodePayload(row.payloadJson)
+                : <String, dynamic>{};
+            return UsersDevicesControlTrustLevelDefinition.fromJson({
+              'level': row.trustLevel,
+              'name': row.name.isNotEmpty
+                  ? row.name
+                  : payload['name']?.toString() ?? '',
+              'description': row.description.isNotEmpty
+                  ? row.description
+                  : payload['description']?.toString() ?? '',
+            });
+          })
           .toList(growable: false);
     }
 
@@ -1253,11 +1279,38 @@ class UsersDevicesControlRepository {
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlAccessRules).get();
       return rows
-          .map(
-            (row) => UsersDevicesControlAccessRule.fromJson(
-              _decodePayload(row.payloadJson),
-            ),
-          )
+          .map((row) {
+            final payload = row.payloadJson.isNotEmpty
+                ? _decodePayload(row.payloadJson)
+                : <String, dynamic>{};
+            return UsersDevicesControlAccessRule.fromJson({
+              'module_id': row.moduleId.isNotEmpty
+                  ? row.moduleId
+                  : payload['module_id']?.toString() ?? '',
+              'view_permission': row.viewPermission.isNotEmpty
+                  ? row.viewPermission
+                  : payload['view_permission']?.toString() ?? '',
+              'edit_permission': row.editPermission.isNotEmpty
+                  ? row.editPermission
+                  : payload['edit_permission']?.toString() ?? '',
+              'admin_permission': row.adminPermission.isNotEmpty
+                  ? row.adminPermission
+                  : payload['admin_permission']?.toString() ?? '',
+              'request_permission': row.requestPermission.isNotEmpty
+                  ? row.requestPermission
+                  : payload['request_permission']?.toString() ?? '',
+              'execute_permission': row.executePermission.isNotEmpty
+                  ? row.executePermission
+                  : payload['execute_permission']?.toString() ?? '',
+              'control_permission': row.controlPermission.isNotEmpty
+                  ? row.controlPermission
+                  : payload['control_permission']?.toString() ?? '',
+              'requires_trust_level': row.requiresTrustLevel,
+              'requires_approval_for': row.requiresApprovalForJson.isNotEmpty
+                  ? _decodeStringList(row.requiresApprovalForJson)
+                  : _stringList(payload['requires_approval_for']),
+            });
+          })
           .toList(growable: false);
     }
 
@@ -1545,6 +1598,7 @@ class UsersDevicesControlRepository {
         await db.into(db.usersDevicesControlRoles).insert(
               UsersDevicesControlRolesCompanion.insert(
                 roleName: role.role,
+                permissionsJson: Value(jsonEncode(role.permissions)),
                 payloadJson: _encodePayload(role.toJson()),
                 createdAt: timestamp,
                 updatedAt: timestamp,
@@ -1557,6 +1611,7 @@ class UsersDevicesControlRepository {
         await db.into(db.usersDevicesControlPermissions).insert(
               UsersDevicesControlPermissionsCompanion.insert(
                 permissionName: permission.permission,
+                description: Value(permission.description),
                 payloadJson: _encodePayload(permission.toJson()),
                 createdAt: timestamp,
                 updatedAt: timestamp,
@@ -1569,6 +1624,8 @@ class UsersDevicesControlRepository {
         await db.into(db.usersDevicesControlTrustLevels).insert(
               UsersDevicesControlTrustLevelsCompanion.insert(
                 trustLevel: Value(trustLevel.level),
+                name: Value(trustLevel.name),
+                description: Value(trustLevel.description),
                 payloadJson: _encodePayload(trustLevel.toJson()),
                 createdAt: timestamp,
                 updatedAt: timestamp,
@@ -1583,12 +1640,21 @@ class UsersDevicesControlRepository {
                 )) {
           final timestamp = DateTime.now().toUtc();
           await db.into(db.usersDevicesControlAccessRules).insert(
-                UsersDevicesControlAccessRulesCompanion.insert(
-                  moduleId: rule.moduleId,
-                  payloadJson: _encodePayload(rule.toJson()),
-                  createdAt: timestamp,
-                  updatedAt: timestamp,
-                ),
+              UsersDevicesControlAccessRulesCompanion.insert(
+                moduleId: rule.moduleId,
+                viewPermission: Value(rule.viewPermission),
+                editPermission: Value(rule.editPermission),
+                adminPermission: Value(rule.adminPermission),
+                requestPermission: Value(rule.requestPermission),
+                executePermission: Value(rule.executePermission),
+                controlPermission: Value(rule.controlPermission),
+                requiresTrustLevel: Value(rule.requiresTrustLevel),
+                requiresApprovalForJson:
+                    Value(jsonEncode(rule.requiresApprovalFor)),
+                payloadJson: _encodePayload(rule.toJson()),
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              ),
               );
         }
       }
@@ -1601,6 +1667,14 @@ class UsersDevicesControlRepository {
       return decoded;
     }
     return <String, dynamic>{};
+  }
+
+  List<String> _decodeStringList(String payloadJson) {
+    final decoded = jsonDecode(payloadJson);
+    if (decoded is! List) {
+      return const <String>[];
+    }
+    return decoded.whereType<String>().toList(growable: false);
   }
 
   String _encodePayload(Map<String, dynamic> payload) {
