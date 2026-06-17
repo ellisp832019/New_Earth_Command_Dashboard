@@ -1217,13 +1217,27 @@ class _UsersDevicesDeviceOnboardingScreenState
                                       subtitle: device.type,
                                       body:
                                           'Trust ${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
-                                      trailing: FilledButton.tonal(
-                                        onPressed: () => _openOnboardingWizard(
-                                          context,
-                                          ref,
-                                          template: templateForType(device.type),
-                                        ),
-                                        child: const Text('Reopen wizard'),
+                                      trailing: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          OutlinedButton(
+                                            onPressed: () => _openDeviceEditor(
+                                              context,
+                                              ref,
+                                              device: device,
+                                            ),
+                                            child: const Text('Edit device'),
+                                          ),
+                                          FilledButton.tonal(
+                                            onPressed: () => _openOnboardingWizard(
+                                              context,
+                                              ref,
+                                              template: templateForType(device.type),
+                                            ),
+                                            child: const Text('Reopen wizard'),
+                                          ),
+                                        ],
                                       ),
                                       chips: [
                                         _CardChip(label: 'T${device.trustLevel}'),
@@ -1245,6 +1259,340 @@ class _UsersDevicesDeviceOnboardingScreenState
                 ],
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class UsersDevicesRouteGateScreen extends ConsumerStatefulWidget {
+  const UsersDevicesRouteGateScreen({
+    super.key,
+    required this.child,
+    required this.moduleId,
+    this.title = 'Users & Devices Access Gate',
+    this.subtitle =
+        'Confirm local identity and device trust before opening this screen.',
+  });
+
+  final Widget child;
+  final String moduleId;
+  final String title;
+  final String subtitle;
+
+  @override
+  ConsumerState<UsersDevicesRouteGateScreen> createState() =>
+      _UsersDevicesRouteGateScreenState();
+}
+
+class _UsersDevicesRouteGateScreenState
+    extends ConsumerState<UsersDevicesRouteGateScreen> {
+  bool _seededDefaults = false;
+  bool _busy = false;
+  bool _unlocked = false;
+  String _status = 'Locked';
+  String _detail = 'Waiting for local verification.';
+  String _auditSummary = 'No audit decision recorded yet.';
+  String? _latestAuditEventId;
+  String? _selectedUserId;
+  String? _selectedDeviceId;
+
+  void _seedSelections(UsersDevicesControlSnapshot snapshot) {
+    if (_seededDefaults) {
+      return;
+    }
+
+    if (snapshot.users.isNotEmpty) {
+      _selectedUserId = snapshot.users.firstWhere(
+        (user) => user.status == 'active',
+        orElse: () => snapshot.users.first,
+      ).id;
+    }
+    if (snapshot.devices.isNotEmpty) {
+      _selectedDeviceId = snapshot.devices.firstWhere(
+        (device) => device.status == 'trusted' || device.trustLevel >= 3,
+        orElse: () => snapshot.devices.first,
+      ).id;
+    }
+    _seededDefaults = true;
+  }
+
+  Future<void> _attemptUnlock() async {
+    if (_busy) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _status = 'Checking local identity';
+      _detail = 'Consulting the Users & Devices control repository.';
+      _auditSummary = 'Writing audit trail...';
+      _latestAuditEventId = null;
+      _unlocked = false;
+    });
+
+    final repository = ref.read(usersDevicesControlRepositoryProvider);
+    final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+    final userId = _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
+    final deviceId =
+        _selectedDeviceId ?? (snapshot.devices.isNotEmpty ? snapshot.devices.first.id : '');
+    if (userId.isEmpty || deviceId.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _status = 'Locked';
+        _detail = 'Pick a local user and device before unlocking.';
+        _auditSummary = 'No access check was written because the gate was incomplete.';
+        _latestAuditEventId = null;
+      });
+      return;
+    }
+
+    final decision = await repository.canOpenModule(
+      userId,
+      deviceId,
+      widget.moduleId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    final updatedSnapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+    final latestAudit = updatedSnapshot.auditLog.isNotEmpty
+        ? updatedSnapshot.auditLog.last
+        : null;
+    setState(() {
+      _busy = false;
+      _unlocked = decision.allowed;
+      _status = decision.allowed
+          ? 'Unlocked locally'
+          : (decision.requiresApproval ? 'Approval needed' : 'Locked');
+      _detail = decision.reason;
+      _latestAuditEventId = latestAudit?.eventId;
+      _auditSummary = latestAudit == null
+          ? 'The access check was recorded locally.'
+          : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_unlocked) {
+      return widget.child;
+    }
+
+    final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    return snapshot.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Users & Devices access gate could not load the local registry.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => ref.invalidate(usersDevicesControlSnapshotProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      data: (data) {
+        _seedSelections(data);
+        final selectedUser = data.users.isEmpty
+            ? null
+            : (data.users.any((user) => user.id == _selectedUserId)
+                ? data.users.firstWhere((user) => user.id == _selectedUserId)
+                : data.users.first);
+        final selectedDevice = data.devices.isEmpty
+            ? null
+            : (data.devices.any((device) => device.id == _selectedDeviceId)
+                ? data.devices
+                    .firstWhere((device) => device.id == _selectedDeviceId)
+                : data.devices.first);
+
+        return Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.surface,
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
+                  Theme.of(context).colorScheme.surface,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 980),
+                    child: Card(
+                      elevation: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _VisualPanel(
+                              title: widget.title,
+                              subtitle: widget.subtitle,
+                              icon: Icons.lock_outline,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      const _Badge(label: 'Local-first'),
+                                      const _Badge(label: 'Identity checked'),
+                                      const _Badge(label: 'Trust checked'),
+                                      const _Badge(label: 'Audit required'),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Open the screen only after a local user and device pass the module check.',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _SummaryRow(
+                                    items: [
+                                      ('Users', data.users.length),
+                                      ('Devices', data.devices.length),
+                                      ('Audit events', data.auditLog.length),
+                                      (
+                                        'Trusted devices',
+                                        data.devices
+                                            .where((device) => device.trustLevel >= 3)
+                                            .length,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _VisualPanel(
+                              title: 'Gate check',
+                              subtitle: 'Pick the local user and device to verify access.',
+                              icon: Icons.verified_user_outlined,
+                              compact: true,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  DropdownButtonFormField<String>(
+                                    initialValue: selectedUser?.id,
+                                    decoration: const InputDecoration(
+                                      labelText: 'User',
+                                    ),
+                                    items: [
+                                      for (final user in data.users)
+                                        DropdownMenuItem<String>(
+                                          value: user.id,
+                                          child: Text('${user.displayName} (${user.role})'),
+                                        ),
+                                    ],
+                                    onChanged: (value) =>
+                                        setState(() => _selectedUserId = value),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  DropdownButtonFormField<String>(
+                                    initialValue: selectedDevice?.id,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Device',
+                                    ),
+                                    items: [
+                                      for (final device in data.devices)
+                                        DropdownMenuItem<String>(
+                                          value: device.id,
+                                          child: Text('${device.name} (T${device.trustLevel})'),
+                                        ),
+                                    ],
+                                    onChanged: (value) =>
+                                        setState(() => _selectedDeviceId = value),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      FilledButton(
+                                        onPressed: _busy ? null : _attemptUnlock,
+                                        child: Text(_busy ? 'Checking...' : 'Open screen'),
+                                      ),
+                                      OutlinedButton(
+                                        onPressed: () => context.go(RouteNames.securityLock),
+                                        child: const Text('Open Security Lock'),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text('Status: $_status'),
+                                  const SizedBox(height: 4),
+                                  Text(_detail),
+                                  const SizedBox(height: 4),
+                                  Text(_auditSummary),
+                                  if (_latestAuditEventId != null) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Latest audit event: $_latestAuditEventId',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _VisualPanel(
+                              title: 'Selected access context',
+                              subtitle:
+                                  'See the active local identity and device before the child route opens.',
+                              icon: Icons.person_search_outlined,
+                              child: Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  if (selectedUser != null) ...[
+                                    _CardChip(label: selectedUser.displayName),
+                                    _CardChip(label: selectedUser.role),
+                                    _CardChip(label: selectedUser.status),
+                                  ],
+                                  if (selectedDevice != null) ...[
+                                    _CardChip(label: selectedDevice.name),
+                                    _CardChip(label: 'T${selectedDevice.trustLevel}'),
+                                    _CardChip(label: selectedDevice.status),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },

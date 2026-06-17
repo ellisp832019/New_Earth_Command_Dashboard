@@ -921,32 +921,71 @@ final appRouter = GoRouter(
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.usersDevices,
-      builder: (context, state) => const UsersDevicesControlScreen(),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: '01_USERS_AND_DEVICES_CONTROL',
+        child: UsersDevicesControlScreen(),
+      ),
       routes: [
         GoRoute(
           path: 'users',
-          builder: (context, state) => const UsersDevicesUsersScreen(),
+          builder: (context, state) => const UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Users Access Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening the user registry.',
+            child: UsersDevicesUsersScreen(),
+          ),
         ),
         GoRoute(
           path: 'devices',
-          builder: (context, state) => const UsersDevicesDevicesScreen(),
+          builder: (context, state) => const UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Devices Access Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening the device registry.',
+            child: UsersDevicesDevicesScreen(),
+          ),
         ),
         GoRoute(
           path: 'access-matrix',
-          builder: (context, state) => const UsersDevicesAccessMatrixScreen(),
+          builder: (context, state) => const UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Access Matrix Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening the access matrix.',
+            child: UsersDevicesAccessMatrixScreen(),
+          ),
         ),
         GoRoute(
           path: 'onboarding',
-          builder: (context, state) => const UsersDevicesDeviceOnboardingScreen(),
+          builder: (context, state) => const UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Onboarding Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening device onboarding.',
+            child: UsersDevicesDeviceOnboardingScreen(),
+          ),
         ),
         GoRoute(
           path: 'approvals',
-          builder: (context, state) => const UsersDevicesApprovalQueueScreen(),
+          builder: (context, state) => const UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Approvals Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening the approval queue.',
+            child: UsersDevicesApprovalQueueScreen(),
+          ),
         ),
         GoRoute(
           path: 'audit',
-          builder: (context, state) => UsersDevicesAuditLogScreen(
-            highlightEventId: state.uri.queryParameters['eventId'],
+          builder: (context, state) => UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Audit Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening the audit log.',
+            child: UsersDevicesAuditLogScreen(
+              highlightEventId: state.uri.queryParameters['eventId'],
+            ),
           ),
         ),
       ],
