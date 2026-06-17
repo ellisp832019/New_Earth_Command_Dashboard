@@ -999,16 +999,16 @@ class _UsersDevicesDeviceOnboardingScreenState
               const SizedBox(height: 12),
               const _StepCard(
                 step: '2',
-                title: 'Assign a trust level',
+                title: 'Confirm the trust',
                 body:
-                    'Use the local trust scale to decide whether the device can view or control sensitive modules.',
+                    'Review the pairing, confirm the owner, and acknowledge any high-trust device before continuing.',
               ),
               const SizedBox(height: 12),
               const _StepCard(
                 step: '3',
-                title: 'Link identity and audit',
+                title: 'Choose allowed actions',
                 body:
-                    'Attach the owner identity and write an audit event for the onboarding decision.',
+                    'Pick the local scopes, then write the device record and trust audit together.',
               ),
               const SizedBox(height: 16),
               _VisualPanel(
@@ -2594,12 +2594,14 @@ Future<void> _openOnboardingWizard(
   var ownerId = defaults.ownerId;
   final selectedActions = <String>{...defaults.allowedActions};
   final customActionController = TextEditingController();
+  final trustAckController = TextEditingController();
 
   try {
     final result = await showDialog<UsersDevicesControlDevice>(
       context: context,
       builder: (dialogContext) {
         var step = 0;
+        var trustConfirmed = trustLevel < 4;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -2690,7 +2692,13 @@ Future<void> _openOnboardingWizard(
                                 .toList(),
                             onChanged: (value) {
                               if (value != null) {
-                                setState(() => trustLevel = value);
+                                setState(() {
+                                  trustLevel = value;
+                                  trustConfirmed = value < 4;
+                                  if (value < 4) {
+                                    trustAckController.clear();
+                                  }
+                                });
                               }
                             },
                           ),
@@ -2698,6 +2706,52 @@ Future<void> _openOnboardingWizard(
                           Text(
                             'Higher trust levels unlock more sensitive module access.',
                             style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          _VisualPanel(
+                            title: 'Trust confirmation',
+                            subtitle:
+                                'Confirm that the device, owner, and trust level are correct before we continue.',
+                            icon: Icons.verified_user_outlined,
+                            compact: true,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CheckboxListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  value: trustConfirmed,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      trustConfirmed = value ?? false;
+                                    });
+                                  },
+                                  title: const Text('I confirm this pairing locally'),
+                                  subtitle: Text(
+                                    trustLevel >= 4
+                                        ? 'High-trust devices need a deliberate confirmation step.'
+                                        : 'This keeps the onboarding audit trail explicit.',
+                                  ),
+                                ),
+                                if (trustLevel >= 4) ...[
+                                  const SizedBox(height: 8),
+                                  TextFormField(
+                                    controller: trustAckController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Type CONFIRM',
+                                      hintText: 'CONFIRM',
+                                    ),
+                                    validator: (value) {
+                                      if (trustLevel < 4) {
+                                        return null;
+                                      }
+                                      return value?.trim().toUpperCase() == 'CONFIRM'
+                                          ? null
+                                          : 'Type CONFIRM to approve a high-trust pairing.';
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ] else ...[
                           TextField(
@@ -2772,7 +2826,16 @@ Future<void> _openOnboardingWizard(
                 FilledButton(
                   onPressed: () async {
                     if (step < 2) {
-                      if (step == 0 && !(formKey.currentState?.validate() ?? false)) {
+                      if (step == 0 &&
+                          !(formKey.currentState?.validate() ?? false)) {
+                        return;
+                      }
+                      if (step == 1 && !trustConfirmed) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please confirm the pairing before continuing.'),
+                          ),
+                        );
                         return;
                       }
                       setState(() => step += 1);
@@ -2780,6 +2843,14 @@ Future<void> _openOnboardingWizard(
                     }
 
                     if (!(formKey.currentState?.validate() ?? false)) {
+                      return;
+                    }
+                    if (!trustConfirmed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please confirm the pairing before finishing.'),
+                        ),
+                      );
                       return;
                     }
 
@@ -2811,6 +2882,16 @@ Future<void> _openOnboardingWizard(
     }
 
     await repository.registerDevice(result);
+    await repository.createAuditEvent(
+      actorId: result.ownerId,
+      deviceId: result.id,
+      eventType: 'device_trust_confirmed',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'confirm_device_trust',
+      result: 'allowed',
+      reason:
+          'Device pairing confirmed locally at trust level ${result.trustLevel}${result.trustLevel >= 4 && trustAckController.text.trim().isNotEmpty ? ' with explicit CONFIRM acknowledgement.' : '.'}',
+    );
     ref.invalidate(usersDevicesControlSnapshotProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2823,6 +2904,7 @@ Future<void> _openOnboardingWizard(
     typeController.dispose();
     notesController.dispose();
     customActionController.dispose();
+    trustAckController.dispose();
   }
 }
 
