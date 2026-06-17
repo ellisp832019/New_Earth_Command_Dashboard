@@ -501,6 +501,9 @@ class _UsersDevicesAccessMatrixScreenState
     extends ConsumerState<UsersDevicesAccessMatrixScreen> {
   String _roleQuery = '';
   String _ruleQuery = '';
+  String? _selectedAccessUserId;
+  String? _selectedAccessRole;
+  String? _selectedAccessPermission;
 
   @override
   Widget build(BuildContext context) {
@@ -513,6 +516,19 @@ class _UsersDevicesAccessMatrixScreenState
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
       data: (data) {
+        final selectedUser = data.users.isEmpty
+            ? null
+            : data.users.firstWhere(
+                (user) => user.id == _selectedAccessUserId,
+                orElse: () => data.users.first,
+              );
+        final selectedRole = data.roles.isEmpty
+            ? ''
+            : (_selectedAccessRole ??
+                (selectedUser != null ? selectedUser.role : data.roles.first.role));
+        final selectedPermission = data.permissions.isEmpty
+            ? ''
+            : (_selectedAccessPermission ?? data.permissions.first.permission);
         final filteredRoles = data.roles.where((role) {
           final query = _roleQuery.trim().toLowerCase();
           if (query.isEmpty) {
@@ -584,6 +600,166 @@ class _UsersDevicesAccessMatrixScreenState
                 spacing: 12,
                 runSpacing: 12,
                 children: [
+                  SizedBox(
+                    width: 430,
+                    child: _VisualPanel(
+                      title: 'Access editor',
+                      subtitle: 'Change a local user role or grant one more permission',
+                      icon: Icons.manage_accounts_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (data.users.isEmpty || data.roles.isEmpty || data.permissions.isEmpty)
+                            const _EmptyCollectionState(
+                              icon: Icons.manage_accounts_outlined,
+                              title: 'Access editing is waiting for seed data',
+                              body:
+                                  'Roles, permissions, and users need to be present before assignments can be made.',
+                            )
+                          else ...[
+                            DropdownButtonFormField<String>(
+                              initialValue: selectedUser?.id,
+                              decoration: const InputDecoration(
+                                labelText: 'User',
+                              ),
+                              items: [
+                                for (final user in data.users)
+                                  DropdownMenuItem<String>(
+                                    value: user.id,
+                                    child: Text('${user.displayName} (${user.id})'),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedAccessUserId = value;
+                                  final user = data.users.firstWhere(
+                                    (item) => item.id == value,
+                                    orElse: () => data.users.first,
+                                  );
+                                  _selectedAccessRole = user.role;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              initialValue: selectedRole.isEmpty ? null : selectedRole,
+                              decoration: const InputDecoration(
+                                labelText: 'Role to assign',
+                              ),
+                              items: [
+                                for (final role in data.roles)
+                                  DropdownMenuItem<String>(
+                                    value: role.role,
+                                    child: Text(role.role),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setState(() => _selectedAccessRole = value);
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              initialValue:
+                                  selectedPermission.isEmpty ? null : selectedPermission,
+                              decoration: const InputDecoration(
+                                labelText: 'Permission to grant',
+                              ),
+                              items: [
+                                for (final permission in data.permissions)
+                                  DropdownMenuItem<String>(
+                                    value: permission.permission,
+                                    child: Text(permission.permission),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setState(() => _selectedAccessPermission = value);
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                if (selectedUser != null) ...[
+                                  _CardChip(label: selectedUser.displayName),
+                                  _CardChip(label: selectedUser.role),
+                                  _CardChip(
+                                    label:
+                                        '${selectedUser.permissions.length} permissions',
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilledButton.tonal(
+                                  onPressed: selectedUser == null || selectedRole.isEmpty
+                                      ? null
+                                      : () async {
+                                          await ref
+                                              .read(
+                                                usersDevicesControlRepositoryProvider,
+                                              )
+                                              .assignRole(selectedUser.id, selectedRole);
+                                          ref.invalidate(
+                                            usersDevicesControlSnapshotProvider,
+                                          );
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  '${selectedUser.displayName} now uses the $selectedRole role.',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                  child: const Text('Assign role'),
+                                ),
+                                OutlinedButton(
+                                  onPressed: selectedUser == null ||
+                                          selectedPermission.isEmpty
+                                      ? null
+                                      : () async {
+                                          await ref
+                                              .read(
+                                                usersDevicesControlRepositoryProvider,
+                                              )
+                                              .assignPermission(
+                                                selectedUser.id,
+                                                selectedPermission,
+                                              );
+                                          ref.invalidate(
+                                            usersDevicesControlSnapshotProvider,
+                                          );
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  '$selectedPermission granted to ${selectedUser.displayName}.',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                  child: const Text('Grant permission'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                   SizedBox(
                     width: 430,
                     child: _VisualPanel(
@@ -714,11 +890,20 @@ class _UsersDevicesAccessMatrixScreenState
   }
 }
 
-class UsersDevicesDeviceOnboardingScreen extends ConsumerWidget {
+class UsersDevicesDeviceOnboardingScreen extends ConsumerStatefulWidget {
   const UsersDevicesDeviceOnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UsersDevicesDeviceOnboardingScreen> createState() =>
+      _UsersDevicesDeviceOnboardingScreenState();
+}
+
+class _UsersDevicesDeviceOnboardingScreenState
+    extends ConsumerState<UsersDevicesDeviceOnboardingScreen> {
+  String _template = 'standard';
+
+  @override
+  Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Device Onboarding'),
@@ -727,68 +912,130 @@ class UsersDevicesDeviceOnboardingScreen extends ConsumerWidget {
         message: 'The onboarding flow is not ready right now.',
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
-      data: (data) => _SectionScaffold(
-        title: 'Device Onboarding',
-        subtitle: 'Register, verify, trust, and log a new local device',
-        onBack: () => context.go(RouteNames.usersDevices),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ActionStrip(
-              title: 'Live onboarding demo',
-              subtitle:
-                  'Create a sample device record and keep the flow local-first.',
-              actions: [
-                _ActionChip(
-                  label: 'Register sample device',
-                  icon: Icons.phonelink_setup_outlined,
-                  onPressed: () => _registerSampleDevice(context, ref),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const _StepCard(
-              step: '1',
-              title: 'Register the device',
-              body: 'Capture the device name, type, owner, and local purpose.',
-            ),
-            const SizedBox(height: 12),
-            const _StepCard(
-              step: '2',
-              title: 'Assign a trust level',
-              body: 'Use the local trust scale to decide whether the device can view or control sensitive modules.',
-            ),
-            const SizedBox(height: 12),
-            const _StepCard(
-              step: '3',
-              title: 'Link identity and audit',
-              body: 'Attach the owner identity and write an audit event for the onboarding decision.',
-            ),
-            const SizedBox(height: 16),
-            _VisualPanel(
-              title: 'Trust levels',
-              subtitle: 'The local scale that shapes access decisions',
-              icon: Icons.verified_outlined,
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  for (final level in data.trustLevels)
-                    SizedBox(
-                      width: 280,
-                      child: _EntityCard(
-                        icon: Icons.verified_outlined,
-                        title: '${level.level} - ${level.name}',
-                        subtitle: 'Trust band',
-                        body: level.description,
-                      ),
+      data: (data) {
+        final trustBands = data.trustLevels;
+
+        return _SectionScaffold(
+          title: 'Device Onboarding',
+          subtitle: 'Register, verify, trust, and log a new local device',
+          onBack: () => context.go(RouteNames.usersDevices),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ActionStrip(
+                title: 'Live onboarding demo',
+                subtitle:
+                    'Create a sample device record or open the guided register flow.',
+                actions: [
+                  _ActionChip(
+                    label: 'Start onboarding',
+                    icon: Icons.phonelink_setup_outlined,
+                    onPressed: () => _openOnboardingWizard(
+                      context,
+                      ref,
+                      template: _template,
                     ),
+                  ),
+                  _ActionChip(
+                    label: 'Register sample device',
+                    icon: Icons.auto_fix_high_outlined,
+                    onPressed: () => _registerSampleDevice(context, ref),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Onboarding template',
+                subtitle: 'Pick a calm starting point before the wizard opens',
+                icon: Icons.tune_outlined,
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Standard'),
+                      selected: _template == 'standard',
+                      onSelected: (_) => setState(() => _template = 'standard'),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Assistant'),
+                      selected: _template == 'assistant',
+                      onSelected: (_) => setState(() => _template = 'assistant'),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Gateway'),
+                      selected: _template == 'gateway',
+                      onSelected: (_) => setState(() => _template = 'gateway'),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Printer'),
+                      selected: _template == 'printer',
+                      onSelected: (_) => setState(() => _template = 'printer'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _SummaryRow(
+                items: [
+                  ('Devices', data.devices.length),
+                  (
+                    'Trusted',
+                    data.devices.where((device) => device.trustLevel >= 3).length,
+                  ),
+                  (
+                    'Owners',
+                    data.devices.where((device) => device.ownerId.isNotEmpty).length,
+                  ),
+                  ('Trust bands', trustBands.length),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const _StepCard(
+                step: '1',
+                title: 'Register the device',
+                body: 'Capture the device name, type, owner, and local purpose.',
+              ),
+              const SizedBox(height: 12),
+              const _StepCard(
+                step: '2',
+                title: 'Assign a trust level',
+                body:
+                    'Use the local trust scale to decide whether the device can view or control sensitive modules.',
+              ),
+              const SizedBox(height: 12),
+              const _StepCard(
+                step: '3',
+                title: 'Link identity and audit',
+                body:
+                    'Attach the owner identity and write an audit event for the onboarding decision.',
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Trust levels',
+                subtitle: 'The local scale that shapes access decisions',
+                icon: Icons.verified_outlined,
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final level in trustBands)
+                      SizedBox(
+                        width: 280,
+                        child: _EntityCard(
+                          icon: Icons.verified_outlined,
+                          title: '${level.level} - ${level.name}',
+                          subtitle: 'Trust band',
+                          body: level.description,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -2269,6 +2516,313 @@ Future<void> _createSampleApproval(
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sample approval created.')),
     );
+  }
+}
+
+Future<void> _openOnboardingWizard(
+  BuildContext context,
+  WidgetRef ref, {
+  required String template,
+}) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+  final availableUsers = snapshot.users;
+  final availableTrustLevels = snapshot.trustLevels.isNotEmpty
+      ? snapshot.trustLevels
+      : const [
+          UsersDevicesControlTrustLevelDefinition(
+            level: 0,
+            name: 'Unknown',
+            description: 'No trust levels are configured yet.',
+          ),
+        ];
+  final availableActions = <String>{
+    ...snapshot.permissions.map((permission) => permission.permission),
+    ...snapshot.accessRules.expand(
+      (rule) => [
+        rule.viewPermission,
+        rule.editPermission,
+        rule.adminPermission,
+        rule.requestPermission,
+        rule.executePermission,
+        rule.controlPermission,
+      ],
+    ),
+  }.where((action) => action.trim().isNotEmpty).toList(growable: false);
+
+  final defaults = switch (template) {
+    'assistant' => (
+        id: 'device_assistant_new',
+        name: 'Local Assistant',
+        type: 'assistant',
+        trustLevel: 3,
+        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+        allowedActions: <String>['ai.request_action', 'voice.request_action'],
+      ),
+    'gateway' => (
+        id: 'device_gateway_new',
+        name: 'Local Gateway',
+        type: 'gateway',
+        trustLevel: 4,
+        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+        allowedActions: <String>['dashboard.view', 'backup.verify'],
+      ),
+    'printer' => (
+        id: 'device_printer_new',
+        name: 'Label Printer',
+        type: 'printer',
+        trustLevel: 2,
+        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+        allowedActions: <String>['assets.print_label'],
+      ),
+    _ => (
+        id: 'device_new_local',
+        name: 'New Local Device',
+        type: 'computer',
+        trustLevel: 2,
+        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+        allowedActions: <String>['dashboard.view'],
+      ),
+  };
+
+  final idController = TextEditingController(text: defaults.id);
+  final nameController = TextEditingController(text: defaults.name);
+  final typeController = TextEditingController(text: defaults.type);
+  final notesController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  var trustLevel = defaults.trustLevel;
+  var ownerId = defaults.ownerId;
+  final selectedActions = <String>{...defaults.allowedActions};
+  final customActionController = TextEditingController();
+
+  try {
+    final result = await showDialog<UsersDevicesControlDevice>(
+      context: context,
+      builder: (dialogContext) {
+        var step = 0;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Device onboarding'),
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Chip(label: Text('Step ${step + 1} of 3')),
+                            Chip(label: Text(template)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (step == 0) ...[
+                          TextFormField(
+                            controller: idController,
+                            decoration: const InputDecoration(
+                              labelText: 'Device ID',
+                              hintText: 'device_unique_id',
+                            ),
+                            validator: (value) => (value == null || value.trim().isEmpty)
+                                ? 'Enter a device ID'
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Device name',
+                            ),
+                            validator: (value) => (value == null || value.trim().isEmpty)
+                                ? 'Enter a device name'
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: typeController,
+                            decoration: const InputDecoration(
+                              labelText: 'Device type',
+                            ),
+                            validator: (value) => (value == null || value.trim().isEmpty)
+                                ? 'Enter a device type'
+                                : null,
+                          ),
+                        ] else if (step == 1) ...[
+                          DropdownButtonFormField<String>(
+                            initialValue: ownerId.isEmpty ? null : ownerId,
+                            decoration: const InputDecoration(
+                              labelText: 'Owner',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('Unassigned'),
+                              ),
+                              ...availableUsers.map(
+                                (user) => DropdownMenuItem<String>(
+                                  value: user.id,
+                                  child: Text('${user.displayName} (${user.id})'),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) => setState(() => ownerId = value ?? ''),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<int>(
+                            initialValue: trustLevel,
+                            decoration: const InputDecoration(
+                              labelText: 'Trust level',
+                            ),
+                            items: availableTrustLevels
+                                .map(
+                                  (level) => DropdownMenuItem<int>(
+                                    value: level.level,
+                                    child: Text('${level.level} - ${level.name}'),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => trustLevel = value);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Higher trust levels unlock more sensitive module access.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ] else ...[
+                          TextField(
+                            controller: customActionController,
+                            decoration: const InputDecoration(
+                              labelText: 'Add custom action',
+                              hintText: 'e.g. assets.print_label',
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          FilledButton.tonal(
+                            onPressed: () {
+                              final action = customActionController.text.trim();
+                              if (action.isEmpty) {
+                                return;
+                              }
+                              setState(() {
+                                selectedActions.add(action);
+                                customActionController.clear();
+                              });
+                            },
+                            child: const Text('Add action'),
+                          ),
+                          const SizedBox(height: 12),
+                          if (availableActions.isNotEmpty)
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final action in availableActions.take(12))
+                                  FilterChip(
+                                    label: Text(action),
+                                    selected: selectedActions.contains(action),
+                                    onSelected: (value) {
+                                      setState(() {
+                                        if (value) {
+                                          selectedActions.add(action);
+                                        } else {
+                                          selectedActions.remove(action);
+                                        }
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: notesController,
+                            minLines: 2,
+                            maxLines: 4,
+                            decoration: const InputDecoration(
+                              labelText: 'Notes',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: step == 0
+                      ? null
+                      : () => setState(() => step -= 1),
+                  child: const Text('Back'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (step < 2) {
+                      if (step == 0 && !(formKey.currentState?.validate() ?? false)) {
+                        return;
+                      }
+                      setState(() => step += 1);
+                      return;
+                    }
+
+                    if (!(formKey.currentState?.validate() ?? false)) {
+                      return;
+                    }
+
+                    Navigator.pop(
+                      dialogContext,
+                      UsersDevicesControlDevice(
+                        id: idController.text.trim(),
+                        name: nameController.text.trim(),
+                        type: typeController.text.trim(),
+                        trustLevel: trustLevel,
+                        status: trustLevel >= 3 ? 'trusted' : 'registered',
+                        ownerId: ownerId,
+                        allowedActions: selectedActions.toList(growable: false),
+                        notes: notesController.text.trim(),
+                      ),
+                    );
+                  },
+                  child: Text(step < 2 ? 'Next' : 'Finish'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    await repository.registerDevice(result);
+    ref.invalidate(usersDevicesControlSnapshotProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Device onboarded locally.')),
+      );
+    }
+  } finally {
+    idController.dispose();
+    nameController.dispose();
+    typeController.dispose();
+    notesController.dispose();
+    customActionController.dispose();
   }
 }
 
