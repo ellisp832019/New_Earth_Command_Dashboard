@@ -100,10 +100,28 @@ class ModuleDetailScreen extends StatelessWidget {
           if (showGateShortcuts) ...[
             const SizedBox(height: 16),
             _DetailPanel(
+              title: 'Gate posture',
+              subtitle: 'Why this module stays behind a local check',
+              icon: Icons.lock_outline,
+              body: _gatePostureBody(module.id),
+              chips: _gatePostureChips(module.id),
+              actions: [
+                FilledButton(
+                  onPressed: module.routes.isEmpty
+                      ? null
+                      : () => context.go(module.routes.first),
+                  child: const Text('Open module route'),
+                ),
+              ],
+              child: const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 16),
+            _DetailPanel(
               title: 'Access control shortcuts',
               subtitle: 'Jump straight into the local access gate and review paths',
               icon: Icons.shield_outlined,
-              body: 'Open the gate or the module route directly, depending on what you need to inspect.',
+              body:
+                  'Open the gate or the module route directly, depending on what you need to inspect.',
               chips: const [
                 'Access gate',
                 'Local route',
@@ -355,6 +373,59 @@ bool _isSensitiveModule(String moduleId) {
     default:
       return false;
   }
+}
+
+String _gatePostureBody(String moduleId) {
+  return switch (moduleId) {
+    '01_USERS_AND_DEVICES_CONTROL' =>
+      'Identity, trust, approvals, and audit live here before any sensitive module opens.',
+    'newearth.finance_treasury' =>
+      'Treasury work stays behind local identity, role, trust, and audit checks.',
+    'repo_research_engine' =>
+      'Research exports and evidence stays gated so the local trail stays clear.',
+    'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE' =>
+      'Voice gateway actions stay behind an explicit identity and trust check.',
+    'gaia_voice_assistant' =>
+      'The assistant surface remains local, trusted, and auditable before it speaks or acts.',
+    _ =>
+      'Sensitive routes stay local, trusted, and recorded before they can open.',
+  };
+}
+
+List<String> _gatePostureChips(String moduleId) {
+  return switch (moduleId) {
+    '01_USERS_AND_DEVICES_CONTROL' => const [
+        'Identity',
+        'Trust',
+        'Approval queue',
+        'Audit log',
+      ],
+    'newearth.finance_treasury' => const [
+        'Finance',
+        'Role-based',
+        'Trusted device',
+        'Audited',
+      ],
+    'repo_research_engine' => const [
+        'Research',
+        'Evidence',
+        'Local trail',
+        'Approval aware',
+      ],
+    'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE' => const [
+        'Voice gateway',
+        'Local trust',
+        'Controlled actions',
+        'Audited',
+      ],
+    'gaia_voice_assistant' => const [
+        'Voice AI',
+        'Conversation history',
+        'Safe actions',
+        'Audit aware',
+      ],
+    _ => const ['Local-first', 'Trusted', 'Audited'],
+  };
 }
 
 class _InfoRow extends StatelessWidget {
