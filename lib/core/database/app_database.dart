@@ -16,10 +16,14 @@ import 'tables/inbox_items_table.dart';
 import 'tables/journal_entries_table.dart';
 import 'tables/learning_items_table.dart';
 import 'tables/projects_table.dart';
+import 'tables/users_devices_control_access_rules_table.dart';
 import 'tables/users_devices_control_approvals_table.dart';
 import 'tables/users_devices_control_audit_events_table.dart';
 import 'tables/users_devices_control_devices_table.dart';
+import 'tables/users_devices_control_permissions_table.dart';
+import 'tables/users_devices_control_roles_table.dart';
 import 'tables/users_devices_control_users_table.dart';
+import 'tables/users_devices_control_trust_levels_table.dart';
 import 'tables/tasks_table.dart';
 import 'tables/wellbeing_checkins_table.dart';
 import 'tables/voice_audit_logs_table.dart';
@@ -44,6 +48,10 @@ part 'app_database.g.dart';
     UsersDevicesControlDevices,
     UsersDevicesControlApprovalRequests,
     UsersDevicesControlAuditEvents,
+    UsersDevicesControlRoles,
+    UsersDevicesControlPermissions,
+    UsersDevicesControlTrustLevels,
+    UsersDevicesControlAccessRules,
     VoiceAuditLogs,
     VoiceConversationThreads,
     VoiceModulePreferences,
@@ -53,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -124,6 +132,13 @@ class AppDatabase extends _$AppDatabase {
             await migrator.createTable(usersDevicesControlDevices);
             await migrator.createTable(usersDevicesControlApprovalRequests);
             await migrator.createTable(usersDevicesControlAuditEvents);
+          }
+
+          if (from < 9) {
+            await migrator.createTable(usersDevicesControlRoles);
+            await migrator.createTable(usersDevicesControlPermissions);
+            await migrator.createTable(usersDevicesControlTrustLevels);
+            await migrator.createTable(usersDevicesControlAccessRules);
           }
         },
       );
