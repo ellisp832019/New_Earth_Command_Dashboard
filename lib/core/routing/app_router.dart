@@ -240,32 +240,66 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: RouteNames.treasury,
-              builder: (context, state) => const TreasuryScreen(),
+              builder: (context, state) => const UsersDevicesRouteGateScreen(
+                moduleId: 'newearth.finance_treasury',
+                title: 'Treasury Access Gate',
+                subtitle:
+                    'Confirm local identity and device trust before opening finance and treasury.',
+                child: TreasuryScreen(),
+              ),
               routes: [
                 GoRoute(
                   path: 'decisions',
-                  builder: (context, state) =>
-                      const TreasuryDecisionsBoardScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'newearth.finance_treasury',
+                    title: 'Treasury Decisions Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening treasury decisions.',
+                    child: TreasuryDecisionsBoardScreen(),
+                  ),
                 ),
                 GoRoute(
                   path: 'budget-pots',
-                  builder: (context, state) => const TreasuryBudgetPotsScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'newearth.finance_treasury',
+                    title: 'Budget Pots Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening budget pots.',
+                    child: TreasuryBudgetPotsScreen(),
+                  ),
                 ),
                 GoRoute(
                   path: 'monthly-summary',
-                  builder: (context, state) =>
-                      const TreasuryMonthlySummaryScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'newearth.finance_treasury',
+                    title: 'Monthly Summary Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening the monthly summary.',
+                    child: TreasuryMonthlySummaryScreen(),
+                  ),
                 ),
                 GoRoute(
                   path: 'settings',
-                  builder: (context, state) => const TreasurySettingsScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'newearth.finance_treasury',
+                    title: 'Treasury Settings Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening treasury settings.',
+                    child: TreasurySettingsScreen(),
+                  ),
                 ),
                 GoRoute(
                   path: 'wizard',
-                  builder: (context, state) => TreasuryWizardScreen(
-                    initialFlow: state.uri.queryParameters['flow'],
-                    initialStepIndex: int.tryParse(
-                      state.uri.queryParameters['step'] ?? '',
+                  builder: (context, state) => UsersDevicesRouteGateScreen(
+                    moduleId: 'newearth.finance_treasury',
+                    title: 'Treasury Wizard Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening the treasury wizard.',
+                    child: TreasuryWizardScreen(
+                      initialFlow: state.uri.queryParameters['flow'],
+                      initialStepIndex: int.tryParse(
+                        state.uri.queryParameters['step'] ?? '',
+                      ),
                     ),
                   ),
                 ),
@@ -282,13 +316,24 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'repo-bridge',
-                  builder: (context, state) =>
-                      const RepoIntelligenceBridgeScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'repo_research_engine',
+                    title: 'Repo Bridge Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening the repo bridge.',
+                    child: RepoIntelligenceBridgeScreen(),
+                  ),
                   routes: [
                     GoRoute(
                       path: 'settings',
                       builder: (context, state) =>
-                          const RepoIntelligenceBridgeSettingsScreen(),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Bridge Settings Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening bridge settings.',
+                        child: RepoIntelligenceBridgeSettingsScreen(),
+                      ),
                     ),
                   ],
                 ),
@@ -541,49 +586,91 @@ final appRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'repo-research-engine',
-                  builder: (context, state) => const RepoResearchEngineScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'repo_research_engine',
+                    title: 'Repo Research Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening repo research.',
+                    child: RepoResearchEngineScreen(),
+                  ),
                   routes: [
                     GoRoute(
                       path: 'scanner',
                       builder: (context, state) =>
-                          const RepoResearchEngineScreen(
-                            initialSection: 'scanner',
-                          ),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Scanner Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening the scanner.',
+                        child: RepoResearchEngineScreen(
+                          initialSection: 'scanner',
+                        ),
+                      ),
                     ),
                     GoRoute(
                       path: 'reports',
                       builder: (context, state) =>
-                          const RepoResearchEngineScreen(
-                            initialSection: 'reports',
-                          ),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Reports Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening reports.',
+                        child: RepoResearchEngineScreen(
+                          initialSection: 'reports',
+                        ),
+                      ),
                     ),
                     GoRoute(
                       path: 'profiles',
                       builder: (context, state) =>
-                          const RepoResearchEngineScreen(
-                            initialSection: 'profiles',
-                          ),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Profiles Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening profiles.',
+                        child: RepoResearchEngineScreen(
+                          initialSection: 'profiles',
+                        ),
+                      ),
                     ),
                     GoRoute(
                       path: 'exports',
                       builder: (context, state) =>
-                          const RepoResearchEngineScreen(
-                            initialSection: 'exports',
-                          ),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Exports Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening exports.',
+                        child: RepoResearchEngineScreen(
+                          initialSection: 'exports',
+                        ),
+                      ),
                     ),
                     GoRoute(
                       path: 'prompts',
                       builder: (context, state) =>
-                          const RepoResearchEngineScreen(
-                            initialSection: 'prompts',
-                          ),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Prompts Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening prompts.',
+                        child: RepoResearchEngineScreen(
+                          initialSection: 'prompts',
+                        ),
+                      ),
                     ),
                     GoRoute(
                       path: 'settings',
                       builder: (context, state) =>
-                          const RepoResearchEngineScreen(
-                            initialSection: 'settings',
-                          ),
+                          const UsersDevicesRouteGateScreen(
+                        moduleId: 'repo_research_engine',
+                        title: 'Repo Settings Gate',
+                        subtitle:
+                            'Confirm local identity and device trust before opening settings.',
+                        child: RepoResearchEngineScreen(
+                          initialSection: 'settings',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -657,7 +744,13 @@ final appRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'alexa-voice-gateway',
-                  builder: (context, state) => const AlexaVoiceGatewayScreen(),
+                  builder: (context, state) => const UsersDevicesRouteGateScreen(
+                    moduleId: 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE',
+                    title: 'Voice Gateway Gate',
+                    subtitle:
+                        'Confirm local identity and device trust before opening the Alexa gateway.',
+                    child: AlexaVoiceGatewayScreen(),
+                  ),
                 ),
               ],
             ),
@@ -999,59 +1092,106 @@ final appRouter = GoRouter(
         }
         return RouteNames.voiceConversation;
       },
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.home),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Access Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening the voice surface.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.home),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceConversation,
-      builder: (context, state) => const VoiceConversationScreen(),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Conversation Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening voice conversation.',
+        child: VoiceConversationScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceNotes,
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.notes),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Notes Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening voice notes.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.notes),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceMeetings,
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.meetings),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Meetings Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening voice meetings.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.meetings),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceDashboardAssistant,
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.assistant),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Assistant Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening the dashboard assistant.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.assistant),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceMicrogrow,
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.microgrow),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'MicroGrow Voice Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening MicroGrow voice control.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.microgrow),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceAudit,
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.audit),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Audit Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening the voice audit trail.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.audit),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceSettings,
-      builder: (context, state) =>
-          const VoiceModuleScreen(section: VoiceModuleSection.settings),
+      builder: (context, state) => const UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Settings Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening voice settings.',
+        child: VoiceModuleScreen(section: VoiceModuleSection.settings),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceAssistant,
-      builder: (context, state) => VoiceAssistantScreen(
-        initialTranscript: state.uri.queryParameters['transcript'],
-        initialType: state.uri.queryParameters['type'],
-        startInWizardMode: state.uri.queryParameters['mode'] == 'wizard',
-        wakeTriggered: state.uri.queryParameters['wake'] == '1',
-        handsfreeTriggered: state.uri.queryParameters['handsfree'] == '1',
+      builder: (context, state) => UsersDevicesRouteGateScreen(
+        moduleId: 'gaia_voice_assistant',
+        title: 'Voice Assistant Gate',
+        subtitle:
+            'Confirm local identity and device trust before opening voice assistant.',
+        child: VoiceAssistantScreen(
+          initialTranscript: state.uri.queryParameters['transcript'],
+          initialType: state.uri.queryParameters['type'],
+          startInWizardMode: state.uri.queryParameters['mode'] == 'wizard',
+          wakeTriggered: state.uri.queryParameters['wake'] == '1',
+          handsfreeTriggered: state.uri.queryParameters['handsfree'] == '1',
+        ),
       ),
     ),
     GoRoute(

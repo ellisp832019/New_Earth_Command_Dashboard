@@ -1663,6 +1663,21 @@ class _UsersDevicesRouteGateScreenState
                                 ],
                               ),
                             ),
+                            if (_latestAuditEventId != null) ...[
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => context.go(
+                                    RouteNames.usersDevicesAuditLogFor(
+                                      _latestAuditEventId!,
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.receipt_long_outlined),
+                                  label: const Text('View latest audit'),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
