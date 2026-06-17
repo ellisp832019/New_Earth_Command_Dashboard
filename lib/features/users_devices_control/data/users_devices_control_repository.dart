@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+
 class UsersDevicesControlUser {
   const UsersDevicesControlUser({
     required this.id,
@@ -388,9 +391,11 @@ class UsersDevicesControlAccessDecision {
 class UsersDevicesControlRepository {
   const UsersDevicesControlRepository({
     this.moduleRootPath = 'modules/01_USERS_AND_DEVICES_CONTROL',
+    this.storageNamespace = 'users_devices_control',
   });
 
   final String moduleRootPath;
+  final String storageNamespace;
 
   Future<UsersDevicesControlSnapshot> loadSnapshot() async {
     return UsersDevicesControlSnapshot(
@@ -1062,52 +1067,67 @@ class UsersDevicesControlRepository {
   }
 
   Future<List<UsersDevicesControlUser>> _readUsers() async {
-    final data = await _readJsonList(_usersPath, _usersExamplePath);
+    final data = await _readJsonList(_usersStoragePath, _usersExamplePath);
     return data.map(UsersDevicesControlUser.fromJson).toList(growable: false);
   }
 
   Future<List<UsersDevicesControlDevice>> _readDevices() async {
-    final data = await _readJsonList(_devicesPath, _devicesExamplePath);
+    final data = await _readJsonList(_devicesStoragePath, _devicesExamplePath);
     return data.map(UsersDevicesControlDevice.fromJson).toList(growable: false);
   }
 
   Future<List<UsersDevicesControlRoleDefinition>> _readRoles() async {
-    final data = await _readJsonList(_rolesPath, _rolesExamplePath);
+    final data = await _readJsonList(_rolesStoragePath, _rolesExamplePath);
     return data
         .map(UsersDevicesControlRoleDefinition.fromJson)
         .toList(growable: false);
   }
 
   Future<List<UsersDevicesControlPermissionDefinition>> _readPermissions() async {
-    final data = await _readJsonList(_permissionsPath, _permissionsExamplePath);
+    final data = await _readJsonList(
+      _permissionsStoragePath,
+      _permissionsExamplePath,
+    );
     return data
         .map(UsersDevicesControlPermissionDefinition.fromJson)
         .toList(growable: false);
   }
 
   Future<List<UsersDevicesControlTrustLevelDefinition>> _readTrustLevels() async {
-    final data = await _readJsonList(_trustLevelsPath, _trustLevelsExamplePath);
+    final data = await _readJsonList(
+      _trustLevelsStoragePath,
+      _trustLevelsExamplePath,
+    );
     return data
         .map(UsersDevicesControlTrustLevelDefinition.fromJson)
         .toList(growable: false);
   }
 
   Future<List<UsersDevicesControlApprovalRequest>> _readApprovals() async {
-    final data = await _readJsonList(_approvalQueuePath, _approvalQueueExamplePath);
+    final data = await _readJsonList(
+      _approvalQueueStoragePath,
+      _approvalQueueExamplePath,
+    );
     return data
         .map(UsersDevicesControlApprovalRequest.fromJson)
         .toList(growable: false);
   }
 
   Future<List<UsersDevicesControlAuditEvent>> _readAuditLog() async {
-    final data = await _readJsonList(_auditLogPath, _auditLogExamplePath);
+    final data = await _readJsonList(
+      _auditLogStoragePath,
+      _auditLogExamplePath,
+    );
     return data
         .map(UsersDevicesControlAuditEvent.fromJson)
         .toList(growable: false);
   }
 
   Future<List<UsersDevicesControlAccessRule>> _readAccessRules() async {
-    final raw = await _readJsonMap(_accessRulesPath, _accessRulesExamplePath);
+    final raw = await _readJsonMap(
+      _accessRulesStoragePath,
+      _accessRulesExamplePath,
+    );
     final rules = raw['rules'];
     if (rules is! List) {
       return const <UsersDevicesControlAccessRule>[];
@@ -1119,10 +1139,10 @@ class UsersDevicesControlRepository {
   }
 
   Future<List<Map<String, dynamic>>> _readJsonList(
-    String path,
+    Future<String> Function() pathProvider,
     String fallbackPath,
   ) async {
-    final file = File(path);
+    final file = File(await pathProvider());
     if (!await file.exists()) {
       final fallbackFile = File(fallbackPath);
       if (!await fallbackFile.exists()) {
@@ -1141,10 +1161,10 @@ class UsersDevicesControlRepository {
   }
 
   Future<Map<String, dynamic>> _readJsonMap(
-    String path,
+    Future<String> Function() pathProvider,
     String fallbackPath,
   ) async {
-    final file = File(path);
+    final file = File(await pathProvider());
     if (!await file.exists()) {
       final fallbackFile = File(fallbackPath);
       if (!await fallbackFile.exists()) {
@@ -1163,12 +1183,15 @@ class UsersDevicesControlRepository {
   }
 
   Future<void> _writeUsers(List<UsersDevicesControlUser> users) async {
-    await _writeJsonList(_usersPath, users.map((user) => user.toJson()).toList());
+    await _writeJsonList(
+      _usersStoragePath,
+      users.map((user) => user.toJson()).toList(),
+    );
   }
 
   Future<void> _writeDevices(List<UsersDevicesControlDevice> devices) async {
     await _writeJsonList(
-      _devicesPath,
+      _devicesStoragePath,
       devices.map((device) => device.toJson()).toList(),
     );
   }
@@ -1177,7 +1200,7 @@ class UsersDevicesControlRepository {
     List<UsersDevicesControlApprovalRequest> approvals,
   ) async {
     await _writeJsonList(
-      _approvalQueuePath,
+      _approvalQueueStoragePath,
       approvals.map((request) => request.toJson()).toList(),
     );
   }
@@ -1186,33 +1209,69 @@ class UsersDevicesControlRepository {
     List<UsersDevicesControlAuditEvent> events,
   ) async {
     await _writeJsonList(
-      _auditLogPath,
+      _auditLogStoragePath,
       events.map((event) => event.toJson()).toList(),
     );
   }
 
   Future<void> _writeJsonList(
-    String path,
+    Future<String> Function() pathProvider,
     List<Map<String, dynamic>> jsonList,
   ) async {
-    final file = File(path);
+    final file = File(await pathProvider());
     await file.parent.create(recursive: true);
     const encoder = JsonEncoder.withIndent('  ');
     await file.writeAsString(encoder.convert(jsonList));
   }
 
+  Future<String> _storageBasePath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return path.join(directory.path, storageNamespace);
+  }
+
+  Future<String> _storageDataPath() async {
+    return path.join(await _storageBasePath(), 'data');
+  }
+
+  Future<String> _storageConfigPath() async {
+    return path.join(await _storageBasePath(), 'config');
+  }
+
+  Future<String> _usersStoragePath() async {
+    return path.join(await _storageDataPath(), 'users.json');
+  }
+
+  Future<String> _devicesStoragePath() async {
+    return path.join(await _storageDataPath(), 'devices.json');
+  }
+
+  Future<String> _rolesStoragePath() async {
+    return path.join(await _storageDataPath(), 'roles.json');
+  }
+
+  Future<String> _permissionsStoragePath() async {
+    return path.join(await _storageDataPath(), 'permissions.json');
+  }
+
+  Future<String> _trustLevelsStoragePath() async {
+    return path.join(await _storageDataPath(), 'trust_levels.json');
+  }
+
+  Future<String> _approvalQueueStoragePath() async {
+    return path.join(await _storageDataPath(), 'approval_queue.json');
+  }
+
+  Future<String> _auditLogStoragePath() async {
+    return path.join(await _storageDataPath(), 'audit_log.json');
+  }
+
+  Future<String> _accessRulesStoragePath() async {
+    return path.join(await _storageConfigPath(), 'module_access_rules.json');
+  }
+
   String get _basePath => moduleRootPath;
   String get _dataPath => '$_basePath/data';
   String get _configPath => '$_basePath/config';
-
-  String get _usersPath => '$_dataPath/users.json';
-  String get _devicesPath => '$_dataPath/devices.json';
-  String get _rolesPath => '$_dataPath/roles.json';
-  String get _permissionsPath => '$_dataPath/permissions.json';
-  String get _trustLevelsPath => '$_dataPath/trust_levels.json';
-  String get _approvalQueuePath => '$_dataPath/approval_queue.json';
-  String get _auditLogPath => '$_dataPath/audit_log.json';
-  String get _accessRulesPath => '$_configPath/module_access_rules.json';
 
   String get _usersExamplePath => '$_dataPath/users.example.json';
   String get _devicesExamplePath => '$_dataPath/devices.example.json';
@@ -1221,7 +1280,7 @@ class UsersDevicesControlRepository {
   String get _trustLevelsExamplePath => '$_dataPath/trust_levels.example.json';
   String get _approvalQueueExamplePath => '$_dataPath/approval_queue.example.json';
   String get _auditLogExamplePath => '$_dataPath/audit_log.example.json';
-  String get _accessRulesExamplePath => _accessRulesPath;
+  String get _accessRulesExamplePath => '$_configPath/module_access_rules.json';
 }
 
 List<String> _stringList(dynamic value) {
