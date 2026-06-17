@@ -9649,6 +9649,1346 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   }
 }
 
+class $UsersDevicesControlUsersTable extends UsersDevicesControlUsers
+    with TableInfo<$UsersDevicesControlUsersTable, UsersDevicesControlUser> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsersDevicesControlUsersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'users_devices_control_users';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UsersDevicesControlUser> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  UsersDevicesControlUser map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UsersDevicesControlUser(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UsersDevicesControlUsersTable createAlias(String alias) {
+    return $UsersDevicesControlUsersTable(attachedDatabase, alias);
+  }
+}
+
+class UsersDevicesControlUser extends DataClass
+    implements Insertable<UsersDevicesControlUser> {
+  final String userId;
+  final String payloadJson;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const UsersDevicesControlUser({
+    required this.userId,
+    required this.payloadJson,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UsersDevicesControlUsersCompanion toCompanion(bool nullToAbsent) {
+    return UsersDevicesControlUsersCompanion(
+      userId: Value(userId),
+      payloadJson: Value(payloadJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UsersDevicesControlUser.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UsersDevicesControlUser(
+      userId: serializer.fromJson<String>(json['userId']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UsersDevicesControlUser copyWith({
+    String? userId,
+    String? payloadJson,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => UsersDevicesControlUser(
+    userId: userId ?? this.userId,
+    payloadJson: payloadJson ?? this.payloadJson,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UsersDevicesControlUser copyWithCompanion(
+    UsersDevicesControlUsersCompanion data,
+  ) {
+    return UsersDevicesControlUser(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlUser(')
+          ..write('userId: $userId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(userId, payloadJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UsersDevicesControlUser &&
+          other.userId == this.userId &&
+          other.payloadJson == this.payloadJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UsersDevicesControlUsersCompanion
+    extends UpdateCompanion<UsersDevicesControlUser> {
+  final Value<String> userId;
+  final Value<String> payloadJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const UsersDevicesControlUsersCompanion({
+    this.userId = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UsersDevicesControlUsersCompanion.insert({
+    required String userId,
+    required String payloadJson,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       payloadJson = Value(payloadJson),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UsersDevicesControlUser> custom({
+    Expression<String>? userId,
+    Expression<String>? payloadJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UsersDevicesControlUsersCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? payloadJson,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UsersDevicesControlUsersCompanion(
+      userId: userId ?? this.userId,
+      payloadJson: payloadJson ?? this.payloadJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlUsersCompanion(')
+          ..write('userId: $userId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UsersDevicesControlDevicesTable extends UsersDevicesControlDevices
+    with
+        TableInfo<$UsersDevicesControlDevicesTable, UsersDevicesControlDevice> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsersDevicesControlDevicesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    deviceId,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'users_devices_control_devices';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UsersDevicesControlDevice> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {deviceId};
+  @override
+  UsersDevicesControlDevice map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UsersDevicesControlDevice(
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UsersDevicesControlDevicesTable createAlias(String alias) {
+    return $UsersDevicesControlDevicesTable(attachedDatabase, alias);
+  }
+}
+
+class UsersDevicesControlDevice extends DataClass
+    implements Insertable<UsersDevicesControlDevice> {
+  final String deviceId;
+  final String payloadJson;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const UsersDevicesControlDevice({
+    required this.deviceId,
+    required this.payloadJson,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['device_id'] = Variable<String>(deviceId);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UsersDevicesControlDevicesCompanion toCompanion(bool nullToAbsent) {
+    return UsersDevicesControlDevicesCompanion(
+      deviceId: Value(deviceId),
+      payloadJson: Value(payloadJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UsersDevicesControlDevice.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UsersDevicesControlDevice(
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'deviceId': serializer.toJson<String>(deviceId),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UsersDevicesControlDevice copyWith({
+    String? deviceId,
+    String? payloadJson,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => UsersDevicesControlDevice(
+    deviceId: deviceId ?? this.deviceId,
+    payloadJson: payloadJson ?? this.payloadJson,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UsersDevicesControlDevice copyWithCompanion(
+    UsersDevicesControlDevicesCompanion data,
+  ) {
+    return UsersDevicesControlDevice(
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlDevice(')
+          ..write('deviceId: $deviceId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(deviceId, payloadJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UsersDevicesControlDevice &&
+          other.deviceId == this.deviceId &&
+          other.payloadJson == this.payloadJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UsersDevicesControlDevicesCompanion
+    extends UpdateCompanion<UsersDevicesControlDevice> {
+  final Value<String> deviceId;
+  final Value<String> payloadJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const UsersDevicesControlDevicesCompanion({
+    this.deviceId = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UsersDevicesControlDevicesCompanion.insert({
+    required String deviceId,
+    required String payloadJson,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : deviceId = Value(deviceId),
+       payloadJson = Value(payloadJson),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UsersDevicesControlDevice> custom({
+    Expression<String>? deviceId,
+    Expression<String>? payloadJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (deviceId != null) 'device_id': deviceId,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UsersDevicesControlDevicesCompanion copyWith({
+    Value<String>? deviceId,
+    Value<String>? payloadJson,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UsersDevicesControlDevicesCompanion(
+      deviceId: deviceId ?? this.deviceId,
+      payloadJson: payloadJson ?? this.payloadJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlDevicesCompanion(')
+          ..write('deviceId: $deviceId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UsersDevicesControlApprovalRequestsTable
+    extends UsersDevicesControlApprovalRequests
+    with
+        TableInfo<
+          $UsersDevicesControlApprovalRequestsTable,
+          UsersDevicesControlApprovalRequest
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsersDevicesControlApprovalRequestsTable(
+    this.attachedDatabase, [
+    this._alias,
+  ]);
+  static const VerificationMeta _requestIdMeta = const VerificationMeta(
+    'requestId',
+  );
+  @override
+  late final GeneratedColumn<String> requestId = GeneratedColumn<String>(
+    'request_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    requestId,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'users_devices_control_approval_requests';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UsersDevicesControlApprovalRequest> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('request_id')) {
+      context.handle(
+        _requestIdMeta,
+        requestId.isAcceptableOrUnknown(data['request_id']!, _requestIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_requestIdMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {requestId};
+  @override
+  UsersDevicesControlApprovalRequest map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UsersDevicesControlApprovalRequest(
+      requestId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}request_id'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UsersDevicesControlApprovalRequestsTable createAlias(String alias) {
+    return $UsersDevicesControlApprovalRequestsTable(attachedDatabase, alias);
+  }
+}
+
+class UsersDevicesControlApprovalRequest extends DataClass
+    implements Insertable<UsersDevicesControlApprovalRequest> {
+  final String requestId;
+  final String payloadJson;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const UsersDevicesControlApprovalRequest({
+    required this.requestId,
+    required this.payloadJson,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['request_id'] = Variable<String>(requestId);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UsersDevicesControlApprovalRequestsCompanion toCompanion(bool nullToAbsent) {
+    return UsersDevicesControlApprovalRequestsCompanion(
+      requestId: Value(requestId),
+      payloadJson: Value(payloadJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UsersDevicesControlApprovalRequest.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UsersDevicesControlApprovalRequest(
+      requestId: serializer.fromJson<String>(json['requestId']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'requestId': serializer.toJson<String>(requestId),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UsersDevicesControlApprovalRequest copyWith({
+    String? requestId,
+    String? payloadJson,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => UsersDevicesControlApprovalRequest(
+    requestId: requestId ?? this.requestId,
+    payloadJson: payloadJson ?? this.payloadJson,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UsersDevicesControlApprovalRequest copyWithCompanion(
+    UsersDevicesControlApprovalRequestsCompanion data,
+  ) {
+    return UsersDevicesControlApprovalRequest(
+      requestId: data.requestId.present ? data.requestId.value : this.requestId,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlApprovalRequest(')
+          ..write('requestId: $requestId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(requestId, payloadJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UsersDevicesControlApprovalRequest &&
+          other.requestId == this.requestId &&
+          other.payloadJson == this.payloadJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UsersDevicesControlApprovalRequestsCompanion
+    extends UpdateCompanion<UsersDevicesControlApprovalRequest> {
+  final Value<String> requestId;
+  final Value<String> payloadJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const UsersDevicesControlApprovalRequestsCompanion({
+    this.requestId = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UsersDevicesControlApprovalRequestsCompanion.insert({
+    required String requestId,
+    required String payloadJson,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : requestId = Value(requestId),
+       payloadJson = Value(payloadJson),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UsersDevicesControlApprovalRequest> custom({
+    Expression<String>? requestId,
+    Expression<String>? payloadJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (requestId != null) 'request_id': requestId,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UsersDevicesControlApprovalRequestsCompanion copyWith({
+    Value<String>? requestId,
+    Value<String>? payloadJson,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UsersDevicesControlApprovalRequestsCompanion(
+      requestId: requestId ?? this.requestId,
+      payloadJson: payloadJson ?? this.payloadJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (requestId.present) {
+      map['request_id'] = Variable<String>(requestId.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlApprovalRequestsCompanion(')
+          ..write('requestId: $requestId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UsersDevicesControlAuditEventsTable
+    extends UsersDevicesControlAuditEvents
+    with
+        TableInfo<
+          $UsersDevicesControlAuditEventsTable,
+          UsersDevicesControlAuditEvent
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsersDevicesControlAuditEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _eventIdMeta = const VerificationMeta(
+    'eventId',
+  );
+  @override
+  late final GeneratedColumn<String> eventId = GeneratedColumn<String>(
+    'event_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    eventId,
+    payloadJson,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'users_devices_control_audit_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UsersDevicesControlAuditEvent> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('event_id')) {
+      context.handle(
+        _eventIdMeta,
+        eventId.isAcceptableOrUnknown(data['event_id']!, _eventIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eventIdMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {eventId};
+  @override
+  UsersDevicesControlAuditEvent map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UsersDevicesControlAuditEvent(
+      eventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}event_id'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UsersDevicesControlAuditEventsTable createAlias(String alias) {
+    return $UsersDevicesControlAuditEventsTable(attachedDatabase, alias);
+  }
+}
+
+class UsersDevicesControlAuditEvent extends DataClass
+    implements Insertable<UsersDevicesControlAuditEvent> {
+  final String eventId;
+  final String payloadJson;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const UsersDevicesControlAuditEvent({
+    required this.eventId,
+    required this.payloadJson,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['event_id'] = Variable<String>(eventId);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UsersDevicesControlAuditEventsCompanion toCompanion(bool nullToAbsent) {
+    return UsersDevicesControlAuditEventsCompanion(
+      eventId: Value(eventId),
+      payloadJson: Value(payloadJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UsersDevicesControlAuditEvent.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UsersDevicesControlAuditEvent(
+      eventId: serializer.fromJson<String>(json['eventId']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'eventId': serializer.toJson<String>(eventId),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UsersDevicesControlAuditEvent copyWith({
+    String? eventId,
+    String? payloadJson,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => UsersDevicesControlAuditEvent(
+    eventId: eventId ?? this.eventId,
+    payloadJson: payloadJson ?? this.payloadJson,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UsersDevicesControlAuditEvent copyWithCompanion(
+    UsersDevicesControlAuditEventsCompanion data,
+  ) {
+    return UsersDevicesControlAuditEvent(
+      eventId: data.eventId.present ? data.eventId.value : this.eventId,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlAuditEvent(')
+          ..write('eventId: $eventId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(eventId, payloadJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UsersDevicesControlAuditEvent &&
+          other.eventId == this.eventId &&
+          other.payloadJson == this.payloadJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UsersDevicesControlAuditEventsCompanion
+    extends UpdateCompanion<UsersDevicesControlAuditEvent> {
+  final Value<String> eventId;
+  final Value<String> payloadJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const UsersDevicesControlAuditEventsCompanion({
+    this.eventId = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UsersDevicesControlAuditEventsCompanion.insert({
+    required String eventId,
+    required String payloadJson,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : eventId = Value(eventId),
+       payloadJson = Value(payloadJson),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UsersDevicesControlAuditEvent> custom({
+    Expression<String>? eventId,
+    Expression<String>? payloadJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (eventId != null) 'event_id': eventId,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UsersDevicesControlAuditEventsCompanion copyWith({
+    Value<String>? eventId,
+    Value<String>? payloadJson,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UsersDevicesControlAuditEventsCompanion(
+      eventId: eventId ?? this.eventId,
+      payloadJson: payloadJson ?? this.payloadJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (eventId.present) {
+      map['event_id'] = Variable<String>(eventId.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersDevicesControlAuditEventsCompanion(')
+          ..write('eventId: $eventId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $VoiceAuditLogsTable extends VoiceAuditLogs
     with TableInfo<$VoiceAuditLogsTable, VoiceAuditLog> {
   @override
@@ -10711,6 +12051,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WellbeingCheckinsTable(this);
   late final $InboxItemsTable inboxItems = $InboxItemsTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $UsersDevicesControlUsersTable usersDevicesControlUsers =
+      $UsersDevicesControlUsersTable(this);
+  late final $UsersDevicesControlDevicesTable usersDevicesControlDevices =
+      $UsersDevicesControlDevicesTable(this);
+  late final $UsersDevicesControlApprovalRequestsTable
+  usersDevicesControlApprovalRequests =
+      $UsersDevicesControlApprovalRequestsTable(this);
+  late final $UsersDevicesControlAuditEventsTable
+  usersDevicesControlAuditEvents = $UsersDevicesControlAuditEventsTable(this);
   late final $VoiceAuditLogsTable voiceAuditLogs = $VoiceAuditLogsTable(this);
   late final $VoiceConversationThreadsTable voiceConversationThreads =
       $VoiceConversationThreadsTable(this);
@@ -10731,6 +12080,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     wellbeingCheckins,
     inboxItems,
     appSettings,
+    usersDevicesControlUsers,
+    usersDevicesControlDevices,
+    usersDevicesControlApprovalRequests,
+    usersDevicesControlAuditEvents,
     voiceAuditLogs,
     voiceConversationThreads,
     voiceModulePreferences,
@@ -15028,6 +16381,814 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSetting,
       PrefetchHooks Function()
     >;
+typedef $$UsersDevicesControlUsersTableCreateCompanionBuilder =
+    UsersDevicesControlUsersCompanion Function({
+      required String userId,
+      required String payloadJson,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UsersDevicesControlUsersTableUpdateCompanionBuilder =
+    UsersDevicesControlUsersCompanion Function({
+      Value<String> userId,
+      Value<String> payloadJson,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UsersDevicesControlUsersTableFilterComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlUsersTable> {
+  $$UsersDevicesControlUsersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UsersDevicesControlUsersTableOrderingComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlUsersTable> {
+  $$UsersDevicesControlUsersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UsersDevicesControlUsersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlUsersTable> {
+  $$UsersDevicesControlUsersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UsersDevicesControlUsersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UsersDevicesControlUsersTable,
+          UsersDevicesControlUser,
+          $$UsersDevicesControlUsersTableFilterComposer,
+          $$UsersDevicesControlUsersTableOrderingComposer,
+          $$UsersDevicesControlUsersTableAnnotationComposer,
+          $$UsersDevicesControlUsersTableCreateCompanionBuilder,
+          $$UsersDevicesControlUsersTableUpdateCompanionBuilder,
+          (
+            UsersDevicesControlUser,
+            BaseReferences<
+              _$AppDatabase,
+              $UsersDevicesControlUsersTable,
+              UsersDevicesControlUser
+            >,
+          ),
+          UsersDevicesControlUser,
+          PrefetchHooks Function()
+        > {
+  $$UsersDevicesControlUsersTableTableManager(
+    _$AppDatabase db,
+    $UsersDevicesControlUsersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UsersDevicesControlUsersTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$UsersDevicesControlUsersTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$UsersDevicesControlUsersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> userId = const Value.absent(),
+                Value<String> payloadJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlUsersCompanion(
+                userId: userId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String userId,
+                required String payloadJson,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlUsersCompanion.insert(
+                userId: userId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UsersDevicesControlUsersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UsersDevicesControlUsersTable,
+      UsersDevicesControlUser,
+      $$UsersDevicesControlUsersTableFilterComposer,
+      $$UsersDevicesControlUsersTableOrderingComposer,
+      $$UsersDevicesControlUsersTableAnnotationComposer,
+      $$UsersDevicesControlUsersTableCreateCompanionBuilder,
+      $$UsersDevicesControlUsersTableUpdateCompanionBuilder,
+      (
+        UsersDevicesControlUser,
+        BaseReferences<
+          _$AppDatabase,
+          $UsersDevicesControlUsersTable,
+          UsersDevicesControlUser
+        >,
+      ),
+      UsersDevicesControlUser,
+      PrefetchHooks Function()
+    >;
+typedef $$UsersDevicesControlDevicesTableCreateCompanionBuilder =
+    UsersDevicesControlDevicesCompanion Function({
+      required String deviceId,
+      required String payloadJson,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UsersDevicesControlDevicesTableUpdateCompanionBuilder =
+    UsersDevicesControlDevicesCompanion Function({
+      Value<String> deviceId,
+      Value<String> payloadJson,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UsersDevicesControlDevicesTableFilterComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlDevicesTable> {
+  $$UsersDevicesControlDevicesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UsersDevicesControlDevicesTableOrderingComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlDevicesTable> {
+  $$UsersDevicesControlDevicesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UsersDevicesControlDevicesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlDevicesTable> {
+  $$UsersDevicesControlDevicesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UsersDevicesControlDevicesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UsersDevicesControlDevicesTable,
+          UsersDevicesControlDevice,
+          $$UsersDevicesControlDevicesTableFilterComposer,
+          $$UsersDevicesControlDevicesTableOrderingComposer,
+          $$UsersDevicesControlDevicesTableAnnotationComposer,
+          $$UsersDevicesControlDevicesTableCreateCompanionBuilder,
+          $$UsersDevicesControlDevicesTableUpdateCompanionBuilder,
+          (
+            UsersDevicesControlDevice,
+            BaseReferences<
+              _$AppDatabase,
+              $UsersDevicesControlDevicesTable,
+              UsersDevicesControlDevice
+            >,
+          ),
+          UsersDevicesControlDevice,
+          PrefetchHooks Function()
+        > {
+  $$UsersDevicesControlDevicesTableTableManager(
+    _$AppDatabase db,
+    $UsersDevicesControlDevicesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UsersDevicesControlDevicesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$UsersDevicesControlDevicesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$UsersDevicesControlDevicesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> deviceId = const Value.absent(),
+                Value<String> payloadJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlDevicesCompanion(
+                deviceId: deviceId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String deviceId,
+                required String payloadJson,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlDevicesCompanion.insert(
+                deviceId: deviceId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UsersDevicesControlDevicesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UsersDevicesControlDevicesTable,
+      UsersDevicesControlDevice,
+      $$UsersDevicesControlDevicesTableFilterComposer,
+      $$UsersDevicesControlDevicesTableOrderingComposer,
+      $$UsersDevicesControlDevicesTableAnnotationComposer,
+      $$UsersDevicesControlDevicesTableCreateCompanionBuilder,
+      $$UsersDevicesControlDevicesTableUpdateCompanionBuilder,
+      (
+        UsersDevicesControlDevice,
+        BaseReferences<
+          _$AppDatabase,
+          $UsersDevicesControlDevicesTable,
+          UsersDevicesControlDevice
+        >,
+      ),
+      UsersDevicesControlDevice,
+      PrefetchHooks Function()
+    >;
+typedef $$UsersDevicesControlApprovalRequestsTableCreateCompanionBuilder =
+    UsersDevicesControlApprovalRequestsCompanion Function({
+      required String requestId,
+      required String payloadJson,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UsersDevicesControlApprovalRequestsTableUpdateCompanionBuilder =
+    UsersDevicesControlApprovalRequestsCompanion Function({
+      Value<String> requestId,
+      Value<String> payloadJson,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UsersDevicesControlApprovalRequestsTableFilterComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlApprovalRequestsTable> {
+  $$UsersDevicesControlApprovalRequestsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get requestId => $composableBuilder(
+    column: $table.requestId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UsersDevicesControlApprovalRequestsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlApprovalRequestsTable> {
+  $$UsersDevicesControlApprovalRequestsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get requestId => $composableBuilder(
+    column: $table.requestId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UsersDevicesControlApprovalRequestsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlApprovalRequestsTable> {
+  $$UsersDevicesControlApprovalRequestsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get requestId =>
+      $composableBuilder(column: $table.requestId, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UsersDevicesControlApprovalRequestsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UsersDevicesControlApprovalRequestsTable,
+          UsersDevicesControlApprovalRequest,
+          $$UsersDevicesControlApprovalRequestsTableFilterComposer,
+          $$UsersDevicesControlApprovalRequestsTableOrderingComposer,
+          $$UsersDevicesControlApprovalRequestsTableAnnotationComposer,
+          $$UsersDevicesControlApprovalRequestsTableCreateCompanionBuilder,
+          $$UsersDevicesControlApprovalRequestsTableUpdateCompanionBuilder,
+          (
+            UsersDevicesControlApprovalRequest,
+            BaseReferences<
+              _$AppDatabase,
+              $UsersDevicesControlApprovalRequestsTable,
+              UsersDevicesControlApprovalRequest
+            >,
+          ),
+          UsersDevicesControlApprovalRequest,
+          PrefetchHooks Function()
+        > {
+  $$UsersDevicesControlApprovalRequestsTableTableManager(
+    _$AppDatabase db,
+    $UsersDevicesControlApprovalRequestsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UsersDevicesControlApprovalRequestsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$UsersDevicesControlApprovalRequestsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$UsersDevicesControlApprovalRequestsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> requestId = const Value.absent(),
+                Value<String> payloadJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlApprovalRequestsCompanion(
+                requestId: requestId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String requestId,
+                required String payloadJson,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlApprovalRequestsCompanion.insert(
+                requestId: requestId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UsersDevicesControlApprovalRequestsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UsersDevicesControlApprovalRequestsTable,
+      UsersDevicesControlApprovalRequest,
+      $$UsersDevicesControlApprovalRequestsTableFilterComposer,
+      $$UsersDevicesControlApprovalRequestsTableOrderingComposer,
+      $$UsersDevicesControlApprovalRequestsTableAnnotationComposer,
+      $$UsersDevicesControlApprovalRequestsTableCreateCompanionBuilder,
+      $$UsersDevicesControlApprovalRequestsTableUpdateCompanionBuilder,
+      (
+        UsersDevicesControlApprovalRequest,
+        BaseReferences<
+          _$AppDatabase,
+          $UsersDevicesControlApprovalRequestsTable,
+          UsersDevicesControlApprovalRequest
+        >,
+      ),
+      UsersDevicesControlApprovalRequest,
+      PrefetchHooks Function()
+    >;
+typedef $$UsersDevicesControlAuditEventsTableCreateCompanionBuilder =
+    UsersDevicesControlAuditEventsCompanion Function({
+      required String eventId,
+      required String payloadJson,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UsersDevicesControlAuditEventsTableUpdateCompanionBuilder =
+    UsersDevicesControlAuditEventsCompanion Function({
+      Value<String> eventId,
+      Value<String> payloadJson,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UsersDevicesControlAuditEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlAuditEventsTable> {
+  $$UsersDevicesControlAuditEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get eventId => $composableBuilder(
+    column: $table.eventId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UsersDevicesControlAuditEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlAuditEventsTable> {
+  $$UsersDevicesControlAuditEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get eventId => $composableBuilder(
+    column: $table.eventId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UsersDevicesControlAuditEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UsersDevicesControlAuditEventsTable> {
+  $$UsersDevicesControlAuditEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get eventId =>
+      $composableBuilder(column: $table.eventId, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UsersDevicesControlAuditEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UsersDevicesControlAuditEventsTable,
+          UsersDevicesControlAuditEvent,
+          $$UsersDevicesControlAuditEventsTableFilterComposer,
+          $$UsersDevicesControlAuditEventsTableOrderingComposer,
+          $$UsersDevicesControlAuditEventsTableAnnotationComposer,
+          $$UsersDevicesControlAuditEventsTableCreateCompanionBuilder,
+          $$UsersDevicesControlAuditEventsTableUpdateCompanionBuilder,
+          (
+            UsersDevicesControlAuditEvent,
+            BaseReferences<
+              _$AppDatabase,
+              $UsersDevicesControlAuditEventsTable,
+              UsersDevicesControlAuditEvent
+            >,
+          ),
+          UsersDevicesControlAuditEvent,
+          PrefetchHooks Function()
+        > {
+  $$UsersDevicesControlAuditEventsTableTableManager(
+    _$AppDatabase db,
+    $UsersDevicesControlAuditEventsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UsersDevicesControlAuditEventsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$UsersDevicesControlAuditEventsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$UsersDevicesControlAuditEventsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> eventId = const Value.absent(),
+                Value<String> payloadJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlAuditEventsCompanion(
+                eventId: eventId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String eventId,
+                required String payloadJson,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => UsersDevicesControlAuditEventsCompanion.insert(
+                eventId: eventId,
+                payloadJson: payloadJson,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UsersDevicesControlAuditEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UsersDevicesControlAuditEventsTable,
+      UsersDevicesControlAuditEvent,
+      $$UsersDevicesControlAuditEventsTableFilterComposer,
+      $$UsersDevicesControlAuditEventsTableOrderingComposer,
+      $$UsersDevicesControlAuditEventsTableAnnotationComposer,
+      $$UsersDevicesControlAuditEventsTableCreateCompanionBuilder,
+      $$UsersDevicesControlAuditEventsTableUpdateCompanionBuilder,
+      (
+        UsersDevicesControlAuditEvent,
+        BaseReferences<
+          _$AppDatabase,
+          $UsersDevicesControlAuditEventsTable,
+          UsersDevicesControlAuditEvent
+        >,
+      ),
+      UsersDevicesControlAuditEvent,
+      PrefetchHooks Function()
+    >;
 typedef $$VoiceAuditLogsTableCreateCompanionBuilder =
     VoiceAuditLogsCompanion Function({
       required String logId,
@@ -15664,6 +17825,29 @@ class $AppDatabaseManager {
       $$InboxItemsTableTableManager(_db, _db.inboxItems);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$UsersDevicesControlUsersTableTableManager get usersDevicesControlUsers =>
+      $$UsersDevicesControlUsersTableTableManager(
+        _db,
+        _db.usersDevicesControlUsers,
+      );
+  $$UsersDevicesControlDevicesTableTableManager
+  get usersDevicesControlDevices =>
+      $$UsersDevicesControlDevicesTableTableManager(
+        _db,
+        _db.usersDevicesControlDevices,
+      );
+  $$UsersDevicesControlApprovalRequestsTableTableManager
+  get usersDevicesControlApprovalRequests =>
+      $$UsersDevicesControlApprovalRequestsTableTableManager(
+        _db,
+        _db.usersDevicesControlApprovalRequests,
+      );
+  $$UsersDevicesControlAuditEventsTableTableManager
+  get usersDevicesControlAuditEvents =>
+      $$UsersDevicesControlAuditEventsTableTableManager(
+        _db,
+        _db.usersDevicesControlAuditEvents,
+      );
   $$VoiceAuditLogsTableTableManager get voiceAuditLogs =>
       $$VoiceAuditLogsTableTableManager(_db, _db.voiceAuditLogs);
   $$VoiceConversationThreadsTableTableManager get voiceConversationThreads =>

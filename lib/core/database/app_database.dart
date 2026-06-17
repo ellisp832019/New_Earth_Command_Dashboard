@@ -16,6 +16,10 @@ import 'tables/inbox_items_table.dart';
 import 'tables/journal_entries_table.dart';
 import 'tables/learning_items_table.dart';
 import 'tables/projects_table.dart';
+import 'tables/users_devices_control_approvals_table.dart';
+import 'tables/users_devices_control_audit_events_table.dart';
+import 'tables/users_devices_control_devices_table.dart';
+import 'tables/users_devices_control_users_table.dart';
 import 'tables/tasks_table.dart';
 import 'tables/wellbeing_checkins_table.dart';
 import 'tables/voice_audit_logs_table.dart';
@@ -36,6 +40,10 @@ part 'app_database.g.dart';
     WellbeingCheckins,
     InboxItems,
     AppSettings,
+    UsersDevicesControlUsers,
+    UsersDevicesControlDevices,
+    UsersDevicesControlApprovalRequests,
+    UsersDevicesControlAuditEvents,
     VoiceAuditLogs,
     VoiceConversationThreads,
     VoiceModulePreferences,
@@ -45,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -109,6 +117,13 @@ class AppDatabase extends _$AppDatabase {
 
           if (from < 7) {
             await migrator.createTable(voiceModulePreferences);
+          }
+
+          if (from < 8) {
+            await migrator.createTable(usersDevicesControlUsers);
+            await migrator.createTable(usersDevicesControlDevices);
+            await migrator.createTable(usersDevicesControlApprovalRequests);
+            await migrator.createTable(usersDevicesControlAuditEvents);
           }
         },
       );

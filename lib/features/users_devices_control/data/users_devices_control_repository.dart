@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../../core/database/app_database.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -389,15 +390,18 @@ class UsersDevicesControlAccessDecision {
 }
 
 class UsersDevicesControlRepository {
-  const UsersDevicesControlRepository({
+  UsersDevicesControlRepository({
+    this.database,
     this.moduleRootPath = 'modules/01_USERS_AND_DEVICES_CONTROL',
     this.storageNamespace = 'users_devices_control',
   });
 
+  final AppDatabase? database;
   final String moduleRootPath;
   final String storageNamespace;
 
   Future<UsersDevicesControlSnapshot> loadSnapshot() async {
+    await _ensureDatabaseSeeded();
     return UsersDevicesControlSnapshot(
       users: await _readUsers(),
       devices: await _readDevices(),
@@ -1067,11 +1071,35 @@ class UsersDevicesControlRepository {
   }
 
   Future<List<UsersDevicesControlUser>> _readUsers() async {
+    final db = database;
+    if (db != null) {
+      final rows = await db.select(db.usersDevicesControlUsers).get();
+      return rows
+          .map(
+            (row) => UsersDevicesControlUser.fromJson(
+              _decodePayload(row.payloadJson),
+            ),
+          )
+          .toList(growable: false);
+    }
+
     final data = await _readJsonList(_usersStoragePath, _usersExamplePath);
     return data.map(UsersDevicesControlUser.fromJson).toList(growable: false);
   }
 
   Future<List<UsersDevicesControlDevice>> _readDevices() async {
+    final db = database;
+    if (db != null) {
+      final rows = await db.select(db.usersDevicesControlDevices).get();
+      return rows
+          .map(
+            (row) => UsersDevicesControlDevice.fromJson(
+              _decodePayload(row.payloadJson),
+            ),
+          )
+          .toList(growable: false);
+    }
+
     final data = await _readJsonList(_devicesStoragePath, _devicesExamplePath);
     return data.map(UsersDevicesControlDevice.fromJson).toList(growable: false);
   }
@@ -1104,6 +1132,18 @@ class UsersDevicesControlRepository {
   }
 
   Future<List<UsersDevicesControlApprovalRequest>> _readApprovals() async {
+    final db = database;
+    if (db != null) {
+      final rows = await db.select(db.usersDevicesControlApprovalRequests).get();
+      return rows
+          .map(
+            (row) => UsersDevicesControlApprovalRequest.fromJson(
+              _decodePayload(row.payloadJson),
+            ),
+          )
+          .toList(growable: false);
+    }
+
     final data = await _readJsonList(
       _approvalQueueStoragePath,
       _approvalQueueExamplePath,
@@ -1114,6 +1154,18 @@ class UsersDevicesControlRepository {
   }
 
   Future<List<UsersDevicesControlAuditEvent>> _readAuditLog() async {
+    final db = database;
+    if (db != null) {
+      final rows = await db.select(db.usersDevicesControlAuditEvents).get();
+      return rows
+          .map(
+            (row) => UsersDevicesControlAuditEvent.fromJson(
+              _decodePayload(row.payloadJson),
+            ),
+          )
+          .toList(growable: false);
+    }
+
     final data = await _readJsonList(
       _auditLogStoragePath,
       _auditLogExamplePath,
@@ -1183,6 +1235,25 @@ class UsersDevicesControlRepository {
   }
 
   Future<void> _writeUsers(List<UsersDevicesControlUser> users) async {
+    final db = database;
+    if (db != null) {
+      await db.transaction(() async {
+        await db.delete(db.usersDevicesControlUsers).go();
+        for (final user in users) {
+          final timestamp = DateTime.now().toUtc();
+          await db.into(db.usersDevicesControlUsers).insert(
+                UsersDevicesControlUsersCompanion.insert(
+                  userId: user.id,
+                  payloadJson: _encodePayload(user.toJson()),
+                  createdAt: timestamp,
+                  updatedAt: timestamp,
+                ),
+              );
+        }
+      });
+      return;
+    }
+
     await _writeJsonList(
       _usersStoragePath,
       users.map((user) => user.toJson()).toList(),
@@ -1190,6 +1261,25 @@ class UsersDevicesControlRepository {
   }
 
   Future<void> _writeDevices(List<UsersDevicesControlDevice> devices) async {
+    final db = database;
+    if (db != null) {
+      await db.transaction(() async {
+        await db.delete(db.usersDevicesControlDevices).go();
+        for (final device in devices) {
+          final timestamp = DateTime.now().toUtc();
+          await db.into(db.usersDevicesControlDevices).insert(
+                UsersDevicesControlDevicesCompanion.insert(
+                  deviceId: device.id,
+                  payloadJson: _encodePayload(device.toJson()),
+                  createdAt: timestamp,
+                  updatedAt: timestamp,
+                ),
+              );
+        }
+      });
+      return;
+    }
+
     await _writeJsonList(
       _devicesStoragePath,
       devices.map((device) => device.toJson()).toList(),
@@ -1199,6 +1289,25 @@ class UsersDevicesControlRepository {
   Future<void> _writeApprovals(
     List<UsersDevicesControlApprovalRequest> approvals,
   ) async {
+    final db = database;
+    if (db != null) {
+      await db.transaction(() async {
+        await db.delete(db.usersDevicesControlApprovalRequests).go();
+        for (final request in approvals) {
+          final timestamp = DateTime.now().toUtc();
+          await db.into(db.usersDevicesControlApprovalRequests).insert(
+                UsersDevicesControlApprovalRequestsCompanion.insert(
+                  requestId: request.requestId,
+                  payloadJson: _encodePayload(request.toJson()),
+                  createdAt: timestamp,
+                  updatedAt: timestamp,
+                ),
+              );
+        }
+      });
+      return;
+    }
+
     await _writeJsonList(
       _approvalQueueStoragePath,
       approvals.map((request) => request.toJson()).toList(),
@@ -1208,6 +1317,25 @@ class UsersDevicesControlRepository {
   Future<void> _writeAuditLog(
     List<UsersDevicesControlAuditEvent> events,
   ) async {
+    final db = database;
+    if (db != null) {
+      await db.transaction(() async {
+        await db.delete(db.usersDevicesControlAuditEvents).go();
+        for (final event in events) {
+          final timestamp = DateTime.tryParse(event.timestamp)?.toUtc() ?? DateTime.now().toUtc();
+          await db.into(db.usersDevicesControlAuditEvents).insert(
+                UsersDevicesControlAuditEventsCompanion.insert(
+                  eventId: event.eventId,
+                  payloadJson: _encodePayload(event.toJson()),
+                  createdAt: timestamp,
+                  updatedAt: timestamp,
+                ),
+              );
+        }
+      });
+      return;
+    }
+
     await _writeJsonList(
       _auditLogStoragePath,
       events.map((event) => event.toJson()).toList(),
@@ -1222,6 +1350,102 @@ class UsersDevicesControlRepository {
     await file.parent.create(recursive: true);
     const encoder = JsonEncoder.withIndent('  ');
     await file.writeAsString(encoder.convert(jsonList));
+  }
+
+  Future<void> _ensureDatabaseSeeded() async {
+    final db = database;
+    if (db == null) {
+      return;
+    }
+
+    final hasUsers = await db.select(db.usersDevicesControlUsers).get();
+    final hasDevices = await db.select(db.usersDevicesControlDevices).get();
+    final hasApprovals =
+        await db.select(db.usersDevicesControlApprovalRequests).get();
+    final hasEvents = await db.select(db.usersDevicesControlAuditEvents).get();
+
+    if (hasUsers.isNotEmpty ||
+        hasDevices.isNotEmpty ||
+        hasApprovals.isNotEmpty ||
+        hasEvents.isNotEmpty) {
+      return;
+    }
+
+    final seedUsers =
+        await _readJsonList(() async => _usersSourcePath, _usersExamplePath);
+    final seedDevices = await _readJsonList(
+      () async => _devicesSourcePath,
+      _devicesExamplePath,
+    );
+    final seedApprovals = await _readJsonList(
+      () async => _approvalQueueSourcePath,
+      _approvalQueueExamplePath,
+    );
+    final seedEvents = await _readJsonList(
+      () async => _auditLogSourcePath,
+      _auditLogExamplePath,
+    );
+
+    await db.transaction(() async {
+      for (final user in seedUsers.map(UsersDevicesControlUser.fromJson)) {
+        final timestamp = DateTime.now().toUtc();
+        await db.into(db.usersDevicesControlUsers).insert(
+              UsersDevicesControlUsersCompanion.insert(
+                userId: user.id,
+                payloadJson: _encodePayload(user.toJson()),
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              ),
+            );
+      }
+      for (final device in seedDevices.map(UsersDevicesControlDevice.fromJson)) {
+        final timestamp = DateTime.now().toUtc();
+        await db.into(db.usersDevicesControlDevices).insert(
+              UsersDevicesControlDevicesCompanion.insert(
+                deviceId: device.id,
+                payloadJson: _encodePayload(device.toJson()),
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              ),
+            );
+      }
+      for (final request
+          in seedApprovals.map(UsersDevicesControlApprovalRequest.fromJson)) {
+        final timestamp = DateTime.now().toUtc();
+        await db.into(db.usersDevicesControlApprovalRequests).insert(
+              UsersDevicesControlApprovalRequestsCompanion.insert(
+                requestId: request.requestId,
+                payloadJson: _encodePayload(request.toJson()),
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              ),
+            );
+      }
+      for (final event in seedEvents.map(UsersDevicesControlAuditEvent.fromJson)) {
+        final timestamp = DateTime.tryParse(event.timestamp)?.toUtc() ??
+            DateTime.now().toUtc();
+        await db.into(db.usersDevicesControlAuditEvents).insert(
+              UsersDevicesControlAuditEventsCompanion.insert(
+                eventId: event.eventId,
+                payloadJson: _encodePayload(event.toJson()),
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              ),
+            );
+      }
+    });
+  }
+
+  Map<String, dynamic> _decodePayload(String payloadJson) {
+    final decoded = jsonDecode(payloadJson);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+    return <String, dynamic>{};
+  }
+
+  String _encodePayload(Map<String, dynamic> payload) {
+    return jsonEncode(payload);
   }
 
   Future<String> _storageBasePath() async {
@@ -1272,6 +1496,11 @@ class UsersDevicesControlRepository {
   String get _basePath => moduleRootPath;
   String get _dataPath => '$_basePath/data';
   String get _configPath => '$_basePath/config';
+
+  String get _usersSourcePath => '$_dataPath/users.json';
+  String get _devicesSourcePath => '$_dataPath/devices.json';
+  String get _approvalQueueSourcePath => '$_dataPath/approval_queue.json';
+  String get _auditLogSourcePath => '$_dataPath/audit_log.json';
 
   String get _usersExamplePath => '$_dataPath/users.example.json';
   String get _devicesExamplePath => '$_dataPath/devices.example.json';

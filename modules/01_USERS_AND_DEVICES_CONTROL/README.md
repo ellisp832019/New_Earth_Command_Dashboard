@@ -63,6 +63,7 @@ D:\NEW_EARTH_OMEGA_OS_PACK\23_AI_AND_AUTOMATION\01_USERS_AND_DEVICES_CONTROL
 - Threat model
 - Test plans
 - Templates and schemas
+- [User guide](./docs/USER_GUIDE.md)
 
 ## Build phases
 
@@ -72,3 +73,12 @@ D:\NEW_EARTH_OMEGA_OS_PACK\23_AI_AND_AUTOMATION\01_USERS_AND_DEVICES_CONTROL
 4. Device onboarding and pairing
 5. AI and voice governance
 6. PIN/passkey/certificate security later
+
+## Reading order
+
+If you are new to the module, start with:
+
+1. `docs/USER_GUIDE.md`
+2. `docs/FSD_USERS_AND_DEVICES.md`
+3. `docs/MODULE_HUB_INTEGRATION.md`
+4. `docs/FUTURE_ROADMAP.md`
