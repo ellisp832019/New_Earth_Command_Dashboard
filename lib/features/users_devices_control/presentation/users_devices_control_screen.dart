@@ -963,6 +963,27 @@ class _UsersDevicesDeviceOnboardingScreenState
           ].join(' ').toLowerCase();
           return haystack.contains(query) && device.trustLevel >= 3;
         }).toList(growable: false);
+        UsersDevicesControlDevice? deviceForId(String id) {
+          for (final device in data.devices) {
+            if (device.id == id) {
+              return device;
+            }
+          }
+          return null;
+        }
+        String templateForType(String type) {
+          final normalized = type.toLowerCase();
+          if (normalized.contains('assistant') || normalized.contains('voice')) {
+            return 'assistant';
+          }
+          if (normalized.contains('gateway') || normalized.contains('bridge')) {
+            return 'gateway';
+          }
+          if (normalized.contains('printer') || normalized.contains('label')) {
+            return 'printer';
+          }
+          return 'standard';
+        }
 
         return _SectionScaffold(
           title: 'Device Onboarding',
@@ -1149,6 +1170,16 @@ class _UsersDevicesDeviceOnboardingScreenState
                                         _CardChip(label: event.targetModule),
                                         _CardChip(label: event.action),
                                       ],
+                                      onTap: () {
+                                        final matchedDevice = deviceForId(event.deviceId);
+                                        if (matchedDevice != null) {
+                                          _openDeviceEditor(
+                                            context,
+                                            ref,
+                                            device: matchedDevice,
+                                          );
+                                        }
+                                      },
                                     ),
                                   ),
                               ],
@@ -1187,17 +1218,22 @@ class _UsersDevicesDeviceOnboardingScreenState
                                       body:
                                           'Trust ${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
                                       trailing: FilledButton.tonal(
-                                        onPressed: () => _openDeviceEditor(
+                                        onPressed: () => _openOnboardingWizard(
                                           context,
                                           ref,
-                                          device: device,
+                                          template: templateForType(device.type),
                                         ),
-                                        child: const Text('Review'),
+                                        child: const Text('Reopen wizard'),
                                       ),
                                       chips: [
                                         _CardChip(label: 'T${device.trustLevel}'),
                                         _CardChip(label: device.status),
                                       ],
+                                      onTap: () => _openDeviceEditor(
+                                        context,
+                                        ref,
+                                        device: device,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -2167,6 +2203,7 @@ class _EntityCard extends StatelessWidget {
     required this.subtitle,
     required this.body,
     this.trailing,
+    this.onTap,
     this.chips = const [],
   });
 
@@ -2175,6 +2212,7 @@ class _EntityCard extends StatelessWidget {
   final String subtitle;
   final String body;
   final Widget? trailing;
+  final VoidCallback? onTap;
   final List<Widget> chips;
 
   @override
@@ -2183,55 +2221,58 @@ class _EntityCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(icon, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 4),
-                        Text(subtitle),
-                      ],
-                    ),
-                  ),
-                  trailing ?? const SizedBox.shrink(),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(body),
-              if (chips.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(spacing: 8, runSpacing: 8, children: chips),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.surface,
+                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               ],
-            ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(icon, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 4),
+                          Text(subtitle),
+                        ],
+                      ),
+                    ),
+                    trailing ?? const SizedBox.shrink(),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(body),
+                if (chips.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(spacing: 8, runSpacing: 8, children: chips),
+                ],
+              ],
+            ),
           ),
         ),
       ),
