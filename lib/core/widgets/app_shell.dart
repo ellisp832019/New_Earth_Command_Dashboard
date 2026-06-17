@@ -175,151 +175,165 @@ class _Sidebar extends StatelessWidget {
           children: [
             const _BrandMark(size: 54),
             const SizedBox(height: 18),
-            _ShellDestination(
-              label: 'Dashboard',
-              icon: Icons.dashboard_outlined,
-              selectedIcon: Icons.dashboard_rounded,
-              selected: navigationShell.currentIndex == 0,
-              onTap: () => navigationShell.goBranch(0),
+            _SidebarSection(
+              title: 'Core',
+              children: [
+                _ShellDestination(
+                  label: 'Dashboard',
+                  icon: Icons.dashboard_outlined,
+                  selectedIcon: Icons.dashboard_rounded,
+                  selected: navigationShell.currentIndex == 0,
+                  onTap: () => navigationShell.goBranch(0),
+                ),
+                const SizedBox(height: 8),
+                _SidebarLink(
+                  label: 'Users & Devices',
+                  icon: Icons.verified_user_outlined,
+                  route: RouteNames.usersDevices,
+                  accent: AppColours.darkSecondary,
+                  badge: 'Gate',
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            _ShellDestination(
-              label: 'Assets',
-              icon: Icons.inventory_2_outlined,
-              selectedIcon: Icons.inventory_2,
-              selected: navigationShell.currentIndex == 1,
-              onTap: () => navigationShell.goBranch(1),
+            const SizedBox(height: 14),
+            _SidebarSection(
+              title: 'Work',
+              children: [
+                _ShellDestination(
+                  label: 'Assets',
+                  icon: Icons.inventory_2_outlined,
+                  selectedIcon: Icons.inventory_2,
+                  selected: navigationShell.currentIndex == 1,
+                  onTap: () => navigationShell.goBranch(1),
+                ),
+                const SizedBox(height: 8),
+                _ShellDestination(
+                  label: 'Treasury',
+                  icon: Icons.account_balance_wallet_outlined,
+                  selectedIcon: Icons.account_balance_wallet,
+                  selected: navigationShell.currentIndex == 2,
+                  onTap: () => navigationShell.goBranch(2),
+                ),
+                const SizedBox(height: 8),
+                _ShellDestination(
+                  label: 'Projects',
+                  icon: Icons.folder_outlined,
+                  selectedIcon: Icons.folder_rounded,
+                  selected: navigationShell.currentIndex == 3,
+                  onTap: () => navigationShell.goBranch(3),
+                ),
+                const SizedBox(height: 8),
+                _ShellDestination(
+                  label: 'Tasks',
+                  icon: Icons.checklist_outlined,
+                  selectedIcon: Icons.checklist_rounded,
+                  selected: navigationShell.currentIndex == 4,
+                  onTap: () => navigationShell.goBranch(4),
+                ),
+                const SizedBox(height: 8),
+                _ShellDestination(
+                  label: 'Planner',
+                  icon: Icons.today_outlined,
+                  selectedIcon: Icons.today_rounded,
+                  selected: navigationShell.currentIndex == 5,
+                  onTap: () => navigationShell.goBranch(5),
+                ),
+                const SizedBox(height: 8),
+                _ShellDestination(
+                  label: 'More',
+                  icon: Icons.apps_outlined,
+                  selectedIcon: Icons.apps_rounded,
+                  selected: navigationShell.currentIndex == 6,
+                  onTap: () => navigationShell.goBranch(6),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            _ShellDestination(
-              label: 'Treasury',
-              icon: Icons.account_balance_wallet_outlined,
-              selectedIcon: Icons.account_balance_wallet,
-              selected: navigationShell.currentIndex == 2,
-              onTap: () => navigationShell.goBranch(2),
+            const SizedBox(height: 14),
+            _SidebarSection(
+              title: 'Support',
+              children: [
+                _SidebarLink(
+                  label: 'Journal',
+                  icon: Icons.menu_book_outlined,
+                  route: RouteNames.journal,
+                ),
+                _SidebarLink(
+                  label: 'Learning',
+                  icon: Icons.school_outlined,
+                  route: RouteNames.learning,
+                ),
+                _SidebarLink(
+                  label: 'Content',
+                  icon: Icons.campaign_outlined,
+                  route: RouteNames.content,
+                ),
+                _SidebarLink(
+                  label: 'Business',
+                  icon: Icons.handshake_outlined,
+                  route: RouteNames.business,
+                ),
+                _SidebarLink(
+                  label: 'Wellbeing',
+                  icon: Icons.favorite_border,
+                  route: RouteNames.wellbeing,
+                ),
+                _SidebarLink(
+                  label: 'Inbox',
+                  icon: Icons.inbox_outlined,
+                  route: RouteNames.inbox,
+                ),
+                _SidebarLink(
+                  label: 'Voice',
+                  icon: Icons.mic_none_rounded,
+                  route: RouteNames.voice,
+                ),
+                const _AlexaGatewaySidebarLink(),
+              ],
             ),
-            const SizedBox(height: 8),
-            _ShellDestination(
-              label: 'Projects',
-              icon: Icons.folder_outlined,
-              selectedIcon: Icons.folder_rounded,
-              selected: navigationShell.currentIndex == 3,
-              onTap: () => navigationShell.goBranch(3),
+            const SizedBox(height: 14),
+            _SidebarSection(
+              title: 'Tools',
+              children: [
+                _SidebarLink(
+                  label: 'Search',
+                  icon: Icons.search,
+                  route: RouteNames.commandPalette,
+                  accent: AppColours.darkPrimary,
+                  badge: 'Cmd',
+                ),
+                _SidebarLink(
+                  label: 'QR Studio',
+                  icon: Icons.print_outlined,
+                  route: RouteNames.assetQrLabelStudio,
+                  accent: AppColours.darkSecondary,
+                  badge: 'Print',
+                ),
+                _SidebarLink(
+                  label: 'Command Deck',
+                  icon: Icons.space_dashboard_outlined,
+                  route: RouteNames.commandDeck,
+                ),
+                _SidebarLink(
+                  label: 'Experiments',
+                  icon: Icons.science_outlined,
+                  route: RouteNames.experimentWorkspace,
+                  accent: AppColours.darkSecondary,
+                  badge: 'Lab',
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            _ShellDestination(
-              label: 'Tasks',
-              icon: Icons.checklist_outlined,
-              selectedIcon: Icons.checklist_rounded,
-              selected: navigationShell.currentIndex == 4,
-              onTap: () => navigationShell.goBranch(4),
-            ),
-            const SizedBox(height: 8),
-            _ShellDestination(
-              label: 'Planner',
-              icon: Icons.today_outlined,
-              selectedIcon: Icons.today_rounded,
-              selected: navigationShell.currentIndex == 5,
-              onTap: () => navigationShell.goBranch(5),
-            ),
-            const SizedBox(height: 8),
-            _ShellDestination(
-              label: 'More',
-              icon: Icons.apps_outlined,
-              selectedIcon: Icons.apps_rounded,
-              selected: navigationShell.currentIndex == 6,
-              onTap: () => navigationShell.goBranch(6),
-            ),
-            const SizedBox(height: 16),
-            Divider(color: AppColours.darkOutline.withValues(alpha: 0.7)),
-            const SizedBox(height: 8),
-            _SidebarLink(
-              label: 'Journal',
-              icon: Icons.menu_book_outlined,
-              route: RouteNames.journal,
-            ),
-            _SidebarLink(
-              label: 'Learning',
-              icon: Icons.school_outlined,
-              route: RouteNames.learning,
-            ),
-            _SidebarLink(
-              label: 'Content',
-              icon: Icons.campaign_outlined,
-              route: RouteNames.content,
-            ),
-            _SidebarLink(
-              label: 'Business',
-              icon: Icons.handshake_outlined,
-              route: RouteNames.business,
-            ),
-            _SidebarLink(
-              label: 'Wellbeing',
-              icon: Icons.favorite_border,
-              route: RouteNames.wellbeing,
-            ),
-            _SidebarLink(
-              label: 'Inbox',
-              icon: Icons.inbox_outlined,
-              route: RouteNames.inbox,
-            ),
-            _SidebarLink(
-              label: 'Voice',
-              icon: Icons.mic_none_rounded,
-              route: RouteNames.voice,
-            ),
-            const _AlexaGatewaySidebarLink(),
-            const SizedBox(height: 12),
-            Divider(color: AppColours.darkOutline.withValues(alpha: 0.5)),
-            const SizedBox(height: 8),
-            Text(
-              'Security',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: AppColours.darkMutedText.withValues(alpha: 0.82),
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 6),
-            _SidebarLink(
-              label: 'Users & Devices',
-              icon: Icons.verified_user_outlined,
-              route: RouteNames.usersDevices,
-              accent: AppColours.darkSecondary,
-              badge: 'Gate',
-            ),
-            const SizedBox(height: 4),
-            _SidebarLink(
-              label: 'Search',
-              icon: Icons.search,
-              route: RouteNames.commandPalette,
-              accent: AppColours.darkPrimary,
-              badge: 'Cmd',
-            ),
-            _SidebarLink(
-              label: 'QR Studio',
-              icon: Icons.print_outlined,
-              route: RouteNames.assetQrLabelStudio,
-              accent: AppColours.darkSecondary,
-              badge: 'Print',
-            ),
-            _SidebarLink(
-              label: 'Command Deck',
-              icon: Icons.space_dashboard_outlined,
-              route: RouteNames.commandDeck,
-            ),
-            _SidebarLink(
-              label: 'Experiments',
-              icon: Icons.science_outlined,
-              route: RouteNames.experimentWorkspace,
-              accent: AppColours.darkSecondary,
-              badge: 'Lab',
-            ),
-            _SidebarLink(
-              label: 'About & Help',
-              icon: Icons.help_outline,
-              route: RouteNames.aboutHelp,
-              accent: AppColours.darkSecondary,
-              badge: 'Docs',
+            const SizedBox(height: 14),
+            _SidebarSection(
+              title: 'About',
+              children: [
+                _SidebarLink(
+                  label: 'About & Help',
+                  icon: Icons.help_outline,
+                  route: RouteNames.aboutHelp,
+                  accent: AppColours.darkSecondary,
+                  badge: 'Docs',
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Text(
@@ -331,6 +345,37 @@ class _Sidebar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SidebarSection extends StatelessWidget {
+  const _SidebarSection({
+    required this.title,
+    required this.children,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppColours.darkMutedText.withValues(alpha: 0.82),
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...children,
+      ],
     );
   }
 }
