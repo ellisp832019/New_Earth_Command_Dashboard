@@ -901,6 +901,8 @@ class UsersDevicesDeviceOnboardingScreen extends ConsumerStatefulWidget {
 class _UsersDevicesDeviceOnboardingScreenState
     extends ConsumerState<UsersDevicesDeviceOnboardingScreen> {
   String _template = 'standard';
+  String _historyQuery = '';
+  String _historyFilter = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -922,6 +924,45 @@ class _UsersDevicesDeviceOnboardingScreenState
             .where((event) => event.eventType == 'device_trust_confirmed')
             .toList(growable: false)
           ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        final query = _historyQuery.trim().toLowerCase();
+        final filteredTrustEvents = trustEvents.where((event) {
+          if (_historyFilter != 'all' && _historyFilter != 'confirmations') {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+          final haystack = [
+            event.eventId,
+            event.actorId,
+            event.deviceId,
+            event.targetModule,
+            event.action,
+            event.result,
+            event.reason,
+            event.timestamp,
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+        final filteredTrustedDevices = trustedDevices.where((device) {
+          if (_historyFilter != 'all' && _historyFilter != 'devices') {
+            return false;
+          }
+          if (query.isEmpty) {
+            return device.trustLevel >= 3;
+          }
+          final haystack = [
+            device.id,
+            device.name,
+            device.type,
+            device.status,
+            device.ownerId,
+            device.notes,
+            device.trustLevel.toString(),
+            ...device.allowedActions,
+          ].join(' ').toLowerCase();
+          return haystack.contains(query) && device.trustLevel >= 3;
+        }).toList(growable: false);
 
         return _SectionScaffold(
           title: 'Device Onboarding',
@@ -1041,6 +1082,32 @@ class _UsersDevicesDeviceOnboardingScreenState
                 ),
               ),
               const SizedBox(height: 16),
+              _SearchFilterPanel(
+                title: 'Onboarding history',
+                subtitle:
+                    'Search recent pairings or trusted devices by id, owner, reason, or action.',
+                query: _historyQuery,
+                onQueryChanged: (value) => setState(() => _historyQuery = value),
+                chips: [
+                  ChoiceChip(
+                    label: const Text('All'),
+                    selected: _historyFilter == 'all',
+                    onSelected: (_) => setState(() => _historyFilter = 'all'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Confirmations'),
+                    selected: _historyFilter == 'confirmations',
+                    onSelected: (_) =>
+                        setState(() => _historyFilter = 'confirmations'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Trusted devices'),
+                    selected: _historyFilter == 'devices',
+                    onSelected: (_) => setState(() => _historyFilter = 'devices'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -1055,17 +1122,17 @@ class _UsersDevicesDeviceOnboardingScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (trustEvents.isEmpty)
+                          if (filteredTrustEvents.isEmpty)
                             const _EmptyCollectionState(
                               icon: Icons.history_outlined,
-                              title: 'No trust confirmations yet',
+                              title: 'No trust confirmations matched',
                               body:
-                                  'Start onboarding a device to record the first local pairing.',
+                                  'Try a broader search term or switch the filter back to All.',
                             )
                           else
                             Column(
                               children: [
-                                for (final event in trustEvents.take(5))
+                                for (final event in filteredTrustEvents.take(5))
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 10),
                                     child: _EntityCard(
@@ -1100,19 +1167,17 @@ class _UsersDevicesDeviceOnboardingScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (trustedDevices.where((device) => device.trustLevel >= 3).isEmpty)
+                          if (filteredTrustedDevices.isEmpty)
                             const _EmptyCollectionState(
                               icon: Icons.devices_outlined,
-                              title: 'No trusted devices yet',
+                              title: 'No trusted devices matched',
                               body:
-                                  'Onboard a higher-trust device to see it appear here.',
+                                  'Try a broader search term or switch the filter back to All.',
                             )
                           else
                             Column(
                               children: [
-                                for (final device in trustedDevices
-                                    .where((device) => device.trustLevel >= 3)
-                                    .take(5))
+                                for (final device in filteredTrustedDevices.take(5))
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 10),
                                     child: _EntityCard(
