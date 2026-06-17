@@ -62,6 +62,11 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                     icon: Icons.rule_folder_outlined,
                     onPressed: () => _createSampleApproval(context, ref),
                   ),
+                  _ActionChip(
+                    label: 'Seed demo path',
+                    icon: Icons.playlist_add_check_outlined,
+                    onPressed: () => _seedDemoPath(context, ref),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -3424,6 +3429,75 @@ Future<void> _createSampleApproval(
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sample approval created.')),
+    );
+  }
+}
+
+Future<void> _seedDemoPath(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+
+  final role = snapshot.roles.isNotEmpty ? snapshot.roles.first.role : 'Guest';
+  final permission = snapshot.permissions.isNotEmpty
+      ? snapshot.permissions.first.permission
+      : 'dashboard.view';
+  final trustLevel = snapshot.trustLevels.isNotEmpty
+      ? snapshot.trustLevels.firstWhere(
+          (level) => level.level >= 3,
+          orElse: () => snapshot.trustLevels.first,
+        ).level
+      : 3;
+  final allowedAction = snapshot.accessRules.isNotEmpty
+      ? snapshot.accessRules.first.viewPermission
+      : permission;
+  final actionScope = allowedAction.isNotEmpty ? allowedAction : permission;
+
+  const userId = 'user_demo_collaborator';
+  const deviceId = 'device_demo_tablet';
+
+  await repository.registerUser(
+    UsersDevicesControlUser(
+      id: userId,
+      displayName: 'Demo Collaborator',
+      role: role,
+      title: 'Seeded from the module hub',
+      status: 'active',
+      permissions: [permission],
+      linkedDevices: [deviceId],
+      notes: 'Created from the UI demo path.',
+    ),
+  );
+  await repository.registerDevice(
+    UsersDevicesControlDevice(
+      id: deviceId,
+      name: 'Demo Tablet',
+      type: 'tablet',
+      trustLevel: trustLevel,
+      status: trustLevel >= 3 ? 'trusted' : 'registered',
+      ownerId: userId,
+      allowedActions: [actionScope],
+      notes: 'Created from the UI demo path.',
+    ),
+  );
+  await repository.createApprovalRequest(
+    requestedBy: userId,
+    deviceId: deviceId,
+    targetModule: '01_USERS_AND_DEVICES_CONTROL',
+    action: 'assign_role',
+    riskLevel: 'high',
+    reason: 'Demo review path created from the module hub.',
+  );
+
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+  if (context.mounted) {
+    context.go(RouteNames.usersDevicesApprovalQueue);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Demo user, device, and approval were seeded.'),
+      ),
     );
   }
 }
