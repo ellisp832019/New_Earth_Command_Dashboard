@@ -269,6 +269,25 @@ class _Sidebar extends StatelessWidget {
               route: RouteNames.voice,
             ),
             const _AlexaGatewaySidebarLink(),
+            const SizedBox(height: 12),
+            Divider(color: AppColours.darkOutline.withValues(alpha: 0.5)),
+            const SizedBox(height: 8),
+            Text(
+              'Security',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: AppColours.darkMutedText.withValues(alpha: 0.82),
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 6),
+            _SidebarLink(
+              label: 'Users & Devices',
+              icon: Icons.verified_user_outlined,
+              route: RouteNames.usersDevices,
+              accent: AppColours.darkSecondary,
+              badge: 'Gate',
+            ),
+            const SizedBox(height: 4),
             _SidebarLink(
               label: 'Search',
               icon: Icons.search,
