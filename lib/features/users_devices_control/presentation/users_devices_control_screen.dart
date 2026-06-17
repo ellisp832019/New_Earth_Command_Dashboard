@@ -115,11 +115,21 @@ class UsersDevicesControlScreen extends ConsumerWidget {
   }
 }
 
-class UsersDevicesUsersScreen extends ConsumerWidget {
+class UsersDevicesUsersScreen extends ConsumerStatefulWidget {
   const UsersDevicesUsersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UsersDevicesUsersScreen> createState() =>
+      _UsersDevicesUsersScreenState();
+}
+
+class _UsersDevicesUsersScreenState
+    extends ConsumerState<UsersDevicesUsersScreen> {
+  String _searchQuery = '';
+  String _statusFilter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Users'),
@@ -128,99 +138,180 @@ class UsersDevicesUsersScreen extends ConsumerWidget {
         message: 'The users registry is not ready right now.',
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
-      data: (data) => _SectionScaffold(
-        title: 'Users',
-        subtitle: 'People, collaborators, guests, and AI identities',
-        onBack: () => context.go(RouteNames.usersDevices),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ActionStrip(
-              title: 'User actions',
-              subtitle:
-                  'Add or update a local identity and write the audit trail immediately.',
-              actions: [
-                _ActionChip(
-                  label: 'Add user',
-                  icon: Icons.person_add_alt_1_outlined,
-                  onPressed: () => _openUserEditor(context, ref),
-                ),
-                _ActionChip(
-                  label: 'Seed sample user',
-                  icon: Icons.auto_fix_high_outlined,
-                  onPressed: () => _registerSampleUser(context, ref),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _SummaryRow(
-              items: [
-                ('Active', data.users.where((user) => user.status == 'active').length),
-                ('Templates', data.users.where((user) => user.status == 'template').length),
-                ('With devices', data.users.where((user) => user.linkedDevices.isNotEmpty).length),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final user in data.users)
-                  SizedBox(
-                    width: 360,
-                    child: _EntityCard(
-                      icon: Icons.person_outline,
-                      title: user.displayName,
-                      subtitle:
-                          '${user.role}${user.title.isNotEmpty ? ' · ${user.title}' : ''}',
-                      body:
-                          '${user.permissions.length} permissions · ${user.linkedDevices.length} linked devices',
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Chip(label: Text(user.status)),
-                          const SizedBox(width: 8),
-                          _EntityActionsMenu(
-                            isArchived: user.status == 'archived',
-                            onEdit: () => _openUserEditor(
-                              context,
-                              ref,
-                              user: user,
-                            ),
-                            onArchiveToggle: () => _toggleUserArchive(
-                              context,
-                              ref,
-                              user,
-                            ),
-                            onDelete: () => _confirmDeleteUser(
-                              context,
-                              ref,
-                              user,
-                            ),
-                          ),
-                        ],
-                      ),
-                      chips: [
-                        _CardChip(label: user.role),
-                        if (user.permissions.isNotEmpty)
-                          _CardChip(label: user.permissions.first),
-                      ],
-                    ),
+      data: (data) {
+        final filteredUsers = data.users.where((user) {
+          if (_statusFilter != 'all' && user.status != _statusFilter) {
+            return false;
+          }
+          final query = _searchQuery.trim().toLowerCase();
+          if (query.isEmpty) {
+            return true;
+          }
+
+          final haystack = [
+            user.id,
+            user.displayName,
+            user.role,
+            user.title,
+            user.status,
+            user.notes,
+            ...user.permissions,
+            ...user.linkedDevices,
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+
+        return _SectionScaffold(
+          title: 'Users',
+          subtitle: 'People, collaborators, guests, and AI identities',
+          onBack: () => context.go(RouteNames.usersDevices),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ActionStrip(
+                title: 'User actions',
+                subtitle:
+                    'Add or update a local identity and write the audit trail immediately.',
+                actions: [
+                  _ActionChip(
+                    label: 'Add user',
+                    icon: Icons.person_add_alt_1_outlined,
+                    onPressed: () => _openUserEditor(context, ref),
                   ),
-              ],
-            ),
-          ],
-        ),
-      ),
+                  _ActionChip(
+                    label: 'Seed sample user',
+                    icon: Icons.auto_fix_high_outlined,
+                    onPressed: () => _registerSampleUser(context, ref),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SummaryRow(
+                items: [
+                  (
+                    'Active',
+                    data.users.where((user) => user.status == 'active').length,
+                  ),
+                  (
+                    'Templates',
+                    data.users.where((user) => user.status == 'template').length,
+                  ),
+                  (
+                    'With devices',
+                    data.users.where((user) => user.linkedDevices.isNotEmpty).length,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SearchFilterPanel(
+                title: 'Search users',
+                subtitle:
+                    'Filter by name, role, notes, permissions, device links, or status.',
+                query: _searchQuery,
+                onQueryChanged: (value) => setState(() => _searchQuery = value),
+                chips: [
+                  ChoiceChip(
+                    label: const Text('All'),
+                    selected: _statusFilter == 'all',
+                    onSelected: (_) => setState(() => _statusFilter = 'all'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Active'),
+                    selected: _statusFilter == 'active',
+                    onSelected: (_) => setState(() => _statusFilter = 'active'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Templates'),
+                    selected: _statusFilter == 'template',
+                    onSelected: (_) => setState(() => _statusFilter = 'template'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Archived'),
+                    selected: _statusFilter == 'archived',
+                    onSelected: (_) => setState(() => _statusFilter = 'archived'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (filteredUsers.isEmpty)
+                _EmptyCollectionState(
+                  icon: Icons.person_off_outlined,
+                  title: 'No users matched the current filters',
+                  body:
+                      'Try a broader search term or switch the status filter back to All.',
+                )
+              else
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final user in filteredUsers)
+                      SizedBox(
+                        width: 360,
+                        child: _EntityCard(
+                          icon: Icons.person_outline,
+                          title: user.displayName,
+                          subtitle:
+                              '${user.role}${user.title.isNotEmpty ? ' - ${user.title}' : ''}',
+                          body:
+                              '${user.permissions.length} permissions - ${user.linkedDevices.length} linked devices',
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Chip(label: Text(user.status)),
+                              const SizedBox(width: 8),
+                              _EntityActionsMenu(
+                                isArchived: user.status == 'archived',
+                                onEdit: () => _openUserEditor(
+                                  context,
+                                  ref,
+                                  user: user,
+                                ),
+                                onArchiveToggle: () => _toggleUserArchive(
+                                  context,
+                                  ref,
+                                  user,
+                                ),
+                                onDelete: () => _confirmDeleteUser(
+                                  context,
+                                  ref,
+                                  user,
+                                ),
+                              ),
+                            ],
+                          ),
+                          chips: [
+                            _CardChip(label: user.role),
+                            if (user.permissions.isNotEmpty)
+                              _CardChip(label: user.permissions.first),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class UsersDevicesDevicesScreen extends ConsumerWidget {
+class UsersDevicesDevicesScreen extends ConsumerStatefulWidget {
   const UsersDevicesDevicesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UsersDevicesDevicesScreen> createState() =>
+      _UsersDevicesDevicesScreenState();
+}
+
+class _UsersDevicesDevicesScreenState
+    extends ConsumerState<UsersDevicesDevicesScreen> {
+  String _searchQuery = '';
+  String _statusFilter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Devices'),
@@ -229,98 +320,190 @@ class UsersDevicesDevicesScreen extends ConsumerWidget {
         message: 'The device registry is not ready right now.',
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
-      data: (data) => _SectionScaffold(
-        title: 'Devices',
-        subtitle: 'Local PCs, assistants, printers, sensors, and gateways',
-        onBack: () => context.go(RouteNames.usersDevices),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ActionStrip(
-              title: 'Device actions',
-              subtitle:
-                  'Add or update a local device and keep the trust trail local.',
-              actions: [
-                _ActionChip(
-                  label: 'Add device',
-                  icon: Icons.devices_outlined,
-                  onPressed: () => _openDeviceEditor(context, ref),
-                ),
-                _ActionChip(
-                  label: 'Seed sample device',
-                  icon: Icons.auto_fix_high_outlined,
-                  onPressed: () => _registerSampleDevice(context, ref),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _SummaryRow(
-              items: [
-                ('Trusted', data.devices.where((device) => device.trustLevel >= 3).length),
-                ('Critical', data.devices.where((device) => device.status == 'critical').length),
-                ('Owned', data.devices.where((device) => device.ownerId.isNotEmpty).length),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final device in data.devices)
-                  SizedBox(
-                    width: 360,
-                    child: _EntityCard(
-                      icon: Icons.devices_outlined,
-                      title: device.name,
-                      subtitle: device.type,
-                      body:
-                          'Trust ${device.trustLevel} · ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Chip(label: Text(device.status)),
-                          const SizedBox(width: 8),
-                          _EntityActionsMenu(
-                            isArchived: device.status == 'archived',
-                            onEdit: () => _openDeviceEditor(
-                              context,
-                              ref,
-                              device: device,
-                            ),
-                            onArchiveToggle: () => _toggleDeviceArchive(
-                              context,
-                              ref,
-                              device,
-                            ),
-                            onDelete: () => _confirmDeleteDevice(
-                              context,
-                              ref,
-                              device,
-                            ),
-                          ),
-                        ],
-                      ),
-                      chips: [
-                        _CardChip(label: 'T${device.trustLevel}'),
-                        if (device.ownerId.isNotEmpty)
-                          const _CardChip(label: 'Assigned'),
-                      ],
-                    ),
+      data: (data) {
+        final filteredDevices = data.devices.where((device) {
+          if (_statusFilter != 'all' && device.status != _statusFilter) {
+            return false;
+          }
+          final query = _searchQuery.trim().toLowerCase();
+          if (query.isEmpty) {
+            return true;
+          }
+
+          final haystack = [
+            device.id,
+            device.name,
+            device.type,
+            device.status,
+            device.ownerId,
+            device.notes,
+            device.trustLevel.toString(),
+            ...device.allowedActions,
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+
+        return _SectionScaffold(
+          title: 'Devices',
+          subtitle: 'Local PCs, assistants, printers, sensors, and gateways',
+          onBack: () => context.go(RouteNames.usersDevices),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ActionStrip(
+                title: 'Device actions',
+                subtitle:
+                    'Add or update a local device and keep the trust trail local.',
+                actions: [
+                  _ActionChip(
+                    label: 'Add device',
+                    icon: Icons.devices_outlined,
+                    onPressed: () => _openDeviceEditor(context, ref),
                   ),
-              ],
-            ),
-          ],
-        ),
-      ),
+                  _ActionChip(
+                    label: 'Seed sample device',
+                    icon: Icons.auto_fix_high_outlined,
+                    onPressed: () => _registerSampleDevice(context, ref),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SummaryRow(
+                items: [
+                  (
+                    'Trusted',
+                    data.devices.where((device) => device.trustLevel >= 3).length,
+                  ),
+                  (
+                    'Critical',
+                    data.devices.where((device) => device.status == 'critical').length,
+                  ),
+                  (
+                    'Owned',
+                    data.devices.where((device) => device.ownerId.isNotEmpty).length,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SearchFilterPanel(
+                title: 'Search devices',
+                subtitle:
+                    'Filter by name, type, owner, action scope, notes, trust level, or status.',
+                query: _searchQuery,
+                onQueryChanged: (value) => setState(() => _searchQuery = value),
+                chips: [
+                  ChoiceChip(
+                    label: const Text('All'),
+                    selected: _statusFilter == 'all',
+                    onSelected: (_) => setState(() => _statusFilter = 'all'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Registered'),
+                    selected: _statusFilter == 'registered',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'registered'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Trusted'),
+                    selected: _statusFilter == 'trusted',
+                    onSelected: (_) => setState(() => _statusFilter = 'trusted'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Critical'),
+                    selected: _statusFilter == 'critical',
+                    onSelected: (_) => setState(() => _statusFilter = 'critical'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Blocked'),
+                    selected: _statusFilter == 'blocked',
+                    onSelected: (_) => setState(() => _statusFilter = 'blocked'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Archived'),
+                    selected: _statusFilter == 'archived',
+                    onSelected: (_) => setState(() => _statusFilter = 'archived'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (filteredDevices.isEmpty)
+                _EmptyCollectionState(
+                  icon: Icons.devices_other_outlined,
+                  title: 'No devices matched the current filters',
+                  body:
+                      'Try a broader search term or switch the status filter back to All.',
+                )
+              else
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final device in filteredDevices)
+                      SizedBox(
+                        width: 360,
+                        child: _EntityCard(
+                          icon: Icons.devices_outlined,
+                          title: device.name,
+                          subtitle: device.type,
+                          body:
+                              'Trust ${device.trustLevel} - ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Chip(label: Text(device.status)),
+                              const SizedBox(width: 8),
+                              _EntityActionsMenu(
+                                isArchived: device.status == 'archived',
+                                onEdit: () => _openDeviceEditor(
+                                  context,
+                                  ref,
+                                  device: device,
+                                ),
+                                onArchiveToggle: () => _toggleDeviceArchive(
+                                  context,
+                                  ref,
+                                  device,
+                                ),
+                                onDelete: () => _confirmDeleteDevice(
+                                  context,
+                                  ref,
+                                  device,
+                                ),
+                              ),
+                            ],
+                          ),
+                          chips: [
+                            _CardChip(label: 'T${device.trustLevel}'),
+                            if (device.ownerId.isNotEmpty)
+                              const _CardChip(label: 'Assigned'),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class UsersDevicesAccessMatrixScreen extends ConsumerWidget {
+class UsersDevicesAccessMatrixScreen extends ConsumerStatefulWidget {
   const UsersDevicesAccessMatrixScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UsersDevicesAccessMatrixScreen> createState() =>
+      _UsersDevicesAccessMatrixScreenState();
+}
+
+class _UsersDevicesAccessMatrixScreenState
+    extends ConsumerState<UsersDevicesAccessMatrixScreen> {
+  String _roleQuery = '';
+  String _ruleQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Access Matrix'),
@@ -329,93 +512,204 @@ class UsersDevicesAccessMatrixScreen extends ConsumerWidget {
         message: 'The access matrix could not be loaded right now.',
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
-      data: (data) => _SectionScaffold(
-        title: 'Access Matrix',
-        subtitle: 'Role permissions and module gates',
-        onBack: () => context.go(RouteNames.usersDevices),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ActionStrip(
-              title: 'Gatekeeper checks',
-              subtitle:
-                  'Create a sample approval to watch the audit trail update.',
-              actions: [
-                _ActionChip(
-                  label: 'Create sample approval',
-                  icon: Icons.rule_folder_outlined,
-                  onPressed: () => _createSampleApproval(context, ref),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                SizedBox(
-                  width: 430,
-                  child: _VisualPanel(
-                    title: 'Role permissions',
-                    subtitle: 'What each identity can do locally',
-                    icon: Icons.badge_outlined,
-                    child: Column(
-                      children: [
-                        for (final role in data.roles)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _EntityCard(
+      data: (data) {
+        final filteredRoles = data.roles.where((role) {
+          final query = _roleQuery.trim().toLowerCase();
+          if (query.isEmpty) {
+            return true;
+          }
+          final haystack = [role.role, ...role.permissions].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+
+        final filteredRules = data.accessRules.where((rule) {
+          final query = _ruleQuery.trim().toLowerCase();
+          if (query.isEmpty) {
+            return true;
+          }
+          final haystack = [
+            rule.moduleId,
+            rule.viewPermission,
+            rule.editPermission,
+            rule.adminPermission,
+            rule.requestPermission,
+            rule.executePermission,
+            rule.controlPermission,
+            rule.requiresTrustLevel.toString(),
+            ...rule.requiresApprovalFor,
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+
+        return _SectionScaffold(
+          title: 'Access Matrix',
+          subtitle: 'Role permissions and module gates',
+          onBack: () => context.go(RouteNames.usersDevices),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ActionStrip(
+                title: 'Gatekeeper checks',
+                subtitle:
+                    'Create a sample approval to watch the audit trail update.',
+                actions: [
+                  _ActionChip(
+                    label: 'Create sample approval',
+                    icon: Icons.rule_folder_outlined,
+                    onPressed: () => _createSampleApproval(context, ref),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SummaryRow(
+                items: [
+                  ('Roles', data.roles.length),
+                  ('Rules', data.accessRules.length),
+                  (
+                    'Gated',
+                    data.accessRules
+                        .where((rule) => rule.requiresApprovalFor.isNotEmpty)
+                        .length,
+                  ),
+                  (
+                    'Trust 4+',
+                    data.accessRules
+                        .where((rule) => rule.requiresTrustLevel >= 4)
+                        .length,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: 430,
+                    child: _VisualPanel(
+                      title: 'Role permissions',
+                      subtitle: 'What each identity can do locally',
+                      icon: Icons.badge_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            onChanged: (value) =>
+                                setState(() => _roleQuery = value),
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.search_outlined),
+                              labelText: 'Search roles',
+                              hintText: 'Role name or permission',
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          if (filteredRoles.isEmpty)
+                            const _EmptyCollectionState(
                               icon: Icons.badge_outlined,
-                              title: role.role,
-                              subtitle:
-                                  '${role.permissions.length} permissions',
-                              body: role.permissions.join(' · '),
-                              chips: [
-                                if (role.permissions.isNotEmpty)
-                                  _CardChip(label: role.permissions.first),
+                              title: 'No roles matched the current filter',
+                              body:
+                                  'Try a broader search term to bring the role cards back.',
+                            )
+                          else
+                            Column(
+                              children: [
+                                for (final role in filteredRoles)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _EntityCard(
+                                      icon: Icons.badge_outlined,
+                                      title: role.role,
+                                      subtitle:
+                                          '${role.permissions.length} permissions',
+                                      body: role.permissions.isEmpty
+                                          ? 'No permissions configured.'
+                                          : role.permissions.join(' - '),
+                                      chips: [
+                                        if (role.permissions.isNotEmpty)
+                                          _CardChip(
+                                            label: '${role.permissions.length} scopes',
+                                          ),
+                                        if (role.permissions.isNotEmpty)
+                                          _CardChip(label: role.permissions.first),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: 430,
-                  child: _VisualPanel(
-                    title: 'Module rules',
-                    subtitle: 'Trust and approval thresholds',
-                    icon: Icons.shield_outlined,
-                    child: Column(
-                      children: [
-                        for (final rule in data.accessRules)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _EntityCard(
-                              icon: Icons.shield_outlined,
-                              title: rule.moduleId,
-                              subtitle:
-                                  'Trust floor ${rule.requiresTrustLevel}',
-                              body:
-                                  'View: ${rule.viewPermission.isEmpty ? 'none' : rule.viewPermission} · Approvals: ${rule.requiresApprovalFor.length}',
-                              trailing: Chip(
-                                label: Text(
-                                  rule.requiresApprovalFor.isEmpty
-                                      ? 'Open'
-                                      : 'Gated',
-                                ),
-                              ),
+                  SizedBox(
+                    width: 430,
+                    child: _VisualPanel(
+                      title: 'Module rules',
+                      subtitle: 'Trust and approval thresholds',
+                      icon: Icons.shield_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            onChanged: (value) =>
+                                setState(() => _ruleQuery = value),
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.search_outlined),
+                              labelText: 'Search rules',
+                              hintText: 'Module, permission, or trust level',
                             ),
                           ),
-                      ],
+                          const SizedBox(height: 12),
+                          if (filteredRules.isEmpty)
+                            const _EmptyCollectionState(
+                              icon: Icons.shield_outlined,
+                              title: 'No rules matched the current filter',
+                              body:
+                                  'Try a broader search term to bring the rule cards back.',
+                            )
+                          else
+                            Column(
+                              children: [
+                                for (final rule in filteredRules)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _EntityCard(
+                                      icon: Icons.shield_outlined,
+                                      title: rule.moduleId,
+                                      subtitle:
+                                          'Trust floor ${rule.requiresTrustLevel}',
+                                      body:
+                                          'View: ${rule.viewPermission.isEmpty ? 'none' : rule.viewPermission} - Approvals: ${rule.requiresApprovalFor.length}',
+                                      trailing: Chip(
+                                        label: Text(
+                                          rule.requiresApprovalFor.isEmpty
+                                              ? 'Open'
+                                              : 'Gated',
+                                        ),
+                                      ),
+                                      chips: [
+                                        _CardChip(
+                                          label: 'Trust ${rule.requiresTrustLevel}',
+                                        ),
+                                        _CardChip(
+                                          label: rule.requiresApprovalFor.isEmpty
+                                              ? 'No approvals'
+                                              : '${rule.requiresApprovalFor.length} approvals',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -484,7 +778,7 @@ class UsersDevicesDeviceOnboardingScreen extends ConsumerWidget {
                       width: 280,
                       child: _EntityCard(
                         icon: Icons.verified_outlined,
-                        title: '${level.level} · ${level.name}',
+                        title: '${level.level} - ${level.name}',
                         subtitle: 'Trust band',
                         body: level.description,
                       ),
@@ -499,11 +793,21 @@ class UsersDevicesDeviceOnboardingScreen extends ConsumerWidget {
   }
 }
 
-class UsersDevicesApprovalQueueScreen extends ConsumerWidget {
+class UsersDevicesApprovalQueueScreen extends ConsumerStatefulWidget {
   const UsersDevicesApprovalQueueScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UsersDevicesApprovalQueueScreen> createState() =>
+      _UsersDevicesApprovalQueueScreenState();
+}
+
+class _UsersDevicesApprovalQueueScreenState
+    extends ConsumerState<UsersDevicesApprovalQueueScreen> {
+  String _query = '';
+  String _statusFilter = 'pending';
+
+  @override
+  Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Approval Queue'),
@@ -512,56 +816,169 @@ class UsersDevicesApprovalQueueScreen extends ConsumerWidget {
         message: 'The approval queue could not be loaded right now.',
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
-      data: (data) => _SectionScaffold(
-        title: 'Approval Queue',
-        subtitle: 'Review actions that need a second look',
-        onBack: () => context.go(RouteNames.usersDevices),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final request in data.approvalQueue)
-              SizedBox(
-                width: 450,
-                child: _ApprovalRequestCard(
-                  request: request,
-                  onApprove: request.status == 'pending'
-                      ? () async {
-                          await ref
-                              .read(usersDevicesControlRepositoryProvider)
-                              .approveRequest(
-                                request.requestId,
-                                reviewedBy: 'user_peter_owner',
-                              );
-                          ref.invalidate(usersDevicesControlSnapshotProvider);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Request approved.')),
-                            );
-                          }
-                        }
-                      : null,
-                  onDeny: request.status == 'pending'
-                      ? () async {
-                          await ref
-                              .read(usersDevicesControlRepositoryProvider)
-                              .denyRequest(
-                                request.requestId,
-                                reviewedBy: 'user_peter_owner',
-                              );
-                          ref.invalidate(usersDevicesControlSnapshotProvider);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Request denied.')),
-                            );
-                          }
-                        }
-                      : null,
-                ),
+      data: (data) {
+        final filteredRequests = data.approvalQueue.where((request) {
+          if (_statusFilter != 'all' && request.status != _statusFilter) {
+            return false;
+          }
+          final query = _query.trim().toLowerCase();
+          if (query.isEmpty) {
+            return true;
+          }
+          final haystack = [
+            request.requestId,
+            request.requestedBy,
+            request.deviceId,
+            request.targetModule,
+            request.action,
+            request.status,
+            request.riskLevel,
+            request.reason,
+            request.reviewedBy ?? '',
+            request.reviewedAt ?? '',
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+
+        return _SectionScaffold(
+          title: 'Approval Queue',
+          subtitle: 'Review actions that need a second look',
+          onBack: () => context.go(RouteNames.usersDevices),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ActionStrip(
+                title: 'Review flow',
+                subtitle:
+                    'Approve or deny pending requests while the audit trail updates locally.',
+                actions: [
+                  _ActionChip(
+                    label: 'Create sample approval',
+                    icon: Icons.rule_folder_outlined,
+                    onPressed: () => _createSampleApproval(context, ref),
+                  ),
+                ],
               ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 16),
+              _SummaryRow(
+                items: [
+                  ('All', data.approvalQueue.length),
+                  (
+                    'Pending',
+                    data.approvalQueue
+                        .where((request) => request.status == 'pending')
+                        .length,
+                  ),
+                  (
+                    'Allowed',
+                    data.approvalQueue
+                        .where((request) => request.status == 'allowed')
+                        .length,
+                  ),
+                  (
+                    'Denied',
+                    data.approvalQueue
+                        .where((request) => request.status == 'denied')
+                        .length,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SearchFilterPanel(
+                title: 'Search approvals',
+                subtitle:
+                    'Search by requester, device, module, action, reason, or risk.',
+                query: _query,
+                onQueryChanged: (value) => setState(() => _query = value),
+                chips: [
+                  ChoiceChip(
+                    label: const Text('Pending'),
+                    selected: _statusFilter == 'pending',
+                    onSelected: (_) => setState(() => _statusFilter = 'pending'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('All'),
+                    selected: _statusFilter == 'all',
+                    onSelected: (_) => setState(() => _statusFilter = 'all'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Allowed'),
+                    selected: _statusFilter == 'allowed',
+                    onSelected: (_) => setState(() => _statusFilter = 'allowed'),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Denied'),
+                    selected: _statusFilter == 'denied',
+                    onSelected: (_) => setState(() => _statusFilter = 'denied'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (filteredRequests.isEmpty)
+                _EmptyCollectionState(
+                  icon: Icons.rule_folder_outlined,
+                  title: 'No approvals matched the current filters',
+                  body:
+                      'Try switching the status chip or widening the search query.',
+                )
+              else
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final request in filteredRequests)
+                      SizedBox(
+                        width: 450,
+                        child: _ApprovalRequestCard(
+                          request: request,
+                          onApprove: request.status == 'pending'
+                              ? () async {
+                                  await ref
+                                      .read(usersDevicesControlRepositoryProvider)
+                                      .approveRequest(
+                                        request.requestId,
+                                        reviewedBy: 'user_peter_owner',
+                                      );
+                                  ref.invalidate(
+                                    usersDevicesControlSnapshotProvider,
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Request approved.'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
+                          onDeny: request.status == 'pending'
+                              ? () async {
+                                  await ref
+                                      .read(usersDevicesControlRepositoryProvider)
+                                      .denyRequest(
+                                        request.requestId,
+                                        reviewedBy: 'user_peter_owner',
+                                      );
+                                  ref.invalidate(
+                                    usersDevicesControlSnapshotProvider,
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Request denied.'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1237,6 +1654,89 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
+class _SearchFilterPanel extends StatelessWidget {
+  const _SearchFilterPanel({
+    required this.title,
+    required this.subtitle,
+    required this.query,
+    required this.onQueryChanged,
+    required this.chips,
+  });
+
+  final String title;
+  final String subtitle;
+  final String query;
+  final ValueChanged<String> onQueryChanged;
+  final List<Widget> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    return _VisualPanel(
+      title: title,
+      subtitle: subtitle,
+      icon: Icons.search_outlined,
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            onChanged: onQueryChanged,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search_outlined),
+              labelText: 'Search',
+              hintText: 'Type to narrow the list',
+              suffixIcon: query.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: () => onQueryChanged(''),
+                      icon: const Icon(Icons.clear),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: chips,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyCollectionState extends StatelessWidget {
+  const _EmptyCollectionState({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 28),
+            const SizedBox(height: 12),
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(body),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _EntityCard extends StatelessWidget {
   const _EntityCard({
     required this.icon,
@@ -1332,11 +1832,13 @@ class _PickerSection extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.trailing,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> children;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -1348,6 +1850,10 @@ class _PickerSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (trailing != null) ...[
+            Align(alignment: Alignment.centerRight, child: trailing),
+            const SizedBox(height: 10),
+          ],
           ...children,
         ],
       ),
@@ -1584,14 +2090,27 @@ class _ApprovalRequestCard extends StatelessWidget {
                       children: [
                         Text(request.action, style: theme.textTheme.titleMedium),
                         const SizedBox(height: 6),
-                        Text('${request.targetModule} · ${request.riskLevel} risk'),
+                        Text('${request.targetModule} - ${request.riskLevel} risk'),
                       ],
                     ),
                   ),
-                  Chip(label: Text(request.status)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Chip(label: Text(request.status)),
+                      const SizedBox(height: 6),
+                      Chip(
+                        label: Text(
+                          request.riskLevel.toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        side: BorderSide(color: riskColor),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(request.reason),
               const SizedBox(height: 12),
               Wrap(
@@ -1600,9 +2119,23 @@ class _ApprovalRequestCard extends StatelessWidget {
                 children: [
                   _CardChip(label: 'Requested by ${request.requestedBy}'),
                   _CardChip(label: 'Device ${request.deviceId}'),
+                  _CardChip(label: 'Module ${request.targetModule}'),
                   _CardChip(label: request.timestamp),
                 ],
               ),
+              if (request.reviewedBy != null || request.reviewedAt != null) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (request.reviewedBy != null)
+                      _CardChip(label: 'Reviewed by ${request.reviewedBy}'),
+                    if (request.reviewedAt != null)
+                      _CardChip(label: request.reviewedAt!),
+                  ],
+                ),
+              ],
               const SizedBox(height: 14),
               Wrap(
                 spacing: 8,
@@ -1659,7 +2192,7 @@ class _AuditEventCard extends StatelessWidget {
           ),
           title: Text(event.eventType),
           subtitle: Text(
-            '${event.actorId} · ${event.targetModule} · ${event.reason}',
+            '${event.actorId} - ${event.targetModule} - ${event.reason}',
           ),
           trailing: Chip(label: Text(event.result)),
         ),
@@ -1772,6 +2305,8 @@ Future<void> _openUserEditor(
   final selectedLinkedDevices = <String>{
     ...(user?.linkedDevices ?? const <String>[]),
   };
+  var permissionQuery = '';
+  var deviceQuery = '';
 
   try {
     final result = await showDialog<UsersDevicesControlUser>(
@@ -1781,6 +2316,17 @@ Future<void> _openUserEditor(
           title: Text(user == null ? 'Add user' : 'Edit user'),
           content: StatefulBuilder(
             builder: (context, setState) {
+              final filteredPermissions = availablePermissions.where(
+                (permission) => permission
+                    .toLowerCase()
+                    .contains(permissionQuery.trim().toLowerCase()),
+              ).toList(growable: false);
+              final filteredDevices = availableDevices.where(
+                (device) => '${device.name} ${device.id}'
+                    .toLowerCase()
+                    .contains(deviceQuery.trim().toLowerCase()),
+              ).toList(growable: false);
+
               return ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Form(
@@ -1811,12 +2357,12 @@ Future<void> _openUserEditor(
                               : null,
                         ),
                         const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            initialValue: role,
-                            decoration: const InputDecoration(
-                              labelText: 'Role',
-                            ),
-                            items: availableRoles
+                        DropdownButtonFormField<String>(
+                          initialValue: role,
+                          decoration: const InputDecoration(
+                            labelText: 'Role',
+                          ),
+                          items: availableRoles
                               .map(
                                 (item) => DropdownMenuItem<String>(
                                   value: item,
@@ -1860,16 +2406,36 @@ Future<void> _openUserEditor(
                         _PickerSection(
                           title: 'Permissions',
                           subtitle: 'Pick local permissions for this identity',
+                          trailing: TextButton(
+                            onPressed: selectedPermissions.isEmpty
+                                ? null
+                                : () {
+                                    setState(() => selectedPermissions.clear());
+                                  },
+                            child: Text('${selectedPermissions.length} selected'),
+                          ),
                           children: [
-                            if (availablePermissions.isNotEmpty)
+                            TextField(
+                              onChanged: (value) {
+                                setState(() => permissionQuery = value);
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Filter permissions',
+                                hintText: 'Search permission scopes',
+                                prefixIcon: Icon(Icons.search_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (filteredPermissions.isNotEmpty)
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  for (final permission in availablePermissions)
+                                  for (final permission in filteredPermissions)
                                     FilterChip(
                                       label: Text(permission),
-                                      selected: selectedPermissions.contains(permission),
+                                      selected:
+                                          selectedPermissions.contains(permission),
                                       onSelected: (value) {
                                         setState(() {
                                           if (value) {
@@ -1883,23 +2449,47 @@ Future<void> _openUserEditor(
                                 ],
                               )
                             else
-                              const Text('No permission definitions are available yet.'),
+                              Text(
+                                availablePermissions.isEmpty
+                                    ? 'No permission definitions are available yet.'
+                                    : 'No permissions matched the current filter.',
+                              ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _PickerSection(
                           title: 'Linked devices',
                           subtitle: 'Connect this user to the trusted devices they use',
+                          trailing: TextButton(
+                            onPressed: selectedLinkedDevices.isEmpty
+                                ? null
+                                : () {
+                                    setState(() => selectedLinkedDevices.clear());
+                                  },
+                            child: Text('${selectedLinkedDevices.length} selected'),
+                          ),
                           children: [
-                            if (availableDevices.isNotEmpty)
+                            TextField(
+                              onChanged: (value) {
+                                setState(() => deviceQuery = value);
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Filter devices',
+                                hintText: 'Search device name or id',
+                                prefixIcon: Icon(Icons.search_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (filteredDevices.isNotEmpty)
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  for (final device in availableDevices)
+                                  for (final device in filteredDevices)
                                     FilterChip(
                                       label: Text(device.name),
-                                      selected: selectedLinkedDevices.contains(device.id),
+                                      selected:
+                                          selectedLinkedDevices.contains(device.id),
                                       onSelected: (value) {
                                         setState(() {
                                           if (value) {
@@ -1913,7 +2503,11 @@ Future<void> _openUserEditor(
                                 ],
                               )
                             else
-                              const Text('No devices are available yet.'),
+                              Text(
+                                availableDevices.isEmpty
+                                    ? 'No devices are available yet.'
+                                    : 'No devices matched the current filter.',
+                              ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -2037,6 +2631,7 @@ Future<void> _openDeviceEditor(
     ...(device?.allowedActions ?? const <String>[]),
   };
   final customActionController = TextEditingController();
+  var actionQuery = '';
 
   try {
     final result = await showDialog<UsersDevicesControlDevice>(
@@ -2046,6 +2641,12 @@ Future<void> _openDeviceEditor(
           title: Text(device == null ? 'Add device' : 'Edit device'),
           content: StatefulBuilder(
             builder: (context, setState) {
+              final filteredActions = availableActions.where(
+                (action) => action
+                    .toLowerCase()
+                    .contains(actionQuery.trim().toLowerCase()),
+              ).toList(growable: false);
+
               return ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Form(
@@ -2151,13 +2752,32 @@ Future<void> _openDeviceEditor(
                         _PickerSection(
                           title: 'Allowed actions',
                           subtitle: 'Pick known action scopes or add a custom one',
+                          trailing: TextButton(
+                            onPressed: selectedActions.isEmpty
+                                ? null
+                                : () {
+                                    setState(() => selectedActions.clear());
+                                  },
+                            child: Text('${selectedActions.length} selected'),
+                          ),
                           children: [
-                            if (availableActions.isNotEmpty)
+                            TextField(
+                              onChanged: (value) {
+                                setState(() => actionQuery = value);
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Filter actions',
+                                hintText: 'Search action scopes',
+                                prefixIcon: Icon(Icons.search_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (filteredActions.isNotEmpty)
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  for (final action in availableActions)
+                                  for (final action in filteredActions)
                                     FilterChip(
                                       label: Text(action),
                                       selected: selectedActions.contains(action),
@@ -2174,7 +2794,11 @@ Future<void> _openDeviceEditor(
                                 ],
                               )
                             else
-                              const Text('No suggested actions are available yet.'),
+                              Text(
+                                availableActions.isEmpty
+                                    ? 'No suggested actions are available yet.'
+                                    : 'No actions matched the current filter.',
+                              ),
                             const SizedBox(height: 10),
                             Row(
                               children: [
