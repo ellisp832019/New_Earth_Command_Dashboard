@@ -1300,6 +1300,41 @@ class _UsersDevicesRouteGateScreenState
   String? _latestAuditEventId;
   String? _selectedUserId;
   String? _selectedDeviceId;
+  List<String> _blockedHints = const [];
+
+  String get _moduleLabel {
+    switch (widget.moduleId) {
+      case '01_USERS_AND_DEVICES_CONTROL':
+        return 'Users & Devices Control';
+      case 'newearth.finance_treasury':
+        return 'Finance & Treasury';
+      case 'repo_research_engine':
+        return 'Repo Research Engine';
+      case 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE':
+        return 'Alexa Voice Gateway';
+      case 'gaia_voice_assistant':
+        return 'GAIA Voice Assistant';
+      default:
+        return widget.title.replaceAll(' Gate', '');
+    }
+  }
+
+  String get _moduleFocus {
+    switch (widget.moduleId) {
+      case '01_USERS_AND_DEVICES_CONTROL':
+        return 'Identity, device trust, approval, and audit decisions stay local.';
+      case 'newearth.finance_treasury':
+        return 'Finance screens stay protected until local identity, role, trust, and audit checks pass.';
+      case 'repo_research_engine':
+        return 'Repository research stays guarded so evidence and exports remain local and auditable.';
+      case 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE':
+        return 'Voice gateway actions stay guarded before anything can reach connected devices.';
+      case 'gaia_voice_assistant':
+        return 'Voice and AI assistant surfaces stay local, trusted, and recorded in the audit trail.';
+      default:
+        return 'Sensitive screens stay local, trusted, and recorded in the audit trail.';
+    }
+  }
 
   void _seedSelections(UsersDevicesControlSnapshot snapshot) {
     if (_seededDefaults) {
@@ -1346,19 +1381,24 @@ class _UsersDevicesRouteGateScreenState
     final userId = _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
     final deviceId =
         _selectedDeviceId ?? (snapshot.devices.isNotEmpty ? snapshot.devices.first.id : '');
-    if (userId.isEmpty || deviceId.isEmpty) {
-      if (!mounted) {
+      if (userId.isEmpty || deviceId.isEmpty) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _busy = false;
+          _status = 'Locked';
+          _detail = 'Pick a local user and device before unlocking.';
+          _auditSummary = 'No access check was written because the gate was incomplete.';
+          _blockedHints = const [
+            'Choose a saved local user from the dropdown.',
+            'Choose a trusted local device from the dropdown.',
+            'Open Security Lock if the registry still feels incomplete.',
+          ];
+          _latestAuditEventId = null;
+        });
         return;
       }
-      setState(() {
-        _busy = false;
-        _status = 'Locked';
-        _detail = 'Pick a local user and device before unlocking.';
-        _auditSummary = 'No access check was written because the gate was incomplete.';
-        _latestAuditEventId = null;
-      });
-      return;
-    }
 
     final decision = await repository.canOpenModule(
       userId,
@@ -1385,7 +1425,59 @@ class _UsersDevicesRouteGateScreenState
       _auditSummary = latestAudit == null
           ? 'The access check was recorded locally.'
           : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
+      _blockedHints = decision.allowed
+          ? const []
+          : _blockedHintsFor(
+              reason: decision.reason,
+              userId: userId,
+              deviceId: deviceId,
+            );
     });
+  }
+
+  List<String> _blockedHintsFor({
+    required String reason,
+    required String userId,
+    required String deviceId,
+  }) {
+    final lowerReason = reason.toLowerCase();
+    final hints = <String>[];
+
+    if (lowerReason.contains('unknown user')) {
+      hints.add('Pick a local user that exists in the registry.');
+      hints.add('Seed a sample user if you are just testing the flow.');
+    }
+    if (lowerReason.contains('unknown device')) {
+      hints.add('Pick a local device that exists in the registry.');
+      hints.add('Register or seed a device before trying again.');
+    }
+    if (lowerReason.contains('archived or disabled')) {
+      hints.add('Restore the user or select a different active identity.');
+      hints.add('Check the Users screen if the account was parked.');
+    }
+    if (lowerReason.contains('archived or blocked')) {
+      hints.add('Use a trusted device or restore the blocked device first.');
+      hints.add('Open the Devices screen to review the device state.');
+    }
+    if (lowerReason.contains('trust must be at least level')) {
+      hints.add('Choose a higher-trust device, or raise trust during onboarding.');
+      hints.add('Open Device Onboarding to review the pairing history.');
+    }
+    if (lowerReason.contains('missing required permission')) {
+      hints.add('Grant the missing permission from the Access Matrix.');
+      hints.add('Check the selected role for the expected capability.');
+    }
+    if (lowerReason.contains('requires approval')) {
+      hints.add('Open the Approval Queue and review the pending request.');
+      hints.add('A trusted reviewer needs to approve this action first.');
+    }
+    if (hints.isEmpty) {
+      hints.add('Review the selected user and device before trying again.');
+      hints.add('Open the latest audit entry for more context.');
+    }
+    hints.add('Selected user: $userId');
+    hints.add('Selected device: $deviceId');
+    return hints;
   }
 
   @override
@@ -1468,6 +1560,22 @@ class _UsersDevicesRouteGateScreenState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _Badge(label: _moduleLabel),
+                                      const _Badge(label: 'Local gate'),
+                                      const _Badge(label: 'Identity checked'),
+                                      const _Badge(label: 'Audit required'),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _moduleFocus,
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 12),
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
@@ -1588,18 +1696,19 @@ class _UsersDevicesRouteGateScreenState
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          setState(() {
-                                            _seededDefaults = false;
-                                            _selectedUserId = null;
-                                            _selectedDeviceId = null;
-                                            _unlocked = false;
-                                            _status = 'Locked';
-                                            _detail = 'Waiting for local verification.';
-                                            _auditSummary =
-                                                'No audit decision recorded yet.';
-                                            _latestAuditEventId = null;
-                                          });
-                                        },
+                                      setState(() {
+                                          _seededDefaults = false;
+                                          _selectedUserId = null;
+                                          _selectedDeviceId = null;
+                                          _unlocked = false;
+                                          _status = 'Locked';
+                                          _detail = 'Waiting for local verification.';
+                                          _auditSummary =
+                                              'No audit decision recorded yet.';
+                                          _blockedHints = const [];
+                                          _latestAuditEventId = null;
+                                        });
+                                      },
                                         child: const Text('Reset selection'),
                                       ),
                                     ],
@@ -1610,6 +1719,26 @@ class _UsersDevicesRouteGateScreenState
                                   Text(_detail),
                                   const SizedBox(height: 4),
                                   Text(_auditSummary),
+                                  if (_blockedHints.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    _VisualPanel(
+                                      title: 'Why blocked',
+                                      subtitle:
+                                          'These local checks still need a little help before the route can open.',
+                                      icon: Icons.rule_folder_outlined,
+                                      compact: true,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          for (final hint in _blockedHints)
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 6),
+                                              child: Text('• $hint'),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                   if (_latestAuditEventId != null) ...[
                                     const SizedBox(height: 8),
                                     Text(
@@ -1756,6 +1885,16 @@ class _UsersDevicesApprovalQueueScreenState
                     label: 'Create sample approval',
                     icon: Icons.rule_folder_outlined,
                     onPressed: () => _createSampleApproval(context, ref),
+                  ),
+                  _ActionChip(
+                    label: 'Open Access Matrix',
+                    icon: Icons.grid_view_outlined,
+                    onPressed: () => context.go(RouteNames.usersDevicesAccessMatrix),
+                  ),
+                  _ActionChip(
+                    label: 'Open Audit Log',
+                    icon: Icons.receipt_long_outlined,
+                    onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
                   ),
                 ],
               ),
@@ -2092,7 +2231,7 @@ class _UsersDevicesPageScaffold extends StatelessWidget {
         controller: scrollController,
         padding: const EdgeInsets.all(20),
         children: [
-          Text(subtitle, style: Theme.of(context).textTheme.titleMedium),
+          _SectionHero(title: title, subtitle: subtitle),
           const SizedBox(height: 16),
           child,
         ],
@@ -2127,6 +2266,89 @@ class _SectionScaffold extends StatelessWidget {
       scrollController: scrollController,
       onBuilt: onBuilt,
       child: child,
+    );
+  }
+}
+
+class _SectionHero extends StatelessWidget {
+  const _SectionHero({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final icon = switch (title) {
+      'Users' => Icons.people_outline,
+      'Devices' => Icons.devices_outlined,
+      'Access Matrix' => Icons.grid_view_outlined,
+      'Device Onboarding' => Icons.phonelink_setup_outlined,
+      'Approval Queue' => Icons.rule_folder_outlined,
+      'Audit Log' => Icons.receipt_long_outlined,
+      _ => Icons.shield_outlined,
+    };
+    final hints = switch (title) {
+      'Users' => ['Local identities', 'Roles and notes', 'Audit-ready'],
+      'Devices' => ['Trusted endpoints', 'Trust levels', 'Ownership'],
+      'Access Matrix' => ['Roles', 'Permissions', 'Trust floors'],
+      'Device Onboarding' => ['Pairing flow', 'Trust step-up', 'Local record'],
+      'Approval Queue' => ['Review first', 'Approve or deny', 'Write audit'],
+      'Audit Log' => ['Timestamped', 'Filterable', 'Local trail'],
+      _ => ['Local-first', 'Audit tracked', 'Calm controls'],
+    };
+
+    return Card(
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.56),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.headlineSmall),
+                  const SizedBox(height: 4),
+                  Text(subtitle),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final hint in hints) _Badge(label: hint),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -2898,6 +3120,20 @@ class _VisualPanel extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                height: 3,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.tertiary,
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2986,6 +3222,20 @@ class _ApprovalRequestCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                height: 3,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: LinearGradient(
+                    colors: [
+                      riskColor,
+                      theme.colorScheme.tertiary,
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3025,6 +3275,7 @@ class _ApprovalRequestCard extends StatelessWidget {
                   _CardChip(label: 'Requested by ${request.requestedBy}'),
                   _CardChip(label: 'Device ${request.deviceId}'),
                   _CardChip(label: 'Module ${request.targetModule}'),
+                  _CardChip(label: 'Action ${request.action}'),
                   _CardChip(label: request.timestamp),
                 ],
               ),
@@ -3048,11 +3299,11 @@ class _ApprovalRequestCard extends StatelessWidget {
                 children: [
                   FilledButton.tonal(
                     onPressed: onApprove,
-                    child: const Text('Approve'),
+                    child: const Text('Approve request'),
                   ),
                   OutlinedButton(
                     onPressed: onDeny,
-                    child: const Text('Deny'),
+                    child: const Text('Deny request'),
                   ),
                 ],
               ),
