@@ -74,8 +74,9 @@ void main() {
     );
 
     expect(find.text('Landing: none'), findsOneWidget);
+    await tester.ensureVisible(find.text('Have Voice'));
     await tester.tap(find.text('Have Voice'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Landing: ${RouteNames.voiceAssistant}'), findsOneWidget);
   });
 
@@ -105,8 +106,9 @@ void main() {
     );
 
     expect(find.text('Landing: none'), findsOneWidget);
+    await tester.ensureVisible(find.text('No Voice'));
     await tester.tap(find.text('No Voice'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Landing: ${RouteNames.dashboard}'), findsOneWidget);
   });
 }

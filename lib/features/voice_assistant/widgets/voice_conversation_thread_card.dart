@@ -43,8 +43,6 @@ class VoiceConversationThreadCard extends StatelessWidget {
                   ),
                 ),
                 Chip(
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   side: BorderSide(color: theme.colorScheme.outlineVariant),
                   label: Text(
                     'Saved entries: ${conversationContext.entryCount}',
@@ -63,7 +61,7 @@ class VoiceConversationThreadCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.38,
+                  alpha: 0.24,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.fromBorderSide(threadSummaryBorder),
@@ -112,15 +110,11 @@ class VoiceConversationThreadCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 Chip(
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   label: Text(
                     'Thread: ${conversationContext.threadScopeLabel}',
                   ),
                 ),
                 Chip(
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   label: Text(
                     'Type: ${conversationContext.navigation ? 'Navigation' : conversationContext.type?.label ?? 'Saved'}',
                   ),
@@ -128,8 +122,6 @@ class VoiceConversationThreadCard extends StatelessWidget {
                 if (conversationContext.projectName != null &&
                     conversationContext.projectName!.isNotEmpty)
                   Chip(
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     label: Text('Project: ${conversationContext.projectName}'),
                   ),
               ],

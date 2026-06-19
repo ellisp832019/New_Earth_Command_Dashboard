@@ -1863,7 +1863,7 @@ class _EndpointCard extends StatelessWidget {
         ? AppColours.darkSecondary
         : AppColours.darkPrimary;
     final statusSummary = endpoint.healthy
-        ? 'Live signal detected'
+        ? 'Signal detected'
         : 'Waiting for local response';
 
     return ConstrainedBox(
@@ -2241,9 +2241,7 @@ class _StatusTile extends StatelessWidget {
               ),
               const Spacer(),
               _Pill(
-                label: title == 'Gateway running'
-                    ? (value == 'Running' ? 'Live' : 'Offline')
-                    : value,
+                label: value,
                 icon: icon,
                 accent: accent,
               ),

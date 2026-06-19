@@ -22,6 +22,9 @@ class CommandTypeSelector extends StatelessWidget {
           label: Text(type.label),
           selected: selectedType == type,
           onSelected: (_) => onChanged(type),
+          showCheckmark: false,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         );
       }).toList(),
     );

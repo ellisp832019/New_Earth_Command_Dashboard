@@ -29,14 +29,17 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
 
   List<VoiceCommand> get _filteredCommands {
     final query = _searchController.text.trim().toLowerCase();
-    return widget.commands.where((command) {
-      final matchesSearch = query.isEmpty ||
-          command.transcript.toLowerCase().contains(query) ||
-          command.type.label.toLowerCase().contains(query);
-      final matchesType =
-          _selectedType == null || command.type == _selectedType;
-      return matchesSearch && matchesType;
-    }).toList(growable: false);
+    return widget.commands
+        .where((command) {
+          final matchesSearch =
+              query.isEmpty ||
+              command.transcript.toLowerCase().contains(query) ||
+              command.type.label.toLowerCase().contains(query);
+          final matchesType =
+              _selectedType == null || command.type == _selectedType;
+          return matchesSearch && matchesType;
+        })
+        .toList(growable: false);
   }
 
   Future<void> _copyTranscript(String transcript) async {
@@ -61,6 +64,9 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
           _selectedType = selected ? null : type;
         });
       },
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
@@ -113,209 +119,201 @@ class _CommandHistoryListState extends State<CommandHistoryList> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        Text(
-          'Recent capture history',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Saved captures stay local and can be reopened, copied, or filtered by type.',
-          style: theme.textTheme.bodySmall,
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  Chip(
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    label: Text('${widget.commands.length} saved captures'),
-                  ),
-                  if (_latestCommand != null)
+          Text('Recent capture history', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Saved captures stay local and can be reopened, copied, or filtered by type.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
                     Chip(
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      label: Text(
-                        'Latest ${_latestCommand!.type.label.toLowerCase()} capture',
-                      ),
+                      label: Text('${widget.commands.length} saved captures'),
                     ),
-                ],
+                    if (_latestCommand != null)
+                      Chip(
+                        label: Text(
+                          'Latest ${_latestCommand!.type.label.toLowerCase()} capture',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Text('${filteredCommands.length}/${widget.commands.length}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_latestCommand != null) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Latest capture',
+                            style: theme.textTheme.titleSmall,
+                          ),
+                        ),
+                        Chip(
+                          label: Text(
+                            _formatDateTime(_latestCommand!.createdAt),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _latestCommand!.transcript,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${_latestCommand!.type.label} capture ready to reuse.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: widget.onCommandSelected == null
+                              ? null
+                              : _reuseLatest,
+                          icon: const Icon(Icons.restart_alt_rounded),
+                          label: const Text('Reuse latest'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await _copyTranscript(_latestCommand!.transcript);
+                            if (!context.mounted) {
+                              return;
+                            }
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Copied latest voice capture.'),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.copy_rounded),
+                          label: const Text('Copy latest'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            Text('${filteredCommands.length}/${widget.commands.length}'),
+            const SizedBox(height: 12),
           ],
-        ),
-        const SizedBox(height: 12),
-        if (_latestCommand != null) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          TextField(
+            key: const Key('voiceHistorySearchField'),
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: 'Search saved captures',
+              hintText: 'Search a phrase or type',
+              prefixIcon: const Icon(Icons.search_outlined),
+              suffixIcon: hasSearch
+                  ? IconButton(
+                      key: const Key('voiceHistorySearchClearButton'),
+                      tooltip: 'Clear search',
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                        });
+                      },
+                      icon: const Icon(Icons.clear_rounded),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasSearch
+                ? 'Showing captures that match your search.'
+                : 'Tap any saved command to restore it into the editor. Use the chips to narrow the list by type.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildTypeChip(label: 'All', type: null),
+              ...VoiceCommandType.values.map(
+                (type) => _buildTypeChip(label: type.label, type: type),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (filteredCommands.isEmpty) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No saved commands match this search yet.',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            ),
+          ] else ...[
+            ...filteredCommands.asMap().entries.map((entry) {
+              final index = entry.key;
+              final command = entry.value;
+
+              return Card(
+                key: Key('voiceHistoryItem-$index'),
+                child: ListTile(
+                  onTap: widget.onCommandSelected == null
+                      ? null
+                      : () => widget.onCommandSelected!(command),
+                  leading: const Icon(Icons.history_rounded),
+                  title: Text(command.transcript),
+                  subtitle: Text(
+                    '${command.type.label} - ${_formatDateTime(command.createdAt)}',
+                  ),
+                  trailing: Wrap(
+                    spacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Latest capture',
-                          style: theme.textTheme.titleSmall,
-                        ),
-                      ),
-                      Chip(
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        label: Text(
-                          _formatDateTime(_latestCommand!.createdAt),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _latestCommand!.transcript,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${_latestCommand!.type.label} capture ready to reuse.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilledButton.tonalIcon(
-                        onPressed:
-                            widget.onCommandSelected == null ? null : _reuseLatest,
-                        icon: const Icon(Icons.restart_alt_rounded),
-                        label: const Text('Reuse latest'),
-                      ),
-                      OutlinedButton.icon(
+                      IconButton(
+                        tooltip: 'Copy transcript',
                         onPressed: () async {
-                          await _copyTranscript(_latestCommand!.transcript);
+                          await _copyTranscript(command.transcript);
                           if (!context.mounted) {
                             return;
                           }
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Copied latest voice capture.'),
+                              content: Text('Copied voice transcript.'),
                             ),
                           );
                         },
                         icon: const Icon(Icons.copy_rounded),
-                        label: const Text('Copy latest'),
+                      ),
+                      Icon(
+                        Icons.restore_outlined,
+                        color: theme.colorScheme.primary,
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-        TextField(
-          key: const Key('voiceHistorySearchField'),
-          controller: _searchController,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            labelText: 'Search saved captures',
-            hintText: 'Search a phrase or type',
-            prefixIcon: const Icon(Icons.search_outlined),
-            suffixIcon: hasSearch
-                ? IconButton(
-                    key: const Key('voiceHistorySearchClearButton'),
-                    tooltip: 'Clear search',
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                      });
-                    },
-                    icon: const Icon(Icons.clear_rounded),
-                  )
-                : null,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          hasSearch
-              ? 'Showing captures that match your search.'
-              : 'Tap any saved command to restore it into the editor. Use the chips to narrow the list by type.',
-          style: theme.textTheme.bodySmall,
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildTypeChip(label: 'All', type: null),
-            ...VoiceCommandType.values.map(
-              (type) => _buildTypeChip(label: type.label, type: type),
-            ),
+                ),
+              );
+            }),
           ],
-        ),
-        const SizedBox(height: 12),
-        if (filteredCommands.isEmpty) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'No saved commands match this search yet.',
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ] else ...[
-          ...filteredCommands.asMap().entries.map((entry) {
-            final index = entry.key;
-            final command = entry.value;
-
-            return Card(
-              key: Key('voiceHistoryItem-$index'),
-              child: ListTile(
-                onTap: widget.onCommandSelected == null
-                    ? null
-                    : () => widget.onCommandSelected!(command),
-                leading: const Icon(Icons.history_rounded),
-                title: Text(command.transcript),
-                subtitle: Text(
-                  '${command.type.label} - ${_formatDateTime(command.createdAt)}',
-                ),
-                trailing: Wrap(
-                  spacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    IconButton(
-                      tooltip: 'Copy transcript',
-                      onPressed: () async {
-                        await _copyTranscript(command.transcript);
-                        if (!context.mounted) {
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Copied voice transcript.'),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.copy_rounded),
-                    ),
-                    Icon(
-                      Icons.restore_outlined,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
         ],
       ),
     );
