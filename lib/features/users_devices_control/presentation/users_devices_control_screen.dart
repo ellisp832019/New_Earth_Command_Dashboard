@@ -3002,7 +3002,17 @@ class _NavigationGrid extends StatelessWidget {
                   child: InkWell(
                     onTap: () => context.go(tile.route),
                     child: Container(
-                      color: Theme.of(context).colorScheme.surface,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        border: Border(
+                          top: BorderSide(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.72),
+                            width: 2,
+                          ),
+                        ),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(14),
                         child: Column(
@@ -3017,7 +3027,11 @@ class _NavigationGrid extends StatelessWidget {
                                 ).colorScheme.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Icon(tile.icon),
+                              child: Icon(
+                                tile.icon,
+                                size: 22,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Text(
