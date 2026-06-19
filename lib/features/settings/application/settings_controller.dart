@@ -118,6 +118,7 @@ class SettingsController {
   Future<void> setVoicePreferences({
     bool? voiceRepliesEnabled,
     bool? voiceAssistantEnabled,
+    bool? voiceStartupGateEnabled,
     String? preferredTtsVoiceName,
     String? preferredTtsVoiceLocale,
     String? preferredTtsVoiceGender,
@@ -128,6 +129,7 @@ class SettingsController {
     await _ref.read(settingsRepositoryProvider).updateVoicePreferences(
       voiceRepliesEnabled: voiceRepliesEnabled,
       voiceAssistantEnabled: voiceAssistantEnabled,
+      voiceStartupGateEnabled: voiceStartupGateEnabled,
       preferredTtsVoiceName: preferredTtsVoiceName,
       preferredTtsVoiceLocale: preferredTtsVoiceLocale,
       preferredTtsVoiceGender: preferredTtsVoiceGender,

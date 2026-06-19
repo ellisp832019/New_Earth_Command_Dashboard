@@ -63,6 +63,7 @@ AppSetting _testSettings() {
     dailyTopTaskLimit: 3,
     voiceRepliesEnabled: true,
     voiceAssistantEnabled: true,
+    voiceStartupGateEnabled: false,
     preferredTtsVoiceName: null,
     preferredTtsVoiceLocale: null,
     preferredTtsVoiceGender: null,

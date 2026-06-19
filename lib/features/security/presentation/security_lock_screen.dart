@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/desktop_startup_backdrop.dart';
+import '../application/security_session_controller.dart';
+import '../../settings/application/settings_controller.dart';
 import '../../users_devices_control/application/users_devices_control_controller.dart';
 import '../../users_devices_control/data/users_devices_control_repository.dart';
 
@@ -80,6 +83,12 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     final userId = _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
     final deviceId =
         _selectedDeviceId ?? (snapshot.devices.isNotEmpty ? snapshot.devices.first.id : '');
+    final selectedUser = snapshot.users.isEmpty
+        ? null
+        : snapshot.users.firstWhere(
+            (user) => user.id == userId,
+            orElse: () => snapshot.users.first,
+          );
     if (userId.isEmpty || deviceId.isEmpty) {
       if (!mounted) {
         return;
@@ -107,6 +116,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     if (decision.allowed) {
       final updatedSnapshot = await ref.read(
         usersDevicesControlSnapshotProvider.future,
+      );
+      ref.read(securitySessionProvider.notifier).unlock(
+        activeUserLabel: selectedUser?.displayName,
+        activeUserOnline: selectedUser?.status == 'active',
       );
       final latestAudit = updatedSnapshot.auditLog.isNotEmpty
           ? updatedSnapshot.auditLog.last
@@ -149,31 +162,38 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    final settingsSnapshot = ref.watch(settingsSnapshotProvider);
 
-    return Scaffold(
-      body: snapshot.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Security Lock could not load the local registry.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () =>
-                      ref.invalidate(usersDevicesControlSnapshotProvider),
-                  child: const Text('Retry'),
-                ),
-              ],
+    return DesktopStartupBackdrop(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: snapshot.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Security Lock could not load the local registry.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () =>
+                        ref.invalidate(usersDevicesControlSnapshotProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        data: (data) {
+          data: (data) {
+          final voiceStartupGateEnabled = settingsSnapshot.maybeWhen(
+            data: (snapshot) => snapshot.settings.voiceStartupGateEnabled,
+            orElse: () => false,
+          );
           _seedSelections(data);
           final selectedUser = data.users.isEmpty
               ? null
@@ -224,8 +244,15 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                   'No local device selected',
                               onUnlock: _attemptUnlock,
                               canContinue: _canContinue,
+                              continueLabel: voiceStartupGateEnabled
+                                  ? 'Continue to voice gate'
+                                  : 'Enter dashboard',
                               onContinue: _canContinue
-                                  ? () => context.go(RouteNames.usersDevices)
+                                  ? () => context.go(
+                                        voiceStartupGateEnabled
+                                            ? RouteNames.voiceStartupGate
+                                            : RouteNames.dashboard,
+                                      )
                                   : null,
                               onOpenUsersDevices: () => context.push(
                                 RouteNames.usersDevices,
@@ -290,7 +317,8 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
               ),
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -306,6 +334,7 @@ class _SecurityHero extends StatelessWidget {
     required this.selectedDeviceLabel,
     required this.onUnlock,
     required this.canContinue,
+    required this.continueLabel,
     required this.onContinue,
     required this.onOpenUsersDevices,
     required this.onOpenAuditLog,
@@ -319,6 +348,7 @@ class _SecurityHero extends StatelessWidget {
   final String selectedDeviceLabel;
   final VoidCallback onUnlock;
   final bool canContinue;
+  final String continueLabel;
   final VoidCallback? onContinue;
   final VoidCallback onOpenUsersDevices;
   final VoidCallback onOpenAuditLog;
@@ -528,7 +558,7 @@ class _SecurityHero extends StatelessWidget {
                 FilledButton.tonalIcon(
                   onPressed: onContinue,
                   icon: const Icon(Icons.arrow_forward_outlined),
-                  label: const Text('Open control center'),
+                  label: Text(continueLabel),
                 ),
               OutlinedButton.icon(
                 onPressed: onOpenUsersDevices,

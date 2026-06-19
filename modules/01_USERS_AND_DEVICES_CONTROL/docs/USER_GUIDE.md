@@ -18,6 +18,27 @@ It manages:
 
 The module home now also shows a short access plan so the main security flow is easy to read at a glance.
 
+The main app now opens on `Security Lock` first. That screen uses the New Earth desktop startup image in the background, then lets you continue into the dashboard or the optional voice gate.
+
+A small opaque security session box now sits in the top-left corner of the desktop shell. It shows whether the session is active, the active user, whether that user is online, the timeout window, and a live countdown to expiry. You can tap it to return to `Security Lock` or jump to `Access Matrix`.
+
+## Startup flow
+
+Use this flow when you want to understand how the app opens now:
+
+1. Launch the app.
+2. Review `Security Lock`.
+3. Pick the local user and device.
+4. Unlock into the dashboard, or into the voice gate if that option is turned on.
+5. Open `Settings` if you want to show or hide the voice startup gate.
+6. Use the top-left session box to check the live countdown, active user, and online status during testing.
+
+Quick checks:
+
+- `Active user` should match the person you just unlocked with
+- `Status: online` should appear when the local session is active
+- The countdown should keep moving once per second
+
 ## Start here
 
 If you are opening the module for the first time, do this first:
@@ -29,6 +50,7 @@ If you are opening the module for the first time, do this first:
 5. Open `Access Matrix` and confirm Treasury needs finance permission plus the trust floor.
 6. Open the Treasury gate with the seeded user and device.
 7. Check `Audit Log` after the decision.
+8. If the voice startup gate is enabled, continue there next and confirm the headset check appears after the lock screen.
 
 ## Core rule
 
@@ -41,6 +63,8 @@ Before a sensitive module opens, the system needs:
 - audit trail
 
 If anything is missing, the gate should explain what is missing and why.
+
+The startup lock is the first check. The voice gate is optional and should only be used when you want the headset readiness step at startup.
 
 ## Treasury example
 
@@ -170,6 +194,11 @@ Click-by-click:
 10. Open `Audit Log` and confirm the allow, deny, or approval event was written.
 11. Search the audit log by actor, device, module, action, or reason.
 12. Switch the audit result filter to narrow the trail to allowed, denied, or pending events.
+13. Open `Security Lock` from app start and confirm the New Earth desktop image appears behind the gate.
+14. Turn the voice startup gate on in `Settings` if you want the headset check after unlock.
+15. Turn it off again if you want startup to go straight from `Security Lock` to the dashboard.
+16. Watch the top-left security session box count down while the session is active.
+17. Tap the box to return to `Security Lock`, or use the `Access Matrix` shortcut inside it when you want to inspect the rules again.
 
 ## Step-by-step Treasury walkthrough
 
@@ -256,7 +285,11 @@ Why this matters: every allow, deny, or approval should leave a trace.
 Why this matters: onboarding is how a device becomes trusted enough for later access.
 14. Open `Security Lock` and confirm the selected context matches what you expect.
 Why this matters: the lock view is a quick sanity check for the current local context.
-15. Reset demo data and repeat the flow until the results feel familiar.
+15. Watch the top-left session box count down while the session stays active, and confirm the active user label and online status match what you expect.
+Why this matters: you can see the live timeout instead of guessing.
+16. Tap the session box to reopen `Security Lock` or use `Access Matrix` if you want to inspect the rule set mid-test.
+Why this matters: the corner box is a quick navigation and status shortcut.
+17. Reset demo data and repeat the flow until the results feel familiar.
 Why this matters: repetition makes the rules easier to trust and remember.
 
 What you should see:

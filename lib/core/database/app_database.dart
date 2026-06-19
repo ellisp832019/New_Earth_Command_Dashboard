@@ -61,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -105,6 +105,13 @@ class AppDatabase extends _$AppDatabase {
             await migrator.addColumn(
               appSettings,
               appSettings.voiceAssistantEnabled,
+            );
+          }
+
+          if (from < 13) {
+            await migrator.addColumn(
+              appSettings,
+              appSettings.voiceStartupGateEnabled,
             );
           }
 

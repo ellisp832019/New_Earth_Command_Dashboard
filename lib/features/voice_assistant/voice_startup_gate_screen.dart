@@ -3,8 +3,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/widgets/desktop_startup_backdrop.dart';
+import '../../core/routing/route_names.dart';
 import '../settings/application/settings_controller.dart';
 import 'application/voice_startup_gate_controller.dart';
 import 'desktop_speech_bridge_service.dart';
@@ -185,7 +187,7 @@ class _VoiceStartupGateScreenState
       VoiceStartupGateState.noDevices =>
         'No audio input is showing up yet. Connect a Bluetooth headset or headset microphone, then try again.',
       VoiceStartupGateState.microphoneOnly =>
-        'Windows can see a microphone, but not one that looks like a headset. If this is your headset mic, choose Have Voice.',
+        'Windows can see a microphone, but not one that looks like a headset. If this is your headset mic, choose Continue with Voice.',
       VoiceStartupGateState.checkFailed =>
         'The assistant could not verify the audio devices from Windows right now. Open diagnostics to check the offline bridge and default input path.',
       VoiceStartupGateState.bypassed =>
@@ -199,7 +201,7 @@ class _VoiceStartupGateScreenState
       VoiceStartupGateState.noDevices =>
         'If a headset is already connected, unplug and reconnect it, then retry.',
       VoiceStartupGateState.microphoneOnly =>
-        'Choose Have Voice if this microphone is actually the one on your headset.',
+        'Choose Continue with Voice if this microphone is actually the one on your headset.',
       VoiceStartupGateState.checkFailed =>
         'Run diagnostics to see whether the bridge can still reach the input device.',
       VoiceStartupGateState.bypassed =>
@@ -269,6 +271,9 @@ class _VoiceStartupGateScreenState
                         ref
                             .read(voiceStartupGateLandingProvider.notifier)
                             .requestVoiceAssistant();
+                        if (mounted) {
+                          context.go(RouteNames.voiceAssistant);
+                        }
                       },
                       onNoVoice: () {
                         ref
@@ -277,6 +282,9 @@ class _VoiceStartupGateScreenState
                         ref
                             .read(voiceStartupGateLandingProvider.notifier)
                             .requestDashboard();
+                        if (mounted) {
+                          context.go(RouteNames.dashboard);
+                        }
                       },
                       onRunDiagnostics: _showVoiceDiagnostics,
                     ),
@@ -495,12 +503,12 @@ class _VoiceGateFloatingPanel extends StatelessWidget {
                             FilledButton.tonalIcon(
                               onPressed: onHaveVoice,
                               icon: const Icon(Icons.headset_mic_outlined),
-                              label: const Text('Have Voice'),
+                              label: const Text('Continue with Voice'),
                             ),
                             OutlinedButton.icon(
                               onPressed: onNoVoice,
                               icon: const Icon(Icons.volume_off_outlined),
-                              label: const Text('No Voice'),
+                              label: const Text('Skip Voice'),
                             ),
                             TextButton.icon(
                               onPressed: onRunDiagnostics,

@@ -34,8 +34,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('No Voice'), findsOneWidget);
-    expect(find.text('Have Voice'), findsOneWidget);
+    expect(find.text('Skip Voice'), findsOneWidget);
+    expect(find.text('Continue with Voice'), findsOneWidget);
   });
 
   testWidgets('startup gate can request voice assistant from the screen', (
@@ -74,8 +74,8 @@ void main() {
     );
 
     expect(find.text('Landing: none'), findsOneWidget);
-    await tester.ensureVisible(find.text('Have Voice'));
-    await tester.tap(find.text('Have Voice'));
+    await tester.ensureVisible(find.text('Continue with Voice'));
+    await tester.tap(find.text('Continue with Voice'));
     await tester.pump();
     expect(find.text('Landing: ${RouteNames.voiceAssistant}'), findsOneWidget);
   });
@@ -106,8 +106,8 @@ void main() {
     );
 
     expect(find.text('Landing: none'), findsOneWidget);
-    await tester.ensureVisible(find.text('No Voice'));
-    await tester.tap(find.text('No Voice'));
+    await tester.ensureVisible(find.text('Skip Voice'));
+    await tester.tap(find.text('Skip Voice'));
     await tester.pump();
     expect(find.text('Landing: ${RouteNames.dashboard}'), findsOneWidget);
   });

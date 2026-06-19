@@ -87,6 +87,7 @@ import '../../features/treasury/presentation/treasury_wizard_screen.dart';
 import '../../features/voice_intelligence/presentation/voice_module_screen.dart';
 import '../../features/voice_intelligence/presentation/voice_conversation_screen.dart';
 import '../../features/voice_assistant/voice_assistant_screen.dart';
+import '../../features/voice_assistant/presentation/voice_startup_gate_route_screen.dart';
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
 import '../widgets/app_shell.dart';
@@ -105,7 +106,7 @@ final _shellNavigatorMoreKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: RouteNames.voiceAssistant,
+  initialLocation: RouteNames.securityLock,
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -241,7 +242,7 @@ final appRouter = GoRouter(
             GoRoute(
               path: RouteNames.treasury,
               builder: (context, state) => const UsersDevicesRouteGateScreen(
-                moduleId: 'newearth.finance_treasury',
+                moduleId: '17_FINANCE_AND_TREASURY',
                 title: 'Treasury Access Gate',
                 subtitle:
                     'Confirm local identity and device trust before opening finance and treasury.',
@@ -251,7 +252,7 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'decisions',
                   builder: (context, state) => const UsersDevicesRouteGateScreen(
-                    moduleId: 'newearth.finance_treasury',
+                    moduleId: '17_FINANCE_AND_TREASURY',
                     title: 'Treasury Decisions Gate',
                     subtitle:
                         'Confirm local identity and device trust before opening treasury decisions.',
@@ -261,7 +262,7 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'budget-pots',
                   builder: (context, state) => const UsersDevicesRouteGateScreen(
-                    moduleId: 'newearth.finance_treasury',
+                    moduleId: '17_FINANCE_AND_TREASURY',
                     title: 'Budget Pots Gate',
                     subtitle:
                         'Confirm local identity and device trust before opening budget pots.',
@@ -271,7 +272,7 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'monthly-summary',
                   builder: (context, state) => const UsersDevicesRouteGateScreen(
-                    moduleId: 'newearth.finance_treasury',
+                    moduleId: '17_FINANCE_AND_TREASURY',
                     title: 'Monthly Summary Gate',
                     subtitle:
                         'Confirm local identity and device trust before opening the monthly summary.',
@@ -281,7 +282,7 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'settings',
                   builder: (context, state) => const UsersDevicesRouteGateScreen(
-                    moduleId: 'newearth.finance_treasury',
+                    moduleId: '17_FINANCE_AND_TREASURY',
                     title: 'Treasury Settings Gate',
                     subtitle:
                         'Confirm local identity and device trust before opening treasury settings.',
@@ -291,7 +292,7 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'wizard',
                   builder: (context, state) => UsersDevicesRouteGateScreen(
-                    moduleId: 'newearth.finance_treasury',
+                    moduleId: '17_FINANCE_AND_TREASURY',
                     title: 'Treasury Wizard Gate',
                     subtitle:
                         'Confirm local identity and device trust before opening the treasury wizard.',
@@ -1010,6 +1011,11 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.securityLock,
       builder: (context, state) => const SecurityLockScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.voiceStartupGate,
+      builder: (context, state) => const VoiceStartupGateRouteScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../routing/route_names.dart';
 import '../theme/app_colours.dart';
+import '../../features/security/application/security_session_controller.dart';
 import '../windowing/desktop_presence_controller.dart';
 import '../windowing/desktop_window_api.dart';
 
@@ -193,11 +195,6 @@ class _Sidebar extends StatelessWidget {
                   label: 'Users & Devices',
                   icon: Icons.verified_user_outlined,
                   route: RouteNames.usersDevices,
-                ),
-                _SidebarLink(
-                  label: 'Security Lock',
-                  icon: Icons.lock_outline,
-                  route: RouteNames.securityLock,
                 ),
               ],
             ),
@@ -565,7 +562,7 @@ class _SidebarLink extends StatelessWidget {
   }
 }
 
-class _DesktopWindowBar extends StatefulWidget {
+class _DesktopWindowBar extends ConsumerStatefulWidget {
   const _DesktopWindowBar({
     required this.title,
     required this.subtitle,
@@ -575,10 +572,10 @@ class _DesktopWindowBar extends StatefulWidget {
   final String subtitle;
 
   @override
-  State<_DesktopWindowBar> createState() => _DesktopWindowBarState();
+  ConsumerState<_DesktopWindowBar> createState() => _DesktopWindowBarState();
 }
 
-class _DesktopWindowBarState extends State<_DesktopWindowBar> {
+class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
   bool _isMaximized = false;
 
   @override
@@ -674,6 +671,14 @@ class _DesktopWindowBarState extends State<_DesktopWindowBar> {
                   ),
                 ),
               ),
+            ),
+            _DesktopWindowButton(
+              icon: Icons.lock_outline,
+              tooltip: 'Lock now',
+              onPressed: () async {
+                ref.read(securitySessionProvider.notifier).lockNow();
+                context.go(RouteNames.securityLock);
+              },
             ),
             _DesktopWindowButton(
               icon: Icons.bedtime_outlined,

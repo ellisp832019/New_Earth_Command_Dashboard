@@ -155,6 +155,7 @@ abstract final class RouteNames {
   static const newInbox = '/inbox/new';
   static const settings = '/settings';
   static const securityLock = '/security-lock';
+  static const voiceStartupGate = '/voice/startup-gate';
   static const voice = '/voice';
   static const voiceConversation = '/voice/conversation';
   static const voiceNotes = '/voice/notes';

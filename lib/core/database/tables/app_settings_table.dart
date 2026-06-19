@@ -41,6 +41,9 @@ class AppSettings extends Table {
   BoolColumn get voiceAssistantEnabled => boolean()
       .named('voice_assistant_enabled')
       .withDefault(const Constant(true))();
+  BoolColumn get voiceStartupGateEnabled => boolean()
+      .named('voice_startup_gate_enabled')
+      .withDefault(const Constant(false))();
   TextColumn get preferredTtsVoiceName =>
       text().named('preferred_tts_voice_name').nullable()();
   TextColumn get preferredTtsVoiceLocale =>

@@ -8675,6 +8675,21 @@ class $AppSettingsTable extends AppSettings
         ),
         defaultValue: const Constant(true),
       );
+  static const VerificationMeta _voiceStartupGateEnabledMeta =
+      const VerificationMeta('voiceStartupGateEnabled');
+  @override
+  late final GeneratedColumn<bool> voiceStartupGateEnabled =
+      GeneratedColumn<bool>(
+        'voice_startup_gate_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("voice_startup_gate_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
   static const VerificationMeta _preferredTtsVoiceNameMeta =
       const VerificationMeta('preferredTtsVoiceName');
   @override
@@ -8784,6 +8799,7 @@ class $AppSettingsTable extends AppSettings
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
+    voiceStartupGateEnabled,
     preferredTtsVoiceName,
     preferredTtsVoiceLocale,
     preferredTtsVoiceGender,
@@ -8954,6 +8970,15 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
+    if (data.containsKey('voice_startup_gate_enabled')) {
+      context.handle(
+        _voiceStartupGateEnabledMeta,
+        voiceStartupGateEnabled.isAcceptableOrUnknown(
+          data['voice_startup_gate_enabled']!,
+          _voiceStartupGateEnabledMeta,
+        ),
+      );
+    }
     if (data.containsKey('preferred_tts_voice_name')) {
       context.handle(
         _preferredTtsVoiceNameMeta,
@@ -9101,6 +9126,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}voice_assistant_enabled'],
       )!,
+      voiceStartupGateEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}voice_startup_gate_enabled'],
+      )!,
       preferredTtsVoiceName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}preferred_tts_voice_name'],
@@ -9160,6 +9189,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final int dailyTopTaskLimit;
   final bool voiceRepliesEnabled;
   final bool voiceAssistantEnabled;
+  final bool voiceStartupGateEnabled;
   final String? preferredTtsVoiceName;
   final String? preferredTtsVoiceLocale;
   final String? preferredTtsVoiceGender;
@@ -9186,6 +9216,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.dailyTopTaskLimit,
     required this.voiceRepliesEnabled,
     required this.voiceAssistantEnabled,
+    required this.voiceStartupGateEnabled,
     this.preferredTtsVoiceName,
     this.preferredTtsVoiceLocale,
     this.preferredTtsVoiceGender,
@@ -9223,6 +9254,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit);
     map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled);
     map['voice_assistant_enabled'] = Variable<bool>(voiceAssistantEnabled);
+    map['voice_startup_gate_enabled'] = Variable<bool>(voiceStartupGateEnabled);
     if (!nullToAbsent || preferredTtsVoiceName != null) {
       map['preferred_tts_voice_name'] = Variable<String>(preferredTtsVoiceName);
     }
@@ -9269,6 +9301,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       dailyTopTaskLimit: Value(dailyTopTaskLimit),
       voiceRepliesEnabled: Value(voiceRepliesEnabled),
       voiceAssistantEnabled: Value(voiceAssistantEnabled),
+      voiceStartupGateEnabled: Value(voiceStartupGateEnabled),
       preferredTtsVoiceName: preferredTtsVoiceName == null && nullToAbsent
           ? const Value.absent()
           : Value(preferredTtsVoiceName),
@@ -9328,6 +9361,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       voiceAssistantEnabled: serializer.fromJson<bool>(
         json['voiceAssistantEnabled'],
       ),
+      voiceStartupGateEnabled: serializer.fromJson<bool>(
+        json['voiceStartupGateEnabled'],
+      ),
       preferredTtsVoiceName: serializer.fromJson<String?>(
         json['preferredTtsVoiceName'],
       ),
@@ -9377,6 +9413,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'dailyTopTaskLimit': serializer.toJson<int>(dailyTopTaskLimit),
       'voiceRepliesEnabled': serializer.toJson<bool>(voiceRepliesEnabled),
       'voiceAssistantEnabled': serializer.toJson<bool>(voiceAssistantEnabled),
+      'voiceStartupGateEnabled': serializer.toJson<bool>(
+        voiceStartupGateEnabled,
+      ),
       'preferredTtsVoiceName': serializer.toJson<String?>(
         preferredTtsVoiceName,
       ),
@@ -9416,6 +9455,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     int? dailyTopTaskLimit,
     bool? voiceRepliesEnabled,
     bool? voiceAssistantEnabled,
+    bool? voiceStartupGateEnabled,
     Value<String?> preferredTtsVoiceName = const Value.absent(),
     Value<String?> preferredTtsVoiceLocale = const Value.absent(),
     Value<String?> preferredTtsVoiceGender = const Value.absent(),
@@ -9448,6 +9488,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
     voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
     voiceAssistantEnabled: voiceAssistantEnabled ?? this.voiceAssistantEnabled,
+    voiceStartupGateEnabled:
+        voiceStartupGateEnabled ?? this.voiceStartupGateEnabled,
     preferredTtsVoiceName: preferredTtsVoiceName.present
         ? preferredTtsVoiceName.value
         : this.preferredTtsVoiceName,
@@ -9517,6 +9559,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       voiceAssistantEnabled: data.voiceAssistantEnabled.present
           ? data.voiceAssistantEnabled.value
           : this.voiceAssistantEnabled,
+      voiceStartupGateEnabled: data.voiceStartupGateEnabled.present
+          ? data.voiceStartupGateEnabled.value
+          : this.voiceStartupGateEnabled,
       preferredTtsVoiceName: data.preferredTtsVoiceName.present
           ? data.preferredTtsVoiceName.value
           : this.preferredTtsVoiceName,
@@ -9562,6 +9607,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
+          ..write('voiceStartupGateEnabled: $voiceStartupGateEnabled, ')
           ..write('preferredTtsVoiceName: $preferredTtsVoiceName, ')
           ..write('preferredTtsVoiceLocale: $preferredTtsVoiceLocale, ')
           ..write('preferredTtsVoiceGender: $preferredTtsVoiceGender, ')
@@ -9593,6 +9639,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
+    voiceStartupGateEnabled,
     preferredTtsVoiceName,
     preferredTtsVoiceLocale,
     preferredTtsVoiceGender,
@@ -9624,6 +9671,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.dailyTopTaskLimit == this.dailyTopTaskLimit &&
           other.voiceRepliesEnabled == this.voiceRepliesEnabled &&
           other.voiceAssistantEnabled == this.voiceAssistantEnabled &&
+          other.voiceStartupGateEnabled == this.voiceStartupGateEnabled &&
           other.preferredTtsVoiceName == this.preferredTtsVoiceName &&
           other.preferredTtsVoiceLocale == this.preferredTtsVoiceLocale &&
           other.preferredTtsVoiceGender == this.preferredTtsVoiceGender &&
@@ -9653,6 +9701,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<int> dailyTopTaskLimit;
   final Value<bool> voiceRepliesEnabled;
   final Value<bool> voiceAssistantEnabled;
+  final Value<bool> voiceStartupGateEnabled;
   final Value<String?> preferredTtsVoiceName;
   final Value<String?> preferredTtsVoiceLocale;
   final Value<String?> preferredTtsVoiceGender;
@@ -9680,6 +9729,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
+    this.voiceStartupGateEnabled = const Value.absent(),
     this.preferredTtsVoiceName = const Value.absent(),
     this.preferredTtsVoiceLocale = const Value.absent(),
     this.preferredTtsVoiceGender = const Value.absent(),
@@ -9708,6 +9758,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
+    this.voiceStartupGateEnabled = const Value.absent(),
     this.preferredTtsVoiceName = const Value.absent(),
     this.preferredTtsVoiceLocale = const Value.absent(),
     this.preferredTtsVoiceGender = const Value.absent(),
@@ -9738,6 +9789,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<int>? dailyTopTaskLimit,
     Expression<bool>? voiceRepliesEnabled,
     Expression<bool>? voiceAssistantEnabled,
+    Expression<bool>? voiceStartupGateEnabled,
     Expression<String>? preferredTtsVoiceName,
     Expression<String>? preferredTtsVoiceLocale,
     Expression<String>? preferredTtsVoiceGender,
@@ -9774,6 +9826,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
         'voice_replies_enabled': voiceRepliesEnabled,
       if (voiceAssistantEnabled != null)
         'voice_assistant_enabled': voiceAssistantEnabled,
+      if (voiceStartupGateEnabled != null)
+        'voice_startup_gate_enabled': voiceStartupGateEnabled,
       if (preferredTtsVoiceName != null)
         'preferred_tts_voice_name': preferredTtsVoiceName,
       if (preferredTtsVoiceLocale != null)
@@ -9810,6 +9864,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<int>? dailyTopTaskLimit,
     Value<bool>? voiceRepliesEnabled,
     Value<bool>? voiceAssistantEnabled,
+    Value<bool>? voiceStartupGateEnabled,
     Value<String?>? preferredTtsVoiceName,
     Value<String?>? preferredTtsVoiceLocale,
     Value<String?>? preferredTtsVoiceGender,
@@ -9844,6 +9899,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
       voiceAssistantEnabled:
           voiceAssistantEnabled ?? this.voiceAssistantEnabled,
+      voiceStartupGateEnabled:
+          voiceStartupGateEnabled ?? this.voiceStartupGateEnabled,
       preferredTtsVoiceName:
           preferredTtsVoiceName ?? this.preferredTtsVoiceName,
       preferredTtsVoiceLocale:
@@ -9930,6 +9987,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
         voiceAssistantEnabled.value,
       );
     }
+    if (voiceStartupGateEnabled.present) {
+      map['voice_startup_gate_enabled'] = Variable<bool>(
+        voiceStartupGateEnabled.value,
+      );
+    }
     if (preferredTtsVoiceName.present) {
       map['preferred_tts_voice_name'] = Variable<String>(
         preferredTtsVoiceName.value,
@@ -9994,6 +10056,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
+          ..write('voiceStartupGateEnabled: $voiceStartupGateEnabled, ')
           ..write('preferredTtsVoiceName: $preferredTtsVoiceName, ')
           ..write('preferredTtsVoiceLocale: $preferredTtsVoiceLocale, ')
           ..write('preferredTtsVoiceGender: $preferredTtsVoiceGender, ')
@@ -18239,6 +18302,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
+      Value<bool> voiceStartupGateEnabled,
       Value<String?> preferredTtsVoiceName,
       Value<String?> preferredTtsVoiceLocale,
       Value<String?> preferredTtsVoiceGender,
@@ -18268,6 +18332,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
+      Value<bool> voiceStartupGateEnabled,
       Value<String?> preferredTtsVoiceName,
       Value<String?> preferredTtsVoiceLocale,
       Value<String?> preferredTtsVoiceGender,
@@ -18370,6 +18435,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get voiceAssistantEnabled => $composableBuilder(
     column: $table.voiceAssistantEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get voiceStartupGateEnabled => $composableBuilder(
+    column: $table.voiceStartupGateEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18508,6 +18578,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get voiceStartupGateEnabled => $composableBuilder(
+    column: $table.voiceStartupGateEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get preferredTtsVoiceName => $composableBuilder(
     column: $table.preferredTtsVoiceName,
     builder: (column) => ColumnOrderings(column),
@@ -18641,6 +18716,11 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get voiceStartupGateEnabled => $composableBuilder(
+    column: $table.voiceStartupGateEnabled,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get preferredTtsVoiceName => $composableBuilder(
     column: $table.preferredTtsVoiceName,
     builder: (column) => column,
@@ -18727,6 +18807,7 @@ class $$AppSettingsTableTableManager
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
+                Value<bool> voiceStartupGateEnabled = const Value.absent(),
                 Value<String?> preferredTtsVoiceName = const Value.absent(),
                 Value<String?> preferredTtsVoiceLocale = const Value.absent(),
                 Value<String?> preferredTtsVoiceGender = const Value.absent(),
@@ -18755,6 +18836,7 @@ class $$AppSettingsTableTableManager
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,
+                voiceStartupGateEnabled: voiceStartupGateEnabled,
                 preferredTtsVoiceName: preferredTtsVoiceName,
                 preferredTtsVoiceLocale: preferredTtsVoiceLocale,
                 preferredTtsVoiceGender: preferredTtsVoiceGender,
@@ -18785,6 +18867,7 @@ class $$AppSettingsTableTableManager
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
+                Value<bool> voiceStartupGateEnabled = const Value.absent(),
                 Value<String?> preferredTtsVoiceName = const Value.absent(),
                 Value<String?> preferredTtsVoiceLocale = const Value.absent(),
                 Value<String?> preferredTtsVoiceGender = const Value.absent(),
@@ -18813,6 +18896,7 @@ class $$AppSettingsTableTableManager
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,
+                voiceStartupGateEnabled: voiceStartupGateEnabled,
                 preferredTtsVoiceName: preferredTtsVoiceName,
                 preferredTtsVoiceLocale: preferredTtsVoiceLocale,
                 preferredTtsVoiceGender: preferredTtsVoiceGender,

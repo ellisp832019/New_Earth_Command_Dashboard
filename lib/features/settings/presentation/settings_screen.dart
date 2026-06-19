@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../security/application/security_session_controller.dart';
 import '../application/settings_controller.dart';
 import '../../voice_assistant/voice_speech_service.dart';
 
@@ -19,6 +20,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   bool? _voiceRepliesEnabled;
   bool? _voiceAssistantEnabled;
+  bool? _voiceStartupGateEnabled;
   double? _voiceRate;
   double? _voicePitch;
   VoiceTtsVoiceOption? _selectedVoice;
@@ -27,6 +29,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _syncVoiceState({
     required bool voiceRepliesEnabled,
     required bool voiceAssistantEnabled,
+    required bool voiceStartupGateEnabled,
     required double voiceRate,
     required double voicePitch,
     VoiceTtsVoiceOption? selectedVoice,
@@ -37,6 +40,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     _voiceRepliesEnabled = voiceRepliesEnabled;
     _voiceAssistantEnabled = voiceAssistantEnabled;
+    _voiceStartupGateEnabled = voiceStartupGateEnabled;
     _voiceRate = voiceRate;
     _voicePitch = voicePitch;
     _selectedVoice = selectedVoice;
@@ -65,6 +69,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsSnapshotProvider);
     final voices = ref.watch(voiceAssistantVoicesProvider);
+    final securitySession = ref.watch(securitySessionProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -79,6 +84,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _syncVoiceState(
             voiceRepliesEnabled: appSettings.voiceRepliesEnabled,
             voiceAssistantEnabled: appSettings.voiceAssistantEnabled,
+            voiceStartupGateEnabled: appSettings.voiceStartupGateEnabled,
             voiceRate: appSettings.preferredTtsVoiceRate,
             voicePitch: appSettings.preferredTtsVoicePitch,
             selectedVoice: selectedVoice,
@@ -87,6 +93,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _voiceRepliesEnabled ?? appSettings.voiceRepliesEnabled;
           final voiceAssistantEnabled =
               _voiceAssistantEnabled ?? appSettings.voiceAssistantEnabled;
+          final voiceStartupGateEnabled =
+              _voiceStartupGateEnabled ?? appSettings.voiceStartupGateEnabled;
           final voiceRate = _voiceRate ?? appSettings.preferredTtsVoiceRate;
           final voicePitch = _voicePitch ?? appSettings.preferredTtsVoicePitch;
           final selectedVoiceOption = _selectedVoice ?? selectedVoice;
@@ -118,7 +126,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const _SettingsNote(
                         icon: Icons.volume_up_outlined,
                         text:
-                            'Voice replies and Voice Assistant can be turned on separately.',
+                            'Voice replies, Voice Assistant, and the optional startup voice gate can be controlled separately.',
                       ),
                       const SizedBox(height: 6),
                       const _SettingsNote(
@@ -164,6 +172,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             icon: const Icon(Icons.lock_outline),
                             label: const Text('Open Security Lock'),
                           ),
+                          FilledButton.icon(
+                            key: const Key('settingsLockNowButton'),
+                            onPressed: () {
+                              ref
+                                  .read(securitySessionProvider.notifier)
+                                  .lockNow();
+                              context.go(RouteNames.securityLock);
+                            },
+                            icon: const Icon(Icons.lock_reset_outlined),
+                            label: const Text('Lock now'),
+                          ),
                           OutlinedButton.icon(
                             onPressed: () {
                               context.push(RouteNames.usersDevices);
@@ -194,6 +213,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+                      _SessionStatusCard(session: securitySession),
                     ],
                   ),
                 ),
@@ -363,6 +384,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         },
                       ),
                       SwitchListTile(
+                        key: const Key('settingsVoiceStartupGateToggle'),
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Show Voice Startup Gate'),
+                        subtitle: const Text(
+                          'Ask for the headset check after the security lock before opening the dashboard.',
+                        ),
+                        value: voiceStartupGateEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _voiceStartupGateEnabled = value;
+                          });
+                          ref
+                              .read(settingsControllerProvider)
+                              .setVoicePreferences(
+                                voiceStartupGateEnabled: value,
+                              );
+                        },
+                      ),
+                      SwitchListTile(
                         key: const Key('settingsVoiceRepliesToggle'),
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Speak Assistant Replies'),
@@ -378,6 +418,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               .read(settingsControllerProvider)
                               .setVoicePreferences(voiceRepliesEnabled: value);
                         },
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          FilledButton.tonalIcon(
+                            key: const Key('settingsOpenVoiceStartupGateButton'),
+                            onPressed: voiceStartupGateEnabled
+                                ? () {
+                                    context.push(RouteNames.voiceStartupGate);
+                                  }
+                                : null,
+                            icon: const Icon(Icons.headset_mic_outlined),
+                            label: const Text('Open Voice Startup Gate'),
+                          ),
+                          Text(
+                            voiceStartupGateEnabled
+                                ? 'The voice gate is available and can run after the security lock.'
+                                : 'Turn on the voice startup gate if you want the headset check available at startup.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       voices.when(
@@ -739,6 +802,75 @@ class _SettingsNote extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
       ],
+    );
+  }
+}
+
+class _SessionStatusCard extends StatelessWidget {
+  const _SessionStatusCard({required this.session});
+
+  final SecuritySessionState session;
+
+  String _formatRemaining(Duration? duration) {
+    if (duration == null) {
+      return 'Locked';
+    }
+
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60);
+    if (minutes <= 0) {
+      return '${seconds}s left';
+    }
+
+    return '${minutes}m ${seconds.toString().padLeft(2, '0')}s left';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isUnlocked = session.isUnlocked && !session.isExpired;
+
+    return Card(
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Security session',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isUnlocked
+                  ? 'Unlocked locally. Idle lock after ${session.timeout.inMinutes} minutes.'
+                  : 'Locked. Open Security Lock to start a local session.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  label: Text(
+                    isUnlocked ? 'Active' : 'Locked',
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    'Timeout: ${session.timeout.inMinutes} minutes',
+                  ),
+                ),
+                Chip(
+                  label: Text(_formatRemaining(session.remaining)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

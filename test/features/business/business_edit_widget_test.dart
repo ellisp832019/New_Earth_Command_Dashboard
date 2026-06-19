@@ -43,6 +43,7 @@ SettingsSnapshot _testSettings() {
       dailyTopTaskLimit: 3,
       voiceRepliesEnabled: false,
       voiceAssistantEnabled: false,
+      voiceStartupGateEnabled: false,
       preferredTtsVoiceName: null,
       preferredTtsVoiceLocale: null,
       preferredTtsVoiceGender: null,

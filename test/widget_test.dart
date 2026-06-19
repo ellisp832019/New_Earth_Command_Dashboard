@@ -99,6 +99,8 @@ void main() {
     Widget? child,
     VoiceStartupGateResult? startupGateResult,
     bool voiceAssistantEnabled = false,
+    bool voiceStartupGateEnabled = false,
+    bool showDockOverlays = true,
     List<CommandDeckActionLogEntry>? recentActions,
   }) {
     final overrides = [
@@ -324,7 +326,7 @@ void main() {
             showLearningCard: true,
             showContentCard: true,
             showProjectsWorkspaceSnapshot: true,
-            showDockOverlays: true,
+            showDockOverlays: showDockOverlays,
             showBackupGuardianDock: true,
             showTreasuryDock: true,
             showKnowledgeLibraryDock: true,
@@ -333,6 +335,7 @@ void main() {
             dailyTopTaskLimit: 3,
             voiceRepliesEnabled: false,
             voiceAssistantEnabled: voiceAssistantEnabled,
+            voiceStartupGateEnabled: voiceStartupGateEnabled,
             preferredTtsVoiceName: null,
             preferredTtsVoiceLocale: null,
             preferredTtsVoiceGender: null,
@@ -2107,18 +2110,16 @@ void main() {
           ],
         ),
         voiceAssistantEnabled: true,
+        voiceStartupGateEnabled: false,
+        showDockOverlays: false,
       ),
     );
+    appRouter.go(RouteNames.voiceStartupGate);
     await pumpUntilIdle(tester);
 
-    expect(find.text('Gaia is waiting for your headset'), findsOneWidget);
-    expect(find.text('Have Voice'), findsOneWidget);
-
-    await tester.tap(find.text('Have Voice'));
-    await pumpUntilIdle(tester);
-
-    expect(find.text('Dashboard'), findsWidgets);
-    expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
+    expect(find.text('Headset detected'), findsOneWidget);
+    expect(find.text('Continue with Voice'), findsOneWidget);
+    expect(find.text('Skip Voice'), findsOneWidget);
   });
 
   testWidgets('voice assistant shows a simple start here guide', (
@@ -2245,6 +2246,7 @@ void main() {
                 dailyTopTaskLimit: 3,
                 voiceRepliesEnabled: false,
                 voiceAssistantEnabled: true,
+                voiceStartupGateEnabled: false,
                 preferredTtsVoiceName: null,
                 preferredTtsVoiceLocale: null,
                 preferredTtsVoiceGender: null,
