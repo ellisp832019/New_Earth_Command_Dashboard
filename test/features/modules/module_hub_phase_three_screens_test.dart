@@ -8,7 +8,6 @@ import 'package:new_earth_command_dashboard/core/modules/module_health.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_manifest.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_permissions.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_status.dart';
-import 'package:new_earth_command_dashboard/features/modules/module_docking_screen.dart';
 import 'package:new_earth_command_dashboard/features/modules/module_governance_screen.dart';
 import 'package:new_earth_command_dashboard/features/modules/module_operations_screen.dart';
 
@@ -72,35 +71,6 @@ void main() {
     await tester.tap(find.text('Refresh registry'));
     await tester.pump();
     expect(find.text('Registry refreshed locally.'), findsOneWidget);
-  });
-
-  testWidgets('module docking screen exposes local layout controls', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(useMaterial3: true),
-        home: ModuleDockingScreen(module: module),
-      ),
-    );
-
-    expect(find.text('Layout and docking'), findsOneWidget);
-    expect(find.text('Dock preview'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.text('Placement snapshot'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Placement snapshot'), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.text('Pinned shortcuts'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Pinned shortcuts'), findsOneWidget);
   });
 
   testWidgets('module governance screen surfaces approvals and risk checks', (

@@ -37,14 +37,16 @@ class ModuleCard extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 theme.colorScheme.surface,
-                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.48),
+                theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.48,
+                ),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -60,18 +62,21 @@ class ModuleCard extends StatelessWidget {
                       ),
                       alignment: Alignment.center,
                       child: Icon(
-                        moduleIconFor(module.iconKey, category: module.category),
+                        moduleIconFor(
+                          module.iconKey,
+                          category: module.category,
+                        ),
                         color: statusColor,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(module.name, style: theme.textTheme.titleMedium),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             module.category.label,
                             style: theme.textTheme.labelMedium,
@@ -86,23 +91,23 @@ class ModuleCard extends StatelessWidget {
                           label: module.status.label,
                           color: statusColor,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         _SourceBadge(module: module),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   module.description,
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: 5,
+                  runSpacing: 5,
                   children: [
                     _CompactChip(
                       label: module.enabled ? 'Enabled' : 'Disabled',
@@ -128,19 +133,32 @@ class ModuleCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        value: module.enabled,
-                        onChanged: onEnabledChanged,
-                        title: const Text('Local toggle'),
-                        subtitle: const Text('Saved locally'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Local toggle',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Saved locally',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
+                    Switch.adaptive(
+                      value: module.enabled,
+                      onChanged: onEnabledChanged,
+                    ),
+                    const SizedBox(width: 8),
                     FilledButton.tonal(
                       onPressed: () =>
                           context.push(RouteNames.moduleHubModule(module.id)),
@@ -149,10 +167,10 @@ class ModuleCard extends StatelessWidget {
                   ],
                 ),
                 if (isSensitiveModule && module.routes.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: FilledButton.tonalIcon(
+                    child: TextButton.icon(
                       onPressed: () => context.go(module.routes.first),
                       icon: const Icon(Icons.lock_open_outlined),
                       label: const Text('Open gate'),
@@ -211,11 +229,11 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Text(
         label,
@@ -236,7 +254,12 @@ class _CompactChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(avatar: Icon(icon, size: 16), label: Text(label));
+    return Chip(
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      avatar: Icon(icon, size: 15),
+      label: Text(label),
+    );
   }
 }
 
@@ -253,11 +276,11 @@ class _SourceBadge extends StatelessWidget {
         : Theme.of(context).colorScheme.secondary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Text(
         module.source.label,

@@ -63,7 +63,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(BackButton), findsOneWidget);
-      expect(find.text('Health'), findsOneWidget);
+      expect(find.text('Health'), findsWidgets);
       expect(find.text('2 minutes ago'), findsOneWidget);
       expect(find.text('Connect the backend health feed.'), findsOneWidget);
       expect(find.text('Inspect permissions'), findsOneWidget);

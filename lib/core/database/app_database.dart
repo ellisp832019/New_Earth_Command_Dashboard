@@ -61,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -247,6 +247,33 @@ class AppDatabase extends _$AppDatabase {
               usersDevicesControlAccessRules.requiresApprovalForJson,
             );
           }
+
+          if (from < 11) {
+            await migrator.addColumn(
+              appSettings,
+              appSettings.showDockOverlays,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.showBackupGuardianDock,
+            );
+            await migrator.addColumn(appSettings, appSettings.showTreasuryDock);
+            await migrator.addColumn(
+              appSettings,
+              appSettings.showKnowledgeLibraryDock,
+            );
+            await migrator.addColumn(
+              appSettings,
+              appSettings.showVoiceConversationDock,
+            );
+          }
+
+          if (from < 12) {
+            await migrator.addColumn(
+              appSettings,
+              appSettings.showVoicePresenceChip,
+            );
+          }
         },
       );
 }
@@ -266,12 +293,12 @@ Future<void> _addColumnIfMissing(
   Migrator migrator,
   TableInfo table,
   String columnName,
-  GeneratedColumn column,
+  dynamic column,
 ) async {
   if (await _columnExists(migrator, table.actualTableName, columnName)) {
     return;
   }
-  await migrator.addColumn(table, column);
+  await migrator.addColumn(table, column as dynamic);
 }
 
 Future<bool> _tableExists(Migrator migrator, String tableName) async {

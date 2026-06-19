@@ -46,6 +46,10 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
     final themeMode = ref.watch(appThemeModeProvider);
     final settingsSnapshot = ref.watch(settingsSnapshotProvider);
     final startupComplete = ref.watch(voiceStartupGateBypassProvider);
+    final appSettings = settingsSnapshot.maybeWhen(
+      data: (snapshot) => snapshot.settings,
+      orElse: () => null,
+    );
 
     Widget buildAppRouter() {
       return _VoiceStartupLandingHandler(
@@ -124,35 +128,52 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                   ValueListenableBuilder<RouteInformation>(
                     valueListenable: appRouter.routeInformationProvider,
                     builder: (context, routeInfo, _) {
+                      final showDockOverlays =
+                          appSettings?.showDockOverlays ?? true;
+                      final showBackupGuardianDock =
+                          appSettings?.showBackupGuardianDock ?? true;
+                      final showTreasuryDock =
+                          appSettings?.showTreasuryDock ?? true;
+                      final showKnowledgeLibraryDock =
+                          appSettings?.showKnowledgeLibraryDock ?? true;
+
                       return Stack(
                         fit: StackFit.expand,
                         clipBehavior: Clip.none,
                         children: [
-                          BackupGuardianDockHost(
-                            currentPath: routeInfo.uri.path,
-                          ),
-                          TreasuryDockHost(
-                            currentPath: routeInfo.uri.path,
-                          ),
-                          KnowledgeLibraryDockHost(
-                            currentPath: routeInfo.uri.path,
-                          ),
+                          if (showDockOverlays && showBackupGuardianDock)
+                            BackupGuardianDockHost(
+                              currentPath: routeInfo.uri.path,
+                            ),
+                          if (showDockOverlays && showTreasuryDock)
+                            TreasuryDockHost(
+                              currentPath: routeInfo.uri.path,
+                            ),
+                          if (showDockOverlays && showKnowledgeLibraryDock)
+                            KnowledgeLibraryDockHost(
+                              currentPath: routeInfo.uri.path,
+                            ),
                         ],
                       );
                     },
                   ),
-                  const Positioned(
-                    top: 16,
-                    right: 16,
-                    child: SafeArea(
-                      child: IgnorePointer(child: VoicePresenceChip()),
+                  if ((appSettings?.showDockOverlays ?? true) &&
+                      (appSettings?.showVoicePresenceChip ?? true))
+                    const Positioned(
+                      top: 16,
+                      right: 16,
+                      child: SafeArea(
+                        child: IgnorePointer(child: VoicePresenceChip()),
+                      ),
                     ),
-                  ),
-                  const Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: SafeArea(child: VoiceConversationDock()),
-                  ),
+                  if ((appSettings?.showDockOverlays ?? true) &&
+                      (appSettings?.showVoiceConversationDock ?? true) &&
+                      (appSettings?.voiceAssistantEnabled ?? true))
+                    const Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: SafeArea(child: VoiceConversationDock()),
+                    ),
                 ],
               );
             },

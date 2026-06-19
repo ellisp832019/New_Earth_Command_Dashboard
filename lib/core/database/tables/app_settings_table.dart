@@ -18,6 +18,22 @@ class AppSettings extends Table {
   BoolColumn get showProjectsWorkspaceSnapshot => boolean()
       .named('show_projects_workspace_snapshot')
       .withDefault(const Constant(true))();
+  BoolColumn get showDockOverlays =>
+      boolean().named('show_dock_overlays').withDefault(const Constant(true))();
+  BoolColumn get showBackupGuardianDock => boolean()
+      .named('show_backup_guardian_dock')
+      .withDefault(const Constant(true))();
+  BoolColumn get showTreasuryDock =>
+      boolean().named('show_treasury_dock').withDefault(const Constant(true))();
+  BoolColumn get showKnowledgeLibraryDock => boolean()
+      .named('show_knowledge_library_dock')
+      .withDefault(const Constant(true))();
+  BoolColumn get showVoiceConversationDock => boolean()
+      .named('show_voice_conversation_dock')
+      .withDefault(const Constant(true))();
+  BoolColumn get showVoicePresenceChip => boolean()
+      .named('show_voice_presence_chip')
+      .withDefault(const Constant(true))();
   IntColumn get dailyTopTaskLimit =>
       integer().named('daily_top_task_limit').withDefault(const Constant(3))();
   BoolColumn get voiceRepliesEnabled =>

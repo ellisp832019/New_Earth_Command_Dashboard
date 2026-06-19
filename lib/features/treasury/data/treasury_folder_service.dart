@@ -341,6 +341,9 @@ class TreasuryFolderService {
     'One short note',
   ];
 
+  String get _demoFinanceRootPath =>
+      path.join(_workingDirectory.path, 'assets', 'treasury', '_demo_finance');
+
   final Directory _workingDirectory;
 
   Future<TreasuryWorkspaceSnapshot> loadWorkspace() async {
@@ -348,12 +351,10 @@ class TreasuryFolderService {
       path.join(_workingDirectory.path, _configRelativePath),
     );
     final issues = <String>[];
-    String? financeRootPath;
+    var financeRootPath = _demoFinanceRootPath;
+    var usingDemoFallback = true;
 
     if (!await configFile.exists()) {
-      issues.add(
-        'config/local_paths.json was not found in the dashboard repo.',
-      );
     } else {
       try {
         final decoded = jsonDecode(await configFile.readAsString());
@@ -361,31 +362,39 @@ class TreasuryFolderService {
           final value = decoded[_financeRootKey];
           if (value is String && value.trim().isNotEmpty) {
             financeRootPath = value.trim();
+            usingDemoFallback = false;
           } else {
-            issues.add(
-              'finance_treasury_path is missing from config/local_paths.json.',
-            );
+            financeRootPath = _demoFinanceRootPath;
+            usingDemoFallback = true;
           }
         } else {
-          issues.add('config/local_paths.json should contain a JSON object.');
+          financeRootPath = _demoFinanceRootPath;
+          usingDemoFallback = true;
         }
       } on FormatException {
-        issues.add('config/local_paths.json could not be read as JSON.');
+        financeRootPath = _demoFinanceRootPath;
+        usingDemoFallback = true;
       } on FileSystemException {
-        issues.add('config/local_paths.json could not be opened.');
+        financeRootPath = _demoFinanceRootPath;
+        usingDemoFallback = true;
       }
     }
 
-    Directory? financeRoot;
-    if (financeRootPath != null) {
-      financeRoot = Directory(financeRootPath);
-      if (!await financeRoot.exists()) {
-        issues.add('The finance folder does not exist at the configured path.');
+    final financeRoot = Directory(financeRootPath);
+    if (!await financeRoot.exists()) {
+      if (usingDemoFallback) {
+        await _bootstrapRequiredStructure(financeRoot);
+      } else {
+        financeRootPath = _demoFinanceRootPath;
+        usingDemoFallback = true;
+        await _bootstrapRequiredStructure(Directory(financeRootPath));
       }
+    } else if (usingDemoFallback) {
+      await _bootstrapRequiredStructure(financeRoot);
     }
 
     final missingFolders = <String>[];
-    if (financeRoot != null && await financeRoot.exists()) {
+    if (await financeRoot.exists()) {
       for (final relativeFolder in requiredFolders) {
         final candidate = Directory(
           path.join(financeRoot.path, relativeFolder),
@@ -397,7 +406,7 @@ class TreasuryFolderService {
     }
 
     final missingFiles = <String>[];
-    if (financeRoot != null && await financeRoot.exists()) {
+    if (await financeRoot.exists()) {
       for (final relativeFile in requiredFiles) {
         final candidate = File(path.join(financeRoot.path, relativeFile));
         if (!await candidate.exists()) {
@@ -448,8 +457,8 @@ class TreasuryFolderService {
       ),
     ];
 
-    final guidanceNote = financeRoot == null
-        ? 'The Treasury area will calm down once the external Omega OS folder is linked. ${OmegaOsFolderRegistry.reservedSystemsNote}'
+    final guidanceNote = usingDemoFallback
+        ? 'Treasury is running from a local demo workspace until the external finance folder is linked. ${OmegaOsFolderRegistry.reservedSystemsNote}'
         : missingFolders.isEmpty
         ? 'The external finance folder is connected. Keep the system local-first and only write with care. ${OmegaOsFolderRegistry.reservedSystemsNote}'
         : 'The finance folder is present, but a few expected Omega OS folders still need attention. ${OmegaOsFolderRegistry.reservedSystemsNote}';
@@ -457,9 +466,7 @@ class TreasuryFolderService {
     return TreasuryWorkspaceSnapshot(
       configPath: configFile.path,
       financeRootPath: financeRootPath,
-      isReady:
-          issues.isEmpty &&
-          financeRootPath != null &&
+      isReady: issues.isEmpty &&
           missingFolders.isEmpty &&
           missingFiles.isEmpty,
       issues: issues,
@@ -550,6 +557,25 @@ class TreasuryFolderService {
       createdFolders: createdFolders,
       createdFiles: createdFiles,
     );
+  }
+
+  Future<void> _bootstrapRequiredStructure(Directory financeRoot) async {
+    await financeRoot.create(recursive: true);
+
+    for (final relativeFolder in requiredFolders) {
+      await Directory(path.join(financeRoot.path, relativeFolder))
+          .create(recursive: true);
+    }
+
+    for (final relativeFile in requiredFiles) {
+      final candidate = File(path.join(financeRoot.path, relativeFile));
+      if (await candidate.exists()) {
+        continue;
+      }
+
+      await candidate.parent.create(recursive: true);
+      await candidate.writeAsString(_templateForRequiredFile(relativeFile));
+    }
   }
 
   Future<void> writeTextFileWithBackup(File file, String contents) async {

@@ -8544,6 +8544,96 @@ class $AppSettingsTable extends AppSettings
         ),
         defaultValue: const Constant(true),
       );
+  static const VerificationMeta _showDockOverlaysMeta = const VerificationMeta(
+    'showDockOverlays',
+  );
+  @override
+  late final GeneratedColumn<bool> showDockOverlays = GeneratedColumn<bool>(
+    'show_dock_overlays',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_dock_overlays" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showBackupGuardianDockMeta =
+      const VerificationMeta('showBackupGuardianDock');
+  @override
+  late final GeneratedColumn<bool> showBackupGuardianDock =
+      GeneratedColumn<bool>(
+        'show_backup_guardian_dock',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_backup_guardian_dock" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
+  static const VerificationMeta _showTreasuryDockMeta = const VerificationMeta(
+    'showTreasuryDock',
+  );
+  @override
+  late final GeneratedColumn<bool> showTreasuryDock = GeneratedColumn<bool>(
+    'show_treasury_dock',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_treasury_dock" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showKnowledgeLibraryDockMeta =
+      const VerificationMeta('showKnowledgeLibraryDock');
+  @override
+  late final GeneratedColumn<bool> showKnowledgeLibraryDock =
+      GeneratedColumn<bool>(
+        'show_knowledge_library_dock',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_knowledge_library_dock" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
+  static const VerificationMeta _showVoiceConversationDockMeta =
+      const VerificationMeta('showVoiceConversationDock');
+  @override
+  late final GeneratedColumn<bool> showVoiceConversationDock =
+      GeneratedColumn<bool>(
+        'show_voice_conversation_dock',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_voice_conversation_dock" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
+  static const VerificationMeta _showVoicePresenceChipMeta =
+      const VerificationMeta('showVoicePresenceChip');
+  @override
+  late final GeneratedColumn<bool> showVoicePresenceChip =
+      GeneratedColumn<bool>(
+        'show_voice_presence_chip',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_voice_presence_chip" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
   static const VerificationMeta _dailyTopTaskLimitMeta = const VerificationMeta(
     'dailyTopTaskLimit',
   );
@@ -8685,6 +8775,12 @@ class $AppSettingsTable extends AppSettings
     showLearningCard,
     showContentCard,
     showProjectsWorkspaceSnapshot,
+    showDockOverlays,
+    showBackupGuardianDock,
+    showTreasuryDock,
+    showKnowledgeLibraryDock,
+    showVoiceConversationDock,
+    showVoicePresenceChip,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
@@ -8774,6 +8870,60 @@ class $AppSettingsTable extends AppSettings
         showProjectsWorkspaceSnapshot.isAcceptableOrUnknown(
           data['show_projects_workspace_snapshot']!,
           _showProjectsWorkspaceSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_dock_overlays')) {
+      context.handle(
+        _showDockOverlaysMeta,
+        showDockOverlays.isAcceptableOrUnknown(
+          data['show_dock_overlays']!,
+          _showDockOverlaysMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_backup_guardian_dock')) {
+      context.handle(
+        _showBackupGuardianDockMeta,
+        showBackupGuardianDock.isAcceptableOrUnknown(
+          data['show_backup_guardian_dock']!,
+          _showBackupGuardianDockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_treasury_dock')) {
+      context.handle(
+        _showTreasuryDockMeta,
+        showTreasuryDock.isAcceptableOrUnknown(
+          data['show_treasury_dock']!,
+          _showTreasuryDockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_knowledge_library_dock')) {
+      context.handle(
+        _showKnowledgeLibraryDockMeta,
+        showKnowledgeLibraryDock.isAcceptableOrUnknown(
+          data['show_knowledge_library_dock']!,
+          _showKnowledgeLibraryDockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_voice_conversation_dock')) {
+      context.handle(
+        _showVoiceConversationDockMeta,
+        showVoiceConversationDock.isAcceptableOrUnknown(
+          data['show_voice_conversation_dock']!,
+          _showVoiceConversationDockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_voice_presence_chip')) {
+      context.handle(
+        _showVoicePresenceChipMeta,
+        showVoicePresenceChip.isAcceptableOrUnknown(
+          data['show_voice_presence_chip']!,
+          _showVoicePresenceChipMeta,
         ),
       );
     }
@@ -8915,6 +9065,30 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}show_projects_workspace_snapshot'],
       )!,
+      showDockOverlays: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_dock_overlays'],
+      )!,
+      showBackupGuardianDock: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_backup_guardian_dock'],
+      )!,
+      showTreasuryDock: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_treasury_dock'],
+      )!,
+      showKnowledgeLibraryDock: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_knowledge_library_dock'],
+      )!,
+      showVoiceConversationDock: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_voice_conversation_dock'],
+      )!,
+      showVoicePresenceChip: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_voice_presence_chip'],
+      )!,
       dailyTopTaskLimit: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}daily_top_task_limit'],
@@ -8977,6 +9151,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showLearningCard;
   final bool showContentCard;
   final bool showProjectsWorkspaceSnapshot;
+  final bool showDockOverlays;
+  final bool showBackupGuardianDock;
+  final bool showTreasuryDock;
+  final bool showKnowledgeLibraryDock;
+  final bool showVoiceConversationDock;
+  final bool showVoicePresenceChip;
   final int dailyTopTaskLimit;
   final bool voiceRepliesEnabled;
   final bool voiceAssistantEnabled;
@@ -8997,6 +9177,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showLearningCard,
     required this.showContentCard,
     required this.showProjectsWorkspaceSnapshot,
+    required this.showDockOverlays,
+    required this.showBackupGuardianDock,
+    required this.showTreasuryDock,
+    required this.showKnowledgeLibraryDock,
+    required this.showVoiceConversationDock,
+    required this.showVoicePresenceChip,
     required this.dailyTopTaskLimit,
     required this.voiceRepliesEnabled,
     required this.voiceAssistantEnabled,
@@ -9024,6 +9210,16 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['show_projects_workspace_snapshot'] = Variable<bool>(
       showProjectsWorkspaceSnapshot,
     );
+    map['show_dock_overlays'] = Variable<bool>(showDockOverlays);
+    map['show_backup_guardian_dock'] = Variable<bool>(showBackupGuardianDock);
+    map['show_treasury_dock'] = Variable<bool>(showTreasuryDock);
+    map['show_knowledge_library_dock'] = Variable<bool>(
+      showKnowledgeLibraryDock,
+    );
+    map['show_voice_conversation_dock'] = Variable<bool>(
+      showVoiceConversationDock,
+    );
+    map['show_voice_presence_chip'] = Variable<bool>(showVoicePresenceChip);
     map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit);
     map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled);
     map['voice_assistant_enabled'] = Variable<bool>(voiceAssistantEnabled);
@@ -9064,6 +9260,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showLearningCard: Value(showLearningCard),
       showContentCard: Value(showContentCard),
       showProjectsWorkspaceSnapshot: Value(showProjectsWorkspaceSnapshot),
+      showDockOverlays: Value(showDockOverlays),
+      showBackupGuardianDock: Value(showBackupGuardianDock),
+      showTreasuryDock: Value(showTreasuryDock),
+      showKnowledgeLibraryDock: Value(showKnowledgeLibraryDock),
+      showVoiceConversationDock: Value(showVoiceConversationDock),
+      showVoicePresenceChip: Value(showVoicePresenceChip),
       dailyTopTaskLimit: Value(dailyTopTaskLimit),
       voiceRepliesEnabled: Value(voiceRepliesEnabled),
       voiceAssistantEnabled: Value(voiceAssistantEnabled),
@@ -9104,6 +9306,20 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showContentCard: serializer.fromJson<bool>(json['showContentCard']),
       showProjectsWorkspaceSnapshot: serializer.fromJson<bool>(
         json['showProjectsWorkspaceSnapshot'],
+      ),
+      showDockOverlays: serializer.fromJson<bool>(json['showDockOverlays']),
+      showBackupGuardianDock: serializer.fromJson<bool>(
+        json['showBackupGuardianDock'],
+      ),
+      showTreasuryDock: serializer.fromJson<bool>(json['showTreasuryDock']),
+      showKnowledgeLibraryDock: serializer.fromJson<bool>(
+        json['showKnowledgeLibraryDock'],
+      ),
+      showVoiceConversationDock: serializer.fromJson<bool>(
+        json['showVoiceConversationDock'],
+      ),
+      showVoicePresenceChip: serializer.fromJson<bool>(
+        json['showVoicePresenceChip'],
       ),
       dailyTopTaskLimit: serializer.fromJson<int>(json['dailyTopTaskLimit']),
       voiceRepliesEnabled: serializer.fromJson<bool>(
@@ -9148,6 +9364,16 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'showProjectsWorkspaceSnapshot': serializer.toJson<bool>(
         showProjectsWorkspaceSnapshot,
       ),
+      'showDockOverlays': serializer.toJson<bool>(showDockOverlays),
+      'showBackupGuardianDock': serializer.toJson<bool>(showBackupGuardianDock),
+      'showTreasuryDock': serializer.toJson<bool>(showTreasuryDock),
+      'showKnowledgeLibraryDock': serializer.toJson<bool>(
+        showKnowledgeLibraryDock,
+      ),
+      'showVoiceConversationDock': serializer.toJson<bool>(
+        showVoiceConversationDock,
+      ),
+      'showVoicePresenceChip': serializer.toJson<bool>(showVoicePresenceChip),
       'dailyTopTaskLimit': serializer.toJson<int>(dailyTopTaskLimit),
       'voiceRepliesEnabled': serializer.toJson<bool>(voiceRepliesEnabled),
       'voiceAssistantEnabled': serializer.toJson<bool>(voiceAssistantEnabled),
@@ -9181,6 +9407,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showLearningCard,
     bool? showContentCard,
     bool? showProjectsWorkspaceSnapshot,
+    bool? showDockOverlays,
+    bool? showBackupGuardianDock,
+    bool? showTreasuryDock,
+    bool? showKnowledgeLibraryDock,
+    bool? showVoiceConversationDock,
+    bool? showVoicePresenceChip,
     int? dailyTopTaskLimit,
     bool? voiceRepliesEnabled,
     bool? voiceAssistantEnabled,
@@ -9204,6 +9436,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showContentCard: showContentCard ?? this.showContentCard,
     showProjectsWorkspaceSnapshot:
         showProjectsWorkspaceSnapshot ?? this.showProjectsWorkspaceSnapshot,
+    showDockOverlays: showDockOverlays ?? this.showDockOverlays,
+    showBackupGuardianDock:
+        showBackupGuardianDock ?? this.showBackupGuardianDock,
+    showTreasuryDock: showTreasuryDock ?? this.showTreasuryDock,
+    showKnowledgeLibraryDock:
+        showKnowledgeLibraryDock ?? this.showKnowledgeLibraryDock,
+    showVoiceConversationDock:
+        showVoiceConversationDock ?? this.showVoiceConversationDock,
+    showVoicePresenceChip: showVoicePresenceChip ?? this.showVoicePresenceChip,
     dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
     voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
     voiceAssistantEnabled: voiceAssistantEnabled ?? this.voiceAssistantEnabled,
@@ -9249,6 +9490,24 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showProjectsWorkspaceSnapshot: data.showProjectsWorkspaceSnapshot.present
           ? data.showProjectsWorkspaceSnapshot.value
           : this.showProjectsWorkspaceSnapshot,
+      showDockOverlays: data.showDockOverlays.present
+          ? data.showDockOverlays.value
+          : this.showDockOverlays,
+      showBackupGuardianDock: data.showBackupGuardianDock.present
+          ? data.showBackupGuardianDock.value
+          : this.showBackupGuardianDock,
+      showTreasuryDock: data.showTreasuryDock.present
+          ? data.showTreasuryDock.value
+          : this.showTreasuryDock,
+      showKnowledgeLibraryDock: data.showKnowledgeLibraryDock.present
+          ? data.showKnowledgeLibraryDock.value
+          : this.showKnowledgeLibraryDock,
+      showVoiceConversationDock: data.showVoiceConversationDock.present
+          ? data.showVoiceConversationDock.value
+          : this.showVoiceConversationDock,
+      showVoicePresenceChip: data.showVoicePresenceChip.present
+          ? data.showVoicePresenceChip.value
+          : this.showVoicePresenceChip,
       dailyTopTaskLimit: data.dailyTopTaskLimit.present
           ? data.dailyTopTaskLimit.value
           : this.dailyTopTaskLimit,
@@ -9294,6 +9553,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write(
             'showProjectsWorkspaceSnapshot: $showProjectsWorkspaceSnapshot, ',
           )
+          ..write('showDockOverlays: $showDockOverlays, ')
+          ..write('showBackupGuardianDock: $showBackupGuardianDock, ')
+          ..write('showTreasuryDock: $showTreasuryDock, ')
+          ..write('showKnowledgeLibraryDock: $showKnowledgeLibraryDock, ')
+          ..write('showVoiceConversationDock: $showVoiceConversationDock, ')
+          ..write('showVoicePresenceChip: $showVoicePresenceChip, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
@@ -9310,7 +9575,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     settingsId,
     themeMode,
     defaultDashboardView,
@@ -9319,6 +9584,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showLearningCard,
     showContentCard,
     showProjectsWorkspaceSnapshot,
+    showDockOverlays,
+    showBackupGuardianDock,
+    showTreasuryDock,
+    showKnowledgeLibraryDock,
+    showVoiceConversationDock,
+    showVoicePresenceChip,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
@@ -9330,7 +9601,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     preferredTtsVoicePitch,
     createdAt,
     updatedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -9344,6 +9615,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showContentCard == this.showContentCard &&
           other.showProjectsWorkspaceSnapshot ==
               this.showProjectsWorkspaceSnapshot &&
+          other.showDockOverlays == this.showDockOverlays &&
+          other.showBackupGuardianDock == this.showBackupGuardianDock &&
+          other.showTreasuryDock == this.showTreasuryDock &&
+          other.showKnowledgeLibraryDock == this.showKnowledgeLibraryDock &&
+          other.showVoiceConversationDock == this.showVoiceConversationDock &&
+          other.showVoicePresenceChip == this.showVoicePresenceChip &&
           other.dailyTopTaskLimit == this.dailyTopTaskLimit &&
           other.voiceRepliesEnabled == this.voiceRepliesEnabled &&
           other.voiceAssistantEnabled == this.voiceAssistantEnabled &&
@@ -9367,6 +9644,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showLearningCard;
   final Value<bool> showContentCard;
   final Value<bool> showProjectsWorkspaceSnapshot;
+  final Value<bool> showDockOverlays;
+  final Value<bool> showBackupGuardianDock;
+  final Value<bool> showTreasuryDock;
+  final Value<bool> showKnowledgeLibraryDock;
+  final Value<bool> showVoiceConversationDock;
+  final Value<bool> showVoicePresenceChip;
   final Value<int> dailyTopTaskLimit;
   final Value<bool> voiceRepliesEnabled;
   final Value<bool> voiceAssistantEnabled;
@@ -9388,6 +9671,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showLearningCard = const Value.absent(),
     this.showContentCard = const Value.absent(),
     this.showProjectsWorkspaceSnapshot = const Value.absent(),
+    this.showDockOverlays = const Value.absent(),
+    this.showBackupGuardianDock = const Value.absent(),
+    this.showTreasuryDock = const Value.absent(),
+    this.showKnowledgeLibraryDock = const Value.absent(),
+    this.showVoiceConversationDock = const Value.absent(),
+    this.showVoicePresenceChip = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
@@ -9410,6 +9699,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showLearningCard = const Value.absent(),
     this.showContentCard = const Value.absent(),
     this.showProjectsWorkspaceSnapshot = const Value.absent(),
+    this.showDockOverlays = const Value.absent(),
+    this.showBackupGuardianDock = const Value.absent(),
+    this.showTreasuryDock = const Value.absent(),
+    this.showKnowledgeLibraryDock = const Value.absent(),
+    this.showVoiceConversationDock = const Value.absent(),
+    this.showVoicePresenceChip = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
@@ -9434,6 +9729,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showLearningCard,
     Expression<bool>? showContentCard,
     Expression<bool>? showProjectsWorkspaceSnapshot,
+    Expression<bool>? showDockOverlays,
+    Expression<bool>? showBackupGuardianDock,
+    Expression<bool>? showTreasuryDock,
+    Expression<bool>? showKnowledgeLibraryDock,
+    Expression<bool>? showVoiceConversationDock,
+    Expression<bool>? showVoicePresenceChip,
     Expression<int>? dailyTopTaskLimit,
     Expression<bool>? voiceRepliesEnabled,
     Expression<bool>? voiceAssistantEnabled,
@@ -9458,6 +9759,16 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (showContentCard != null) 'show_content_card': showContentCard,
       if (showProjectsWorkspaceSnapshot != null)
         'show_projects_workspace_snapshot': showProjectsWorkspaceSnapshot,
+      if (showDockOverlays != null) 'show_dock_overlays': showDockOverlays,
+      if (showBackupGuardianDock != null)
+        'show_backup_guardian_dock': showBackupGuardianDock,
+      if (showTreasuryDock != null) 'show_treasury_dock': showTreasuryDock,
+      if (showKnowledgeLibraryDock != null)
+        'show_knowledge_library_dock': showKnowledgeLibraryDock,
+      if (showVoiceConversationDock != null)
+        'show_voice_conversation_dock': showVoiceConversationDock,
+      if (showVoicePresenceChip != null)
+        'show_voice_presence_chip': showVoicePresenceChip,
       if (dailyTopTaskLimit != null) 'daily_top_task_limit': dailyTopTaskLimit,
       if (voiceRepliesEnabled != null)
         'voice_replies_enabled': voiceRepliesEnabled,
@@ -9490,6 +9801,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showLearningCard,
     Value<bool>? showContentCard,
     Value<bool>? showProjectsWorkspaceSnapshot,
+    Value<bool>? showDockOverlays,
+    Value<bool>? showBackupGuardianDock,
+    Value<bool>? showTreasuryDock,
+    Value<bool>? showKnowledgeLibraryDock,
+    Value<bool>? showVoiceConversationDock,
+    Value<bool>? showVoicePresenceChip,
     Value<int>? dailyTopTaskLimit,
     Value<bool>? voiceRepliesEnabled,
     Value<bool>? voiceAssistantEnabled,
@@ -9513,6 +9830,16 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       showContentCard: showContentCard ?? this.showContentCard,
       showProjectsWorkspaceSnapshot:
           showProjectsWorkspaceSnapshot ?? this.showProjectsWorkspaceSnapshot,
+      showDockOverlays: showDockOverlays ?? this.showDockOverlays,
+      showBackupGuardianDock:
+          showBackupGuardianDock ?? this.showBackupGuardianDock,
+      showTreasuryDock: showTreasuryDock ?? this.showTreasuryDock,
+      showKnowledgeLibraryDock:
+          showKnowledgeLibraryDock ?? this.showKnowledgeLibraryDock,
+      showVoiceConversationDock:
+          showVoiceConversationDock ?? this.showVoiceConversationDock,
+      showVoicePresenceChip:
+          showVoicePresenceChip ?? this.showVoicePresenceChip,
       dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
       voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
       voiceAssistantEnabled:
@@ -9564,6 +9891,32 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (showProjectsWorkspaceSnapshot.present) {
       map['show_projects_workspace_snapshot'] = Variable<bool>(
         showProjectsWorkspaceSnapshot.value,
+      );
+    }
+    if (showDockOverlays.present) {
+      map['show_dock_overlays'] = Variable<bool>(showDockOverlays.value);
+    }
+    if (showBackupGuardianDock.present) {
+      map['show_backup_guardian_dock'] = Variable<bool>(
+        showBackupGuardianDock.value,
+      );
+    }
+    if (showTreasuryDock.present) {
+      map['show_treasury_dock'] = Variable<bool>(showTreasuryDock.value);
+    }
+    if (showKnowledgeLibraryDock.present) {
+      map['show_knowledge_library_dock'] = Variable<bool>(
+        showKnowledgeLibraryDock.value,
+      );
+    }
+    if (showVoiceConversationDock.present) {
+      map['show_voice_conversation_dock'] = Variable<bool>(
+        showVoiceConversationDock.value,
+      );
+    }
+    if (showVoicePresenceChip.present) {
+      map['show_voice_presence_chip'] = Variable<bool>(
+        showVoicePresenceChip.value,
       );
     }
     if (dailyTopTaskLimit.present) {
@@ -9632,6 +9985,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write(
             'showProjectsWorkspaceSnapshot: $showProjectsWorkspaceSnapshot, ',
           )
+          ..write('showDockOverlays: $showDockOverlays, ')
+          ..write('showBackupGuardianDock: $showBackupGuardianDock, ')
+          ..write('showTreasuryDock: $showTreasuryDock, ')
+          ..write('showKnowledgeLibraryDock: $showKnowledgeLibraryDock, ')
+          ..write('showVoiceConversationDock: $showVoiceConversationDock, ')
+          ..write('showVoicePresenceChip: $showVoicePresenceChip, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
@@ -17871,6 +18230,12 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showLearningCard,
       Value<bool> showContentCard,
       Value<bool> showProjectsWorkspaceSnapshot,
+      Value<bool> showDockOverlays,
+      Value<bool> showBackupGuardianDock,
+      Value<bool> showTreasuryDock,
+      Value<bool> showKnowledgeLibraryDock,
+      Value<bool> showVoiceConversationDock,
+      Value<bool> showVoicePresenceChip,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
@@ -17894,6 +18259,12 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showLearningCard,
       Value<bool> showContentCard,
       Value<bool> showProjectsWorkspaceSnapshot,
+      Value<bool> showDockOverlays,
+      Value<bool> showBackupGuardianDock,
+      Value<bool> showTreasuryDock,
+      Value<bool> showKnowledgeLibraryDock,
+      Value<bool> showVoiceConversationDock,
+      Value<bool> showVoicePresenceChip,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
@@ -17954,6 +18325,36 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get showProjectsWorkspaceSnapshot => $composableBuilder(
     column: $table.showProjectsWorkspaceSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showDockOverlays => $composableBuilder(
+    column: $table.showDockOverlays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showBackupGuardianDock => $composableBuilder(
+    column: $table.showBackupGuardianDock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showTreasuryDock => $composableBuilder(
+    column: $table.showTreasuryDock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showKnowledgeLibraryDock => $composableBuilder(
+    column: $table.showKnowledgeLibraryDock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showVoiceConversationDock => $composableBuilder(
+    column: $table.showVoiceConversationDock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showVoicePresenceChip => $composableBuilder(
+    column: $table.showVoicePresenceChip,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18062,6 +18463,36 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showDockOverlays => $composableBuilder(
+    column: $table.showDockOverlays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showBackupGuardianDock => $composableBuilder(
+    column: $table.showBackupGuardianDock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showTreasuryDock => $composableBuilder(
+    column: $table.showTreasuryDock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showKnowledgeLibraryDock => $composableBuilder(
+    column: $table.showKnowledgeLibraryDock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showVoiceConversationDock => $composableBuilder(
+    column: $table.showVoiceConversationDock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showVoicePresenceChip => $composableBuilder(
+    column: $table.showVoicePresenceChip,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
     builder: (column) => ColumnOrderings(column),
@@ -18165,6 +18596,36 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get showDockOverlays => $composableBuilder(
+    column: $table.showDockOverlays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showBackupGuardianDock => $composableBuilder(
+    column: $table.showBackupGuardianDock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showTreasuryDock => $composableBuilder(
+    column: $table.showTreasuryDock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showKnowledgeLibraryDock => $composableBuilder(
+    column: $table.showKnowledgeLibraryDock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showVoiceConversationDock => $composableBuilder(
+    column: $table.showVoiceConversationDock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showVoicePresenceChip => $composableBuilder(
+    column: $table.showVoicePresenceChip,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
     builder: (column) => column,
@@ -18257,6 +18718,12 @@ class $$AppSettingsTableTableManager
                 Value<bool> showContentCard = const Value.absent(),
                 Value<bool> showProjectsWorkspaceSnapshot =
                     const Value.absent(),
+                Value<bool> showDockOverlays = const Value.absent(),
+                Value<bool> showBackupGuardianDock = const Value.absent(),
+                Value<bool> showTreasuryDock = const Value.absent(),
+                Value<bool> showKnowledgeLibraryDock = const Value.absent(),
+                Value<bool> showVoiceConversationDock = const Value.absent(),
+                Value<bool> showVoicePresenceChip = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
@@ -18279,6 +18746,12 @@ class $$AppSettingsTableTableManager
                 showLearningCard: showLearningCard,
                 showContentCard: showContentCard,
                 showProjectsWorkspaceSnapshot: showProjectsWorkspaceSnapshot,
+                showDockOverlays: showDockOverlays,
+                showBackupGuardianDock: showBackupGuardianDock,
+                showTreasuryDock: showTreasuryDock,
+                showKnowledgeLibraryDock: showKnowledgeLibraryDock,
+                showVoiceConversationDock: showVoiceConversationDock,
+                showVoicePresenceChip: showVoicePresenceChip,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,
@@ -18303,6 +18776,12 @@ class $$AppSettingsTableTableManager
                 Value<bool> showContentCard = const Value.absent(),
                 Value<bool> showProjectsWorkspaceSnapshot =
                     const Value.absent(),
+                Value<bool> showDockOverlays = const Value.absent(),
+                Value<bool> showBackupGuardianDock = const Value.absent(),
+                Value<bool> showTreasuryDock = const Value.absent(),
+                Value<bool> showKnowledgeLibraryDock = const Value.absent(),
+                Value<bool> showVoiceConversationDock = const Value.absent(),
+                Value<bool> showVoicePresenceChip = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
@@ -18325,6 +18804,12 @@ class $$AppSettingsTableTableManager
                 showLearningCard: showLearningCard,
                 showContentCard: showContentCard,
                 showProjectsWorkspaceSnapshot: showProjectsWorkspaceSnapshot,
+                showDockOverlays: showDockOverlays,
+                showBackupGuardianDock: showBackupGuardianDock,
+                showTreasuryDock: showTreasuryDock,
+                showKnowledgeLibraryDock: showKnowledgeLibraryDock,
+                showVoiceConversationDock: showVoiceConversationDock,
+                showVoicePresenceChip: showVoicePresenceChip,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,

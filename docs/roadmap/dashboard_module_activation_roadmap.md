@@ -5,6 +5,8 @@ This roadmap is the next-step plan for bringing more New Earth modules online in
 It is not a list of every future idea.
 It is the practical order for turning roadmap modules into working, visible, low-friction parts of the daily system.
 
+Users & Devices Control is already active. The next build phase should start with Treasury hardening, then continue through the rest of the core loop in order.
+
 ## Activation Rule
 
 A module becomes `active with the core` when all three are true:
@@ -275,4 +277,3 @@ Before a module moves into active core status, check that:
 - the user can review before committing changes
 - the module has a calm empty state and a clear health state
 - the module does not break the main Dashboard loop
-

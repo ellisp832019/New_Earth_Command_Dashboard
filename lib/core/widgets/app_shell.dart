@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -176,7 +174,7 @@ class _Sidebar extends StatelessWidget {
             const _BrandMark(size: 54),
             const SizedBox(height: 18),
             _SidebarSection(
-              title: 'Core',
+              title: 'Home',
               children: [
                 _ShellDestination(
                   label: 'Dashboard',
@@ -185,13 +183,21 @@ class _Sidebar extends StatelessWidget {
                   selected: navigationShell.currentIndex == 0,
                   onTap: () => navigationShell.goBranch(0),
                 ),
-                const SizedBox(height: 8),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _SidebarSection(
+              title: 'Control',
+              children: [
                 _SidebarLink(
                   label: 'Users & Devices',
                   icon: Icons.verified_user_outlined,
                   route: RouteNames.usersDevices,
-                  accent: AppColours.darkSecondary,
-                  badge: 'Gate',
+                ),
+                _SidebarLink(
+                  label: 'Security Lock',
+                  icon: Icons.lock_outline,
+                  route: RouteNames.securityLock,
                 ),
               ],
             ),
@@ -298,15 +304,11 @@ class _Sidebar extends StatelessWidget {
                   label: 'Search',
                   icon: Icons.search,
                   route: RouteNames.commandPalette,
-                  accent: AppColours.darkPrimary,
-                  badge: 'Cmd',
                 ),
                 _SidebarLink(
                   label: 'QR Studio',
                   icon: Icons.print_outlined,
                   route: RouteNames.assetQrLabelStudio,
-                  accent: AppColours.darkSecondary,
-                  badge: 'Print',
                 ),
                 _SidebarLink(
                   label: 'Command Deck',
@@ -317,8 +319,6 @@ class _Sidebar extends StatelessWidget {
                   label: 'Experiments',
                   icon: Icons.science_outlined,
                   route: RouteNames.experimentWorkspace,
-                  accent: AppColours.darkSecondary,
-                  badge: 'Lab',
                 ),
               ],
             ),
@@ -327,11 +327,9 @@ class _Sidebar extends StatelessWidget {
               title: 'About',
               children: [
                 _SidebarLink(
-                  label: 'About & Help',
+                  label: 'About',
                   icon: Icons.help_outline,
                   route: RouteNames.aboutHelp,
-                  accent: AppColours.darkSecondary,
-                  badge: 'Docs',
                 ),
               ],
             ),
@@ -368,8 +366,8 @@ class _SidebarSection extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColours.darkMutedText.withValues(alpha: 0.82),
-              letterSpacing: 0.8,
+              color: AppColours.darkMutedText.withValues(alpha: 0.7),
+              letterSpacing: 0.6,
             ),
           ),
         ),
@@ -503,18 +501,21 @@ class _SidebarLink extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.route,
-    this.accent,
-    this.badge,
   });
 
   final String label;
   final IconData icon;
   final String route;
-  final Color? accent;
-  final String? badge;
 
   @override
   Widget build(BuildContext context) {
+    final currentPath = GoRouterState.of(context).uri.path;
+    final isActive =
+        currentPath == route || currentPath.startsWith('$route/');
+    final color = isActive
+        ? AppColours.darkText
+        : AppColours.darkMutedText.withValues(alpha: 0.96);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Material(
@@ -524,52 +525,38 @@ class _SidebarLink extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: Row(
-              children: [
-                Icon(icon, size: 16, color: accent ?? AppColours.darkMutedText),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: 11,
-                      height: 1.15,
-                      color: accent ?? AppColours.darkMutedText,
-                      fontWeight: badge != null
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (badge != null) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: (accent ?? AppColours.darkSecondary).withValues(
-                        alpha: 0.16,
-                      ),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: (accent ?? AppColours.darkSecondary).withValues(
-                          alpha: 0.35,
-                        ),
-                      ),
-                    ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? AppColours.darkSurfaceRaised.withValues(alpha: 0.96)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+                border: isActive
+                    ? Border.all(
+                        color: AppColours.darkSecondary.withValues(alpha: 0.28),
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 16, color: color),
+                  const SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      badge!,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: accent ?? AppColours.darkText,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
+                      label,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        height: 1.15,
+                        color: color,
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),
                   ),
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -750,99 +737,15 @@ class _DesktopWindowButton extends StatelessWidget {
   }
 }
 
-class _AlexaGatewaySidebarLink extends StatefulWidget {
+class _AlexaGatewaySidebarLink extends StatelessWidget {
   const _AlexaGatewaySidebarLink();
-
-  @override
-  State<_AlexaGatewaySidebarLink> createState() =>
-      _AlexaGatewaySidebarLinkState();
-}
-
-class _AlexaGatewaySidebarLinkState extends State<_AlexaGatewaySidebarLink> {
-  Timer? _timer;
-  String _badge = '...';
-  Color _accent = AppColours.darkMutedText;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshStatus();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!mounted) {
-        return;
-      }
-
-      _refreshStatus();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _refreshStatus() async {
-    final client = HttpClient();
-
-    try {
-      final request = await client
-          .getUrl(Uri.parse('http://127.0.0.1:8088/health'))
-          .timeout(const Duration(seconds: 2));
-      final response = await request.close().timeout(
-        const Duration(seconds: 2),
-      );
-      final body = await response.transform(utf8.decoder).join();
-      final ok = response.statusCode >= 200 && response.statusCode < 300;
-
-      var badge = 'Off';
-      var accent = AppColours.darkPrimary;
-
-      if (ok) {
-        var enabled = true;
-        try {
-          final decoded = jsonDecode(body);
-          if (decoded is Map<String, dynamic>) {
-            enabled = decoded['enabled'] != false;
-          }
-        } catch (_) {
-          enabled = true;
-        }
-
-        badge = enabled ? 'Live' : 'Paused';
-        accent = enabled ? AppColours.darkSecondary : AppColours.darkGlow;
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _badge = badge;
-        _accent = accent;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _badge = 'Off';
-        _accent = AppColours.darkPrimary;
-      });
-    } finally {
-      client.close(force: true);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return _SidebarLink(
-      label: 'Alexa Voice Gateway',
+      label: 'Alexa',
       icon: Icons.hub_outlined,
       route: RouteNames.alexaVoiceGateway,
-      accent: _accent,
-      badge: _badge,
     );
   }
 }

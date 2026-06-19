@@ -3096,9 +3096,19 @@ class _DashboardQuickCaptureCardState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelTitle(
-            title: 'Quick Capture',
-            icon: Icons.add_circle_outline,
+          Row(
+            children: [
+              const _PanelTitle(
+                title: 'Quick Capture',
+                icon: Icons.add_circle_outline,
+              ),
+              const Spacer(),
+              _InlineTag(
+                label: 'Fast lane',
+                accent: AppColours.darkSecondary,
+                foreground: AppColours.darkSecondary,
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
@@ -3345,13 +3355,23 @@ class _ShowcaseTaskCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: state.accent.withValues(alpha: 0.1),
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: state.accent.withValues(alpha: 0.26)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.94),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: state.accent.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -3513,17 +3533,48 @@ class _MiniModuleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: _panelDecoration(context),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurface.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.94),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(state.icon, color: state.accent),
+          Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: state.accent.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           const SizedBox(height: 14),
-          Text(
-            state.title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: state.accent.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: state.accent.withValues(alpha: 0.32),
+                  ),
+                ),
+                child: Icon(state.icon, size: 16, color: state.accent),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  state.title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -3659,10 +3710,10 @@ class _HeaderMetricChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(minWidth: 128),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(18),
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColours.darkOutline),
       ),
       child: Column(
@@ -3734,11 +3785,11 @@ class _InlineTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.13),
+        color: accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.2)),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -3784,11 +3835,11 @@ class _CaptureTypeChip extends StatelessWidget {
     final accent = selected ? AppColours.darkPrimary : AppColours.darkMutedText;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: selected
-            ? AppColours.darkPrimary.withValues(alpha: 0.18)
-            : AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+            ? AppColours.darkPrimary.withValues(alpha: 0.14)
+            : AppColours.darkSurfaceAlt.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: selected ? AppColours.darkPrimary : AppColours.darkOutline,

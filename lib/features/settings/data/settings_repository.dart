@@ -59,6 +59,62 @@ class SettingsRepository {
     return _getOrCreateSettings();
   }
 
+  Future<AppSetting> updateDockVisibility({
+    bool? showDockOverlays,
+    bool? showBackupGuardianDock,
+    bool? showTreasuryDock,
+    bool? showKnowledgeLibraryDock,
+    bool? showVoiceConversationDock,
+  }) async {
+    final settings = await _getOrCreateSettings();
+    final timestamp = DateTime.now();
+
+    await (_database.update(
+      _database.appSettings,
+    )..where((table) => table.settingsId.equals(settings.settingsId))).write(
+      AppSettingsCompanion(
+        showDockOverlays: showDockOverlays == null
+            ? const Value.absent()
+            : Value(showDockOverlays),
+        showBackupGuardianDock: showBackupGuardianDock == null
+            ? const Value.absent()
+            : Value(showBackupGuardianDock),
+        showTreasuryDock: showTreasuryDock == null
+            ? const Value.absent()
+            : Value(showTreasuryDock),
+        showKnowledgeLibraryDock: showKnowledgeLibraryDock == null
+            ? const Value.absent()
+            : Value(showKnowledgeLibraryDock),
+        showVoiceConversationDock: showVoiceConversationDock == null
+            ? const Value.absent()
+            : Value(showVoiceConversationDock),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return _getOrCreateSettings();
+  }
+
+  Future<AppSetting> updateVoicePresenceVisibility({
+    bool? showVoicePresenceChip,
+  }) async {
+    final settings = await _getOrCreateSettings();
+    final timestamp = DateTime.now();
+
+    await (_database.update(
+      _database.appSettings,
+    )..where((table) => table.settingsId.equals(settings.settingsId))).write(
+      AppSettingsCompanion(
+        showVoicePresenceChip: showVoicePresenceChip == null
+            ? const Value.absent()
+            : Value(showVoicePresenceChip),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return _getOrCreateSettings();
+  }
+
   Future<AppSetting> updateThemeMode(String themeMode) async {
     final settings = await _getOrCreateSettings();
     final timestamp = DateTime.now();
@@ -137,6 +193,12 @@ class SettingsRepository {
             showLearningCard: const Value(true),
             showContentCard: const Value(true),
             showProjectsWorkspaceSnapshot: const Value(true),
+            showDockOverlays: const Value(true),
+            showBackupGuardianDock: const Value(true),
+            showTreasuryDock: const Value(true),
+            showKnowledgeLibraryDock: const Value(true),
+            showVoiceConversationDock: const Value(true),
+            showVoicePresenceChip: const Value(true),
             dailyTopTaskLimit: const Value(3),
             voiceRepliesEnabled: const Value(true),
             voiceAssistantEnabled: const Value(true),

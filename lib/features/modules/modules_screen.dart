@@ -112,7 +112,10 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
           ),
           const SizedBox(height: 16),
           _PinnedStartHereCard(
-            module: modules.where((module) => module.id == '01_USERS_AND_DEVICES_CONTROL').cast<ModuleManifest?>().firstOrNull,
+            module: modules
+                .where((module) => module.id == '01_USERS_AND_DEVICES_CONTROL')
+                .cast<ModuleManifest?>()
+                .firstOrNull,
           ),
           const SizedBox(height: 16),
           Card(
@@ -157,7 +160,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
   Widget _buildSearchAndViewControls(ThemeData theme) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -189,9 +192,9 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 _buildSortMenu(),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 ToggleButtons(
                   isSelected: [
                     _viewMode == ModuleViewMode.grid,
@@ -207,18 +210,18 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                   },
                   children: const [
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 10),
                       child: Icon(Icons.grid_view_outlined),
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 10),
                       child: Icon(Icons.view_agenda_outlined),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Use search, filters, and sort to narrow the registry to what matters now.',
               style: theme.textTheme.bodySmall,
@@ -236,19 +239,19 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
   }) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Filters', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text('Dockability', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
+            Text('Dockability', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                ChoiceChip(
+                _HubFilterChip(
                   label: const Text('All'),
                   selected: _dockableFilter == null,
                   onSelected: (_) {
@@ -256,7 +259,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     _saveUiState();
                   },
                 ),
-                ChoiceChip(
+                _HubFilterChip(
                   label: const Text('Dockable'),
                   selected: _dockableFilter == true,
                   onSelected: (_) {
@@ -264,7 +267,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                     _saveUiState();
                   },
                 ),
-                ChoiceChip(
+                _HubFilterChip(
                   label: const Text('Fixed'),
                   selected: _dockableFilter == false,
                   onSelected: (_) {
@@ -274,14 +277,14 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text('Category', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
+            Text('Category', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                ChoiceChip(
+                _HubFilterChip(
                   label: const Text('All'),
                   selected: _categoryFilter == null,
                   onSelected: (_) {
@@ -290,7 +293,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                   },
                 ),
                 ...ModuleCategory.values.map(
-                  (category) => ChoiceChip(
+                  (category) => _HubFilterChip(
                     label: Text(category.label),
                     selected: _categoryFilter == category,
                     onSelected: (_) {
@@ -301,14 +304,14 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text('Status', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
+            Text('Status', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                ChoiceChip(
+                _HubFilterChip(
                   label: const Text('All'),
                   selected: _statusFilter == null,
                   onSelected: (_) {
@@ -317,7 +320,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                   },
                 ),
                 ...visibleStatusFilters.map(
-                  (status) => ChoiceChip(
+                  (status) => _HubFilterChip(
                     label: Text(status.label),
                     selected: effectiveStatusFilter == status,
                     onSelected: (_) {
@@ -328,14 +331,14 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text('Permissions', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
+            Text('Permissions', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                ChoiceChip(
+                _HubFilterChip(
                   label: const Text('All'),
                   selected: _permissionFilter == null,
                   onSelected: (_) {
@@ -344,7 +347,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                   },
                 ),
                 ...ModulePermissionType.values.map(
-                  (permissionType) => ChoiceChip(
+                  (permissionType) => _HubFilterChip(
                     label: Text(permissionType.label),
                     selected: _permissionFilter == permissionType,
                     onSelected: (_) {
@@ -355,7 +358,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -379,8 +382,8 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
         .length;
 
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: 10,
+      runSpacing: 10,
       children: [
         _SummaryCard(label: 'Modules', value: '${modules.length}'),
         _SummaryCard(
@@ -480,7 +483,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisExtent: 320,
+            mainAxisExtent: 340,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
@@ -704,65 +707,61 @@ class _PinnedStartHereCard extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              theme.colorScheme.primary.withValues(alpha: 0.12),
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.56),
+              theme.colorScheme.primary.withValues(alpha: 0.1),
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.38),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(18),
+                color: theme.colorScheme.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 moduleIconFor(module!.iconKey, category: module!.category),
                 color: theme.colorScheme.primary,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: const [
                       Chip(label: Text('Start here')),
                       Chip(label: Text('Sensitive module')),
                       Chip(label: Text('Local access gate')),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    module!.name,
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 10),
+                  Text(module!.name, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 2),
                   Text(
                     'This is the easiest launch point for identity, device trust, approvals, and audit.',
                     style: theme.textTheme.bodyMedium,
                   ),
+                  const SizedBox(height: 10),
+                  Text(module!.description, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 12),
-                  Text(
-                    module!.description,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 14),
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
                       FilledButton.tonalIcon(
-                        onPressed: () => context.push(RouteNames.moduleHubModule(module!.id)),
+                        onPressed: () => context.push(
+                          RouteNames.moduleHubModule(module!.id),
+                        ),
                         icon: const Icon(Icons.open_in_new),
                         label: const Text('Open module home'),
                       ),
@@ -772,12 +771,14 @@ class _PinnedStartHereCard extends StatelessWidget {
                         label: const Text('Open access gate'),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => context.push(RouteNames.usersDevicesUsers),
+                        onPressed: () =>
+                            context.push(RouteNames.usersDevicesUsers),
                         icon: const Icon(Icons.people_outline),
                         label: const Text('Open Users'),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => context.push(RouteNames.usersDevicesDevices),
+                        onPressed: () =>
+                            context.push(RouteNames.usersDevicesDevices),
                         icon: const Icon(Icons.devices_outlined),
                         label: const Text('Open Devices'),
                       ),
@@ -817,7 +818,8 @@ class _HeaderCard extends StatelessWidget {
       title: 'More - Module Hub',
       subtitle: subtitle,
       body: summary,
-      footer: 'Folder-only entries are shown as Scaffold until they gain a root manifest.',
+      footer:
+          'Folder-only entries are shown as Scaffold until they gain a root manifest.',
       action: Align(
         alignment: Alignment.centerLeft,
         child: OutlinedButton.icon(
@@ -861,9 +863,7 @@ class _ActivityRow extends StatelessWidget {
       subtitle: event.message.isEmpty ? event.moduleId : event.message,
       body: event.timestamp.toLocal().toIso8601String(),
       compact: true,
-      metrics: [
-        _SummaryCard(label: 'Module', value: event.moduleId),
-      ],
+      metrics: [_SummaryCard(label: 'Module', value: event.moduleId)],
     );
   }
 }
@@ -880,13 +880,13 @@ class _SummaryCard extends StatelessWidget {
     return Card(
       elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: theme.textTheme.labelMedium),
-            const SizedBox(height: 4),
-            Text(value, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 2),
+            Text(value, style: theme.textTheme.titleSmall),
           ],
         ),
       ),
@@ -926,14 +926,14 @@ class _HubPanel extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.46),
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.36),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(compact ? 14 : 20),
+          padding: EdgeInsets.all(compact ? 12 : 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -950,39 +950,71 @@ class _HubPanel extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Icon(icon, size: compact ? 20 : 22),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(title, style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 4),
-                        Text(subtitle, style: theme.textTheme.headlineSmall),
+                        const SizedBox(height: 2),
+                        Text(subtitle, style: theme.textTheme.bodyMedium),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Text(body, style: theme.textTheme.bodyMedium),
               if (footer != null) ...[
                 const SizedBox(height: 6),
                 Text(footer!, style: theme.textTheme.bodySmall),
               ],
-              if (action != null) ...[
-                const SizedBox(height: 14),
-                action!,
-              ],
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: metrics,
-              ),
+              if (action != null) ...[const SizedBox(height: 12), action!],
+              const SizedBox(height: 14),
+              Wrap(spacing: 10, runSpacing: 10, children: metrics),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HubFilterChip extends StatelessWidget {
+  const _HubFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final Widget label;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ChoiceChip(
+      label: label,
+      selected: selected,
+      onSelected: onSelected,
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: selected
+            ? theme.colorScheme.onSurface
+            : theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: theme.colorScheme.surface,
+      selectedColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.42),
+      side: BorderSide(
+        color: selected
+            ? theme.colorScheme.primary.withValues(alpha: 0.72)
+            : theme.colorScheme.outlineVariant,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
 }

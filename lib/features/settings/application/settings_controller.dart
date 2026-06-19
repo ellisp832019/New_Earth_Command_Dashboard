@@ -61,6 +61,48 @@ class SettingsController {
     _invalidate();
   }
 
+  Future<void> setShowDockOverlays(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDockVisibility(showDockOverlays: value);
+    _invalidate();
+  }
+
+  Future<void> setShowBackupGuardianDock(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDockVisibility(showBackupGuardianDock: value);
+    _invalidate();
+  }
+
+  Future<void> setShowTreasuryDock(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDockVisibility(showTreasuryDock: value);
+    _invalidate();
+  }
+
+  Future<void> setShowKnowledgeLibraryDock(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDockVisibility(showKnowledgeLibraryDock: value);
+    _invalidate();
+  }
+
+  Future<void> setShowVoiceConversationDock(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDockVisibility(showVoiceConversationDock: value);
+    _invalidate();
+  }
+
+  Future<void> setShowVoicePresenceChip(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateVoicePresenceVisibility(showVoicePresenceChip: value);
+    _invalidate();
+  }
+
   Future<void> setShowProjectsWorkspaceSnapshot(bool value) async {
     await _ref
         .read(settingsRepositoryProvider)

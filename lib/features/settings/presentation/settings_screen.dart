@@ -573,6 +573,123 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 12),
               Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Docking Windows',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Hide the shell docks if they distract from the main dashboard. You can switch the whole group off or control each dock separately.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      SwitchListTile(
+                        key: const Key('settingsShowDockOverlaysToggle'),
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Show Docking Windows'),
+                        subtitle: const Text(
+                          'Master switch for all shell dock overlays.',
+                        ),
+                        value: appSettings.showDockOverlays,
+                        onChanged: (value) => ref
+                            .read(settingsControllerProvider)
+                            .setShowDockOverlays(value),
+                      ),
+                      ExpansionTile(
+                        key: const Key('settingsDockDetailsExpansionTile'),
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding:
+                            const EdgeInsets.only(left: 4, top: 4),
+                        title: Text(
+                          'Individual dock controls',
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        subtitle: Text(
+                          'Hide only the panels you do not want today.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        children: [
+                          SwitchListTile(
+                            key: const Key(
+                              'settingsShowBackupGuardianDockToggle',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Show Backup Guardian Dock'),
+                            subtitle: const Text(
+                              'Keep the backup status panel visible on the dashboard.',
+                            ),
+                            value: appSettings.showBackupGuardianDock,
+                            onChanged: (value) => ref
+                                .read(settingsControllerProvider)
+                                .setShowBackupGuardianDock(value),
+                          ),
+                          SwitchListTile(
+                            key: const Key('settingsShowTreasuryDockToggle'),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Show Treasury Dock'),
+                            subtitle: const Text(
+                              'Keep the finance and treasury panel visible on the dashboard.',
+                            ),
+                            value: appSettings.showTreasuryDock,
+                            onChanged: (value) => ref
+                                .read(settingsControllerProvider)
+                                .setShowTreasuryDock(value),
+                          ),
+                          SwitchListTile(
+                            key: const Key(
+                              'settingsShowKnowledgeLibraryDockToggle',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Show Knowledge Library Dock'),
+                            subtitle: const Text(
+                              'Keep the local knowledge panel visible on the dashboard.',
+                            ),
+                            value: appSettings.showKnowledgeLibraryDock,
+                            onChanged: (value) => ref
+                                .read(settingsControllerProvider)
+                                .setShowKnowledgeLibraryDock(value),
+                          ),
+                          SwitchListTile(
+                            key: const Key(
+                              'settingsShowVoiceConversationDockToggle',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Show Voice Conversation Dock'),
+                            subtitle: const Text(
+                              'Keep the assistant follow-up dock visible when wake capture lands on the dashboard.',
+                            ),
+                            value: appSettings.showVoiceConversationDock,
+                            onChanged: (value) => ref
+                                .read(settingsControllerProvider)
+                                .setShowVoiceConversationDock(value),
+                          ),
+                          SwitchListTile(
+                            key: const Key(
+                              'settingsShowVoicePresenceChipToggle',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Show Assistant Status Chip'),
+                            subtitle: const Text(
+                              'Keep the small assistant status chip in the top-right corner.',
+                            ),
+                            value: appSettings.showVoicePresenceChip,
+                            onChanged: (value) => ref
+                                .read(settingsControllerProvider)
+                                .setShowVoicePresenceChip(value),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
