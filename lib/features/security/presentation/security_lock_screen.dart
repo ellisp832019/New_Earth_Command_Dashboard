@@ -57,7 +57,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       _busy = true;
       _canContinue = false;
       _status = 'Checking local identity';
-      _detail = 'Consulting the Users & Devices control repository.';
+      _detail = 'Consulting the local access plan in Users & Devices.';
       _auditSummary = 'Writing audit trail...';
       _latestAuditEventId = null;
     });
@@ -115,7 +115,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         _busy = false;
         _canContinue = true;
         _status = 'Unlocked locally';
-        _detail = decision.reason;
+        _detail = decision.nextStep.isNotEmpty
+            ? '${decision.reason} ${decision.nextStep}'
+            : decision.reason;
         _latestAuditEventId = latestAudit?.eventId;
         _auditSummary = latestAudit == null
             ? 'The access check passed and was recorded locally.'
@@ -133,7 +135,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     setState(() {
       _busy = false;
       _status = decision.requiresApproval ? 'Approval needed' : 'Locked';
-      _detail = decision.reason;
+      _detail = decision.nextStep.isNotEmpty
+          ? '${decision.reason} ${decision.nextStep}'
+          : decision.reason;
       _latestAuditEventId = latestAudit?.eventId;
       _auditSummary = latestAudit == null
           ? 'The access check was denied and should be reviewed.'
@@ -325,7 +329,7 @@ class _SecurityHero extends StatelessWidget {
     return _VisualPanel(
       title: 'Security Lock',
       subtitle:
-          'This is the local entry point for identity, device trust, approvals, and sensitive module access. Cloud login stays out of V0.1.',
+          'This is the local entry point for the access plan: identity, device trust, approvals, and sensitive module access. Cloud login stays out of V0.1.',
       icon: Icons.lock_outline,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,6 +390,28 @@ class _SecurityHero extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
                           _VisualPanel(
+                            title: 'Current access summary',
+                            subtitle:
+                                'A quick read on the active local user, trusted device, and gate status.',
+                            icon: Icons.person_search_outlined,
+                            compact: true,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _Badge(label: 'Status: $status'),
+                                _Badge(label: 'User: $selectedUserLabel'),
+                                _Badge(label: 'Device: $selectedDeviceLabel'),
+                                _Badge(
+                                  label: hasLatestAuditEvent
+                                      ? 'Audit recorded'
+                                      : 'No audit yet',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _VisualPanel(
                             title: 'Latest audit event',
                             subtitle: auditSummary,
                             icon: Icons.verified_outlined,
@@ -423,6 +449,28 @@ class _SecurityHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   _VisualPanel(
+                    title: 'Current access summary',
+                    subtitle:
+                        'A quick read on the active local user, trusted device, and gate status.',
+                    icon: Icons.person_search_outlined,
+                    compact: true,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _Badge(label: 'Status: $status'),
+                        _Badge(label: 'User: $selectedUserLabel'),
+                        _Badge(label: 'Device: $selectedDeviceLabel'),
+                        _Badge(
+                          label: hasLatestAuditEvent
+                              ? 'Audit recorded'
+                              : 'No audit yet',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _VisualPanel(
                     title: 'Latest audit event',
                     subtitle: auditSummary,
                     icon: Icons.verified_outlined,
@@ -441,7 +489,7 @@ class _SecurityHero extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _VisualPanel(
-            title: 'Gate layers',
+            title: 'Access plan',
             subtitle: 'Identity, trust, scope, and audit all stay visible',
             icon: Icons.shield_outlined,
             compact: true,
@@ -529,7 +577,7 @@ class _SecuritySidePanel extends StatelessWidget {
         _VisualPanel(
           title: 'Unlock options',
           subtitle:
-              'This placeholder keeps the future login surface in one calm place.',
+              'This placeholder keeps the future login surface in one calm place while matching the access plan wording.',
           icon: Icons.login_outlined,
           compact: true,
           child: Column(
@@ -604,7 +652,7 @@ class _SecuritySidePanel extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _VisualPanel(
-          title: 'Gate layers',
+          title: 'Access plan',
           subtitle: 'The unlock check stays easy to inspect',
           icon: Icons.stacked_line_chart_outlined,
           compact: true,

@@ -30,8 +30,9 @@ class UsersDevicesControlScreen extends ConsumerWidget {
           final pending = data.approvalQueue
               .where((request) => request.status == 'pending')
               .length;
-          final trustedDevices =
-              data.devices.where((device) => device.trustLevel >= 3).length;
+          final trustedDevices = data.devices
+              .where((device) => device.trustLevel >= 3)
+              .length;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,6 +41,26 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                 data: data,
                 pendingRequests: pending,
                 trustedDevices: trustedDevices,
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Access plan',
+                subtitle:
+                    'Identity, device trust, permissions, approvals, and audit all get checked before a screen opens.',
+                icon: Icons.route_outlined,
+                compact: true,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: const [
+                    _CardChip(label: 'Identity'),
+                    _CardChip(label: 'Device'),
+                    _CardChip(label: 'Role'),
+                    _CardChip(label: 'Trust'),
+                    _CardChip(label: 'Approval'),
+                    _CardChip(label: 'Audit'),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _ActionStrip(
@@ -63,9 +84,20 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                     onPressed: () => _createSampleApproval(context, ref),
                   ),
                   _ActionChip(
+                    label: 'Open queue',
+                    icon: Icons.open_in_new_outlined,
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesApprovalQueue),
+                  ),
+                  _ActionChip(
                     label: 'Seed demo path',
                     icon: Icons.playlist_add_check_outlined,
                     onPressed: () => _seedDemoPath(context, ref),
+                  ),
+                  _ActionChip(
+                    label: 'Reset demo data',
+                    icon: Icons.restart_alt_outlined,
+                    onPressed: () => _confirmResetDemoData(context, ref),
                   ),
                 ],
               ),
@@ -98,7 +130,8 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                   ),
                   _NavTile(
                     title: 'Approval Queue',
-                    subtitle: '$pending request${pending == 1 ? '' : 's'} pending',
+                    subtitle:
+                        '$pending request${pending == 1 ? '' : 's'} pending',
                     icon: Icons.rule_folder_outlined,
                     route: RouteNames.usersDevicesApprovalQueue,
                   ),
@@ -144,27 +177,29 @@ class _UsersDevicesUsersScreenState
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
       data: (data) {
-        final filteredUsers = data.users.where((user) {
-          if (_statusFilter != 'all' && user.status != _statusFilter) {
-            return false;
-          }
-          final query = _searchQuery.trim().toLowerCase();
-          if (query.isEmpty) {
-            return true;
-          }
+        final filteredUsers = data.users
+            .where((user) {
+              if (_statusFilter != 'all' && user.status != _statusFilter) {
+                return false;
+              }
+              final query = _searchQuery.trim().toLowerCase();
+              if (query.isEmpty) {
+                return true;
+              }
 
-          final haystack = [
-            user.id,
-            user.displayName,
-            user.role,
-            user.title,
-            user.status,
-            user.notes,
-            ...user.permissions,
-            ...user.linkedDevices,
-          ].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
+              final haystack = [
+                user.id,
+                user.displayName,
+                user.role,
+                user.title,
+                user.status,
+                user.notes,
+                ...user.permissions,
+                ...user.linkedDevices,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
 
         return _SectionScaffold(
           title: 'Users',
@@ -199,11 +234,15 @@ class _UsersDevicesUsersScreenState
                   ),
                   (
                     'Templates',
-                    data.users.where((user) => user.status == 'template').length,
+                    data.users
+                        .where((user) => user.status == 'template')
+                        .length,
                   ),
                   (
                     'With devices',
-                    data.users.where((user) => user.linkedDevices.isNotEmpty).length,
+                    data.users
+                        .where((user) => user.linkedDevices.isNotEmpty)
+                        .length,
                   ),
                 ],
               ),
@@ -215,25 +254,27 @@ class _UsersDevicesUsersScreenState
                 query: _searchQuery,
                 onQueryChanged: (value) => setState(() => _searchQuery = value),
                 chips: [
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('All'),
                     selected: _statusFilter == 'all',
                     onSelected: (_) => setState(() => _statusFilter = 'all'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Active'),
                     selected: _statusFilter == 'active',
                     onSelected: (_) => setState(() => _statusFilter = 'active'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Templates'),
                     selected: _statusFilter == 'template',
-                    onSelected: (_) => setState(() => _statusFilter = 'template'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'template'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Archived'),
                     selected: _statusFilter == 'archived',
-                    onSelected: (_) => setState(() => _statusFilter = 'archived'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'archived'),
                   ),
                 ],
               ),
@@ -267,21 +308,12 @@ class _UsersDevicesUsersScreenState
                               const SizedBox(width: 8),
                               _EntityActionsMenu(
                                 isArchived: user.status == 'archived',
-                                onEdit: () => _openUserEditor(
-                                  context,
-                                  ref,
-                                  user: user,
-                                ),
-                                onArchiveToggle: () => _toggleUserArchive(
-                                  context,
-                                  ref,
-                                  user,
-                                ),
-                                onDelete: () => _confirmDeleteUser(
-                                  context,
-                                  ref,
-                                  user,
-                                ),
+                                onEdit: () =>
+                                    _openUserEditor(context, ref, user: user),
+                                onArchiveToggle: () =>
+                                    _toggleUserArchive(context, ref, user),
+                                onDelete: () =>
+                                    _confirmDeleteUser(context, ref, user),
                               ),
                             ],
                           ),
@@ -289,6 +321,22 @@ class _UsersDevicesUsersScreenState
                             _CardChip(label: user.role),
                             if (user.permissions.isNotEmpty)
                               _CardChip(label: user.permissions.first),
+                          ],
+                          actions: [
+                            FilledButton.tonal(
+                              onPressed: () =>
+                                  _openUserEditor(context, ref, user: user),
+                              child: const Text('Edit'),
+                            ),
+                            OutlinedButton(
+                              onPressed: () =>
+                                  _toggleUserArchive(context, ref, user),
+                              child: Text(
+                                user.status == 'archived'
+                                    ? 'Restore'
+                                    : 'Archive',
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -326,27 +374,29 @@ class _UsersDevicesDevicesScreenState
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
       data: (data) {
-        final filteredDevices = data.devices.where((device) {
-          if (_statusFilter != 'all' && device.status != _statusFilter) {
-            return false;
-          }
-          final query = _searchQuery.trim().toLowerCase();
-          if (query.isEmpty) {
-            return true;
-          }
+        final filteredDevices = data.devices
+            .where((device) {
+              if (_statusFilter != 'all' && device.status != _statusFilter) {
+                return false;
+              }
+              final query = _searchQuery.trim().toLowerCase();
+              if (query.isEmpty) {
+                return true;
+              }
 
-          final haystack = [
-            device.id,
-            device.name,
-            device.type,
-            device.status,
-            device.ownerId,
-            device.notes,
-            device.trustLevel.toString(),
-            ...device.allowedActions,
-          ].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
+              final haystack = [
+                device.id,
+                device.name,
+                device.type,
+                device.status,
+                device.ownerId,
+                device.notes,
+                device.trustLevel.toString(),
+                ...device.allowedActions,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
 
         return _SectionScaffold(
           title: 'Devices',
@@ -377,15 +427,21 @@ class _UsersDevicesDevicesScreenState
                 items: [
                   (
                     'Trusted',
-                    data.devices.where((device) => device.trustLevel >= 3).length,
+                    data.devices
+                        .where((device) => device.trustLevel >= 3)
+                        .length,
                   ),
                   (
                     'Critical',
-                    data.devices.where((device) => device.status == 'critical').length,
+                    data.devices
+                        .where((device) => device.status == 'critical')
+                        .length,
                   ),
                   (
                     'Owned',
-                    data.devices.where((device) => device.ownerId.isNotEmpty).length,
+                    data.devices
+                        .where((device) => device.ownerId.isNotEmpty)
+                        .length,
                   ),
                 ],
               ),
@@ -397,36 +453,40 @@ class _UsersDevicesDevicesScreenState
                 query: _searchQuery,
                 onQueryChanged: (value) => setState(() => _searchQuery = value),
                 chips: [
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('All'),
                     selected: _statusFilter == 'all',
                     onSelected: (_) => setState(() => _statusFilter = 'all'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Registered'),
                     selected: _statusFilter == 'registered',
                     onSelected: (_) =>
                         setState(() => _statusFilter = 'registered'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Trusted'),
                     selected: _statusFilter == 'trusted',
-                    onSelected: (_) => setState(() => _statusFilter = 'trusted'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'trusted'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Critical'),
                     selected: _statusFilter == 'critical',
-                    onSelected: (_) => setState(() => _statusFilter = 'critical'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'critical'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Blocked'),
                     selected: _statusFilter == 'blocked',
-                    onSelected: (_) => setState(() => _statusFilter = 'blocked'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'blocked'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Archived'),
                     selected: _statusFilter == 'archived',
-                    onSelected: (_) => setState(() => _statusFilter = 'archived'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'archived'),
                   ),
                 ],
               ),
@@ -464,16 +524,10 @@ class _UsersDevicesDevicesScreenState
                                   ref,
                                   device: device,
                                 ),
-                                onArchiveToggle: () => _toggleDeviceArchive(
-                                  context,
-                                  ref,
-                                  device,
-                                ),
-                                onDelete: () => _confirmDeleteDevice(
-                                  context,
-                                  ref,
-                                  device,
-                                ),
+                                onArchiveToggle: () =>
+                                    _toggleDeviceArchive(context, ref, device),
+                                onDelete: () =>
+                                    _confirmDeleteDevice(context, ref, device),
                               ),
                             ],
                           ),
@@ -481,6 +535,25 @@ class _UsersDevicesDevicesScreenState
                             _CardChip(label: 'T${device.trustLevel}'),
                             if (device.ownerId.isNotEmpty)
                               const _CardChip(label: 'Assigned'),
+                          ],
+                          actions: [
+                            FilledButton.tonal(
+                              onPressed: () => _openDeviceEditor(
+                                context,
+                                ref,
+                                device: device,
+                              ),
+                              child: const Text('Edit'),
+                            ),
+                            OutlinedButton(
+                              onPressed: () =>
+                                  _toggleDeviceArchive(context, ref, device),
+                              child: Text(
+                                device.status == 'archived'
+                                    ? 'Restore'
+                                    : 'Archive',
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -530,41 +603,50 @@ class _UsersDevicesAccessMatrixScreenState
         final selectedRole = data.roles.isEmpty
             ? ''
             : (_selectedAccessRole ??
-                (selectedUser != null ? selectedUser.role : data.roles.first.role));
+                  (selectedUser != null
+                      ? selectedUser.role
+                      : data.roles.first.role));
         final selectedPermission = data.permissions.isEmpty
             ? ''
             : (_selectedAccessPermission ?? data.permissions.first.permission);
-        final filteredRoles = data.roles.where((role) {
-          final query = _roleQuery.trim().toLowerCase();
-          if (query.isEmpty) {
-            return true;
-          }
-          final haystack = [role.role, ...role.permissions].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
+        final filteredRoles = data.roles
+            .where((role) {
+              final query = _roleQuery.trim().toLowerCase();
+              if (query.isEmpty) {
+                return true;
+              }
+              final haystack = [
+                role.role,
+                ...role.permissions,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
 
-        final filteredRules = data.accessRules.where((rule) {
-          final query = _ruleQuery.trim().toLowerCase();
-          if (query.isEmpty) {
-            return true;
-          }
-          final haystack = [
-            rule.moduleId,
-            rule.viewPermission,
-            rule.editPermission,
-            rule.adminPermission,
-            rule.requestPermission,
-            rule.executePermission,
-            rule.controlPermission,
-            rule.requiresTrustLevel.toString(),
-            ...rule.requiresApprovalFor,
-          ].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
+        final filteredRules = data.accessRules
+            .where((rule) {
+              final query = _ruleQuery.trim().toLowerCase();
+              if (query.isEmpty) {
+                return true;
+              }
+              final haystack = [
+                rule.moduleId,
+                rule.viewPermission,
+                rule.editPermission,
+                rule.adminPermission,
+                rule.requestPermission,
+                rule.executePermission,
+                rule.controlPermission,
+                rule.requiresTrustLevel.toString(),
+                ...rule.requiresApprovalFor,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
 
         return _SectionScaffold(
           title: 'Access Matrix',
-          subtitle: 'Role permissions and module gates',
+          subtitle: 'Role permissions, trust floors, and module gates',
           onBack: () => context.go(RouteNames.usersDevices),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -580,6 +662,35 @@ class _UsersDevicesAccessMatrixScreenState
                     onPressed: () => _createSampleApproval(context, ref),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Access at a glance',
+                subtitle:
+                    'See the selected identity, role, permission, and current gate shape before making changes.',
+                icon: Icons.visibility_outlined,
+                compact: true,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _CardChip(
+                      label: selectedUser == null
+                          ? 'No user selected'
+                          : selectedUser.displayName,
+                    ),
+                    if (selectedUser != null)
+                      _CardChip(label: selectedUser.role),
+                    if (selectedPermission.isNotEmpty)
+                      _CardChip(label: selectedPermission),
+                    if (selectedRole.isNotEmpty) _CardChip(label: selectedRole),
+                    _CardChip(label: '${data.accessRules.length} rules'),
+                    _CardChip(
+                      label:
+                          '${data.accessRules.where((rule) => rule.requiresApprovalFor.isNotEmpty).length} gated rules',
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _SummaryRow(
@@ -609,12 +720,15 @@ class _UsersDevicesAccessMatrixScreenState
                     width: 430,
                     child: _VisualPanel(
                       title: 'Access editor',
-                      subtitle: 'Change a local user role or grant one more permission',
+                      subtitle:
+                          'Change one local role or permission without leaving the matrix.',
                       icon: Icons.manage_accounts_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (data.users.isEmpty || data.roles.isEmpty || data.permissions.isEmpty)
+                          if (data.users.isEmpty ||
+                              data.roles.isEmpty ||
+                              data.permissions.isEmpty)
                             const _EmptyCollectionState(
                               icon: Icons.manage_accounts_outlined,
                               title: 'Access editing is waiting for seed data',
@@ -622,6 +736,11 @@ class _UsersDevicesAccessMatrixScreenState
                                   'Roles, permissions, and users need to be present before assignments can be made.',
                             )
                           else ...[
+                            _CardChip(
+                              label:
+                                  'Editing ${selectedUser?.displayName ?? 'selected user'}',
+                            ),
+                            const SizedBox(height: 10),
                             DropdownButtonFormField<String>(
                               initialValue: selectedUser?.id,
                               decoration: const InputDecoration(
@@ -631,7 +750,9 @@ class _UsersDevicesAccessMatrixScreenState
                                 for (final user in data.users)
                                   DropdownMenuItem<String>(
                                     value: user.id,
-                                    child: Text('${user.displayName} (${user.id})'),
+                                    child: Text(
+                                      '${user.displayName} (${user.id})',
+                                    ),
                                   ),
                               ],
                               onChanged: (value) {
@@ -647,7 +768,9 @@ class _UsersDevicesAccessMatrixScreenState
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
-                              initialValue: selectedRole.isEmpty ? null : selectedRole,
+                              initialValue: selectedRole.isEmpty
+                                  ? null
+                                  : selectedRole,
                               decoration: const InputDecoration(
                                 labelText: 'Role to assign',
                               ),
@@ -667,8 +790,9 @@ class _UsersDevicesAccessMatrixScreenState
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
-                              initialValue:
-                                  selectedPermission.isEmpty ? null : selectedPermission,
+                              initialValue: selectedPermission.isEmpty
+                                  ? null
+                                  : selectedPermission,
                               decoration: const InputDecoration(
                                 labelText: 'Permission to grant',
                               ),
@@ -683,7 +807,9 @@ class _UsersDevicesAccessMatrixScreenState
                                 if (value == null) {
                                   return;
                                 }
-                                setState(() => _selectedAccessPermission = value);
+                                setState(
+                                  () => _selectedAccessPermission = value,
+                                );
                               },
                             ),
                             const SizedBox(height: 12),
@@ -707,19 +833,26 @@ class _UsersDevicesAccessMatrixScreenState
                               runSpacing: 8,
                               children: [
                                 FilledButton.tonal(
-                                  onPressed: selectedUser == null || selectedRole.isEmpty
+                                  onPressed:
+                                      selectedUser == null ||
+                                          selectedRole.isEmpty
                                       ? null
                                       : () async {
                                           await ref
                                               .read(
                                                 usersDevicesControlRepositoryProvider,
                                               )
-                                              .assignRole(selectedUser.id, selectedRole);
+                                              .assignRole(
+                                                selectedUser.id,
+                                                selectedRole,
+                                              );
                                           ref.invalidate(
                                             usersDevicesControlSnapshotProvider,
                                           );
                                           if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               SnackBar(
                                                 content: Text(
                                                   '${selectedUser.displayName} now uses the $selectedRole role.',
@@ -731,7 +864,8 @@ class _UsersDevicesAccessMatrixScreenState
                                   child: const Text('Assign role'),
                                 ),
                                 OutlinedButton(
-                                  onPressed: selectedUser == null ||
+                                  onPressed:
+                                      selectedUser == null ||
                                           selectedPermission.isEmpty
                                       ? null
                                       : () async {
@@ -747,7 +881,9 @@ class _UsersDevicesAccessMatrixScreenState
                                             usersDevicesControlSnapshotProvider,
                                           );
                                           if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               SnackBar(
                                                 content: Text(
                                                   '$selectedPermission granted to ${selectedUser.displayName}.',
@@ -769,7 +905,8 @@ class _UsersDevicesAccessMatrixScreenState
                     width: 430,
                     child: _VisualPanel(
                       title: 'Role permissions',
-                      subtitle: 'What each identity can do locally',
+                      subtitle:
+                          'What each identity can do locally and what it currently carries.',
                       icon: Icons.badge_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,10 +945,13 @@ class _UsersDevicesAccessMatrixScreenState
                                       chips: [
                                         if (role.permissions.isNotEmpty)
                                           _CardChip(
-                                            label: '${role.permissions.length} scopes',
+                                            label:
+                                                '${role.permissions.length} scopes',
                                           ),
                                         if (role.permissions.isNotEmpty)
-                                          _CardChip(label: role.permissions.first),
+                                          _CardChip(
+                                            label: role.permissions.first,
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -825,7 +965,8 @@ class _UsersDevicesAccessMatrixScreenState
                     width: 430,
                     child: _VisualPanel(
                       title: 'Module rules',
-                      subtitle: 'Trust and approval thresholds',
+                      subtitle:
+                          'Trust and approval thresholds for each sensitive module.',
                       icon: Icons.shield_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -859,7 +1000,7 @@ class _UsersDevicesAccessMatrixScreenState
                                       subtitle:
                                           'Trust floor ${rule.requiresTrustLevel}',
                                       body:
-                                          'View: ${rule.viewPermission.isEmpty ? 'none' : rule.viewPermission} - Approvals: ${rule.requiresApprovalFor.length}',
+                                          'View ${rule.viewPermission.isEmpty ? 'none' : rule.viewPermission} - Edit ${rule.editPermission.isEmpty ? 'none' : rule.editPermission} - Approvals ${rule.requiresApprovalFor.length}',
                                       trailing: Chip(
                                         label: Text(
                                           rule.requiresApprovalFor.isEmpty
@@ -869,10 +1010,16 @@ class _UsersDevicesAccessMatrixScreenState
                                       ),
                                       chips: [
                                         _CardChip(
-                                          label: 'Trust ${rule.requiresTrustLevel}',
+                                          label:
+                                              'Trust ${rule.requiresTrustLevel}',
                                         ),
+                                        if (rule.viewPermission.isNotEmpty)
+                                          _CardChip(label: rule.viewPermission),
+                                        if (rule.editPermission.isNotEmpty)
+                                          _CardChip(label: rule.editPermission),
                                         _CardChip(
-                                          label: rule.requiresApprovalFor.isEmpty
+                                          label:
+                                              rule.requiresApprovalFor.isEmpty
                                               ? 'No approvals'
                                               : '${rule.requiresApprovalFor.length} approvals',
                                         ),
@@ -922,52 +1069,56 @@ class _UsersDevicesDeviceOnboardingScreenState
       data: (data) {
         final trustBands = data.trustLevels;
         final trustedDevices = [...data.devices]
-          ..sort(
-            (a, b) => b.trustLevel.compareTo(a.trustLevel),
-          );
-        final trustEvents = data.auditLog
-            .where((event) => event.eventType == 'device_trust_confirmed')
-            .toList(growable: false)
-          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          ..sort((a, b) => b.trustLevel.compareTo(a.trustLevel));
+        final trustEvents =
+            data.auditLog
+                .where((event) => event.eventType == 'device_trust_confirmed')
+                .toList(growable: false)
+              ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
         final query = _historyQuery.trim().toLowerCase();
-        final filteredTrustEvents = trustEvents.where((event) {
-          if (_historyFilter != 'all' && _historyFilter != 'confirmations') {
-            return false;
-          }
-          if (query.isEmpty) {
-            return true;
-          }
-          final haystack = [
-            event.eventId,
-            event.actorId,
-            event.deviceId,
-            event.targetModule,
-            event.action,
-            event.result,
-            event.reason,
-            event.timestamp,
-          ].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
-        final filteredTrustedDevices = trustedDevices.where((device) {
-          if (_historyFilter != 'all' && _historyFilter != 'devices') {
-            return false;
-          }
-          if (query.isEmpty) {
-            return device.trustLevel >= 3;
-          }
-          final haystack = [
-            device.id,
-            device.name,
-            device.type,
-            device.status,
-            device.ownerId,
-            device.notes,
-            device.trustLevel.toString(),
-            ...device.allowedActions,
-          ].join(' ').toLowerCase();
-          return haystack.contains(query) && device.trustLevel >= 3;
-        }).toList(growable: false);
+        final filteredTrustEvents = trustEvents
+            .where((event) {
+              if (_historyFilter != 'all' &&
+                  _historyFilter != 'confirmations') {
+                return false;
+              }
+              if (query.isEmpty) {
+                return true;
+              }
+              final haystack = [
+                event.eventId,
+                event.actorId,
+                event.deviceId,
+                event.targetModule,
+                event.action,
+                event.result,
+                event.reason,
+                event.timestamp,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
+        final filteredTrustedDevices = trustedDevices
+            .where((device) {
+              if (_historyFilter != 'all' && _historyFilter != 'devices') {
+                return false;
+              }
+              if (query.isEmpty) {
+                return device.trustLevel >= 3;
+              }
+              final haystack = [
+                device.id,
+                device.name,
+                device.type,
+                device.status,
+                device.ownerId,
+                device.notes,
+                device.trustLevel.toString(),
+                ...device.allowedActions,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query) && device.trustLevel >= 3;
+            })
+            .toList(growable: false);
         UsersDevicesControlDevice? deviceForId(String id) {
           for (final device in data.devices) {
             if (device.id == id) {
@@ -976,9 +1127,11 @@ class _UsersDevicesDeviceOnboardingScreenState
           }
           return null;
         }
+
         String templateForType(String type) {
           final normalized = type.toLowerCase();
-          if (normalized.contains('assistant') || normalized.contains('voice')) {
+          if (normalized.contains('assistant') ||
+              normalized.contains('voice')) {
             return 'assistant';
           }
           if (normalized.contains('gateway') || normalized.contains('bridge')) {
@@ -1016,6 +1169,12 @@ class _UsersDevicesDeviceOnboardingScreenState
                     icon: Icons.auto_fix_high_outlined,
                     onPressed: () => _registerSampleDevice(context, ref),
                   ),
+                  _ActionChip(
+                    label: 'Open approvals',
+                    icon: Icons.rule_folder_outlined,
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesApprovalQueue),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -1027,22 +1186,23 @@ class _UsersDevicesDeviceOnboardingScreenState
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    ChoiceChip(
+                    _SoftChoiceChip(
                       label: const Text('Standard'),
                       selected: _template == 'standard',
                       onSelected: (_) => setState(() => _template = 'standard'),
                     ),
-                    ChoiceChip(
+                    _SoftChoiceChip(
                       label: const Text('Assistant'),
                       selected: _template == 'assistant',
-                      onSelected: (_) => setState(() => _template = 'assistant'),
+                      onSelected: (_) =>
+                          setState(() => _template = 'assistant'),
                     ),
-                    ChoiceChip(
+                    _SoftChoiceChip(
                       label: const Text('Gateway'),
                       selected: _template == 'gateway',
                       onSelected: (_) => setState(() => _template = 'gateway'),
                     ),
-                    ChoiceChip(
+                    _SoftChoiceChip(
                       label: const Text('Printer'),
                       selected: _template == 'printer',
                       onSelected: (_) => setState(() => _template = 'printer'),
@@ -1056,11 +1216,15 @@ class _UsersDevicesDeviceOnboardingScreenState
                   ('Devices', data.devices.length),
                   (
                     'Trusted',
-                    data.devices.where((device) => device.trustLevel >= 3).length,
+                    data.devices
+                        .where((device) => device.trustLevel >= 3)
+                        .length,
                   ),
                   (
                     'Owners',
-                    data.devices.where((device) => device.ownerId.isNotEmpty).length,
+                    data.devices
+                        .where((device) => device.ownerId.isNotEmpty)
+                        .length,
                   ),
                   ('Trust bands', trustBands.length),
                 ],
@@ -1069,7 +1233,8 @@ class _UsersDevicesDeviceOnboardingScreenState
               const _StepCard(
                 step: '1',
                 title: 'Register the device',
-                body: 'Capture the device name, type, owner, and local purpose.',
+                body:
+                    'Capture the device name, type, owner, and local purpose.',
               ),
               const SizedBox(height: 12),
               const _StepCard(
@@ -1113,23 +1278,25 @@ class _UsersDevicesDeviceOnboardingScreenState
                 subtitle:
                     'Search recent pairings or trusted devices by id, owner, reason, or action.',
                 query: _historyQuery,
-                onQueryChanged: (value) => setState(() => _historyQuery = value),
+                onQueryChanged: (value) =>
+                    setState(() => _historyQuery = value),
                 chips: [
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('All'),
                     selected: _historyFilter == 'all',
                     onSelected: (_) => setState(() => _historyFilter = 'all'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Confirmations'),
                     selected: _historyFilter == 'confirmations',
                     onSelected: (_) =>
                         setState(() => _historyFilter = 'confirmations'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Trusted devices'),
                     selected: _historyFilter == 'devices',
-                    onSelected: (_) => setState(() => _historyFilter = 'devices'),
+                    onSelected: (_) =>
+                        setState(() => _historyFilter = 'devices'),
                   ),
                 ],
               ),
@@ -1168,15 +1335,15 @@ class _UsersDevicesDeviceOnboardingScreenState
                                           '${event.actorId} confirmed ${event.result}',
                                       body:
                                           '${event.timestamp}\n${event.reason}',
-                                      trailing: Chip(
-                                        label: Text(event.result),
-                                      ),
+                                      trailing: Chip(label: Text(event.result)),
                                       chips: [
                                         _CardChip(label: event.targetModule),
                                         _CardChip(label: event.action),
                                       ],
                                       onTap: () {
-                                        final matchedDevice = deviceForId(event.deviceId);
+                                        final matchedDevice = deviceForId(
+                                          event.deviceId,
+                                        );
                                         if (matchedDevice != null) {
                                           _openDeviceEditor(
                                             context,
@@ -1213,7 +1380,8 @@ class _UsersDevicesDeviceOnboardingScreenState
                           else
                             Column(
                               children: [
-                                for (final device in filteredTrustedDevices.take(5))
+                                for (final device
+                                    in filteredTrustedDevices.take(5))
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 10),
                                     child: _EntityCard(
@@ -1235,17 +1403,22 @@ class _UsersDevicesDeviceOnboardingScreenState
                                             child: const Text('Edit device'),
                                           ),
                                           FilledButton.tonal(
-                                            onPressed: () => _openOnboardingWizard(
-                                              context,
-                                              ref,
-                                              template: templateForType(device.type),
-                                            ),
+                                            onPressed: () =>
+                                                _openOnboardingWizard(
+                                                  context,
+                                                  ref,
+                                                  template: templateForType(
+                                                    device.type,
+                                                  ),
+                                                ),
                                             child: const Text('Reopen wizard'),
                                           ),
                                         ],
                                       ),
                                       chips: [
-                                        _CardChip(label: 'T${device.trustLevel}'),
+                                        _CardChip(
+                                          label: 'T${device.trustLevel}',
+                                        ),
                                         _CardChip(label: device.status),
                                       ],
                                       onTap: () => _openDeviceEditor(
@@ -1350,19 +1523,23 @@ class _UsersDevicesRouteGateScreenState
         snapshot.users.any((user) => user.id == _rememberedUserId)) {
       _selectedUserId = _rememberedUserId;
     } else if (snapshot.users.isNotEmpty) {
-      _selectedUserId = snapshot.users.firstWhere(
-        (user) => user.status == 'active',
-        orElse: () => snapshot.users.first,
-      ).id;
+      _selectedUserId = snapshot.users
+          .firstWhere(
+            (user) => user.status == 'active',
+            orElse: () => snapshot.users.first,
+          )
+          .id;
     }
     if (_rememberedDeviceId != null &&
         snapshot.devices.any((device) => device.id == _rememberedDeviceId)) {
       _selectedDeviceId = _rememberedDeviceId;
     } else if (snapshot.devices.isNotEmpty) {
-      _selectedDeviceId = snapshot.devices.firstWhere(
-        (device) => device.status == 'trusted' || device.trustLevel >= 3,
-        orElse: () => snapshot.devices.first,
-      ).id;
+      _selectedDeviceId = snapshot.devices
+          .firstWhere(
+            (device) => device.status == 'trusted' || device.trustLevel >= 3,
+            orElse: () => snapshot.devices.first,
+          )
+          .id;
     }
     _seededDefaults = true;
   }
@@ -1375,7 +1552,7 @@ class _UsersDevicesRouteGateScreenState
     setState(() {
       _busy = true;
       _status = 'Checking local identity';
-      _detail = 'Consulting the Users & Devices control repository.';
+      _detail = 'Consulting the local access plan in Users & Devices.';
       _auditSummary = 'Writing audit trail...';
       _latestAuditEventId = null;
       _unlocked = false;
@@ -1383,27 +1560,31 @@ class _UsersDevicesRouteGateScreenState
 
     final repository = ref.read(usersDevicesControlRepositoryProvider);
     final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
-    final userId = _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
+    final userId =
+        _selectedUserId ??
+        (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
     final deviceId =
-        _selectedDeviceId ?? (snapshot.devices.isNotEmpty ? snapshot.devices.first.id : '');
-      if (userId.isEmpty || deviceId.isEmpty) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _busy = false;
-          _status = 'Locked';
-          _detail = 'Pick a local user and device before unlocking.';
-          _auditSummary = 'No access check was written because the gate was incomplete.';
-          _blockedHints = const [
-            'Choose a saved local user from the dropdown.',
-            'Choose a trusted local device from the dropdown.',
-            'Open Security Lock if the registry still feels incomplete.',
-          ];
-          _latestAuditEventId = null;
-        });
+        _selectedDeviceId ??
+        (snapshot.devices.isNotEmpty ? snapshot.devices.first.id : '');
+    if (userId.isEmpty || deviceId.isEmpty) {
+      if (!mounted) {
         return;
       }
+      setState(() {
+        _busy = false;
+        _status = 'Locked';
+        _detail = 'Pick a local user and device before unlocking.';
+        _auditSummary =
+            'No access check was written because the gate was incomplete.';
+        _blockedHints = const [
+          'Choose a saved local user from the dropdown.',
+          'Choose a trusted local device from the dropdown.',
+          'Open Security Lock if the registry still feels incomplete.',
+        ];
+        _latestAuditEventId = null;
+      });
+      return;
+    }
 
     final decision = await repository.canOpenModule(
       userId,
@@ -1415,7 +1596,9 @@ class _UsersDevicesRouteGateScreenState
       return;
     }
 
-    final updatedSnapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+    final updatedSnapshot = await ref.read(
+      usersDevicesControlSnapshotProvider.future,
+    );
     final latestAudit = updatedSnapshot.auditLog.isNotEmpty
         ? updatedSnapshot.auditLog.last
         : null;
@@ -1425,7 +1608,9 @@ class _UsersDevicesRouteGateScreenState
       _status = decision.allowed
           ? 'Unlocked locally'
           : (decision.requiresApproval ? 'Approval needed' : 'Locked');
-      _detail = decision.reason;
+      _detail = decision.nextStep.isNotEmpty
+          ? '${decision.reason} ${decision.nextStep}'
+          : decision.reason;
       _latestAuditEventId = latestAudit?.eventId;
       _auditSummary = latestAudit == null
           ? 'The access check was recorded locally.'
@@ -1434,6 +1619,7 @@ class _UsersDevicesRouteGateScreenState
           ? const []
           : _blockedHintsFor(
               reason: decision.reason,
+              nextStep: decision.nextStep,
               userId: userId,
               deviceId: deviceId,
             );
@@ -1442,11 +1628,16 @@ class _UsersDevicesRouteGateScreenState
 
   List<String> _blockedHintsFor({
     required String reason,
+    required String nextStep,
     required String userId,
     required String deviceId,
   }) {
     final lowerReason = reason.toLowerCase();
     final hints = <String>[];
+
+    if (nextStep.isNotEmpty) {
+      hints.add(nextStep);
+    }
 
     if (lowerReason.contains('unknown user')) {
       hints.add('Pick a local user that exists in the registry.');
@@ -1465,7 +1656,9 @@ class _UsersDevicesRouteGateScreenState
       hints.add('Open the Devices screen to review the device state.');
     }
     if (lowerReason.contains('trust must be at least level')) {
-      hints.add('Choose a higher-trust device, or raise trust during onboarding.');
+      hints.add(
+        'Choose a higher-trust device, or raise trust during onboarding.',
+      );
       hints.add('Open Device Onboarding to review the pairing history.');
     }
     if (lowerReason.contains('missing required permission')) {
@@ -1493,9 +1686,8 @@ class _UsersDevicesRouteGateScreenState
 
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     return snapshot.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => Scaffold(
         appBar: AppBar(title: Text(widget.title)),
         body: Center(
@@ -1510,7 +1702,8 @@ class _UsersDevicesRouteGateScreenState
                 ),
                 const SizedBox(height: 12),
                 FilledButton(
-                  onPressed: () => ref.invalidate(usersDevicesControlSnapshotProvider),
+                  onPressed: () =>
+                      ref.invalidate(usersDevicesControlSnapshotProvider),
                   child: const Text('Retry'),
                 ),
               ],
@@ -1523,38 +1716,30 @@ class _UsersDevicesRouteGateScreenState
         final selectedUser = data.users.isEmpty
             ? null
             : (data.users.any((user) => user.id == _selectedUserId)
-                ? data.users.firstWhere((user) => user.id == _selectedUserId)
-                : data.users.first);
+                  ? data.users.firstWhere((user) => user.id == _selectedUserId)
+                  : data.users.first);
         final selectedDevice = data.devices.isEmpty
             ? null
             : (data.devices.any((device) => device.id == _selectedDeviceId)
-                ? data.devices
-                    .firstWhere((device) => device.id == _selectedDeviceId)
-                : data.devices.first);
+                  ? data.devices.firstWhere(
+                      (device) => device.id == _selectedDeviceId,
+                    )
+                  : data.devices.first);
 
         return Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
-                  Theme.of(context).colorScheme.surface,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+            color: Theme.of(context).colorScheme.surface,
             child: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 980),
                     child: Card(
                       elevation: 0,
                       child: Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1575,10 +1760,12 @@ class _UsersDevicesRouteGateScreenState
                                       const _Badge(label: 'Audit required'),
                                     ],
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 12),
                                   Text(
                                     _moduleFocus,
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   const SizedBox(height: 12),
                                   Wrap(
@@ -1594,7 +1781,9 @@ class _UsersDevicesRouteGateScreenState
                                   const SizedBox(height: 16),
                                   Text(
                                     'Open the screen only after a local user and device pass the module check.',
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   const SizedBox(height: 12),
                                   _SummaryRow(
@@ -1605,7 +1794,10 @@ class _UsersDevicesRouteGateScreenState
                                       (
                                         'Trusted devices',
                                         data.devices
-                                            .where((device) => device.trustLevel >= 3)
+                                            .where(
+                                              (device) =>
+                                                  device.trustLevel >= 3,
+                                            )
                                             .length,
                                       ),
                                     ],
@@ -1617,11 +1809,13 @@ class _UsersDevicesRouteGateScreenState
                                     children: [
                                       _Badge(label: _status),
                                       _Badge(
-                                        label: selectedUser?.displayName ??
+                                        label:
+                                            selectedUser?.displayName ??
                                             'No user selected',
                                       ),
                                       _Badge(
-                                        label: selectedDevice?.name ??
+                                        label:
+                                            selectedDevice?.name ??
                                             'No device selected',
                                       ),
                                     ],
@@ -1632,7 +1826,8 @@ class _UsersDevicesRouteGateScreenState
                             const SizedBox(height: 16),
                             _VisualPanel(
                               title: 'Gate check',
-                              subtitle: 'Pick the local user and device to verify access.',
+                              subtitle:
+                                  'Pick the local user and device to verify access.',
                               icon: Icons.verified_user_outlined,
                               compact: true,
                               child: Column(
@@ -1647,14 +1842,15 @@ class _UsersDevicesRouteGateScreenState
                                       for (final user in data.users)
                                         DropdownMenuItem<String>(
                                           value: user.id,
-                                          child: Text('${user.displayName} (${user.role})'),
+                                          child: Text(
+                                            '${user.displayName} (${user.role})',
+                                          ),
                                         ),
                                     ],
-                                    onChanged: (value) =>
-                                        setState(() {
-                                          _selectedUserId = value;
-                                          _rememberedUserId = value;
-                                        }),
+                                    onChanged: (value) => setState(() {
+                                      _selectedUserId = value;
+                                      _rememberedUserId = value;
+                                    }),
                                   ),
                                   const SizedBox(height: 12),
                                   DropdownButtonFormField<String>(
@@ -1666,14 +1862,15 @@ class _UsersDevicesRouteGateScreenState
                                       for (final device in data.devices)
                                         DropdownMenuItem<String>(
                                           value: device.id,
-                                          child: Text('${device.name} (T${device.trustLevel})'),
+                                          child: Text(
+                                            '${device.name} (T${device.trustLevel})',
+                                          ),
                                         ),
                                     ],
-                                    onChanged: (value) =>
-                                        setState(() {
-                                          _selectedDeviceId = value;
-                                          _rememberedDeviceId = value;
-                                        }),
+                                    onChanged: (value) => setState(() {
+                                      _selectedDeviceId = value;
+                                      _rememberedDeviceId = value;
+                                    }),
                                   ),
                                   const SizedBox(height: 12),
                                   Wrap(
@@ -1681,39 +1878,47 @@ class _UsersDevicesRouteGateScreenState
                                     runSpacing: 8,
                                     children: [
                                       FilledButton(
-                                        onPressed: _busy ? null : _attemptUnlock,
-                                        child: Text(_busy ? 'Checking...' : 'Open screen'),
+                                        onPressed: _busy
+                                            ? null
+                                            : _attemptUnlock,
+                                        child: Text(
+                                          _busy ? 'Checking...' : 'Open screen',
+                                        ),
                                       ),
                                       OutlinedButton(
-                                        onPressed: () => context.go(RouteNames.securityLock),
+                                        onPressed: () =>
+                                            context.go(RouteNames.securityLock),
                                         child: const Text('Open Security Lock'),
                                       ),
                                       OutlinedButton.icon(
                                         onPressed: _latestAuditEventId == null
                                             ? null
                                             : () => context.go(
-                                                  RouteNames.usersDevicesAuditLogFor(
-                                                    _latestAuditEventId!,
-                                                  ),
+                                                RouteNames.usersDevicesAuditLogFor(
+                                                  _latestAuditEventId!,
                                                 ),
-                                        icon: const Icon(Icons.receipt_long_outlined),
+                                              ),
+                                        icon: const Icon(
+                                          Icons.receipt_long_outlined,
+                                        ),
                                         label: const Text('Open latest audit'),
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                      setState(() {
-                                          _seededDefaults = false;
-                                          _selectedUserId = null;
-                                          _selectedDeviceId = null;
-                                          _unlocked = false;
-                                          _status = 'Locked';
-                                          _detail = 'Waiting for local verification.';
-                                          _auditSummary =
-                                              'No audit decision recorded yet.';
-                                          _blockedHints = const [];
-                                          _latestAuditEventId = null;
-                                        });
-                                      },
+                                          setState(() {
+                                            _seededDefaults = false;
+                                            _selectedUserId = null;
+                                            _selectedDeviceId = null;
+                                            _unlocked = false;
+                                            _status = 'Locked';
+                                            _detail =
+                                                'Waiting for local verification.';
+                                            _auditSummary =
+                                                'No audit decision recorded yet.';
+                                            _blockedHints = const [];
+                                            _latestAuditEventId = null;
+                                          });
+                                        },
                                         child: const Text('Reset selection'),
                                       ),
                                     ],
@@ -1733,11 +1938,14 @@ class _UsersDevicesRouteGateScreenState
                                       icon: Icons.rule_folder_outlined,
                                       compact: true,
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           for (final hint in _blockedHints)
                                             Padding(
-                                              padding: const EdgeInsets.only(bottom: 6),
+                                              padding: const EdgeInsets.only(
+                                                bottom: 6,
+                                              ),
                                               child: Text('• $hint'),
                                             ),
                                         ],
@@ -1748,7 +1956,9 @@ class _UsersDevicesRouteGateScreenState
                                     const SizedBox(height: 8),
                                     Text(
                                       'Latest audit event: $_latestAuditEventId',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                   ],
                                 ],
@@ -1756,9 +1966,9 @@ class _UsersDevicesRouteGateScreenState
                             ),
                             const SizedBox(height: 16),
                             _VisualPanel(
-                              title: 'What this gate checks',
+                              title: 'Access plan',
                               subtitle:
-                                  'The access path stays closed until each local guard passes.',
+                                  'The route stays closed until each local guard passes.',
                               icon: Icons.fact_check_outlined,
                               child: Wrap(
                                 spacing: 10,
@@ -1789,11 +1999,15 @@ class _UsersDevicesRouteGateScreenState
                                   ],
                                   if (selectedDevice != null) ...[
                                     _CardChip(label: selectedDevice.name),
-                                    _CardChip(label: 'T${selectedDevice.trustLevel}'),
+                                    _CardChip(
+                                      label: 'T${selectedDevice.trustLevel}',
+                                    ),
                                     _CardChip(label: selectedDevice.status),
                                   ],
                                   if (_latestAuditEventId != null)
-                                    _CardChip(label: 'Audit: $_latestAuditEventId'),
+                                    _CardChip(
+                                      label: 'Audit: $_latestAuditEventId',
+                                    ),
                                 ],
                               ),
                             ),
@@ -1851,28 +2065,33 @@ class _UsersDevicesApprovalQueueScreenState
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
       data: (data) {
-        final filteredRequests = data.approvalQueue.where((request) {
-          if (_statusFilter != 'all' && request.status != _statusFilter) {
-            return false;
-          }
-          final query = _query.trim().toLowerCase();
-          if (query.isEmpty) {
-            return true;
-          }
-          final haystack = [
-            request.requestId,
-            request.requestedBy,
-            request.deviceId,
-            request.targetModule,
-            request.action,
-            request.status,
-            request.riskLevel,
-            request.reason,
-            request.reviewedBy ?? '',
-            request.reviewedAt ?? '',
-          ].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
+        final pendingCount = data.approvalQueue
+            .where((request) => request.status == 'pending')
+            .length;
+        final filteredRequests = data.approvalQueue
+            .where((request) {
+              if (_statusFilter != 'all' && request.status != _statusFilter) {
+                return false;
+              }
+              final query = _query.trim().toLowerCase();
+              if (query.isEmpty) {
+                return true;
+              }
+              final haystack = [
+                request.requestId,
+                request.requestedBy,
+                request.deviceId,
+                request.targetModule,
+                request.action,
+                request.status,
+                request.riskLevel,
+                request.reason,
+                request.reviewedBy ?? '',
+                request.reviewedAt ?? '',
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
 
         return _SectionScaffold(
           title: 'Approval Queue',
@@ -1892,14 +2111,38 @@ class _UsersDevicesApprovalQueueScreenState
                     onPressed: () => _createSampleApproval(context, ref),
                   ),
                   _ActionChip(
+                    label: 'Approve next',
+                    icon: Icons.check_circle_outline,
+                    onPressed: pendingCount == 0
+                        ? null
+                        : () => _reviewFirstPendingApproval(
+                            context,
+                            ref,
+                            approve: true,
+                          ),
+                  ),
+                  _ActionChip(
+                    label: 'Deny next',
+                    icon: Icons.block_outlined,
+                    onPressed: pendingCount == 0
+                        ? null
+                        : () => _reviewFirstPendingApproval(
+                            context,
+                            ref,
+                            approve: false,
+                          ),
+                  ),
+                  _ActionChip(
                     label: 'Open Access Matrix',
                     icon: Icons.grid_view_outlined,
-                    onPressed: () => context.go(RouteNames.usersDevicesAccessMatrix),
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesAccessMatrix),
                   ),
                   _ActionChip(
                     label: 'Open Audit Log',
                     icon: Icons.receipt_long_outlined,
-                    onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesAuditLog),
                   ),
                 ],
               ),
@@ -1935,22 +2178,24 @@ class _UsersDevicesApprovalQueueScreenState
                 query: _query,
                 onQueryChanged: (value) => setState(() => _query = value),
                 chips: [
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Pending'),
                     selected: _statusFilter == 'pending',
-                    onSelected: (_) => setState(() => _statusFilter = 'pending'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'pending'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('All'),
                     selected: _statusFilter == 'all',
                     onSelected: (_) => setState(() => _statusFilter = 'all'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Allowed'),
                     selected: _statusFilter == 'allowed',
-                    onSelected: (_) => setState(() => _statusFilter = 'allowed'),
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'allowed'),
                   ),
-                  ChoiceChip(
+                  _SoftChoiceChip(
                     label: const Text('Denied'),
                     selected: _statusFilter == 'denied',
                     onSelected: (_) => setState(() => _statusFilter = 'denied'),
@@ -1978,7 +2223,9 @@ class _UsersDevicesApprovalQueueScreenState
                           onApprove: request.status == 'pending'
                               ? () async {
                                   await ref
-                                      .read(usersDevicesControlRepositoryProvider)
+                                      .read(
+                                        usersDevicesControlRepositoryProvider,
+                                      )
                                       .approveRequest(
                                         request.requestId,
                                         reviewedBy: 'user_peter_owner',
@@ -1998,7 +2245,9 @@ class _UsersDevicesApprovalQueueScreenState
                           onDeny: request.status == 'pending'
                               ? () async {
                                   await ref
-                                      .read(usersDevicesControlRepositoryProvider)
+                                      .read(
+                                        usersDevicesControlRepositoryProvider,
+                                      )
                                       .denyRequest(
                                         request.requestId,
                                         reviewedBy: 'user_peter_owner',
@@ -2015,6 +2264,8 @@ class _UsersDevicesApprovalQueueScreenState
                                   }
                                 }
                               : null,
+                          onOpenAuditLog: () =>
+                              context.go(RouteNames.usersDevicesAuditLog),
                         ),
                       ),
                   ],
@@ -2042,6 +2293,8 @@ class _UsersDevicesAuditLogScreenState
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _highlightKey = GlobalKey();
   bool _didScrollToHighlight = false;
+  String _query = '';
+  String _resultFilter = 'all';
 
   @override
   void dispose() {
@@ -2067,6 +2320,7 @@ class _UsersDevicesAuditLogScreenState
         scrollController: _scrollController,
         onBuilt: _scheduleHighlightScroll,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (highlightEventId != null &&
                 data.auditLog.any((event) => event.eventId == highlightEventId))
@@ -2095,18 +2349,62 @@ class _UsersDevicesAuditLogScreenState
                       .where((event) => event.result == 'denied')
                       .length,
                 ),
+                (
+                  'Pending',
+                  data.auditLog
+                      .where((event) => event.result == 'pending')
+                      .length,
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            ...data.auditLog.map(
-              (event) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _AuditEventCard(
-                  event: event,
-                  highlighted: event.eventId == highlightEventId,
+            _SearchFilterPanel(
+              title: 'Search audit events',
+              subtitle:
+                  'Search by actor, device, module, result, action, or reason.',
+              query: _query,
+              onQueryChanged: (value) => setState(() => _query = value),
+              chips: [
+                _SoftChoiceChip(
+                  label: const Text('All'),
+                  selected: _resultFilter == 'all',
+                  onSelected: (_) => setState(() => _resultFilter = 'all'),
+                ),
+                _SoftChoiceChip(
+                  label: const Text('Allowed'),
+                  selected: _resultFilter == 'allowed',
+                  onSelected: (_) => setState(() => _resultFilter = 'allowed'),
+                ),
+                _SoftChoiceChip(
+                  label: const Text('Denied'),
+                  selected: _resultFilter == 'denied',
+                  onSelected: (_) => setState(() => _resultFilter = 'denied'),
+                ),
+                _SoftChoiceChip(
+                  label: const Text('Pending'),
+                  selected: _resultFilter == 'pending',
+                  onSelected: (_) => setState(() => _resultFilter = 'pending'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_filteredAuditEvents(data.auditLog).isEmpty)
+              _EmptyCollectionState(
+                icon: Icons.receipt_long_outlined,
+                title: 'No audit events matched the current filters',
+                body:
+                    'Try clearing the search box or switching the result filter back to All.',
+              )
+            else
+              ..._filteredAuditEvents(data.auditLog).map(
+                (event) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _AuditEventCard(
+                    event: event,
+                    highlighted: event.eventId == highlightEventId,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -2149,6 +2447,34 @@ class _UsersDevicesAuditLogScreenState
       _didScrollToHighlight = true;
     });
   }
+
+  List<UsersDevicesControlAuditEvent> _filteredAuditEvents(
+    List<UsersDevicesControlAuditEvent> events,
+  ) {
+    return events
+        .where((event) {
+          if (_resultFilter != 'all' && event.result != _resultFilter) {
+            return false;
+          }
+          final query = _query.trim().toLowerCase();
+          if (query.isEmpty) {
+            return true;
+          }
+          final haystack = [
+            event.eventId,
+            event.timestamp,
+            event.actorId,
+            event.deviceId,
+            event.eventType,
+            event.targetModule,
+            event.action,
+            event.result,
+            event.reason,
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        })
+        .toList(growable: false);
+  }
 }
 
 class _HighlightedAuditBanner extends StatelessWidget {
@@ -2163,17 +2489,16 @@ class _HighlightedAuditBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.85),
-              Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            ],
-          ),
-        ),
+        color: theme.colorScheme.primaryContainer,
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2188,11 +2513,12 @@ class _HighlightedAuditBanner extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'Latest lock-screen decision',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: theme.textTheme.titleMedium,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${event.eventType} - ${event.result} - ${event.reason}',
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ],
               ),
@@ -2226,20 +2552,24 @@ class _UsersDevicesPageScaffold extends StatelessWidget {
     if (onBuilt != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => onBuilt?.call());
     }
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
         leading: BackButton(onPressed: onBack),
-        title: Text(title),
+        title: _HeaderTitle(
+          label: 'Users & Devices',
+          title: title,
+          subtitle: subtitle,
+        ),
+        toolbarHeight: 72,
       ),
       body: ListView(
         controller: scrollController,
-        padding: const EdgeInsets.all(20),
-        children: [
-          _SectionHero(title: title, subtitle: subtitle),
-          const SizedBox(height: 16),
-          child,
-        ],
+        padding: const EdgeInsets.all(16),
+        children: [child],
       ),
     );
   }
@@ -2275,85 +2605,42 @@ class _SectionScaffold extends StatelessWidget {
   }
 }
 
-class _SectionHero extends StatelessWidget {
-  const _SectionHero({
+class _HeaderTitle extends StatelessWidget {
+  const _HeaderTitle({
+    required this.label,
     required this.title,
     required this.subtitle,
   });
 
+  final String label;
   final String title;
   final String subtitle;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final icon = switch (title) {
-      'Users' => Icons.people_outline,
-      'Devices' => Icons.devices_outlined,
-      'Access Matrix' => Icons.grid_view_outlined,
-      'Device Onboarding' => Icons.phonelink_setup_outlined,
-      'Approval Queue' => Icons.rule_folder_outlined,
-      'Audit Log' => Icons.receipt_long_outlined,
-      _ => Icons.shield_outlined,
-    };
-    final hints = switch (title) {
-      'Users' => ['Local identities', 'Roles and notes', 'Audit-ready'],
-      'Devices' => ['Trusted endpoints', 'Trust levels', 'Ownership'],
-      'Access Matrix' => ['Roles', 'Permissions', 'Trust floors'],
-      'Device Onboarding' => ['Pairing flow', 'Trust step-up', 'Local record'],
-      'Approval Queue' => ['Review first', 'Approve or deny', 'Write audit'],
-      'Audit Log' => ['Timestamped', 'Filterable', 'Local trail'],
-      _ => ['Local-first', 'Audit tracked', 'Calm controls'],
-    };
-
-    return Card(
-      elevation: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.56),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            letterSpacing: 1.2,
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.headlineSmall),
-                  const SizedBox(height: 4),
-                  Text(subtitle),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final hint in hints) _Badge(label: hint),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+        const SizedBox(height: 2),
+        Text(title, style: theme.textTheme.titleLarge),
+        const SizedBox(height: 1),
+        Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -2365,8 +2652,19 @@ class _LoadingScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        title: _HeaderTitle(
+          label: 'Users & Devices',
+          title: title,
+          subtitle: 'Loading local data',
+        ),
+        toolbarHeight: 72,
+      ),
       body: const Center(child: CircularProgressIndicator()),
     );
   }
@@ -2385,8 +2683,19 @@ class _ErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        title: _HeaderTitle(
+          label: 'Users & Devices',
+          title: title,
+          subtitle: 'Try again in a moment',
+        ),
+        toolbarHeight: 72,
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -2405,10 +2714,7 @@ class _ErrorScreen extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -2445,9 +2751,9 @@ class _HeroPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _VisualPanel(
-      title: 'Security-first local control',
+      title: 'Local access control',
       subtitle:
-          'Identity, device trust, approvals, and audit evidence stay local and calm.',
+          'Identity, device trust, approvals, and audit evidence stay local, calm, and easy to review.',
       icon: Icons.shield_outlined,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -2457,21 +2763,25 @@ class _HeroPanel extends StatelessWidget {
               label: 'Users',
               value: data.users.length.toString(),
               icon: Icons.people_outline,
+              accentColor: const Color(0xFF5BB7FF),
             ),
             _MetricTile(
               label: 'Devices',
               value: data.devices.length.toString(),
               icon: Icons.devices_outlined,
+              accentColor: const Color(0xFF63D0C2),
             ),
             _MetricTile(
               label: 'Trusted',
               value: trustedDevices.toString(),
               icon: Icons.verified_outlined,
+              accentColor: const Color(0xFF9BE564),
             ),
             _MetricTile(
               label: 'Pending',
               value: pendingRequests.toString(),
               icon: Icons.rule_folder_outlined,
+              accentColor: const Color(0xFFFFC857),
             ),
           ];
 
@@ -2504,10 +2814,22 @@ class _HeroPanel extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          Chip(label: Text('${data.users.length} users')),
-                          Chip(label: Text('${data.devices.length} devices')),
-                          Chip(label: Text('$pendingRequests pending approvals')),
-                          Chip(label: Text('${data.auditLog.length} audit events')),
+                          _SummaryChip(
+                            label: '${data.users.length} users',
+                            accentColor: const Color(0xFF5BB7FF),
+                          ),
+                          _SummaryChip(
+                            label: '${data.devices.length} devices',
+                            accentColor: const Color(0xFF63D0C2),
+                          ),
+                          _SummaryChip(
+                            label: '$pendingRequests pending approvals',
+                            accentColor: const Color(0xFFFFC857),
+                          ),
+                          _SummaryChip(
+                            label: '${data.auditLog.length} audit events',
+                            accentColor: const Color(0xFF9BE564),
+                          ),
                         ],
                       ),
                     ],
@@ -2542,10 +2864,22 @@ class _HeroPanel extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  Chip(label: Text('${data.users.length} users')),
-                  Chip(label: Text('${data.devices.length} devices')),
-                  Chip(label: Text('$pendingRequests pending approvals')),
-                  Chip(label: Text('${data.auditLog.length} audit events')),
+                  _SummaryChip(
+                    label: '${data.users.length} users',
+                    accentColor: const Color(0xFF5BB7FF),
+                  ),
+                  _SummaryChip(
+                    label: '${data.devices.length} devices',
+                    accentColor: const Color(0xFF63D0C2),
+                  ),
+                  _SummaryChip(
+                    label: '$pendingRequests pending approvals',
+                    accentColor: const Color(0xFFFFC857),
+                  ),
+                  _SummaryChip(
+                    label: '${data.auditLog.length} audit events',
+                    accentColor: const Color(0xFF9BE564),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -2576,11 +2910,7 @@ class _ActionStrip extends StatelessWidget {
       subtitle: subtitle,
       icon: Icons.auto_awesome_outlined,
       compact: true,
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: actions,
-      ),
+      child: Wrap(spacing: 10, runSpacing: 10, children: actions),
     );
   }
 }
@@ -2594,7 +2924,7 @@ class _ActionChip extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -2602,6 +2932,45 @@ class _ActionChip extends StatelessWidget {
       onPressed: onPressed,
       icon: Icon(icon),
       label: Text(label),
+    );
+  }
+}
+
+class _SoftChoiceChip extends StatelessWidget {
+  const _SoftChoiceChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final Widget label;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ChoiceChip(
+      label: label,
+      selected: selected,
+      onSelected: onSelected,
+      showCheckmark: false,
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: selected
+            ? theme.colorScheme.onSurface
+            : theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: theme.colorScheme.surface,
+      selectedColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.42),
+      side: BorderSide(
+        color: selected
+            ? theme.colorScheme.primary.withValues(alpha: 0.7)
+            : theme.colorScheme.outlineVariant,
+      ),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
 }
@@ -2618,36 +2987,24 @@ class _NavigationGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 900
             ? 3
             : constraints.maxWidth >= 600
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: [
             for (final tile in tiles)
               SizedBox(
-                width: (constraints.maxWidth - (columns - 1) * 12) / columns,
+                width: (constraints.maxWidth - (columns - 1) * 10) / columns,
                 child: Card(
                   clipBehavior: Clip.antiAlias,
                   elevation: 0,
                   child: InkWell(
                     onTap: () => context.go(tile.route),
                     child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.surface,
-                            Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withValues(alpha: 0.5),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
+                      color: Theme.of(context).colorScheme.surface,
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2655,25 +3012,30 @@ class _NavigationGrid extends StatelessWidget {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withValues(alpha: 0.12),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Icon(tile.icon),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             Text(
                               tile.title,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
-                            const SizedBox(height: 6),
-                            Text(tile.subtitle),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 4),
+                            Text(
+                              tile.subtitle,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 10),
                             const Align(
                               alignment: Alignment.centerRight,
-                              child: Icon(Icons.arrow_forward_outlined, size: 18),
+                              child: Icon(
+                                Icons.arrow_forward_outlined,
+                                size: 18,
+                              ),
                             ),
                           ],
                         ),
@@ -2772,6 +3134,7 @@ class _SummaryRow extends StatelessWidget {
                   label: item.$1,
                   value: item.$2.toString(),
                   icon: Icons.stacked_line_chart_outlined,
+                  accentColor: _metricAccentColor(item.$1),
                 ),
               ),
           ],
@@ -2821,11 +3184,7 @@ class _SearchFilterPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: chips,
-          ),
+          Wrap(spacing: 8, runSpacing: 8, children: chips),
         ],
       ),
     );
@@ -2845,8 +3204,14 @@ class _EmptyCollectionState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
-      elevation: 0,
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -2854,9 +3219,9 @@ class _EmptyCollectionState extends StatelessWidget {
           children: [
             Icon(icon, size: 28),
             const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(title, style: theme.textTheme.titleMedium),
             const SizedBox(height: 6),
-            Text(body),
+            Text(body, style: theme.textTheme.bodyMedium),
           ],
         ),
       ),
@@ -2873,6 +3238,7 @@ class _EntityCard extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.chips = const [],
+    this.actions = const [],
   });
 
   final IconData icon;
@@ -2882,28 +3248,25 @@ class _EntityCard extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final List<Widget> chips;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 0,
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: InkWell(
         onTap: onTap,
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.surface,
-                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          color: theme.colorScheme.surface,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2914,7 +3277,9 @@ class _EntityCard extends StatelessWidget {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(icon, size: 22),
@@ -2926,7 +3291,7 @@ class _EntityCard extends StatelessWidget {
                         children: [
                           Text(title, style: theme.textTheme.titleMedium),
                           const SizedBox(height: 4),
-                          Text(subtitle),
+                          Text(subtitle, style: theme.textTheme.bodyMedium),
                         ],
                       ),
                     ),
@@ -2934,10 +3299,14 @@ class _EntityCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(body),
+                Text(body, style: theme.textTheme.bodyMedium),
                 if (chips.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Wrap(spacing: 8, runSpacing: 8, children: chips),
+                ],
+                if (actions.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Wrap(spacing: 6, runSpacing: 6, children: actions),
                 ],
               ],
             ),
@@ -2955,7 +3324,19 @@ class _CardChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(label: Text(label));
+    final theme = Theme.of(context);
+    return Chip(
+      label: Text(label),
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: theme.colorScheme.surface,
+      side: BorderSide(color: theme.colorScheme.outlineVariant),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+    );
   }
 }
 
@@ -3024,18 +3405,12 @@ class _EntityActionsMenu extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem<String>(
-          value: 'edit',
-          child: Text('Edit'),
-        ),
+        const PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
         PopupMenuItem<String>(
           value: 'archive',
           child: Text(isArchived ? 'Restore' : 'Archive'),
         ),
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Text('Delete'),
-        ),
+        const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
       ],
     );
   }
@@ -3046,38 +3421,56 @@ class _MetricTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
+    this.accentColor,
   });
 
   final String label;
   final String value;
   final IconData icon;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      elevation: 0,
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                color: (accentColor ?? theme.colorScheme.primary).withValues(
+                  alpha: 0.12,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 20),
+              child: Icon(
+                icon,
+                size: 20,
+                color: accentColor ?? theme.colorScheme.primary,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label, style: theme.textTheme.labelLarge),
                   const SizedBox(height: 3),
-                  Text(value, style: theme.textTheme.titleLarge),
+                  Text(
+                    value,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -3108,20 +3501,16 @@ class _VisualPanel extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 0,
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.44),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        color: theme.colorScheme.surface,
         child: Padding(
-          padding: EdgeInsets.all(compact ? 14 : 18),
+          padding: EdgeInsets.all(compact ? 12 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -3138,33 +3527,33 @@ class _VisualPanel extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: compact ? 36 : 44,
-                    height: compact ? 36 : 44,
+                    width: compact ? 34 : 42,
+                    height: compact ? 34 : 42,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(icon, size: compact ? 18 : 22),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(title, style: theme.textTheme.titleMedium),
                         const SizedBox(height: 4),
-                        Text(subtitle),
+                        Text(subtitle, style: theme.textTheme.bodyMedium),
                       ],
                     ),
                   ),
                 ],
               ),
-              if (!compact) const SizedBox(height: 16),
+              if (!compact) const SizedBox(height: 12),
               child,
             ],
           ),
@@ -3181,7 +3570,71 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(label: Text(label));
+    final theme = Theme.of(context);
+    return Chip(
+      label: Text(label),
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: theme.colorScheme.surface,
+      side: BorderSide(color: theme.colorScheme.outlineVariant),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({required this.label, this.accentColor});
+
+  final String label;
+  final Color? accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final Color effectiveAccent = accentColor ?? theme.colorScheme.surface;
+    return Chip(
+      label: Text(label),
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: accentColor ?? theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: accentColor == null
+          ? theme.colorScheme.surface
+          : effectiveAccent.withValues(alpha: 0.14),
+      side: BorderSide(
+        color: accentColor == null
+            ? theme.colorScheme.outlineVariant
+            : effectiveAccent.withValues(alpha: 0.4),
+      ),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+    );
+  }
+}
+
+Color _metricAccentColor(String label) {
+  switch (label.toLowerCase()) {
+    case 'active':
+    case 'users':
+      return const Color(0xFF5BB7FF);
+    case 'devices':
+    case 'with devices':
+      return const Color(0xFF63D0C2);
+    case 'trusted':
+    case 'templates':
+    case 'audit':
+    case 'audit events':
+      return const Color(0xFF9BE564);
+    case 'pending':
+    case 'pending approvals':
+      return const Color(0xFFFFC857);
+    default:
+      return const Color(0xFF5BB7FF);
   }
 }
 
@@ -3190,11 +3643,13 @@ class _ApprovalRequestCard extends StatelessWidget {
     required this.request,
     required this.onApprove,
     required this.onDeny,
+    this.onOpenAuditLog,
   });
 
   final UsersDevicesControlApprovalRequest request;
   final VoidCallback? onApprove;
   final VoidCallback? onDeny;
+  final VoidCallback? onOpenAuditLog;
 
   @override
   Widget build(BuildContext context) {
@@ -3202,28 +3657,24 @@ class _ApprovalRequestCard extends StatelessWidget {
     final riskColor = request.riskLevel == 'high'
         ? theme.colorScheme.error
         : request.riskLevel == 'medium'
-            ? theme.colorScheme.tertiary
-            : theme.colorScheme.primary;
+        ? theme.colorScheme.tertiary
+        : theme.colorScheme.primary;
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 0,
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: Container(
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: riskColor, width: 5),
-          ),
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.46),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          border: Border(left: BorderSide(color: riskColor, width: 5)),
+          color: theme.colorScheme.surface,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -3233,14 +3684,11 @@ class _ApprovalRequestCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   gradient: LinearGradient(
-                    colors: [
-                      riskColor,
-                      theme.colorScheme.tertiary,
-                    ],
+                    colors: [riskColor, theme.colorScheme.tertiary],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3248,40 +3696,43 @@ class _ApprovalRequestCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(request.action, style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 6),
-                        Text('${request.targetModule} - ${request.riskLevel} risk'),
+                        Text(
+                          request.action,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${request.targetModule} - ${request.riskLevel} risk',
+                        ),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  const SizedBox(width: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.end,
                     children: [
-                      Chip(label: Text(request.status)),
-                      const SizedBox(height: 6),
-                      Chip(
-                        label: Text(
-                          request.riskLevel.toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        side: BorderSide(color: riskColor),
-                      ),
+                      _CardChip(label: request.status.toUpperCase()),
+                      _CardChip(label: request.riskLevel.toUpperCase()),
+                      if (request.status == 'pending')
+                        const _CardChip(label: 'Waiting for reviewer'),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(request.reason),
+              const SizedBox(height: 8),
+              Text(request.reason, style: theme.textTheme.bodyMedium),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
-                  _CardChip(label: 'Requested by ${request.requestedBy}'),
+                  _CardChip(label: 'Requester ${request.requestedBy}'),
                   _CardChip(label: 'Device ${request.deviceId}'),
                   _CardChip(label: 'Module ${request.targetModule}'),
                   _CardChip(label: 'Action ${request.action}'),
-                  _CardChip(label: request.timestamp),
+                  _CardChip(label: 'Time ${request.timestamp}'),
                 ],
               ),
               if (request.reviewedBy != null || request.reviewedAt != null) ...[
@@ -3293,14 +3744,14 @@ class _ApprovalRequestCard extends StatelessWidget {
                     if (request.reviewedBy != null)
                       _CardChip(label: 'Reviewed by ${request.reviewedBy}'),
                     if (request.reviewedAt != null)
-                      _CardChip(label: request.reviewedAt!),
+                      _CardChip(label: 'Reviewed ${request.reviewedAt!}'),
                   ],
                 ),
               ],
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   FilledButton.tonal(
                     onPressed: onApprove,
@@ -3310,6 +3761,12 @@ class _ApprovalRequestCard extends StatelessWidget {
                     onPressed: onDeny,
                     child: const Text('Deny request'),
                   ),
+                  if (onOpenAuditLog != null)
+                    TextButton.icon(
+                      onPressed: onOpenAuditLog,
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: const Text('Open Audit Log'),
+                    ),
                 ],
               ),
             ],
@@ -3321,10 +3778,7 @@ class _ApprovalRequestCard extends StatelessWidget {
 }
 
 class _AuditEventCard extends StatelessWidget {
-  const _AuditEventCard({
-    required this.event,
-    required this.highlighted,
-  });
+  const _AuditEventCard({required this.event, required this.highlighted});
 
   final UsersDevicesControlAuditEvent event;
   final bool highlighted;
@@ -3332,40 +3786,81 @@ class _AuditEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final resultColor = switch (event.result) {
+      'allowed' => const Color(0xFF9BE564),
+      'denied' => theme.colorScheme.error,
+      'pending' => theme.colorScheme.tertiary,
+      _ => theme.colorScheme.outline,
+    };
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 0,
+      elevation: 1,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: highlighted
-              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.28)
-              : null,
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.surface,
           border: Border.all(
             color: highlighted
                 ? theme.colorScheme.primary
-                : theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                : theme.colorScheme.outlineVariant,
           ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: ListTile(
+          dense: true,
           leading: Icon(
             highlighted ? Icons.verified_outlined : Icons.receipt_long_outlined,
           ),
           title: Text(event.eventType),
-          subtitle: Text(
-            '${event.actorId} - ${event.targetModule} - ${event.reason}',
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${event.actorId} - ${event.targetModule} - ${event.reason}',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _CardChip(label: event.timestamp),
+                  _CardChip(label: 'Device ${event.deviceId}'),
+                  _CardChip(label: 'Action ${event.action}'),
+                  Chip(
+                    label: Text(
+                      event.result.toUpperCase(),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    side: BorderSide(color: resultColor),
+                  ),
+                ],
+              ),
+            ],
           ),
-          trailing: Chip(label: Text(event.result)),
+          trailing: highlighted
+              ? Chip(
+                  label: const Text(
+                    'Highlighted',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  side: BorderSide(color: theme.colorScheme.primary),
+                )
+              : null,
         ),
       ),
     );
   }
 }
 
-Future<void> _registerSampleUser(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> _registerSampleUser(BuildContext context, WidgetRef ref) async {
   final repository = ref.read(usersDevicesControlRepositoryProvider);
   await repository.registerUser(
     const UsersDevicesControlUser(
@@ -3381,16 +3876,13 @@ Future<void> _registerSampleUser(
   );
   ref.invalidate(usersDevicesControlSnapshotProvider);
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sample user registered.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Sample user registered.')));
   }
 }
 
-Future<void> _registerSampleDevice(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> _registerSampleDevice(BuildContext context, WidgetRef ref) async {
   final repository = ref.read(usersDevicesControlRepositoryProvider);
   await repository.registerDevice(
     const UsersDevicesControlDevice(
@@ -3406,16 +3898,13 @@ Future<void> _registerSampleDevice(
   );
   ref.invalidate(usersDevicesControlSnapshotProvider);
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sample device registered.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Sample device registered.')));
   }
 }
 
-Future<void> _createSampleApproval(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> _createSampleApproval(BuildContext context, WidgetRef ref) async {
   final repository = ref.read(usersDevicesControlRepositoryProvider);
   await repository.createApprovalRequest(
     requestedBy: 'agent_ai_sandbox',
@@ -3427,16 +3916,86 @@ Future<void> _createSampleApproval(
   );
   ref.invalidate(usersDevicesControlSnapshotProvider);
   if (context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Sample approval created.')));
+  }
+}
+
+Future<void> _reviewFirstPendingApproval(
+  BuildContext context,
+  WidgetRef ref, {
+  required bool approve,
+}) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+  final pending = snapshot.approvalQueue.firstWhere(
+    (request) => request.status == 'pending',
+    orElse: () => throw StateError('No pending approval requests available.'),
+  );
+
+  if (approve) {
+    await repository.approveRequest(
+      pending.requestId,
+      reviewedBy: 'user_peter_owner',
+    );
+  } else {
+    await repository.denyRequest(
+      pending.requestId,
+      reviewedBy: 'user_peter_owner',
+    );
+  }
+
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+  if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sample approval created.')),
+      SnackBar(
+        content: Text(
+          approve ? 'Pending approval approved.' : 'Pending approval denied.',
+        ),
+      ),
     );
   }
 }
 
-Future<void> _seedDemoPath(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> _confirmResetDemoData(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Reset demo data?'),
+      content: const Text(
+        'This clears the local Users & Devices data and restores the seeded demo state. '
+        'Any local changes made in the module will be replaced.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Reset'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) {
+    return;
+  }
+
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  await repository.resetToSeedData();
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Demo data reset to the seeded state.')),
+    );
+  }
+}
+
+Future<void> _seedDemoPath(BuildContext context, WidgetRef ref) async {
   final repository = ref.read(usersDevicesControlRepositoryProvider);
   final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
 
@@ -3445,10 +4004,12 @@ Future<void> _seedDemoPath(
       ? snapshot.permissions.first.permission
       : 'dashboard.view';
   final trustLevel = snapshot.trustLevels.isNotEmpty
-      ? snapshot.trustLevels.firstWhere(
-          (level) => level.level >= 3,
-          orElse: () => snapshot.trustLevels.first,
-        ).level
+      ? snapshot.trustLevels
+            .firstWhere(
+              (level) => level.level >= 3,
+              orElse: () => snapshot.trustLevels.first,
+            )
+            .level
       : 3;
   final allowedAction = snapshot.accessRules.isNotEmpty
       ? snapshot.accessRules.first.viewPermission
@@ -3535,37 +4096,37 @@ Future<void> _openOnboardingWizard(
 
   final defaults = switch (template) {
     'assistant' => (
-        id: 'device_assistant_new',
-        name: 'Local Assistant',
-        type: 'assistant',
-        trustLevel: 3,
-        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
-        allowedActions: <String>['ai.request_action', 'voice.request_action'],
-      ),
+      id: 'device_assistant_new',
+      name: 'Local Assistant',
+      type: 'assistant',
+      trustLevel: 3,
+      ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+      allowedActions: <String>['ai.request_action', 'voice.request_action'],
+    ),
     'gateway' => (
-        id: 'device_gateway_new',
-        name: 'Local Gateway',
-        type: 'gateway',
-        trustLevel: 4,
-        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
-        allowedActions: <String>['dashboard.view', 'backup.verify'],
-      ),
+      id: 'device_gateway_new',
+      name: 'Local Gateway',
+      type: 'gateway',
+      trustLevel: 4,
+      ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+      allowedActions: <String>['dashboard.view', 'backup.verify'],
+    ),
     'printer' => (
-        id: 'device_printer_new',
-        name: 'Label Printer',
-        type: 'printer',
-        trustLevel: 2,
-        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
-        allowedActions: <String>['assets.print_label'],
-      ),
+      id: 'device_printer_new',
+      name: 'Label Printer',
+      type: 'printer',
+      trustLevel: 2,
+      ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+      allowedActions: <String>['assets.print_label'],
+    ),
     _ => (
-        id: 'device_new_local',
-        name: 'New Local Device',
-        type: 'computer',
-        trustLevel: 2,
-        ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
-        allowedActions: <String>['dashboard.view'],
-      ),
+      id: 'device_new_local',
+      name: 'New Local Device',
+      type: 'computer',
+      trustLevel: 2,
+      ownerId: availableUsers.isNotEmpty ? availableUsers.first.id : '',
+      allowedActions: <String>['dashboard.view'],
+    ),
   };
 
   final idController = TextEditingController(text: defaults.id);
@@ -3615,7 +4176,8 @@ Future<void> _openOnboardingWizard(
                               labelText: 'Device ID',
                               hintText: 'device_unique_id',
                             ),
-                            validator: (value) => (value == null || value.trim().isEmpty)
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty)
                                 ? 'Enter a device ID'
                                 : null,
                           ),
@@ -3625,7 +4187,8 @@ Future<void> _openOnboardingWizard(
                             decoration: const InputDecoration(
                               labelText: 'Device name',
                             ),
-                            validator: (value) => (value == null || value.trim().isEmpty)
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty)
                                 ? 'Enter a device name'
                                 : null,
                           ),
@@ -3635,7 +4198,8 @@ Future<void> _openOnboardingWizard(
                             decoration: const InputDecoration(
                               labelText: 'Device type',
                             ),
-                            validator: (value) => (value == null || value.trim().isEmpty)
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty)
                                 ? 'Enter a device type'
                                 : null,
                           ),
@@ -3653,11 +4217,14 @@ Future<void> _openOnboardingWizard(
                               ...availableUsers.map(
                                 (user) => DropdownMenuItem<String>(
                                   value: user.id,
-                                  child: Text('${user.displayName} (${user.id})'),
+                                  child: Text(
+                                    '${user.displayName} (${user.id})',
+                                  ),
                                 ),
                               ),
                             ],
-                            onChanged: (value) => setState(() => ownerId = value ?? ''),
+                            onChanged: (value) =>
+                                setState(() => ownerId = value ?? ''),
                           ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<int>(
@@ -3669,7 +4236,9 @@ Future<void> _openOnboardingWizard(
                                 .map(
                                   (level) => DropdownMenuItem<int>(
                                     value: level.level,
-                                    child: Text('${level.level} - ${level.name}'),
+                                    child: Text(
+                                      '${level.level} - ${level.name}',
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -3708,7 +4277,9 @@ Future<void> _openOnboardingWizard(
                                       trustConfirmed = value ?? false;
                                     });
                                   },
-                                  title: const Text('I confirm this pairing locally'),
+                                  title: const Text(
+                                    'I confirm this pairing locally',
+                                  ),
                                   subtitle: Text(
                                     trustLevel >= 4
                                         ? 'High-trust devices need a deliberate confirmation step.'
@@ -3727,7 +4298,8 @@ Future<void> _openOnboardingWizard(
                                       if (trustLevel < 4) {
                                         return null;
                                       }
-                                      return value?.trim().toUpperCase() == 'CONFIRM'
+                                      return value?.trim().toUpperCase() ==
+                                              'CONFIRM'
                                           ? null
                                           : 'Type CONFIRM to approve a high-trust pairing.';
                                     },
@@ -3801,9 +4373,7 @@ Future<void> _openOnboardingWizard(
                   child: const Text('Cancel'),
                 ),
                 TextButton(
-                  onPressed: step == 0
-                      ? null
-                      : () => setState(() => step -= 1),
+                  onPressed: step == 0 ? null : () => setState(() => step -= 1),
                   child: const Text('Back'),
                 ),
                 FilledButton(
@@ -3816,7 +4386,9 @@ Future<void> _openOnboardingWizard(
                       if (step == 1 && !trustConfirmed) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Please confirm the pairing before continuing.'),
+                            content: Text(
+                              'Please confirm the pairing before continuing.',
+                            ),
                           ),
                         );
                         return;
@@ -3831,7 +4403,9 @@ Future<void> _openOnboardingWizard(
                     if (!trustConfirmed) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Please confirm the pairing before finishing.'),
+                          content: Text(
+                            'Please confirm the pairing before finishing.',
+                          ),
                         ),
                       );
                       return;
@@ -3909,14 +4483,14 @@ Future<void> _openUserEditor(
       .toList(growable: false);
   final availableDevices = snapshot.devices;
   final idController = TextEditingController(text: user?.id ?? '');
-  final displayNameController = TextEditingController(text: user?.displayName ?? '');
+  final displayNameController = TextEditingController(
+    text: user?.displayName ?? '',
+  );
   final titleController = TextEditingController(text: user?.title ?? '');
   final notesController = TextEditingController(text: user?.notes ?? '');
   final formKey = GlobalKey<FormState>();
   final messenger = ScaffoldMessenger.maybeOf(context);
-  var role = user?.role.isNotEmpty == true
-      ? user!.role
-      : availableRoles.first;
+  var role = user?.role.isNotEmpty == true ? user!.role : availableRoles.first;
   var status = user?.status ?? 'active';
   final selectedPermissions = <String>{
     ...(user?.permissions ?? const <String>[]),
@@ -3935,16 +4509,20 @@ Future<void> _openUserEditor(
           title: Text(user == null ? 'Add user' : 'Edit user'),
           content: StatefulBuilder(
             builder: (context, setState) {
-              final filteredPermissions = availablePermissions.where(
-                (permission) => permission
-                    .toLowerCase()
-                    .contains(permissionQuery.trim().toLowerCase()),
-              ).toList(growable: false);
-              final filteredDevices = availableDevices.where(
-                (device) => '${device.name} ${device.id}'
-                    .toLowerCase()
-                    .contains(deviceQuery.trim().toLowerCase()),
-              ).toList(growable: false);
+              final filteredPermissions = availablePermissions
+                  .where(
+                    (permission) => permission.toLowerCase().contains(
+                      permissionQuery.trim().toLowerCase(),
+                    ),
+                  )
+                  .toList(growable: false);
+              final filteredDevices = availableDevices
+                  .where(
+                    (device) => '${device.name} ${device.id}'
+                        .toLowerCase()
+                        .contains(deviceQuery.trim().toLowerCase()),
+                  )
+                  .toList(growable: false);
 
               return ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
@@ -3961,7 +4539,8 @@ Future<void> _openUserEditor(
                             labelText: 'User ID',
                             hintText: 'user_unique_id',
                           ),
-                          validator: (value) => (value == null || value.trim().isEmpty)
+                          validator: (value) =>
+                              (value == null || value.trim().isEmpty)
                               ? 'Enter a user ID'
                               : null,
                         ),
@@ -3971,16 +4550,15 @@ Future<void> _openUserEditor(
                           decoration: const InputDecoration(
                             labelText: 'Display name',
                           ),
-                          validator: (value) => (value == null || value.trim().isEmpty)
+                          validator: (value) =>
+                              (value == null || value.trim().isEmpty)
                               ? 'Enter a display name'
                               : null,
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
                           initialValue: role,
-                          decoration: const InputDecoration(
-                            labelText: 'Role',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Role'),
                           items: availableRoles
                               .map(
                                 (item) => DropdownMenuItem<String>(
@@ -4003,9 +4581,18 @@ Future<void> _openUserEditor(
                             labelText: 'Status',
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'active', child: Text('active')),
-                            DropdownMenuItem(value: 'template', child: Text('template')),
-                            DropdownMenuItem(value: 'disabled', child: Text('disabled')),
+                            DropdownMenuItem(
+                              value: 'active',
+                              child: Text('active'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'template',
+                              child: Text('template'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'disabled',
+                              child: Text('disabled'),
+                            ),
                           ],
                           onChanged: (value) {
                             if (value == null) {
@@ -4017,9 +4604,7 @@ Future<void> _openUserEditor(
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: titleController,
-                          decoration: const InputDecoration(
-                            labelText: 'Title',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Title'),
                         ),
                         const SizedBox(height: 12),
                         _PickerSection(
@@ -4031,7 +4616,9 @@ Future<void> _openUserEditor(
                                 : () {
                                     setState(() => selectedPermissions.clear());
                                   },
-                            child: Text('${selectedPermissions.length} selected'),
+                            child: Text(
+                              '${selectedPermissions.length} selected',
+                            ),
                           ),
                           children: [
                             TextField(
@@ -4053,14 +4640,17 @@ Future<void> _openUserEditor(
                                   for (final permission in filteredPermissions)
                                     FilterChip(
                                       label: Text(permission),
-                                      selected:
-                                          selectedPermissions.contains(permission),
+                                      selected: selectedPermissions.contains(
+                                        permission,
+                                      ),
                                       onSelected: (value) {
                                         setState(() {
                                           if (value) {
                                             selectedPermissions.add(permission);
                                           } else {
-                                            selectedPermissions.remove(permission);
+                                            selectedPermissions.remove(
+                                              permission,
+                                            );
                                           }
                                         });
                                       },
@@ -4078,14 +4668,19 @@ Future<void> _openUserEditor(
                         const SizedBox(height: 12),
                         _PickerSection(
                           title: 'Linked devices',
-                          subtitle: 'Connect this user to the trusted devices they use',
+                          subtitle:
+                              'Connect this user to the trusted devices they use',
                           trailing: TextButton(
                             onPressed: selectedLinkedDevices.isEmpty
                                 ? null
                                 : () {
-                                    setState(() => selectedLinkedDevices.clear());
+                                    setState(
+                                      () => selectedLinkedDevices.clear(),
+                                    );
                                   },
-                            child: Text('${selectedLinkedDevices.length} selected'),
+                            child: Text(
+                              '${selectedLinkedDevices.length} selected',
+                            ),
                           ),
                           children: [
                             TextField(
@@ -4107,14 +4702,19 @@ Future<void> _openUserEditor(
                                   for (final device in filteredDevices)
                                     FilterChip(
                                       label: Text(device.name),
-                                      selected:
-                                          selectedLinkedDevices.contains(device.id),
+                                      selected: selectedLinkedDevices.contains(
+                                        device.id,
+                                      ),
                                       onSelected: (value) {
                                         setState(() {
                                           if (value) {
-                                            selectedLinkedDevices.add(device.id);
+                                            selectedLinkedDevices.add(
+                                              device.id,
+                                            );
                                           } else {
-                                            selectedLinkedDevices.remove(device.id);
+                                            selectedLinkedDevices.remove(
+                                              device.id,
+                                            );
                                           }
                                         });
                                       },
@@ -4134,9 +4734,7 @@ Future<void> _openUserEditor(
                           controller: notesController,
                           minLines: 2,
                           maxLines: 4,
-                          decoration: const InputDecoration(
-                            labelText: 'Notes',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Notes'),
                         ),
                       ],
                     ),
@@ -4164,7 +4762,9 @@ Future<void> _openUserEditor(
                     title: titleController.text.trim(),
                     status: status,
                     permissions: selectedPermissions.toList(growable: false),
-                    linkedDevices: selectedLinkedDevices.toList(growable: false),
+                    linkedDevices: selectedLinkedDevices.toList(
+                      growable: false,
+                    ),
                     notes: notesController.text.trim(),
                   ),
                 );
@@ -4216,7 +4816,11 @@ Future<void> _openDeviceEditor(
         ];
   final trustLevelItems = <UsersDevicesControlTrustLevelDefinition>[
     ...availableTrustLevels,
-    if (!availableTrustLevels.any((level) => level.level == (device?.trustLevel ?? availableTrustLevels.first.level)))
+    if (!availableTrustLevels.any(
+      (level) =>
+          level.level ==
+          (device?.trustLevel ?? availableTrustLevels.first.level),
+    ))
       UsersDevicesControlTrustLevelDefinition(
         level: device?.trustLevel ?? availableTrustLevels.first.level,
         name: 'Custom',
@@ -4244,7 +4848,9 @@ Future<void> _openDeviceEditor(
   final formKey = GlobalKey<FormState>();
   final messenger = ScaffoldMessenger.maybeOf(context);
   var status = device?.status ?? 'registered';
-  var ownerId = device?.ownerId ?? (availableUsers.isNotEmpty ? availableUsers.first.id : '');
+  var ownerId =
+      device?.ownerId ??
+      (availableUsers.isNotEmpty ? availableUsers.first.id : '');
   var trustLevel = device?.trustLevel ?? availableTrustLevels.first.level;
   final selectedActions = <String>{
     ...(device?.allowedActions ?? const <String>[]),
@@ -4260,11 +4866,13 @@ Future<void> _openDeviceEditor(
           title: Text(device == null ? 'Add device' : 'Edit device'),
           content: StatefulBuilder(
             builder: (context, setState) {
-              final filteredActions = availableActions.where(
-                (action) => action
-                    .toLowerCase()
-                    .contains(actionQuery.trim().toLowerCase()),
-              ).toList(growable: false);
+              final filteredActions = availableActions
+                  .where(
+                    (action) => action.toLowerCase().contains(
+                      actionQuery.trim().toLowerCase(),
+                    ),
+                  )
+                  .toList(growable: false);
 
               return ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
@@ -4281,7 +4889,8 @@ Future<void> _openDeviceEditor(
                             labelText: 'Device ID',
                             hintText: 'device_unique_id',
                           ),
-                          validator: (value) => (value == null || value.trim().isEmpty)
+                          validator: (value) =>
+                              (value == null || value.trim().isEmpty)
                               ? 'Enter a device ID'
                               : null,
                         ),
@@ -4291,7 +4900,8 @@ Future<void> _openDeviceEditor(
                           decoration: const InputDecoration(
                             labelText: 'Device name',
                           ),
-                          validator: (value) => (value == null || value.trim().isEmpty)
+                          validator: (value) =>
+                              (value == null || value.trim().isEmpty)
                               ? 'Enter a device name'
                               : null,
                         ),
@@ -4301,7 +4911,8 @@ Future<void> _openDeviceEditor(
                           decoration: const InputDecoration(
                             labelText: 'Device type',
                           ),
-                          validator: (value) => (value == null || value.trim().isEmpty)
+                          validator: (value) =>
+                              (value == null || value.trim().isEmpty)
                               ? 'Enter a device type'
                               : null,
                         ),
@@ -4333,10 +4944,22 @@ Future<void> _openDeviceEditor(
                             labelText: 'Status',
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'registered', child: Text('registered')),
-                            DropdownMenuItem(value: 'trusted', child: Text('trusted')),
-                            DropdownMenuItem(value: 'critical', child: Text('critical')),
-                            DropdownMenuItem(value: 'blocked', child: Text('blocked')),
+                            DropdownMenuItem(
+                              value: 'registered',
+                              child: Text('registered'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'trusted',
+                              child: Text('trusted'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'critical',
+                              child: Text('critical'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'blocked',
+                              child: Text('blocked'),
+                            ),
                           ],
                           onChanged: (value) {
                             if (value == null) {
@@ -4348,9 +4971,7 @@ Future<void> _openDeviceEditor(
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
                           initialValue: ownerId.isEmpty ? null : ownerId,
-                          decoration: const InputDecoration(
-                            labelText: 'Owner',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Owner'),
                           items: [
                             const DropdownMenuItem<String>(
                               value: '',
@@ -4359,7 +4980,9 @@ Future<void> _openDeviceEditor(
                             ...availableUsers.map(
                               (userOption) => DropdownMenuItem<String>(
                                 value: userOption.id,
-                                child: Text('${userOption.displayName} (${userOption.id})'),
+                                child: Text(
+                                  '${userOption.displayName} (${userOption.id})',
+                                ),
                               ),
                             ),
                           ],
@@ -4370,7 +4993,8 @@ Future<void> _openDeviceEditor(
                         const SizedBox(height: 12),
                         _PickerSection(
                           title: 'Allowed actions',
-                          subtitle: 'Pick known action scopes or add a custom one',
+                          subtitle:
+                              'Pick known action scopes or add a custom one',
                           trailing: TextButton(
                             onPressed: selectedActions.isEmpty
                                 ? null
@@ -4399,7 +5023,9 @@ Future<void> _openDeviceEditor(
                                   for (final action in filteredActions)
                                     FilterChip(
                                       label: Text(action),
-                                      selected: selectedActions.contains(action),
+                                      selected: selectedActions.contains(
+                                        action,
+                                      ),
                                       onSelected: (value) {
                                         setState(() {
                                           if (value) {
@@ -4433,7 +5059,8 @@ Future<void> _openDeviceEditor(
                                 const SizedBox(width: 8),
                                 FilledButton.tonal(
                                   onPressed: () {
-                                    final action = customActionController.text.trim();
+                                    final action = customActionController.text
+                                        .trim();
                                     if (action.isEmpty) {
                                       return;
                                     }
@@ -4470,9 +5097,7 @@ Future<void> _openDeviceEditor(
                           controller: notesController,
                           minLines: 2,
                           maxLines: 4,
-                          decoration: const InputDecoration(
-                            labelText: 'Notes',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Notes'),
                         ),
                       ],
                     ),
@@ -4616,9 +5241,9 @@ Future<void> _confirmDeleteUser(
   await repository.deleteUser(user.id);
   ref.invalidate(usersDevicesControlSnapshotProvider);
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User deleted locally.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('User deleted locally.')));
   }
 }
 
@@ -4654,8 +5279,8 @@ Future<void> _confirmDeleteDevice(
   await repository.deleteDevice(device.id);
   ref.invalidate(usersDevicesControlSnapshotProvider);
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Device deleted locally.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Device deleted locally.')));
   }
 }

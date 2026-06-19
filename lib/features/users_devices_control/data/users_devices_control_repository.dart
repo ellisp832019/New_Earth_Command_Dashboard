@@ -419,11 +419,15 @@ class UsersDevicesControlAccessDecision {
     required this.allowed,
     required this.requiresApproval,
     required this.reason,
+    this.nextStep = '',
+    this.issueCode = '',
   });
 
   final bool allowed;
   final bool requiresApproval;
   final String reason;
+  final String nextStep;
+  final String issueCode;
 }
 
 class UsersDevicesControlRepository {
@@ -436,6 +440,7 @@ class UsersDevicesControlRepository {
   final AppDatabase? database;
   final String moduleRootPath;
   final String storageNamespace;
+  Future<void>? _seedFuture;
 
   Future<UsersDevicesControlSnapshot> loadSnapshot() async {
     await _ensureDatabaseSeeded();
@@ -448,6 +453,69 @@ class UsersDevicesControlRepository {
       approvalQueue: await _readApprovals(),
       auditLog: await _readAuditLog(),
       accessRules: await _readAccessRules(),
+    );
+  }
+
+  Future<void> resetToSeedData() async {
+    final db = database;
+    _seedFuture = null;
+
+    if (db != null) {
+      await db.transaction(() async {
+        await db.delete(db.usersDevicesControlUsers).go();
+        await db.delete(db.usersDevicesControlDevices).go();
+        await db.delete(db.usersDevicesControlApprovalRequests).go();
+        await db.delete(db.usersDevicesControlAuditEvents).go();
+        await db.delete(db.usersDevicesControlRoles).go();
+        await db.delete(db.usersDevicesControlPermissions).go();
+        await db.delete(db.usersDevicesControlTrustLevels).go();
+        await db.delete(db.usersDevicesControlAccessRules).go();
+      });
+
+      await _ensureDatabaseSeeded();
+      return;
+    }
+
+    await _writeJsonList(
+      _usersStoragePath,
+      await _readJsonList(() async => _usersSourcePath, _usersExamplePath),
+    );
+    await _writeJsonList(
+      _devicesStoragePath,
+      await _readJsonList(() async => _devicesSourcePath, _devicesExamplePath),
+    );
+    await _writeJsonList(
+      _approvalQueueStoragePath,
+      await _readJsonList(
+        () async => _approvalQueueSourcePath,
+        _approvalQueueExamplePath,
+      ),
+    );
+    await _writeJsonList(
+      _auditLogStoragePath,
+      await _readJsonList(() async => _auditLogSourcePath, _auditLogExamplePath),
+    );
+    await _writeJsonList(
+      _rolesStoragePath,
+      await _readJsonList(() async => _rolesSourcePath, _rolesExamplePath),
+    );
+    await _writeJsonList(
+      _permissionsStoragePath,
+      await _readJsonList(
+        () async => _permissionsSourcePath,
+        _permissionsExamplePath,
+      ),
+    );
+    await _writeJsonList(
+      _trustLevelsStoragePath,
+      await _readJsonList(
+        () async => _trustLevelsSourcePath,
+        _trustLevelsExamplePath,
+      ),
+    );
+    await _writeJsonMap(
+      _accessRulesStoragePath,
+      await _readJsonMap(() async => _accessRulesSourcePath, _accessRulesExamplePath),
     );
   }
 
@@ -919,6 +987,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: false,
         reason: 'Unknown user.',
+        nextStep: 'Select a local user from the registry or seed demo data.',
+        issueCode: 'unknown_user',
       );
     }
 
@@ -928,6 +998,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: false,
         reason: 'Unknown device.',
+        nextStep: 'Select a local device from the registry or seed demo data.',
+        issueCode: 'unknown_device',
       );
     }
 
@@ -936,6 +1008,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: false,
         reason: 'User is archived or disabled.',
+        nextStep: 'Restore the user or choose a different active identity.',
+        issueCode: 'inactive_user',
       );
       await createAuditEvent(
         actorId: userId,
@@ -954,6 +1028,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: false,
         reason: 'Device is archived or blocked.',
+        nextStep: 'Restore the device or choose a trusted device.',
+        issueCode: 'blocked_device',
       );
       await createAuditEvent(
         actorId: userId,
@@ -973,6 +1049,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: true,
         reason: 'No access rule is configured for this module.',
+        nextStep: 'Add a module rule in the Access Matrix before trying again.',
+        issueCode: 'missing_rule',
       );
       await createAuditEvent(
         actorId: userId,
@@ -993,6 +1071,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: true,
         reason: 'Device trust must be at least level $requiredTrust.',
+        nextStep: 'Use a higher-trust device or raise the device trust level.',
+        issueCode: 'trust_floor',
       );
       await createAuditEvent(
         actorId: userId,
@@ -1015,6 +1095,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: true,
         reason: 'Missing required permission: $requiredPermission.',
+        nextStep: 'Grant the missing permission or switch to a role that already has it.',
+        issueCode: 'missing_permission',
       );
       await createAuditEvent(
         actorId: userId,
@@ -1033,6 +1115,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: true,
         reason: 'Action requires approval.',
+        nextStep: 'Open the Approval Queue and wait for a reviewer to approve it.',
+        issueCode: 'approval_required',
       );
       await createAuditEvent(
         actorId: userId,
@@ -1050,6 +1134,8 @@ class UsersDevicesControlRepository {
       allowed: true,
       requiresApproval: false,
       reason: 'Identity, role, permission, and trust checks passed.',
+      nextStep: 'The screen can open normally.',
+      issueCode: 'allowed',
     );
     await createAuditEvent(
       actorId: userId,
@@ -1490,33 +1576,27 @@ class UsersDevicesControlRepository {
     await file.writeAsString(encoder.convert(jsonList));
   }
 
+  Future<void> _writeJsonMap(
+    Future<String> Function() pathProvider,
+    Map<String, dynamic> jsonMap,
+  ) async {
+    final file = File(await pathProvider());
+    await file.parent.create(recursive: true);
+    const encoder = JsonEncoder.withIndent('  ');
+    await file.writeAsString(encoder.convert(jsonMap));
+  }
+
   Future<void> _ensureDatabaseSeeded() async {
     final db = database;
     if (db == null) {
       return;
     }
 
-    final hasUsers = await db.select(db.usersDevicesControlUsers).get();
-    final hasDevices = await db.select(db.usersDevicesControlDevices).get();
-    final hasApprovals =
-        await db.select(db.usersDevicesControlApprovalRequests).get();
-    final hasEvents = await db.select(db.usersDevicesControlAuditEvents).get();
-    final hasRoles = await db.select(db.usersDevicesControlRoles).get();
-    final hasPermissions = await db.select(db.usersDevicesControlPermissions).get();
-    final hasTrustLevels = await db.select(db.usersDevicesControlTrustLevels).get();
-    final hasAccessRules = await db.select(db.usersDevicesControlAccessRules).get();
+    _seedFuture ??= _seedDatabase(db);
+    await _seedFuture;
+  }
 
-    if (hasUsers.isNotEmpty ||
-        hasDevices.isNotEmpty ||
-        hasApprovals.isNotEmpty ||
-        hasEvents.isNotEmpty ||
-        hasRoles.isNotEmpty ||
-        hasPermissions.isNotEmpty ||
-        hasTrustLevels.isNotEmpty ||
-        hasAccessRules.isNotEmpty) {
-      return;
-    }
-
+  Future<void> _seedDatabase(AppDatabase db) async {
     final seedUsers =
         await _readJsonList(() async => _usersSourcePath, _usersExamplePath);
     final seedDevices = await _readJsonList(
@@ -1547,118 +1627,215 @@ class UsersDevicesControlRepository {
     );
 
     await db.transaction(() async {
-      for (final user in seedUsers.map(UsersDevicesControlUser.fromJson)) {
-        final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlUsers).insert(
-              UsersDevicesControlUsersCompanion.insert(
-                userId: user.id,
-                payloadJson: _encodePayload(user.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      for (final device in seedDevices.map(UsersDevicesControlDevice.fromJson)) {
-        final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlDevices).insert(
-              UsersDevicesControlDevicesCompanion.insert(
-                deviceId: device.id,
-                payloadJson: _encodePayload(device.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      for (final request
-          in seedApprovals.map(UsersDevicesControlApprovalRequest.fromJson)) {
-        final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlApprovalRequests).insert(
-              UsersDevicesControlApprovalRequestsCompanion.insert(
-                requestId: request.requestId,
-                payloadJson: _encodePayload(request.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      for (final event in seedEvents.map(UsersDevicesControlAuditEvent.fromJson)) {
-        final timestamp = DateTime.tryParse(event.timestamp)?.toUtc() ??
-            DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlAuditEvents).insert(
-              UsersDevicesControlAuditEventsCompanion.insert(
-                eventId: event.eventId,
-                payloadJson: _encodePayload(event.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      for (final role in seedRoles.map(UsersDevicesControlRoleDefinition.fromJson)) {
-        final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlRoles).insert(
-              UsersDevicesControlRolesCompanion.insert(
-                roleName: role.role,
-                permissionsJson: Value(jsonEncode(role.permissions)),
-                payloadJson: _encodePayload(role.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      for (final permission
-          in seedPermissions.map(UsersDevicesControlPermissionDefinition.fromJson)) {
-        final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlPermissions).insert(
-              UsersDevicesControlPermissionsCompanion.insert(
-                permissionName: permission.permission,
-                description: Value(permission.description),
-                payloadJson: _encodePayload(permission.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      for (final trustLevel
-          in seedTrustLevels.map(UsersDevicesControlTrustLevelDefinition.fromJson)) {
-        final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlTrustLevels).insert(
-              UsersDevicesControlTrustLevelsCompanion.insert(
-                trustLevel: Value(trustLevel.level),
-                name: Value(trustLevel.name),
-                description: Value(trustLevel.description),
-                payloadJson: _encodePayload(trustLevel.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-            );
-      }
-      final accessRules = seedAccessRules['rules'];
-      if (accessRules is List) {
-        for (final rule
-            in accessRules.whereType<Map<String, dynamic>>().map(
-                  UsersDevicesControlAccessRule.fromJson,
-                )) {
-          final timestamp = DateTime.now().toUtc();
-          await db.into(db.usersDevicesControlAccessRules).insert(
-              UsersDevicesControlAccessRulesCompanion.insert(
-                moduleId: rule.moduleId,
-                viewPermission: Value(rule.viewPermission),
-                editPermission: Value(rule.editPermission),
-                adminPermission: Value(rule.adminPermission),
-                requestPermission: Value(rule.requestPermission),
-                executePermission: Value(rule.executePermission),
-                controlPermission: Value(rule.controlPermission),
-                requiresTrustLevel: Value(rule.requiresTrustLevel),
-                requiresApprovalForJson:
-                    Value(jsonEncode(rule.requiresApprovalFor)),
-                payloadJson: _encodePayload(rule.toJson()),
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              ),
-              );
-        }
-      }
+      await _seedUsersTable(db, seedUsers);
+      await _seedDevicesTable(db, seedDevices);
+      await _seedApprovalsTable(db, seedApprovals);
+      await _seedAuditTable(db, seedEvents);
+      await _seedRolesTable(db, seedRoles);
+      await _seedPermissionsTable(db, seedPermissions);
+      await _seedTrustLevelsTable(db, seedTrustLevels);
+      await _seedAccessRulesTable(db, seedAccessRules);
     });
+  }
+
+  Future<void> _seedUsersTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedUsers,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlUsers).get();
+    if (existing.isNotEmpty || seedUsers.isEmpty) {
+      return;
+    }
+
+    for (final user in seedUsers.map(UsersDevicesControlUser.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlUsers).insert(
+            UsersDevicesControlUsersCompanion.insert(
+              userId: user.id,
+              payloadJson: _encodePayload(user.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedDevicesTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedDevices,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlDevices).get();
+    if (existing.isNotEmpty || seedDevices.isEmpty) {
+      return;
+    }
+
+    for (final device in seedDevices.map(UsersDevicesControlDevice.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlDevices).insert(
+            UsersDevicesControlDevicesCompanion.insert(
+              deviceId: device.id,
+              payloadJson: _encodePayload(device.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedApprovalsTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedApprovals,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlApprovalRequests).get();
+    if (existing.isNotEmpty || seedApprovals.isEmpty) {
+      return;
+    }
+
+    for (final request
+        in seedApprovals.map(UsersDevicesControlApprovalRequest.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlApprovalRequests).insert(
+            UsersDevicesControlApprovalRequestsCompanion.insert(
+              requestId: request.requestId,
+              payloadJson: _encodePayload(request.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedAuditTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedEvents,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlAuditEvents).get();
+    if (existing.isNotEmpty || seedEvents.isEmpty) {
+      return;
+    }
+
+    for (final event in seedEvents.map(UsersDevicesControlAuditEvent.fromJson)) {
+      final timestamp = DateTime.tryParse(event.timestamp)?.toUtc() ??
+          DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlAuditEvents).insert(
+            UsersDevicesControlAuditEventsCompanion.insert(
+              eventId: event.eventId,
+              payloadJson: _encodePayload(event.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedRolesTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedRoles,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlRoles).get();
+    if (existing.isNotEmpty || seedRoles.isEmpty) {
+      return;
+    }
+
+    for (final role in seedRoles.map(UsersDevicesControlRoleDefinition.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlRoles).insert(
+            UsersDevicesControlRolesCompanion.insert(
+              roleName: role.role,
+              permissionsJson: Value(jsonEncode(role.permissions)),
+              payloadJson: _encodePayload(role.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedPermissionsTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedPermissions,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlPermissions).get();
+    if (existing.isNotEmpty || seedPermissions.isEmpty) {
+      return;
+    }
+
+    for (final permission in seedPermissions
+        .map(UsersDevicesControlPermissionDefinition.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlPermissions).insert(
+            UsersDevicesControlPermissionsCompanion.insert(
+              permissionName: permission.permission,
+              description: Value(permission.description),
+              payloadJson: _encodePayload(permission.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedTrustLevelsTable(
+    AppDatabase db,
+    List<Map<String, dynamic>> seedTrustLevels,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlTrustLevels).get();
+    if (existing.isNotEmpty || seedTrustLevels.isEmpty) {
+      return;
+    }
+
+    for (final trustLevel in seedTrustLevels
+        .map(UsersDevicesControlTrustLevelDefinition.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlTrustLevels).insert(
+            UsersDevicesControlTrustLevelsCompanion.insert(
+              trustLevel: Value(trustLevel.level),
+              name: Value(trustLevel.name),
+              description: Value(trustLevel.description),
+              payloadJson: _encodePayload(trustLevel.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
+  }
+
+  Future<void> _seedAccessRulesTable(
+    AppDatabase db,
+    Map<String, dynamic> seedAccessRules,
+  ) async {
+    final existing = await db.select(db.usersDevicesControlAccessRules).get();
+    if (existing.isNotEmpty) {
+      return;
+    }
+
+    final accessRules = seedAccessRules['rules'];
+    if (accessRules is! List) {
+      return;
+    }
+
+    for (final rule in accessRules
+        .whereType<Map<String, dynamic>>()
+        .map(UsersDevicesControlAccessRule.fromJson)) {
+      final timestamp = DateTime.now().toUtc();
+      await db.into(db.usersDevicesControlAccessRules).insert(
+            UsersDevicesControlAccessRulesCompanion.insert(
+              moduleId: rule.moduleId,
+              viewPermission: Value(rule.viewPermission),
+              editPermission: Value(rule.editPermission),
+              adminPermission: Value(rule.adminPermission),
+              requestPermission: Value(rule.requestPermission),
+              executePermission: Value(rule.executePermission),
+              controlPermission: Value(rule.controlPermission),
+              requiresTrustLevel: Value(rule.requiresTrustLevel),
+              requiresApprovalForJson:
+                  Value(jsonEncode(rule.requiresApprovalFor)),
+              payloadJson: _encodePayload(rule.toJson()),
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            ),
+          );
+    }
   }
 
   Map<String, dynamic> _decodePayload(String payloadJson) {

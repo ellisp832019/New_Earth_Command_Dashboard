@@ -118,6 +118,105 @@ void main() {
     expect(auditReasons, contains('Test approval request.'));
   });
 
+  test('role, permission, trust, and approval helpers behave locally', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    final updatedUser = await repository.assignRole(
+      'user_guest',
+      'Project Contributor',
+    );
+    expect(updatedUser.role, 'Project Contributor');
+
+    final permissionUser = await repository.assignPermission(
+      'user_guest',
+      'projects.view',
+    );
+    expect(permissionUser.permissions, contains('projects.view'));
+
+    expect(
+      await repository.checkPermission(
+        'user_guest',
+        'projects.view',
+        deviceId: 'device_phone_scanner',
+      ),
+      isTrue,
+    );
+    expect(
+      await repository.checkDeviceTrust('device_new_earth_dev', 4),
+      isTrue,
+    );
+    expect(
+      await repository.checkDeviceTrust('device_workshop_tablet', 4),
+      isFalse,
+    );
+
+    final auditEvent = await repository.createAuditEvent(
+      actorId: 'user_guest',
+      deviceId: 'device_phone_scanner',
+      eventType: 'test_audit',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'test_action',
+      result: 'allowed',
+      reason: 'Repository test audit event.',
+    );
+    expect(auditEvent.eventId, startsWith('audit_'));
+
+    final approval = await repository.createApprovalRequest(
+      requestedBy: 'user_guest',
+      deviceId: 'device_phone_scanner',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'assign_role',
+      riskLevel: 'high',
+      reason: 'Repository test approval.',
+    );
+    final denied = await repository.denyRequest(
+      approval.requestId,
+      reviewedBy: 'user_peter_owner',
+    );
+    expect(denied.status, 'denied');
+    expect(denied.reviewedBy, 'user_peter_owner');
+  });
+
+  test('resetToSeedData restores the seeded local registry', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    await repository.registerUser(
+      const UsersDevicesControlUser(
+        id: 'user_temp_reset',
+        displayName: 'Temp Reset',
+        role: 'Project Contributor',
+        status: 'active',
+        permissions: ['projects.view'],
+        linkedDevices: [],
+        notes: 'Temporary record for reset test.',
+      ),
+    );
+
+    var snapshot = await repository.loadSnapshot();
+    expect(
+      snapshot.users.any((user) => user.id == 'user_temp_reset'),
+      isTrue,
+    );
+
+    await repository.resetToSeedData();
+    snapshot = await repository.loadSnapshot();
+
+    expect(
+      snapshot.users.any((user) => user.id == 'user_temp_reset'),
+      isFalse,
+    );
+    expect(snapshot.users, hasLength(7));
+    expect(snapshot.devices, hasLength(9));
+  });
+
   test('access checks still enforce trust and permission rules from stored policies', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -140,8 +239,10 @@ void main() {
 
     expect(allowed.allowed, isTrue);
     expect(allowed.requiresApproval, isFalse);
+    expect(allowed.nextStep, isNotEmpty);
     expect(denied.allowed, isFalse);
     expect(denied.requiresApproval, isTrue);
+    expect(denied.nextStep, isNotEmpty);
   });
 
   test('access checks deny unknown users and low trust devices with clear reasons', () async {
@@ -164,8 +265,10 @@ void main() {
 
     expect(unknownUserDecision.allowed, isFalse);
     expect(unknownUserDecision.reason, contains('Unknown user'));
+    expect(unknownUserDecision.nextStep, isNotEmpty);
     expect(lowTrustDecision.allowed, isFalse);
     expect(lowTrustDecision.reason, contains('trust must be at least level 4'));
+    expect(lowTrustDecision.nextStep, isNotEmpty);
   });
 
   test('high risk actions require approval in the access workflow', () async {
@@ -185,5 +288,6 @@ void main() {
     expect(decision.allowed, isFalse);
     expect(decision.requiresApproval, isTrue);
     expect(decision.reason, contains('approval'));
+    expect(decision.nextStep, isNotEmpty);
   });
 }
