@@ -11,6 +11,7 @@ import 'package:path/path.dart' as path;
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../widgets/calm_guidance_card.dart';
+import '../../company_command_centre/data/company_command_centre_repository.dart';
 import '../../assets/application/assets_controller.dart';
 import '../../assets/data/qr_label_printing_service.dart';
 import '../../inbox/application/inbox_controller.dart';
@@ -84,6 +85,8 @@ class _DashboardContent extends StatelessWidget {
                     _DashboardGuidanceCard(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _TreasuryOverviewCard(),
+                    const SizedBox(height: 22),
+                    const _CompanyCommandCentreCard(),
                     const SizedBox(height: 22),
                     _DashboardSectionHeader(
                       title: 'Primary work surface',
@@ -622,6 +625,232 @@ class _TreasuryMetricChip extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompanyCommandCentreCard extends ConsumerWidget {
+  const _CompanyCommandCentreCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(companyCommandCentreSnapshotProvider);
+
+    return snapshot.when(
+      loading: () => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _panelDecoration(context),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.domain_outlined,
+              color: AppColours.darkSecondary,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Company Command Centre is loading quietly.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => _CompanyCommandCentrePanel(
+        title: 'Company Command Centre',
+        subtitle: 'The company ops space is ready to open from the dashboard.',
+        body:
+            'Company records, website notes, LinkedIn planning, grants, and the action board stay together in one calm place.',
+        statusLabel: 'Module ready',
+        statusAccent: AppColours.darkAmber,
+        onOpenModule: () => context.push(RouteNames.companyCommandCentre),
+        onReload: () => ref.invalidate(companyCommandCentreSnapshotProvider),
+        chips: const [
+          _CompanyChip(label: 'Overview', value: 'Ready'),
+          _CompanyChip(label: 'Compliance', value: 'Tracked'),
+          _CompanyChip(label: 'Website', value: 'Planned'),
+          _CompanyChip(label: 'LinkedIn', value: 'Planned'),
+        ],
+      ),
+      data: (data) => _CompanyCommandCentrePanel(
+        title: 'Company Command Centre',
+        subtitle: data.overview.companyName,
+        body:
+            'Foundational company operations stay visible here without leaving the dashboard.',
+        statusLabel: data.overview.status.replaceAll('_', ' '),
+        statusAccent: data.overview.omegaOsPathExists
+            ? AppColours.darkSuccess
+            : AppColours.darkAmber,
+        onOpenModule: () => context.push(RouteNames.companyCommandCentre),
+        onReload: () => ref.invalidate(companyCommandCentreSnapshotProvider),
+        chips: [
+          _CompanyChip(label: 'Company no.', value: data.overview.companyNumber),
+          _CompanyChip(
+            label: 'Products',
+            value: '${data.productPortfolio.length}',
+          ),
+          _CompanyChip(
+            label: 'Grants',
+            value: '${data.grantsPipeline.length}',
+          ),
+          _CompanyChip(
+            label: 'Actions',
+            value: '${data.actionBoard.length}',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompanyCommandCentrePanel extends StatelessWidget {
+  const _CompanyCommandCentrePanel({
+    required this.title,
+    required this.subtitle,
+    required this.body,
+    required this.statusLabel,
+    required this.statusAccent,
+    required this.onOpenModule,
+    required this.onReload,
+    required this.chips,
+  });
+
+  final String title;
+  final String subtitle;
+  final String body;
+  final String statusLabel;
+  final Color statusAccent;
+  final VoidCallback onOpenModule;
+  final VoidCallback onReload;
+  final List<_CompanyChip> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: _panelDecoration(context),
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWideLayout = constraints.maxWidth >= 960;
+
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const _PanelTitle(
+                    title: 'Company',
+                    icon: Icons.domain_outlined,
+                  ),
+                  const Spacer(),
+                  _InlineTag(
+                    label: statusLabel,
+                    accent: statusAccent,
+                    foreground: statusAccent,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                subtitle,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppColours.darkText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Text(
+                  body,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(spacing: 10, runSpacing: 10, children: chips),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenModule,
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open Company'),
+              ),
+              TextButton.icon(
+                onPressed: onReload,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload'),
+              ),
+            ],
+          );
+
+          if (!useWideLayout) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [content, const SizedBox(height: 16), actions],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: content),
+              const SizedBox(width: 20),
+              SizedBox(width: 220, child: actions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CompanyChip extends StatelessWidget {
+  const _CompanyChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 128),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColours.darkText,
               fontWeight: FontWeight.w600,
             ),

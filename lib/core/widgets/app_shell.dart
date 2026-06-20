@@ -185,6 +185,12 @@ class _Sidebar extends StatelessWidget {
                   selected: navigationShell.currentIndex == 0,
                   onTap: () => navigationShell.goBranch(0),
                 ),
+                const SizedBox(height: 8),
+                _SidebarLink(
+                  label: 'Company',
+                  icon: Icons.domain_outlined,
+                  route: RouteNames.companyCommandCentre,
+                ),
               ],
             ),
             const SizedBox(height: 14),
