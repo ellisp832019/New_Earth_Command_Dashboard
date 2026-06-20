@@ -42,6 +42,8 @@ void main() {
     expect(find.text('Profile'), findsOneWidget);
     expect(find.text('IP & Asset Register'), findsOneWidget);
     expect(find.text('Open Assets'), findsOneWidget);
+    expect(find.text('Evidence Library'), findsOneWidget);
+    expect(find.text('UK company admin checklist'), findsOneWidget);
     expect(find.text('Product portfolio'), findsOneWidget);
     expect(find.text('Grants pipeline'), findsOneWidget);
   });

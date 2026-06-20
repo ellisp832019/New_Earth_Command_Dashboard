@@ -75,16 +75,7 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
                           'Read only',
                         ],
                       ),
-                      const _SimplePlaceholderTab(
-                        title: 'Evidence Library',
-                        body:
-                            'Read-only placeholder for source files, exports, and supporting evidence.',
-                        chips: [
-                          'Evidence',
-                          'Source files',
-                          'Read only',
-                        ],
-                      ),
+                      const _EvidenceLibraryTab(),
                       _ActionBoardTab(snapshot: snapshot),
                       _SettingsTab(snapshot: snapshot),
                     ],
@@ -465,6 +456,52 @@ class _AssetOverviewTab extends StatelessWidget {
   }
 }
 
+class _EvidenceLibraryTab extends StatelessWidget {
+  const _EvidenceLibraryTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScrollView(
+      children: [
+        _CalmSectionCard(
+          title: 'Evidence Library',
+          body:
+              'Read-only index of the source documents, templates, and module artifacts that support the company record.',
+          children: [
+            _EvidenceSectionCard(
+              title: 'Legal & finance',
+              items: _evidenceItems
+                  .where((item) => item.section == 'Legal & finance')
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            _EvidenceSectionCard(
+              title: 'Website & marketing',
+              items: _evidenceItems
+                  .where((item) => item.section == 'Website & marketing')
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            _EvidenceSectionCard(
+              title: 'Product & operations',
+              items: _evidenceItems
+                  .where((item) => item.section == 'Product & operations')
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            _EvidenceSectionCard(
+              title: 'Module source',
+              items: _evidenceItems
+                  .where((item) => item.section == 'Module source')
+                  .toList(growable: false),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _GrantsTab extends StatelessWidget {
   const _GrantsTab({required this.snapshot});
 
@@ -815,6 +852,93 @@ class _AssetOverviewCard extends ConsumerWidget {
   }
 }
 
+class _EvidenceItem {
+  const _EvidenceItem({
+    required this.section,
+    required this.title,
+    required this.kind,
+    required this.status,
+    required this.notes,
+    required this.sourceFile,
+  });
+
+  final String section;
+  final String title;
+  final String kind;
+  final String status;
+  final String notes;
+  final String sourceFile;
+}
+
+class _EvidenceSectionCard extends StatelessWidget {
+  const _EvidenceSectionCard({
+    required this.title,
+    required this.items,
+  });
+
+  final String title;
+  final List<_EvidenceItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 88,
+                  columns: const [
+                    DataColumn(label: Text('Artifact')),
+                    DataColumn(label: Text('Kind')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Notes')),
+                    DataColumn(label: Text('Source file')),
+                  ],
+                  rows: items
+                      .map(
+                        (item) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 260, child: Text(item.title))),
+                            DataCell(SizedBox(width: 150, child: Text(item.kind))),
+                            DataCell(Chip(label: Text(item.status))),
+                            DataCell(
+                              SizedBox(
+                                width: 360,
+                                child: Text(
+                                  item.notes,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(width: 280, child: Text(item.sourceFile)),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CompanyAssetMetric extends StatelessWidget {
   const _CompanyAssetMetric({required this.label, required this.value});
 
@@ -855,6 +979,116 @@ class _CompanyAssetMetric extends StatelessWidget {
     );
   }
 }
+
+const List<_EvidenceItem> _evidenceItems = [
+  _EvidenceItem(
+    section: 'Legal & finance',
+    title: 'UK company admin checklist',
+    kind: 'Checklist',
+    status: 'Tracked',
+    notes: 'Core companies, banking, tax, and public presence items in one support list.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _EvidenceItem(
+    section: 'Legal & finance',
+    title: 'Company overview template',
+    kind: 'Template',
+    status: 'Tracked',
+    notes: 'Reusable template for the company overview record and public-facing summary.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/company_overview_template.md',
+  ),
+  _EvidenceItem(
+    section: 'Legal & finance',
+    title: 'Capability statement template',
+    kind: 'Template',
+    status: 'Tracked',
+    notes: 'Drafting support for capability and services positioning.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/capability_statement_template.md',
+  ),
+  _EvidenceItem(
+    section: 'Website & marketing',
+    title: 'Website next steps',
+    kind: 'Checklist',
+    status: 'Tracked',
+    notes: 'Planned public website work, tracked as a calm next-step list.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _EvidenceItem(
+    section: 'Website & marketing',
+    title: 'LinkedIn next steps',
+    kind: 'Checklist',
+    status: 'Tracked',
+    notes: 'Company profile and launch actions for LinkedIn presence.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _EvidenceItem(
+    section: 'Website & marketing',
+    title: 'Product page template',
+    kind: 'Template',
+    status: 'Tracked',
+    notes: 'Structure for future product pages and evidence-backed product descriptions.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/product_page_template.md',
+  ),
+  _EvidenceItem(
+    section: 'Product & operations',
+    title: 'Roadmap',
+    kind: 'Roadmap',
+    status: 'Tracked',
+    notes: 'The company module roadmap provides the longer-term evidence trail.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/roadmap/ROADMAP.md',
+  ),
+  _EvidenceItem(
+    section: 'Product & operations',
+    title: 'Operating manual',
+    kind: 'Manual',
+    status: 'Tracked',
+    notes: 'Operational guidance for how the company module is meant to be used.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/operations/OPERATING_MANUAL.md',
+  ),
+  _EvidenceItem(
+    section: 'Product & operations',
+    title: 'Module test plan',
+    kind: 'Plan',
+    status: 'Tracked',
+    notes: 'Testing outline for module shell, data, and safety checks.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/tests/MODULE_TEST_PLAN.md',
+  ),
+  _EvidenceItem(
+    section: 'Module source',
+    title: 'Module manifest',
+    kind: 'JSON',
+    status: 'Tracked',
+    notes: 'Module registration details used by the dashboard module system.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/module_manifest.json',
+  ),
+  _EvidenceItem(
+    section: 'Module source',
+    title: 'Module shell config',
+    kind: 'JSON',
+    status: 'Tracked',
+    notes: 'Local shell configuration for the module scaffold.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/src/module_shell/module_config.json',
+  ),
+  _EvidenceItem(
+    section: 'Module source',
+    title: 'Overview wireframe',
+    kind: 'SVG',
+    status: 'Tracked',
+    notes: 'Design reference for the module shell and layout decisions.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/assets/wireframes/overview_wireframe.svg',
+  ),
+];
 
 class _LoadingAssetSummary extends StatelessWidget {
   const _LoadingAssetSummary();
@@ -956,37 +1190,6 @@ class _ComplianceTable extends StatelessWidget {
               .toList(growable: false),
         ),
       ),
-    );
-  }
-}
-
-class _SimplePlaceholderTab extends StatelessWidget {
-  const _SimplePlaceholderTab({
-    required this.title,
-    required this.body,
-    required this.chips,
-  });
-
-  final String title;
-  final String body;
-  final List<String> chips;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionScrollView(
-      children: [
-        _CalmSectionCard(
-          title: title,
-          body: body,
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: chips.map((chip) => Chip(label: Text(chip))).toList(),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
