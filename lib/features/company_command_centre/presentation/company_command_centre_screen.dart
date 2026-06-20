@@ -468,6 +468,9 @@ class _WebsiteBrandTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = _websiteTrackerItems;
+    final drafting = items.where((item) => item.status == 'Drafting').length;
+    final planned = items.where((item) => item.status == 'Planned').length;
+    final ready = items.where((item) => item.status == 'Ready').length;
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
@@ -480,25 +483,16 @@ class _WebsiteBrandTab extends StatelessWidget {
               runSpacing: 10,
               children: [
                 _CompanyAssetMetric(label: 'Next steps', value: '${items.length}'),
-                _CompanyAssetMetric(
-                  label: 'Drafting',
-                  value: '${items.where((item) => item.status == 'Drafting').length}',
-                ),
-                _CompanyAssetMetric(
-                  label: 'Planned',
-                  value: '${items.where((item) => item.status == 'Planned').length}',
-                ),
-                _CompanyAssetMetric(
-                  label: 'Ready',
-                  value: '${items.where((item) => item.status == 'Ready').length}',
-                ),
+                _CompanyAssetMetric(label: 'Drafting', value: '$drafting'),
+                _CompanyAssetMetric(label: 'Planned', value: '$planned'),
+                _CompanyAssetMetric(label: 'Ready', value: '$ready'),
               ],
             ),
             const SizedBox(height: 12),
             _KeyValueRow(label: 'Domain', value: snapshot.overview.domain),
             const _KeyValueRow(label: 'Email', value: 'To be linked'),
             const SizedBox(height: 12),
-            _TrackerTable(items: items),
+            _WebsitePageBoard(items: items),
           ],
         ),
       ],
@@ -1683,7 +1677,7 @@ class _EvidenceIndexCard extends StatelessWidget {
               children: counts.entries
                   .map(
                     (entry) => _InlineTag(
-                      label: '${entry.key} · ${entry.value}',
+                      label: '${entry.key} - ${entry.value}',
                       accent: AppColours.darkSecondary,
                       foreground: AppColours.darkText,
                     ),
@@ -1704,6 +1698,7 @@ class _EvidenceIndexCard extends StatelessWidget {
                     DataColumn(label: Text('Section')),
                     DataColumn(label: Text('Kind')),
                     DataColumn(label: Text('Source file')),
+                    DataColumn(label: Text('Open')),
                   ],
                   rows: sortedItems
                       .map(
@@ -1713,6 +1708,13 @@ class _EvidenceIndexCard extends StatelessWidget {
                             DataCell(SizedBox(width: 180, child: Text(item.section))),
                             DataCell(SizedBox(width: 140, child: Text(item.kind))),
                             DataCell(SizedBox(width: 340, child: Text(item.sourceFile))),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _openSourceLocation(item.sourceFile),
+                                icon: const Icon(Icons.open_in_new_outlined),
+                                label: const Text('Open source'),
+                              ),
+                            ),
                           ],
                         ),
                       )
@@ -1849,6 +1851,14 @@ const List<_EvidenceItem> _evidenceItems = [
     notes: 'Testing outline for module shell, data, and safety checks.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/tests/MODULE_TEST_PLAN.md',
+  ),
+  _EvidenceItem(
+    section: 'Module source',
+    title: 'Company module folder',
+    kind: 'Folder',
+    status: 'Tracked',
+    notes: 'Open the module root to review the company command centre source bundle.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE',
   ),
   _EvidenceItem(
     section: 'Module source',
@@ -2092,6 +2102,85 @@ class _TrackerSectionCard extends StatelessWidget {
   }
 }
 
+class _WebsitePageBoard extends StatelessWidget {
+  const _WebsitePageBoard({required this.items});
+
+  final List<_TrackerItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedItems = [...items]
+      ..sort((a, b) {
+        final byStatus = a.status.compareTo(b.status);
+        if (byStatus != 0) {
+          return byStatus;
+        }
+        return a.item.compareTo(b.item);
+      });
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Page-level tracker', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Each row maps directly to the website next steps list and keeps the public pages calm and visible.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 88,
+                  columns: const [
+                    DataColumn(label: Text('Page')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Notes')),
+                    DataColumn(label: Text('Source file')),
+                    DataColumn(label: Text('Open')),
+                  ],
+                  rows: sortedItems
+                      .map(
+                        (item) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 260, child: Text(item.item))),
+                            DataCell(Chip(label: Text(item.status))),
+                            DataCell(
+                              SizedBox(
+                                width: 360,
+                                child: Text(item.notes),
+                              ),
+                            ),
+                            DataCell(SizedBox(width: 320, child: Text(item.sourceFile))),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _openSourceLocation(item.sourceFile),
+                                icon: const Icon(Icons.open_in_new_outlined),
+                                label: const Text('Open source'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _KeyValueRow extends StatelessWidget {
   const _KeyValueRow({required this.label, required this.value});
 
@@ -2165,6 +2254,25 @@ class _SectionScrollView extends StatelessWidget {
       itemCount: children.length,
     );
   }
+}
+
+Future<void> _openSourceLocation(String sourcePath) async {
+  final trimmedPath = sourcePath.trim();
+  if (trimmedPath.isEmpty) {
+    return;
+  }
+
+  if (Platform.isWindows) {
+    await Process.start('cmd.exe', ['/c', 'start', '', trimmedPath]);
+    return;
+  }
+
+  if (Platform.isMacOS) {
+    await Process.start('open', [trimmedPath]);
+    return;
+  }
+
+  await Process.start('xdg-open', [trimmedPath]);
 }
 
 class _LinkedFileTable extends StatelessWidget {

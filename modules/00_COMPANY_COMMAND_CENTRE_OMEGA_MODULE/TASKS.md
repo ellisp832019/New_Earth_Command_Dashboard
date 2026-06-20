@@ -29,6 +29,8 @@
 - [x] Director action board lane cleanup.
 - [x] Asset navigator hub.
 - [x] Grants pipeline source-linked board.
+- [x] Website page-level status board.
+- [x] Evidence rows open source files and folders.
 
 ## Phase 4 - Safety
 - [x] Add read-only mode switch.

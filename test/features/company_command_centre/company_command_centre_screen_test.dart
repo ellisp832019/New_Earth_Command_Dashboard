@@ -37,6 +37,7 @@ void main() {
       findsAtLeastNWidgets(1),
     );
     expect(find.text('Website & brand'), findsOneWidget);
+    expect(find.text('Page-level tracker'), findsOneWidget);
     expect(find.text('LinkedIn & marketing'), findsOneWidget);
     expect(find.text('Create Technologies page'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
@@ -45,6 +46,7 @@ void main() {
     expect(find.text('Asset navigator'), findsOneWidget);
     expect(find.text('Evidence Library'), findsOneWidget);
     expect(find.text('Source-linked file index'), findsOneWidget);
+    expect(find.text('Open source'), findsWidgets);
     expect(find.text('UK company admin checklist'), findsOneWidget);
     expect(find.text('This Week'), findsWidgets);
     expect(find.text('This Month'), findsWidgets);
