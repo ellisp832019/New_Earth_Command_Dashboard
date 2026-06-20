@@ -85,10 +85,20 @@ class _DashboardContent extends StatelessWidget {
                     const SizedBox(height: 22),
                     const _TreasuryOverviewCard(),
                     const SizedBox(height: 22),
+                    _DashboardSectionHeader(
+                      title: 'Primary work surface',
+                      subtitle: 'Focus, projects, next action.',
+                    ),
+                    const SizedBox(height: 14),
                     _TopTaskShowcase(snapshot: snapshot),
                     const SizedBox(height: 22),
                     _SecondaryPanelGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
+                    _DashboardSectionHeader(
+                      title: 'Supporting tools',
+                      subtitle: 'Secondary tools only.',
+                    ),
+                    const SizedBox(height: 14),
                     _SupportModuleGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _DashboardEveningReviewCard(),
@@ -667,32 +677,77 @@ class _SupportModuleGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final summaryTiles = <_CompactModuleTile>[
+      const _CompactModuleTile(
+        title: 'Command Deck',
+        description: 'Launch shortcuts.',
+        icon: Icons.space_dashboard_outlined,
+        route: RouteNames.commandDeck,
+        accent: AppColours.darkSecondary,
+      ),
+      const _CompactModuleTile(
+        title: 'Launchpad',
+        description: 'Campaign readiness.',
+        icon: Icons.rocket_launch_outlined,
+        route: RouteNames.launchpad,
+        accent: AppColours.darkSuccess,
+      ),
+      const _CompactModuleTile(
+        title: 'Meetings',
+        description: 'Notes and follow-ups.',
+        icon: Icons.groups_outlined,
+        route: RouteNames.meetingDashboard,
+        accent: AppColours.darkAmber,
+      ),
+      const _CompactModuleTile(
+        title: 'Knowledge',
+        description: 'Local reference.',
+        icon: Icons.menu_book_outlined,
+        route: RouteNames.knowledgeLibrary,
+        accent: AppColours.darkPurple,
+      ),
+      const _CompactModuleTile(
+        title: 'Repo Bridge',
+        description: 'Read-only intelligence.',
+        icon: Icons.device_hub_outlined,
+        route: RouteNames.repoIntelligenceBridge,
+        accent: AppColours.darkPrimary,
+      ),
+      const _CompactModuleTile(
+        title: 'Experiment',
+        description: 'Validation workspace.',
+        icon: Icons.science_outlined,
+        route: RouteNames.experimentWorkspace,
+        accent: AppColours.darkSecondary,
+      ),
+    ];
+
     final cards = <_MiniModuleState>[
       if (snapshot.showLearningCard)
         const _MiniModuleState(
           title: 'Learning Focus',
-          description: 'Track the skill that supports today\'s build.',
+          description: '',
           icon: Icons.school_outlined,
           accent: AppColours.darkSuccess,
         ),
       if (snapshot.showContentCard)
         const _MiniModuleState(
           title: 'Content Focus',
-          description: 'Turn progress into public awareness.',
+          description: '',
           icon: Icons.campaign_outlined,
           accent: AppColours.darkSecondary,
         ),
       if (snapshot.showBusinessCard)
         const _MiniModuleState(
           title: 'Business Reminder',
-          description: 'Keep funding and next practical actions visible.',
+          description: '',
           icon: Icons.handshake_outlined,
           accent: AppColours.darkAmber,
         ),
       if (snapshot.showWellbeingCard)
         const _MiniModuleState(
           title: 'Wellbeing',
-          description: 'Build New Earth without burning out.',
+          description: '',
           icon: Icons.favorite_border,
           accent: AppColours.darkPurple,
         ),
@@ -705,22 +760,29 @@ class _SupportModuleGrid extends StatelessWidget {
             : constraints.maxWidth >= 740
             ? 2
             : 1;
+        final summaryColumns = constraints.maxWidth >= 1080
+            ? 3
+            : constraints.maxWidth >= 700
+            ? 2
+            : 1;
 
         return Column(
           children: [
-            const CommandDeckDashboardCard(),
-            const SizedBox(height: 14),
-            const LaunchpadDashboardCard(),
-            const SizedBox(height: 14),
-            const MeetingSystemDashboardCard(),
-            const SizedBox(height: 14),
-            const KnowledgeLibraryDashboardCard(),
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                for (final tile in summaryTiles)
+                  SizedBox(
+                    width: (constraints.maxWidth -
+                            (summaryColumns - 1) * 14) /
+                        summaryColumns,
+                    child: tile,
+                  ),
+              ],
+            ),
             const SizedBox(height: 14),
             const BackupGuardianDashboardCard(),
-            const SizedBox(height: 14),
-            const RepoIntelligenceBridgeDashboardCard(),
-            const SizedBox(height: 14),
-            const OmegaExperimentDashboardCard(),
             const SizedBox(height: 14),
             GridView.builder(
               shrinkWrap: true,
@@ -742,6 +804,132 @@ class _SupportModuleGrid extends StatelessWidget {
   }
 }
 
+class _DashboardSectionHeader extends StatelessWidget {
+  const _DashboardSectionHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 5),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Text(
+              subtitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactModuleTile extends StatelessWidget {
+  const _CompactModuleTile({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.route,
+    required this.accent,
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+  final String route;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: InkWell(
+        onTap: () => context.go(route),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: accent.withValues(alpha: 0.72),
+                width: 2,
+              ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(icon, size: 20, color: accent),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.arrow_forward_outlined,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class BackupGuardianDashboardCard extends ConsumerWidget {
   const BackupGuardianDashboardCard({super.key});
 
@@ -759,7 +947,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
             const Icon(Icons.backup_outlined, color: AppColours.darkSecondary),
             const SizedBox(width: 12),
             Text(
-              'Backup Guardian is loading quietly.',
+              'Backup Guardian loading.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
@@ -777,7 +965,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Backup Guardian could not load right now.',
+                'Backup Guardian unavailable.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColours.darkMutedText,
                 ),
@@ -806,7 +994,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: _panelDecoration(context),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -819,7 +1007,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                     color: stripColor,
                     animate: !snapshot.backupDriveExists,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
                       const _PanelTitle(
@@ -834,13 +1022,10 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: statusAccent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(18),
@@ -865,29 +1050,24 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Local-first backup path for D: to E:\\NEW_EARTH_BACKUP.',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColours.darkText,
-                    ),
-                  ),
                   const SizedBox(height: 8),
                   Text(
                     snapshot.notificationBanner,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColours.darkSecondary,
-                      height: 1.35,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (snapshot.errors.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Mismatch detected: ${snapshot.verificationMismatchSummary}. If the mirror itself is still the right baseline, use Rebaseline. If the files really changed, use Backup Now.',
+                      'Mismatch: ${snapshot.verificationMismatchSummary}.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColours.darkMutedText,
-                        height: 1.35,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                   const SizedBox(height: 8),
@@ -895,20 +1075,13 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                     constraints: const BoxConstraints(maxWidth: 760),
                     child: Text(
                       snapshot.backupDriveExists
-                          ? 'The backup drive is visible and ready for the next manual run.'
-                          : 'The dashboard is waiting for the external backup drive to reconnect.',
+                          ? 'Drive ready.'
+                          : 'Waiting for drive.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColours.darkMutedText,
-                        height: 1.4,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'After you launch a backup, you can close the dashboard and let the script continue on its own.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColours.darkSecondary,
-                      height: 1.35,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -3532,7 +3705,7 @@ class _MiniModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(24),
@@ -3544,18 +3717,18 @@ class _MiniModuleCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 4,
+            height: 2,
             decoration: BoxDecoration(
               color: state.accent.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   color: state.accent.withValues(alpha: 0.16),
                   shape: BoxShape.circle,
@@ -3563,7 +3736,7 @@ class _MiniModuleCard extends StatelessWidget {
                     color: state.accent.withValues(alpha: 0.32),
                   ),
                 ),
-                child: Icon(state.icon, size: 16, color: state.accent),
+                child: Icon(state.icon, size: 14, color: state.accent),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -3571,18 +3744,29 @@ class _MiniModuleCard extends StatelessWidget {
                   state.title,
                   style: Theme.of(
                     context,
-                  ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
+                  ).textTheme.titleSmall?.copyWith(
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            state.description,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
-          ),
+          if (state.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              state.description,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(
+                color: AppColours.darkMutedText,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );

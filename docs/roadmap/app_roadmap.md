@@ -66,6 +66,8 @@ Focus here:
 - keep inbox triage clear and recoverable
 - keep voice capture and review predictable
 
+For the dashboard specifically, the near-term future is tracked in [`docs/roadmap/dashboard_future_roadmap.md`](dashboard_future_roadmap.md). That roadmap focuses on home clarity, consistent card styling, session/access visibility, daily flow tools, and light personalization without making the home screen noisy.
+
 ### 2. Finish The Voice Clean-up
 
 The voice path should be polished before any AI assist layer is added.
