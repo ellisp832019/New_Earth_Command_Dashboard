@@ -9,6 +9,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../assets/application/assets_controller.dart';
 import '../data/company_command_centre_index_service.dart';
 import '../data/company_command_centre_repository.dart';
+import '../data/company_command_centre_report_service.dart';
 import '../data/company_command_centre_write_service.dart';
 
 class CompanyCommandCentreScreen extends ConsumerWidget {
@@ -830,6 +831,11 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
             _KeyValueRow(label: 'Backup root', value: snapshot.backupRootPath),
             _KeyValueRow(label: 'Audit log', value: snapshot.auditLogPath),
             const _KeyValueRow(
+              label: 'Summary report',
+              value:
+                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/omega_os_bridge/reports/company_command_centre_summary.md',
+            ),
+            const _KeyValueRow(
               label: 'Write policy',
               value: 'Copy first, then overwrite',
             ),
@@ -858,6 +864,11 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
                   onPressed: _busy ? null : _exportAuditSummary,
                   icon: const Icon(Icons.summarize_outlined),
                   label: const Text('Export audit summary'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _exportCompanySummary,
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Export company summary'),
                 ),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _refreshIndexes,
@@ -937,6 +948,32 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     if (result.success) {
       ref.invalidate(companyCommandCentreSnapshotProvider);
     }
+  }
+
+  Future<void> _exportCompanySummary() async {
+    if (_busy) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+    });
+
+    final result = await ref
+        .read(companyCommandCentreReportServiceProvider)
+        .exportSummaryReport(snapshot: widget.snapshot);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _busy = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message)),
+    );
   }
 
   Future<void> _refreshIndexes() async {

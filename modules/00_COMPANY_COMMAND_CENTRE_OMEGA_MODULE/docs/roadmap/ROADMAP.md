@@ -5,7 +5,7 @@ Static UI, mock data, and navigation.
 
 ## v0.2 - Read-only Omega OS bridge
 Scan markdown records from `D:\NEW_EARTH_OMEGA_OS_PACK\00_COMPANY` and create dashboard indexes.
-Current slice: the scanner now generates the local company, action, deadline, product, grants, IP asset, and evidence indexes for the dashboard, and the Index Explorer surfaces them in a searchable read-only view.
+Current slice: the scanner now generates the local company, action, deadline, product, grants, IP asset, and evidence indexes for the dashboard, the Index Explorer surfaces them in a searchable read-only view, and the module can export a source-linked company summary report.
 
 ## v0.3 - Action board
 Tasks, deadlines, filters, and weekly/monthly views.

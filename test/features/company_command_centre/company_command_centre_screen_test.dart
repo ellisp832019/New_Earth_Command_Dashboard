@@ -76,6 +76,8 @@ void main() {
     expect(find.text('Backup root'), findsOneWidget);
     expect(find.text('Audit log'), findsOneWidget);
     expect(find.text('Copy first, then overwrite'), findsOneWidget);
+    expect(find.text('Export company summary'), findsOneWidget);
+    expect(find.text('Summary report'), findsOneWidget);
 
     await tester.tap(find.text('Index Explorer').last);
     await tester.pumpAndSettle();

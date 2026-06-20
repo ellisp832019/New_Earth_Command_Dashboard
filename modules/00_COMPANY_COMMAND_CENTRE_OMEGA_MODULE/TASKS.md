@@ -30,3 +30,4 @@
 - [x] Add backup-before-write system.
 - [x] Add audit log.
 - [x] Add export summary report.
+- [x] Add source-linked company summary report.
