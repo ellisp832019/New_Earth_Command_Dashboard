@@ -534,33 +534,36 @@ class _ActionBoardTab extends StatelessWidget {
     for (final item in snapshot.actionBoard) {
       lanes.putIfAbsent(item.lane, () => <CompanyActionItemData>[]).add(item);
     }
+    final orderedLanes = <String>[
+      'Today',
+      'This Week',
+      'This Month',
+      'Waiting',
+      'Done',
+    ];
 
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Director action board',
-          body: 'Simple lane view for the next practical company moves.',
+          body:
+              'Simple lane view for the next practical company moves. Keep the board calm, short, and current.',
           children: [
+            _ActionBoardSummaryRow(
+              lanes: orderedLanes,
+              laneMap: lanes,
+            ),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 12,
               runSpacing: 12,
-              children: lanes.entries
+              children: orderedLanes
                   .map(
-                    (entry) => SizedBox(
-                      width: 250,
-                      child: Card(
-                        elevation: 0,
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(entry.key, style: Theme.of(context).textTheme.titleSmall),
-                              const SizedBox(height: 8),
-                              ...entry.value.map((item) => _ActionLine(item: item)),
-                            ],
-                          ),
-                        ),
+                    (lane) => SizedBox(
+                      width: 260,
+                      child: _ActionLaneCard(
+                        title: lane,
+                        items: lanes[lane] ?? const <CompanyActionItemData>[],
                       ),
                     ),
                   )
@@ -654,8 +657,95 @@ class _ActionLine extends StatelessWidget {
         children: [
           Text(item.title, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 2),
-          Text("${item.area} - ${item.priority}"),
+          Text('${item.area} • ${item.priority}'),
+          const SizedBox(height: 2),
+          Text(
+            item.id,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionBoardSummaryRow extends StatelessWidget {
+  const _ActionBoardSummaryRow({
+    required this.lanes,
+    required this.laneMap,
+  });
+
+  final List<String> lanes;
+  final Map<String, List<CompanyActionItemData>> laneMap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: lanes
+          .map(
+            (lane) => _CompanyAssetMetric(
+              label: lane,
+              value: '${laneMap[lane]?.length ?? 0}',
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class _ActionLaneCard extends StatelessWidget {
+  const _ActionLaneCard({
+    required this.title,
+    required this.items,
+  });
+
+  final String title;
+  final List<CompanyActionItemData> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+                ),
+                _InlineTag(
+                  label: '${items.length}',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (items.isEmpty)
+              Text(
+                'No actions in this lane yet.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              )
+            else
+              Column(
+                children: [
+                  for (var index = 0; index < items.length; index++) ...[
+                    _ActionLine(item: items[index]),
+                    if (index != items.length - 1) const SizedBox(height: 10),
+                  ],
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
