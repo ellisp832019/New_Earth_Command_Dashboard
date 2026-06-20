@@ -27,6 +27,8 @@
 - [x] Partnerships tracker.
 - [x] Evidence library source index.
 - [x] Director action board lane cleanup.
+- [x] Asset navigator hub.
+- [x] Grants pipeline source-linked board.
 
 ## Phase 4 - Safety
 - [x] Add read-only mode switch.

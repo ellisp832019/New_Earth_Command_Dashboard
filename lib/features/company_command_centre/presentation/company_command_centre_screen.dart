@@ -649,9 +649,11 @@ class _AssetOverviewTab extends StatelessWidget {
         _CalmSectionCard(
           title: 'IP & Asset Register',
           body:
-              'This tab is a read-only summary and navigator. The live asset register stays in the Assets module.',
+              'This tab stays read-only and points into the live Assets module when you need to work with equipment, projects, or valuation.',
           children: [
             _AssetOverviewCard(snapshot: snapshot),
+            const SizedBox(height: 14),
+            const _AssetNavigatorCard(),
           ],
         ),
       ],
@@ -702,14 +704,30 @@ class _GrantsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final stages = snapshot.grantsPipeline.map((item) => item.stage).toSet().toList()
+      ..sort();
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Grants pipeline',
-          body: 'Read-only grant research and application tracking.',
-          children: snapshot.grantsPipeline
-              .map((grant) => _GrantCard(item: grant))
-              .toList(growable: false),
+          body: 'Calm source-linked board for grant research, fit, and the next practical action.',
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: stages
+                  .map(
+                    (stage) => _CompanyAssetMetric(
+                      label: stage,
+                      value:
+                          '${snapshot.grantsPipeline.where((item) => item.stage == stage).length}',
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 14),
+            _GrantsPipelineTable(items: snapshot.grantsPipeline),
+          ],
         ),
       ],
     );
@@ -1020,37 +1038,222 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
   }
 }
 
-class _GrantCard extends StatelessWidget {
-  const _GrantCard({required this.item});
+class _GrantsPipelineTable extends StatelessWidget {
+  const _GrantsPipelineTable({required this.items});
 
-  final CompanyGrantItemData item;
+  final List<CompanyGrantItemData> items;
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Text(
+        'No grants are being tracked yet.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+
+    final sortedItems = [...items]
+      ..sort((a, b) {
+        final byStage = a.stage.compareTo(b.stage);
+        if (byStage != 0) {
+          return byStage;
+        }
+        return a.name.compareTo(b.name);
+      });
+
     return Card(
       elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(item.name, style: Theme.of(context).textTheme.titleSmall),
-                ),
-                Chip(label: Text(item.stage)),
-              ],
-            ),
+            Text('Source-linked grant board', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
-            Text(item.fit),
-            const SizedBox(height: 4),
-            Text('Next: ${item.nextAction}'),
+            Text(
+              'Each row shows the grant fit and the next practical action to take.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 96,
+                  columns: const [
+                    DataColumn(label: Text('Grant')),
+                    DataColumn(label: Text('Stage')),
+                    DataColumn(label: Text('Fit')),
+                    DataColumn(label: Text('Next action')),
+                    DataColumn(label: Text('Source file')),
+                  ],
+                  rows: sortedItems
+                      .map(
+                        (item) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 260, child: Text(item.name))),
+                            DataCell(Chip(label: Text(item.stage))),
+                            DataCell(SizedBox(width: 240, child: Text(item.fit))),
+                            DataCell(SizedBox(width: 240, child: Text(item.nextAction))),
+                            DataCell(
+                              SizedBox(
+                                width: 260,
+                                child: Text('data/mock/grants_pipeline.json'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+class _AssetNavigatorCard extends StatelessWidget {
+  const _AssetNavigatorCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = const [
+      _AssetNavigatorRow(
+        title: 'Open Assets',
+        description: 'Live asset workspace, evidence, labels, and register tools.',
+        route: RouteNames.assets,
+        sourceFile: 'lib/features/assets/presentation/assets_screen.dart',
+      ),
+      _AssetNavigatorRow(
+        title: 'Open Equipment Register',
+        description: 'The working register for equipment items and the main live CSV view.',
+        route: RouteNames.assetEquipment,
+        sourceFile: 'lib/features/assets/presentation/equipment_register_screen.dart',
+      ),
+      _AssetNavigatorRow(
+        title: 'Open Project Summary',
+        description: 'Project-linked asset summary for mixed, ready, and low-stock states.',
+        route: RouteNames.assetProjectSummary,
+        sourceFile: 'lib/features/assets/presentation/project_summary_screen.dart',
+      ),
+      _AssetNavigatorRow(
+        title: 'Open Valuation Summary',
+        description: 'Estimated value, valuation rows, and summary totals.',
+        route: RouteNames.assetValuationSummary,
+        sourceFile: 'lib/features/assets/presentation/valuation_summary_screen.dart',
+      ),
+    ];
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Asset navigator', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Use these direct links to work in the real Assets module. The company tab only keeps a calm read-only summary.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 56,
+                  dataRowMaxHeight: 88,
+                  columns: const [
+                    DataColumn(label: Text('Action')),
+                    DataColumn(label: Text('Description')),
+                    DataColumn(label: Text('Route')),
+                    DataColumn(label: Text('Source file')),
+                  ],
+                  rows: rows
+                      .map(
+                        (row) => DataRow(
+                          cells: [
+                            DataCell(
+                              SizedBox(
+                                width: 220,
+                                child: Text(row.title),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: 380,
+                                child: Text(row.description),
+                              ),
+                            ),
+                            DataCell(SizedBox(width: 180, child: Text(row.route))),
+                            DataCell(
+                              SizedBox(
+                                width: 340,
+                                child: Text(row.sourceFile),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: () => context.push(RouteNames.assets),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Open Assets'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(RouteNames.assetEquipment),
+                  icon: const Icon(Icons.precision_manufacturing_outlined),
+                  label: const Text('Open Equipment Register'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(RouteNames.assetProjectSummary),
+                  icon: const Icon(Icons.groups_2_outlined),
+                  label: const Text('Open Project Summary'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(RouteNames.assetValuationSummary),
+                  icon: const Icon(Icons.assessment_outlined),
+                  label: const Text('Open Valuation Summary'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AssetNavigatorRow {
+  const _AssetNavigatorRow({
+    required this.title,
+    required this.description,
+    required this.route,
+    required this.sourceFile,
+  });
+
+  final String title;
+  final String description;
+  final String route;
+  final String sourceFile;
 }
 
 class _ActionLine extends StatelessWidget {
