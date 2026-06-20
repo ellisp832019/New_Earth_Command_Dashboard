@@ -36,6 +36,10 @@ void main() {
       find.text(r'D:\NEW_EARTH_OMEGA_OS_PACK\00_COMPANY'),
       findsAtLeastNWidgets(1),
     );
+    expect(find.text('Website & brand'), findsOneWidget);
+    expect(find.text('LinkedIn & marketing'), findsOneWidget);
+    expect(find.text('Create Technologies page'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
     expect(find.text('Product portfolio'), findsOneWidget);
     expect(find.text('Grants pipeline'), findsOneWidget);
   });

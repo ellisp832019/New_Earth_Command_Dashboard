@@ -327,10 +327,8 @@ class _WebsiteBrandTab extends StatelessWidget {
           children: [
             _KeyValueRow(label: 'Domain', value: snapshot.overview.domain),
             const _KeyValueRow(label: 'Email', value: 'To be linked'),
-            const SizedBox(height: 10),
-            ..._websiteNextSteps
-                .map((item) => _ChecklistBulletCard(item: item))
-                .toList(growable: false),
+            const SizedBox(height: 12),
+            _TrackerTable(items: _websiteTrackerItems),
           ],
         ),
       ],
@@ -361,17 +359,43 @@ class _LinkedInTab extends StatelessWidget {
           children: [
             const _KeyValueRow(label: 'Company page', value: 'Not yet published'),
             const _KeyValueRow(label: 'Content rhythm', value: 'Build log / founder note'),
-            const SizedBox(height: 10),
-            ..._linkedinNextSteps
-                .map((item) => _ChecklistBulletCard(item: item))
-                .toList(growable: false),
-            const SizedBox(height: 10),
-            Text(
-              'Marketing actions from the director board',
-              style: Theme.of(context).textTheme.titleSmall,
+            const SizedBox(height: 12),
+            _TrackerSectionCard(
+              title: 'Profile',
+              items: _linkedinTrackerItems
+                  .where((item) => item.section == 'Profile')
+                  .toList(growable: false),
             ),
-            const SizedBox(height: 8),
-            ...marketingActions.map((item) => _ActionLine(item: item)),
+            const SizedBox(height: 12),
+            _TrackerSectionCard(
+              title: 'Company Page',
+              items: _linkedinTrackerItems
+                  .where((item) => item.section == 'Company Page')
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            _TrackerSectionCard(
+              title: 'Content Rhythm',
+              items: _linkedinTrackerItems
+                  .where((item) => item.section == 'Content Rhythm')
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            _TrackerSectionCard(
+              title: 'Launch Tasks',
+              items: _linkedinTrackerItems
+                  .where((item) => item.section == 'Launch Tasks')
+                  .toList(growable: false),
+            ),
+            if (marketingActions.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Marketing actions from the director board',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              ...marketingActions.map((item) => _ActionLine(item: item)),
+            ],
           ],
         ),
       ],
@@ -604,26 +628,6 @@ class _ChecklistItem {
   final String sourceFile;
 }
 
-class _ChecklistBulletCard extends StatelessWidget {
-  const _ChecklistBulletCard({required this.item});
-
-  final String item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('- '),
-          Expanded(child: Text(item)),
-        ],
-      ),
-    );
-  }
-}
-
 class _ComplianceTable extends StatelessWidget {
   const _ComplianceTable({required this.items});
 
@@ -667,6 +671,95 @@ class _ComplianceTable extends StatelessWidget {
                 ),
               )
               .toList(growable: false),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackerItem {
+  const _TrackerItem({
+    required this.section,
+    required this.item,
+    required this.status,
+    required this.notes,
+    required this.sourceFile,
+  });
+
+  final String section;
+  final String item;
+  final String status;
+  final String notes;
+  final String sourceFile;
+}
+
+class _TrackerTable extends StatelessWidget {
+  const _TrackerTable({required this.items});
+
+  final List<_TrackerItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowHeight: 44,
+          dataRowMinHeight: 52,
+          dataRowMaxHeight: 88,
+          columns: const [
+            DataColumn(label: Text('Item')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Notes')),
+            DataColumn(label: Text('Source file')),
+          ],
+          rows: items
+              .map(
+                (item) => DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 280, child: Text(item.item))),
+                    DataCell(Chip(label: Text(item.status))),
+                    DataCell(
+                      SizedBox(
+                        width: 360,
+                        child: Text(item.notes, style: theme.textTheme.bodyMedium),
+                      ),
+                    ),
+                    DataCell(SizedBox(width: 260, child: Text(item.sourceFile))),
+                  ],
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackerSectionCard extends StatelessWidget {
+  const _TrackerSectionCard({
+    required this.title,
+    required this.items,
+  });
+
+  final String title;
+  final List<_TrackerItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            _TrackerTable(items: items),
+          ],
         ),
       ),
     );
@@ -844,29 +937,143 @@ const List<_ChecklistItem> _complianceChecklistItems = [
   ),
 ];
 
-const List<String> _websiteNextSteps = [
-  'Add company identity to homepage',
-  'Create Technologies page',
-  'Create Products page',
-  'Create Projects/build log page',
-  'Create Grants & Partnerships page',
-  'Add MicroGrow product page',
-  'Add BioCalm product page',
-  'Add Omega Dashboard product page',
-  'Add company contact form subjects',
-  'Add LinkedIn company page link',
-  'Add professional footer with company name and company number',
+const List<_TrackerItem> _websiteTrackerItems = [
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add company identity to homepage',
+    status: 'Drafting',
+    notes: 'Surface the legal name and founder identity clearly on the landing page.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Create Technologies page',
+    status: 'Planned',
+    notes: 'Reserve a calm page for the company technology overview.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Create Products page',
+    status: 'Planned',
+    notes: 'List the product family in one clear place.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Create Projects/build log page',
+    status: 'Planned',
+    notes: 'Use this for progress notes and visible build momentum.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Create Grants & Partnerships page',
+    status: 'Planned',
+    notes: 'Provide a single destination for opportunities and collaborators.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add MicroGrow product page',
+    status: 'Planned',
+    notes: 'Draft the first product-specific page for MicroGrow.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add BioCalm product page',
+    status: 'Planned',
+    notes: 'Reserve a product page for the BioCalm concept.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add Omega Dashboard product page',
+    status: 'Planned',
+    notes: 'Keep the dashboard product visible for future customers and partners.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add company contact form subjects',
+    status: 'Drafting',
+    notes: 'Define the calm subject options before the form goes live.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add LinkedIn company page link',
+    status: 'Ready',
+    notes: 'This can point straight at the new LinkedIn company profile.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Website',
+    item: 'Add professional footer with company name and company number',
+    status: 'Drafting',
+    notes: 'Keep the legal footer visible and consistent across pages.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
 ];
 
-const List<String> _linkedinNextSteps = [
-  'Update personal headline',
-  'Add Founder & Director role',
-  'Create New Earth Advanced Technologies Ltd company page',
-  'Upload banner',
-  'Add website link',
-  'Pin MicroGrow/BioCalm/Omega posts',
-  'Publish company launch post',
-  'Create weekly engineering update rhythm',
+const List<_TrackerItem> _linkedinTrackerItems = [
+  _TrackerItem(
+    section: 'Profile',
+    item: 'Update personal headline',
+    status: 'Drafting',
+    notes: 'Keep the profile headline clear and founder-focused.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Profile',
+    item: 'Add Founder & Director role',
+    status: 'Planned',
+    notes: 'Make the public role reflect the company position accurately.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Company Page',
+    item: 'Create New Earth Advanced Technologies Ltd company page',
+    status: 'Planned',
+    notes: 'Create the official company page before launch content starts.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Company Page',
+    item: 'Upload banner',
+    status: 'Planned',
+    notes: 'Use the banner to keep the page visually aligned with the website.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Company Page',
+    item: 'Add website link',
+    status: 'Ready',
+    notes: 'Link the public profile back to the website once the page exists.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Content Rhythm',
+    item: 'Create weekly engineering update rhythm',
+    status: 'Drafting',
+    notes: 'Keep the cadence steady and low pressure.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Content Rhythm',
+    item: 'Pin MicroGrow/BioCalm/Omega posts',
+    status: 'Planned',
+    notes: 'Pin the most representative posts once the launch content is ready.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Launch Tasks',
+    item: 'Publish company launch post',
+    status: 'Ready',
+    notes: 'Draft the first launch update when the company page is live.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
 ];
 
 
