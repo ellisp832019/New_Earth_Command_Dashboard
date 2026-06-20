@@ -70,16 +70,7 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
                       _AssetOverviewTab(snapshot: snapshot),
                       _GrantsTab(snapshot: snapshot),
                       _IndexExplorerTab(snapshot: snapshot),
-                      const _SimplePlaceholderTab(
-                        title: 'Partnerships',
-                        body:
-                            'Read-only placeholder for partner relationships and follow-ups.',
-                        chips: [
-                          'Partnerships',
-                          'Relationships',
-                          'Read only',
-                        ],
-                      ),
+                      const _PartnershipsTab(),
                       const _EvidenceLibraryTab(),
                       _ActionBoardTab(snapshot: snapshot),
                       _SettingsTab(snapshot: snapshot),
@@ -871,6 +862,11 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
                   label: const Text('Export company summary'),
                 ),
                 OutlinedButton.icon(
+                  onPressed: _busy ? null : _openLatestReport,
+                  icon: const Icon(Icons.open_in_new_outlined),
+                  label: const Text('Open latest report'),
+                ),
+                OutlinedButton.icon(
                   onPressed: _busy ? null : _refreshIndexes,
                   icon: const Icon(Icons.refresh_outlined),
                   label: const Text('Refresh indexes'),
@@ -962,6 +958,32 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     final result = await ref
         .read(companyCommandCentreReportServiceProvider)
         .exportSummaryReport(snapshot: widget.snapshot);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _busy = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message)),
+    );
+  }
+
+  Future<void> _openLatestReport() async {
+    if (_busy) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+    });
+
+    final result = await ref
+        .read(companyCommandCentreReportServiceProvider)
+        .openLatestReport();
 
     if (!mounted) {
       return;
@@ -2255,6 +2277,65 @@ class _SimplePlaceholderTab extends StatelessWidget {
   }
 }
 
+class _PartnershipsTab extends StatelessWidget {
+  const _PartnershipsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _partnershipTrackerItems;
+    final planned = items.where((item) => item.status == 'Planned').length;
+    final drafting = items.where((item) => item.status == 'Drafting').length;
+    final ready = items.where((item) => item.status == 'Ready').length;
+
+    return _SectionScrollView(
+      children: [
+        _CalmSectionCard(
+          title: 'Partnerships',
+          body:
+              'Source-linked tracker for the grants and partnerships page noted in the website next steps.',
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CompanyAssetMetric(label: 'Planned', value: '$planned'),
+                _CompanyAssetMetric(label: 'Drafting', value: '$drafting'),
+                _CompanyAssetMetric(label: 'Ready', value: '$ready'),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: const [
+                _InlineTag(
+                  label: 'Website next steps',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'Module spec',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'Read only',
+                  accent: AppColours.darkSuccess,
+                  foreground: AppColours.darkText,
+                ),
+              ],
+            ),
+          ],
+        ),
+        _TrackerSectionCard(
+          title: 'Partnership tracker',
+          items: items,
+        ),
+      ],
+    );
+  }
+}
+
 class _InlineTag extends StatelessWidget {
   const _InlineTag({
     required this.label,
@@ -2681,6 +2762,37 @@ const List<_TrackerItem> _linkedinTrackerItems = [
     status: 'Ready',
     notes: 'Draft the first launch update when the company page is live.',
     sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+  ),
+];
+
+const List<_TrackerItem> _partnershipTrackerItems = [
+  _TrackerItem(
+    section: 'Planning',
+    item: 'Create Grants & Partnerships page shell',
+    status: 'Planned',
+    notes: 'Turn the website next step into a calm, source-linked tracking page.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+  _TrackerItem(
+    section: 'Planning',
+    item: 'List priority partner types',
+    status: 'Drafting',
+    notes: 'Keep the first partner map small and easy to review.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/MODULE_SPEC.md',
+  ),
+  _TrackerItem(
+    section: 'Outreach',
+    item: 'Draft partner intro pack',
+    status: 'Drafting',
+    notes: 'Use the company and capability templates to keep outreach consistent.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/capability_statement_template.md',
+  ),
+  _TrackerItem(
+    section: 'Evidence',
+    item: 'Link partner evidence files',
+    status: 'Ready',
+    notes: 'Attach the supporting documents once partnerships start moving.',
+    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/MODULE_SPEC.md',
   ),
 ];
 

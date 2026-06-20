@@ -49,6 +49,8 @@ void main() {
     expect(find.text('Product portfolio'), findsOneWidget);
     expect(find.text('Grants pipeline'), findsOneWidget);
     expect(find.text('Index Explorer'), findsOneWidget);
+    expect(find.text('Partnerships'), findsWidgets);
+    expect(find.text('Partnership tracker'), findsOneWidget);
     expect(find.text('Generated indexes'), findsOneWidget);
     expect(find.text('Linked files'), findsOneWidget);
     expect(find.text('company_index.generated.json'), findsOneWidget);
@@ -77,6 +79,7 @@ void main() {
     expect(find.text('Audit log'), findsOneWidget);
     expect(find.text('Copy first, then overwrite'), findsOneWidget);
     expect(find.text('Export company summary'), findsOneWidget);
+    expect(find.text('Open latest report'), findsOneWidget);
     expect(find.text('Summary report'), findsOneWidget);
 
     await tester.tap(find.text('Index Explorer').last);

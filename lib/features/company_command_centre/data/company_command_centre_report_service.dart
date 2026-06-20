@@ -19,16 +19,17 @@ class CompanyCommandCentreReportService {
   final String moduleRootPath;
   final DateTime Function()? now;
 
+  String get summaryReportPath => path.join(
+    moduleRootPath,
+    'omega_os_bridge',
+    'reports',
+    'company_command_centre_summary.md',
+  );
+
   Future<CompanyCommandCentreReportResult> exportSummaryReport({
     required CompanyCommandCentreSnapshot snapshot,
   }) async {
-    final reportPath = path.join(
-      moduleRootPath,
-      'omega_os_bridge',
-      'reports',
-      'company_command_centre_summary.md',
-    );
-    final reportFile = File(reportPath);
+    final reportFile = File(summaryReportPath);
     await reportFile.parent.create(recursive: true);
 
     String? backupPath;
@@ -48,9 +49,25 @@ class CompanyCommandCentreReportService {
     );
 
     return CompanyCommandCentreReportResult.success(
-      reportPath: reportPath,
+      reportPath: reportFile.path,
       backupPath: backupPath,
       message: 'Exported the company summary report.',
+    );
+  }
+
+  Future<CompanyCommandCentreReportResult> openLatestReport() async {
+    final reportFile = File(summaryReportPath);
+    if (!await reportFile.exists()) {
+      return CompanyCommandCentreReportResult.failure(
+        message: 'No company summary report has been exported yet.',
+        reportPath: summaryReportPath,
+      );
+    }
+
+    await _openPath(reportFile.path);
+    return CompanyCommandCentreReportResult.success(
+      reportPath: reportFile.path,
+      message: 'Opened the latest company summary report.',
     );
   }
 
@@ -72,6 +89,20 @@ class CompanyCommandCentreReportService {
     await backupFile.parent.create(recursive: true);
     await sourceFile.copy(backupFile.path);
     return backupFile.path;
+  }
+
+  Future<void> _openPath(String filePath) async {
+    if (Platform.isWindows) {
+      await Process.start('cmd.exe', ['/c', 'start', '', filePath]);
+      return;
+    }
+
+    if (Platform.isMacOS) {
+      await Process.start('open', [filePath]);
+      return;
+    }
+
+    await Process.start('xdg-open', [filePath]);
   }
 
   DateTime _now() => now?.call() ?? DateTime.now();
@@ -172,6 +203,19 @@ class CompanyCommandCentreReportResult {
   }) {
     return CompanyCommandCentreReportResult._(
       success: true,
+      message: message,
+      reportPath: reportPath,
+      backupPath: backupPath,
+    );
+  }
+
+  factory CompanyCommandCentreReportResult.failure({
+    required String message,
+    required String reportPath,
+    String? backupPath,
+  }) {
+    return CompanyCommandCentreReportResult._(
+      success: false,
       message: message,
       reportPath: reportPath,
       backupPath: backupPath,
