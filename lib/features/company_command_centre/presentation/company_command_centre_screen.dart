@@ -277,9 +277,9 @@ class _ComplianceTab extends StatelessWidget {
         _CalmSectionCard(
           title: 'Compliance & deadlines',
           body: 'Read-only control list for core company obligations.',
-          children: _complianceChecklistItems
-              .map((item) => _ChecklistItemCard(item: item))
-              .toList(growable: false),
+          children: [
+            _ComplianceTable(items: _complianceChecklistItems),
+          ],
         ),
       ],
     );
@@ -586,8 +586,8 @@ class _ActionLine extends StatelessWidget {
   }
 }
 
-class _SimpleChecklistRow extends StatelessWidget {
-  const _SimpleChecklistRow({
+class _ChecklistItem {
+  const _ChecklistItem({
     required this.item,
     required this.authority,
     required this.dueDate,
@@ -602,88 +602,6 @@ class _SimpleChecklistRow extends StatelessWidget {
   final String status;
   final String notes;
   final String sourceFile;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(item, style: Theme.of(context).textTheme.titleSmall),
-                ),
-                Chip(label: Text(status)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(authority),
-            Text('Due: $dueDate'),
-            const SizedBox(height: 6),
-            Text(notes),
-            const SizedBox(height: 6),
-            Text('Source: $sourceFile'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ChecklistItem {
-  const _ChecklistItem({
-    required this.title,
-    required this.status,
-    required this.detail,
-    required this.source,
-  });
-
-  final String title;
-  final String status;
-  final String detail;
-  final String source;
-}
-
-class _ChecklistItemCard extends StatelessWidget {
-  const _ChecklistItemCard({required this.item});
-
-  final _ChecklistItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.title,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                Chip(label: Text(item.status)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(item.detail),
-            const SizedBox(height: 6),
-            Text('Source: ${item.source}'),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _ChecklistBulletCard extends StatelessWidget {
@@ -698,9 +616,58 @@ class _ChecklistBulletCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• '),
+          const Text('- '),
           Expanded(child: Text(item)),
         ],
+      ),
+    );
+  }
+}
+
+class _ComplianceTable extends StatelessWidget {
+  const _ComplianceTable({required this.items});
+
+  final List<_ChecklistItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowHeight: 44,
+          dataRowMinHeight: 52,
+          dataRowMaxHeight: 84,
+          columns: const [
+            DataColumn(label: Text('Item')),
+            DataColumn(label: Text('Authority')),
+            DataColumn(label: Text('Due date')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Notes')),
+            DataColumn(label: Text('Source file')),
+          ],
+          rows: items
+              .map(
+                (item) => DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 240, child: Text(item.item))),
+                    DataCell(SizedBox(width: 140, child: Text(item.authority))),
+                    DataCell(SizedBox(width: 100, child: Text(item.dueDate))),
+                    DataCell(Chip(label: Text(item.status))),
+                    DataCell(
+                      SizedBox(
+                        width: 320,
+                        child: Text(item.notes, style: theme.textTheme.bodyMedium),
+                      ),
+                    ),
+                    DataCell(SizedBox(width: 220, child: Text(item.sourceFile))),
+                  ],
+                ),
+              )
+              .toList(growable: false),
+        ),
       ),
     );
   }
@@ -826,43 +793,54 @@ const List<String> _tabs = [
   'Director Action Board',
   'Settings',
 ];
-
 const List<_ChecklistItem> _complianceChecklistItems = [
   _ChecklistItem(
-    title: 'Companies House account available',
+    item: 'Companies House account available',
+    authority: 'Companies House',
+    dueDate: 'Ongoing',
     status: 'Tracked',
-    detail: 'Company records are being kept in the admin trail.',
-    source: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Company records are being kept in the admin trail.',
+    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
-    title: 'Authentication code stored securely',
+    item: 'Authentication code stored securely',
+    authority: 'Companies House',
+    dueDate: 'Ongoing',
     status: 'Tracked',
-    detail: 'Sensitive registration access stays noted for future recovery.',
-    source: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Sensitive registration access stays noted for future recovery.',
+    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
-    title: 'Certificate of incorporation saved',
+    item: 'Certificate of incorporation saved',
+    authority: 'Company records',
+    dueDate: 'Ongoing',
     status: 'Tracked',
-    detail: 'Core formation documents stay visible in the company record set.',
-    source: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Core formation documents stay visible in the company record set.',
+    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
-    title: 'Articles of association saved',
+    item: 'Articles of association saved',
+    authority: 'Company records',
+    dueDate: 'Ongoing',
     status: 'Tracked',
-    detail: 'Foundational company documents are listed for review.',
-    source: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Foundational company documents are listed for review.',
+    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
-    title: 'Registered office details saved',
+    item: 'Registered office details saved',
+    authority: 'Company records',
+    dueDate: 'Ongoing',
     status: 'Tracked',
-    detail: 'Registered office history remains part of the local record.',
-    source: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Registered office history remains part of the local record.',
+    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
-    title: 'Tide account active',
+    item: 'Tide account active',
+    authority: 'Banking',
+    dueDate: 'Ongoing',
     status: 'Finance',
-    detail: 'Banking setup is tracked in the finance snapshot tab.',
-    source: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Banking setup is tracked in the finance snapshot tab.',
+    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
 ];
 
@@ -890,4 +868,5 @@ const List<String> _linkedinNextSteps = [
   'Publish company launch post',
   'Create weekly engineering update rhythm',
 ];
+
 
