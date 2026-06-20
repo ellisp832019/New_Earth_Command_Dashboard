@@ -1,0 +1,33 @@
+{
+  "module_id": "00_COMPANY_COMMAND_CENTRE",
+  "name": "Company Command Centre",
+  "version": "0.1.0",
+  "status": "installed",
+  "category": "System Core",
+  "owner": "New Earth Advanced Technologies Ltd",
+  "omega_os_path": "D:\\NEW_EARTH_OMEGA_OS_PACK\\00_COMPANY",
+  "purpose": "Operate New Earth Advanced Technologies Ltd from the Omega Dashboard.",
+  "priority": "core_company_module",
+  "recommended_route": "/modules/company-command-centre",
+  "routes": [
+    "/modules/company-command-centre"
+  ],
+  "data_mode": "markdown_backed_with_json_indexes",
+  "write_safety": "read_only_first_then_backup_before_write",
+  "permissions": [
+    "file_read"
+  ],
+  "capabilities": [
+    "company_records",
+    "compliance_deadlines",
+    "finance_snapshot",
+    "website_brand_status",
+    "linkedin_marketing",
+    "grants_pipeline",
+    "partnerships",
+    "ip_asset_register",
+    "product_portfolio",
+    "evidence_library",
+    "director_action_board"
+  ]
+}

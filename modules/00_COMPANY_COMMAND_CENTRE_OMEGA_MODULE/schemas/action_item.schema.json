@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ActionItem",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "lane",
+    "area",
+    "priority"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "lane": {
+      "enum": [
+        "Today",
+        "This Week",
+        "This Month",
+        "Waiting",
+        "Done"
+      ]
+    },
+    "area": {
+      "type": "string"
+    },
+    "priority": {
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ]
+    },
+    "due_date": {
+      "type": "string"
+    },
+    "linked_file": {
+      "type": "string"
+    }
+  }
+}

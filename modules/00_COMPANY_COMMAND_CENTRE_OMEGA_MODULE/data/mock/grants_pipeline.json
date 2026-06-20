@@ -1,0 +1,23 @@
+[
+  {
+    "id": "GRANT-001",
+    "name": "Liverpool City Region innovation/support funding",
+    "stage": "Researching",
+    "fit": "Local startup and innovation support",
+    "next_action": "Create eligibility notes"
+  },
+  {
+    "id": "GRANT-002",
+    "name": "Innovate UK",
+    "stage": "Researching",
+    "fit": "Technology R&D and innovation",
+    "next_action": "Map MicroGrow/BioCalm to open calls"
+  },
+  {
+    "id": "GRANT-003",
+    "name": "Social impact / rehabilitation funding",
+    "stage": "Idea",
+    "fit": "New Earth rehabilitation and regenerative education",
+    "next_action": "Create concept note"
+  }
+]

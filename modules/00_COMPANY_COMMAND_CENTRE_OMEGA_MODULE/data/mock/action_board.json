@@ -1,0 +1,37 @@
+[
+  {
+    "id": "ACT-001",
+    "title": "Create LinkedIn company page",
+    "lane": "This Week",
+    "area": "Marketing",
+    "priority": "High"
+  },
+  {
+    "id": "ACT-002",
+    "title": "Publish company overview page on website",
+    "lane": "This Week",
+    "area": "Website",
+    "priority": "High"
+  },
+  {
+    "id": "ACT-003",
+    "title": "Create company capability statement",
+    "lane": "This Month",
+    "area": "Company Records",
+    "priority": "High"
+  },
+  {
+    "id": "ACT-004",
+    "title": "Prepare first grant application tracker",
+    "lane": "This Month",
+    "area": "Grants",
+    "priority": "High"
+  },
+  {
+    "id": "ACT-005",
+    "title": "Add MicroGrow product page",
+    "lane": "This Week",
+    "area": "Products",
+    "priority": "High"
+  }
+]

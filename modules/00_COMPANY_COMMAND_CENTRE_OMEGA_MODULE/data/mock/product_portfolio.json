@@ -1,0 +1,32 @@
+[
+  {
+    "name": "MicroGrow",
+    "type": "Smart growing system",
+    "status": "V1 stabilisation",
+    "commercial_readiness": "pilot_candidate"
+  },
+  {
+    "name": "BioCalm",
+    "type": "Wellbeing and biofeedback technology",
+    "status": "prototype/research",
+    "commercial_readiness": "research_candidate"
+  },
+  {
+    "name": "Omega Dashboard",
+    "type": "Control and operations platform",
+    "status": "active module expansion",
+    "commercial_readiness": "internal_platform"
+  },
+  {
+    "name": "New Earth Living",
+    "type": "Conscious living app",
+    "status": "Android v1 preparation",
+    "commercial_readiness": "app_candidate"
+  },
+  {
+    "name": "Field Scanner",
+    "type": "Environmental/node diagnostic tool",
+    "status": "concept/prototype",
+    "commercial_readiness": "future_tool"
+  }
+]

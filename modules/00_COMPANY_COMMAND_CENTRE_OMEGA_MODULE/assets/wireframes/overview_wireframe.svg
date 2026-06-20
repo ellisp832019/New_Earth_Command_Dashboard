@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#071014"/>
+  <text x="40" y="60" fill="#b7ff4a" font-size="32" font-family="Arial">Company Command Centre</text>
+  <rect x="40" y="100" width="260" height="130" rx="16" fill="#102027" stroke="#8cc63f"/>
+  <rect x="320" y="100" width="260" height="130" rx="16" fill="#102027" stroke="#8cc63f"/>
+  <rect x="600" y="100" width="260" height="130" rx="16" fill="#102027" stroke="#8cc63f"/>
+  <rect x="880" y="100" width="260" height="130" rx="16" fill="#102027" stroke="#8cc63f"/>
+  <text x="70" y="165" fill="#ffffff" font-size="22" font-family="Arial">Company Status</text>
+  <text x="350" y="165" fill="#ffffff" font-size="22" font-family="Arial">Next Deadline</text>
+  <text x="630" y="165" fill="#ffffff" font-size="22" font-family="Arial">Grants</text>
+  <text x="910" y="165" fill="#ffffff" font-size="22" font-family="Arial">Products</text>
+</svg>
