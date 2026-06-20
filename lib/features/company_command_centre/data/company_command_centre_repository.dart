@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
 
 import 'company_command_centre_config.dart';
+import 'company_command_centre_index_service.dart';
 
 final companyCommandCentreRepositoryProvider =
     Provider<CompanyCommandCentreRepository>(
@@ -23,6 +25,7 @@ class CompanyCommandCentreRepository {
     final actionBoard = await _readActionBoard();
     final productPortfolio = await _readProductPortfolio();
     final grantsPipeline = await _readGrantsPipeline();
+    final indexSnapshot = await const CompanyCommandCentreIndexService().scanAndGenerate();
     final omegaOsPath = overview.omegaOsPath.isNotEmpty
         ? overview.omegaOsPath
         : companyCommandCentreOmegaOsPath;
@@ -33,6 +36,26 @@ class CompanyCommandCentreRepository {
       'omegaPath',
       'omega_os_path',
     ]);
+    final moduleReadOnly = _boolValue(
+      configSnapshot,
+      const ['readOnly', 'read_only'],
+      fallback: true,
+    );
+    final moduleBackupBeforeWrite = _boolValue(
+      configSnapshot,
+      const ['backupBeforeWrite', 'backup_before_write'],
+      fallback: true,
+    );
+    final backupRootPath = path.join(
+      omegaOsPath,
+      'backups',
+      'company_command_centre',
+    );
+    final auditLogPath = path.join(
+      omegaOsPath,
+      'audit',
+      'company_command_centre_write_audit.jsonl',
+    );
 
     return CompanyCommandCentreSnapshot(
       overview: overview.copyWith(
@@ -47,6 +70,11 @@ class CompanyCommandCentreRepository {
       configuredOmegaPath: configuredPath.isNotEmpty
           ? configuredPath
           : companyCommandCentreOmegaOsPath,
+      moduleReadOnly: moduleReadOnly,
+      moduleBackupBeforeWrite: moduleBackupBeforeWrite,
+      backupRootPath: backupRootPath,
+      auditLogPath: auditLogPath,
+      indexSnapshot: indexSnapshot,
     );
   }
 
@@ -185,6 +213,32 @@ class CompanyCommandCentreRepository {
     }
     return const [];
   }
+
+  bool _boolValue(
+    Map<String, dynamic> data,
+    List<String> keys, {
+    required bool fallback,
+  }) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value is bool) {
+        return value;
+      }
+      if (value == null) {
+        continue;
+      }
+
+      final text = value.toString().trim().toLowerCase();
+      if (text == 'true' || text == 'yes' || text == '1') {
+        return true;
+      }
+      if (text == 'false' || text == 'no' || text == '0') {
+        return false;
+      }
+    }
+
+    return fallback;
+  }
 }
 
 class CompanyCommandCentreSnapshot {
@@ -196,6 +250,11 @@ class CompanyCommandCentreSnapshot {
     required this.moduleConfigPath,
     required this.moduleConfigExists,
     required this.configuredOmegaPath,
+    required this.moduleReadOnly,
+    required this.moduleBackupBeforeWrite,
+    required this.backupRootPath,
+    required this.auditLogPath,
+    required this.indexSnapshot,
   });
 
   final CompanyOverviewData overview;
@@ -205,6 +264,11 @@ class CompanyCommandCentreSnapshot {
   final String moduleConfigPath;
   final bool moduleConfigExists;
   final String configuredOmegaPath;
+  final bool moduleReadOnly;
+  final bool moduleBackupBeforeWrite;
+  final String backupRootPath;
+  final String auditLogPath;
+  final CompanyCommandCentreIndexSnapshot indexSnapshot;
 }
 
 class CompanyOverviewData {

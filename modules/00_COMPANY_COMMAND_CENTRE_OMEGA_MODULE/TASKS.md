@@ -8,23 +8,25 @@
 - [ ] Build navigation tabs.
 
 ## Phase 2 — Data
-- [ ] Load mock JSON data.
-- [ ] Add config for Omega OS path.
-- [ ] Build markdown index scanner.
-- [ ] Generate company index JSON.
-- [ ] Show linked files in UI.
+- [x] Load mock JSON data.
+- [x] Add config for Omega OS path.
+- [x] Build markdown index scanner.
+- [x] Generate company index JSON.
+- [x] Show linked files in UI.
+- [x] Add index explorer tab.
 
 ## Phase 3 — Features
-- [ ] Compliance deadline tracker.
-- [ ] Director action board.
-- [ ] Website and brand tracker.
+- [x] Compliance deadline tracker.
+- [x] Director action board.
+- [x] Website and brand tracker.
+- [x] LinkedIn and marketing tracker.
 - [ ] Finance task tracker.
 - [ ] Grants pipeline.
 - [ ] IP and asset register.
 - [ ] Product portfolio tracker.
 
 ## Phase 4 — Safety
-- [ ] Add read-only mode switch.
-- [ ] Add backup-before-write system.
-- [ ] Add audit log.
-- [ ] Add export summary report.
+- [x] Add read-only mode switch.
+- [x] Add backup-before-write system.
+- [x] Add audit log.
+- [x] Add export summary report.

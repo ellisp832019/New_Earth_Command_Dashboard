@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/theme/app_colours.dart';
 import '../../assets/application/assets_controller.dart';
+import '../data/company_command_centre_index_service.dart';
 import '../data/company_command_centre_repository.dart';
+import '../data/company_command_centre_write_service.dart';
 
 class CompanyCommandCentreScreen extends ConsumerWidget {
   const CompanyCommandCentreScreen({super.key});
@@ -65,6 +68,7 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
                       _ProductPortfolioTab(snapshot: snapshot),
                       _AssetOverviewTab(snapshot: snapshot),
                       _GrantsTab(snapshot: snapshot),
+                      _IndexExplorerTab(snapshot: snapshot),
                       const _SimplePlaceholderTab(
                         title: 'Partnerships',
                         body:
@@ -217,6 +221,13 @@ class _OverviewTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overview = snapshot.overview;
+    final indexRecords = snapshot.indexSnapshot.records;
+    final actionCount = indexRecords.where((record) => record.checkboxCount > 0).length;
+    final deadlineCount = indexRecords.where((record) => record.dueDates.isNotEmpty).length;
+    final productCount = indexRecords.where((record) => record.labels.contains('product')).length;
+    final grantCount = indexRecords.where((record) => record.labels.contains('grant')).length;
+    final ipAssetCount = indexRecords.where((record) => record.labels.contains('ip_asset')).length;
+    final evidenceCount = indexRecords.where((record) => record.isEvidence).length;
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
@@ -243,6 +254,102 @@ class _OverviewTab extends StatelessWidget {
           body:
               'This shell is read-only for now. Changes will only be added after backup-aware write-back is designed.',
         ),
+        _CalmSectionCard(
+          title: 'Generated indexes',
+          body: 'The scanner keeps local JSON indexes refreshed from the company Markdown records.',
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _InlineTag(
+                  label: '$actionCount action files',
+                  accent: AppColours.darkSuccess,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '$deadlineCount deadline files',
+                  accent: AppColours.darkAmber,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '$productCount product files',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '$grantCount grant files',
+                  accent: AppColours.darkPurple,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '$ipAssetCount IP / asset files',
+                  accent: AppColours.darkGlow,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '$evidenceCount evidence files',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '${snapshot.indexSnapshot.sourceMarkdownCount} markdown files',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: snapshot.indexSnapshot.sourceExists ? 'Source available' : 'Source missing',
+                  accent: snapshot.indexSnapshot.sourceExists
+                      ? AppColours.darkSuccess
+                      : AppColours.darkAmber,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'company_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'action_items_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'deadlines_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'products_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'grants_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'ip_assets_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: 'evidence_index.generated.json',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+              ],
+            ),
+          ],
+        ),
+        _CalmSectionCard(
+          title: 'Linked files',
+          body: 'Files with actions, deadlines, products, grants, IP, or evidence signals are surfaced here.',
+          children: [
+            _LinkedFileTable(records: snapshot.indexSnapshot.recentFiles),
+          ],
+        ),
       ],
     );
   }
@@ -255,14 +362,56 @@ class _ComplianceTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = _complianceChecklistItems;
+    final sections = const [
+      'Company records',
+      'Banking',
+      'Tax/admin',
+      'Public presence',
+    ];
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Compliance & deadlines',
-          body: 'Read-only control list for core company obligations.',
+          body:
+              'Source-linked control list for core company obligations and public presence checks.',
           children: [
-            _ComplianceTable(items: _complianceChecklistItems),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: sections
+                  .map(
+                    (section) => _CompanyAssetMetric(
+                      label: section,
+                      value: '${items.where((item) => item.authority == section).length}',
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
           ],
+        ),
+        const SizedBox(height: 2),
+        _ComplianceSectionCard(
+          title: 'Company records',
+          items: items
+              .where((item) => item.authority == 'Company records')
+              .toList(growable: false),
+        ),
+        _ComplianceSectionCard(
+          title: 'Banking',
+          items: items.where((item) => item.authority == 'Banking').toList(growable: false),
+        ),
+        _ComplianceSectionCard(
+          title: 'Tax/admin',
+          items: items
+              .where((item) => item.authority == 'Tax/admin')
+              .toList(growable: false),
+        ),
+        _ComplianceSectionCard(
+          title: 'Public presence',
+          items: items
+              .where((item) => item.authority == 'Public presence')
+              .toList(growable: false),
         ),
       ],
     );
@@ -302,16 +451,38 @@ class _WebsiteBrandTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = _websiteTrackerItems;
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Website & brand',
-          body: 'Keep the public presence calm, clear, and consistent.',
+          body:
+              'Page-level tracker sourced from the website next steps note. Keep the public presence calm, clear, and consistent.',
           children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CompanyAssetMetric(label: 'Next steps', value: '${items.length}'),
+                _CompanyAssetMetric(
+                  label: 'Drafting',
+                  value: '${items.where((item) => item.status == 'Drafting').length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Planned',
+                  value: '${items.where((item) => item.status == 'Planned').length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Ready',
+                  value: '${items.where((item) => item.status == 'Ready').length}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             _KeyValueRow(label: 'Domain', value: snapshot.overview.domain),
             const _KeyValueRow(label: 'Email', value: 'To be linked'),
             const SizedBox(height: 12),
-            _TrackerTable(items: _websiteTrackerItems),
+            _TrackerTable(items: items),
           ],
         ),
       ],
@@ -326,6 +497,7 @@ class _LinkedInTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = _linkedinTrackerItems;
     final marketingActions = snapshot.actionBoard
         .where(
           (item) =>
@@ -338,37 +510,52 @@ class _LinkedInTab extends StatelessWidget {
       children: [
         _CalmSectionCard(
           title: 'LinkedIn & marketing',
-          body: 'Keep public awareness connected to what is actually being built.',
+          body:
+              'Same calm tracker layout as Website. Keep public awareness connected to what is actually being built.',
           children: [
             const _KeyValueRow(label: 'Company page', value: 'Not yet published'),
             const _KeyValueRow(label: 'Content rhythm', value: 'Build log / founder note'),
             const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CompanyAssetMetric(label: 'Profile', value: '${items.where((item) => item.section == 'Profile').length}'),
+                _CompanyAssetMetric(
+                  label: 'Company Page',
+                  value: '${items.where((item) => item.section == 'Company Page').length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Content Rhythm',
+                  value: '${items.where((item) => item.section == 'Content Rhythm').length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Launch Tasks',
+                  value: '${items.where((item) => item.section == 'Launch Tasks').length}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             _TrackerSectionCard(
               title: 'Profile',
-              items: _linkedinTrackerItems
-                  .where((item) => item.section == 'Profile')
-                  .toList(growable: false),
+              items: items.where((item) => item.section == 'Profile').toList(growable: false),
             ),
             const SizedBox(height: 12),
             _TrackerSectionCard(
               title: 'Company Page',
-              items: _linkedinTrackerItems
-                  .where((item) => item.section == 'Company Page')
-                  .toList(growable: false),
+              items: items.where((item) => item.section == 'Company Page').toList(growable: false),
             ),
             const SizedBox(height: 12),
             _TrackerSectionCard(
               title: 'Content Rhythm',
-              items: _linkedinTrackerItems
+              items: items
                   .where((item) => item.section == 'Content Rhythm')
                   .toList(growable: false),
             ),
             const SizedBox(height: 12),
             _TrackerSectionCard(
               title: 'Launch Tasks',
-              items: _linkedinTrackerItems
-                  .where((item) => item.section == 'Launch Tasks')
-                  .toList(growable: false),
+              items: items.where((item) => item.section == 'Launch Tasks').toList(growable: false),
             ),
             if (marketingActions.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -576,19 +763,27 @@ class _ActionBoardTab extends StatelessWidget {
   }
 }
 
-class _SettingsTab extends StatelessWidget {
+class _SettingsTab extends ConsumerStatefulWidget {
   const _SettingsTab({required this.snapshot});
 
   final CompanyCommandCentreSnapshot snapshot;
 
   @override
+  ConsumerState<_SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends ConsumerState<_SettingsTab> {
+  bool _busy = false;
+
+  @override
   Widget build(BuildContext context) {
+    final snapshot = widget.snapshot;
     final omegaPathExists = Directory(snapshot.configuredOmegaPath).existsSync();
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Settings',
-          body: 'Read-only configuration and source path visibility.',
+          body: 'Read-only configuration, source path visibility, and the backup-first write plan.',
           children: [
             _KeyValueRow(label: 'Omega OS source path', value: snapshot.configuredOmegaPath),
             _KeyValueRow(
@@ -600,13 +795,155 @@ class _SettingsTab extends StatelessWidget {
               label: 'Module config status',
               value: snapshot.moduleConfigExists ? 'Available' : 'Missing',
             ),
-            const _KeyValueRow(label: 'Write mode', value: 'Read only'),
-            const _KeyValueRow(label: 'Backup before write', value: 'Required later'),
+            _KeyValueRow(
+              label: 'Write mode',
+              value: snapshot.moduleReadOnly ? 'Read only' : 'Write enabled',
+            ),
+            _KeyValueRow(
+              label: 'Backup before write',
+              value: snapshot.moduleBackupBeforeWrite ? 'Enabled' : 'Disabled',
+            ),
+            _KeyValueRow(label: 'Backup root', value: snapshot.backupRootPath),
+            _KeyValueRow(label: 'Audit log', value: snapshot.auditLogPath),
+            const _KeyValueRow(
+              label: 'Write policy',
+              value: 'Copy first, then overwrite',
+            ),
             const _KeyValueRow(label: 'Route', value: '/modules/company-command-centre'),
+          ],
+        ),
+        _CalmSectionCard(
+          title: 'Write controls',
+          body: 'Keep the module read-only by default. Turn write mode on only when you are ready to save local changes with backups.',
+          children: [
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: !snapshot.moduleReadOnly,
+              onChanged: _busy ? null : (value) => _setReadOnlyMode(!value),
+              title: const Text('Write mode'),
+              subtitle: Text(
+                snapshot.moduleReadOnly ? 'Read only' : 'Write enabled',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _exportAuditSummary,
+                  icon: const Icon(Icons.summarize_outlined),
+                  label: const Text('Export audit summary'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _refreshIndexes,
+                  icon: const Icon(Icons.refresh_outlined),
+                  label: const Text('Refresh indexes'),
+                ),
+              ],
+            ),
           ],
         ),
       ],
     );
+  }
+
+  Future<void> _setReadOnlyMode(bool readOnly) async {
+    if (_busy) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+    });
+
+    final result = await ref
+        .read(companyCommandCentreWriteServiceProvider)
+        .setReadOnlyMode(
+          readOnly: readOnly,
+          actorLabel: 'Peter Ellis',
+          note: readOnly
+              ? 'Disable company write mode from settings.'
+              : 'Enable company write mode from settings.',
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _busy = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message)),
+    );
+    if (result.success) {
+      ref.invalidate(companyCommandCentreSnapshotProvider);
+    }
+  }
+
+  Future<void> _exportAuditSummary() async {
+    if (_busy) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+    });
+
+    final result = await ref
+        .read(companyCommandCentreWriteServiceProvider)
+        .exportAuditSummaryReport(
+          actorLabel: 'Peter Ellis',
+          note: 'Export the company audit summary from settings.',
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _busy = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message)),
+    );
+    if (result.success) {
+      ref.invalidate(companyCommandCentreSnapshotProvider);
+    }
+  }
+
+  Future<void> _refreshIndexes() async {
+    if (_busy) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+    });
+
+    final result = await ref
+        .read(companyCommandCentreIndexServiceProvider)
+        .scanAndGenerate();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _busy = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Refreshed ${result.sourceMarkdownCount} markdown files into local indexes.',
+        ),
+      ),
+    );
+    ref.invalidate(companyCommandCentreSnapshotProvider);
   }
 }
 
@@ -1235,6 +1572,27 @@ class _ChecklistItem {
   final String sourceFile;
 }
 
+class _ComplianceSectionCard extends StatelessWidget {
+  const _ComplianceSectionCard({
+    required this.title,
+    required this.items,
+  });
+
+  final String title;
+  final List<_ChecklistItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: title,
+      body: 'Read-only checklist rows sourced from the company admin notes.',
+      children: [
+        _ComplianceTable(items: items),
+      ],
+    );
+  }
+}
+
 class _ComplianceTable extends StatelessWidget {
   const _ComplianceTable({required this.items});
 
@@ -1448,6 +1806,426 @@ class _SectionScrollView extends StatelessWidget {
   }
 }
 
+class _LinkedFileTable extends StatelessWidget {
+  const _LinkedFileTable({required this.records});
+
+  final List<CompanyCommandCentreMarkdownRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (records.isEmpty) {
+      return Text(
+        'No linked company Markdown files were found yet.',
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowHeight: 44,
+          dataRowMinHeight: 52,
+          dataRowMaxHeight: 88,
+          columns: const [
+            DataColumn(label: Text('Title')),
+            DataColumn(label: Text('Signals')),
+            DataColumn(label: Text('Source file')),
+          ],
+          rows: records
+              .map(
+                (record) => DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 280, child: Text(record.title))),
+                    DataCell(
+                      SizedBox(
+                        width: 250,
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (record.checkboxCount > 0)
+                              _InlineTag(
+                                label: '${record.checkboxCount} tasks',
+                                accent: AppColours.darkSecondary,
+                                foreground: AppColours.darkText,
+                              ),
+                            if (record.dueDates.isNotEmpty)
+                              _InlineTag(
+                                label: '${record.dueDates.length} due dates',
+                                accent: AppColours.darkAmber,
+                                foreground: AppColours.darkText,
+                              ),
+                            if (record.labels.contains('product'))
+                              _InlineTag(
+                                label: 'Product',
+                                accent: AppColours.darkSuccess,
+                                foreground: AppColours.darkText,
+                              ),
+                            if (record.labels.contains('grant'))
+                              _InlineTag(
+                                label: 'Grant',
+                                accent: AppColours.darkPurple,
+                                foreground: AppColours.darkText,
+                              ),
+                            if (record.labels.contains('ip_asset'))
+                              _InlineTag(
+                                label: 'IP / Asset',
+                                accent: AppColours.darkGlow,
+                                foreground: AppColours.darkText,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataCell(SizedBox(width: 320, child: Text(record.relativePath))),
+                  ],
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ),
+    );
+  }
+}
+
+class _IndexExplorerTab extends StatefulWidget {
+  const _IndexExplorerTab({required this.snapshot});
+
+  final CompanyCommandCentreSnapshot snapshot;
+
+  @override
+  State<_IndexExplorerTab> createState() => _IndexExplorerTabState();
+}
+
+class _IndexExplorerTabState extends State<_IndexExplorerTab> {
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'All';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = widget.snapshot.indexSnapshot;
+    final records = _filteredRecords(snapshot.records);
+    final filters = const [
+      'All',
+      'Action',
+      'Deadline',
+      'Product',
+      'Grant',
+      'IP / Asset',
+      'Evidence',
+    ];
+
+    return _SectionScrollView(
+      children: [
+        _CalmSectionCard(
+          title: 'Index Explorer',
+          body: 'Search the generated company indexes by title, label, or source path.',
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _InlineTag(
+                  label: 'Generated ${snapshot.generatedAt.toLocal()}',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: snapshot.sourceExists ? 'Source available' : 'Source missing',
+                  accent: snapshot.sourceExists ? AppColours.darkSuccess : AppColours.darkAmber,
+                  foreground: AppColours.darkText,
+                ),
+                _InlineTag(
+                  label: '${snapshot.sourceMarkdownCount} markdown files',
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _searchController,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                labelText: 'Search indexes',
+                hintText: 'Search title, source path, label, or due date',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: filters
+                  .map(
+                    (filter) => ChoiceChip(
+                      label: Text(filter),
+                      selected: _selectedFilter == filter,
+                      onSelected: (_) {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 14),
+            _IndexSummaryRow(records: snapshot.records),
+            const SizedBox(height: 14),
+            _IndexExplorerTable(records: records),
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<CompanyCommandCentreMarkdownRecord> _filteredRecords(
+    List<CompanyCommandCentreMarkdownRecord> records,
+  ) {
+    final query = _searchController.text.trim().toLowerCase();
+    return records.where((record) {
+      final matchesQuery = query.isEmpty ||
+          record.title.toLowerCase().contains(query) ||
+          record.relativePath.toLowerCase().contains(query) ||
+          record.labels.any((label) => label.toLowerCase().contains(query)) ||
+          record.dueDates.any((date) => date.contains(query));
+
+      final matchesFilter = switch (_selectedFilter) {
+        'Action' => record.checkboxCount > 0,
+        'Deadline' => record.dueDates.isNotEmpty,
+        'Product' => record.labels.contains('product'),
+        'Grant' => record.labels.contains('grant'),
+        'IP / Asset' => record.labels.contains('ip_asset'),
+        'Evidence' => record.isEvidence,
+        _ => true,
+      };
+
+      return matchesQuery && matchesFilter;
+    }).toList(growable: false);
+  }
+}
+
+class _IndexSummaryRow extends StatelessWidget {
+  const _IndexSummaryRow({required this.records});
+
+  final List<CompanyCommandCentreMarkdownRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final actionCount = records.where((record) => record.checkboxCount > 0).length;
+    final deadlineCount = records.where((record) => record.dueDates.isNotEmpty).length;
+    final productCount = records.where((record) => record.labels.contains('product')).length;
+    final grantCount = records.where((record) => record.labels.contains('grant')).length;
+    final ipAssetCount = records.where((record) => record.labels.contains('ip_asset')).length;
+    final evidenceCount = records.where((record) => record.isEvidence).length;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _InlineTag(label: '$actionCount action files', accent: AppColours.darkSuccess, foreground: AppColours.darkText),
+        _InlineTag(label: '$deadlineCount deadline files', accent: AppColours.darkAmber, foreground: AppColours.darkText),
+        _InlineTag(label: '$productCount product files', accent: AppColours.darkSecondary, foreground: AppColours.darkText),
+        _InlineTag(label: '$grantCount grant files', accent: AppColours.darkPurple, foreground: AppColours.darkText),
+        _InlineTag(label: '$ipAssetCount IP / asset files', accent: AppColours.darkGlow, foreground: AppColours.darkText),
+        _InlineTag(label: '$evidenceCount evidence files', accent: AppColours.darkSecondary, foreground: AppColours.darkText),
+      ],
+    );
+  }
+}
+
+class _IndexExplorerTable extends StatelessWidget {
+  const _IndexExplorerTable({required this.records});
+
+  final List<CompanyCommandCentreMarkdownRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (records.isEmpty) {
+      return Text(
+        'No records match the current search or filter.',
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowHeight: 44,
+          dataRowMinHeight: 56,
+          dataRowMaxHeight: 96,
+          columns: const [
+            DataColumn(label: Text('Title')),
+            DataColumn(label: Text('Labels')),
+            DataColumn(label: Text('Due dates')),
+            DataColumn(label: Text('Source file')),
+          ],
+          rows: records
+              .map(
+                (record) => DataRow(
+                  cells: [
+                    DataCell(
+                      SizedBox(
+                        width: 260,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(record.title),
+                            const SizedBox(height: 4),
+                            Text(
+                              record.excerpt,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColours.darkMutedText,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 280,
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: record.labels
+                              .map(
+                                (label) => _InlineTag(
+                                  label: label,
+                                  accent: _labelAccent(label),
+                                  foreground: AppColours.darkText,
+                                ),
+                              )
+                              .toList(growable: false),
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 160,
+                        child: Text(record.dueDates.isEmpty
+                            ? '-'
+                            : record.dueDates.join(', ')),
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(width: 340, child: Text(record.relativePath)),
+                    ),
+                  ],
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ),
+    );
+  }
+
+  Color _labelAccent(String label) {
+    switch (label) {
+      case 'action':
+        return AppColours.darkSuccess;
+      case 'deadline':
+        return AppColours.darkAmber;
+      case 'product':
+        return AppColours.darkSecondary;
+      case 'grant':
+        return AppColours.darkPurple;
+      case 'ip_asset':
+        return AppColours.darkGlow;
+      case 'evidence':
+        return AppColours.darkPrimary;
+      default:
+        return AppColours.darkSecondary;
+    }
+  }
+}
+
+class _SimplePlaceholderTab extends StatelessWidget {
+  const _SimplePlaceholderTab({
+    required this.title,
+    required this.body,
+    required this.chips,
+  });
+
+  final String title;
+  final String body;
+  final List<String> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScrollView(
+      children: [
+        _CalmSectionCard(
+          title: title,
+          body: body,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: chips
+                  .map(
+                    (chip) => _InlineTag(
+                      label: chip,
+                      accent: AppColours.darkSecondary,
+                      foreground: AppColours.darkText,
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _InlineTag extends StatelessWidget {
+  const _InlineTag({
+    required this.label,
+    required this.accent,
+    this.foreground,
+  });
+
+  final String label;
+  final Color accent;
+  final Color? foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: foreground ?? accent,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
+      ),
+    );
+  }
+}
+
 const List<String> _tabs = [
   'Overview',
   'Compliance & Deadlines',
@@ -1457,6 +2235,7 @@ const List<String> _tabs = [
   'Product Portfolio',
   'IP & Asset Register',
   'Grants Pipeline',
+  'Index Explorer',
   'Partnerships',
   'Evidence Library',
   'Director Action Board',
@@ -1465,35 +2244,48 @@ const List<String> _tabs = [
 const List<_ChecklistItem> _complianceChecklistItems = [
   _ChecklistItem(
     item: 'Companies House account available',
-    authority: 'Companies House',
+    authority: 'Company records',
     dueDate: 'Ongoing',
     status: 'Tracked',
-    notes: 'Company records are being kept in the admin trail.',
-    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Core registry access stays visible in the local admin trail.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
     item: 'Authentication code stored securely',
-    authority: 'Companies House',
+    authority: 'Company records',
     dueDate: 'Ongoing',
     status: 'Tracked',
-    notes: 'Sensitive registration access stays noted for future recovery.',
-    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Sensitive filing access is kept ready for recovery and follow-up.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
     item: 'Certificate of incorporation saved',
     authority: 'Company records',
     dueDate: 'Ongoing',
     status: 'Tracked',
-    notes: 'Core formation documents stay visible in the company record set.',
-    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Formation paperwork remains easy to find.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
     item: 'Articles of association saved',
     authority: 'Company records',
     dueDate: 'Ongoing',
     status: 'Tracked',
-    notes: 'Foundational company documents are listed for review.',
-    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    notes: 'Foundational company rules stay in the local record.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Shareholder/director records saved',
+    authority: 'Company records',
+    dueDate: 'Ongoing',
+    status: 'Tracked',
+    notes: 'Ownership and director details stay available for admin checks.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
     item: 'Registered office details saved',
@@ -1501,15 +2293,143 @@ const List<_ChecklistItem> _complianceChecklistItems = [
     dueDate: 'Ongoing',
     status: 'Tracked',
     notes: 'Registered office history remains part of the local record.',
-    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
   _ChecklistItem(
     item: 'Tide account active',
     authority: 'Banking',
     dueDate: 'Ongoing',
-    status: 'Finance',
+    status: 'Tracked',
     notes: 'Banking setup is tracked in the finance snapshot tab.',
-    sourceFile: 'UK_COMPANY_ADMIN_CHECKLIST.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Debit card received/activated',
+    authority: 'Banking',
+    dueDate: 'Ongoing',
+    status: 'Tracked',
+    notes: 'Card handling stays visible until the banking flow is settled.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Bank details saved securely',
+    authority: 'Banking',
+    dueDate: 'Ongoing',
+    status: 'Tracked',
+    notes: 'Bank details are kept in the local company record.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Business-only spending rule followed',
+    authority: 'Banking',
+    dueDate: 'Ongoing',
+    status: 'Tracked',
+    notes: 'Company spending stays separate and easy to audit.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Corporation Tax activation reviewed',
+    authority: 'Tax/admin',
+    dueDate: 'Review soon',
+    status: 'Review',
+    notes: 'Tax setup is tracked before it becomes urgent.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Bookkeeping process chosen',
+    authority: 'Tax/admin',
+    dueDate: 'Review soon',
+    status: 'Drafting',
+    notes: 'The bookkeeping path should stay simple and repeatable.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Receipt capture process created',
+    authority: 'Tax/admin',
+    dueDate: 'Review soon',
+    status: 'Drafting',
+    notes: 'Receipt capture is the first step before automation later.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Accountant shortlist created',
+    authority: 'Tax/admin',
+    dueDate: 'Review soon',
+    status: 'Planned',
+    notes: 'Keep a short list ready for later finance support.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'PAYE reviewed if paying salary',
+    authority: 'Tax/admin',
+    dueDate: 'When needed',
+    status: 'Planned',
+    notes: 'Only activate PAYE when salary plans make it relevant.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'VAT reviewed when revenue grows or strategically useful',
+    authority: 'Tax/admin',
+    dueDate: 'When needed',
+    status: 'Planned',
+    notes: 'VAT should stay a staged decision, not a rush job.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Website live',
+    authority: 'Public presence',
+    dueDate: 'Launch',
+    status: 'Planned',
+    notes: 'Public presence work stays aligned with the website plan.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Company email live',
+    authority: 'Public presence',
+    dueDate: 'Launch',
+    status: 'Planned',
+    notes: 'Use a company email before public release is widened.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'LinkedIn profile updated',
+    authority: 'Public presence',
+    dueDate: 'Launch',
+    status: 'Drafting',
+    notes: 'Founder profile and company presence should stay aligned.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'LinkedIn company page created',
+    authority: 'Public presence',
+    dueDate: 'Launch',
+    status: 'Planned',
+    notes: 'Create the company page once the public identity is ready.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _ChecklistItem(
+    item: 'Product pages drafted',
+    authority: 'Public presence',
+    dueDate: 'Launch',
+    status: 'Drafting',
+    notes: 'Keep product pages aligned with the product portfolio tracker.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
 ];
 

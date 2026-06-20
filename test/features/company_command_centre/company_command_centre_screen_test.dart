@@ -48,5 +48,33 @@ void main() {
     expect(find.text('This Month'), findsWidgets);
     expect(find.text('Product portfolio'), findsOneWidget);
     expect(find.text('Grants pipeline'), findsOneWidget);
+    expect(find.text('Index Explorer'), findsOneWidget);
+    expect(find.text('Generated indexes'), findsOneWidget);
+    expect(find.text('Linked files'), findsOneWidget);
+    expect(find.text('company_index.generated.json'), findsOneWidget);
+
+    await tester.tap(find.text('Compliance & Deadlines').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Compliance & deadlines'), findsOneWidget);
+    expect(find.text('Company records'), findsWidgets);
+    expect(find.text('Banking'), findsWidgets);
+    expect(find.text('Tax/admin'), findsWidgets);
+    expect(find.text('Public presence'), findsWidgets);
+    expect(find.text('modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md'), findsWidgets);
+
+    await tester.tap(find.text('Settings').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Backup root'), findsOneWidget);
+    expect(find.text('Audit log'), findsOneWidget);
+    expect(find.text('Copy first, then overwrite'), findsOneWidget);
+
+    await tester.tap(find.text('Index Explorer').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Search indexes'), findsOneWidget);
+    expect(find.text('Source available'), findsWidgets);
+    expect(find.text('All'), findsWidgets);
   });
 }
