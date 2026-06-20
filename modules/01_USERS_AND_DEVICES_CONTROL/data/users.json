@@ -7,6 +7,8 @@
     "status": "active",
     "permissions": [
       "*",
+      "file_read",
+      "repo_access",
       "dashboard.view",
       "users.view",
       "users.manage",

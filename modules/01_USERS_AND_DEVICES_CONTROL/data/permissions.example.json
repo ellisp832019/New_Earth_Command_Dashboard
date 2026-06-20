@@ -4,6 +4,14 @@
     "description": "dashboard view"
   },
   {
+    "permission": "file_read",
+    "description": "file read"
+  },
+  {
+    "permission": "repo_access",
+    "description": "repo access"
+  },
+  {
     "permission": "users.view",
     "description": "users view"
   },

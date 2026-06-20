@@ -60,6 +60,17 @@
         "approve_request",
         "deny_request"
       ]
+    },
+    {
+      "module_id": "repo_research_engine",
+      "view_permission": "repo_access",
+      "edit_permission": "repo_access",
+      "admin_permission": "repo_access",
+      "request_permission": "repo_access",
+      "execute_permission": "repo_access",
+      "control_permission": "repo_access",
+      "requires_trust_level": 4,
+      "requires_approval_for": []
     }
   ]
 }

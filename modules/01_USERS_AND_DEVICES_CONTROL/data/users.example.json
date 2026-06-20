@@ -6,7 +6,9 @@
     "title": "Owner / System Architect",
     "status": "active",
     "permissions": [
-      "*"
+      "*",
+      "file_read",
+      "repo_access"
     ],
     "linked_devices": [
       "device_new_earth_dev"

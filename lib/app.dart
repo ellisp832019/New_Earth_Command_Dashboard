@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -178,20 +179,29 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                   );
                 },
               ),
-              if ((appSettings?.showDockOverlays ?? true) &&
-                  (appSettings?.showVoicePresenceChip ?? true))
-                const Positioned(
-                  top: 16,
-                  right: 16,
-                  child: SafeArea(
-                    child: IgnorePointer(child: VoicePresenceChip()),
-                  ),
-                ),
               Positioned(
                 top: 16,
-                left: 16,
+                right: 16,
                 child: SafeArea(
-                  child: _SecuritySessionPill(session: securitySession),
+                  child: SizedBox(
+                    width: math.min(
+                      340,
+                      MediaQuery.sizeOf(context).width - 32,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if ((appSettings?.showDockOverlays ?? true) &&
+                            (appSettings?.showVoicePresenceChip ?? true))
+                          const IgnorePointer(child: VoicePresenceChip()),
+                        if ((appSettings?.showDockOverlays ?? true) &&
+                            (appSettings?.showVoicePresenceChip ?? true))
+                          const SizedBox(height: 12),
+                        _SecuritySessionPill(session: securitySession),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               if ((appSettings?.showDockOverlays ?? true) &&

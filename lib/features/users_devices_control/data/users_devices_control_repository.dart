@@ -1364,7 +1364,7 @@ class UsersDevicesControlRepository {
     final db = database;
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlAccessRules).get();
-      return rows
+      final databaseRules = rows
           .map((row) {
             final payload = row.payloadJson.isNotEmpty
                 ? _decodePayload(row.payloadJson)
@@ -1398,8 +1398,35 @@ class UsersDevicesControlRepository {
             });
           })
           .toList(growable: false);
+
+      final sourceRules = await _readAccessRulesFromSource();
+      if (sourceRules.isEmpty) {
+        return databaseRules;
+      }
+
+      final merged = <String, UsersDevicesControlAccessRule>{};
+      for (final rule in sourceRules) {
+        final key = rule.moduleId.trim().toLowerCase();
+        if (key.isEmpty) {
+          continue;
+        }
+        merged[key] = rule;
+      }
+      for (final rule in databaseRules) {
+        final key = rule.moduleId.trim().toLowerCase();
+        if (key.isEmpty) {
+          continue;
+        }
+        merged[key] = rule;
+      }
+
+      return merged.values.toList(growable: false);
     }
 
+    return _readAccessRulesFromSource();
+  }
+
+  Future<List<UsersDevicesControlAccessRule>> _readAccessRulesFromSource() async {
     final raw = await _readJsonMap(
       _accessRulesStoragePath,
       _accessRulesExamplePath,
@@ -1804,19 +1831,26 @@ class UsersDevicesControlRepository {
     AppDatabase db,
     Map<String, dynamic> seedAccessRules,
   ) async {
-    final existing = await db.select(db.usersDevicesControlAccessRules).get();
-    if (existing.isNotEmpty) {
-      return;
-    }
-
     final accessRules = seedAccessRules['rules'];
     if (accessRules is! List) {
       return;
     }
 
+    final existingRules =
+        await db.select(db.usersDevicesControlAccessRules).get();
+    final existingModuleIds = existingRules
+        .map((row) => row.moduleId)
+        .where((moduleId) => moduleId.isNotEmpty)
+        .map((moduleId) => moduleId.toLowerCase())
+        .toSet();
+
     for (final rule in accessRules
         .whereType<Map<String, dynamic>>()
         .map(UsersDevicesControlAccessRule.fromJson)) {
+      if (rule.moduleId.isNotEmpty &&
+          existingModuleIds.contains(rule.moduleId.toLowerCase())) {
+        continue;
+      }
       final timestamp = DateTime.now().toUtc();
       await db.into(db.usersDevicesControlAccessRules).insert(
             UsersDevicesControlAccessRulesCompanion.insert(
