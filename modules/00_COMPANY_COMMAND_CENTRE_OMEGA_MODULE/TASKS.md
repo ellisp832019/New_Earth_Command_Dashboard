@@ -25,6 +25,8 @@
 - [x] IP and asset register.
 - [x] Product portfolio tracker.
 - [x] Partnerships tracker.
+- [x] Evidence library source index.
+- [x] Director action board lane cleanup.
 
 ## Phase 4 - Safety
 - [x] Add read-only mode switch.

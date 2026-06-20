@@ -43,6 +43,7 @@ void main() {
     expect(find.text('IP & Asset Register'), findsOneWidget);
     expect(find.text('Open Assets'), findsOneWidget);
     expect(find.text('Evidence Library'), findsOneWidget);
+    expect(find.text('Source-linked file index'), findsOneWidget);
     expect(find.text('UK company admin checklist'), findsOneWidget);
     expect(find.text('This Week'), findsWidgets);
     expect(find.text('This Month'), findsWidgets);
@@ -81,6 +82,9 @@ void main() {
     expect(find.text('Export company summary'), findsOneWidget);
     expect(find.text('Open latest report'), findsOneWidget);
     expect(find.text('Summary report'), findsOneWidget);
+    expect(find.text('Today'), findsWidgets);
+    expect(find.text('This Week'), findsWidgets);
+    expect(find.text('Waiting'), findsWidgets);
 
     await tester.tap(find.text('Index Explorer').last);
     await tester.pumpAndSettle();

@@ -664,40 +664,30 @@ class _EvidenceLibraryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sections = _evidenceItems.map((item) => item.section).toSet().toList()
+      ..sort();
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Evidence Library',
           body:
-              'Read-only index of the source documents, templates, and module artifacts that support the company record.',
+              'Read-only source index of the documents, templates, and module artifacts that support the company record.',
           children: [
-            _EvidenceSectionCard(
-              title: 'Legal & finance',
-              items: _evidenceItems
-                  .where((item) => item.section == 'Legal & finance')
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: sections
+                  .map(
+                    (section) => _InlineTag(
+                      label: section,
+                      accent: AppColours.darkSecondary,
+                      foreground: AppColours.darkText,
+                    ),
+                  )
                   .toList(growable: false),
             ),
-            const SizedBox(height: 12),
-            _EvidenceSectionCard(
-              title: 'Website & marketing',
-              items: _evidenceItems
-                  .where((item) => item.section == 'Website & marketing')
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            _EvidenceSectionCard(
-              title: 'Product & operations',
-              items: _evidenceItems
-                  .where((item) => item.section == 'Product & operations')
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            _EvidenceSectionCard(
-              title: 'Module source',
-              items: _evidenceItems
-                  .where((item) => item.section == 'Module source')
-                  .toList(growable: false),
-            ),
+            const SizedBox(height: 14),
+            _EvidenceIndexCard(items: _evidenceItems),
           ],
         ),
       ],
@@ -750,7 +740,7 @@ class _ActionBoardTab extends StatelessWidget {
         _CalmSectionCard(
           title: 'Director action board',
           body:
-              'Simple lane view for the next practical company moves. Keep the board calm, short, and current.',
+              'Calm lane board for the next practical company moves. Keep each lane short, current, and easy to scan.',
           children: [
             _ActionBoardSummaryRow(
               lanes: orderedLanes,
@@ -761,7 +751,7 @@ class _ActionBoardTab extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: orderedLanes
-                  .map(
+                .map(
                     (lane) => SizedBox(
                       width: 260,
                       child: _ActionLaneCard(
@@ -1435,6 +1425,91 @@ class _EvidenceSectionCard extends StatelessWidget {
                             DataCell(
                               SizedBox(width: 280, child: Text(item.sourceFile)),
                             ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EvidenceIndexCard extends StatelessWidget {
+  const _EvidenceIndexCard({required this.items});
+
+  final List<_EvidenceItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedItems = [...items]..sort((a, b) {
+      final bySection = a.section.compareTo(b.section);
+      if (bySection != 0) {
+        return bySection;
+      }
+      return a.title.compareTo(b.title);
+    });
+
+    final counts = <String, int>{};
+    for (final item in sortedItems) {
+      counts[item.section] = (counts[item.section] ?? 0) + 1;
+    }
+
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Source-linked file index', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Each row shows the supporting artifact and the file that anchors it.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: counts.entries
+                  .map(
+                    (entry) => _InlineTag(
+                      label: '${entry.key} · ${entry.value}',
+                      accent: AppColours.darkSecondary,
+                      foreground: AppColours.darkText,
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 88,
+                  columns: const [
+                    DataColumn(label: Text('Artifact')),
+                    DataColumn(label: Text('Section')),
+                    DataColumn(label: Text('Kind')),
+                    DataColumn(label: Text('Source file')),
+                  ],
+                  rows: sortedItems
+                      .map(
+                        (item) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 280, child: Text(item.title))),
+                            DataCell(SizedBox(width: 180, child: Text(item.section))),
+                            DataCell(SizedBox(width: 140, child: Text(item.kind))),
+                            DataCell(SizedBox(width: 340, child: Text(item.sourceFile))),
                           ],
                         ),
                       )

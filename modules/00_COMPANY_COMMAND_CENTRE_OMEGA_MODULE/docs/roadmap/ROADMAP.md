@@ -13,6 +13,7 @@ Current slice: compliance, website, LinkedIn, and director board views now surfa
 
 ## v0.4 - Evidence library
 Capture and link evidence for grants, products, IP, and marketing.
+Current slice: the Evidence Library now reads as a source-linked file index instead of a loose artifact list, and the Director Action Board uses clearer lanes for Today, This Week, This Month, Waiting, and Done.
 
 ## v0.5 - Safe write-back
 Create/update markdown files with backup and audit log.
