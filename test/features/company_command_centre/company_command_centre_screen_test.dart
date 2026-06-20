@@ -63,6 +63,13 @@ void main() {
     expect(find.text('Public presence'), findsWidgets);
     expect(find.text('modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md'), findsWidgets);
 
+    await tester.tap(find.text('Finance Snapshot').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Finance task tracker'), findsOneWidget);
+    expect(find.text('Confirm bank account details'), findsOneWidget);
+    expect(find.text('Review VAT / PAYE timing'), findsOneWidget);
+
     await tester.tap(find.text('Settings').last);
     await tester.pumpAndSettle();
 

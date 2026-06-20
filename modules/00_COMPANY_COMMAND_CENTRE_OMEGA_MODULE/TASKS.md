@@ -20,10 +20,10 @@
 - [x] Director action board.
 - [x] Website and brand tracker.
 - [x] LinkedIn and marketing tracker.
-- [ ] Finance task tracker.
-- [ ] Grants pipeline.
-- [ ] IP and asset register.
-- [ ] Product portfolio tracker.
+- [x] Finance task tracker.
+- [x] Grants pipeline.
+- [x] IP and asset register.
+- [x] Product portfolio tracker.
 
 ## Phase 4 — Safety
 - [x] Add read-only mode switch.

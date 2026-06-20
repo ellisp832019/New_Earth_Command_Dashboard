@@ -425,18 +425,42 @@ class _FinanceTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = _financeTrackerItems;
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
-          title: 'Finance snapshot',
-          body: 'Track the current finance and admin state without editing it here.',
+          title: 'Finance task tracker',
+          body:
+              'Small finance follow-up list sourced from the company admin checklist and overview data.',
           children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CompanyAssetMetric(label: 'Tasks', value: '${items.length}'),
+                _CompanyAssetMetric(
+                  label: 'Tracked',
+                  value: '${items.where((item) => item.status == 'Tracked').length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Review',
+                  value: '${items.where((item) => item.status == 'Review').length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Planned',
+                  value: '${items.where((item) => item.status == 'Planned').length}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             _KeyValueRow(label: 'Bank', value: snapshot.overview.bank),
             const _KeyValueRow(label: 'Bookkeeping', value: 'To be linked'),
             const _KeyValueRow(label: 'Receipts', value: 'Capture queue ready'),
             const _KeyValueRow(label: 'Monthly reconciliation', value: 'Pending'),
             const _KeyValueRow(label: 'Accountant', value: 'To be linked'),
             const _KeyValueRow(label: 'VAT / PAYE', value: 'Review later'),
+            const SizedBox(height: 12),
+            _TrackerSectionCard(title: 'Finance tasks', items: items),
           ],
         ),
       ],
@@ -2510,6 +2534,57 @@ const List<_TrackerItem> _websiteTrackerItems = [
     status: 'Drafting',
     notes: 'Keep the legal footer visible and consistent across pages.',
     sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+  ),
+];
+
+const List<_TrackerItem> _financeTrackerItems = [
+  _TrackerItem(
+    section: 'Finance',
+    item: 'Confirm bank account details',
+    status: 'Tracked',
+    notes: 'Keep the active bank reference visible in the finance snapshot.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/company_overview.json',
+  ),
+  _TrackerItem(
+    section: 'Finance',
+    item: 'Choose bookkeeping process',
+    status: 'Drafting',
+    notes: 'Decide the simplest repeatable bookkeeping route.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _TrackerItem(
+    section: 'Finance',
+    item: 'Create receipt capture routine',
+    status: 'Drafting',
+    notes: 'Receipt capture should be simple before any automation is added.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _TrackerItem(
+    section: 'Finance',
+    item: 'Review monthly reconciliation',
+    status: 'Planned',
+    notes: 'Use the monthly review to keep the books calm and up to date.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _TrackerItem(
+    section: 'Finance',
+    item: 'Shortlist accountant',
+    status: 'Planned',
+    notes: 'Keep a shortlist ready for when external help is needed.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
+  ),
+  _TrackerItem(
+    section: 'Finance',
+    item: 'Review VAT / PAYE timing',
+    status: 'Review',
+    notes: 'Only step into VAT or PAYE when the company situation makes it useful.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
 ];
 
