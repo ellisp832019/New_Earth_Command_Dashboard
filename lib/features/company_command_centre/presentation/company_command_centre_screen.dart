@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../assets/application/assets_controller.dart';
 import '../data/company_command_centre_repository.dart';
 
 class CompanyCommandCentreScreen extends ConsumerWidget {
@@ -62,16 +63,7 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
                       _WebsiteBrandTab(snapshot: snapshot),
                       _LinkedInTab(snapshot: snapshot),
                       _ProductPortfolioTab(snapshot: snapshot),
-                      const _SimplePlaceholderTab(
-                        title: 'IP & Asset Register',
-                        body:
-                            'Read-only placeholder for the IP register and asset ledger.',
-                        chips: [
-                          'Assets',
-                          'IP',
-                          'Read only',
-                        ],
-                      ),
+                      _AssetOverviewTab(snapshot: snapshot),
                       _GrantsTab(snapshot: snapshot),
                       const _SimplePlaceholderTab(
                         title: 'Partnerships',
@@ -451,6 +443,28 @@ class _ProductPortfolioTab extends StatelessWidget {
   }
 }
 
+class _AssetOverviewTab extends StatelessWidget {
+  const _AssetOverviewTab({required this.snapshot});
+
+  final CompanyCommandCentreSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScrollView(
+      children: [
+        _CalmSectionCard(
+          title: 'IP & Asset Register',
+          body:
+              'This tab is a read-only summary and navigator. The live asset register stays in the Assets module.',
+          children: [
+            _AssetOverviewCard(snapshot: snapshot),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _GrantsTab extends StatelessWidget {
   const _GrantsTab({required this.snapshot});
 
@@ -610,6 +624,275 @@ class _ActionLine extends StatelessWidget {
   }
 }
 
+class _AssetOverviewCard extends ConsumerWidget {
+  const _AssetOverviewCard({required this.snapshot});
+
+  final CompanyCommandCentreSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workspaceAsync = ref.watch(assetWorkspaceProvider);
+    final projectSummaryAsync = ref.watch(assetProjectSummaryProvider);
+    final valuationAsync = ref.watch(assetValuationOverviewProvider);
+    final syncStatusAsync = ref.watch(assetSyncStatusProvider);
+
+    return workspaceAsync.when(
+      loading: () => const _LoadingAssetSummary(),
+      error: (error, stackTrace) => _AssetSummaryError(
+        onOpenAssets: () => context.push(RouteNames.assets),
+      ),
+      data: (workspace) {
+        return projectSummaryAsync.when(
+          loading: () => const _LoadingAssetSummary(),
+          error: (error, stackTrace) => _AssetSummaryError(
+            onOpenAssets: () => context.push(RouteNames.assets),
+          ),
+          data: (projects) {
+            return valuationAsync.when(
+              loading: () => const _LoadingAssetSummary(),
+              error: (error, stackTrace) => _AssetSummaryError(
+                onOpenAssets: () => context.push(RouteNames.assets),
+              ),
+              data: (valuation) {
+                return syncStatusAsync.when(
+                  loading: () => const _LoadingAssetSummary(),
+                  error: (error, stackTrace) => _AssetSummaryError(
+                    onOpenAssets: () => context.push(RouteNames.assets),
+                  ),
+                  data: (syncStatus) {
+                    final readyProjects = projects
+                        .where((project) => project.availableCount > 0)
+                        .length;
+                    final mixedProjects = projects
+                        .where((project) => project.isMixedProject)
+                        .length;
+                    final lowStockProjects = projects
+                        .where((project) => project.lowStockCount > 0)
+                        .length;
+
+                    return Card(
+                      elevation: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Asset overview',
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ),
+                                _InlineTag(
+                                  label: syncStatus.statusLabel,
+                                  accent: syncStatus.isConnected
+                                      ? Colors.green.shade400
+                                      : Colors.amber.shade600,
+                                  foreground: AppColours.darkText,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              workspace.assetsRootPath ??
+                                  snapshot.overview.omegaOsPath,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: [
+                                _CompanyAssetMetric(
+                                  label: 'Equipment',
+                                  value: '${workspace.equipmentCount}',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Parts',
+                                  value: '${workspace.partsCount}',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Projects',
+                                  value: '${projects.length}',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Ready projects',
+                                  value: '$readyProjects',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Mixed projects',
+                                  value: '$mixedProjects',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Low stock projects',
+                                  value: '$lowStockProjects',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Valuation rows',
+                                  value: '${valuation.valuationRowCount}',
+                                ),
+                                _CompanyAssetMetric(
+                                  label: 'Estimated value',
+                                  value: valuation.currentEstimatedValueTotal
+                                      .toStringAsFixed(2),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                FilledButton.icon(
+                                  onPressed: () => context.push(RouteNames.assets),
+                                  icon: const Icon(Icons.inventory_2_outlined),
+                                  label: const Text('Open Assets'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: () =>
+                                      context.push(RouteNames.assetEquipment),
+                                  icon: const Icon(Icons.precision_manufacturing_outlined),
+                                  label: const Text('Open Equipment'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: () =>
+                                      context.push(RouteNames.assetProjectSummary),
+                                  icon: const Icon(Icons.groups_2_outlined),
+                                  label: const Text('Open Project Summary'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: () =>
+                                      context.push(RouteNames.assetValuationSummary),
+                                  icon: const Icon(Icons.assessment_outlined),
+                                  label: const Text('Open Valuation'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                _InlineTag(
+                                  label: 'Assets + Treasury linked',
+                                  accent: AppColours.darkSecondary,
+                                  foreground: AppColours.darkText,
+                                ),
+                                _InlineTag(
+                                  label: '${syncStatus.entryCount} journal entries',
+                                  accent: AppColours.darkSecondary,
+                                  foreground: AppColours.darkText,
+                                ),
+                                _InlineTag(
+                                  label: '${syncStatus.conflictCount} conflicts',
+                                  accent: syncStatus.conflictCount == 0
+                                      ? AppColours.darkSuccess
+                                      : AppColours.darkAmber,
+                                  foreground: AppColours.darkText,
+                                ),
+                                _InlineTag(
+                                  label: '${valuation.projectTotals.length} value groups',
+                                  accent: AppColours.darkSecondary,
+                                  foreground: AppColours.darkText,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _CompanyAssetMetric extends StatelessWidget {
+  const _CompanyAssetMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingAssetSummary extends StatelessWidget {
+  const _LoadingAssetSummary();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _AssetSummaryError extends StatelessWidget {
+  const _AssetSummaryError({required this.onOpenAssets});
+
+  final VoidCallback onOpenAssets;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Asset summary could not load right now.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: onOpenAssets,
+          icon: const Icon(Icons.inventory_2_outlined),
+          label: const Text('Open Assets'),
+        ),
+      ],
+    );
+  }
+}
+
 class _ChecklistItem {
   const _ChecklistItem({
     required this.item,
@@ -673,6 +956,37 @@ class _ComplianceTable extends StatelessWidget {
               .toList(growable: false),
         ),
       ),
+    );
+  }
+}
+
+class _SimplePlaceholderTab extends StatelessWidget {
+  const _SimplePlaceholderTab({
+    required this.title,
+    required this.body,
+    required this.chips,
+  });
+
+  final String title;
+  final String body;
+  final List<String> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScrollView(
+      children: [
+        _CalmSectionCard(
+          title: title,
+          body: body,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: chips.map((chip) => Chip(label: Text(chip))).toList(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -837,37 +1151,6 @@ class _SectionScrollView extends StatelessWidget {
       itemBuilder: (context, index) => children[index],
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemCount: children.length,
-    );
-  }
-}
-
-class _SimplePlaceholderTab extends StatelessWidget {
-  const _SimplePlaceholderTab({
-    required this.title,
-    required this.body,
-    required this.chips,
-  });
-
-  final String title;
-  final String body;
-  final List<String> chips;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionScrollView(
-      children: [
-        _CalmSectionCard(
-          title: title,
-          body: body,
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: chips.map((chip) => Chip(label: Text(chip))).toList(),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
