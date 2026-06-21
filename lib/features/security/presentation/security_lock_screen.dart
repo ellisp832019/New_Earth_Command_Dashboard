@@ -607,7 +607,7 @@ class _SecuritySidePanel extends StatelessWidget {
         _VisualPanel(
           title: 'Unlock options',
           subtitle:
-              'This placeholder keeps the future login surface in one calm place while matching the access plan wording.',
+              'Choose the local user and trusted device that should unlock the session.',
           icon: Icons.login_outlined,
           compact: true,
           child: Column(
@@ -677,32 +677,12 @@ class _SecuritySidePanel extends StatelessWidget {
                     : const Icon(Icons.verified_outlined),
                 label: Text(isBusy ? 'Checking...' : 'Unlock locally'),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _VisualPanel(
-          title: 'Access plan',
-          subtitle: 'The unlock check stays easy to inspect',
-          icon: Icons.stacked_line_chart_outlined,
-          compact: true,
-          child: const Column(
-            children: [
-              _LayerRow(
-                title: 'Identity',
-                body: 'Who is requesting access?',
-              ),
-              _LayerRow(
-                title: 'Device trust',
-                body: 'Is this device known and trusted enough?',
-              ),
-              _LayerRow(
-                title: 'Role + permission',
-                body: 'Does the user have the right scope?',
-              ),
-              _LayerRow(
-                title: 'Audit trail',
-                body: 'Was the decision written locally?',
+              const SizedBox(height: 8),
+              Text(
+                'The session will lock itself again after inactivity.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),

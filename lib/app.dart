@@ -338,6 +338,11 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
     final accentColor = _accentColor(session);
     final activeUserLabel = _activeUserLabel(session);
     final presenceLabel = _presenceLabel(session);
+    final remainingFraction = session.timeout.inMilliseconds <= 0 ||
+            remaining == null
+        ? 0.0
+        : remaining.inMilliseconds / session.timeout.inMilliseconds;
+    final clampedFraction = remainingFraction.clamp(0.0, 1.0);
 
     return Material(
       color: Colors.transparent,
@@ -360,13 +365,13 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
                       isUnlocked ? Icons.lock_open : Icons.lock,
@@ -374,62 +379,93 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                       color: accentColor,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Security session',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Security session',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              Chip(
+                                visualDensity: VisualDensity.compact,
+                                label: Text(
+                                  isUnlocked ? 'Active' : 'Locked',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                side: BorderSide(
+                                  color: accentColor.withValues(alpha: 0.45),
+                                ),
+                                backgroundColor: accentColor.withValues(
+                                  alpha: 0.12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            activeUserLabel,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFFE4E8EA),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            presenceLabel,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: session.activeUserOnline
+                                  ? const Color(0xFFBFE9CF)
+                                  : const Color(0xFFFFC857),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  isUnlocked ? 'Active' : 'Locked',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: accentColor,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    value: isUnlocked ? clampedFraction : 0,
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
+                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  activeUserLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFFE4E8EA),
-                  ),
-                ),
-                Text(
-                  presenceLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: session.activeUserOnline
-                        ? const Color(0xFFBFE9CF)
-                        : const Color(0xFFFFC857),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  durationSinceConnect == null
-                      ? 'Connected: -'
-                      : 'Connected: ${_formatDuration(durationSinceConnect)} ago',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFFE4E8EA),
-                  ),
-                ),
-                Text(
-                  'Timeout: ${_formatDuration(session.timeout)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFFE4E8EA),
-                  ),
-                ),
-                Text(
-                  remaining == null
-                      ? 'Expires in: -'
-                      : 'Expires in: ${_formatDuration(remaining)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: accentColor,
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 6,
+                  children: [
+                    _SessionLabel(
+                      label: durationSinceConnect == null
+                          ? 'Connected: -'
+                          : 'Connected ${_formatDuration(durationSinceConnect)} ago',
+                    ),
+                    _SessionLabel(
+                      label: 'Timeout ${_formatDuration(session.timeout)}',
+                    ),
+                    _SessionLabel(
+                      label: remaining == null
+                          ? 'Expires: -'
+                          : 'Expires in ${_formatDuration(remaining)}',
+                      accent: accentColor,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -452,6 +488,33 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SessionLabel extends StatelessWidget {
+  const _SessionLabel({required this.label, this.accent});
+
+  final String label;
+  final Color? accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = accent ?? const Color(0xFFE4E8EA);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: baseColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: baseColor.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }
