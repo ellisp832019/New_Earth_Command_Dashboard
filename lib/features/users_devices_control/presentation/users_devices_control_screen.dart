@@ -1485,6 +1485,7 @@ class _UsersDevicesRouteGateScreenState
       case '01_USERS_AND_DEVICES_CONTROL':
         return 'Users & Devices Control';
       case 'newearth.finance_treasury':
+      case '17_FINANCE_AND_TREASURY':
         return 'Finance & Treasury';
       case 'repo_research_engine':
         return 'Repo Research Engine';
@@ -1502,6 +1503,7 @@ class _UsersDevicesRouteGateScreenState
       case '01_USERS_AND_DEVICES_CONTROL':
         return 'Identity, device trust, approval, and audit decisions stay local.';
       case 'newearth.finance_treasury':
+      case '17_FINANCE_AND_TREASURY':
         return 'Finance screens stay protected until local identity, role, trust, and audit checks pass.';
       case 'repo_research_engine':
         return 'Repository research stays guarded so evidence and exports remain local and auditable.';
@@ -1965,23 +1967,7 @@ class _UsersDevicesRouteGateScreenState
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _VisualPanel(
-                              title: 'Access plan',
-                              subtitle:
-                                  'The route stays closed until each local guard passes.',
-                              icon: Icons.fact_check_outlined,
-                              child: Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: const [
-                                  _CardChip(label: 'Identity'),
-                                  _CardChip(label: 'Role'),
-                                  _CardChip(label: 'Permission'),
-                                  _CardChip(label: 'Trust'),
-                                  _CardChip(label: 'Audit'),
-                                ],
-                              ),
-                            ),
+                            _GatekeeperSnapshotPanel(data: data),
                             const SizedBox(height: 16),
                             _VisualPanel(
                               title: 'Selected access context',
@@ -2039,6 +2025,217 @@ class _UsersDevicesRouteGateScreenState
       },
     );
   }
+}
+
+class _GatekeeperSnapshotPanel extends StatelessWidget {
+  const _GatekeeperSnapshotPanel({required this.data});
+
+  final UsersDevicesControlSnapshot data;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _gatekeeperRows(data);
+    final treasuryRule = rows.firstWhere(
+      (row) => row.moduleId == 'newearth.finance_treasury',
+      orElse: () => rows.first,
+    );
+    final pendingApprovals = data.approvalQueue
+        .where((request) => request.status == 'pending')
+        .length;
+
+    return _VisualPanel(
+      title: 'Gatekeeper snapshot',
+      subtitle:
+          'Treasury is the clearest example of the local access plan, with rules and audit state shown together.',
+      icon: Icons.fact_check_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _CardChip(label: '${data.accessRules.length} module rules'),
+              _CardChip(label: '${data.auditLog.length} audit events'),
+              _CardChip(label: '$pendingApprovals pending approvals'),
+              _CardChip(label: 'Treasury trust floor ${treasuryRule.trustFloor}'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 44,
+                dataRowMinHeight: 54,
+                dataRowMaxHeight: 92,
+                columns: const [
+                  DataColumn(label: Text('Module')),
+                  DataColumn(label: Text('Trust floor')),
+                  DataColumn(label: Text('View permission')),
+                  DataColumn(label: Text('Approvals')),
+                  DataColumn(label: Text('Latest audit')),
+                ],
+                rows: rows
+                    .map(
+                      (row) => DataRow(
+                        cells: [
+                          DataCell(
+                            SizedBox(
+                              width: 240,
+                              child: Text(row.label),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 120,
+                              child: Text('T${row.trustFloor}'),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 220,
+                              child: Text(row.viewPermission),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 220,
+                              child: Text(row.approvalSummary),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 320,
+                              child: Text(row.latestAuditSummary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.go(RouteNames.usersDevicesAccessMatrix),
+                icon: const Icon(Icons.grid_view_outlined),
+                label: const Text('Open access matrix'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Open audit log'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.usersDevicesApprovalQueue),
+                icon: const Icon(Icons.rule_folder_outlined),
+                label: const Text('Open approvals'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<_GatekeeperModuleRow> _gatekeeperRows(
+  UsersDevicesControlSnapshot data,
+) {
+  final auditIndex = <String, UsersDevicesControlAuditEvent>{};
+  for (final event in data.auditLog) {
+    final current = auditIndex[event.targetModule];
+    if (current == null || event.timestamp.compareTo(current.timestamp) >= 0) {
+      auditIndex[event.targetModule] = event;
+    }
+  }
+
+  final approvalCounts = <String, int>{};
+  for (final request in data.approvalQueue) {
+    if (request.status == 'pending') {
+      approvalCounts[request.targetModule] =
+          (approvalCounts[request.targetModule] ?? 0) + 1;
+    }
+  }
+
+  const orderedModules = <String>[
+    '17_FINANCE_AND_TREASURY',
+    'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE',
+    'gaia_voice_assistant',
+    'repo_research_engine',
+  ];
+
+  return orderedModules
+      .map((moduleId) {
+        final rule = data.accessRules.firstWhere(
+          (item) => item.moduleId == moduleId,
+          orElse: () => const UsersDevicesControlAccessRule(
+            moduleId: '',
+            requiresTrustLevel: 0,
+            requiresApprovalFor: [],
+          ),
+        );
+        return _GatekeeperModuleRow(
+          moduleId: moduleId,
+          label: _gatekeeperModuleLabel(moduleId),
+          trustFloor: rule.requiresTrustLevel,
+          viewPermission: rule.viewPermission.isEmpty
+              ? 'Not set'
+              : rule.viewPermission,
+          approvalSummary: rule.requiresApprovalFor.isEmpty
+              ? '${approvalCounts[moduleId] ?? 0} pending'
+              : '${rule.requiresApprovalFor.length} gated action${rule.requiresApprovalFor.length == 1 ? '' : 's'}',
+          latestAuditSummary: _gatekeeperAuditSummary(auditIndex[moduleId]),
+        );
+      })
+      .toList(growable: false);
+}
+
+String _gatekeeperModuleLabel(String moduleId) {
+  switch (moduleId) {
+    case '17_FINANCE_AND_TREASURY':
+      return 'Treasury';
+    case 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE':
+      return 'Alexa Voice Gateway';
+    case 'gaia_voice_assistant':
+      return 'GAIA Voice Assistant';
+    case 'repo_research_engine':
+      return 'Repo Research Engine';
+    default:
+      return moduleId;
+  }
+}
+
+String _gatekeeperAuditSummary(UsersDevicesControlAuditEvent? event) {
+  if (event == null) {
+    return 'No audit yet';
+  }
+  return '${event.result} - ${event.reason}';
+}
+
+class _GatekeeperModuleRow {
+  const _GatekeeperModuleRow({
+    required this.moduleId,
+    required this.label,
+    required this.trustFloor,
+    required this.viewPermission,
+    required this.approvalSummary,
+    required this.latestAuditSummary,
+  });
+
+  final String moduleId;
+  final String label;
+  final int trustFloor;
+  final String viewPermission;
+  final String approvalSummary;
+  final String latestAuditSummary;
 }
 
 class UsersDevicesApprovalQueueScreen extends ConsumerStatefulWidget {

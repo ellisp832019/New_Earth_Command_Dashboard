@@ -155,6 +155,18 @@ void main() {
           requiresTrustLevel: 3,
           requiresApprovalFor: ['assign_role'],
         ),
+        UsersDevicesControlAccessRule(
+          moduleId: '17_FINANCE_AND_TREASURY',
+          viewPermission: 'finance.view',
+          editPermission: 'finance.edit',
+          adminPermission: 'finance.admin',
+          requiresTrustLevel: 4,
+          requiresApprovalFor: [
+            'delete_record',
+            'export_data',
+            'change_bank_details',
+          ],
+        ),
       ],
     );
   }
@@ -203,9 +215,10 @@ void main() {
     expect(find.text('Open queue'), findsWidgets);
     expect(find.text('Seed demo path'), findsWidgets);
     expect(find.text('Reset demo data'), findsWidgets);
-    expect(find.text('Users'), findsWidgets);
-    expect(find.text('Devices'), findsWidgets);
-    expect(find.text('Access Matrix'), findsWidgets);
+    expect(find.text('Gatekeeper snapshot'), findsOneWidget);
+    expect(find.text('Treasury'), findsWidgets);
+    expect(find.text('Open access matrix'), findsOneWidget);
+    expect(find.text('Open audit log'), findsOneWidget);
     expect(find.text('Onboarding'), findsWidgets);
     expect(find.text('Approval Queue'), findsWidgets);
     expect(find.text('Audit Log'), findsWidgets);

@@ -7,7 +7,7 @@ JSON users, devices, roles, permissions, trust levels, audit, and approvals are 
 Working Dashboard screens and Module Hub card.
 
 ## v0.3 Gatekeeper
-Real module access checks and audit logging.
+Real module access checks, audit logging, and live gatekeeper snapshots.
 
 ## v0.4 Device onboarding
 QR/manual pairing and trust management.
