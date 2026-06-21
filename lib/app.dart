@@ -343,152 +343,165 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
         ? 0.0
         : remaining.inMilliseconds / session.timeout.inMilliseconds;
     final clampedFraction = remainingFraction.clamp(0.0, 1.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 260;
+        final contentSpacing = isCompact ? 8.0 : 10.0;
+        final labelSpacing = isCompact ? 8.0 : 10.0;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: _openSecurityLock,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0B1418).withValues(alpha: 0.92),
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: accentColor.withValues(alpha: 0.55),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+            onTap: _openSecurityLock,
+            child: Ink(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0B1418).withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.55),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.22),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompact ? 12 : 14,
+                  vertical: isCompact ? 10 : 12,
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      isUnlocked ? Icons.lock_open : Icons.lock,
-                      size: 16,
-                      color: accentColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          isUnlocked ? Icons.lock_open : Icons.lock,
+                          size: isCompact ? 14 : 16,
+                          color: accentColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  'Security session',
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Security session',
+                                      style:
+                                          theme.textTheme.labelMedium?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ),
+                                  Chip(
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    label: Text(
+                                      isUnlocked ? 'Active' : 'Locked',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    labelPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    side: BorderSide(
+                                      color: accentColor.withValues(alpha: 0.45),
+                                    ),
+                                    backgroundColor: accentColor.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                activeUserLabel,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFFE4E8EA),
                                 ),
                               ),
-                              Chip(
-                                visualDensity: VisualDensity.compact,
-                                label: Text(
-                                  isUnlocked ? 'Active' : 'Locked',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                labelPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                side: BorderSide(
-                                  color: accentColor.withValues(alpha: 0.45),
-                                ),
-                                backgroundColor: accentColor.withValues(
-                                  alpha: 0.12,
+                              const SizedBox(height: 2),
+                              Text(
+                                presenceLabel,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: session.activeUserOnline
+                                      ? const Color(0xFFBFE9CF)
+                                      : const Color(0xFFFFC857),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            activeUserLabel,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFFE4E8EA),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            presenceLabel,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: session.activeUserOnline
-                                  ? const Color(0xFFBFE9CF)
-                                  : const Color(0xFFFFC857),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: contentSpacing),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        minHeight: isCompact ? 5 : 6,
+                        value: isUnlocked ? clampedFraction : 0,
+                        backgroundColor: Colors.white.withValues(alpha: 0.08),
+                        valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    minHeight: 6,
-                    value: isUnlocked ? clampedFraction : 0,
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
-                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 6,
-                  children: [
-                    _SessionLabel(
-                      label: durationSinceConnect == null
-                          ? 'Connected: -'
-                          : 'Connected ${_formatDuration(durationSinceConnect)} ago',
+                    SizedBox(height: labelSpacing),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 6,
+                      children: [
+                        _SessionLabel(
+                          label: durationSinceConnect == null
+                              ? 'Connected: -'
+                              : 'Connected ${_formatDuration(durationSinceConnect)} ago',
+                        ),
+                        _SessionLabel(
+                          label: 'Timeout ${_formatDuration(session.timeout)}',
+                        ),
+                        _SessionLabel(
+                          label: remaining == null
+                              ? 'Expires: -'
+                              : 'Expires in ${_formatDuration(remaining)}',
+                          accent: accentColor,
+                        ),
+                      ],
                     ),
-                    _SessionLabel(
-                      label: 'Timeout ${_formatDuration(session.timeout)}',
-                    ),
-                    _SessionLabel(
-                      label: remaining == null
-                          ? 'Expires: -'
-                          : 'Expires in ${_formatDuration(remaining)}',
-                      accent: accentColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _MiniSessionAction(
-                      label: 'Open lock',
-                      icon: Icons.lock_outline,
-                      onPressed: _openSecurityLock,
-                    ),
-                    _MiniSessionAction(
-                      label: 'Access matrix',
-                      icon: Icons.grid_view_outlined,
-                      onPressed: _openAccessMatrix,
+                    SizedBox(height: labelSpacing),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniSessionAction(
+                          label: 'Open lock',
+                          icon: Icons.lock_outline,
+                          onPressed: _openSecurityLock,
+                        ),
+                        _MiniSessionAction(
+                          label: 'Open matrix',
+                          icon: Icons.grid_view_outlined,
+                          onPressed: _openAccessMatrix,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
