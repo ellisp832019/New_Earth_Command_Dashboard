@@ -48,7 +48,8 @@ void main() {
     expect(find.text('Source-linked product board'), findsOneWidget);
     expect(find.text('IP & Asset Register'), findsOneWidget);
     expect(find.text('Open Assets'), findsOneWidget);
-    expect(find.text('Asset navigator'), findsOneWidget);
+    expect(find.text('Open Equipment Register'), findsOneWidget);
+    expect(find.text('Source-linked asset registry'), findsOneWidget);
     expect(find.text('Evidence Library'), findsOneWidget);
     expect(find.text('Source-linked file index'), findsOneWidget);
     expect(find.text('Open source'), findsWidgets);

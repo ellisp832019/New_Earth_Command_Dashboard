@@ -775,8 +775,6 @@ class _AssetOverviewTab extends StatelessWidget {
               'This tab stays read-only and points into the live Assets module when you need to work with equipment, projects, or valuation.',
           children: [
             _AssetOverviewCard(snapshot: snapshot),
-            const SizedBox(height: 14),
-            const _AssetNavigatorCard(),
           ],
         ),
       ],
@@ -1263,144 +1261,6 @@ class _GrantsPipelineTable extends StatelessWidget {
   }
 }
 
-class _AssetNavigatorCard extends StatelessWidget {
-  const _AssetNavigatorCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = const [
-      _AssetNavigatorRow(
-        title: 'Open Assets',
-        description: 'Live asset workspace, evidence, labels, and register tools.',
-        route: RouteNames.assets,
-        sourceFile: 'lib/features/assets/presentation/assets_screen.dart',
-      ),
-      _AssetNavigatorRow(
-        title: 'Open Equipment Register',
-        description: 'The working register for equipment items and the main live CSV view.',
-        route: RouteNames.assetEquipment,
-        sourceFile: 'lib/features/assets/presentation/equipment_register_screen.dart',
-      ),
-      _AssetNavigatorRow(
-        title: 'Open Project Summary',
-        description: 'Project-linked asset summary for mixed, ready, and low-stock states.',
-        route: RouteNames.assetProjectSummary,
-        sourceFile: 'lib/features/assets/presentation/project_summary_screen.dart',
-      ),
-      _AssetNavigatorRow(
-        title: 'Open Valuation Summary',
-        description: 'Estimated value, valuation rows, and summary totals.',
-        route: RouteNames.assetValuationSummary,
-        sourceFile: 'lib/features/assets/presentation/valuation_summary_screen.dart',
-      ),
-    ];
-
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Asset navigator', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 6),
-            Text(
-              'Use these direct links to work in the real Assets module. The company tab only keeps a calm read-only summary.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowHeight: 44,
-                  dataRowMinHeight: 56,
-                  dataRowMaxHeight: 88,
-                  columns: const [
-                    DataColumn(label: Text('Action')),
-                    DataColumn(label: Text('Description')),
-                    DataColumn(label: Text('Route')),
-                    DataColumn(label: Text('Source file')),
-                  ],
-                  rows: rows
-                      .map(
-                        (row) => DataRow(
-                          cells: [
-                            DataCell(
-                              SizedBox(
-                                width: 220,
-                                child: Text(row.title),
-                              ),
-                            ),
-                            DataCell(
-                              SizedBox(
-                                width: 380,
-                                child: Text(row.description),
-                              ),
-                            ),
-                            DataCell(SizedBox(width: 180, child: Text(row.route))),
-                            DataCell(
-                              SizedBox(
-                                width: 340,
-                                child: Text(row.sourceFile),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      .toList(growable: false),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                FilledButton.icon(
-                  onPressed: () => context.push(RouteNames.assets),
-                  icon: const Icon(Icons.inventory_2_outlined),
-                  label: const Text('Open Assets'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.push(RouteNames.assetEquipment),
-                  icon: const Icon(Icons.precision_manufacturing_outlined),
-                  label: const Text('Open Equipment Register'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.push(RouteNames.assetProjectSummary),
-                  icon: const Icon(Icons.groups_2_outlined),
-                  label: const Text('Open Project Summary'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.push(RouteNames.assetValuationSummary),
-                  icon: const Icon(Icons.assessment_outlined),
-                  label: const Text('Open Valuation Summary'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AssetNavigatorRow {
-  const _AssetNavigatorRow({
-    required this.title,
-    required this.description,
-    required this.route,
-    required this.sourceFile,
-  });
-
-  final String title;
-  final String description;
-  final String route;
-  final String sourceFile;
-}
-
 class _ActionLine extends StatelessWidget {
   const _ActionLine({required this.item});
 
@@ -1555,139 +1415,15 @@ class _AssetOverviewCard extends ConsumerWidget {
                         .where((project) => project.lowStockCount > 0)
                         .length;
 
-                    return Card(
-                      elevation: 0,
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Asset overview',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                ),
-                                _InlineTag(
-                                  label: syncStatus.statusLabel,
-                                  accent: syncStatus.isConnected
-                                      ? Colors.green.shade400
-                                      : Colors.amber.shade600,
-                                  foreground: AppColours.darkText,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              workspace.assetsRootPath ??
-                                  snapshot.overview.omegaOsPath,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                _CompanyAssetMetric(
-                                  label: 'Equipment',
-                                  value: '${workspace.equipmentCount}',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Parts',
-                                  value: '${workspace.partsCount}',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Projects',
-                                  value: '${projects.length}',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Ready projects',
-                                  value: '$readyProjects',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Mixed projects',
-                                  value: '$mixedProjects',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Low stock projects',
-                                  value: '$lowStockProjects',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Valuation rows',
-                                  value: '${valuation.valuationRowCount}',
-                                ),
-                                _CompanyAssetMetric(
-                                  label: 'Estimated value',
-                                  value: valuation.currentEstimatedValueTotal
-                                      .toStringAsFixed(2),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                FilledButton.icon(
-                                  onPressed: () => context.push(RouteNames.assets),
-                                  icon: const Icon(Icons.inventory_2_outlined),
-                                  label: const Text('Open Assets'),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: () =>
-                                      context.push(RouteNames.assetEquipment),
-                                  icon: const Icon(Icons.precision_manufacturing_outlined),
-                                  label: const Text('Open Equipment'),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: () =>
-                                      context.push(RouteNames.assetProjectSummary),
-                                  icon: const Icon(Icons.groups_2_outlined),
-                                  label: const Text('Open Project Summary'),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: () =>
-                                      context.push(RouteNames.assetValuationSummary),
-                                  icon: const Icon(Icons.assessment_outlined),
-                                  label: const Text('Open Valuation'),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                _InlineTag(
-                                  label: 'Assets + Treasury linked',
-                                  accent: AppColours.darkSecondary,
-                                  foreground: AppColours.darkText,
-                                ),
-                                _InlineTag(
-                                  label: '${syncStatus.entryCount} journal entries',
-                                  accent: AppColours.darkSecondary,
-                                  foreground: AppColours.darkText,
-                                ),
-                                _InlineTag(
-                                  label: '${syncStatus.conflictCount} conflicts',
-                                  accent: syncStatus.conflictCount == 0
-                                      ? AppColours.darkSuccess
-                                      : AppColours.darkAmber,
-                                  foreground: AppColours.darkText,
-                                ),
-                                _InlineTag(
-                                  label: '${valuation.projectTotals.length} value groups',
-                                  accent: AppColours.darkSecondary,
-                                  foreground: AppColours.darkText,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                    return _AssetRegistryBoard(
+                      snapshot: snapshot,
+                      workspace: workspace,
+                      projects: projects,
+                      valuation: valuation,
+                      syncStatus: syncStatus,
+                      readyProjects: readyProjects,
+                      mixedProjects: mixedProjects,
+                      lowStockProjects: lowStockProjects,
                     );
                   },
                 );
@@ -1698,6 +1434,255 @@ class _AssetOverviewCard extends ConsumerWidget {
       },
     );
   }
+}
+
+class _AssetRegistryBoard extends StatelessWidget {
+  const _AssetRegistryBoard({
+    required this.snapshot,
+    required this.workspace,
+    required this.projects,
+    required this.valuation,
+    required this.syncStatus,
+    required this.readyProjects,
+    required this.mixedProjects,
+    required this.lowStockProjects,
+  });
+
+  final CompanyCommandCentreSnapshot snapshot;
+  final AssetWorkspaceSnapshot workspace;
+  final List<AssetProjectSummary> projects;
+  final AssetValuationOverview valuation;
+  final AssetSyncStatus syncStatus;
+  final int readyProjects;
+  final int mixedProjects;
+  final int lowStockProjects;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = [
+      _AssetRegistryRow(
+        name: 'Live workspace',
+        summary:
+            '${workspace.equipmentCount} equipment, ${workspace.partsCount} parts',
+        status: syncStatus.statusLabel,
+        sourceFile: 'lib/features/assets/presentation/assets_screen.dart',
+        route: RouteNames.assets,
+      ),
+      _AssetRegistryRow(
+        name: 'Equipment register',
+        summary: '${workspace.equipmentCount} tracked equipment items',
+        status: 'Working register',
+        sourceFile:
+            'lib/features/assets/presentation/equipment_register_screen.dart',
+        route: RouteNames.assetEquipment,
+      ),
+      _AssetRegistryRow(
+        name: 'Project summary',
+        summary:
+            '${projects.length} projects, $readyProjects ready, $mixedProjects mixed, $lowStockProjects low stock',
+        status: 'Read only summary',
+        sourceFile:
+            'lib/features/assets/presentation/project_summary_screen.dart',
+        route: RouteNames.assetProjectSummary,
+      ),
+      _AssetRegistryRow(
+        name: 'Valuation summary',
+        summary:
+            '${valuation.valuationRowCount} rows, ${valuation.currentEstimatedValueTotal.toStringAsFixed(2)} estimated value',
+        status: 'Tracked',
+        sourceFile:
+            'lib/features/assets/presentation/valuation_summary_screen.dart',
+        route: RouteNames.assetValuationSummary,
+      ),
+      _AssetRegistryRow(
+        name: 'Sync journal',
+        summary:
+            '${syncStatus.entryCount} entries, ${syncStatus.conflictCount} conflicts',
+        status: syncStatus.isConnected ? 'Connected' : 'Needs attention',
+        sourceFile: 'lib/features/assets/application/assets_controller.dart',
+        route: RouteNames.assets,
+      ),
+    ];
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Asset overview',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                _InlineTag(
+                  label: syncStatus.statusLabel,
+                  accent: syncStatus.isConnected
+                      ? Colors.green.shade400
+                      : Colors.amber.shade600,
+                  foreground: AppColours.darkText,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              workspace.assetsRootPath ?? snapshot.overview.omegaOsPath,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _CompanyAssetMetric(
+                  label: 'Equipment',
+                  value: '${workspace.equipmentCount}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Parts',
+                  value: '${workspace.partsCount}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Projects',
+                  value: '${projects.length}',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Conflicts',
+                  value: '${syncStatus.conflictCount}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Source-linked asset registry',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'This stays read-only and points into the live Assets module when you need to work the actual register.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 54,
+                  dataRowMaxHeight: 92,
+                  columns: const [
+                    DataColumn(label: Text('Area')),
+                    DataColumn(label: Text('Summary')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Source file')),
+                    DataColumn(label: Text('Open')),
+                    DataColumn(label: Text('Reveal')),
+                  ],
+                  rows: rows
+                      .map(
+                        (row) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 220, child: Text(row.name))),
+                            DataCell(
+                              SizedBox(
+                                width: 360,
+                                child: Text(row.summary),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: 160,
+                                child: Text(row.status),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: 350,
+                                child: Text(row.sourceFile),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => context.push(row.route),
+                                icon: const Icon(Icons.open_in_new_outlined),
+                                label: const Text('Open'),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _revealSourceLocation(row.sourceFile),
+                                icon: const Icon(Icons.folder_open_outlined),
+                                label: const Text('Reveal'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: () => context.push(RouteNames.assets),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Open Assets'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(RouteNames.assetEquipment),
+                  icon: const Icon(Icons.precision_manufacturing_outlined),
+                  label: const Text('Open Equipment Register'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(RouteNames.assetProjectSummary),
+                  icon: const Icon(Icons.groups_2_outlined),
+                  label: const Text('Open Project Summary'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(RouteNames.assetValuationSummary),
+                  icon: const Icon(Icons.assessment_outlined),
+                  label: const Text('Open Valuation Summary'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Read-only summary only. The live Assets module remains the working register.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkMutedText,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AssetRegistryRow {
+  const _AssetRegistryRow({
+    required this.name,
+    required this.summary,
+    required this.status,
+    required this.sourceFile,
+    required this.route,
+  });
+
+  final String name;
+  final String summary;
+  final String status;
+  final String sourceFile;
+  final String route;
 }
 
 class _EvidenceItem {

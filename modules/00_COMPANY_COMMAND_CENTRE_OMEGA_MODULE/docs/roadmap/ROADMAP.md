@@ -13,7 +13,7 @@ Current slice: compliance, website, LinkedIn, and director board views now surfa
 
 ## v0.4 - Evidence library
 Capture and link evidence for grants, products, IP, and marketing.
-Current slice: the Evidence Library now reads as a source-linked file index with open and reveal actions, the Website and LinkedIn trackers are page-level status boards, the Product Portfolio is now a source-linked board, the IP & Asset Register points into the live Assets module with direct navigators, the Grants Pipeline is a source-linked board with next actions, and the Director Action Board uses clearer lanes for Today, This Week, This Month, Waiting, and Done.
+Current slice: the Evidence Library now reads as a source-linked file index with open and reveal actions, the Website and LinkedIn trackers are page-level status boards, the Product Portfolio is now a source-linked board, the IP & Asset Register is now a read-only source-linked asset summary that points into the live Assets module, the Grants Pipeline is a source-linked board with next actions, and the Director Action Board uses clearer lanes for Today, This Week, This Month, Waiting, and Done.
 
 ## v0.5 - Safe write-back
 Create/update markdown files with backup and audit log.
