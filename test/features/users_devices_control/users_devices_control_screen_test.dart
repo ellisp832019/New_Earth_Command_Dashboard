@@ -222,6 +222,22 @@ void main() {
     expect(find.text('Onboarding'), findsWidgets);
     expect(find.text('Approval Queue'), findsWidgets);
     expect(find.text('Audit Log'), findsWidgets);
+
+    await tester.tap(find.text('Onboarding').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trust posture'), findsOneWidget);
+    expect(find.text('Trust levels'), findsOneWidget);
+
+    await tester.tap(find.text('Approval Queue').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Queue posture'), findsOneWidget);
+
+    await tester.tap(find.text('Audit Log').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Audit posture'), findsOneWidget);
   });
 
 }

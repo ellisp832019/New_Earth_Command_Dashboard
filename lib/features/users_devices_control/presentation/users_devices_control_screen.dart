@@ -1211,6 +1211,12 @@ class _UsersDevicesDeviceOnboardingScreenState
                 ),
               ),
               const SizedBox(height: 16),
+              _TrustPosturePanel(
+                trustBands: trustBands,
+                trustedDevices: trustedDevices,
+                template: _template,
+              ),
+              const SizedBox(height: 16),
               _SummaryRow(
                 items: [
                   ('Devices', data.devices.length),
@@ -1440,6 +1446,77 @@ class _UsersDevicesDeviceOnboardingScreenState
           ),
         );
       },
+    );
+  }
+}
+
+class _TrustPosturePanel extends StatelessWidget {
+  const _TrustPosturePanel({
+    required this.trustBands,
+    required this.trustedDevices,
+    required this.template,
+  });
+
+  final List<UsersDevicesControlTrustLevelDefinition> trustBands;
+  final List<UsersDevicesControlDevice> trustedDevices;
+  final String template;
+
+  @override
+  Widget build(BuildContext context) {
+    final topDevice = trustedDevices.isEmpty ? null : trustedDevices.first;
+    return _VisualPanel(
+      title: 'Trust posture',
+      subtitle:
+          'Device onboarding is mostly about choosing the right trust band and recording the pairing cleanly.',
+      icon: Icons.verified_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _CardChip(label: '${trustBands.length} trust bands'),
+              _CardChip(label: '${trustedDevices.length} trusted devices'),
+              _CardChip(label: 'Template: ${template.toUpperCase()}'),
+              if (topDevice != null) _CardChip(label: 'Top trust: ${topDevice.name}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 44,
+                dataRowMinHeight: 54,
+                dataRowMaxHeight: 88,
+                columns: const [
+                  DataColumn(label: Text('Level')),
+                  DataColumn(label: Text('Name')),
+                  DataColumn(label: Text('Description')),
+                ],
+                rows: trustBands
+                    .map(
+                      (level) => DataRow(
+                        cells: [
+                          DataCell(SizedBox(width: 100, child: Text('T${level.level}'))),
+                          DataCell(SizedBox(width: 180, child: Text(level.name))),
+                          DataCell(
+                            SizedBox(
+                              width: 420,
+                              child: Text(level.description),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2344,6 +2421,8 @@ class _UsersDevicesApprovalQueueScreenState
                 ],
               ),
               const SizedBox(height: 16),
+              _ApprovalQueueSnapshotPanel(data: data),
+              const SizedBox(height: 16),
               _SummaryRow(
                 items: [
                   ('All', data.approvalQueue.length),
@@ -2475,6 +2554,133 @@ class _UsersDevicesApprovalQueueScreenState
   }
 }
 
+class _ApprovalQueueSnapshotPanel extends StatelessWidget {
+  const _ApprovalQueueSnapshotPanel({required this.data});
+
+  final UsersDevicesControlSnapshot data;
+
+  @override
+  Widget build(BuildContext context) {
+    final pendingByModule = <String, int>{};
+    for (final request in data.approvalQueue) {
+      if (request.status == 'pending') {
+        pendingByModule[request.targetModule] =
+            (pendingByModule[request.targetModule] ?? 0) + 1;
+      }
+    }
+    final topModule = pendingByModule.entries.isEmpty
+        ? null
+        : pendingByModule.entries.toList(growable: false)
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+    return _VisualPanel(
+      title: 'Queue posture',
+      subtitle:
+          'Pending requests are easier to scan when the module mix and status pressure are shown first.',
+      icon: Icons.rule_folder_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _CardChip(label: '${data.approvalQueue.length} total requests'),
+              _CardChip(label: '${pendingByModule.values.fold<int>(0, (a, b) => a + b)} pending'),
+              if (topModule != null)
+                _CardChip(label: 'Top module: ${_approvalModuleLabel(topModule.first.key)}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 44,
+                dataRowMinHeight: 54,
+                dataRowMaxHeight: 88,
+                columns: const [
+                  DataColumn(label: Text('Module')),
+                  DataColumn(label: Text('Pending')),
+                  DataColumn(label: Text('Status mix')),
+                ],
+                rows: pendingByModule.entries.isEmpty
+                    ? [
+                        const DataRow(
+                          cells: [
+                            DataCell(Text('No pending approvals')),
+                            DataCell(Text('-')),
+                            DataCell(Text('-')),
+                          ],
+                        ),
+                      ]
+                    : pendingByModule.entries
+                        .map(
+                          (entry) => DataRow(
+                            cells: [
+                              DataCell(
+                                SizedBox(
+                                  width: 250,
+                                  child: Text(_approvalModuleLabel(entry.key)),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 120,
+                                  child: Text(entry.value.toString()),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 240,
+                                  child: Text(_approvalStatusMix(
+                                    data.approvalQueue,
+                                    entry.key,
+                                  )),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        .toList(growable: false),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _approvalModuleLabel(String moduleId) {
+  switch (moduleId) {
+    case '01_USERS_AND_DEVICES_CONTROL':
+      return 'Users & Devices Control';
+    case '17_FINANCE_AND_TREASURY':
+      return 'Treasury';
+    case 'repo_research_engine':
+      return 'Repo Research Engine';
+    case 'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE':
+      return 'Alexa Voice Gateway';
+    case 'gaia_voice_assistant':
+      return 'GAIA Voice Assistant';
+    default:
+      return moduleId;
+  }
+}
+
+String _approvalStatusMix(
+  List<UsersDevicesControlApprovalRequest> requests,
+  String moduleId,
+) {
+  final matches = requests.where((request) => request.targetModule == moduleId);
+  final pending = matches.where((request) => request.status == 'pending').length;
+  final allowed = matches.where((request) => request.status == 'allowed').length;
+  final denied = matches.where((request) => request.status == 'denied').length;
+  return '$pending pending, $allowed allowed, $denied denied';
+}
+
 class UsersDevicesAuditLogScreen extends ConsumerStatefulWidget {
   const UsersDevicesAuditLogScreen({super.key, this.highlightEventId});
 
@@ -2585,6 +2791,8 @@ class _UsersDevicesAuditLogScreenState
               ],
             ),
             const SizedBox(height: 16),
+            _AuditSnapshotPanel(events: data.auditLog),
+            const SizedBox(height: 16),
             if (_filteredAuditEvents(data.auditLog).isEmpty)
               _EmptyCollectionState(
                 icon: Icons.receipt_long_outlined,
@@ -2671,6 +2879,125 @@ class _UsersDevicesAuditLogScreenState
           return haystack.contains(query);
         })
         .toList(growable: false);
+  }
+}
+
+class _AuditSnapshotPanel extends StatelessWidget {
+  const _AuditSnapshotPanel({required this.events});
+
+  final List<UsersDevicesControlAuditEvent> events;
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedEvents = [...events]
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final latest = sortedEvents.isNotEmpty ? sortedEvents.first : null;
+    final allowed = events.where((event) => event.result == 'allowed').length;
+    final denied = events.where((event) => event.result == 'denied').length;
+    final pending = events.where((event) => event.result == 'pending').length;
+    final moduleCounts = <String, int>{};
+    for (final event in events) {
+      moduleCounts[event.targetModule] = (moduleCounts[event.targetModule] ?? 0) + 1;
+    }
+
+    return _VisualPanel(
+      title: 'Audit posture',
+      subtitle:
+          'Recent access decisions are easier to scan when the newest event and result mix stay visible.',
+      icon: Icons.receipt_long_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _CardChip(label: '${events.length} total events'),
+              _CardChip(label: '$allowed allowed'),
+              _CardChip(label: '$denied denied'),
+              _CardChip(label: '$pending pending'),
+              if (latest != null) _CardChip(label: 'Latest: ${latest.eventType}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (latest != null)
+            _VisualPanel(
+              title: 'Latest audit event',
+              subtitle: '${latest.timestamp} - ${_approvalModuleLabel(latest.targetModule)}',
+              icon: Icons.verified_outlined,
+              compact: true,
+              child: Text(
+                '${latest.actorId} / ${latest.deviceId} / ${latest.action} - ${latest.result}',
+              ),
+            ),
+          if (latest != null) const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 44,
+                dataRowMinHeight: 54,
+                dataRowMaxHeight: 88,
+                columns: const [
+                  DataColumn(label: Text('Module')),
+                  DataColumn(label: Text('Events')),
+                  DataColumn(label: Text('Latest result')),
+                ],
+                rows: moduleCounts.entries.isEmpty
+                    ? [
+                        const DataRow(
+                          cells: [
+                            DataCell(Text('No audit events yet')),
+                            DataCell(Text('-')),
+                            DataCell(Text('-')),
+                          ],
+                        ),
+                      ]
+                    : moduleCounts.entries
+                        .map(
+                          (entry) => DataRow(
+                            cells: [
+                              DataCell(
+                                SizedBox(
+                                  width: 250,
+                                  child: Text(_approvalModuleLabel(entry.key)),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 120,
+                                  child: Text(entry.value.toString()),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 220,
+                                  child: Text(
+                                    sortedEvents
+                                            .where((event) =>
+                                                event.targetModule == entry.key)
+                                            .isEmpty
+                                        ? 'No result yet'
+                                        : sortedEvents
+                                            .firstWhere(
+                                              (event) =>
+                                                  event.targetModule == entry.key,
+                                            )
+                                            .result,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        .toList(growable: false),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
