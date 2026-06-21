@@ -508,6 +508,10 @@ class _LinkedInTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = _linkedinTrackerItems;
+    final profile = items.where((item) => item.section == 'Profile').length;
+    final companyPage = items.where((item) => item.section == 'Company Page').length;
+    final contentRhythm = items.where((item) => item.section == 'Content Rhythm').length;
+    final launchTasks = items.where((item) => item.section == 'Launch Tasks').length;
     final marketingActions = snapshot.actionBoard
         .where(
           (item) =>
@@ -521,7 +525,7 @@ class _LinkedInTab extends StatelessWidget {
         _CalmSectionCard(
           title: 'LinkedIn & marketing',
           body:
-              'Same calm tracker layout as Website. Keep public awareness connected to what is actually being built.',
+              'Same calm page-board layout as Website. Keep public awareness connected to what is actually being built.',
           children: [
             const _KeyValueRow(label: 'Company page', value: 'Not yet published'),
             const _KeyValueRow(label: 'Content rhythm', value: 'Build log / founder note'),
@@ -530,43 +534,14 @@ class _LinkedInTab extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _CompanyAssetMetric(label: 'Profile', value: '${items.where((item) => item.section == 'Profile').length}'),
-                _CompanyAssetMetric(
-                  label: 'Company Page',
-                  value: '${items.where((item) => item.section == 'Company Page').length}',
-                ),
-                _CompanyAssetMetric(
-                  label: 'Content Rhythm',
-                  value: '${items.where((item) => item.section == 'Content Rhythm').length}',
-                ),
-                _CompanyAssetMetric(
-                  label: 'Launch Tasks',
-                  value: '${items.where((item) => item.section == 'Launch Tasks').length}',
-                ),
+                _CompanyAssetMetric(label: 'Profile', value: '$profile'),
+                _CompanyAssetMetric(label: 'Company Page', value: '$companyPage'),
+                _CompanyAssetMetric(label: 'Content Rhythm', value: '$contentRhythm'),
+                _CompanyAssetMetric(label: 'Launch Tasks', value: '$launchTasks'),
               ],
             ),
             const SizedBox(height: 12),
-            _TrackerSectionCard(
-              title: 'Profile',
-              items: items.where((item) => item.section == 'Profile').toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            _TrackerSectionCard(
-              title: 'Company Page',
-              items: items.where((item) => item.section == 'Company Page').toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            _TrackerSectionCard(
-              title: 'Content Rhythm',
-              items: items
-                  .where((item) => item.section == 'Content Rhythm')
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            _TrackerSectionCard(
-              title: 'Launch Tasks',
-              items: items.where((item) => item.section == 'Launch Tasks').toList(growable: false),
-            ),
+            _LinkedInPageBoard(items: items),
             if (marketingActions.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
@@ -1083,6 +1058,8 @@ class _GrantsPipelineTable extends StatelessWidget {
                     DataColumn(label: Text('Fit')),
                     DataColumn(label: Text('Next action')),
                     DataColumn(label: Text('Source file')),
+                    DataColumn(label: Text('Open')),
+                    DataColumn(label: Text('Reveal')),
                   ],
                   rows: sortedItems
                       .map(
@@ -1095,7 +1072,27 @@ class _GrantsPipelineTable extends StatelessWidget {
                             DataCell(
                               SizedBox(
                                 width: 260,
-                                child: Text('data/mock/grants_pipeline.json'),
+                                child: Text(
+                                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/grants_pipeline.json',
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _openSourceLocation(
+                                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/grants_pipeline.json',
+                                ),
+                                icon: const Icon(Icons.open_in_new_outlined),
+                                label: const Text('Open'),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _revealSourceLocation(
+                                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/grants_pipeline.json',
+                                ),
+                                icon: const Icon(Icons.folder_open_outlined),
+                                label: const Text('Reveal'),
                               ),
                             ),
                           ],
@@ -1699,6 +1696,7 @@ class _EvidenceIndexCard extends StatelessWidget {
                     DataColumn(label: Text('Kind')),
                     DataColumn(label: Text('Source file')),
                     DataColumn(label: Text('Open')),
+                    DataColumn(label: Text('Reveal')),
                   ],
                   rows: sortedItems
                       .map(
@@ -1713,6 +1711,13 @@ class _EvidenceIndexCard extends StatelessWidget {
                                 onPressed: () => _openSourceLocation(item.sourceFile),
                                 icon: const Icon(Icons.open_in_new_outlined),
                                 label: const Text('Open source'),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _revealSourceLocation(item.sourceFile),
+                                icon: const Icon(Icons.folder_open_outlined),
+                                label: const Text('Reveal'),
                               ),
                             ),
                           ],
@@ -2181,6 +2186,86 @@ class _WebsitePageBoard extends StatelessWidget {
   }
 }
 
+class _LinkedInPageBoard extends StatelessWidget {
+  const _LinkedInPageBoard({required this.items});
+
+  final List<_TrackerItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedItems = [...items]
+      ..sort((a, b) {
+        final bySection = a.section.compareTo(b.section);
+        if (bySection != 0) {
+          return bySection;
+        }
+        final byStatus = a.status.compareTo(b.status);
+        if (byStatus != 0) {
+          return byStatus;
+        }
+        return a.item.compareTo(b.item);
+      });
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Page-level tracker', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Each row keeps the profile, company page, content rhythm, and launch tasks in one calm view.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 88,
+                  columns: const [
+                    DataColumn(label: Text('Page')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Notes')),
+                    DataColumn(label: Text('Source file')),
+                    DataColumn(label: Text('Open')),
+                  ],
+                  rows: sortedItems
+                      .map(
+                        (item) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 260, child: Text(item.item))),
+                            DataCell(Chip(label: Text(item.status))),
+                            DataCell(
+                              SizedBox(width: 360, child: Text(item.notes)),
+                            ),
+                            DataCell(SizedBox(width: 320, child: Text(item.sourceFile))),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _openSourceLocation(item.sourceFile),
+                                icon: const Icon(Icons.open_in_new_outlined),
+                                label: const Text('Open source'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _KeyValueRow extends StatelessWidget {
   const _KeyValueRow({required this.label, required this.value});
 
@@ -2262,8 +2347,15 @@ Future<void> _openSourceLocation(String sourcePath) async {
     return;
   }
 
+  final entityType = FileSystemEntity.typeSync(trimmedPath, followLinks: false);
+  final isDirectory = entityType == FileSystemEntityType.directory;
+
   if (Platform.isWindows) {
-    await Process.start('cmd.exe', ['/c', 'start', '', trimmedPath]);
+    if (isDirectory) {
+      await Process.start('explorer.exe', [trimmedPath]);
+    } else {
+      await Process.start('cmd.exe', ['/c', 'start', '', trimmedPath]);
+    }
     return;
   }
 
@@ -2273,6 +2365,37 @@ Future<void> _openSourceLocation(String sourcePath) async {
   }
 
   await Process.start('xdg-open', [trimmedPath]);
+}
+
+Future<void> _revealSourceLocation(String sourcePath) async {
+  final trimmedPath = sourcePath.trim();
+  if (trimmedPath.isEmpty) {
+    return;
+  }
+
+  final entityType = FileSystemEntity.typeSync(trimmedPath, followLinks: false);
+  final isDirectory = entityType == FileSystemEntityType.directory;
+
+  if (Platform.isWindows) {
+    if (isDirectory) {
+      await Process.start('explorer.exe', [trimmedPath]);
+    } else {
+      await Process.start('explorer.exe', ['/select,$trimmedPath']);
+    }
+    return;
+  }
+
+  if (Platform.isMacOS) {
+    if (isDirectory) {
+      await Process.start('open', [trimmedPath]);
+    } else {
+      await Process.start('open', ['-R', trimmedPath]);
+    }
+    return;
+  }
+
+  final folderPath = isDirectory ? trimmedPath : File(trimmedPath).parent.path;
+  await Process.start('xdg-open', [folderPath]);
 }
 
 class _LinkedFileTable extends StatelessWidget {

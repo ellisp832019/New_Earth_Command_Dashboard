@@ -31,6 +31,8 @@
 - [x] Grants pipeline source-linked board.
 - [x] Website page-level status board.
 - [x] Evidence rows open source files and folders.
+- [x] LinkedIn page-level status board.
+- [x] Grants and evidence source reveal actions.
 
 ## Phase 4 - Safety
 - [x] Add read-only mode switch.

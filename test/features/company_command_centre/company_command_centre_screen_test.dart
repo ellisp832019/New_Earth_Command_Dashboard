@@ -39,6 +39,8 @@ void main() {
     expect(find.text('Website & brand'), findsOneWidget);
     expect(find.text('Page-level tracker'), findsOneWidget);
     expect(find.text('LinkedIn & marketing'), findsOneWidget);
+    expect(find.text('Page-level tracker'), findsWidgets);
+    expect(find.text('Open source'), findsWidgets);
     expect(find.text('Create Technologies page'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
     expect(find.text('IP & Asset Register'), findsOneWidget);
