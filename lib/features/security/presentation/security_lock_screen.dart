@@ -606,7 +606,7 @@ class _SecurityHero extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onUnlock,
                 icon: const Icon(Icons.lock_open_outlined),
-                label: const Text('Open dashboard'),
+                label: const Text('Unlock session'),
               ),
               if (canContinue && onContinue != null)
                 FilledButton.tonalIcon(
