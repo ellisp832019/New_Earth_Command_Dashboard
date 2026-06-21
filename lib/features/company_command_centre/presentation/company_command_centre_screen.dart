@@ -220,6 +220,17 @@ class _OverviewTab extends StatelessWidget {
     final grantCount = indexRecords.where((record) => record.labels.contains('grant')).length;
     final ipAssetCount = indexRecords.where((record) => record.labels.contains('ip_asset')).length;
     final evidenceCount = indexRecords.where((record) => record.isEvidence).length;
+    final quickActions = [
+      _OverviewAction(label: 'Website', tabIndex: 3, icon: Icons.language_outlined),
+      _OverviewAction(label: 'LinkedIn', tabIndex: 4, icon: Icons.cases_outlined),
+      _OverviewAction(label: 'Products', tabIndex: 5, icon: Icons.inventory_2_outlined),
+      _OverviewAction(label: 'Grants', tabIndex: 7, icon: Icons.rocket_launch_outlined),
+      _OverviewAction(
+        label: 'Assets',
+        tabIndex: 6,
+        icon: Icons.precision_manufacturing_outlined,
+      ),
+    ];
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
@@ -229,6 +240,37 @@ class _OverviewTab extends StatelessWidget {
             _KeyValueRow(label: 'Status', value: overview.status),
             _KeyValueRow(label: 'Owner', value: 'New Earth Advanced Technologies Ltd'),
             _KeyValueRow(label: 'Omega OS source', value: overview.omegaOsPath),
+          ],
+        ),
+        _CalmSectionCard(
+          title: 'Today at a glance',
+          body:
+              'Keep the day calm by jumping directly to the most active company areas from one place.',
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CompanyAssetMetric(label: 'Actions', value: '$actionCount'),
+                _CompanyAssetMetric(label: 'Deadlines', value: '$deadlineCount'),
+                _CompanyAssetMetric(label: 'Products', value: '$productCount'),
+                _CompanyAssetMetric(label: 'Grants', value: '$grantCount'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: quickActions
+                  .map(
+                    (action) => FilledButton.tonalIcon(
+                      onPressed: () => _jumpToTab(context, action.tabIndex),
+                      icon: Icon(action.icon),
+                      label: Text('Open ${action.label}'),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
           ],
         ),
         _CalmSectionCard(
@@ -345,6 +387,27 @@ class _OverviewTab extends StatelessWidget {
       ],
     );
   }
+}
+
+void _jumpToTab(BuildContext context, int index) {
+  final controller = DefaultTabController.of(context);
+  if (controller == null) {
+    return;
+  }
+
+  controller.animateTo(index);
+}
+
+class _OverviewAction {
+  const _OverviewAction({
+    required this.label,
+    required this.tabIndex,
+    required this.icon,
+  });
+
+  final String label;
+  final int tabIndex;
+  final IconData icon;
 }
 
 class _ComplianceTab extends StatelessWidget {
@@ -565,43 +628,134 @@ class _ProductPortfolioTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = snapshot.productPortfolio;
+    final ready = items.where((item) => item.status.toLowerCase() == 'ready').length;
+    final drafting = items.where((item) => item.status.toLowerCase() == 'drafting').length;
+    final planned = items.where((item) => item.status.toLowerCase() == 'planned').length;
+    final types = items.map((item) => item.type).toSet().length;
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Product portfolio',
-          body: 'Mock portfolio data for the first read-only shell.',
+          body:
+              'Calm product board for the mock portfolio, with status, readiness, and source context kept together.',
           children: [
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: snapshot.productPortfolio
-                  .map(
-                    (item) => SizedBox(
-                      width: 300,
-                      child: Card(
-                        elevation: 0,
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.name, style: Theme.of(context).textTheme.titleMedium),
-                              const SizedBox(height: 4),
-                              Text(item.type),
-                              const SizedBox(height: 8),
-                              Text('Status: ${item.status}'),
-                              Text('Readiness: ${item.commercialReadiness}'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CompanyAssetMetric(label: 'Products', value: '${items.length}'),
+                _CompanyAssetMetric(label: 'Ready', value: '$ready'),
+                _CompanyAssetMetric(label: 'Drafting', value: '$drafting'),
+                _CompanyAssetMetric(label: 'Planned', value: '$planned'),
+                _CompanyAssetMetric(label: 'Types', value: '$types'),
+              ],
             ),
+            const SizedBox(height: 12),
+            _ProductPortfolioBoard(items: items),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ProductPortfolioBoard extends StatelessWidget {
+  const _ProductPortfolioBoard({required this.items});
+
+  final List<CompanyProductItemData> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedItems = [...items]
+      ..sort((a, b) {
+        final byStatus = a.status.compareTo(b.status);
+        if (byStatus != 0) {
+          return byStatus;
+        }
+        return a.name.compareTo(b.name);
+      });
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Source-linked product board', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Each row stays close to the portfolio record and shows the current readiness at a glance.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 44,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 88,
+                  columns: const [
+                    DataColumn(label: Text('Product')),
+                    DataColumn(label: Text('Type')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Readiness')),
+                    DataColumn(label: Text('Source file')),
+                    DataColumn(label: Text('Open')),
+                    DataColumn(label: Text('Reveal')),
+                  ],
+                  rows: sortedItems
+                      .map(
+                        (item) => DataRow(
+                          cells: [
+                            DataCell(SizedBox(width: 260, child: Text(item.name))),
+                            DataCell(SizedBox(width: 180, child: Text(item.type))),
+                            DataCell(Chip(label: Text(item.status))),
+                            DataCell(
+                              SizedBox(
+                                width: 220,
+                                child: Text(item.commercialReadiness),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: 300,
+                                child: Text(
+                                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/product_portfolio.json',
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _openSourceLocation(
+                                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/product_portfolio.json',
+                                ),
+                                icon: const Icon(Icons.open_in_new_outlined),
+                                label: const Text('Open source'),
+                              ),
+                            ),
+                            DataCell(
+                              TextButton.icon(
+                                onPressed: () => _revealSourceLocation(
+                                  'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/mock/product_portfolio.json',
+                                ),
+                                icon: const Icon(Icons.folder_open_outlined),
+                                label: const Text('Reveal'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -33,6 +33,8 @@
 - [x] Evidence rows open source files and folders.
 - [x] LinkedIn page-level status board.
 - [x] Grants and evidence source reveal actions.
+- [x] Product portfolio source-linked board.
+- [x] Overview quick action strip.
 
 ## Phase 4 - Safety
 - [x] Add read-only mode switch.

@@ -30,6 +30,8 @@ void main() {
 
     expect(find.text('Company Command Centre'), findsAtLeastNWidgets(1));
     expect(find.text('Overview'), findsWidgets);
+    expect(find.text('Today at a glance'), findsOneWidget);
+    expect(find.text('Open Website'), findsOneWidget);
     expect(find.text('Settings'), findsWidgets);
     expect(find.text('New Earth Advanced Technologies Ltd'), findsOneWidget);
     expect(
@@ -43,6 +45,7 @@ void main() {
     expect(find.text('Open source'), findsWidgets);
     expect(find.text('Create Technologies page'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
+    expect(find.text('Source-linked product board'), findsOneWidget);
     expect(find.text('IP & Asset Register'), findsOneWidget);
     expect(find.text('Open Assets'), findsOneWidget);
     expect(find.text('Asset navigator'), findsOneWidget);
@@ -53,6 +56,7 @@ void main() {
     expect(find.text('This Week'), findsWidgets);
     expect(find.text('This Month'), findsWidgets);
     expect(find.text('Product portfolio'), findsOneWidget);
+    expect(find.text('Open source'), findsWidgets);
     expect(find.text('Grants pipeline'), findsOneWidget);
     expect(find.text('Source-linked grant board'), findsOneWidget);
     expect(find.text('Open Valuation Summary'), findsOneWidget);
