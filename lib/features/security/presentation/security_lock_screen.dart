@@ -71,7 +71,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     return '${seconds}s';
   }
 
-  Future<void> _attemptUnlock() async {
+  Future<void> _attemptUnlock({
+    required bool voiceStartupGateEnabled,
+  }) async {
     if (_busy) {
       return;
     }
@@ -146,7 +148,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
           : null;
       setState(() {
         _busy = false;
-        _canContinue = true;
+        _canContinue = voiceStartupGateEnabled;
         _status = 'Unlocked locally';
         _detail = decision.nextStep.isNotEmpty
             ? '${decision.reason} ${decision.nextStep}'
@@ -156,6 +158,12 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
             ? 'The access check passed and was recorded locally.'
             : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
       });
+      if (!voiceStartupGateEnabled) {
+        if (!mounted) {
+          return;
+        }
+        context.go(RouteNames.dashboard);
+      }
       return;
     }
 
@@ -277,7 +285,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                 sessionCountdownLabel: sessionCountdownLabel,
                                 sessionCountdownAccent:
                                     sessionCountdownAccent,
-                                onUnlock: _attemptUnlock,
+                                onUnlock: () => _attemptUnlock(
+                                  voiceStartupGateEnabled:
+                                      voiceStartupGateEnabled,
+                                ),
                                 canContinue: _canContinue,
                                 continueLabel: voiceStartupGateEnabled
                                     ? 'Continue to voice gate'
@@ -321,7 +332,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                   _showPin = !_showPin;
                                 }),
                                 isBusy: _busy,
-                                onUnlock: _attemptUnlock,
+                                onUnlock: () => _attemptUnlock(
+                                  voiceStartupGateEnabled:
+                                      voiceStartupGateEnabled,
+                                ),
                               );
 
                               if (isWide) {
