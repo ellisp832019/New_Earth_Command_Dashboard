@@ -46,17 +46,16 @@ class UsersDevicesControlScreen extends ConsumerWidget {
               _VisualPanel(
                 title: 'Access plan',
                 subtitle:
-                    'Identity, device trust, permissions, approvals, and audit all get checked before a screen opens.',
+                    'Identity, trust, permission, approval, and audit stay in view.',
                 icon: Icons.route_outlined,
                 compact: true,
                 child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: 6,
+                  runSpacing: 6,
                   children: const [
                     _CardChip(label: 'Identity'),
-                    _CardChip(label: 'Device'),
-                    _CardChip(label: 'Role'),
-                    _CardChip(label: 'Trust'),
+                    _CardChip(label: 'Device trust'),
+                    _CardChip(label: 'Permission'),
                     _CardChip(label: 'Approval'),
                     _CardChip(label: 'Audit'),
                   ],
@@ -65,8 +64,7 @@ class UsersDevicesControlScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               _ActionStrip(
                 title: 'Try it now',
-                subtitle:
-                    'Seed a sample user, a sample device, or a sample approval.',
+                subtitle: 'Seed a sample user, device, or approval.',
                 actions: [
                   _ActionChip(
                     label: 'Register user',
@@ -1830,8 +1828,8 @@ class _UsersDevicesRouteGateScreenState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
+                                    spacing: 6,
+                                    runSpacing: 6,
                                     children: [
                                       _Badge(label: _moduleLabel),
                                       const _Badge(label: 'Local gate'),
@@ -1839,17 +1837,17 @@ class _UsersDevicesRouteGateScreenState
                                       const _Badge(label: 'Audit required'),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 10),
                                   Text(
                                     _moduleFocus,
                                     style: Theme.of(
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 10),
                                   Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
+                                    spacing: 6,
+                                    runSpacing: 6,
                                     children: [
                                       const _Badge(label: 'Local-first'),
                                       const _Badge(label: 'Identity checked'),
@@ -1857,14 +1855,14 @@ class _UsersDevicesRouteGateScreenState
                                       const _Badge(label: 'Audit required'),
                                     ],
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 12),
                                   Text(
                                     'Open the screen only after a local user and device pass the module check.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 10),
                                   _SummaryRow(
                                     items: [
                                       ('Users', data.users.length),
@@ -1881,10 +1879,10 @@ class _UsersDevicesRouteGateScreenState
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 10),
                                   Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
+                                    spacing: 6,
+                                    runSpacing: 6,
                                     children: [
                                       _Badge(label: _status),
                                       _Badge(
@@ -2013,7 +2011,7 @@ class _UsersDevicesRouteGateScreenState
                                     _VisualPanel(
                                       title: 'Why blocked',
                                       subtitle:
-                                          'These local checks still need a little help before the route can open.',
+                                          'A short local note on what still needs attention.',
                                       icon: Icons.rule_folder_outlined,
                                       compact: true,
                                       child: Column(
@@ -2025,7 +2023,7 @@ class _UsersDevicesRouteGateScreenState
                                               padding: const EdgeInsets.only(
                                                 bottom: 6,
                                               ),
-                                              child: Text('• $hint'),
+                                              child: Text('- $hint'),
                                             ),
                                         ],
                                       ),
@@ -2377,7 +2375,7 @@ class _UsersDevicesApprovalQueueScreenState
               _ActionStrip(
                 title: 'Review flow',
                 subtitle:
-                    'Approve or deny pending requests while the audit trail updates locally.',
+                    'Approve or deny pending requests while the audit trail updates.',
                 actions: [
                   _ActionChip(
                     label: 'Create sample approval',
@@ -2407,13 +2405,13 @@ class _UsersDevicesApprovalQueueScreenState
                           ),
                   ),
                   _ActionChip(
-                    label: 'Open Access Matrix',
+                    label: 'Open matrix',
                     icon: Icons.grid_view_outlined,
                     onPressed: () =>
                         context.go(RouteNames.usersDevicesAccessMatrix),
                   ),
                   _ActionChip(
-                    label: 'Open Audit Log',
+                    label: 'Open audit log',
                     icon: Icons.receipt_long_outlined,
                     onPressed: () =>
                         context.go(RouteNames.usersDevicesAuditLog),

@@ -346,8 +346,8 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 260;
-        final contentSpacing = isCompact ? 8.0 : 10.0;
-        final labelSpacing = isCompact ? 8.0 : 10.0;
+        final contentSpacing = isCompact ? 6.0 : 8.0;
+        final labelSpacing = isCompact ? 6.0 : 8.0;
 
         return Material(
           color: Colors.transparent,
@@ -371,8 +371,8 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
               ),
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isCompact ? 12 : 14,
-                  vertical: isCompact ? 10 : 12,
+                  horizontal: isCompact ? 10 : 12,
+                  vertical: isCompact ? 8 : 10,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +383,7 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                       children: [
                         Icon(
                           isUnlocked ? Icons.lock_open : Icons.lock,
-                          size: isCompact ? 14 : 16,
+                          size: isCompact ? 13 : 15,
                           color: accentColor,
                         ),
                         const SizedBox(width: 8),
