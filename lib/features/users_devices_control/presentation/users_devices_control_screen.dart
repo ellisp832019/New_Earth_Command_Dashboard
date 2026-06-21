@@ -2568,10 +2568,9 @@ class _ApprovalQueueSnapshotPanel extends StatelessWidget {
             (pendingByModule[request.targetModule] ?? 0) + 1;
       }
     }
-    final topModule = pendingByModule.entries.isEmpty
-        ? null
-        : pendingByModule.entries.toList(growable: false)
-          ..sort((a, b) => b.value.compareTo(a.value));
+    final topModules = pendingByModule.entries.toList(growable: false)
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topModule = topModules.isEmpty ? null : topModules.first;
 
     return _VisualPanel(
       title: 'Queue posture',
@@ -2588,7 +2587,7 @@ class _ApprovalQueueSnapshotPanel extends StatelessWidget {
               _CardChip(label: '${data.approvalQueue.length} total requests'),
               _CardChip(label: '${pendingByModule.values.fold<int>(0, (a, b) => a + b)} pending'),
               if (topModule != null)
-                _CardChip(label: 'Top module: ${_approvalModuleLabel(topModule.first.key)}'),
+                _CardChip(label: 'Top module: ${_approvalModuleLabel(topModule.key)}'),
             ],
           ),
           const SizedBox(height: 12),
