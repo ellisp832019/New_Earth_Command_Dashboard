@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +20,7 @@ class SecurityLockScreen extends ConsumerStatefulWidget {
 
 class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
   final TextEditingController _pinController = TextEditingController();
+  Timer? _ticker;
   bool _showPin = false;
   String _status = 'Locked';
   String _detail = 'Waiting for local verification.';
@@ -30,7 +33,18 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
   bool _seededDefaults = false;
 
   @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _ticker?.cancel();
     _pinController.dispose();
     super.dispose();
   }
