@@ -1043,6 +1043,28 @@ class UsersDevicesControlRepository {
       return decision;
     }
 
+    final isPaired = user.linkedDevices.contains(deviceId) || device.ownerId == userId;
+    if (!isPaired) {
+      final decision = const UsersDevicesControlAccessDecision(
+        allowed: false,
+        requiresApproval: false,
+        reason: 'User and device are not paired.',
+        nextStep:
+            'Choose the device linked to this user, or pair them in Users & Devices first.',
+        issueCode: 'pairing_required',
+      );
+      await createAuditEvent(
+        actorId: userId,
+        deviceId: deviceId,
+        eventType: 'module_access_checked',
+        targetModule: moduleId,
+        action: action,
+        result: 'denied',
+        reason: decision.reason,
+      );
+      return decision;
+    }
+
     final rule = await _ruleFor(moduleId);
     if (rule == null) {
       final decision = const UsersDevicesControlAccessDecision(

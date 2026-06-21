@@ -253,11 +253,20 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                     (user) => user.id == _selectedUserId,
                     orElse: () => data.users.first,
                   );
-            final selectedDevice = data.devices.isEmpty
+            final pairedDevices = selectedUser == null
+                ? data.devices
+                : data.devices
+                    .where(
+                      (device) =>
+                          selectedUser.linkedDevices.contains(device.id) ||
+                          device.ownerId == selectedUser.id,
+                    )
+                    .toList(growable: false);
+            final selectedDevice = pairedDevices.isEmpty
                 ? null
-                : data.devices.firstWhere(
+                : pairedDevices.firstWhere(
                     (device) => device.id == _selectedDeviceId,
-                    orElse: () => data.devices.first,
+                    orElse: () => pairedDevices.first,
                   );
 
             return Container(
@@ -331,10 +340,11 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                 selectedUserId: _selectedUserId,
                                 selectedDeviceId: _selectedDeviceId,
                                 users: data.users,
-                                devices: data.devices,
+                                devices: pairedDevices,
                                 onUserChanged: (value) {
                                   setState(() {
                                     _selectedUserId = value;
+                                    _selectedDeviceId = null;
                                   });
                                 },
                                 onDeviceChanged: (value) {
@@ -720,22 +730,30 @@ class _SecuritySidePanel extends StatelessWidget {
                 onChanged: onUserChanged,
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: selectedDeviceId,
-                decoration: const InputDecoration(
-                  labelText: 'Trusted device',
-                  border: OutlineInputBorder(),
-                ),
-                items: devices
-                    .map(
-                      (device) => DropdownMenuItem<String>(
-                        value: device.id,
-                        child: Text('${device.name} (T${device.trustLevel})'),
+              if (devices.isEmpty)
+                Text(
+                  'No paired device is linked to this user yet. Pair one in Users & Devices before unlocking.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                    )
-                    .toList(),
-                onChanged: onDeviceChanged,
-              ),
+                )
+              else
+                DropdownButtonFormField<String>(
+                  initialValue: selectedDeviceId,
+                  decoration: const InputDecoration(
+                    labelText: 'Trusted device',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: devices
+                      .map(
+                        (device) => DropdownMenuItem<String>(
+                          value: device.id,
+                          child: Text('${device.name} (T${device.trustLevel})'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: onDeviceChanged,
+                ),
               if (showPin) ...[
                 const SizedBox(height: 8),
                 TextField(
