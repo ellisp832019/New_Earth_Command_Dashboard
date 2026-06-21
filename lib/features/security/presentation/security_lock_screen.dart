@@ -51,6 +51,26 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     _seededDefaults = true;
   }
 
+  String _formatDuration(Duration duration) {
+    if (duration.isNegative) {
+      return '0s';
+    }
+
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+    }
+
+    if (minutes > 0) {
+      return '${minutes}m ${seconds.toString().padLeft(2, '0')}s';
+    }
+
+    return '${seconds}s';
+  }
+
   Future<void> _attemptUnlock() async {
     if (_busy) {
       return;
