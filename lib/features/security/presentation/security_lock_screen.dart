@@ -19,9 +19,12 @@ class SecurityLockScreen extends ConsumerStatefulWidget {
 }
 
 class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
+  static String? _rememberedUserId;
+  static String? _rememberedDeviceId;
+
   final TextEditingController _pinController = TextEditingController();
   Timer? _ticker;
-  bool _showPin = false;
+  bool _showIdentityPicker = false;
   String _status = 'Locked';
   String _detail = 'Waiting for local verification.';
   String _auditSummary = 'No audit decision recorded yet.';
@@ -54,14 +57,38 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       return;
     }
 
-    _selectedUserId = snapshot.users.firstWhere(
-      (user) => user.status == 'active',
+    if (_rememberedUserId != null &&
+        snapshot.users.any((user) => user.id == _rememberedUserId)) {
+      _selectedUserId = _rememberedUserId;
+    } else {
+      _selectedUserId = snapshot.users.firstWhere(
+        (user) => user.status == 'active',
+        orElse: () => snapshot.users.first,
+      ).id;
+    }
+
+    final rememberedUser = snapshot.users.firstWhere(
+      (user) => user.id == _selectedUserId,
       orElse: () => snapshot.users.first,
-    ).id;
-    _selectedDeviceId = snapshot.devices.firstWhere(
-      (device) => device.status == 'trusted' || device.trustLevel >= 3,
-      orElse: () => snapshot.devices.first,
-    ).id;
+    );
+    final pairedDevices = snapshot.devices
+        .where(
+          (device) =>
+              rememberedUser.linkedDevices.contains(device.id) ||
+              device.ownerId == rememberedUser.id,
+        )
+        .toList(growable: false);
+
+    if (_rememberedDeviceId != null &&
+        pairedDevices.any((device) => device.id == _rememberedDeviceId)) {
+      _selectedDeviceId = _rememberedDeviceId;
+    } else if (pairedDevices.isNotEmpty) {
+      _selectedDeviceId = pairedDevices.first.id;
+    } else {
+      _selectedDeviceId = snapshot.devices.isNotEmpty
+          ? snapshot.devices.first.id
+          : null;
+    }
     _seededDefaults = true;
   }
 
@@ -103,7 +130,18 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
 
     final enteredPin = _pinController.text.trim();
     const demoPin = '2468';
-    if (_showPin && enteredPin.isNotEmpty && enteredPin != demoPin) {
+    if (enteredPin.isEmpty) {
+      setState(() {
+        _busy = false;
+        _status = 'Locked';
+        _detail = 'Enter the local PIN to unlock the session.';
+        _auditSummary = 'PIN check was not completed.';
+        _latestAuditEventId = null;
+      });
+      return;
+    }
+
+    if (enteredPin != demoPin) {
       setState(() {
         _busy = false;
         _status = 'Locked';
@@ -116,15 +154,25 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
 
     final repository = ref.read(usersDevicesControlRepositoryProvider);
     final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
-    final userId = _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
-    final deviceId =
-        _selectedDeviceId ?? (snapshot.devices.isNotEmpty ? snapshot.devices.first.id : '');
+    final userId =
+        _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
     final selectedUser = snapshot.users.isEmpty
         ? null
         : snapshot.users.firstWhere(
             (user) => user.id == userId,
             orElse: () => snapshot.users.first,
           );
+    final pairedDevices = selectedUser == null
+        ? snapshot.devices
+        : snapshot.devices
+            .where(
+              (device) =>
+                  selectedUser.linkedDevices.contains(device.id) ||
+                  device.ownerId == selectedUser.id,
+            )
+            .toList(growable: false);
+    final deviceId = _selectedDeviceId ??
+        (pairedDevices.isNotEmpty ? pairedDevices.first.id : '');
     if (userId.isEmpty || deviceId.isEmpty) {
       if (!mounted) {
         return;
@@ -153,6 +201,8 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       final updatedSnapshot = await ref.read(
         usersDevicesControlSnapshotProvider.future,
       );
+      _rememberedUserId = userId;
+      _rememberedDeviceId = deviceId;
       ref.read(securitySessionProvider.notifier).unlock(
         activeUserLabel: selectedUser?.displayName,
         activeUserOnline: selectedUser?.status == 'active',
@@ -335,16 +385,22 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                 ),
                               );
                               final sidePanel = _SecuritySidePanel(
-                                showPin: _showPin,
                                 pinController: _pinController,
-                                selectedUserId: _selectedUserId,
-                                selectedDeviceId: _selectedDeviceId,
+                                selectedUserId: selectedUser?.id,
+                                selectedDeviceId: selectedDevice?.id,
+                                showIdentityPicker:
+                                    _showIdentityPicker ||
+                                    pairedDevices.isEmpty,
+                                onToggleIdentityPicker: () => setState(() {
+                                  _showIdentityPicker = !_showIdentityPicker;
+                                }),
                                 users: data.users,
                                 devices: pairedDevices,
                                 onUserChanged: (value) {
                                   setState(() {
                                     _selectedUserId = value;
                                     _selectedDeviceId = null;
+                                    _showIdentityPicker = true;
                                   });
                                 },
                                 onDeviceChanged: (value) {
@@ -352,9 +408,6 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                     _selectedDeviceId = value;
                                   });
                                 },
-                                onTogglePin: () => setState(() {
-                                  _showPin = !_showPin;
-                                }),
                                 isBusy: _busy,
                                 onUnlock: () => _attemptUnlock(
                                   voiceStartupGateEnabled:
@@ -667,104 +720,154 @@ class _SecurityHero extends StatelessWidget {
 
 class _SecuritySidePanel extends StatelessWidget {
   const _SecuritySidePanel({
-    required this.showPin,
     required this.pinController,
     required this.selectedUserId,
     required this.selectedDeviceId,
+    required this.showIdentityPicker,
     required this.users,
     required this.devices,
     required this.onUserChanged,
     required this.onDeviceChanged,
     required this.isBusy,
-    required this.onTogglePin,
+    required this.onToggleIdentityPicker,
     required this.onUnlock,
   });
 
-  final bool showPin;
   final TextEditingController pinController;
   final String? selectedUserId;
   final String? selectedDeviceId;
+  final bool showIdentityPicker;
   final List<UsersDevicesControlUser> users;
   final List<UsersDevicesControlDevice> devices;
   final ValueChanged<String?> onUserChanged;
   final ValueChanged<String?> onDeviceChanged;
   final bool isBusy;
-  final VoidCallback onTogglePin;
+  final VoidCallback onToggleIdentityPicker;
   final VoidCallback onUnlock;
 
   @override
   Widget build(BuildContext context) {
+    final selectedUser = users.isEmpty
+        ? null
+        : users.firstWhere(
+            (user) => user.id == selectedUserId,
+            orElse: () => users.first,
+          );
+    final selectedDevice = devices.isEmpty
+        ? null
+        : devices.firstWhere(
+            (device) => device.id == selectedDeviceId,
+            orElse: () => devices.first,
+          );
+    final showIdentityPicker = this.showIdentityPicker || devices.isEmpty;
+
     return Column(
       children: [
         _VisualPanel(
           title: 'Unlock options',
           subtitle:
-              'Choose the local user and trusted device that should unlock the session.',
+              'Use the remembered local identity, or change it when you need to switch operator.',
           icon: Icons.login_outlined,
           compact: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                value: showPin,
-                onChanged: (_) => onTogglePin(),
-                title: const Text('Show local PIN field'),
-                subtitle: const Text('Future PIN/passkey entry'),
+              _VisualPanel(
+                title: 'Current identity',
+                subtitle: 'This is the remembered user/device pair for unlock.',
+                icon: Icons.person_search_outlined,
+                compact: true,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _Badge(
+                      label: selectedUser == null
+                          ? 'User: none'
+                          : 'User: ${selectedUser.displayName}',
+                    ),
+                    _Badge(
+                      label: selectedDevice == null
+                          ? 'Device: none'
+                          : 'Device: ${selectedDevice.name}',
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: selectedUserId,
-                decoration: const InputDecoration(
-                  labelText: 'Local user',
-                  border: OutlineInputBorder(),
-                ),
-                items: users
-                    .map(
-                      (user) => DropdownMenuItem<String>(
-                        value: user.id,
-                        child: Text(user.displayName),
-                      ),
-                    )
-                    .toList(),
-                onChanged: onUserChanged,
-              ),
-              const SizedBox(height: 12),
-              if (devices.isEmpty)
-                Text(
-                  'No paired device is linked to this user yet. Pair one in Users & Devices before unlocking.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                )
-              else
+              if (showIdentityPicker) ...[
                 DropdownButtonFormField<String>(
-                  initialValue: selectedDeviceId,
+                  initialValue: selectedUserId,
                   decoration: const InputDecoration(
-                    labelText: 'Trusted device',
+                    labelText: 'Local user',
                     border: OutlineInputBorder(),
                   ),
-                  items: devices
+                  items: users
                       .map(
-                        (device) => DropdownMenuItem<String>(
-                          value: device.id,
-                          child: Text('${device.name} (T${device.trustLevel})'),
+                        (user) => DropdownMenuItem<String>(
+                          value: user.id,
+                          child: Text(user.displayName),
                         ),
                       )
                       .toList(),
-                  onChanged: onDeviceChanged,
+                  onChanged: onUserChanged,
                 ),
-              if (showPin) ...[
-                const SizedBox(height: 8),
-                TextField(
-                  controller: pinController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Local PIN',
-                    hintText: 'Demo placeholder only',
+                const SizedBox(height: 12),
+                if (devices.isEmpty)
+                  Text(
+                    'No paired device is linked to this user yet. Pair one in Users & Devices before unlocking.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedDeviceId,
+                    decoration: const InputDecoration(
+                      labelText: 'Trusted device',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: devices
+                        .map(
+                          (device) => DropdownMenuItem<String>(
+                            value: device.id,
+                            child: Text(
+                              '${device.name} (T${device.trustLevel})',
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: onDeviceChanged,
+                  ),
+                const SizedBox(height: 12),
+              ] else
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: onToggleIdentityPicker,
+                    icon: const Icon(Icons.manage_accounts_outlined),
+                    label: const Text('Change identity'),
                   ),
                 ),
+              if (showIdentityPicker) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: onToggleIdentityPicker,
+                    icon: const Icon(Icons.visibility_off_outlined),
+                    label: const Text('Hide identity picker'),
+                  ),
+                ),
+                const SizedBox(height: 4),
               ],
+              TextField(
+                controller: pinController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Local PIN',
+                  hintText: 'Required for unlock',
+                ),
+              ),
               const SizedBox(height: 14),
               FilledButton.tonalIcon(
                 onPressed: isBusy ? null : onUnlock,
@@ -779,7 +882,7 @@ class _SecuritySidePanel extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'The session will lock itself again after inactivity.',
+                'The session will lock itself again after inactivity. Local PIN is required to unlock.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
