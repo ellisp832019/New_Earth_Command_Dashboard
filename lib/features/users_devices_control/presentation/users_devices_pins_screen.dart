@@ -735,7 +735,7 @@ class _PinGroupSection extends StatelessWidget {
                     DataRow(
                       cells: [
                         DataCell(Text(record.label)),
-                        DataCell(Text(_maskPinCode(record.pinCode))),
+                        DataCell(Text(_maskPin(record.pinCode))),
                         DataCell(Text(record.sourceLabel)),
                         DataCell(
                           Text(
