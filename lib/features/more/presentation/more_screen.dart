@@ -39,6 +39,14 @@ class MoreScreen extends StatelessWidget {
       badge: 'Scan',
     ),
     _MoreItem(
+      title: 'Company Command Centre',
+      description:
+          'Open company records, LinkedIn planning, and the main company workspace.',
+      icon: Icons.domain_outlined,
+      route: RouteNames.companyCommandCentre,
+      badge: 'Company',
+    ),
+    _MoreItem(
       title: 'Systems',
       description:
           'Protect the full D: drive, review backup status, and keep recovery tools calm.',
@@ -271,10 +279,12 @@ class MoreScreen extends StatelessWidget {
                               gradient: isOmegaKnowledgeEngine
                                   ? LinearGradient(
                                       colors: [
-                                        AppColours.darkSecondary
-                                            .withValues(alpha: 0.22),
-                                        AppColours.darkSurfaceRaised
-                                            .withValues(alpha: 0.98),
+                                        AppColours.darkSecondary.withValues(
+                                          alpha: 0.22,
+                                        ),
+                                        AppColours.darkSurfaceRaised.withValues(
+                                          alpha: 0.98,
+                                        ),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -287,10 +297,12 @@ class MoreScreen extends StatelessWidget {
                                     ),
                               border: Border.all(
                                 color: isOmegaKnowledgeEngine
-                                    ? AppColours.darkSecondary
-                                        .withValues(alpha: 0.4)
-                                    : AppColours.darkOutline
-                                        .withValues(alpha: 0.22),
+                                    ? AppColours.darkSecondary.withValues(
+                                        alpha: 0.4,
+                                      )
+                                    : AppColours.darkOutline.withValues(
+                                        alpha: 0.22,
+                                      ),
                               ),
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -322,17 +334,19 @@ class MoreScreen extends StatelessWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isOmegaKnowledgeEngine
-                                          ? AppColours.darkSecondary
-                                              .withValues(alpha: 0.22)
-                                          : AppColours.darkSecondary
-                                              .withValues(alpha: 0.14),
+                                          ? AppColours.darkSecondary.withValues(
+                                              alpha: 0.22,
+                                            )
+                                          : AppColours.darkSecondary.withValues(
+                                              alpha: 0.14,
+                                            ),
                                       borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
                                         color: isOmegaKnowledgeEngine
                                             ? AppColours.darkSecondary
-                                                .withValues(alpha: 0.5)
+                                                  .withValues(alpha: 0.5)
                                             : AppColours.darkSecondary
-                                                .withValues(alpha: 0.26),
+                                                  .withValues(alpha: 0.26),
                                       ),
                                     ),
                                     child: Text(
@@ -483,9 +497,8 @@ class _OmegaKnowledgeEngineBanner extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       FilledButton.tonalIcon(
-                        onPressed: () => context.push(
-                          RouteNames.omegaKnowledgeEngine,
-                        ),
+                        onPressed: () =>
+                            context.push(RouteNames.omegaKnowledgeEngine),
                         icon: const Icon(Icons.open_in_new),
                         label: const Text('Open module home'),
                       ),
@@ -534,9 +547,9 @@ class _OmegaChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColours.darkText,
-              fontWeight: FontWeight.w700,
-            ),
+          color: AppColours.darkText,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

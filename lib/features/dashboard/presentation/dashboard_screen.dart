@@ -11,6 +11,8 @@ import 'package:path/path.dart' as path;
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../widgets/calm_guidance_card.dart';
+import '../../company_command_centre/data/company_command_centre_config.dart';
+import '../../company_command_centre/data/company_command_centre_local_settings_service.dart';
 import '../../company_command_centre/data/company_command_centre_repository.dart';
 import '../../assets/application/assets_controller.dart';
 import '../../assets/data/qr_label_printing_service.dart';
@@ -20,12 +22,10 @@ import '../../launchpad/application/launchpad_controller.dart';
 import '../../launchpad/data/launchpad_calculator.dart';
 import '../../launchpad/data/launchpad_phase2_models.dart';
 import '../../launchpad/data/launchpad_models.dart';
-import '../../experiments/presentation/omega_experiment_dashboard_card.dart';
 import '../../meeting_system/application/meeting_system_controller.dart';
 import '../../meeting_system/data/meeting_folder_service.dart';
 import '../../meeting_system/presentation/meeting_system_widgets.dart';
 import '../../planner/application/planner_controller.dart';
-import '../../repo_intelligence_bridge/presentation/repo_intelligence_bridge_screen.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../../system_backup/application/backup_guardian_controller.dart';
 import '../../system_backup/data/backup_guardian_service.dart';
@@ -641,6 +641,13 @@ class _CompanyCommandCentreCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(companyCommandCentreSnapshotProvider);
+    final localSettings = ref.watch(companyCommandCentreLocalSettingsProvider);
+    final linkedinCompanyUrl = localSettings.maybeWhen(
+      data: (settings) => settings.linkedinCompanyUrl.isNotEmpty
+          ? settings.linkedinCompanyUrl
+          : companyCommandCentreLinkedInCompanyUrl,
+      orElse: () => companyCommandCentreLinkedInCompanyUrl,
+    );
 
     return snapshot.when(
       loading: () => Container(
@@ -648,10 +655,7 @@ class _CompanyCommandCentreCard extends ConsumerWidget {
         decoration: _panelDecoration(context),
         child: Row(
           children: [
-            const Icon(
-              Icons.domain_outlined,
-              color: AppColours.darkSecondary,
-            ),
+            const Icon(Icons.domain_outlined, color: AppColours.darkSecondary),
             const SizedBox(width: 12),
             Text(
               'Company Command Centre is loading quietly.',
@@ -671,6 +675,9 @@ class _CompanyCommandCentreCard extends ConsumerWidget {
         statusAccent: AppColours.darkAmber,
         onOpenModule: () => context.push(RouteNames.companyCommandCentre),
         onReload: () => ref.invalidate(companyCommandCentreSnapshotProvider),
+        onOpenLinkedIn: linkedinCompanyUrl.trim().isEmpty
+            ? null
+            : () => _openExternalUrl(linkedinCompanyUrl),
         chips: const [
           _CompanyChip(label: 'Overview', value: 'Ready'),
           _CompanyChip(label: 'Compliance', value: 'Tracked'),
@@ -689,20 +696,20 @@ class _CompanyCommandCentreCard extends ConsumerWidget {
             : AppColours.darkAmber,
         onOpenModule: () => context.push(RouteNames.companyCommandCentre),
         onReload: () => ref.invalidate(companyCommandCentreSnapshotProvider),
+        onOpenLinkedIn: linkedinCompanyUrl.trim().isEmpty
+            ? null
+            : () => _openExternalUrl(linkedinCompanyUrl),
         chips: [
-          _CompanyChip(label: 'Company no.', value: data.overview.companyNumber),
+          _CompanyChip(
+            label: 'Company no.',
+            value: data.overview.companyNumber,
+          ),
           _CompanyChip(
             label: 'Products',
             value: '${data.productPortfolio.length}',
           ),
-          _CompanyChip(
-            label: 'Grants',
-            value: '${data.grantsPipeline.length}',
-          ),
-          _CompanyChip(
-            label: 'Actions',
-            value: '${data.actionBoard.length}',
-          ),
+          _CompanyChip(label: 'Grants', value: '${data.grantsPipeline.length}'),
+          _CompanyChip(label: 'Actions', value: '${data.actionBoard.length}'),
         ],
       ),
     );
@@ -718,6 +725,7 @@ class _CompanyCommandCentrePanel extends StatelessWidget {
     required this.statusAccent,
     required this.onOpenModule,
     required this.onReload,
+    required this.onOpenLinkedIn,
     required this.chips,
   });
 
@@ -728,6 +736,7 @@ class _CompanyCommandCentrePanel extends StatelessWidget {
   final Color statusAccent;
   final VoidCallback onOpenModule;
   final VoidCallback onReload;
+  final VoidCallback? onOpenLinkedIn;
   final List<_CompanyChip> chips;
 
   @override
@@ -791,6 +800,11 @@ class _CompanyCommandCentrePanel extends StatelessWidget {
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open Company'),
               ),
+              FilledButton.tonalIcon(
+                onPressed: onOpenLinkedIn,
+                icon: const Icon(Icons.cases_outlined),
+                label: const Text('Open LinkedIn'),
+              ),
               TextButton.icon(
                 onPressed: onReload,
                 icon: const Icon(Icons.refresh),
@@ -818,6 +832,25 @@ class _CompanyCommandCentrePanel extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openExternalUrl(String url) async {
+  final trimmedUrl = url.trim();
+  if (trimmedUrl.isEmpty) {
+    return;
+  }
+
+  if (Platform.isWindows) {
+    await Process.start('explorer.exe', [trimmedUrl]);
+    return;
+  }
+
+  if (Platform.isMacOS) {
+    await Process.start('open', [trimmedUrl]);
+    return;
+  }
+
+  await Process.start('xdg-open', [trimmedUrl]);
 }
 
 class _CompanyChip extends StatelessWidget {
@@ -1003,8 +1036,8 @@ class _SupportModuleGrid extends StatelessWidget {
               children: [
                 for (final tile in summaryTiles)
                   SizedBox(
-                    width: (constraints.maxWidth -
-                            (summaryColumns - 1) * 14) /
+                    width:
+                        (constraints.maxWidth - (summaryColumns - 1) * 14) /
                         summaryColumns,
                     child: tile,
                   ),
@@ -1034,10 +1067,7 @@ class _SupportModuleGrid extends StatelessWidget {
 }
 
 class _DashboardSectionHeader extends StatelessWidget {
-  const _DashboardSectionHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _DashboardSectionHeader({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -1101,10 +1131,7 @@ class _CompactModuleTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             border: Border(
-              top: BorderSide(
-                color: accent.withValues(alpha: 0.72),
-                width: 2,
-              ),
+              top: BorderSide(color: accent.withValues(alpha: 0.72), width: 2),
             ),
           ),
           child: Padding(
@@ -1254,7 +1281,10 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: statusAccent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(18),
@@ -3971,9 +4001,7 @@ class _MiniModuleCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   state.title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppColours.darkText,
                     fontWeight: FontWeight.w700,
                   ),
@@ -3989,9 +4017,7 @@ class _MiniModuleCard extends StatelessWidget {
               state.description,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
