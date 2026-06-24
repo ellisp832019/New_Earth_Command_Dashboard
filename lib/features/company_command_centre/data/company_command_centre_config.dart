@@ -1,6 +1,9 @@
 const String companyCommandCentreOmegaOsPath =
     r'D:\NEW_EARTH_OMEGA_OS_PACK\00_COMPANY';
 
+const String companyCommandCentreLinkedInCompanyUrl =
+    'https://www.linkedin.com/search/results/companies/?keywords=New%20Earth%20Advanced%20Technologies%20Ltd';
+
 const String companyCommandCentreModuleConfigPath =
     'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/src/module_shell/module_config.json';
 

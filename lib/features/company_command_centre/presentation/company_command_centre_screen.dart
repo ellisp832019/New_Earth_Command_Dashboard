@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,26 +10,53 @@ import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../assets/application/assets_controller.dart';
 import '../../assets/data/assets_folder_service.dart';
+import '../data/company_command_centre_config.dart';
+import '../data/company_command_centre_local_settings_service.dart';
 import '../data/company_command_centre_index_service.dart';
 import '../data/company_command_centre_repository.dart';
 import '../data/company_command_centre_report_service.dart';
 import '../data/company_command_centre_write_service.dart';
 
-class CompanyCommandCentreScreen extends ConsumerWidget {
+class CompanyCommandCentreScreen extends ConsumerStatefulWidget {
   const CompanyCommandCentreScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CompanyCommandCentreScreen> createState() =>
+      _CompanyCommandCentreScreenState();
+}
+
+class _CompanyCommandCentreScreenState
+    extends ConsumerState<CompanyCommandCentreScreen> {
+  String _linkedinCompanyUrl = companyCommandCentreLinkedInCompanyUrl;
+  final CompanyCommandCentreLocalSettingsService _localSettingsService =
+      const CompanyCommandCentreLocalSettingsService();
+  Timer? _linkedinSaveDebounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalSettings();
+  }
+
+  @override
+  void dispose() {
+    _linkedinSaveDebounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final snapshotAsync = ref.watch(companyCommandCentreSnapshotProvider);
 
     return snapshotAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => Scaffold(
         appBar: AppBar(
           title: const Text('Company Command Centre'),
-          leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
+          leading: BackButton(
+            onPressed: () => context.go(RouteNames.moduleHub),
+          ),
         ),
         body: Center(
           child: Padding(
@@ -45,7 +74,9 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
           length: _tabs.length,
           child: Scaffold(
             appBar: AppBar(
-              leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
+              leading: BackButton(
+                onPressed: () => context.go(RouteNames.moduleHub),
+              ),
               title: const Text('Company Command Centre'),
               bottom: TabBar(
                 isScrollable: true,
@@ -62,11 +93,17 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _OverviewTab(snapshot: snapshot),
+                      _OverviewTab(
+                        snapshot: snapshot,
+                        linkedinCompanyUrl: _linkedinCompanyUrl,
+                      ),
                       _ComplianceTab(snapshot: snapshot),
                       _FinanceTab(snapshot: snapshot),
                       _WebsiteBrandTab(snapshot: snapshot),
-                      _LinkedInTab(snapshot: snapshot),
+                      _LinkedInTab(
+                        snapshot: snapshot,
+                        linkedinCompanyUrl: _linkedinCompanyUrl,
+                      ),
                       _ProductPortfolioTab(snapshot: snapshot),
                       _AssetOverviewTab(snapshot: snapshot),
                       _GrantsTab(snapshot: snapshot),
@@ -74,7 +111,11 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
                       const _PartnershipsTab(),
                       const _EvidenceLibraryTab(),
                       _ActionBoardTab(snapshot: snapshot),
-                      _SettingsTab(snapshot: snapshot),
+                      _SettingsTab(
+                        snapshot: snapshot,
+                        linkedinCompanyUrl: _linkedinCompanyUrl,
+                        onLinkedInCompanyUrlChanged: _setLinkedInCompanyUrl,
+                      ),
                     ],
                   ),
                 ),
@@ -84,6 +125,41 @@ class CompanyCommandCentreScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  void _setLinkedInCompanyUrl(String url) {
+    final normalized = url.trim().isEmpty
+        ? companyCommandCentreLinkedInCompanyUrl
+        : url.trim();
+    setState(() {
+      _linkedinCompanyUrl = normalized;
+    });
+    _scheduleLinkedInSave(normalized);
+  }
+
+  Future<void> _loadLocalSettings() async {
+    final settings = await _localSettingsService.load();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _linkedinCompanyUrl = settings.linkedinCompanyUrl.isNotEmpty
+          ? settings.linkedinCompanyUrl
+          : companyCommandCentreLinkedInCompanyUrl;
+    });
+  }
+
+  void _scheduleLinkedInSave(String url) {
+    _linkedinSaveDebounce?.cancel();
+    _linkedinSaveDebounce = Timer(const Duration(milliseconds: 500), () async {
+      await _localSettingsService.save(
+        CompanyCommandCentreLocalSettings(linkedinCompanyUrl: url),
+      );
+      if (mounted) {
+        ref.invalidate(companyCommandCentreLocalSettingsProvider);
+      }
+    });
   }
 }
 
@@ -138,9 +214,7 @@ class _HeaderSummaryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Chip(
-                  label: Text(overview.status.replaceAll('_', ' ')),
-                ),
+                Chip(label: Text(overview.status.replaceAll('_', ' '))),
               ],
             ),
             const SizedBox(height: 14),
@@ -191,7 +265,9 @@ class _InfoPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.42,
+        ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -207,25 +283,57 @@ class _InfoPill extends StatelessWidget {
 }
 
 class _OverviewTab extends StatelessWidget {
-  const _OverviewTab({required this.snapshot});
+  const _OverviewTab({
+    required this.snapshot,
+    required this.linkedinCompanyUrl,
+  });
 
   final CompanyCommandCentreSnapshot snapshot;
+  final String linkedinCompanyUrl;
 
   @override
   Widget build(BuildContext context) {
     final overview = snapshot.overview;
     final indexRecords = snapshot.indexSnapshot.records;
-    final actionCount = indexRecords.where((record) => record.checkboxCount > 0).length;
-    final deadlineCount = indexRecords.where((record) => record.dueDates.isNotEmpty).length;
-    final productCount = indexRecords.where((record) => record.labels.contains('product')).length;
-    final grantCount = indexRecords.where((record) => record.labels.contains('grant')).length;
-    final ipAssetCount = indexRecords.where((record) => record.labels.contains('ip_asset')).length;
-    final evidenceCount = indexRecords.where((record) => record.isEvidence).length;
+    final actionCount = indexRecords
+        .where((record) => record.checkboxCount > 0)
+        .length;
+    final deadlineCount = indexRecords
+        .where((record) => record.dueDates.isNotEmpty)
+        .length;
+    final productCount = indexRecords
+        .where((record) => record.labels.contains('product'))
+        .length;
+    final grantCount = indexRecords
+        .where((record) => record.labels.contains('grant'))
+        .length;
+    final ipAssetCount = indexRecords
+        .where((record) => record.labels.contains('ip_asset'))
+        .length;
+    final evidenceCount = indexRecords
+        .where((record) => record.isEvidence)
+        .length;
     final quickActions = [
-      _OverviewAction(label: 'Website', tabIndex: 3, icon: Icons.language_outlined),
-      _OverviewAction(label: 'LinkedIn', tabIndex: 4, icon: Icons.cases_outlined),
-      _OverviewAction(label: 'Products', tabIndex: 5, icon: Icons.inventory_2_outlined),
-      _OverviewAction(label: 'Grants', tabIndex: 7, icon: Icons.rocket_launch_outlined),
+      _OverviewAction(
+        label: 'Website',
+        tabIndex: 3,
+        icon: Icons.language_outlined,
+      ),
+      _OverviewAction(
+        label: 'LinkedIn',
+        tabIndex: 4,
+        icon: Icons.cases_outlined,
+      ),
+      _OverviewAction(
+        label: 'Products',
+        tabIndex: 5,
+        icon: Icons.inventory_2_outlined,
+      ),
+      _OverviewAction(
+        label: 'Grants',
+        tabIndex: 7,
+        icon: Icons.rocket_launch_outlined,
+      ),
       _OverviewAction(
         label: 'Assets',
         tabIndex: 6,
@@ -239,7 +347,10 @@ class _OverviewTab extends StatelessWidget {
           body: 'Live overview from the imported mock company data.',
           children: [
             _KeyValueRow(label: 'Status', value: overview.status),
-            _KeyValueRow(label: 'Owner', value: 'New Earth Advanced Technologies Ltd'),
+            _KeyValueRow(
+              label: 'Owner',
+              value: 'New Earth Advanced Technologies Ltd',
+            ),
             _KeyValueRow(label: 'Omega OS source', value: overview.omegaOsPath),
           ],
         ),
@@ -252,8 +363,23 @@ class _OverviewTab extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
+                OutlinedButton.icon(
+                  onPressed: linkedinCompanyUrl.trim().isEmpty
+                      ? null
+                      : () => _openExternalUrl(linkedinCompanyUrl),
+                  icon: const Icon(Icons.open_in_new_outlined),
+                  label: const Text('Open LinkedIn'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _jumpToTab(context, 4),
+                  icon: const Icon(Icons.cases_outlined),
+                  label: const Text('LinkedIn tab'),
+                ),
                 _CompanyAssetMetric(label: 'Actions', value: '$actionCount'),
-                _CompanyAssetMetric(label: 'Deadlines', value: '$deadlineCount'),
+                _CompanyAssetMetric(
+                  label: 'Deadlines',
+                  value: '$deadlineCount',
+                ),
                 _CompanyAssetMetric(label: 'Products', value: '$productCount'),
                 _CompanyAssetMetric(label: 'Grants', value: '$grantCount'),
               ],
@@ -278,10 +404,12 @@ class _OverviewTab extends StatelessWidget {
           title: 'Focus',
           body: 'The company is currently aligned around these themes.',
           children: overview.focus
-              .map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text('- $item'),
-                  ))
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('- $item'),
+                ),
+              )
               .toList(growable: false),
         ),
         _CalmSectionCard(
@@ -291,7 +419,8 @@ class _OverviewTab extends StatelessWidget {
         ),
         _CalmSectionCard(
           title: 'Generated indexes',
-          body: 'The scanner keeps local JSON indexes refreshed from the company Markdown records.',
+          body:
+              'The scanner keeps local JSON indexes refreshed from the company Markdown records.',
           children: [
             Wrap(
               spacing: 8,
@@ -328,12 +457,15 @@ class _OverviewTab extends StatelessWidget {
                   foreground: AppColours.darkText,
                 ),
                 _InlineTag(
-                  label: '${snapshot.indexSnapshot.sourceMarkdownCount} markdown files',
+                  label:
+                      '${snapshot.indexSnapshot.sourceMarkdownCount} markdown files',
                   accent: AppColours.darkSecondary,
                   foreground: AppColours.darkText,
                 ),
                 _InlineTag(
-                  label: snapshot.indexSnapshot.sourceExists ? 'Source available' : 'Source missing',
+                  label: snapshot.indexSnapshot.sourceExists
+                      ? 'Source available'
+                      : 'Source missing',
                   accent: snapshot.indexSnapshot.sourceExists
                       ? AppColours.darkSuccess
                       : AppColours.darkAmber,
@@ -380,7 +512,8 @@ class _OverviewTab extends StatelessWidget {
         ),
         _CalmSectionCard(
           title: 'Linked files',
-          body: 'Files with actions, deadlines, products, grants, IP, or evidence signals are surfaced here.',
+          body:
+              'Files with actions, deadlines, products, grants, IP, or evidence signals are surfaced here.',
           children: [
             _LinkedFileTable(records: snapshot.indexSnapshot.recentFiles),
           ],
@@ -391,7 +524,7 @@ class _OverviewTab extends StatelessWidget {
 }
 
 void _jumpToTab(BuildContext context, int index) {
-  final controller = DefaultTabController.of(context);
+  final controller = DefaultTabController.maybeOf(context);
   if (controller == null) {
     return;
   }
@@ -439,7 +572,8 @@ class _ComplianceTab extends StatelessWidget {
                   .map(
                     (section) => _CompanyAssetMetric(
                       label: section,
-                      value: '${items.where((item) => item.authority == section).length}',
+                      value:
+                          '${items.where((item) => item.authority == section).length}',
                     ),
                   )
                   .toList(growable: false),
@@ -455,7 +589,9 @@ class _ComplianceTab extends StatelessWidget {
         ),
         _ComplianceSectionCard(
           title: 'Banking',
-          items: items.where((item) => item.authority == 'Banking').toList(growable: false),
+          items: items
+              .where((item) => item.authority == 'Banking')
+              .toList(growable: false),
         ),
         _ComplianceSectionCard(
           title: 'Tax/admin',
@@ -496,15 +632,18 @@ class _FinanceTab extends StatelessWidget {
                 _CompanyAssetMetric(label: 'Tasks', value: '${items.length}'),
                 _CompanyAssetMetric(
                   label: 'Tracked',
-                  value: '${items.where((item) => item.status == 'Tracked').length}',
+                  value:
+                      '${items.where((item) => item.status == 'Tracked').length}',
                 ),
                 _CompanyAssetMetric(
                   label: 'Review',
-                  value: '${items.where((item) => item.status == 'Review').length}',
+                  value:
+                      '${items.where((item) => item.status == 'Review').length}',
                 ),
                 _CompanyAssetMetric(
                   label: 'Planned',
-                  value: '${items.where((item) => item.status == 'Planned').length}',
+                  value:
+                      '${items.where((item) => item.status == 'Planned').length}',
                 ),
               ],
             ),
@@ -512,7 +651,10 @@ class _FinanceTab extends StatelessWidget {
             _KeyValueRow(label: 'Bank', value: snapshot.overview.bank),
             const _KeyValueRow(label: 'Bookkeeping', value: 'To be linked'),
             const _KeyValueRow(label: 'Receipts', value: 'Capture queue ready'),
-            const _KeyValueRow(label: 'Monthly reconciliation', value: 'Pending'),
+            const _KeyValueRow(
+              label: 'Monthly reconciliation',
+              value: 'Pending',
+            ),
             const _KeyValueRow(label: 'Accountant', value: 'To be linked'),
             const _KeyValueRow(label: 'VAT / PAYE', value: 'Review later'),
             const SizedBox(height: 12),
@@ -546,7 +688,10 @@ class _WebsiteBrandTab extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _CompanyAssetMetric(label: 'Next steps', value: '${items.length}'),
+                _CompanyAssetMetric(
+                  label: 'Next steps',
+                  value: '${items.length}',
+                ),
                 _CompanyAssetMetric(label: 'Drafting', value: '$drafting'),
                 _CompanyAssetMetric(label: 'Planned', value: '$planned'),
                 _CompanyAssetMetric(label: 'Ready', value: '$ready'),
@@ -565,17 +710,29 @@ class _WebsiteBrandTab extends StatelessWidget {
 }
 
 class _LinkedInTab extends StatelessWidget {
-  const _LinkedInTab({required this.snapshot});
+  const _LinkedInTab({
+    required this.snapshot,
+    required this.linkedinCompanyUrl,
+  });
 
   final CompanyCommandCentreSnapshot snapshot;
+  final String linkedinCompanyUrl;
 
   @override
   Widget build(BuildContext context) {
     final items = _linkedinTrackerItems;
     final profile = items.where((item) => item.section == 'Profile').length;
-    final companyPage = items.where((item) => item.section == 'Company Page').length;
-    final contentRhythm = items.where((item) => item.section == 'Content Rhythm').length;
-    final launchTasks = items.where((item) => item.section == 'Launch Tasks').length;
+    final companyPage = items
+        .where((item) => item.section == 'Company Page')
+        .length;
+    final contentRhythm = items
+        .where((item) => item.section == 'Content Rhythm')
+        .length;
+    final launchTasks = items
+        .where((item) => item.section == 'Launch Tasks')
+        .length;
+    final linkedinUrl = linkedinCompanyUrl.trim();
+    final linkedinConfigured = linkedinUrl.isNotEmpty;
     final marketingActions = snapshot.actionBoard
         .where(
           (item) =>
@@ -591,21 +748,91 @@ class _LinkedInTab extends StatelessWidget {
           body:
               'Same calm page-board layout as Website. Keep public awareness connected to what is actually being built.',
           children: [
-            const _KeyValueRow(label: 'Company page', value: 'Not yet published'),
-            const _KeyValueRow(label: 'Content rhythm', value: 'Build log / founder note'),
+            _KeyValueRow(
+              label: 'LinkedIn destination',
+              value: linkedinConfigured ? linkedinUrl : 'Not configured',
+            ),
+            const _KeyValueRow(
+              label: 'Connection mode',
+              value: 'Manual browser launch',
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: linkedinConfigured
+                      ? () => _openExternalUrl(linkedinUrl)
+                      : null,
+                  icon: const Icon(Icons.open_in_new_outlined),
+                  label: const Text('Open LinkedIn'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _jumpToTab(context, 12),
+                  icon: const Icon(Icons.tune_outlined),
+                  label: const Text('Open settings'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _revealSourceLocation(
+                    'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+                  ),
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Open checklist'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _KeyValueRow(
+              label: 'Company page',
+              value: 'Not yet published',
+            ),
+            const _KeyValueRow(
+              label: 'Content rhythm',
+              value: 'Build log / founder note',
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
                 _CompanyAssetMetric(label: 'Profile', value: '$profile'),
-                _CompanyAssetMetric(label: 'Company Page', value: '$companyPage'),
-                _CompanyAssetMetric(label: 'Content Rhythm', value: '$contentRhythm'),
-                _CompanyAssetMetric(label: 'Launch Tasks', value: '$launchTasks'),
+                _CompanyAssetMetric(
+                  label: 'Company Page',
+                  value: '$companyPage',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Content Rhythm',
+                  value: '$contentRhythm',
+                ),
+                _CompanyAssetMetric(
+                  label: 'Launch Tasks',
+                  value: '$launchTasks',
+                ),
               ],
             ),
             const SizedBox(height: 12),
             _LinkedInPageBoard(items: items),
+            const SizedBox(height: 12),
+            const _LinkedInGuidanceCard(),
+            const SizedBox(height: 12),
+            _LinkedInProfileCopyCard(
+              profileCopy: _buildLinkedInProfileCopy(snapshot),
+            ),
+            const SizedBox(height: 12),
+            _LinkedInContentBankCard(
+              items: _buildLinkedInContentBank(snapshot),
+            ),
+            const SizedBox(height: 12),
+            const _LinkedInChecklistCard(),
+            const SizedBox(height: 12),
+            _LinkedInIdeaGeneratorCard(
+              ideas: _buildLinkedInPostIdeas(snapshot, items),
+            ),
+            const SizedBox(height: 12),
+            _LinkedInWeeklyTemplateCard(
+              template: _buildWeeklyLinkedInTemplate(snapshot, items),
+            ),
             if (marketingActions.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
@@ -630,9 +857,15 @@ class _ProductPortfolioTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = snapshot.productPortfolio;
-    final ready = items.where((item) => item.status.toLowerCase() == 'ready').length;
-    final drafting = items.where((item) => item.status.toLowerCase() == 'drafting').length;
-    final planned = items.where((item) => item.status.toLowerCase() == 'planned').length;
+    final ready = items
+        .where((item) => item.status.toLowerCase() == 'ready')
+        .length;
+    final drafting = items
+        .where((item) => item.status.toLowerCase() == 'drafting')
+        .length;
+    final planned = items
+        .where((item) => item.status.toLowerCase() == 'planned')
+        .length;
     final types = items.map((item) => item.type).toSet().length;
     return _SectionScrollView(
       children: [
@@ -645,7 +878,10 @@ class _ProductPortfolioTab extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _CompanyAssetMetric(label: 'Products', value: '${items.length}'),
+                _CompanyAssetMetric(
+                  label: 'Products',
+                  value: '${items.length}',
+                ),
                 _CompanyAssetMetric(label: 'Ready', value: '$ready'),
                 _CompanyAssetMetric(label: 'Drafting', value: '$drafting'),
                 _CompanyAssetMetric(label: 'Planned', value: '$planned'),
@@ -684,7 +920,10 @@ class _ProductPortfolioBoard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Source-linked product board', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              'Source-linked product board',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 6),
             Text(
               'Each row stays close to the portfolio record and shows the current readiness at a glance.',
@@ -712,8 +951,12 @@ class _ProductPortfolioBoard extends StatelessWidget {
                       .map(
                         (item) => DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 260, child: Text(item.name))),
-                            DataCell(SizedBox(width: 180, child: Text(item.type))),
+                            DataCell(
+                              SizedBox(width: 260, child: Text(item.name)),
+                            ),
+                            DataCell(
+                              SizedBox(width: 180, child: Text(item.type)),
+                            ),
                             DataCell(Chip(label: Text(item.status))),
                             DataCell(
                               SizedBox(
@@ -774,9 +1017,7 @@ class _AssetOverviewTab extends StatelessWidget {
           title: 'IP & Asset Register',
           body:
               'This tab stays read-only and points into the live Assets module when you need to work with equipment, projects, or valuation.',
-          children: [
-            _AssetOverviewCard(snapshot: snapshot),
-          ],
+          children: [_AssetOverviewCard(snapshot: snapshot)],
         ),
       ],
     );
@@ -826,13 +1067,15 @@ class _GrantsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stages = snapshot.grantsPipeline.map((item) => item.stage).toSet().toList()
-      ..sort();
+    final stages =
+        snapshot.grantsPipeline.map((item) => item.stage).toSet().toList()
+          ..sort();
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Grants pipeline',
-          body: 'Calm source-linked board for grant research, fit, and the next practical action.',
+          body:
+              'Calm source-linked board for grant research, fit, and the next practical action.',
           children: [
             Wrap(
               spacing: 10,
@@ -882,16 +1125,13 @@ class _ActionBoardTab extends StatelessWidget {
           body:
               'Calm lane board for the next practical company moves. Keep each lane short, current, and easy to scan.',
           children: [
-            _ActionBoardSummaryRow(
-              lanes: orderedLanes,
-              laneMap: lanes,
-            ),
+            _ActionBoardSummaryRow(lanes: orderedLanes, laneMap: lanes),
             const SizedBox(height: 14),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: orderedLanes
-                .map(
+                  .map(
                     (lane) => SizedBox(
                       width: 260,
                       child: _ActionLaneCard(
@@ -910,9 +1150,15 @@ class _ActionBoardTab extends StatelessWidget {
 }
 
 class _SettingsTab extends ConsumerStatefulWidget {
-  const _SettingsTab({required this.snapshot});
+  const _SettingsTab({
+    required this.snapshot,
+    required this.linkedinCompanyUrl,
+    required this.onLinkedInCompanyUrlChanged,
+  });
 
   final CompanyCommandCentreSnapshot snapshot;
+  final String linkedinCompanyUrl;
+  final ValueChanged<String> onLinkedInCompanyUrlChanged;
 
   @override
   ConsumerState<_SettingsTab> createState() => _SettingsTabState();
@@ -920,23 +1166,60 @@ class _SettingsTab extends ConsumerStatefulWidget {
 
 class _SettingsTabState extends ConsumerState<_SettingsTab> {
   bool _busy = false;
+  late final TextEditingController _linkedinController;
+
+  @override
+  void initState() {
+    super.initState();
+    _linkedinController = TextEditingController(
+      text: widget.linkedinCompanyUrl,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _SettingsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.linkedinCompanyUrl != widget.linkedinCompanyUrl &&
+        _linkedinController.text != widget.linkedinCompanyUrl) {
+      _linkedinController.text = widget.linkedinCompanyUrl;
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkedinController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = widget.snapshot;
-    final omegaPathExists = Directory(snapshot.configuredOmegaPath).existsSync();
+    final omegaPathExists = Directory(
+      snapshot.configuredOmegaPath,
+    ).existsSync();
     return _SectionScrollView(
       children: [
         _CalmSectionCard(
           title: 'Settings',
-          body: 'Read-only configuration, source path visibility, and the backup-first write plan.',
+          body:
+              'Read-only configuration, source path visibility, and the backup-first write plan.',
           children: [
-            _KeyValueRow(label: 'Omega OS source path', value: snapshot.configuredOmegaPath),
+            _KeyValueRow(
+              label: 'Omega OS source path',
+              value: snapshot.configuredOmegaPath,
+            ),
+            _KeyValueRow(
+              label: 'LinkedIn destination',
+              value: widget.linkedinCompanyUrl,
+            ),
             _KeyValueRow(
               label: 'Source path status',
               value: omegaPathExists ? 'Available' : 'Missing',
             ),
-            _KeyValueRow(label: 'Module config', value: snapshot.moduleConfigPath),
+            _KeyValueRow(
+              label: 'Module config',
+              value: snapshot.moduleConfigPath,
+            ),
             _KeyValueRow(
               label: 'Module config status',
               value: snapshot.moduleConfigExists ? 'Available' : 'Missing',
@@ -960,12 +1243,73 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
               label: 'Write policy',
               value: 'Copy first, then overwrite',
             ),
-            const _KeyValueRow(label: 'Route', value: '/modules/company-command-centre'),
+            const _KeyValueRow(
+              label: 'Route',
+              value: '/modules/company-command-centre',
+            ),
+          ],
+        ),
+        _CalmSectionCard(
+          title: 'LinkedIn connection',
+          body:
+              'The dashboard links to the LinkedIn destination in the browser while the module stays read-only.',
+          children: [
+            const _KeyValueRow(label: 'Launch mode', value: 'External browser'),
+            _KeyValueRow(
+              label: 'LinkedIn destination',
+              value: widget.linkedinCompanyUrl,
+            ),
+            TextFormField(
+              controller: _linkedinController,
+              decoration: const InputDecoration(
+                labelText: 'LinkedIn URL',
+                helperText:
+                    'Paste the live company page here, or leave the search link in place for now.',
+              ),
+              onChanged: widget.onLinkedInCompanyUrlChanged,
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () => _openExternalUrl(widget.linkedinCompanyUrl),
+                  icon: const Icon(Icons.open_in_new_outlined),
+                  label: const Text('Open LinkedIn'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () => _revealSourceLocation(
+                          'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+                        ),
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Open LinkedIn checklist'),
+                ),
+                TextButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () {
+                          _linkedinController.text =
+                              companyCommandCentreLinkedInCompanyUrl;
+                          widget.onLinkedInCompanyUrlChanged(
+                            companyCommandCentreLinkedInCompanyUrl,
+                          );
+                        },
+                  icon: const Icon(Icons.restart_alt_outlined),
+                  label: const Text('Reset'),
+                ),
+              ],
+            ),
           ],
         ),
         _CalmSectionCard(
           title: 'Write controls',
-          body: 'Keep the module read-only by default. Turn write mode on only when you are ready to save local changes with backups.',
+          body:
+              'Keep the module read-only by default. Turn write mode on only when you are ready to save local changes with backups.',
           children: [
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
@@ -1036,9 +1380,9 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
       _busy = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
     if (result.success) {
       ref.invalidate(companyCommandCentreSnapshotProvider);
     }
@@ -1068,9 +1412,9 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
       _busy = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
     if (result.success) {
       ref.invalidate(companyCommandCentreSnapshotProvider);
     }
@@ -1097,9 +1441,9 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
       _busy = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
   }
 
   Future<void> _openLatestReport() async {
@@ -1123,9 +1467,9 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
       _busy = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
   }
 
   Future<void> _refreshIndexes() async {
@@ -1190,7 +1534,10 @@ class _GrantsPipelineTable extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Source-linked grant board', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              'Source-linked grant board',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 6),
             Text(
               'Each row shows the grant fit and the next practical action to take.',
@@ -1218,10 +1565,19 @@ class _GrantsPipelineTable extends StatelessWidget {
                       .map(
                         (item) => DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 260, child: Text(item.name))),
+                            DataCell(
+                              SizedBox(width: 260, child: Text(item.name)),
+                            ),
                             DataCell(Chip(label: Text(item.stage))),
-                            DataCell(SizedBox(width: 240, child: Text(item.fit))),
-                            DataCell(SizedBox(width: 240, child: Text(item.nextAction))),
+                            DataCell(
+                              SizedBox(width: 240, child: Text(item.fit)),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: 240,
+                                child: Text(item.nextAction),
+                              ),
+                            ),
                             DataCell(
                               SizedBox(
                                 width: 260,
@@ -1280,9 +1636,9 @@ class _ActionLine extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             item.id,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -1291,10 +1647,7 @@ class _ActionLine extends StatelessWidget {
 }
 
 class _ActionBoardSummaryRow extends StatelessWidget {
-  const _ActionBoardSummaryRow({
-    required this.lanes,
-    required this.laneMap,
-  });
+  const _ActionBoardSummaryRow({required this.lanes, required this.laneMap});
 
   final List<String> lanes;
   final Map<String, List<CompanyActionItemData>> laneMap;
@@ -1317,10 +1670,7 @@ class _ActionBoardSummaryRow extends StatelessWidget {
 }
 
 class _ActionLaneCard extends StatelessWidget {
-  const _ActionLaneCard({
-    required this.title,
-    required this.items,
-  });
+  const _ActionLaneCard({required this.title, required this.items});
 
   final String title;
   final List<CompanyActionItemData> items;
@@ -1337,7 +1687,10 @@ class _ActionLaneCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
                 _InlineTag(
                   label: '${items.length}',
@@ -1588,24 +1941,17 @@ class _AssetRegistryBoard extends StatelessWidget {
                       .map(
                         (row) => DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 220, child: Text(row.name))),
                             DataCell(
-                              SizedBox(
-                                width: 360,
-                                child: Text(row.summary),
-                              ),
+                              SizedBox(width: 220, child: Text(row.name)),
                             ),
                             DataCell(
-                              SizedBox(
-                                width: 160,
-                                child: Text(row.status),
-                              ),
+                              SizedBox(width: 360, child: Text(row.summary)),
                             ),
                             DataCell(
-                              SizedBox(
-                                width: 350,
-                                child: Text(row.sourceFile),
-                              ),
+                              SizedBox(width: 160, child: Text(row.status)),
+                            ),
+                            DataCell(
+                              SizedBox(width: 350, child: Text(row.sourceFile)),
                             ),
                             DataCell(
                               TextButton.icon(
@@ -1650,7 +1996,8 @@ class _AssetRegistryBoard extends StatelessWidget {
                   label: const Text('Open Project Summary'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => context.push(RouteNames.assetValuationSummary),
+                  onPressed: () =>
+                      context.push(RouteNames.assetValuationSummary),
                   icon: const Icon(Icons.assessment_outlined),
                   label: const Text('Open Valuation Summary'),
                 ),
@@ -1659,9 +2006,9 @@ class _AssetRegistryBoard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Read-only summary only. The live Assets module remains the working register.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             ),
           ],
         ),
@@ -1704,75 +2051,6 @@ class _EvidenceItem {
   final String sourceFile;
 }
 
-class _EvidenceSectionCard extends StatelessWidget {
-  const _EvidenceSectionCard({
-    required this.title,
-    required this.items,
-  });
-
-  final String title;
-  final List<_EvidenceItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowHeight: 44,
-                  dataRowMinHeight: 52,
-                  dataRowMaxHeight: 88,
-                  columns: const [
-                    DataColumn(label: Text('Artifact')),
-                    DataColumn(label: Text('Kind')),
-                    DataColumn(label: Text('Status')),
-                    DataColumn(label: Text('Notes')),
-                    DataColumn(label: Text('Source file')),
-                  ],
-                  rows: items
-                      .map(
-                        (item) => DataRow(
-                          cells: [
-                            DataCell(SizedBox(width: 260, child: Text(item.title))),
-                            DataCell(SizedBox(width: 150, child: Text(item.kind))),
-                            DataCell(Chip(label: Text(item.status))),
-                            DataCell(
-                              SizedBox(
-                                width: 360,
-                                child: Text(
-                                  item.notes,
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ),
-                            ),
-                            DataCell(
-                              SizedBox(width: 280, child: Text(item.sourceFile)),
-                            ),
-                          ],
-                        ),
-                      )
-                      .toList(growable: false),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _EvidenceIndexCard extends StatelessWidget {
   const _EvidenceIndexCard({required this.items});
 
@@ -1780,13 +2058,14 @@ class _EvidenceIndexCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sortedItems = [...items]..sort((a, b) {
-      final bySection = a.section.compareTo(b.section);
-      if (bySection != 0) {
-        return bySection;
-      }
-      return a.title.compareTo(b.title);
-    });
+    final sortedItems = [...items]
+      ..sort((a, b) {
+        final bySection = a.section.compareTo(b.section);
+        if (bySection != 0) {
+          return bySection;
+        }
+        return a.title.compareTo(b.title);
+      });
 
     final counts = <String, int>{};
     for (final item in sortedItems) {
@@ -1842,20 +2121,33 @@ class _EvidenceIndexCard extends StatelessWidget {
                       .map(
                         (item) => DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 280, child: Text(item.title))),
-                            DataCell(SizedBox(width: 180, child: Text(item.section))),
-                            DataCell(SizedBox(width: 140, child: Text(item.kind))),
-                            DataCell(SizedBox(width: 340, child: Text(item.sourceFile))),
+                            DataCell(
+                              SizedBox(width: 280, child: Text(item.title)),
+                            ),
+                            DataCell(
+                              SizedBox(width: 180, child: Text(item.section)),
+                            ),
+                            DataCell(
+                              SizedBox(width: 140, child: Text(item.kind)),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: 340,
+                                child: Text(item.sourceFile),
+                              ),
+                            ),
                             DataCell(
                               TextButton.icon(
-                                onPressed: () => _openSourceLocation(item.sourceFile),
+                                onPressed: () =>
+                                    _openSourceLocation(item.sourceFile),
                                 icon: const Icon(Icons.open_in_new_outlined),
                                 label: const Text('Open source'),
                               ),
                             ),
                             DataCell(
                               TextButton.icon(
-                                onPressed: () => _revealSourceLocation(item.sourceFile),
+                                onPressed: () =>
+                                    _revealSourceLocation(item.sourceFile),
                                 icon: const Icon(Icons.folder_open_outlined),
                                 label: const Text('Reveal'),
                               ),
@@ -1921,7 +2213,8 @@ const List<_EvidenceItem> _evidenceItems = [
     title: 'UK company admin checklist',
     kind: 'Checklist',
     status: 'Tracked',
-    notes: 'Core companies, banking, tax, and public presence items in one support list.',
+    notes:
+        'Core companies, banking, tax, and public presence items in one support list.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
@@ -1930,7 +2223,8 @@ const List<_EvidenceItem> _evidenceItems = [
     title: 'Company overview template',
     kind: 'Template',
     status: 'Tracked',
-    notes: 'Reusable template for the company overview record and public-facing summary.',
+    notes:
+        'Reusable template for the company overview record and public-facing summary.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/company_overview_template.md',
   ),
@@ -1966,7 +2260,8 @@ const List<_EvidenceItem> _evidenceItems = [
     title: 'Product page template',
     kind: 'Template',
     status: 'Tracked',
-    notes: 'Structure for future product pages and evidence-backed product descriptions.',
+    notes:
+        'Structure for future product pages and evidence-backed product descriptions.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/product_page_template.md',
   ),
@@ -1975,7 +2270,8 @@ const List<_EvidenceItem> _evidenceItems = [
     title: 'Roadmap',
     kind: 'Roadmap',
     status: 'Tracked',
-    notes: 'The company module roadmap provides the longer-term evidence trail.',
+    notes:
+        'The company module roadmap provides the longer-term evidence trail.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/roadmap/ROADMAP.md',
   ),
@@ -1984,7 +2280,8 @@ const List<_EvidenceItem> _evidenceItems = [
     title: 'Operating manual',
     kind: 'Manual',
     status: 'Tracked',
-    notes: 'Operational guidance for how the company module is meant to be used.',
+    notes:
+        'Operational guidance for how the company module is meant to be used.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/operations/OPERATING_MANUAL.md',
   ),
@@ -2002,7 +2299,8 @@ const List<_EvidenceItem> _evidenceItems = [
     title: 'Company module folder',
     kind: 'Folder',
     status: 'Tracked',
-    notes: 'Open the module root to review the company command centre source bundle.',
+    notes:
+        'Open the module root to review the company command centre source bundle.',
     sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE',
   ),
   _EvidenceItem(
@@ -2011,7 +2309,8 @@ const List<_EvidenceItem> _evidenceItems = [
     kind: 'JSON',
     status: 'Tracked',
     notes: 'Module registration details used by the dashboard module system.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/module_manifest.json',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/module_manifest.json',
   ),
   _EvidenceItem(
     section: 'Module source',
@@ -2089,10 +2388,7 @@ class _ChecklistItem {
 }
 
 class _ComplianceSectionCard extends StatelessWidget {
-  const _ComplianceSectionCard({
-    required this.title,
-    required this.items,
-  });
+  const _ComplianceSectionCard({required this.title, required this.items});
 
   final String title;
   final List<_ChecklistItem> items;
@@ -2102,9 +2398,7 @@ class _ComplianceSectionCard extends StatelessWidget {
     return _CalmSectionCard(
       title: title,
       body: 'Read-only checklist rows sourced from the company admin notes.',
-      children: [
-        _ComplianceTable(items: items),
-      ],
+      children: [_ComplianceTable(items: items)],
     );
   }
 }
@@ -2144,10 +2438,15 @@ class _ComplianceTable extends StatelessWidget {
                     DataCell(
                       SizedBox(
                         width: 320,
-                        child: Text(item.notes, style: theme.textTheme.bodyMedium),
+                        child: Text(
+                          item.notes,
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       ),
                     ),
-                    DataCell(SizedBox(width: 220, child: Text(item.sourceFile))),
+                    DataCell(
+                      SizedBox(width: 220, child: Text(item.sourceFile)),
+                    ),
                   ],
                 ),
               )
@@ -2205,10 +2504,15 @@ class _TrackerTable extends StatelessWidget {
                     DataCell(
                       SizedBox(
                         width: 360,
-                        child: Text(item.notes, style: theme.textTheme.bodyMedium),
+                        child: Text(
+                          item.notes,
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       ),
                     ),
-                    DataCell(SizedBox(width: 260, child: Text(item.sourceFile))),
+                    DataCell(
+                      SizedBox(width: 260, child: Text(item.sourceFile)),
+                    ),
                   ],
                 ),
               )
@@ -2220,10 +2524,7 @@ class _TrackerTable extends StatelessWidget {
 }
 
 class _TrackerSectionCard extends StatelessWidget {
-  const _TrackerSectionCard({
-    required this.title,
-    required this.items,
-  });
+  const _TrackerSectionCard({required this.title, required this.items});
 
   final String title;
   final List<_TrackerItem> items;
@@ -2270,7 +2571,10 @@ class _WebsitePageBoard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Page-level tracker', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              'Page-level tracker',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 6),
             Text(
               'Each row maps directly to the website next steps list and keeps the public pages calm and visible.',
@@ -2296,18 +2600,23 @@ class _WebsitePageBoard extends StatelessWidget {
                       .map(
                         (item) => DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 260, child: Text(item.item))),
+                            DataCell(
+                              SizedBox(width: 260, child: Text(item.item)),
+                            ),
                             DataCell(Chip(label: Text(item.status))),
                             DataCell(
+                              SizedBox(width: 360, child: Text(item.notes)),
+                            ),
+                            DataCell(
                               SizedBox(
-                                width: 360,
-                                child: Text(item.notes),
+                                width: 320,
+                                child: Text(item.sourceFile),
                               ),
                             ),
-                            DataCell(SizedBox(width: 320, child: Text(item.sourceFile))),
                             DataCell(
                               TextButton.icon(
-                                onPressed: () => _openSourceLocation(item.sourceFile),
+                                onPressed: () =>
+                                    _openSourceLocation(item.sourceFile),
                                 icon: const Icon(Icons.open_in_new_outlined),
                                 label: const Text('Open source'),
                               ),
@@ -2353,7 +2662,10 @@ class _LinkedInPageBoard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Page-level tracker', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              'Page-level tracker',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 6),
             Text(
               'Each row keeps the profile, company page, content rhythm, and launch tasks in one calm view.',
@@ -2379,15 +2691,23 @@ class _LinkedInPageBoard extends StatelessWidget {
                       .map(
                         (item) => DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 260, child: Text(item.item))),
+                            DataCell(
+                              SizedBox(width: 260, child: Text(item.item)),
+                            ),
                             DataCell(Chip(label: Text(item.status))),
                             DataCell(
                               SizedBox(width: 360, child: Text(item.notes)),
                             ),
-                            DataCell(SizedBox(width: 320, child: Text(item.sourceFile))),
+                            DataCell(
+                              SizedBox(
+                                width: 320,
+                                child: Text(item.sourceFile),
+                              ),
+                            ),
                             DataCell(
                               TextButton.icon(
-                                onPressed: () => _openSourceLocation(item.sourceFile),
+                                onPressed: () =>
+                                    _openSourceLocation(item.sourceFile),
                                 icon: const Icon(Icons.open_in_new_outlined),
                                 label: const Text('Open source'),
                               ),
@@ -2404,6 +2724,397 @@ class _LinkedInPageBoard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LinkedInGuidanceCard extends StatelessWidget {
+  const _LinkedInGuidanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: 'How the dashboard enriches LinkedIn',
+      body:
+          'Use the company workspace as your content engine: keep the profile current, turn the action board into weekly posts, and pull evidence from the website and product tabs.',
+      children: const [
+        _LinkedInBullet(
+          text:
+              'Keep the LinkedIn destination saved in Settings so you always open the right page quickly.',
+        ),
+        _LinkedInBullet(
+          text:
+              'Use the Overview quick actions to jump between company work and LinkedIn planning.',
+        ),
+        _LinkedInBullet(
+          text:
+              'Turn director actions and product progress into a weekly engineering update.',
+        ),
+        _LinkedInBullet(
+          text:
+              'Use the Website and Evidence tabs to pull proof, screenshots, and polished wording into posts.',
+        ),
+      ],
+    );
+  }
+}
+
+class _LinkedInProfileCopyCard extends StatelessWidget {
+  const _LinkedInProfileCopyCard({required this.profileCopy});
+
+  final _LinkedInProfileCopy profileCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: 'Profile headline and about copy',
+      body:
+          'Copy-ready text for the personal LinkedIn profile and the company-facing about section.',
+      children: [
+        _CopyBlock(label: 'Headline', text: profileCopy.headline),
+        const SizedBox(height: 12),
+        _CopyBlock(label: 'About', text: profileCopy.about, maxLines: 6),
+      ],
+    );
+  }
+}
+
+class _LinkedInContentBankCard extends StatelessWidget {
+  const _LinkedInContentBankCard({required this.items});
+
+  final List<_LinkedInContentBankItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: 'LinkedIn content bank',
+      body:
+          'Turn company milestones into post prompts with one short source-backed angle for each.',
+      children: [
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _CopyBlock(
+              label: item.label,
+              text: item.prompt,
+              footerTags: item.tags,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LinkedInChecklistCard extends StatelessWidget {
+  const _LinkedInChecklistCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: 'LinkedIn checklist',
+      body:
+          'Use this short checklist before you post or update the company page.',
+      children: const [
+        _LinkedInBullet(
+          text: 'Keep the LinkedIn destination saved in Settings.',
+        ),
+        _LinkedInBullet(
+          text: 'Choose one clear company milestone or product angle.',
+        ),
+        _LinkedInBullet(
+          text: 'Pull one proof point from the evidence or website tabs.',
+        ),
+        _LinkedInBullet(
+          text: 'Copy the weekly template or a content bank prompt.',
+        ),
+        _LinkedInBullet(
+          text: 'Post, then note the next follow-up task in the action board.',
+        ),
+      ],
+    );
+  }
+}
+
+class _CopyBlock extends StatelessWidget {
+  const _CopyBlock({
+    required this.label,
+    required this.text,
+    this.maxLines = 4,
+    this.footerTags = const [],
+  });
+
+  final String label;
+  final String text;
+  final int maxLines;
+  final List<String> footerTags;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Text(label, style: theme.textTheme.titleSmall)),
+                TextButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: text));
+                    if (!context.mounted) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Copied $label')));
+                  },
+                  icon: const Icon(Icons.copy_outlined),
+                  label: const Text('Copy'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              text,
+              maxLines: maxLines,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (footerTags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: footerTags
+                    .map(
+                      (tag) => _InlineTag(
+                        label: tag,
+                        accent: AppColours.darkSecondary,
+                        foreground: AppColours.darkText,
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LinkedInProfileCopy {
+  const _LinkedInProfileCopy({required this.headline, required this.about});
+
+  final String headline;
+  final String about;
+}
+
+class _LinkedInContentBankItem {
+  const _LinkedInContentBankItem({
+    required this.label,
+    required this.prompt,
+    required this.tags,
+  });
+
+  final String label;
+  final String prompt;
+  final List<String> tags;
+}
+
+class _LinkedInBullet extends StatelessWidget {
+  const _LinkedInBullet({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Icon(Icons.circle, size: 8),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LinkedInIdeaGeneratorCard extends StatelessWidget {
+  const _LinkedInIdeaGeneratorCard({required this.ideas});
+
+  final List<_LinkedInPostIdea> ideas;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: 'LinkedIn post ideas',
+      body:
+          'Short, source-backed angles you can use for the next company update.',
+      children: [
+        ...ideas.map(
+          (idea) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Card(
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            idea.title,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => Clipboard.setData(
+                            ClipboardData(text: idea.copyText),
+                          ),
+                          icon: const Icon(Icons.copy_outlined),
+                          label: const Text('Copy'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(idea.hook),
+                    const SizedBox(height: 8),
+                    Text(
+                      idea.copyText,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _InlineTag(
+                          label: idea.sourceLabel,
+                          accent: AppColours.darkSecondary,
+                          foreground: AppColours.darkText,
+                        ),
+                        _InlineTag(
+                          label: idea.angle,
+                          accent: AppColours.darkGlow,
+                          foreground: AppColours.darkText,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LinkedInWeeklyTemplateCard extends StatelessWidget {
+  const _LinkedInWeeklyTemplateCard({required this.template});
+
+  final _LinkedInWeeklyTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalmSectionCard(
+      title: 'Weekly LinkedIn template',
+      body:
+          'A repeatable structure for the weekly engineering update and company progress post.',
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                template.summary,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () =>
+                  Clipboard.setData(ClipboardData(text: template.copyText)),
+              icon: const Icon(Icons.copy_outlined),
+              label: const Text('Copy template'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColours.darkSurface.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColours.darkOutline),
+          ),
+          child: SelectableText(
+            template.copyText,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: template.closesWith
+              .map(
+                (item) => _InlineTag(
+                  label: item,
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkText,
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ],
+    );
+  }
+}
+
+class _LinkedInPostIdea {
+  const _LinkedInPostIdea({
+    required this.title,
+    required this.hook,
+    required this.copyText,
+    required this.sourceLabel,
+    required this.angle,
+  });
+
+  final String title;
+  final String hook;
+  final String copyText;
+  final String sourceLabel;
+  final String angle;
+}
+
+class _LinkedInWeeklyTemplate {
+  const _LinkedInWeeklyTemplate({
+    required this.summary,
+    required this.copyText,
+    required this.closesWith,
+  });
+
+  final String summary;
+  final String copyText;
+  final List<String> closesWith;
 }
 
 class _KeyValueRow extends StatelessWidget {
@@ -2481,6 +3192,182 @@ class _SectionScrollView extends StatelessWidget {
   }
 }
 
+List<_LinkedInPostIdea> _buildLinkedInPostIdeas(
+  CompanyCommandCentreSnapshot snapshot,
+  List<_TrackerItem> linkedInItems,
+) {
+  final companyName = snapshot.overview.companyName.isNotEmpty
+      ? snapshot.overview.companyName
+      : 'New Earth Advanced Technologies Ltd';
+  final nextMilestone = snapshot.overview.nextMilestone.isNotEmpty
+      ? snapshot.overview.nextMilestone
+      : 'the next company milestone';
+  final firstProduct = snapshot.productPortfolio.isNotEmpty
+      ? snapshot.productPortfolio.first.name
+      : 'the next product';
+  final firstAction = snapshot.actionBoard.isNotEmpty
+      ? snapshot.actionBoard.first.title
+      : 'the next practical move';
+  final launchTaskCount = linkedInItems
+      .where((item) => item.section == 'Launch Tasks')
+      .length;
+
+  return [
+    _LinkedInPostIdea(
+      title: 'Weekly progress update',
+      hook: 'Share what moved this week and why it matters.',
+      copyText:
+          'This week at $companyName we moved $nextMilestone.\n\nWhat changed:\n- One clear milestone moved forward.\n- One practical action from the company board was completed.\n- One proof point can now be shared publicly.\n\nWhy it matters:\nIt keeps the work visible, calm, and grounded in real progress.\n\nNext step: $firstAction',
+      sourceLabel: 'Overview + Action Board',
+      angle: 'Progress',
+    ),
+    _LinkedInPostIdea(
+      title: 'Product spotlight',
+      hook: 'Introduce a product in one calm, useful post.',
+      copyText:
+          'Product spotlight: $firstProduct\n\nWhy it exists:\nIt supports the wider New Earth mission.\n\nWhat it does:\n- Keep it simple and practical.\n- Explain the user benefit in one line.\n- Link the product back to the company direction.\n\nIf you are following the build, this is where the idea becomes a working product.',
+      sourceLabel: 'Product Portfolio',
+      angle: 'Product',
+    ),
+    _LinkedInPostIdea(
+      title: 'Founder note',
+      hook: 'Use this for a short personal update or lesson learned.',
+      copyText:
+          'Founder note from $companyName\n\nThis week I focused on clarity, evidence, and the next practical move.\n\nWhat I learned:\n- Small steps make the work easier to share.\n- Calm structure makes the system easier to trust.\n- Good documentation makes public updates easier.\n\nIf you are building something similar, keep the next step small and visible.',
+      sourceLabel: '$launchTaskCount launch tasks',
+      angle: 'Founder',
+    ),
+  ];
+}
+
+_LinkedInProfileCopy _buildLinkedInProfileCopy(
+  CompanyCommandCentreSnapshot snapshot,
+) {
+  final companyName = snapshot.overview.companyName.isNotEmpty
+      ? snapshot.overview.companyName
+      : 'New Earth Advanced Technologies Ltd';
+  final companyNumber = snapshot.overview.companyNumber.isNotEmpty
+      ? snapshot.overview.companyNumber
+      : '17286202';
+  final domain = snapshot.overview.domain.isNotEmpty
+      ? snapshot.overview.domain
+      : 'www.new-earth.uk';
+  final focusLine = snapshot.overview.focus.isNotEmpty
+      ? snapshot.overview.focus.take(3).join(' · ')
+      : 'Embedded systems · IoT · sustainability technology';
+
+  return _LinkedInProfileCopy(
+    headline:
+        'Founder & Director at $companyName | Building calm technology for useful real-world systems',
+    about:
+        'I lead $companyName, where we build practical technology across embedded systems, IoT, wellbeing, and regenerative tools.\n\nCurrent focus: $focusLine.\n\nCompany number: $companyNumber\nWebsite: $domain\n\nI use this space to share evidence-backed progress, product milestones, and useful lessons from the build.',
+  );
+}
+
+List<_LinkedInContentBankItem> _buildLinkedInContentBank(
+  CompanyCommandCentreSnapshot snapshot,
+) {
+  final companyName = snapshot.overview.companyName.isNotEmpty
+      ? snapshot.overview.companyName
+      : 'New Earth Advanced Technologies Ltd';
+  final productNames = snapshot.productPortfolio
+      .map((item) => item.name)
+      .toList();
+  final firstProduct = productNames.isNotEmpty
+      ? productNames.first
+      : 'MicroGrow';
+  final secondProduct = productNames.length > 1 ? productNames[1] : 'BioCalm';
+  final nextMilestone = snapshot.overview.nextMilestone.isNotEmpty
+      ? snapshot.overview.nextMilestone
+      : 'the next company milestone';
+
+  return [
+    _LinkedInContentBankItem(
+      label: 'Milestone update',
+      prompt:
+          'Prompt: Share how $companyName moved $nextMilestone and why it matters to the wider mission.',
+      tags: const ['Overview', 'Progress', 'Mission'],
+    ),
+    _LinkedInContentBankItem(
+      label: '$firstProduct spotlight',
+      prompt:
+          'Prompt: Explain $firstProduct in simple language, what problem it solves, and how it fits the company direction.',
+      tags: const ['Product', 'Simple', 'Useful'],
+    ),
+    _LinkedInContentBankItem(
+      label: '$secondProduct tease',
+      prompt:
+          'Prompt: Share one reason $secondProduct exists, what stage it is at, and one thing you have learned while building it.',
+      tags: const ['Product', 'Learning', 'Build log'],
+    ),
+    _LinkedInContentBankItem(
+      label: 'Founder reflection',
+      prompt:
+          'Prompt: Share a short lesson learned this week and connect it to how you are building $companyName.',
+      tags: const ['Founder', 'Reflection', 'Trust'],
+    ),
+    _LinkedInContentBankItem(
+      label: 'Website proof',
+      prompt:
+          'Prompt: Show one piece of proof from the website, evidence, or product tabs that supports a public update.',
+      tags: const ['Website', 'Evidence', 'Proof'],
+    ),
+  ];
+}
+
+_LinkedInWeeklyTemplate _buildWeeklyLinkedInTemplate(
+  CompanyCommandCentreSnapshot snapshot,
+  List<_TrackerItem> linkedInItems,
+) {
+  final companyName = snapshot.overview.companyName.isNotEmpty
+      ? snapshot.overview.companyName
+      : 'New Earth Advanced Technologies Ltd';
+  final milestone = snapshot.overview.nextMilestone.isNotEmpty
+      ? snapshot.overview.nextMilestone
+      : 'the next milestone';
+  final profileCount = linkedInItems
+      .where((item) => item.section == 'Profile')
+      .length;
+  final companyPageCount = linkedInItems
+      .where((item) => item.section == 'Company Page')
+      .length;
+  final rhythmCount = linkedInItems
+      .where((item) => item.section == 'Content Rhythm')
+      .length;
+
+  return _LinkedInWeeklyTemplate(
+    summary: 'Copy-ready weekly post structure',
+    copyText:
+        '''
+Weekly update from $companyName
+
+One line win:
+$milestone
+
+What I built:
+- A clear company action moved forward.
+- A product or website step became more visible.
+- The record now has better proof and better structure.
+
+Why it matters:
+It helps keep the company work calm, local, and easy to understand.
+
+What is next:
+- Keep the LinkedIn profile aligned.
+- Keep the company page current.
+- Keep the weekly rhythm steady.
+
+Follow along for more practical build updates.
+'''
+            .trim(),
+    closesWith: [
+      '$profileCount profile tasks',
+      '$companyPageCount company page tasks',
+      '$rhythmCount rhythm tasks',
+    ],
+  );
+}
+
 Future<void> _openSourceLocation(String sourcePath) async {
   final trimmedPath = sourcePath.trim();
   if (trimmedPath.isEmpty) {
@@ -2505,6 +3392,25 @@ Future<void> _openSourceLocation(String sourcePath) async {
   }
 
   await Process.start('xdg-open', [trimmedPath]);
+}
+
+Future<void> _openExternalUrl(String url) async {
+  final trimmedUrl = url.trim();
+  if (trimmedUrl.isEmpty) {
+    return;
+  }
+
+  if (Platform.isWindows) {
+    await Process.start('explorer.exe', [trimmedUrl]);
+    return;
+  }
+
+  if (Platform.isMacOS) {
+    await Process.start('open', [trimmedUrl]);
+    return;
+  }
+
+  await Process.start('xdg-open', [trimmedUrl]);
 }
 
 Future<void> _revealSourceLocation(String sourcePath) async {
@@ -2612,7 +3518,9 @@ class _LinkedFileTable extends StatelessWidget {
                         ),
                       ),
                     ),
-                    DataCell(SizedBox(width: 320, child: Text(record.relativePath))),
+                    DataCell(
+                      SizedBox(width: 320, child: Text(record.relativePath)),
+                    ),
                   ],
                 ),
               )
@@ -2660,7 +3568,8 @@ class _IndexExplorerTabState extends State<_IndexExplorerTab> {
       children: [
         _CalmSectionCard(
           title: 'Index Explorer',
-          body: 'Search the generated company indexes by title, label, or source path.',
+          body:
+              'Search the generated company indexes by title, label, or source path.',
           children: [
             Wrap(
               spacing: 8,
@@ -2672,8 +3581,12 @@ class _IndexExplorerTabState extends State<_IndexExplorerTab> {
                   foreground: AppColours.darkText,
                 ),
                 _InlineTag(
-                  label: snapshot.sourceExists ? 'Source available' : 'Source missing',
-                  accent: snapshot.sourceExists ? AppColours.darkSuccess : AppColours.darkAmber,
+                  label: snapshot.sourceExists
+                      ? 'Source available'
+                      : 'Source missing',
+                  accent: snapshot.sourceExists
+                      ? AppColours.darkSuccess
+                      : AppColours.darkAmber,
                   foreground: AppColours.darkText,
                 ),
                 _InlineTag(
@@ -2725,25 +3638,30 @@ class _IndexExplorerTabState extends State<_IndexExplorerTab> {
     List<CompanyCommandCentreMarkdownRecord> records,
   ) {
     final query = _searchController.text.trim().toLowerCase();
-    return records.where((record) {
-      final matchesQuery = query.isEmpty ||
-          record.title.toLowerCase().contains(query) ||
-          record.relativePath.toLowerCase().contains(query) ||
-          record.labels.any((label) => label.toLowerCase().contains(query)) ||
-          record.dueDates.any((date) => date.contains(query));
+    return records
+        .where((record) {
+          final matchesQuery =
+              query.isEmpty ||
+              record.title.toLowerCase().contains(query) ||
+              record.relativePath.toLowerCase().contains(query) ||
+              record.labels.any(
+                (label) => label.toLowerCase().contains(query),
+              ) ||
+              record.dueDates.any((date) => date.contains(query));
 
-      final matchesFilter = switch (_selectedFilter) {
-        'Action' => record.checkboxCount > 0,
-        'Deadline' => record.dueDates.isNotEmpty,
-        'Product' => record.labels.contains('product'),
-        'Grant' => record.labels.contains('grant'),
-        'IP / Asset' => record.labels.contains('ip_asset'),
-        'Evidence' => record.isEvidence,
-        _ => true,
-      };
+          final matchesFilter = switch (_selectedFilter) {
+            'Action' => record.checkboxCount > 0,
+            'Deadline' => record.dueDates.isNotEmpty,
+            'Product' => record.labels.contains('product'),
+            'Grant' => record.labels.contains('grant'),
+            'IP / Asset' => record.labels.contains('ip_asset'),
+            'Evidence' => record.isEvidence,
+            _ => true,
+          };
 
-      return matchesQuery && matchesFilter;
-    }).toList(growable: false);
+          return matchesQuery && matchesFilter;
+        })
+        .toList(growable: false);
   }
 }
 
@@ -2754,23 +3672,57 @@ class _IndexSummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actionCount = records.where((record) => record.checkboxCount > 0).length;
-    final deadlineCount = records.where((record) => record.dueDates.isNotEmpty).length;
-    final productCount = records.where((record) => record.labels.contains('product')).length;
-    final grantCount = records.where((record) => record.labels.contains('grant')).length;
-    final ipAssetCount = records.where((record) => record.labels.contains('ip_asset')).length;
+    final actionCount = records
+        .where((record) => record.checkboxCount > 0)
+        .length;
+    final deadlineCount = records
+        .where((record) => record.dueDates.isNotEmpty)
+        .length;
+    final productCount = records
+        .where((record) => record.labels.contains('product'))
+        .length;
+    final grantCount = records
+        .where((record) => record.labels.contains('grant'))
+        .length;
+    final ipAssetCount = records
+        .where((record) => record.labels.contains('ip_asset'))
+        .length;
     final evidenceCount = records.where((record) => record.isEvidence).length;
 
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        _InlineTag(label: '$actionCount action files', accent: AppColours.darkSuccess, foreground: AppColours.darkText),
-        _InlineTag(label: '$deadlineCount deadline files', accent: AppColours.darkAmber, foreground: AppColours.darkText),
-        _InlineTag(label: '$productCount product files', accent: AppColours.darkSecondary, foreground: AppColours.darkText),
-        _InlineTag(label: '$grantCount grant files', accent: AppColours.darkPurple, foreground: AppColours.darkText),
-        _InlineTag(label: '$ipAssetCount IP / asset files', accent: AppColours.darkGlow, foreground: AppColours.darkText),
-        _InlineTag(label: '$evidenceCount evidence files', accent: AppColours.darkSecondary, foreground: AppColours.darkText),
+        _InlineTag(
+          label: '$actionCount action files',
+          accent: AppColours.darkSuccess,
+          foreground: AppColours.darkText,
+        ),
+        _InlineTag(
+          label: '$deadlineCount deadline files',
+          accent: AppColours.darkAmber,
+          foreground: AppColours.darkText,
+        ),
+        _InlineTag(
+          label: '$productCount product files',
+          accent: AppColours.darkSecondary,
+          foreground: AppColours.darkText,
+        ),
+        _InlineTag(
+          label: '$grantCount grant files',
+          accent: AppColours.darkPurple,
+          foreground: AppColours.darkText,
+        ),
+        _InlineTag(
+          label: '$ipAssetCount IP / asset files',
+          accent: AppColours.darkGlow,
+          foreground: AppColours.darkText,
+        ),
+        _InlineTag(
+          label: '$evidenceCount evidence files',
+          accent: AppColours.darkSecondary,
+          foreground: AppColours.darkText,
+        ),
       ],
     );
   }
@@ -2850,9 +3802,11 @@ class _IndexExplorerTable extends StatelessWidget {
                     DataCell(
                       SizedBox(
                         width: 160,
-                        child: Text(record.dueDates.isEmpty
-                            ? '-'
-                            : record.dueDates.join(', ')),
+                        child: Text(
+                          record.dueDates.isEmpty
+                              ? '-'
+                              : record.dueDates.join(', '),
+                        ),
                       ),
                     ),
                     DataCell(
@@ -2884,45 +3838,6 @@ class _IndexExplorerTable extends StatelessWidget {
       default:
         return AppColours.darkSecondary;
     }
-  }
-}
-
-class _SimplePlaceholderTab extends StatelessWidget {
-  const _SimplePlaceholderTab({
-    required this.title,
-    required this.body,
-    required this.chips,
-  });
-
-  final String title;
-  final String body;
-  final List<String> chips;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionScrollView(
-      children: [
-        _CalmSectionCard(
-          title: title,
-          body: body,
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: chips
-                  .map(
-                    (chip) => _InlineTag(
-                      label: chip,
-                      accent: AppColours.darkSecondary,
-                      foreground: AppColours.darkText,
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 }
 
@@ -2976,10 +3891,7 @@ class _PartnershipsTab extends StatelessWidget {
             ),
           ],
         ),
-        _TrackerSectionCard(
-          title: 'Partnership tracker',
-          items: items,
-        ),
+        _TrackerSectionCard(title: 'Partnership tracker', items: items),
       ],
     );
   }
@@ -3229,78 +4141,91 @@ const List<_TrackerItem> _websiteTrackerItems = [
     section: 'Website',
     item: 'Add company identity to homepage',
     status: 'Drafting',
-    notes: 'Surface the legal name and founder identity clearly on the landing page.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    notes:
+        'Surface the legal name and founder identity clearly on the landing page.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Create Technologies page',
     status: 'Planned',
     notes: 'Reserve a calm page for the company technology overview.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Create Products page',
     status: 'Planned',
     notes: 'List the product family in one clear place.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Create Projects/build log page',
     status: 'Planned',
     notes: 'Use this for progress notes and visible build momentum.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Create Grants & Partnerships page',
     status: 'Planned',
     notes: 'Provide a single destination for opportunities and collaborators.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Add MicroGrow product page',
     status: 'Planned',
     notes: 'Draft the first product-specific page for MicroGrow.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Add BioCalm product page',
     status: 'Planned',
     notes: 'Reserve a product page for the BioCalm concept.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Add Omega Dashboard product page',
     status: 'Planned',
-    notes: 'Keep the dashboard product visible for future customers and partners.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    notes:
+        'Keep the dashboard product visible for future customers and partners.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Add company contact form subjects',
     status: 'Drafting',
     notes: 'Define the calm subject options before the form goes live.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Add LinkedIn company page link',
     status: 'Ready',
     notes: 'This can point straight at the new LinkedIn company profile.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Website',
     item: 'Add professional footer with company name and company number',
     status: 'Drafting',
     notes: 'Keep the legal footer visible and consistent across pages.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
 ];
 
@@ -3349,7 +4274,8 @@ const List<_TrackerItem> _financeTrackerItems = [
     section: 'Finance',
     item: 'Review VAT / PAYE timing',
     status: 'Review',
-    notes: 'Only step into VAT or PAYE when the company situation makes it useful.',
+    notes:
+        'Only step into VAT or PAYE when the company situation makes it useful.',
     sourceFile:
         'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/legal_finance/UK_COMPANY_ADMIN_CHECKLIST.md',
   ),
@@ -3361,56 +4287,65 @@ const List<_TrackerItem> _linkedinTrackerItems = [
     item: 'Update personal headline',
     status: 'Drafting',
     notes: 'Keep the profile headline clear and founder-focused.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Profile',
     item: 'Add Founder & Director role',
     status: 'Planned',
     notes: 'Make the public role reflect the company position accurately.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Company Page',
     item: 'Create New Earth Advanced Technologies Ltd company page',
     status: 'Planned',
     notes: 'Create the official company page before launch content starts.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Company Page',
     item: 'Upload banner',
     status: 'Planned',
     notes: 'Use the banner to keep the page visually aligned with the website.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Company Page',
     item: 'Add website link',
     status: 'Ready',
     notes: 'Link the public profile back to the website once the page exists.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Content Rhythm',
     item: 'Create weekly engineering update rhythm',
     status: 'Drafting',
     notes: 'Keep the cadence steady and low pressure.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Content Rhythm',
     item: 'Pin MicroGrow/BioCalm/Omega posts',
     status: 'Planned',
-    notes: 'Pin the most representative posts once the launch content is ready.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    notes:
+        'Pin the most representative posts once the launch content is ready.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
   _TrackerItem(
     section: 'Launch Tasks',
     item: 'Publish company launch post',
     status: 'Ready',
     notes: 'Draft the first launch update when the company page is live.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/linkedin_next_steps.md',
   ),
 ];
 
@@ -3419,30 +4354,34 @@ const List<_TrackerItem> _partnershipTrackerItems = [
     section: 'Planning',
     item: 'Create Grants & Partnerships page shell',
     status: 'Planned',
-    notes: 'Turn the website next step into a calm, source-linked tracking page.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
+    notes:
+        'Turn the website next step into a calm, source-linked tracking page.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/checklists/website_next_steps.md',
   ),
   _TrackerItem(
     section: 'Planning',
     item: 'List priority partner types',
     status: 'Drafting',
     notes: 'Keep the first partner map small and easy to review.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/MODULE_SPEC.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/MODULE_SPEC.md',
   ),
   _TrackerItem(
     section: 'Outreach',
     item: 'Draft partner intro pack',
     status: 'Drafting',
-    notes: 'Use the company and capability templates to keep outreach consistent.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/capability_statement_template.md',
+    notes:
+        'Use the company and capability templates to keep outreach consistent.',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/data/templates/capability_statement_template.md',
   ),
   _TrackerItem(
     section: 'Evidence',
     item: 'Link partner evidence files',
     status: 'Ready',
     notes: 'Attach the supporting documents once partnerships start moving.',
-    sourceFile: 'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/MODULE_SPEC.md',
+    sourceFile:
+        'modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/docs/MODULE_SPEC.md',
   ),
 ];
-
-
