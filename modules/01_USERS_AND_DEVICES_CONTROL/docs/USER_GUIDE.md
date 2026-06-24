@@ -13,6 +13,7 @@ It manages:
 - roles
 - permissions
 - trust levels
+- local PIN records
 - approvals
 - audit events
 
@@ -21,6 +22,68 @@ The module home now also shows a short access plan so the main security flow is 
 The main app now opens on `Security Lock` first. That screen uses the New Earth desktop startup image in the background, then lets you continue into the dashboard or the optional voice gate.
 
 A small opaque security session box now sits in the top-left corner of the desktop shell. It shows whether the session is active, the active user, whether that user is online, the timeout window, and a live countdown to expiry. You can tap it to return to `Security Lock` or jump to `Access Matrix`.
+
+The local PIN registry now lives inside the same security area. Use `PIN Registry` from `Users & Devices Control` or `Settings` when you need to set, revoke, or recover a local PIN. The lock screen no longer opens the registry directly.
+
+The PIN registry now stores records in the local SQLite database first, with the seeded JSON files acting as the fallback demo source. That keeps per-user PIN changes, recovery codes, and audit flow local while the rest of the access store catches up.
+
+If you already had a local PIN saved before the database switch, the app will import that legacy PIN file into SQLite the first time the registry loads. That keeps existing demo PINs and personal test PINs working during the transition.
+
+The current PINs now show in two places:
+
+- each user card in `Users` shows the active and recovery PIN summaries for that person
+- `Security Lock` shows the selected user’s masked PIN summaries before unlock
+
+That makes it easier to check the right person before you test a PIN.
+
+`Security Lock` also highlights a recommended local identity when the selected user is not the best match for the screen you are trying to open.
+That gives you a clearer first choice before you start typing a PIN.
+
+When the app is locked, the `Users & Devices` area stays open, but `PIN Registry` is blocked until a local session is unlocked. Everything else redirects back to `Security Lock`.
+
+## Access System
+
+Use these diagrams when you want to understand the full access flow quickly.
+
+### 1. Access flow
+
+![Access flow chart](assets/access-flow-chart.svg)
+
+This shows the exact route from app start to unlocked screen. If a check fails, the flow loops back to the right place instead of letting the screen open.
+
+### 2. Roles and permissions
+
+![Role and permission matrix](assets/role-permission-matrix.svg)
+
+This shows why a user can be blocked even when the device is trusted. The Hayley example is a good reminder that role and permission still matter.
+
+### 3. Session lifecycle
+
+![Security session lifecycle](assets/session-lifecycle.svg)
+
+This shows how the session box, countdown, active user, and auto-lock behave across the app.
+
+## Focused access diagrams
+
+Use these when you want a closer look at the parts people ask about most.
+
+### 1. User onboarding
+
+![User onboarding flow](assets/user-onboarding-flow.svg)
+
+This shows the path from a new user record to trusted access.
+
+### 2. Device trust
+
+![Device trust flow](assets/device-trust-flow.svg)
+
+This shows how a device moves from detected to trusted and ready for gated access.
+
+### 3. PIN assignment and recovery
+
+![PIN assignment and recovery workflow](assets/pin-assignment-recovery.svg)
+
+This shows how a PIN is assigned, confirmed, stored locally, and recovered safely.
 
 ## Startup flow
 
@@ -61,10 +124,125 @@ Before a sensitive module opens, the system needs:
 - permission
 - trust level
 - audit trail
+- local PIN, when the lock is enabled
 
 If anything is missing, the gate should explain what is missing and why.
 
 The startup lock is the first check. The voice gate is optional and should only be used when you want the headset readiness step at startup.
+
+## PIN Registry
+
+Use `PIN Registry` when a user has lost their local PIN or when you want to rotate it. It is only available after the main Users & Devices screen or Settings is open.
+
+You can also assign a PIN directly from an individual user card in `Users`.
+That card shows the PIN counts for that person, such as `Primary PIN 1` or `Recovery PIN 1`.
+Use `Assign PIN` on the card for the fastest path:
+
+- choose `Primary` to type a manual unlock PIN
+- choose `Recovery` to generate a recovery code automatically
+
+Each PIN record is tied to one user only, so the unlock check always compares the selected user with that user's saved PINs.
+If the session locks again, the PIN Registry closes back to `Security Lock`.
+
+PIN policy:
+
+- keep PINs local and user-specific
+- use 4 to 8 digits for the normal unlock code
+- use a recovery PIN only when the primary PIN is unavailable
+- revoke recovery PINs after use
+- keep the audit trail visible for each change
+
+It supports:
+
+- set primary PIN
+- issue recovery PIN
+- revoke all PINs for a user
+- revoke a single PIN record
+
+When to use it:
+
+- the user cannot remember the current unlock PIN
+- you want to replace a shared demo PIN with a personal one
+- you want to retire an old code after recovery
+
+Click-by-click:
+
+1. Open `Users & Devices Control`.
+2. Click `Manage PINs` from `Users & Devices Control` or `Settings`.
+3. Pick the user.
+4. Set a primary PIN or issue a recovery PIN.
+5. Use `Security Lock` to test the new PIN.
+6. Revoke the old PIN once the user is back in.
+
+## Quick operator flow
+
+Use this when you want the fastest safe path from user card to test unlock.
+
+1. Open `Users`.
+2. Find the person you want to work with.
+3. Click the user's PIN summary chip to open `PIN Registry` already pointed at that user.
+4. Or click `Copy PIN summary` if you want a quick local note for yourself.
+5. Set or rotate the primary PIN, or issue a recovery PIN if needed.
+6. Open `Security Lock`.
+7. Select the same user and matching device.
+8. Enter the new PIN and unlock.
+9. Check `Audit Log` to confirm the change was recorded locally.
+
+## Assign a PIN to one user
+
+Use this when you want to give one person their own local unlock code.
+
+1. Open `Users & Devices Control`.
+2. Open `Users`.
+3. Find the person you want to update.
+4. Click `Assign PIN` on that user's card.
+5. Leave `Primary` selected if you want to type a normal unlock PIN yourself.
+6. Enter a 4 to 8 digit PIN that only that person should use.
+7. Save the PIN and watch the card update to show the new PIN count.
+8. Or switch to `Recovery` if you want the app to generate a recovery code for you.
+9. Open `Security Lock`.
+10. Select the same user.
+11. Enter the new PIN and unlock the session.
+12. Check `Audit Log` if you want to confirm the change was written locally.
+
+What this does:
+
+- creates or replaces the active PIN for only that selected user
+- keeps the PIN bound to the selected local identity
+- leaves other users' PINs untouched
+- records the change in the local audit trail
+
+## Recover a lost PIN
+
+Use this when the user still exists but the active PIN was lost or needs a safe replacement.
+
+1. Open `Users & Devices Control`.
+2. Open `PIN Registry`.
+3. Pick the affected user.
+4. Click `Issue recovery PIN`.
+5. Share the recovery code with the user through a safe local path.
+6. Ask the user to unlock with that recovery PIN.
+7. Once the user is back in, revoke the recovery PIN.
+8. If needed, set a fresh primary PIN after the recovery has been confirmed.
+
+What to keep in mind:
+
+- the recovery PIN is still tied to one user only
+- the recovery PIN is generated automatically in the dialog
+- the recovery PIN should be revoked after use
+- if the user forgets the PIN again, issue a fresh recovery code rather than reusing an old one
+- the audit log should show both the issue and the revoke events
+
+## Next access-control task
+
+The next calm step is to keep tightening the Users & Devices access flow now that the live store is already SQLite-first.
+
+Why this is next:
+
+- it matches the current future roadmap
+- it keeps the access story calm and consistent for operators
+- it makes per-user PIN, approval, and audit data easier to understand
+- it gives the access system a cleaner foundation before PIN/passkey expansion
 
 ## Treasury example
 

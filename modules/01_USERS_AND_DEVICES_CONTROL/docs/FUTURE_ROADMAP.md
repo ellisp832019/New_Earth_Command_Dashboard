@@ -1,7 +1,8 @@
 # Future Roadmap
 
 ## v0.1 Local persistence
-JSON users, devices, roles, permissions, trust levels, audit, and approvals are seeded into the local app-documents store.
+The Users & Devices store now runs through the local SQLite database, with the imported JSON files used as seed data.
+PIN records also live in SQLite as the first database-backed security slice.
 
 ## v0.2 UI integration
 Working Dashboard screens and Module Hub card.
@@ -19,4 +20,5 @@ GAIA and Alexa controlled identities with approval queue.
 PIN/passkeys, encrypted local DB, device certificates, exportable audit report.
 
 ## Next likely step
-Move the Users & Devices store from JSON-backed files into a structured local database layer once the Phase 1 flows settle.
+Keep the remaining Users & Devices polish focused on onboarding, trust, and approval UX now that the live store is SQLite-first.
+The next clean slice is likely more user-facing than storage-focused.

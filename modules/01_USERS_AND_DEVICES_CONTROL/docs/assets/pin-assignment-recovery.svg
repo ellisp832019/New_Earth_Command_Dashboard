@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-label="PIN assignment and recovery workflow">
+  <defs>
+    <style>
+      .bg { fill: #081722; }
+      .panel { fill: #102634; stroke: #5bc6b8; stroke-width: 2; rx: 18; ry: 18; }
+      .node { fill: #163042; stroke: #335466; stroke-width: 2; rx: 18; ry: 18; }
+      .good { fill: #17352f; stroke: #71d68a; stroke-width: 2; rx: 18; ry: 18; }
+      .warn { fill: #2c2531; stroke: #f0b35b; stroke-width: 2; rx: 18; ry: 18; }
+      .text { fill: #eaf6f4; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
+      .small { fill: #bed0cf; font-family: Arial, Helvetica, sans-serif; font-size: 17px; }
+      .tiny { fill: #92a6ab; font-family: Arial, Helvetica, sans-serif; font-size: 14px; }
+      .arrow { stroke: #8fd3d4; stroke-width: 4; fill: none; marker-end: url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#8fd3d4" />
+    </marker>
+  </defs>
+  <rect class="bg" width="1400" height="760" />
+  <text class="text" x="60" y="58">PIN assignment and recovery workflow</text>
+  <text class="small" x="60" y="88">Each PIN belongs to one user. Primary codes unlock normally; recovery codes help when the primary code is lost.</text>
+
+  <rect class="panel" x="60" y="132" width="1280" height="540" />
+
+  <rect class="node" x="92" y="248" width="200" height="100" />
+  <text class="text" x="118" y="286">Assign primary PIN</text>
+  <text class="small" x="118" y="314">User types the code</text>
+
+  <rect class="node" x="340" y="248" width="220" height="100" />
+  <text class="text" x="366" y="286">Save locally</text>
+  <text class="small" x="366" y="314">Audit trail is written</text>
+
+  <rect class="good" x="620" y="248" width="220" height="100" />
+  <text class="text" x="646" y="286">Test in Security Lock</text>
+  <text class="small" x="646" y="314">Same user, same device</text>
+
+  <rect class="warn" x="900" y="248" width="220" height="100" />
+  <text class="text" x="926" y="286">If lost, issue recovery</text>
+  <text class="small" x="926" y="314">Generate a temporary code</text>
+
+  <rect class="good" x="1180" y="248" width="90" height="100" />
+  <text class="text" x="1198" y="286">Revoke</text>
+
+  <path class="arrow" d="M292 298 L330 298" />
+  <path class="arrow" d="M560 298 L610 298" />
+  <path class="arrow" d="M840 298 L890 298" />
+  <path class="arrow" d="M1120 298 L1170 298" />
+
+  <rect class="panel" x="92" y="430" width="1240" height="110" />
+  <text class="text" x="118" y="472">Policy reminder</text>
+  <text class="small" x="118" y="502">Primary PINs are for normal unlock. Recovery PINs are temporary and should be revoked after use.</text>
+  <text class="tiny" x="118" y="534">That keeps the local identity path tidy and makes audits easier to read later.</text>
+</svg>
