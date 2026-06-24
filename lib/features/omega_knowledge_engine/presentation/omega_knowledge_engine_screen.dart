@@ -30,6 +30,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   late final TextEditingController _obsidianVaultController;
   List<OmegaKnowledgeEngineRepoProfile> _repoProfilesDraft = [];
   OmegaKnowledgeEngineSnapshot? _snapshot;
+  String? _loadError;
   bool _loading = true;
   bool _saving = false;
   bool _runningScan = false;
@@ -78,16 +79,28 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   }
 
   Future<void> _loadSnapshot() async {
-    final snapshot = await _service.loadSnapshot();
-    if (!mounted) {
-      return;
-    }
+    try {
+      final snapshot = await _service.loadSnapshot();
+      if (!mounted) {
+        return;
+      }
 
-    _seedControllers(snapshot.settings);
-    setState(() {
-      _snapshot = snapshot;
-      _loading = false;
-    });
+      _seedControllers(snapshot.settings);
+      setState(() {
+        _snapshot = snapshot;
+        _loadError = null;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loadError = error.toString();
+        _loading = false;
+      });
+    }
   }
 
   void _seedControllers(OmegaKnowledgeEngineSettings settings) {
@@ -136,23 +149,37 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       ],
     );
 
-    await _service.saveSettings(updatedSettings);
-    final reloaded = await _service.loadSnapshot();
-    if (!mounted) {
-      return;
+    try {
+      await _service.saveSettings(updatedSettings);
+      final reloaded = await _service.loadSnapshot();
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _snapshot = reloaded;
+        _loadError = null;
+        _seedControllers(reloaded.settings);
+        _saving = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Omega Knowledge Engine settings saved locally.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _saving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save Omega settings: $error')),
+      );
     }
-
-    setState(() {
-      _snapshot = reloaded;
-      _seedControllers(reloaded.settings);
-      _saving = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Omega Knowledge Engine settings saved locally.'),
-      ),
-    );
   }
 
   Future<void> _resetSettings() async {
@@ -160,24 +187,37 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       _saving = true;
     });
 
-    await _service.saveSettings(
-      OmegaKnowledgeEngineSettings.defaults(
-        moduleRootPath: _service.moduleRootPath,
-      ),
-    );
-    await _loadSnapshot();
+    try {
+      await _service.saveSettings(
+        OmegaKnowledgeEngineSettings.defaults(
+          moduleRootPath: _service.moduleRootPath,
+        ),
+      );
+      await _loadSnapshot();
 
-    if (!mounted) {
-      return;
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _saving = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Knowledge Engine settings reset.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _saving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not reset Omega settings: $error')),
+      );
     }
-
-    setState(() {
-      _saving = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Knowledge Engine settings reset.')),
-    );
   }
 
   Future<void> _copyScanCommand() async {
@@ -204,31 +244,45 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       _runningScan = true;
     });
 
-    final result = await _service.runScan();
-    final reloaded = await _service.loadSnapshot();
+    try {
+      final result = await _service.runScan();
+      final reloaded = await _service.loadSnapshot();
 
-    if (!mounted) {
-      return;
-    }
+      if (!mounted) {
+        return;
+      }
 
-    setState(() {
-      _snapshot = reloaded;
-      _seedControllers(reloaded.settings);
-      _runningScan = false;
-    });
+      setState(() {
+        _snapshot = reloaded;
+        _loadError = null;
+        _seedControllers(reloaded.settings);
+        _runningScan = false;
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.succeeded
-              ? 'Omega scan completed and outputs refreshed.'
-              : 'Omega scan did not complete: ${result.summary}',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.succeeded
+                ? 'Omega scan completed and outputs refreshed.'
+                : 'Omega scan did not complete: ${result.summary}',
+          ),
         ),
-      ),
-    );
+      );
 
-    if (result.succeeded) {
-      _openScanResults();
+      if (result.succeeded) {
+        _openScanResults();
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _runningScan = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Omega scan failed to start: $error')),
+      );
     }
   }
 
@@ -469,13 +523,73 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_loading || _snapshot == null) {
+    if (_loading) {
       return Scaffold(
         appBar: AppBar(
           leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
           title: const Text('Omega Knowledge Engine'),
         ),
         body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_loadError != null && _snapshot == null) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
+          title: const Text('Omega Knowledge Engine'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Omega Knowledge Engine could not load',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _loadError!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _loading = true;
+                                _loadError = null;
+                              });
+                              unawaited(_loadSnapshot());
+                            },
+                            icon: const Icon(Icons.refresh_outlined),
+                            label: const Text('Try again'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _openSettings,
+                            icon: const Icon(Icons.settings_outlined),
+                            label: const Text('Open settings'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -556,6 +670,10 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             onOpenObsidianExport: () => _openTab(7),
             onOpenSettings: _openSettings,
             healthWarnings: healthWarnings,
+            onOpenOutputFolder: () => _openLocalPath(snapshot.settings.outputDir),
+            onOpenObsidianExportFolder: () =>
+                _openLocalPath(snapshot.settings.obsidianExportDir),
+            onCopyOutputPath: () => _copyText(snapshot.settings.outputDir),
           ),
           _RepositoriesTab(
             snapshot: snapshot,
@@ -618,7 +736,13 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
               ),
             ],
           ),
-          _ObsidianExportTab(snapshot: snapshot, theme: theme),
+          _ObsidianExportTab(
+            snapshot: snapshot,
+            theme: theme,
+            onOpenExportFolder: () =>
+                _openLocalPath(snapshot.settings.obsidianExportDir),
+            onCopyExportPath: () => _copyText(snapshot.settings.obsidianExportDir),
+          ),
           _SettingsTab(
             snapshot: snapshot,
             repoProfiles: _repoProfilesDraft,
@@ -803,6 +927,40 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   bool _entityExists(String relativePath) {
     return FileSystemEntity.typeSync(relativePath) != FileSystemEntityType.notFound;
   }
+
+  Future<void> _copyText(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Path copied to clipboard.')),
+    );
+  }
+
+  Future<void> _openLocalPath(String localPath) async {
+    final trimmed = localPath.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    try {
+      if (Platform.isWindows) {
+        await Process.start('explorer', [trimmed], runInShell: true);
+      } else if (Platform.isMacOS) {
+        await Process.start('open', [trimmed], runInShell: true);
+      } else {
+        await Process.start('xdg-open', [trimmed], runInShell: true);
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open path: $trimmed')),
+      );
+    }
+  }
 }
 
 class _OverviewTab extends StatelessWidget {
@@ -821,6 +979,9 @@ class _OverviewTab extends StatelessWidget {
     required this.onOpenObsidianExport,
     required this.onOpenSettings,
     required this.healthWarnings,
+    required this.onOpenOutputFolder,
+    required this.onOpenObsidianExportFolder,
+    required this.onCopyOutputPath,
   });
 
   final OmegaKnowledgeEngineSnapshot snapshot;
@@ -837,6 +998,9 @@ class _OverviewTab extends StatelessWidget {
   final VoidCallback onOpenObsidianExport;
   final VoidCallback onOpenSettings;
   final List<String> healthWarnings;
+  final VoidCallback onOpenOutputFolder;
+  final VoidCallback onOpenObsidianExportFolder;
+  final VoidCallback onCopyOutputPath;
 
   @override
   Widget build(BuildContext context) {
@@ -1055,7 +1219,30 @@ class _OverviewTab extends StatelessWidget {
           subtitle:
               'A simple check of the files the engine expects to find in the output folder.',
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: onOpenOutputFolder,
+                    icon: const Icon(Icons.folder_open_outlined),
+                    label: const Text('Open output folder'),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: onOpenObsidianExportFolder,
+                    icon: const Icon(Icons.auto_stories_outlined),
+                    label: const Text('Open export folder'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onCopyOutputPath,
+                    icon: const Icon(Icons.copy_outlined),
+                    label: const Text('Copy output path'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               for (final item in outputHealth) ...[
                 _PathHealthRow(item: item),
                 if (item != outputHealth.last) const SizedBox(height: 8),
@@ -1199,10 +1386,17 @@ class _CommentSuggestionsTab extends StatelessWidget {
 }
 
 class _ObsidianExportTab extends StatelessWidget {
-  const _ObsidianExportTab({required this.snapshot, required this.theme});
+  const _ObsidianExportTab({
+    required this.snapshot,
+    required this.theme,
+    required this.onOpenExportFolder,
+    required this.onCopyExportPath,
+  });
 
   final OmegaKnowledgeEngineSnapshot snapshot;
   final ThemeData theme;
+  final VoidCallback onOpenExportFolder;
+  final VoidCallback onCopyExportPath;
 
   @override
   Widget build(BuildContext context) {
@@ -1224,8 +1418,25 @@ class _ObsidianExportTab extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final file in snapshot.obsidianExportFiles)
-                    Chip(label: Text(file)),
+                    for (final file in snapshot.obsidianExportFiles)
+                      Chip(label: Text(file)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: onOpenExportFolder,
+                    icon: const Icon(Icons.folder_open_outlined),
+                    label: const Text('Open export folder'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onCopyExportPath,
+                    icon: const Icon(Icons.copy_outlined),
+                    label: const Text('Copy export path'),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
