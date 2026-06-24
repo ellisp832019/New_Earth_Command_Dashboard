@@ -70,6 +70,7 @@ import '../../features/modules/module_permissions_screen.dart';
 import '../../features/modules/module_settings_screen.dart';
 import '../../features/modules/modules_screen.dart';
 import '../../features/users_devices_control/presentation/users_devices_control_screen.dart';
+import '../../features/users_devices_control/presentation/users_devices_pins_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
 import '../../features/projects/presentation/add_edit_project_screen.dart';
 import '../../features/projects/presentation/project_detail_screen.dart';
@@ -77,6 +78,7 @@ import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/omega_os_folder_health_screen.dart';
 import '../../features/security/presentation/security_lock_screen.dart';
+import '../../features/security/application/security_session_controller.dart';
 import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/treasury/presentation/treasury_screen.dart';
@@ -108,6 +110,22 @@ final _shellNavigatorMoreKey = GlobalKey<NavigatorState>();
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: RouteNames.securityLock,
+  refreshListenable: SecuritySessionRouterBridge.refresh,
+  redirect: (context, state) {
+    final path = state.uri.path;
+    final session = SecuritySessionRouterBridge.current;
+    final isPublicRoute =
+        path == RouteNames.securityLock ||
+        path == RouteNames.usersDevices ||
+        (path.startsWith('${RouteNames.usersDevices}/') &&
+            path != RouteNames.usersDevicesPins);
+
+    if (!session.isUnlocked || session.isExpired) {
+      return isPublicRoute ? null : RouteNames.securityLock;
+    }
+
+    return null;
+  },
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -1090,6 +1108,18 @@ final appRouter = GoRouter(
                 'Confirm local identity and device trust before opening the audit log.',
             child: UsersDevicesAuditLogScreen(
               highlightEventId: state.uri.queryParameters['eventId'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: 'pins',
+          builder: (context, state) => UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'PIN Registry Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening PIN management.',
+            child: UsersDevicesPinsScreen(
+              initialUserId: state.uri.queryParameters['userId'],
             ),
           ),
         ),

@@ -61,63 +61,108 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (migrator) async {
+      onCreate: (migrator) async {
           await migrator.createAll();
+          await migrator.database.customStatement('''
+            CREATE TABLE IF NOT EXISTS users_devices_control_pin_records (
+              pin_id TEXT PRIMARY KEY NOT NULL,
+              user_id TEXT NOT NULL,
+              label TEXT NOT NULL,
+              pin_code TEXT NOT NULL,
+              status TEXT NOT NULL,
+              source_label TEXT NOT NULL,
+              notes TEXT NOT NULL DEFAULT '',
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+          ''');
         },
         onUpgrade: (migrator, from, to) async {
           if (from < 2) {
-            await migrator.addColumn(appSettings, appSettings.voiceRepliesEnabled);
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'voice_replies_enabled',
+              appSettings.voiceRepliesEnabled,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              appSettings,
+              'voice_assistant_enabled',
               appSettings.voiceAssistantEnabled,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'preferred_tts_voice_name',
               appSettings.preferredTtsVoiceName,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'preferred_tts_voice_locale',
               appSettings.preferredTtsVoiceLocale,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'preferred_tts_voice_gender',
               appSettings.preferredTtsVoiceGender,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'preferred_tts_voice_identifier',
               appSettings.preferredTtsVoiceIdentifier,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'preferred_tts_voice_rate',
               appSettings.preferredTtsVoiceRate,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'preferred_tts_voice_pitch',
               appSettings.preferredTtsVoicePitch,
             );
           }
 
-          if (from < 3) {
-            await migrator.addColumn(
-              appSettings,
-              appSettings.voiceAssistantEnabled,
-            );
-          }
-
           if (from < 13) {
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'voice_startup_gate_enabled',
               appSettings.voiceStartupGateEnabled,
             );
           }
 
+          if (from < 14) {
+            await migrator.database.customStatement('''
+              CREATE TABLE IF NOT EXISTS users_devices_control_pin_records (
+                pin_id TEXT PRIMARY KEY NOT NULL,
+                user_id TEXT NOT NULL,
+                label TEXT NOT NULL,
+                pin_code TEXT NOT NULL,
+                status TEXT NOT NULL,
+                source_label TEXT NOT NULL,
+                notes TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+              )
+            ''');
+          }
+
           if (from < 4) {
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'show_projects_workspace_snapshot',
               appSettings.showProjectsWorkspaceSnapshot,
             );
           }
@@ -256,28 +301,43 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 11) {
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'show_dock_overlays',
               appSettings.showDockOverlays,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'show_backup_guardian_dock',
               appSettings.showBackupGuardianDock,
             );
-            await migrator.addColumn(appSettings, appSettings.showTreasuryDock);
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'show_treasury_dock',
+              appSettings.showTreasuryDock,
+            );
+            await _addColumnIfMissing(
+              migrator,
+              appSettings,
+              'show_knowledge_library_dock',
               appSettings.showKnowledgeLibraryDock,
             );
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'show_voice_conversation_dock',
               appSettings.showVoiceConversationDock,
             );
           }
 
           if (from < 12) {
-            await migrator.addColumn(
+            await _addColumnIfMissing(
+              migrator,
               appSettings,
+              'show_voice_presence_chip',
               appSettings.showVoicePresenceChip,
             );
           }

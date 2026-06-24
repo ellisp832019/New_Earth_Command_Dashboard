@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SecuritySessionState {
@@ -79,7 +80,9 @@ class SecuritySessionNotifier extends Notifier<SecuritySessionState> {
   @override
   SecuritySessionState build() {
     ref.onDispose(_cancelTimer);
-    return const SecuritySessionState.locked();
+    const locked = SecuritySessionState.locked();
+    SecuritySessionRouterBridge.sync(locked);
+    return locked;
   }
 
   void unlock({
@@ -97,6 +100,7 @@ class SecuritySessionNotifier extends Notifier<SecuritySessionState> {
       activeUserLabel: activeUserLabel,
       activeUserOnline: activeUserOnline,
     );
+    SecuritySessionRouterBridge.sync(state);
     _scheduleExpiry();
   }
 
@@ -110,12 +114,15 @@ class SecuritySessionNotifier extends Notifier<SecuritySessionState> {
       lastActivityAt: now,
       expiresAt: now.add(state.timeout),
     );
+    SecuritySessionRouterBridge.sync(state);
     _scheduleExpiry();
   }
 
   void lockNow() {
     _cancelTimer();
-    state = const SecuritySessionState.locked();
+    const locked = SecuritySessionState.locked();
+    state = locked;
+    SecuritySessionRouterBridge.sync(locked);
   }
 
   void _scheduleExpiry() {
@@ -139,3 +146,15 @@ final securitySessionProvider =
     NotifierProvider<SecuritySessionNotifier, SecuritySessionState>(
       SecuritySessionNotifier.new,
     );
+
+final class SecuritySessionRouterBridge {
+  SecuritySessionRouterBridge._();
+
+  static final ValueNotifier<int> refresh = ValueNotifier<int>(0);
+  static SecuritySessionState current = const SecuritySessionState.locked();
+
+  static void sync(SecuritySessionState state) {
+    current = state;
+    refresh.value++;
+  }
+}

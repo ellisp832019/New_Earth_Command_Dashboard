@@ -51,6 +51,7 @@ abstract final class RouteNames {
   static const usersDevicesDeviceOnboarding = '/users-devices/onboarding';
   static const usersDevicesApprovalQueue = '/users-devices/approvals';
   static const usersDevicesAuditLog = '/users-devices/audit';
+  static const usersDevicesPins = '/users-devices/pins';
   static String usersDevicesAuditLogFor(String eventId) {
     return Uri(
       path: usersDevicesAuditLog,

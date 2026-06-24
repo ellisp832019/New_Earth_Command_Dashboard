@@ -20,11 +20,11 @@ void main() {
     expect(snapshot.users, hasLength(7));
     expect(snapshot.devices, hasLength(9));
     expect(snapshot.roles, hasLength(10));
-    expect(snapshot.permissions, hasLength(18));
+    expect(snapshot.permissions, hasLength(20));
     expect(snapshot.trustLevels, hasLength(6));
     expect(snapshot.approvalQueue, hasLength(1));
     expect(snapshot.auditLog, hasLength(1));
-    expect(snapshot.accessRules, hasLength(5));
+    expect(snapshot.accessRules, hasLength(6));
 
     final users = await database.select(database.usersDevicesControlUsers).get();
     final devices = await database.select(database.usersDevicesControlDevices).get();
@@ -43,11 +43,32 @@ void main() {
     expect(users, hasLength(7));
     expect(devices, hasLength(9));
     expect(roles, hasLength(10));
-    expect(permissions, hasLength(18));
+    expect(permissions, hasLength(20));
     expect(trustLevels, hasLength(6));
     expect(approvals, hasLength(1));
     expect(auditEvents, hasLength(1));
-    expect(accessRules, hasLength(5));
+    expect(accessRules, hasLength(6));
+  });
+
+  test('access rules are read back from Drift after local edits', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    await database.customStatement('''
+      UPDATE users_devices_control_access_rules
+      SET view_permission = 'finance.view.override'
+      WHERE module_id = '17_FINANCE_AND_TREASURY'
+    ''');
+
+    final snapshot = await repository.loadSnapshot();
+    final treasuryRule = snapshot.accessRules.firstWhere(
+      (rule) => rule.moduleId == '17_FINANCE_AND_TREASURY',
+    );
+
+    expect(treasuryRule.viewPermission, 'finance.view.override');
   });
 
   test('register and approval actions persist through the local database', () async {
@@ -241,7 +262,7 @@ void main() {
     expect(allowed.requiresApproval, isFalse);
     expect(allowed.nextStep, isNotEmpty);
     expect(denied.allowed, isFalse);
-    expect(denied.requiresApproval, isTrue);
+    expect(denied.requiresApproval, isFalse);
     expect(denied.nextStep, isNotEmpty);
   });
 

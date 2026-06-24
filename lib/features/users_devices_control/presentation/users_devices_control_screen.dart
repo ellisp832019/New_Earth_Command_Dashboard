@@ -1,12 +1,16 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../application/users_devices_control_controller.dart';
+import '../application/users_devices_pin_registry_controller.dart';
 import '../data/users_devices_control_repository.dart';
+import '../data/users_devices_pin_registry_service.dart';
+import '../../security/application/security_session_controller.dart';
 
 class UsersDevicesControlScreen extends ConsumerWidget {
   const UsersDevicesControlScreen({super.key});
@@ -14,6 +18,9 @@ class UsersDevicesControlScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    final securitySession = ref.watch(securitySessionProvider);
+    final isSessionLocked =
+        !securitySession.isUnlocked || securitySession.isExpired;
 
     return _UsersDevicesPageScaffold(
       title: 'Users & Devices Control',
@@ -88,6 +95,13 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                         context.go(RouteNames.usersDevicesApprovalQueue),
                   ),
                   _ActionChip(
+                    label: 'Manage PINs',
+                    icon: Icons.pin_outlined,
+                    onPressed: isSessionLocked
+                        ? null
+                        : () => context.go(RouteNames.usersDevicesPins),
+                  ),
+                  _ActionChip(
                     label: 'Seed demo path',
                     icon: Icons.playlist_add_check_outlined,
                     onPressed: () => _seedDemoPath(context, ref),
@@ -139,6 +153,14 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                     icon: Icons.receipt_long_outlined,
                     route: RouteNames.usersDevicesAuditLog,
                   ),
+                  _NavTile(
+                    title: 'PIN Registry',
+                    subtitle: isSessionLocked
+                        ? 'Unlock session first'
+                        : 'Set or recover local PINs',
+                    icon: Icons.pin_outlined,
+                    route: isSessionLocked ? null : RouteNames.usersDevicesPins,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -167,6 +189,10 @@ class _UsersDevicesUsersScreenState
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    final securitySession = ref.watch(securitySessionProvider);
+    final isSessionLocked =
+        !securitySession.isUnlocked || securitySession.isExpired;
+    final pinsSnapshot = ref.watch(usersDevicesPinRegistrySnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Users'),
       error: (error, stackTrace) => _ErrorScreen(
@@ -175,6 +201,12 @@ class _UsersDevicesUsersScreenState
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
       data: (data) {
+        final pins = pinsSnapshot.maybeWhen(
+          data: (snapshot) => snapshot,
+          orElse: () => UsersDevicesPinRegistrySnapshot(
+            records: const <UsersDevicesPinRecord>[],
+          ),
+        );
         final filteredUsers = data.users
             .where((user) {
               if (_statusFilter != 'all' && user.status != _statusFilter) {
@@ -292,50 +324,127 @@ class _UsersDevicesUsersScreenState
                     for (final user in filteredUsers)
                       SizedBox(
                         width: 360,
-                        child: _EntityCard(
-                          icon: Icons.person_outline,
-                          title: user.displayName,
-                          subtitle:
-                              '${user.role}${user.title.isNotEmpty ? ' - ${user.title}' : ''}',
-                          body:
-                              '${user.permissions.length} permissions - ${user.linkedDevices.length} linked devices',
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Chip(label: Text(user.status)),
-                              const SizedBox(width: 8),
-                              _EntityActionsMenu(
-                                isArchived: user.status == 'archived',
-                                onEdit: () =>
-                                    _openUserEditor(context, ref, user: user),
-                                onArchiveToggle: () =>
-                                    _toggleUserArchive(context, ref, user),
-                                onDelete: () =>
-                                    _confirmDeleteUser(context, ref, user),
+                        child: Builder(
+                          builder: (context) {
+                            final userPins = pins.recordsForUser(user.id);
+                            final primaryPins = userPins
+                                .where((pin) => pin.status == 'active')
+                                .length;
+                            final recoveryPins = userPins
+                                .where((pin) => pin.status == 'recovery')
+                                .length;
+
+                            return _EntityCard(
+                              icon: Icons.person_outline,
+                              title: user.displayName,
+                              subtitle:
+                                  '${user.role}${user.title.isNotEmpty ? ' - ${user.title}' : ''}',
+                              body:
+                                  '${user.permissions.length} permissions - ${user.linkedDevices.length} linked devices',
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Chip(label: Text(user.status)),
+                                  const SizedBox(width: 8),
+                                  _EntityActionsMenu(
+                                    isArchived: user.status == 'archived',
+                                    onEdit: () => _openUserEditor(
+                                      context,
+                                      ref,
+                                      user: user,
+                                    ),
+                                    onArchiveToggle: () =>
+                                        _toggleUserArchive(context, ref, user),
+                                    onDelete: () =>
+                                        _confirmDeleteUser(context, ref, user),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          chips: [
-                            _CardChip(label: user.role),
-                            if (user.permissions.isNotEmpty)
-                              _CardChip(label: user.permissions.first),
-                          ],
-                          actions: [
-                            FilledButton.tonal(
-                              onPressed: () =>
-                                  _openUserEditor(context, ref, user: user),
-                              child: const Text('Edit'),
-                            ),
-                            OutlinedButton(
-                              onPressed: () =>
-                                  _toggleUserArchive(context, ref, user),
-                              child: Text(
-                                user.status == 'archived'
-                                    ? 'Restore'
-                                    : 'Archive',
-                              ),
-                            ),
-                          ],
+                              chips: [
+                                _CardChip(label: user.role),
+                                if (user.permissions.isNotEmpty)
+                                  _CardChip(label: user.permissions.first),
+                                if (primaryPins > 0)
+                                  _CardChip(label: 'Primary PIN $primaryPins'),
+                                if (recoveryPins > 0)
+                                  _CardChip(
+                                    label: 'Recovery PIN $recoveryPins',
+                                  ),
+                                for (final pinSummary in _pinSummaries(userPins))
+                                  _CardChip(
+                                    label: pinSummary,
+                                    onTap: () =>
+                                        _openUserPinsRegistry(context, user.id),
+                                  ),
+                                if (userPins.isEmpty)
+                                  const _CardChip(label: 'No PIN set'),
+                              ],
+                              actions: [
+                                OutlinedButton.icon(
+                                  onPressed: isSessionLocked
+                                      ? null
+                                      : () => _assignUserPin(context, ref, user),
+                                  icon: const Icon(Icons.pin_outlined),
+                                  label: Text(
+                                    isSessionLocked
+                                        ? 'PINs locked'
+                                        : 'Assign PIN',
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: isSessionLocked
+                                      ? null
+                                      : () => _assignUserPin(
+                                            context,
+                                            ref,
+                                            user,
+                                            initialRecoveryMode: true,
+                                          ),
+                                  icon: const Icon(Icons.vpn_key_outlined),
+                                  label: Text(
+                                    isSessionLocked
+                                        ? 'PINs locked'
+                                        : 'Recovery PIN',
+                                  ),
+                                ),
+                                FilledButton.tonal(
+                                  onPressed: () =>
+                                      _openUserEditor(context, ref, user: user),
+                                  child: const Text('Edit'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: userPins.isEmpty
+                                      ? null
+                                      : () => _copyUserPinSummary(
+                                            context,
+                                            user.displayName,
+                                            userPins,
+                                          ),
+                                  icon: const Icon(Icons.copy_outlined),
+                                  label: const Text('Copy PIN summary'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: userPins.isEmpty
+                                      ? null
+                                      : () => _openUserPinsRegistry(
+                                            context,
+                                            user.id,
+                                          ),
+                                  icon: const Icon(Icons.pin_end_outlined),
+                                  label: const Text('Open PIN Registry'),
+                                ),
+                                OutlinedButton(
+                                  onPressed: () =>
+                                      _toggleUserArchive(context, ref, user),
+                                  child: Text(
+                                    user.status == 'archived'
+                                        ? 'Restore'
+                                        : 'Archive',
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                   ],
@@ -1177,6 +1286,38 @@ class _UsersDevicesDeviceOnboardingScreenState
               ),
               const SizedBox(height: 16),
               _VisualPanel(
+                title: 'First-time trust path',
+                subtitle:
+                    'A new device should be registered, confirmed, and trusted in one calm pass.',
+                icon: Icons.verified_user_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _StepCard(
+                      step: '1',
+                      title: 'Register the device',
+                      body:
+                          'Capture the device name, type, owner, and local purpose.',
+                    ),
+                    const SizedBox(height: 12),
+                    const _StepCard(
+                      step: '2',
+                      title: 'Confirm the owner and trust',
+                      body:
+                          'Review the pairing, confirm the owner, and acknowledge any high-trust device before continuing.',
+                    ),
+                    const SizedBox(height: 12),
+                    const _StepCard(
+                      step: '3',
+                      title: 'Write the trust record',
+                      body:
+                          'Pick the local scopes, then write the device record and trust audit together.',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
                 title: 'Onboarding template',
                 subtitle: 'Pick a calm starting point before the wizard opens',
                 icon: Icons.tune_outlined,
@@ -1225,34 +1366,31 @@ class _UsersDevicesDeviceOnboardingScreenState
                         .length,
                   ),
                   (
+                    'Registered',
+                    data.devices
+                        .where((device) => device.status == 'registered')
+                        .length,
+                  ),
+                  (
                     'Owners',
                     data.devices
                         .where((device) => device.ownerId.isNotEmpty)
                         .length,
                   ),
+                  (
+                    'Blocked',
+                    data.devices
+                        .where((device) => device.status == 'blocked')
+                        .length,
+                  ),
+                  (
+                    'Archived',
+                    data.devices
+                        .where((device) => device.status == 'archived')
+                        .length,
+                  ),
                   ('Trust bands', trustBands.length),
                 ],
-              ),
-              const SizedBox(height: 16),
-              const _StepCard(
-                step: '1',
-                title: 'Register the device',
-                body:
-                    'Capture the device name, type, owner, and local purpose.',
-              ),
-              const SizedBox(height: 12),
-              const _StepCard(
-                step: '2',
-                title: 'Confirm the trust',
-                body:
-                    'Review the pairing, confirm the owner, and acknowledge any high-trust device before continuing.',
-              ),
-              const SizedBox(height: 12),
-              const _StepCard(
-                step: '3',
-                title: 'Choose allowed actions',
-                body:
-                    'Pick the local scopes, then write the device record and trust audit together.',
               ),
               const SizedBox(height: 16),
               _VisualPanel(
@@ -1477,7 +1615,8 @@ class _TrustPosturePanel extends StatelessWidget {
               _CardChip(label: '${trustBands.length} trust bands'),
               _CardChip(label: '${trustedDevices.length} trusted devices'),
               _CardChip(label: 'Template: ${template.toUpperCase()}'),
-              if (topDevice != null) _CardChip(label: 'Top trust: ${topDevice.name}'),
+              if (topDevice != null)
+                _CardChip(label: 'Top trust: ${topDevice.name}'),
             ],
           ),
           const SizedBox(height: 12),
@@ -1498,8 +1637,15 @@ class _TrustPosturePanel extends StatelessWidget {
                     .map(
                       (level) => DataRow(
                         cells: [
-                          DataCell(SizedBox(width: 100, child: Text('T${level.level}'))),
-                          DataCell(SizedBox(width: 180, child: Text(level.name))),
+                          DataCell(
+                            SizedBox(
+                              width: 100,
+                              child: Text('T${level.level}'),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(width: 180, child: Text(level.name)),
+                          ),
                           DataCell(
                             SizedBox(
                               width: 420,
@@ -1596,9 +1742,13 @@ class _UsersDevicesRouteGateScreenState
       return;
     }
 
+    final suggestedUser = _bestUserForModule(snapshot, widget.moduleId);
+
     if (_rememberedUserId != null &&
         snapshot.users.any((user) => user.id == _rememberedUserId)) {
       _selectedUserId = _rememberedUserId;
+    } else if (suggestedUser != null) {
+      _selectedUserId = suggestedUser.id;
     } else if (snapshot.users.isNotEmpty) {
       _selectedUserId = snapshot.users
           .firstWhere(
@@ -1610,15 +1760,49 @@ class _UsersDevicesRouteGateScreenState
     if (_rememberedDeviceId != null &&
         snapshot.devices.any((device) => device.id == _rememberedDeviceId)) {
       _selectedDeviceId = _rememberedDeviceId;
-    } else if (snapshot.devices.isNotEmpty) {
-      _selectedDeviceId = snapshot.devices
-          .firstWhere(
-            (device) => device.status == 'trusted' || device.trustLevel >= 3,
-            orElse: () => snapshot.devices.first,
-          )
-          .id;
+    } else {
+      final selectedUser = snapshot.users.firstWhere(
+        (user) => user.id == _selectedUserId,
+        orElse: () => snapshot.users.first,
+      );
+      final pairedDevices = _pairedDevicesForUser(
+        snapshot.devices,
+        selectedUser,
+      );
+      if (pairedDevices.isNotEmpty) {
+        _selectedDeviceId = pairedDevices.first.id;
+      } else if (snapshot.devices.isNotEmpty) {
+        _selectedDeviceId = snapshot.devices
+            .firstWhere(
+              (device) => device.status == 'trusted' || device.trustLevel >= 3,
+              orElse: () => snapshot.devices.first,
+            )
+            .id;
+      }
     }
     _seededDefaults = true;
+  }
+
+  void _selectSuggestedUser(
+    UsersDevicesControlSnapshot snapshot,
+    UsersDevicesControlUser user,
+  ) {
+    final pairedDevices = _pairedDevicesForUser(snapshot.devices, user);
+    setState(() {
+      _selectedUserId = user.id;
+      _rememberedUserId = user.id;
+      if (pairedDevices.isEmpty) {
+        return;
+      }
+
+      final currentDeviceMatches = pairedDevices.any(
+        (device) => device.id == _selectedDeviceId,
+      );
+      if (!currentDeviceMatches) {
+        _selectedDeviceId = pairedDevices.first.id;
+        _rememberedDeviceId = _selectedDeviceId;
+      }
+    });
   }
 
   Future<void> _attemptUnlock() async {
@@ -1739,7 +1923,9 @@ class _UsersDevicesRouteGateScreenState
       hints.add('Open Device Onboarding to review the pairing history.');
     }
     if (lowerReason.contains('missing required permission')) {
-      hints.add('Grant the missing permission from the Access Matrix.');
+      hints.add(
+        'Use the recommended user if one is shown, or grant the missing permission from the Access Matrix.',
+      );
       hints.add('Check the selected role for the expected capability.');
     }
     if (lowerReason.contains('requires approval')) {
@@ -1802,6 +1988,11 @@ class _UsersDevicesRouteGateScreenState
                       (device) => device.id == _selectedDeviceId,
                     )
                   : data.devices.first);
+        final suggestedUser = _bestUserForModule(
+          data,
+          widget.moduleId,
+          deviceId: selectedDevice?.id,
+        );
 
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -1897,9 +2088,71 @@ class _UsersDevicesRouteGateScreenState
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'The selected user must have a matching local PIN and trusted device before this screen opens.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                  ),
                                 ],
                               ),
                             ),
+                            if (suggestedUser != null &&
+                                suggestedUser.id != selectedUser?.id) ...[
+                              const SizedBox(height: 16),
+                              _VisualPanel(
+                                title: 'Recommended user',
+                                subtitle:
+                                    'A local identity already satisfies this permission requirement and is paired to a trusted device.',
+                                icon: Icons.person_pin_outlined,
+                                compact: true,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _suggestedUserReason(
+                                        data: data,
+                                        moduleId: widget.moduleId,
+                                        user: suggestedUser,
+                                        deviceId: selectedDevice?.id,
+                                      ),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        _Badge(
+                                          label: suggestedUser.displayName,
+                                        ),
+                                        _Badge(label: suggestedUser.role),
+                                        _Badge(label: suggestedUser.status),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    FilledButton.tonalIcon(
+                                      onPressed: () => _selectSuggestedUser(
+                                        data,
+                                        suggestedUser,
+                                      ),
+                                      icon: const Icon(
+                                        Icons.switch_account_outlined,
+                                      ),
+                                      label: const Text('Use suggested user'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             _VisualPanel(
                               title: 'Gate check',
@@ -2133,7 +2386,9 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
               _CardChip(label: '${data.accessRules.length} module rules'),
               _CardChip(label: '${data.auditLog.length} audit events'),
               _CardChip(label: '$pendingApprovals pending approvals'),
-              _CardChip(label: 'Treasury trust floor ${treasuryRule.trustFloor}'),
+              _CardChip(
+                label: 'Treasury trust floor ${treasuryRule.trustFloor}',
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -2157,10 +2412,7 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
                       (row) => DataRow(
                         cells: [
                           DataCell(
-                            SizedBox(
-                              width: 240,
-                              child: Text(row.label),
-                            ),
+                            SizedBox(width: 240, child: Text(row.label)),
                           ),
                           DataCell(
                             SizedBox(
@@ -2199,7 +2451,8 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
             runSpacing: 10,
             children: [
               FilledButton.icon(
-                onPressed: () => context.go(RouteNames.usersDevicesAccessMatrix),
+                onPressed: () =>
+                    context.go(RouteNames.usersDevicesAccessMatrix),
                 icon: const Icon(Icons.grid_view_outlined),
                 label: const Text('Open access matrix'),
               ),
@@ -2209,7 +2462,8 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
                 label: const Text('Open audit log'),
               ),
               OutlinedButton.icon(
-                onPressed: () => context.go(RouteNames.usersDevicesApprovalQueue),
+                onPressed: () =>
+                    context.go(RouteNames.usersDevicesApprovalQueue),
                 icon: const Icon(Icons.rule_folder_outlined),
                 label: const Text('Open approvals'),
               ),
@@ -2221,9 +2475,7 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
   }
 }
 
-List<_GatekeeperModuleRow> _gatekeeperRows(
-  UsersDevicesControlSnapshot data,
-) {
+List<_GatekeeperModuleRow> _gatekeeperRows(UsersDevicesControlSnapshot data) {
   final auditIndex = <String, UsersDevicesControlAuditEvent>{};
   for (final event in data.auditLog) {
     final current = auditIndex[event.targetModule];
@@ -2293,6 +2545,187 @@ String _gatekeeperAuditSummary(UsersDevicesControlAuditEvent? event) {
     return 'No audit yet';
   }
   return '${event.result} - ${event.reason}';
+}
+
+UsersDevicesControlUser? _bestUserForModule(
+  UsersDevicesControlSnapshot data,
+  String moduleId, {
+  String? deviceId,
+  String action = 'view',
+}) {
+  final rule = data.accessRules.firstWhere(
+    (item) => item.moduleId == moduleId,
+    orElse: () => const UsersDevicesControlAccessRule(
+      moduleId: '',
+      requiresTrustLevel: 0,
+      requiresApprovalFor: [],
+    ),
+  );
+  final requiredPermission = _requiredPermissionForAction(rule, action);
+  if (requiredPermission.isEmpty || data.users.isEmpty) {
+    return null;
+  }
+
+  final candidates = <UsersDevicesControlUser>[];
+  for (final user in data.users) {
+    if (user.status != 'active') {
+      continue;
+    }
+    if (!_userHasRequiredPermission(data, user, requiredPermission)) {
+      continue;
+    }
+    if (deviceId != null && deviceId.isNotEmpty) {
+      final pairedDevices = _pairedDevicesForUser(data.devices, user);
+      if (pairedDevices.isEmpty ||
+          !pairedDevices.any((device) => device.id == deviceId)) {
+        continue;
+      }
+    }
+    candidates.add(user);
+  }
+
+  if (candidates.isEmpty) {
+    return null;
+  }
+
+  candidates.sort(
+    (left, right) => _userSuggestionScore(
+      data,
+      right,
+      requiredPermission,
+    ).compareTo(_userSuggestionScore(data, left, requiredPermission)),
+  );
+  return candidates.first;
+}
+
+String _suggestedUserReason({
+  required UsersDevicesControlSnapshot data,
+  required String moduleId,
+  required UsersDevicesControlUser user,
+  String? deviceId,
+  String action = 'view',
+}) {
+  final rule = data.accessRules.firstWhere(
+    (item) => item.moduleId == moduleId,
+    orElse: () => const UsersDevicesControlAccessRule(
+      moduleId: '',
+      requiresTrustLevel: 0,
+      requiresApprovalFor: [],
+    ),
+  );
+  final requiredPermission = _requiredPermissionForAction(rule, action);
+  final hasWildcard = _effectivePermissionsForUser(data, user).contains('*');
+  final pairedDevices = _pairedDevicesForUser(data.devices, user);
+  final pairedDeviceLabel = pairedDevices.isEmpty
+      ? 'a paired device'
+      : pairedDevices.first.name;
+  final selectedDeviceLabel = deviceId != null && deviceId.isNotEmpty
+      ? data.devices.any((device) => device.id == deviceId)
+            ? data.devices.firstWhere((device) => device.id == deviceId).name
+            : 'the selected device'
+      : 'the selected device';
+
+  if (hasWildcard) {
+    return '${user.displayName} already has owner-level access, so this is the fastest local match for this screen with $pairedDeviceLabel.';
+  }
+
+  if (requiredPermission.isEmpty) {
+    return '${user.displayName} is already the strongest local match for this screen.';
+  }
+
+  return '${user.displayName} already satisfies $requiredPermission and can use $pairedDeviceLabel instead of $selectedDeviceLabel.';
+}
+
+List<UsersDevicesControlDevice> _pairedDevicesForUser(
+  List<UsersDevicesControlDevice> devices,
+  UsersDevicesControlUser user,
+) {
+  return devices
+      .where(
+        (device) =>
+            user.linkedDevices.contains(device.id) || device.ownerId == user.id,
+      )
+      .toList(growable: false);
+}
+
+Set<String> _effectivePermissionsForUser(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlUser user,
+) {
+  final permissions = <String>{...user.permissions};
+  for (final role in data.roles) {
+    if (role.role.toLowerCase() == user.role.toLowerCase()) {
+      permissions.addAll(role.permissions);
+      break;
+    }
+  }
+  return permissions;
+}
+
+bool _userHasRequiredPermission(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlUser user,
+  String requiredPermission,
+) {
+  if (requiredPermission.isEmpty) {
+    return true;
+  }
+
+  final permissions = _effectivePermissionsForUser(data, user);
+  return permissions.contains('*') || permissions.contains(requiredPermission);
+}
+
+String _requiredPermissionForAction(
+  UsersDevicesControlAccessRule? rule,
+  String action,
+) {
+  switch (action) {
+    case 'view':
+      return rule?.viewPermission ?? '';
+    case 'edit':
+      return rule?.editPermission ?? '';
+    case 'admin':
+      return rule?.adminPermission ?? '';
+    case 'request_action':
+    case 'request':
+      return rule?.requestPermission ?? '';
+    case 'execute':
+    case 'execute_system_action':
+      return rule?.executePermission ?? '';
+    case 'control':
+      return rule?.controlPermission ?? '';
+    default:
+      return rule?.viewPermission ?? '';
+  }
+}
+
+int _userSuggestionScore(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlUser user,
+  String requiredPermission,
+) {
+  final permissions = _effectivePermissionsForUser(data, user);
+  var score = permissions.length;
+  if (permissions.contains('*')) {
+    score += 1000;
+  }
+  if (permissions.contains(requiredPermission)) {
+    score += 300;
+  }
+  final role = user.role.toLowerCase();
+  if (role.contains('owner')) {
+    score += 200;
+  }
+  if (role.contains('admin')) {
+    score += 150;
+  }
+  if (user.status == 'active') {
+    score += 100;
+  }
+  if (user.linkedDevices.isNotEmpty) {
+    score += 25;
+  }
+  return score;
 }
 
 class _GatekeeperModuleRow {
@@ -2583,9 +3016,14 @@ class _ApprovalQueueSnapshotPanel extends StatelessWidget {
             runSpacing: 10,
             children: [
               _CardChip(label: '${data.approvalQueue.length} total requests'),
-              _CardChip(label: '${pendingByModule.values.fold<int>(0, (a, b) => a + b)} pending'),
+              _CardChip(
+                label:
+                    '${pendingByModule.values.fold<int>(0, (a, b) => a + b)} pending',
+              ),
               if (topModule != null)
-                _CardChip(label: 'Top module: ${_approvalModuleLabel(topModule.key)}'),
+                _CardChip(
+                  label: 'Top module: ${_approvalModuleLabel(topModule.key)}',
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -2613,34 +3051,38 @@ class _ApprovalQueueSnapshotPanel extends StatelessWidget {
                         ),
                       ]
                     : pendingByModule.entries
-                        .map(
-                          (entry) => DataRow(
-                            cells: [
-                              DataCell(
-                                SizedBox(
-                                  width: 250,
-                                  child: Text(_approvalModuleLabel(entry.key)),
+                          .map(
+                            (entry) => DataRow(
+                              cells: [
+                                DataCell(
+                                  SizedBox(
+                                    width: 250,
+                                    child: Text(
+                                      _approvalModuleLabel(entry.key),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: 120,
-                                  child: Text(entry.value.toString()),
+                                DataCell(
+                                  SizedBox(
+                                    width: 120,
+                                    child: Text(entry.value.toString()),
+                                  ),
                                 ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: 240,
-                                  child: Text(_approvalStatusMix(
-                                    data.approvalQueue,
-                                    entry.key,
-                                  )),
+                                DataCell(
+                                  SizedBox(
+                                    width: 240,
+                                    child: Text(
+                                      _approvalStatusMix(
+                                        data.approvalQueue,
+                                        entry.key,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                        .toList(growable: false),
+                              ],
+                            ),
+                          )
+                          .toList(growable: false),
               ),
             ),
           ),
@@ -2672,8 +3114,12 @@ String _approvalStatusMix(
   String moduleId,
 ) {
   final matches = requests.where((request) => request.targetModule == moduleId);
-  final pending = matches.where((request) => request.status == 'pending').length;
-  final allowed = matches.where((request) => request.status == 'allowed').length;
+  final pending = matches
+      .where((request) => request.status == 'pending')
+      .length;
+  final allowed = matches
+      .where((request) => request.status == 'allowed')
+      .length;
   final denied = matches.where((request) => request.status == 'denied').length;
   return '$pending pending, $allowed allowed, $denied denied';
 }
@@ -2894,7 +3340,8 @@ class _AuditSnapshotPanel extends StatelessWidget {
     final pending = events.where((event) => event.result == 'pending').length;
     final moduleCounts = <String, int>{};
     for (final event in events) {
-      moduleCounts[event.targetModule] = (moduleCounts[event.targetModule] ?? 0) + 1;
+      moduleCounts[event.targetModule] =
+          (moduleCounts[event.targetModule] ?? 0) + 1;
     }
 
     return _VisualPanel(
@@ -2913,14 +3360,16 @@ class _AuditSnapshotPanel extends StatelessWidget {
               _CardChip(label: '$allowed allowed'),
               _CardChip(label: '$denied denied'),
               _CardChip(label: '$pending pending'),
-              if (latest != null) _CardChip(label: 'Latest: ${latest.eventType}'),
+              if (latest != null)
+                _CardChip(label: 'Latest: ${latest.eventType}'),
             ],
           ),
           const SizedBox(height: 12),
           if (latest != null)
             _VisualPanel(
               title: 'Latest audit event',
-              subtitle: '${latest.timestamp} - ${_approvalModuleLabel(latest.targetModule)}',
+              subtitle:
+                  '${latest.timestamp} - ${_approvalModuleLabel(latest.targetModule)}',
               icon: Icons.verified_outlined,
               compact: true,
               child: Text(
@@ -2952,43 +3401,49 @@ class _AuditSnapshotPanel extends StatelessWidget {
                         ),
                       ]
                     : moduleCounts.entries
-                        .map(
-                          (entry) => DataRow(
-                            cells: [
-                              DataCell(
-                                SizedBox(
-                                  width: 250,
-                                  child: Text(_approvalModuleLabel(entry.key)),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: 120,
-                                  child: Text(entry.value.toString()),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: 220,
-                                  child: Text(
-                                    sortedEvents
-                                            .where((event) =>
-                                                event.targetModule == entry.key)
-                                            .isEmpty
-                                        ? 'No result yet'
-                                        : sortedEvents
-                                            .firstWhere(
-                                              (event) =>
-                                                  event.targetModule == entry.key,
-                                            )
-                                            .result,
+                          .map(
+                            (entry) => DataRow(
+                              cells: [
+                                DataCell(
+                                  SizedBox(
+                                    width: 250,
+                                    child: Text(
+                                      _approvalModuleLabel(entry.key),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                        .toList(growable: false),
+                                DataCell(
+                                  SizedBox(
+                                    width: 120,
+                                    child: Text(entry.value.toString()),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: 220,
+                                    child: Text(
+                                      sortedEvents
+                                              .where(
+                                                (event) =>
+                                                    event.targetModule ==
+                                                    entry.key,
+                                              )
+                                              .isEmpty
+                                          ? 'No result yet'
+                                          : sortedEvents
+                                                .firstWhere(
+                                                  (event) =>
+                                                      event.targetModule ==
+                                                      entry.key,
+                                                )
+                                                .result,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                          .toList(growable: false),
               ),
             ),
           ),
@@ -3521,58 +3976,63 @@ class _NavigationGrid extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   elevation: 0,
                   child: InkWell(
-                    onTap: () => context.go(tile.route),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        border: Border(
-                          top: BorderSide(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.72),
-                            width: 2,
+                    onTap: tile.route == null
+                        ? null
+                        : () => context.go(tile.route!),
+                    child: Opacity(
+                      opacity: tile.route == null ? 0.6 : 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          border: Border(
+                            top: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.72),
+                              width: 2,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  tile.icon,
+                                  size: 22,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
-                              child: Icon(
-                                tile.icon,
-                                size: 22,
-                                color: Theme.of(context).colorScheme.primary,
+                              const SizedBox(height: 10),
+                              Text(
+                                tile.title,
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              tile.title,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              tile.subtitle,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 10),
-                            const Align(
-                              alignment: Alignment.centerRight,
-                              child: Icon(
-                                Icons.arrow_forward_outlined,
-                                size: 18,
+                              const SizedBox(height: 4),
+                              Text(
+                                tile.subtitle,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 10),
+                              const Align(
+                                alignment: Alignment.centerRight,
+                                child: Icon(
+                                  Icons.arrow_forward_outlined,
+                                  size: 18,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -3591,13 +4051,13 @@ class _NavTile {
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.route,
+    this.route,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
-  final String route;
+  final String? route;
 }
 
 class _StaticRulePanel extends StatelessWidget {
@@ -3853,14 +4313,15 @@ class _EntityCard extends StatelessWidget {
 }
 
 class _CardChip extends StatelessWidget {
-  const _CardChip({required this.label});
+  const _CardChip({required this.label, this.onTap});
 
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Chip(
+    final chip = Chip(
       label: Text(label),
       labelStyle: theme.textTheme.labelSmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
@@ -3871,6 +4332,71 @@ class _CardChip extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       padding: const EdgeInsets.symmetric(horizontal: 4),
+    );
+
+    if (onTap == null) {
+      return chip;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: chip,
+      ),
+    );
+  }
+}
+
+List<String> _pinSummaries(List<UsersDevicesPinRecord> pins) {
+  final currentPins = pins
+      .where((pin) => pin.status == 'active' || pin.status == 'recovery')
+      .toList(growable: false);
+
+  if (currentPins.isEmpty) {
+    return const <String>[];
+  }
+
+  return currentPins
+      .map((pin) => '${pin.label}: ${_maskPinCode(pin.pinCode)}')
+      .toList(growable: false);
+}
+
+String _maskPinCode(String pinCode) {
+  if (pinCode.length <= 2) {
+    return pinCode;
+  }
+
+  return '${'*' * (pinCode.length - 2)}${pinCode.substring(pinCode.length - 2)}';
+}
+
+void _openUserPinsRegistry(BuildContext context, String userId) {
+  context.push(
+    Uri(
+      path: RouteNames.usersDevicesPins,
+      queryParameters: {'userId': userId},
+    ).toString(),
+  );
+}
+
+Future<void> _copyUserPinSummary(
+  BuildContext context,
+  String userName,
+  List<UsersDevicesPinRecord> pins,
+) async {
+  final summary = [
+    'PIN summary for $userName',
+    for (final pin in pins.where(
+      (pin) => pin.status == 'active' || pin.status == 'recovery',
+    ))
+      '${pin.label}: ${_maskPinCode(pin.pinCode)} (${pin.status})',
+  ].join('\n');
+
+  await Clipboard.setData(ClipboardData(text: summary));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied PIN summary for $userName.')),
     );
   }
 }
@@ -4520,12 +5046,198 @@ Future<void> _confirmResetDemoData(BuildContext context, WidgetRef ref) async {
   }
 
   final repository = ref.read(usersDevicesControlRepositoryProvider);
+  final pinRegistry = ref.read(usersDevicesPinRegistryProvider);
   await repository.resetToSeedData();
+  await pinRegistry.resetToSeedData();
   ref.invalidate(usersDevicesControlSnapshotProvider);
+  ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
 
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Demo data reset to the seeded state.')),
+    );
+  }
+}
+
+Future<void> _assignUserPin(
+  BuildContext context,
+  WidgetRef ref,
+  UsersDevicesControlUser user,
+  {bool initialRecoveryMode = false}
+) async {
+  final labelController = TextEditingController(text: 'Primary PIN');
+  final pinController = TextEditingController();
+  var recoveryMode = initialRecoveryMode;
+  if (recoveryMode) {
+    labelController.text = 'Recovery PIN';
+  }
+  final result =
+      await showDialog<({String pinCode, String label, bool recovery})>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (dialogContext, setDialogState) {
+              return AlertDialog(
+                title: Text('Assign PIN to ${user.displayName}'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment<bool>(
+                          value: false,
+                          label: Text('Primary'),
+                          icon: Icon(Icons.pin_outlined),
+                        ),
+                        ButtonSegment<bool>(
+                          value: true,
+                          label: Text('Recovery'),
+                          icon: Icon(Icons.vpn_key_outlined),
+                        ),
+                      ],
+                      selected: {recoveryMode},
+                      onSelectionChanged: (selection) {
+                        setDialogState(() {
+                          recoveryMode = selection.first;
+                          if (recoveryMode &&
+                              labelController.text.trim() == 'Primary PIN') {
+                            labelController.text = 'Recovery PIN';
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: labelController,
+                      decoration: InputDecoration(
+                        labelText: recoveryMode ? 'Recovery label' : 'Label',
+                        hintText: recoveryMode
+                            ? 'For example: Backup PIN'
+                            : 'For example: Primary PIN',
+                      ),
+                    ),
+                    if (!recoveryMode) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: pinController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'PIN code',
+                          hintText: 'Use 4 to 8 digits',
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'A recovery PIN will be generated automatically when you save.',
+                        style: Theme.of(dialogContext)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                              color: Theme.of(dialogContext)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: recoveryMode
+                        ? null
+                        : () {
+                            Navigator.of(dialogContext).pop((
+                              pinCode: pinController.text.trim(),
+                              label: labelController.text.trim(),
+                              recovery: false,
+                            ));
+                          },
+                    child: const Text('Save primary PIN'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: !recoveryMode
+                        ? null
+                        : () {
+                            Navigator.of(dialogContext).pop((
+                              pinCode: '',
+                              label: labelController.text.trim().isEmpty
+                                  ? 'Recovery PIN'
+                                  : labelController.text.trim(),
+                              recovery: true,
+                            ));
+                          },
+                    child: const Text('Generate recovery PIN'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+  labelController.dispose();
+  pinController.dispose();
+
+  if (result == null || (!result.recovery && result.pinCode.isEmpty)) {
+    return;
+  }
+
+  final pins = ref.read(usersDevicesPinRegistryProvider);
+  if (result.recovery) {
+    await pins.issueRecoveryPin(
+      userId: user.id,
+      label: result.label.isEmpty ? 'Recovery PIN' : result.label,
+    );
+  } else {
+    await pins.setPrimaryPin(
+      userId: user.id,
+      pinCode: result.pinCode,
+      label: result.label.isEmpty ? '${user.displayName} PIN' : result.label,
+    );
+  }
+
+  final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
+  final auditUser = snapshot.users.firstWhere(
+    (entry) => entry.id == user.id,
+    orElse: () => user,
+  );
+  final deviceId = auditUser.linkedDevices.isNotEmpty
+      ? auditUser.linkedDevices.first
+      : '';
+  if (auditUser.id.isNotEmpty) {
+    await ref
+        .read(usersDevicesControlRepositoryProvider)
+        .createAuditEvent(
+          actorId: auditUser.id,
+          deviceId: deviceId,
+          eventType: 'pin_set',
+          targetModule: '01_USERS_AND_DEVICES_CONTROL',
+          action: 'assign_pin',
+          result: 'allowed',
+          reason: result.recovery
+              ? 'Recovery PIN generated locally for ${auditUser.displayName}.'
+              : 'Primary PIN assigned locally for ${auditUser.displayName}.',
+        );
+  }
+
+  ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
+  ref.invalidate(usersDevicesControlSnapshotProvider);
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.recovery
+              ? 'Recovery PIN generated for ${user.displayName}.'
+              : 'PIN assigned to ${user.displayName}.',
+        ),
+      ),
     );
   }
 }
@@ -4681,6 +5393,23 @@ Future<void> _openOnboardingWizard(
       builder: (dialogContext) {
         var step = 0;
         var trustConfirmed = trustLevel < 4;
+        final onboardingOwnerLabel = ownerId.isEmpty
+            ? 'Unassigned'
+            : availableUsers
+                  .firstWhere(
+                    (user) => user.id == ownerId,
+                    orElse: () => UsersDevicesControlUser(
+                      id: ownerId,
+                      displayName: ownerId,
+                      role: '',
+                      status: 'active',
+                      permissions: const [],
+                      linkedDevices: const [],
+                    ),
+                  )
+                  .displayName;
+        final onboardingTrustLabel =
+            trustLevel >= 4 ? 'High-trust confirm required' : 'Standard pairing';
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -4844,6 +5573,28 @@ Future<void> _openOnboardingWizard(
                             ),
                           ),
                         ] else ...[
+                          _VisualPanel(
+                            title: 'Onboarding recap',
+                            subtitle:
+                                'Check the local identity, owner, trust level, and access scope before saving.',
+                            icon: Icons.fact_check_outlined,
+                            compact: true,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _CardChip(label: 'ID: ${idController.text.trim()}'),
+                                _CardChip(label: 'Owner: $onboardingOwnerLabel'),
+                                _CardChip(label: 'Trust: T$trustLevel'),
+                                _CardChip(
+                                  label:
+                                      'Actions: ${selectedActions.length}',
+                                ),
+                                _CardChip(label: onboardingTrustLabel),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           TextField(
                             controller: customActionController,
                             decoration: const InputDecoration(
@@ -4974,6 +5725,11 @@ Future<void> _openOnboardingWizard(
     }
 
     await repository.registerDevice(result);
+    final hasHighTrustAck =
+        result.trustLevel >= 4 && trustAckController.text.trim().isNotEmpty;
+    final auditReason =
+        'Device pairing confirmed locally at trust level ${result.trustLevel} for owner ${result.ownerId} with ${result.allowedActions.length} allowed action(s)'
+        '${hasHighTrustAck ? ' and explicit CONFIRM acknowledgement.' : '.'}';
     await repository.createAuditEvent(
       actorId: result.ownerId,
       deviceId: result.id,
@@ -4981,13 +5737,16 @@ Future<void> _openOnboardingWizard(
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'confirm_device_trust',
       result: 'allowed',
-      reason:
-          'Device pairing confirmed locally at trust level ${result.trustLevel}${result.trustLevel >= 4 && trustAckController.text.trim().isNotEmpty ? ' with explicit CONFIRM acknowledgement.' : '.'}',
+      reason: auditReason,
     );
     ref.invalidate(usersDevicesControlSnapshotProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Device onboarded locally.')),
+        SnackBar(
+          content: Text(
+            'Device onboarded locally at trust level ${result.trustLevel}.',
+          ),
+        ),
       );
     }
   } finally {

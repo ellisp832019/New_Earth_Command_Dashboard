@@ -9,7 +9,9 @@ import '../../../core/widgets/desktop_startup_backdrop.dart';
 import '../application/security_session_controller.dart';
 import '../../settings/application/settings_controller.dart';
 import '../../users_devices_control/application/users_devices_control_controller.dart';
+import '../../users_devices_control/application/users_devices_pin_registry_controller.dart';
 import '../../users_devices_control/data/users_devices_control_repository.dart';
+import '../../users_devices_control/data/users_devices_pin_registry_service.dart';
 
 class SecurityLockScreen extends ConsumerStatefulWidget {
   const SecurityLockScreen({super.key});
@@ -61,10 +63,12 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         snapshot.users.any((user) => user.id == _rememberedUserId)) {
       _selectedUserId = _rememberedUserId;
     } else {
-      _selectedUserId = snapshot.users.firstWhere(
-        (user) => user.status == 'active',
-        orElse: () => snapshot.users.first,
-      ).id;
+      _selectedUserId = snapshot.users
+          .firstWhere(
+            (user) => user.status == 'active',
+            orElse: () => snapshot.users.first,
+          )
+          .id;
     }
 
     final rememberedUser = snapshot.users.firstWhere(
@@ -112,9 +116,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     return '${seconds}s';
   }
 
-  Future<void> _attemptUnlock({
-    required bool voiceStartupGateEnabled,
-  }) async {
+  Future<void> _attemptUnlock({required bool voiceStartupGateEnabled}) async {
     if (_busy) {
       return;
     }
@@ -129,7 +131,6 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     });
 
     final enteredPin = _pinController.text.trim();
-    const demoPin = '2468';
     if (enteredPin.isEmpty) {
       setState(() {
         _busy = false;
@@ -141,21 +142,12 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       return;
     }
 
-    if (enteredPin != demoPin) {
-      setState(() {
-        _busy = false;
-        _status = 'Locked';
-        _detail = 'Demo PIN rejected. Use 2468 for the local demo.';
-        _auditSummary = 'PIN check failed before access control.';
-        _latestAuditEventId = null;
-      });
-      return;
-    }
-
     final repository = ref.read(usersDevicesControlRepositoryProvider);
+    final pinRegistry = ref.read(usersDevicesPinRegistryProvider);
     final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
     final userId =
-        _selectedUserId ?? (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
+        _selectedUserId ??
+        (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
     final selectedUser = snapshot.users.isEmpty
         ? null
         : snapshot.users.firstWhere(
@@ -165,13 +157,14 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     final pairedDevices = selectedUser == null
         ? snapshot.devices
         : snapshot.devices
-            .where(
-              (device) =>
-                  selectedUser.linkedDevices.contains(device.id) ||
-                  device.ownerId == selectedUser.id,
-            )
-            .toList(growable: false);
-    final deviceId = _selectedDeviceId ??
+              .where(
+                (device) =>
+                    selectedUser.linkedDevices.contains(device.id) ||
+                    device.ownerId == selectedUser.id,
+              )
+              .toList(growable: false);
+    final deviceId =
+        _selectedDeviceId ??
         (pairedDevices.isNotEmpty ? pairedDevices.first.id : '');
     if (userId.isEmpty || deviceId.isEmpty) {
       if (!mounted) {
@@ -181,7 +174,31 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         _busy = false;
         _status = 'Locked';
         _detail = 'Pick a local user and device before unlocking.';
-        _auditSummary = 'No access check was written because the gate was incomplete.';
+        _auditSummary =
+            'No access check was written because the gate was incomplete.';
+        _latestAuditEventId = null;
+      });
+      return;
+    }
+
+    final pinDecision = await pinRegistry.validatePinForUser(
+      userId,
+      enteredPin,
+    );
+    if (!pinDecision.allowed) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _status = 'Locked';
+        _detail = pinDecision.reason.isNotEmpty
+            ? pinDecision.reason
+            : 'The local PIN was not accepted.';
+        if (pinDecision.nextStep.isNotEmpty) {
+          _detail = '$_detail ${pinDecision.nextStep}';
+        }
+        _auditSummary = 'PIN check failed before access control.';
         _latestAuditEventId = null;
       });
       return;
@@ -203,10 +220,12 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       );
       _rememberedUserId = userId;
       _rememberedDeviceId = deviceId;
-      ref.read(securitySessionProvider.notifier).unlock(
-        activeUserLabel: selectedUser?.displayName,
-        activeUserOnline: selectedUser?.status == 'active',
-      );
+      ref
+          .read(securitySessionProvider.notifier)
+          .unlock(
+            activeUserLabel: selectedUser?.displayName,
+            activeUserOnline: selectedUser?.status == 'active',
+          );
       final latestAudit = updatedSnapshot.auditLog.isNotEmpty
           ? updatedSnapshot.auditLog.last
           : null;
@@ -256,15 +275,17 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
     final settingsSnapshot = ref.watch(settingsSnapshotProvider);
     final securitySession = ref.watch(securitySessionProvider);
-    final sessionCountdownLabel = securitySession.isUnlocked &&
+    final pinsSnapshot = ref.watch(usersDevicesPinRegistrySnapshotProvider);
+    final sessionCountdownLabel =
+        securitySession.isUnlocked &&
             !securitySession.isExpired &&
             securitySession.remaining != null
         ? 'Session expires in ${_formatDuration(securitySession.remaining!)}'
         : 'Session locked';
     final sessionCountdownAccent =
         securitySession.isUnlocked && !securitySession.isExpired
-            ? const Color(0xFF9BE564)
-            : theme.colorScheme.outlineVariant;
+        ? const Color(0xFF9BE564)
+        : theme.colorScheme.outlineVariant;
 
     return DesktopStartupBackdrop(
       child: Scaffold(
@@ -306,26 +327,37 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
             final pairedDevices = selectedUser == null
                 ? data.devices
                 : data.devices
-                    .where(
-                      (device) =>
-                          selectedUser.linkedDevices.contains(device.id) ||
-                          device.ownerId == selectedUser.id,
-                    )
-                    .toList(growable: false);
+                      .where(
+                        (device) =>
+                            selectedUser.linkedDevices.contains(device.id) ||
+                            device.ownerId == selectedUser.id,
+                      )
+                      .toList(growable: false);
             final selectedDevice = pairedDevices.isEmpty
                 ? null
                 : pairedDevices.firstWhere(
                     (device) => device.id == _selectedDeviceId,
                     orElse: () => pairedDevices.first,
                   );
+            final selectedUserPins = pinsSnapshot.maybeWhen(
+              data: (pins) => selectedUser == null
+                  ? const <UsersDevicesPinRecord>[]
+                  : pins.recordsForUser(selectedUser.id),
+              orElse: () => const <UsersDevicesPinRecord>[],
+            );
+            final suggestedUser = _bestUserForModule(
+              data,
+              '01_USERS_AND_DEVICES_CONTROL',
+            );
 
             return Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     theme.colorScheme.surface,
-                    theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.72),
+                    theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.72,
+                    ),
                     theme.colorScheme.surface,
                   ],
                   begin: Alignment.topLeft,
@@ -346,36 +378,52 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                             builder: (context, constraints) {
                               final isWide = constraints.maxWidth >= 820;
                               final header = _SecurityHero(
+                                data: data,
                                 status: _status,
                                 detail: _detail,
                                 auditSummary: _auditSummary,
                                 hasLatestAuditEvent:
                                     _latestAuditEventId != null,
-                                selectedUserLabel: selectedUser?.displayName ??
+                                selectedUserLabel:
+                                    selectedUser?.displayName ??
                                     'No local user selected',
-                                selectedDeviceLabel: selectedDevice?.name ??
+                                selectedDeviceLabel:
+                                    selectedDevice?.name ??
                                     'No local device selected',
                                 sessionCountdownLabel: sessionCountdownLabel,
-                                sessionCountdownAccent:
-                                    sessionCountdownAccent,
+                                sessionCountdownAccent: sessionCountdownAccent,
                                 onUnlock: () => _attemptUnlock(
                                   voiceStartupGateEnabled:
                                       voiceStartupGateEnabled,
                                 ),
+                                suggestedUser:
+                                    suggestedUser != null &&
+                                        suggestedUser.id != selectedUser?.id
+                                    ? suggestedUser
+                                    : null,
+                                selectedDevice: selectedDevice,
+                                onUseSuggestedUser:
+                                    suggestedUser != null &&
+                                        suggestedUser.id != selectedUser?.id
+                                    ? () => setState(() {
+                                        _selectedUserId = suggestedUser.id;
+                                        _selectedDeviceId = null;
+                                        _showIdentityPicker = true;
+                                      })
+                                    : null,
                                 canContinue: _canContinue,
                                 continueLabel: voiceStartupGateEnabled
                                     ? 'Continue to voice gate'
                                     : 'Open dashboard',
                                 onContinue: _canContinue
                                     ? () => context.go(
-                                          voiceStartupGateEnabled
-                                              ? RouteNames.voiceStartupGate
-                                              : RouteNames.dashboard,
-                                        )
+                                        voiceStartupGateEnabled
+                                            ? RouteNames.voiceStartupGate
+                                            : RouteNames.dashboard,
+                                      )
                                     : null,
-                                onOpenUsersDevices: () => context.push(
-                                  RouteNames.usersDevices,
-                                ),
+                                onOpenUsersDevices: () =>
+                                    context.push(RouteNames.usersDevices),
                                 onOpenAuditLog: () => context.push(
                                   _latestAuditEventId == null
                                       ? RouteNames.usersDevicesAuditLog
@@ -388,6 +436,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                 pinController: _pinController,
                                 selectedUserId: selectedUser?.id,
                                 selectedDeviceId: selectedDevice?.id,
+                                selectedUserPins: selectedUserPins,
                                 showIdentityPicker:
                                     _showIdentityPicker ||
                                     pairedDevices.isEmpty,
@@ -409,6 +458,8 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                   });
                                 },
                                 isBusy: _busy,
+                                onOpenUsersDevices: () =>
+                                    context.push(RouteNames.usersDevices),
                                 onUnlock: () => _attemptUnlock(
                                   voiceStartupGateEnabled:
                                       voiceStartupGateEnabled,
@@ -419,7 +470,33 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(flex: 3, child: header),
+                                    Expanded(
+                                      flex: 3,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          header,
+                                          if (suggestedUser != null &&
+                                              suggestedUser.id !=
+                                                  selectedUser?.id) ...[
+                                            const SizedBox(height: 18),
+                                            _RecommendedIdentityCard(
+                                              data: data,
+                                              suggestedUser: suggestedUser,
+                                              selectedDevice: selectedDevice,
+                                              onUseSuggestedUser: () =>
+                                                  setState(() {
+                                                    _selectedUserId =
+                                                        suggestedUser.id;
+                                                    _selectedDeviceId = null;
+                                                    _showIdentityPicker = true;
+                                                  }),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
                                     const SizedBox(width: 18),
                                     Expanded(flex: 2, child: sidePanel),
                                   ],
@@ -427,10 +504,23 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                               }
 
                               return Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   header,
+                                  if (suggestedUser != null &&
+                                      suggestedUser.id != selectedUser?.id) ...[
+                                    const SizedBox(height: 18),
+                                    _RecommendedIdentityCard(
+                                      data: data,
+                                      suggestedUser: suggestedUser,
+                                      selectedDevice: selectedDevice,
+                                      onUseSuggestedUser: () => setState(() {
+                                        _selectedUserId = suggestedUser.id;
+                                        _selectedDeviceId = null;
+                                        _showIdentityPicker = true;
+                                      }),
+                                    ),
+                                  ],
                                   const SizedBox(height: 18),
                                   sidePanel,
                                 ],
@@ -453,6 +543,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
 
 class _SecurityHero extends StatelessWidget {
   const _SecurityHero({
+    required this.data,
     required this.status,
     required this.detail,
     required this.auditSummary,
@@ -462,6 +553,9 @@ class _SecurityHero extends StatelessWidget {
     required this.sessionCountdownLabel,
     required this.sessionCountdownAccent,
     required this.onUnlock,
+    required this.suggestedUser,
+    required this.selectedDevice,
+    required this.onUseSuggestedUser,
     required this.canContinue,
     required this.continueLabel,
     required this.onContinue,
@@ -470,6 +564,7 @@ class _SecurityHero extends StatelessWidget {
   });
 
   final String status;
+  final UsersDevicesControlSnapshot data;
   final String detail;
   final String auditSummary;
   final bool hasLatestAuditEvent;
@@ -478,6 +573,9 @@ class _SecurityHero extends StatelessWidget {
   final String sessionCountdownLabel;
   final Color sessionCountdownAccent;
   final VoidCallback onUnlock;
+  final UsersDevicesControlUser? suggestedUser;
+  final UsersDevicesControlDevice? selectedDevice;
+  final VoidCallback? onUseSuggestedUser;
   final bool canContinue;
   final String continueLabel;
   final VoidCallback? onContinue;
@@ -487,6 +585,8 @@ class _SecurityHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final recommendedUser = suggestedUser;
+    final recommendedDevice = selectedDevice;
     return _VisualPanel(
       title: 'Security Lock',
       subtitle:
@@ -495,6 +595,47 @@ class _SecurityHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (recommendedUser != null && onUseSuggestedUser != null) ...[
+            _VisualPanel(
+              title: 'Recommended identity',
+              subtitle:
+                  'This identity already fits the local access plan for this screen.',
+              icon: Icons.person_pin_outlined,
+              compact: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _securityLockSuggestedUserReason(
+                      data: data,
+                      user: recommendedUser,
+                      deviceId: recommendedDevice?.id,
+                    ),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _Badge(label: recommendedUser.displayName),
+                      _Badge(label: recommendedUser.role),
+                      _Badge(label: recommendedUser.status),
+                      if (recommendedDevice != null)
+                        _Badge(label: recommendedDevice.name),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  FilledButton.tonalIcon(
+                    onPressed: onUseSuggestedUser,
+                    icon: const Icon(Icons.switch_account_outlined),
+                    label: const Text('Use recommended user'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+          ],
           Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -536,10 +677,7 @@ class _SecurityHero extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            detail,
-                            style: theme.textTheme.titleMedium,
-                          ),
+                          Text(detail, style: theme.textTheme.titleMedium),
                           const SizedBox(height: 14),
                           Wrap(
                             spacing: 10,
@@ -547,13 +685,14 @@ class _SecurityHero extends StatelessWidget {
                             children: [
                               Chip(label: Text('User: $selectedUserLabel')),
                               Chip(label: Text('Device: $selectedDeviceLabel')),
-                                Chip(
-                                  label: Text(sessionCountdownLabel),
-                                  side: BorderSide(
-                                    color: sessionCountdownAccent
-                                        .withValues(alpha: 0.45),
+                              Chip(
+                                label: Text(sessionCountdownLabel),
+                                side: BorderSide(
+                                  color: sessionCountdownAccent.withValues(
+                                    alpha: 0.45,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -594,10 +733,7 @@ class _SecurityHero extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(children: stats),
-                    ),
+                    Expanded(flex: 2, child: Column(children: stats)),
                   ],
                 );
               }
@@ -607,21 +743,20 @@ class _SecurityHero extends StatelessWidget {
                 children: [
                   Text(detail, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          Chip(label: Text('User: $selectedUserLabel')),
-                          Chip(label: Text('Device: $selectedDeviceLabel')),
-                          Chip(
-                            label: Text(sessionCountdownLabel),
-                            side: BorderSide(
-                              color:
-                                  sessionCountdownAccent.withValues(alpha: 0.45),
-                            ),
-                          ),
-                        ],
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      Chip(label: Text('User: $selectedUserLabel')),
+                      Chip(label: Text('Device: $selectedDeviceLabel')),
+                      Chip(
+                        label: Text(sessionCountdownLabel),
+                        side: BorderSide(
+                          color: sessionCountdownAccent.withValues(alpha: 0.45),
+                        ),
                       ),
+                    ],
+                  ),
                   const SizedBox(height: 14),
                   _VisualPanel(
                     title: 'Current access summary',
@@ -670,10 +805,7 @@ class _SecurityHero extends StatelessWidget {
             compact: true,
             child: const Column(
               children: [
-                _LayerRow(
-                  title: 'Identity',
-                  body: 'Who is requesting access?',
-                ),
+                _LayerRow(title: 'Identity', body: 'Who is requesting access?'),
                 _LayerRow(
                   title: 'Device trust',
                   body: 'Is this device known and trusted enough?',
@@ -723,6 +855,7 @@ class _SecuritySidePanel extends StatelessWidget {
     required this.pinController,
     required this.selectedUserId,
     required this.selectedDeviceId,
+    required this.selectedUserPins,
     required this.showIdentityPicker,
     required this.users,
     required this.devices,
@@ -730,12 +863,14 @@ class _SecuritySidePanel extends StatelessWidget {
     required this.onDeviceChanged,
     required this.isBusy,
     required this.onToggleIdentityPicker,
+    required this.onOpenUsersDevices,
     required this.onUnlock,
   });
 
   final TextEditingController pinController;
   final String? selectedUserId;
   final String? selectedDeviceId;
+  final List<UsersDevicesPinRecord> selectedUserPins;
   final bool showIdentityPicker;
   final List<UsersDevicesControlUser> users;
   final List<UsersDevicesControlDevice> devices;
@@ -743,6 +878,7 @@ class _SecuritySidePanel extends StatelessWidget {
   final ValueChanged<String?> onDeviceChanged;
   final bool isBusy;
   final VoidCallback onToggleIdentityPicker;
+  final VoidCallback onOpenUsersDevices;
   final VoidCallback onUnlock;
 
   @override
@@ -763,10 +899,10 @@ class _SecuritySidePanel extends StatelessWidget {
 
     return Column(
       children: [
-        _VisualPanel(
+      _VisualPanel(
           title: 'Unlock options',
           subtitle:
-              'Use the remembered local identity, or change it when you need to switch operator.',
+              'Use the remembered local identity, or change it deliberately when you need to switch operator.',
           icon: Icons.login_outlined,
           compact: true,
           child: Column(
@@ -774,7 +910,8 @@ class _SecuritySidePanel extends StatelessWidget {
             children: [
               _VisualPanel(
                 title: 'Current identity',
-                subtitle: 'This is the remembered user/device pair for unlock.',
+                subtitle:
+                    'This user/device pair must match the PIN you enter below.',
                 icon: Icons.person_search_outlined,
                 compact: true,
                 child: Wrap(
@@ -791,6 +928,61 @@ class _SecuritySidePanel extends StatelessWidget {
                           ? 'Device: none'
                           : 'Device: ${selectedDevice.name}',
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              _VisualPanel(
+                title: 'Current PINs',
+                subtitle:
+                    "Only the selected user's local active and recovery codes are shown here, masked for quick checking.",
+                icon: Icons.pin_outlined,
+                compact: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _Badge(
+                          label:
+                              'Primary ${selectedUserPins.where((pin) => pin.status == 'active').length}',
+                        ),
+                        _Badge(
+                          label:
+                              'Recovery ${selectedUserPins.where((pin) => pin.status == 'recovery').length}',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    selectedUserPins.isEmpty
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'No PINs are currently set for this user. Add or restore one in Users & Devices before unlocking.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton.icon(
+                                onPressed: onOpenUsersDevices,
+                                icon: const Icon(Icons.shield_outlined),
+                                label: const Text('Open Users & Devices'),
+                              ),
+                            ],
+                          )
+                        : Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final pin in selectedUserPins)
+                                _Badge(
+                                  label:
+                                      '${pin.label}: ${_maskPinCode(pin.pinCode)}',
+                                ),
+                            ],
+                          ),
                   ],
                 ),
               ),
@@ -817,8 +1009,8 @@ class _SecuritySidePanel extends StatelessWidget {
                   Text(
                     'No paired device is linked to this user yet. Pair one in Users & Devices before unlocking.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   )
                 else
                   DropdownButtonFormField<String>(
@@ -846,7 +1038,7 @@ class _SecuritySidePanel extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: onToggleIdentityPicker,
                     icon: const Icon(Icons.manage_accounts_outlined),
-                    label: const Text('Change identity'),
+                    label: const Text('Change selected identity'),
                   ),
                 ),
               if (showIdentityPicker) ...[
@@ -868,6 +1060,13 @@ class _SecuritySidePanel extends StatelessWidget {
                   hintText: 'Required for unlock',
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'The PIN is checked only against the selected user above.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(height: 14),
               FilledButton.tonalIcon(
                 onPressed: isBusy ? null : onUnlock,
@@ -884,8 +1083,8 @@ class _SecuritySidePanel extends StatelessWidget {
               Text(
                 'The session will lock itself again after inactivity. Local PIN is required to unlock.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -893,6 +1092,247 @@ class _SecuritySidePanel extends StatelessWidget {
       ],
     );
   }
+}
+
+String _maskPinCode(String pinCode) {
+  if (pinCode.length <= 2) {
+    return pinCode;
+  }
+
+  return '${'*' * (pinCode.length - 2)}${pinCode.substring(pinCode.length - 2)}';
+}
+
+UsersDevicesControlUser? _bestUserForModule(
+  UsersDevicesControlSnapshot data,
+  String moduleId, {
+  String? deviceId,
+  String action = 'view',
+}) {
+  final rule = data.accessRules.firstWhere(
+    (item) => item.moduleId == moduleId,
+    orElse: () => const UsersDevicesControlAccessRule(
+      moduleId: '',
+      requiresTrustLevel: 0,
+      requiresApprovalFor: [],
+    ),
+  );
+  final requiredPermission = _requiredPermissionForAction(rule, action);
+  if (requiredPermission.isEmpty || data.users.isEmpty) {
+    return null;
+  }
+
+  final candidates = <UsersDevicesControlUser>[];
+  for (final user in data.users) {
+    if (user.status != 'active') {
+      continue;
+    }
+    if (!_userHasRequiredPermission(data, user, requiredPermission)) {
+      continue;
+    }
+    if (deviceId != null && deviceId.isNotEmpty) {
+      final pairedDevices = _pairedDevicesForUser(data.devices, user);
+      if (pairedDevices.isEmpty ||
+          !pairedDevices.any((device) => device.id == deviceId)) {
+        continue;
+      }
+    }
+    candidates.add(user);
+  }
+
+  if (candidates.isEmpty) {
+    return null;
+  }
+
+  candidates.sort(
+    (left, right) => _userSuggestionScore(
+      data,
+      right,
+      requiredPermission,
+    ).compareTo(_userSuggestionScore(data, left, requiredPermission)),
+  );
+  return candidates.first;
+}
+
+class _RecommendedIdentityCard extends StatelessWidget {
+  const _RecommendedIdentityCard({
+    required this.data,
+    required this.suggestedUser,
+    required this.selectedDevice,
+    required this.onUseSuggestedUser,
+  });
+
+  final UsersDevicesControlSnapshot data;
+  final UsersDevicesControlUser suggestedUser;
+  final UsersDevicesControlDevice? selectedDevice;
+  final VoidCallback onUseSuggestedUser;
+
+  @override
+  Widget build(BuildContext context) {
+    return _VisualPanel(
+      title: 'Recommended identity',
+      subtitle: 'A stronger local identity is available for this lock screen.',
+      icon: Icons.person_pin_outlined,
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _securityLockSuggestedUserReason(
+              data: data,
+              user: suggestedUser,
+              deviceId: selectedDevice?.id,
+            ),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Badge(label: suggestedUser.displayName),
+              _Badge(label: suggestedUser.role),
+              _Badge(label: suggestedUser.status),
+            ],
+          ),
+          const SizedBox(height: 10),
+          FilledButton.tonalIcon(
+            onPressed: onUseSuggestedUser,
+            icon: const Icon(Icons.switch_account_outlined),
+            label: const Text('Use suggested user'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _securityLockSuggestedUserReason({
+  required UsersDevicesControlSnapshot data,
+  required UsersDevicesControlUser user,
+  String? deviceId,
+  String action = 'view',
+}) {
+  final rule = data.accessRules.firstWhere(
+    (item) => item.moduleId == '01_USERS_AND_DEVICES_CONTROL',
+    orElse: () => const UsersDevicesControlAccessRule(
+      moduleId: '',
+      requiresTrustLevel: 0,
+      requiresApprovalFor: [],
+    ),
+  );
+  final requiredPermission = _requiredPermissionForAction(rule, action);
+  final permissions = _effectivePermissionsForUser(data, user);
+  final pairedDevices = _pairedDevicesForUser(data.devices, user);
+  final deviceLabel = deviceId != null && deviceId.isNotEmpty
+      ? data.devices.any((device) => device.id == deviceId)
+            ? data.devices.firstWhere((device) => device.id == deviceId).name
+            : 'the selected device'
+      : 'the selected device';
+  final pairedDeviceLabel = pairedDevices.isEmpty
+      ? 'a paired device'
+      : pairedDevices.first.name;
+
+  if (permissions.contains('*')) {
+    return '${user.displayName} already has owner-level access, so this is the fastest local match for the lock screen.';
+  }
+
+  if (requiredPermission.isEmpty) {
+    return '${user.displayName} is already the strongest local match for the lock screen.';
+  }
+
+  return '${user.displayName} already satisfies $requiredPermission and can use $pairedDeviceLabel instead of $deviceLabel.';
+}
+
+List<UsersDevicesControlDevice> _pairedDevicesForUser(
+  List<UsersDevicesControlDevice> devices,
+  UsersDevicesControlUser user,
+) {
+  return devices
+      .where(
+        (device) =>
+            user.linkedDevices.contains(device.id) || device.ownerId == user.id,
+      )
+      .toList(growable: false);
+}
+
+Set<String> _effectivePermissionsForUser(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlUser user,
+) {
+  final permissions = <String>{...user.permissions};
+  for (final role in data.roles) {
+    if (role.role.toLowerCase() == user.role.toLowerCase()) {
+      permissions.addAll(role.permissions);
+      break;
+    }
+  }
+  return permissions;
+}
+
+bool _userHasRequiredPermission(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlUser user,
+  String requiredPermission,
+) {
+  if (requiredPermission.isEmpty) {
+    return true;
+  }
+
+  final permissions = _effectivePermissionsForUser(data, user);
+  return permissions.contains('*') || permissions.contains(requiredPermission);
+}
+
+String _requiredPermissionForAction(
+  UsersDevicesControlAccessRule? rule,
+  String action,
+) {
+  switch (action) {
+    case 'view':
+      return rule?.viewPermission ?? '';
+    case 'edit':
+      return rule?.editPermission ?? '';
+    case 'admin':
+      return rule?.adminPermission ?? '';
+    case 'request_action':
+    case 'request':
+      return rule?.requestPermission ?? '';
+    case 'execute':
+    case 'execute_system_action':
+      return rule?.executePermission ?? '';
+    case 'control':
+      return rule?.controlPermission ?? '';
+    default:
+      return rule?.viewPermission ?? '';
+  }
+}
+
+int _userSuggestionScore(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlUser user,
+  String requiredPermission,
+) {
+  final permissions = _effectivePermissionsForUser(data, user);
+  var score = permissions.length;
+  if (permissions.contains('*')) {
+    score += 1000;
+  }
+  if (permissions.contains(requiredPermission)) {
+    score += 300;
+  }
+  final role = user.role.toLowerCase();
+  if (role.contains('owner')) {
+    score += 200;
+  }
+  if (role.contains('admin')) {
+    score += 150;
+  }
+  if (user.status == 'active') {
+    score += 100;
+  }
+  if (user.linkedDevices.isNotEmpty) {
+    score += 25;
+  }
+  return score;
 }
 
 class _LayerRow extends StatelessWidget {

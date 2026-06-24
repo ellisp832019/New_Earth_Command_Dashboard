@@ -70,6 +70,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.watch(settingsSnapshotProvider);
     final voices = ref.watch(voiceAssistantVoicesProvider);
     final securitySession = ref.watch(securitySessionProvider);
+    final isSessionLocked =
+        !securitySession.isUnlocked || securitySession.isExpired;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -157,7 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'This is where local identity, device trust, approvals, and future PIN or passkey controls should sit.',
+                        'This is where local identity, device trust, approvals, and PIN controls should sit.',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 12),
@@ -203,6 +205,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             },
                             icon: const Icon(Icons.devices_outlined),
                             label: const Text('Manage Devices'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: isSessionLocked
+                                ? null
+                                : () {
+                                    context.push(RouteNames.usersDevicesPins);
+                                  },
+                            icon: const Icon(Icons.pin_outlined),
+                            label: Text(
+                              isSessionLocked ? 'PINs locked' : 'Manage PINs',
+                            ),
                           ),
                           OutlinedButton.icon(
                             onPressed: () {

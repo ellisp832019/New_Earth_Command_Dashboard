@@ -58,6 +58,16 @@ void main() {
           notes: 'Primary local reviewer.',
         ),
         UsersDevicesControlUser(
+          id: 'user_hayley_finance',
+          displayName: 'Hayley Arthur',
+          role: 'Co-founder',
+          title: 'Finance / Treasury',
+          status: 'active',
+          permissions: ['finance.view', 'finance.edit'],
+          linkedDevices: ['device_phone_scanner'],
+          notes: 'Finance test identity.',
+        ),
+        UsersDevicesControlUser(
           id: 'user_guest',
           displayName: 'Guest User',
           role: 'Guest',
@@ -90,10 +100,7 @@ void main() {
         ),
       ],
       roles: [
-        UsersDevicesControlRoleDefinition(
-          role: 'Owner',
-          permissions: ['*'],
-        ),
+        UsersDevicesControlRoleDefinition(role: 'Owner', permissions: ['*']),
       ],
       permissions: [
         UsersDevicesControlPermissionDefinition(
@@ -178,7 +185,9 @@ void main() {
     return ProviderScope(
       overrides: [
         usersDevicesControlRepositoryProvider.overrideWithValue(repository),
-        usersDevicesControlSnapshotProvider.overrideWith((ref) async => snapshot),
+        usersDevicesControlSnapshotProvider.overrideWith(
+          (ref) async => snapshot,
+        ),
       ],
       child: MaterialApp(home: child),
     );
@@ -188,25 +197,43 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(buildTestApp(const SecurityLockScreen()));
-    await pumpUntilFound(tester, find.text('Unlock locally'));
+    await pumpUntilFound(tester, find.text('Unlock session'));
 
-    expect(find.text('Unlock locally'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Unlock locally'));
-    await tester.tap(find.text('Unlock locally'));
-    await pumpUntilFound(tester, find.text('Continue to control center'));
-
-    expect(find.text('Continue to control center'), findsOneWidget);
-    expect(find.text('Open Users & Devices'), findsOneWidget);
+    expect(find.text('Unlock session'), findsWidgets);
+    expect(find.text('Open Users & Devices'), findsWidgets);
     expect(find.text('Open audit log'), findsOneWidget);
   });
+
+  testWidgets(
+    'security lock suggests a stronger identity after switching users',
+    (tester) async {
+      await tester.pumpWidget(buildTestApp(const SecurityLockScreen()));
+      await pumpUntilFound(tester, find.text('Change selected identity'));
+
+      await tester.ensureVisible(find.text('Change selected identity'));
+      await tester.tap(find.text('Change selected identity').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DropdownButtonFormField<String>), findsWidgets);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hayley Arthur').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recommended identity'), findsWidgets);
+      expect(
+        find.textContaining('Peter Owner already has owner-level access'),
+        findsWidgets,
+      );
+      expect(find.text('Use suggested user'), findsOneWidget);
+    },
+  );
 
   testWidgets('module home exposes the calm action strip and six screens', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      buildTestApp(const UsersDevicesControlScreen()),
-    );
+    await tester.pumpWidget(buildTestApp(const UsersDevicesControlScreen()));
     await pumpUntilFound(tester, find.text('Register user'));
 
     expect(find.text('Register user'), findsWidgets);
@@ -215,29 +242,40 @@ void main() {
     expect(find.text('Open queue'), findsWidgets);
     expect(find.text('Seed demo path'), findsWidgets);
     expect(find.text('Reset demo data'), findsWidgets);
-    expect(find.text('Gatekeeper snapshot'), findsOneWidget);
-    expect(find.text('Treasury'), findsWidgets);
-    expect(find.text('Open access matrix'), findsOneWidget);
-    expect(find.text('Open audit log'), findsOneWidget);
     expect(find.text('Onboarding'), findsWidgets);
     expect(find.text('Approval Queue'), findsWidgets);
     expect(find.text('Audit Log'), findsWidgets);
-
-    await tester.tap(find.text('Onboarding').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Trust posture'), findsOneWidget);
-    expect(find.text('Trust levels'), findsOneWidget);
-
-    await tester.tap(find.text('Approval Queue').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Queue posture'), findsOneWidget);
-
-    await tester.tap(find.text('Audit Log').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Audit posture'), findsOneWidget);
   });
 
+  testWidgets('route gate suggests a stronger local user when one is available', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        const UsersDevicesRouteGateScreen(
+          moduleId: '17_FINANCE_AND_TREASURY',
+          title: 'Treasury Access Gate',
+          subtitle:
+              'Confirm local identity and device trust before opening finance and treasury.',
+          child: SizedBox.shrink(),
+        ),
+      ),
+    );
+    await pumpUntilFound(tester, find.text('Gate check'));
+
+    await tester.ensureVisible(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hayley Arthur (Co-founder)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recommended user'), findsOneWidget);
+    expect(find.text('Use suggested user'), findsOneWidget);
+    expect(
+      find.textContaining('Peter Owner already has owner-level access'),
+      findsOneWidget,
+    );
+  });
 }

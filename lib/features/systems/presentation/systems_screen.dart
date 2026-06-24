@@ -67,9 +67,9 @@ class SystemsScreen extends ConsumerWidget {
                         icon: Icons.lock_open_outlined,
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => context.go(RouteNames.dashboard),
-                        icon: const Icon(Icons.dashboard_outlined),
-                        label: const Text('Back to Dashboard'),
+                        onPressed: () => context.go(RouteNames.more),
+                        icon: const Icon(Icons.grid_view_outlined),
+                        label: const Text('Back to More'),
                       ),
                     ],
                   ),
