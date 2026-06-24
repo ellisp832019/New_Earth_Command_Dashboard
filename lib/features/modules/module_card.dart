@@ -23,6 +23,7 @@ class ModuleCard extends StatelessWidget {
     final statusColor = _statusColor(theme, module.status);
     final borderColor = statusColor.withValues(alpha: 0.42);
     final isSensitiveModule = _isSensitiveModule(module.id);
+    final isKnowledgeEngineModule = _isKnowledgeEngineModule(module.id);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -126,6 +127,11 @@ class ModuleCard extends StatelessWidget {
                       label: '${module.permissions.length} permissions',
                       icon: Icons.verified_user_outlined,
                     ),
+                    if (isKnowledgeEngineModule)
+                      const _CompactChip(
+                        label: 'Scan/report only',
+                        icon: Icons.auto_awesome_mosaic_outlined,
+                      ),
                     if (isSensitiveModule)
                       const _CompactChip(
                         label: 'Access gate',
@@ -166,6 +172,19 @@ class ModuleCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (isKnowledgeEngineModule) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => context.push(
+                        '${RouteNames.omegaKnowledgeEngine}?tab=scan-results',
+                      ),
+                      icon: const Icon(Icons.table_view_outlined),
+                      label: const Text('Open outputs'),
+                    ),
+                  ),
+                ],
                 if (isSensitiveModule && module.routes.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Align(
@@ -197,6 +216,10 @@ bool _isSensitiveModule(String moduleId) {
     default:
       return false;
   }
+}
+
+bool _isKnowledgeEngineModule(String moduleId) {
+  return moduleId == '26_OMEGA_KNOWLEDGE_ENGINE';
 }
 
 Color _statusColor(ThemeData theme, ModuleStatus status) {

@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-06-24T12:00:00",
+  "scan_mode": "scan_report_only",
+  "repository_count": 4,
+  "files_scanned": 1287,
+  "repositories": [
+    {
+      "key": "dashboard",
+      "name": "New Earth Dashboard",
+      "path": "D:/Dev/Projects/New Earth - Command Dashboard",
+      "files_scanned": 742,
+      "status": "connected"
+    },
+    {
+      "key": "microgrow",
+      "name": "MicroGrow",
+      "path": "D:/Dev/Projects/MicroGrow",
+      "files_scanned": 241,
+      "status": "connected"
+    },
+    {
+      "key": "biocalm",
+      "name": "BioCalm",
+      "path": "D:/Dev/Projects/BioCalm",
+      "files_scanned": 198,
+      "status": "connected"
+    },
+    {
+      "key": "new_earth_living",
+      "name": "New Earth Living",
+      "path": "D:/Dev/Projects/New Earth Living",
+      "files_scanned": 106,
+      "status": "connected"
+    }
+  ]
+}

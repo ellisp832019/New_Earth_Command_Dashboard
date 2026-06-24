@@ -151,4 +151,15 @@ void main() {
     expect(manifest?.routes, contains('/experiments'));
     expect(manifest?.iconKey, isNotEmpty);
   });
+
+  test('omega knowledge engine manifest is discoverable from the module tree', () {
+    final registry = ModuleLoader().load();
+    final manifest = registry.byId('26_OMEGA_KNOWLEDGE_ENGINE');
+
+    expect(manifest, isNotNull);
+    expect(manifest?.name, contains('Omega Knowledge Engine'));
+    expect(manifest?.routes, contains('/modules/omega-knowledge-engine'));
+    expect(manifest?.iconKey, isNotEmpty);
+    expect(manifest?.notes, contains('Scan/report only'));
+  });
 }

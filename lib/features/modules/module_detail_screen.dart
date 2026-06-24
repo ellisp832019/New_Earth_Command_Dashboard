@@ -97,6 +97,47 @@ class ModuleDetailScreen extends StatelessWidget {
             ],
             child: const SizedBox.shrink(),
           ),
+          if (_isKnowledgeEngineModule(module.id)) ...[
+            const SizedBox(height: 16),
+            _DetailPanel(
+              title: 'Knowledge engine quick access',
+              subtitle: 'Jump straight to the scan outputs or safe settings',
+              icon: Icons.travel_explore_outlined,
+              body:
+                  'This module stays read-only by default. Use the scan outputs shortcut to open the repository index and generated notes directly.',
+              chips: const [
+                'Scan/report only',
+                'Repository index',
+                'Learning notes',
+                'Obsidian export',
+              ],
+              actions: [
+                FilledButton(
+                  onPressed: module.routes.isEmpty
+                      ? null
+                      : () => context.go(
+                          Uri(
+                            path: module.routes.first,
+                            queryParameters: {'tab': 'scan-results'},
+                          ).toString(),
+                        ),
+                  child: const Text('Open scan outputs'),
+                ),
+                FilledButton.tonal(
+                  onPressed: module.routes.isEmpty
+                      ? null
+                      : () => context.go(
+                          Uri(
+                            path: module.routes.first,
+                            queryParameters: {'tab': 'settings'},
+                          ).toString(),
+                        ),
+                  child: const Text('Open safe settings'),
+                ),
+              ],
+              child: const SizedBox.shrink(),
+            ),
+          ],
           if (showGateShortcuts) ...[
             const SizedBox(height: 16),
             _DetailPanel(
@@ -373,6 +414,10 @@ bool _isSensitiveModule(String moduleId) {
     default:
       return false;
   }
+}
+
+bool _isKnowledgeEngineModule(String moduleId) {
+  return moduleId == '26_OMEGA_KNOWLEDGE_ENGINE';
 }
 
 String _gatePostureBody(String moduleId) {

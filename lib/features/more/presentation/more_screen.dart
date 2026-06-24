@@ -31,6 +31,14 @@ class MoreScreen extends StatelessWidget {
       route: RouteNames.repoResearchEngine,
     ),
     _MoreItem(
+      title: 'Omega Knowledge Engine',
+      description:
+          'Scan repos, build learning notes, and review architecture maps locally.',
+      icon: Icons.travel_explore_outlined,
+      route: RouteNames.omegaKnowledgeEngine,
+      badge: 'Scan',
+    ),
+    _MoreItem(
       title: 'Systems',
       description:
           'Protect the full D: drive, review backup status, and keep recovery tools calm.',
@@ -243,6 +251,8 @@ class MoreScreen extends StatelessWidget {
                 ),
                 itemBuilder: (context, index) {
                   final item = _items[index];
+                  final isOmegaKnowledgeEngine =
+                      item.route == RouteNames.omegaKnowledgeEngine;
                   return InkWell(
                     borderRadius: BorderRadius.circular(24),
                     onTap: () => context.push(item.route),
@@ -256,15 +266,38 @@ class MoreScreen extends StatelessWidget {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: AppColours.darkSurfaceRaised.withValues(
-                                alpha: 0.95,
+                              gradient: isOmegaKnowledgeEngine
+                                  ? LinearGradient(
+                                      colors: [
+                                        AppColours.darkSecondary
+                                            .withValues(alpha: 0.22),
+                                        AppColours.darkSurfaceRaised
+                                            .withValues(alpha: 0.98),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: isOmegaKnowledgeEngine
+                                  ? null
+                                  : AppColours.darkSurfaceRaised.withValues(
+                                      alpha: 0.95,
+                                    ),
+                              border: Border.all(
+                                color: isOmegaKnowledgeEngine
+                                    ? AppColours.darkSecondary
+                                        .withValues(alpha: 0.4)
+                                    : AppColours.darkOutline
+                                        .withValues(alpha: 0.22),
                               ),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             alignment: Alignment.center,
                             child: Icon(
                               item.icon,
-                              color: AppColours.darkSecondary,
+                              color: isOmegaKnowledgeEngine
+                                  ? AppColours.darkText
+                                  : AppColours.darkSecondary,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -282,20 +315,28 @@ class MoreScreen extends StatelessWidget {
                                   const SizedBox(height: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
+                                      horizontal: 10,
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColours.darkSecondary
-                                          .withValues(alpha: 0.14),
+                                      color: isOmegaKnowledgeEngine
+                                          ? AppColours.darkSecondary
+                                              .withValues(alpha: 0.22)
+                                          : AppColours.darkSecondary
+                                              .withValues(alpha: 0.14),
                                       borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
-                                        color: AppColours.darkSecondary
-                                            .withValues(alpha: 0.26),
+                                        color: isOmegaKnowledgeEngine
+                                            ? AppColours.darkSecondary
+                                                .withValues(alpha: 0.5)
+                                            : AppColours.darkSecondary
+                                                .withValues(alpha: 0.26),
                                       ),
                                     ),
                                     child: Text(
-                                      item.badge!,
+                                      isOmegaKnowledgeEngine
+                                          ? 'Scan / report only'
+                                          : item.badge!,
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
                                             color: AppColours.darkText,

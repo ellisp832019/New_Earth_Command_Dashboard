@@ -35,6 +35,7 @@ V0.1 foundation is live:
 - Settings screen now loads local app settings, shows the Top 3 rule, shows app version, and controls dashboard support-card visibility
 - Voice Assistant / Voice Intelligence now includes wake handling, startup gating, a dashboard conversation dock, shared session flow, and review-first local capture
 - Voice Intelligence V1 is integrated as a new `/voice` module with mock transcription, a full `/voice/conversation` loop, locally persisted shared thread memory and audit logging, remembered voice settings, meeting summaries, MicroGrow read-only status, safety gating, and no hidden hardware writes
+- Omega Knowledge Engine is registered as a read-only local intelligence module at `/modules/omega-knowledge-engine`, with scan/report outputs, repository indexing, learning notes, architecture maps, and Obsidian export staging
 - On Windows, the dashboard now waits for a connected headset or headset microphone before the main dashboard loads
 - Meeting System phase 1 is live with dashboard, meeting index, wizard, detail, and trackers
 - Launchpad module phase 1 is live with campaign manager, rewards, story builder, readiness tracker, finance modeller, and JSON seed import; phase 2 now adds media, grants, investors, partners, manufacturing, community, timeline, analytics, launch checklist, backer updates, fulfilment, and impact records; phase 3 is polishing the overview, summary cards, reward cards, and archive flow
@@ -53,6 +54,7 @@ V0.1 foundation is live:
 - [Meeting System module](modules/meeting_system/README.md)
 - [Voice Intelligence module pack](modules/voice_intelligence_module/README.md)
 - [Launchpad module](modules/new_earth_launchpad_module/README.md)
+- [Omega Knowledge Engine module](modules/26_OMEGA_KNOWLEDGE_ENGINE/README.md)
 - [Module Hub architecture](docs/architecture/module_hub/module_hub_architecture.md)
 - [MVP Roadmap](docs/roadmap/mvp_roadmap.md)
 - [Architecture Decisions](docs/architecture/architecture_decisions.md)
@@ -86,6 +88,34 @@ If you want the full operating guide, use:
 
 - [Detailed User Guide](docs/user_guide/getting_started.md)
 
+## Developer Shortcuts
+
+For faster local work in VS Code:
+
+- `Ctrl+Alt+A` runs `Flutter: quick analyze Omega + Modules`
+- `Ctrl+Alt+B` runs `Flutter: get + analyze + test`
+- `Ctrl+Alt+F` runs `Flutter: format project`
+- `Ctrl+Alt+T` runs `Flutter: test`
+- `Ctrl+Alt+R` runs `Flutter: run Windows`
+- `Ctrl+Alt+W` runs `Flutter: run Chrome`
+- `Ctrl+Alt+G` runs `Flutter: pub get`
+- `Ctrl+Alt+C` runs `Flutter: clean`
+- `Flutter: get + quick analyze` chains `pub get` and the quick analyze task
+- `Flutter: build all local` chains Windows and Web builds
+- Use `Terminal > Run Task` if you want the full task list
+
+The quick analyze task checks the active Omega and module UI files without waiting for a full workspace pass.
+The format, test, clean, and package tasks give you a simple maintenance loop without typing long commands.
+
+## Debug Profiles
+
+VS Code launch profiles are available for:
+
+- `Launch Windows`
+- `Launch Chrome`
+
+Use them from the Run and Debug panel when you want to attach the debugger instead of using a terminal task.
+
 ## Best Visual Assets
 
 These are the most useful documentation visuals right now:
@@ -96,6 +126,7 @@ These are the most useful documentation visuals right now:
 - Dashboard user manual: `assets/user_guide/36_dashboard_user_manual_page.png`
 - Projects and Tasks manual: `assets/user_guide/37_projects_tasks_user_manual_page.png`
 - Journal and Planner manual: `assets/user_guide/38_journal_planner_user_manual_page.png`
+- Developer toolkit cheat sheet: `docs/developer_guide/assets/developer_toolkit_cheat_sheet.png`
 - Quick start guide: `assets/user_guide/35_getting_started_quick_start.png`
 - Mobile overview: `assets/screenshots/27_mobile_app_screens_overview.png`
 - Daily planning flow: `assets/screenshots/28_daily_planning_flow.png`

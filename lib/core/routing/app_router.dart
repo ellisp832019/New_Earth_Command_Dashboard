@@ -69,6 +69,7 @@ import '../../features/modules/module_operations_screen.dart';
 import '../../features/modules/module_permissions_screen.dart';
 import '../../features/modules/module_settings_screen.dart';
 import '../../features/modules/modules_screen.dart';
+import '../../features/omega_knowledge_engine/presentation/omega_knowledge_engine_screen.dart';
 import '../../features/users_devices_control/presentation/users_devices_control_screen.dart';
 import '../../features/users_devices_control/presentation/users_devices_pins_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
@@ -1030,6 +1031,11 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.companyCommandCentre,
       builder: (context, state) => const CompanyCommandCentreScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.omegaKnowledgeEngine,
+      builder: (context, state) => const OmegaKnowledgeEngineScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

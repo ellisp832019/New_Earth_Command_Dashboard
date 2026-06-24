@@ -118,6 +118,13 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
                 .firstOrNull,
           ),
           const SizedBox(height: 16),
+          _PinnedKnowledgeEngineCard(
+            module: modules
+                .where((module) => module.id == '26_OMEGA_KNOWLEDGE_ENGINE')
+                .cast<ModuleManifest?>()
+                .firstOrNull,
+          ),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -781,6 +788,110 @@ class _PinnedStartHereCard extends StatelessWidget {
                             context.push(RouteNames.usersDevicesDevices),
                         icon: const Icon(Icons.devices_outlined),
                         label: const Text('Open Devices'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PinnedKnowledgeEngineCard extends StatelessWidget {
+  const _PinnedKnowledgeEngineCard({required this.module});
+
+  final ModuleManifest? module;
+
+  @override
+  Widget build(BuildContext context) {
+    if (module == null) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.secondary.withValues(alpha: 0.1),
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.38),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                moduleIconFor(module!.iconKey, category: module!.category),
+                color: theme.colorScheme.secondary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: const [
+                      Chip(label: Text('Featured module')),
+                      Chip(label: Text('Scan/report only')),
+                      Chip(label: Text('Knowledge engine')),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(module!.name, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Use this when you want a local scan, architecture map, learning notes, or export preview for any repo.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(module!.description, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.push(
+                          RouteNames.omegaKnowledgeEngine,
+                        ),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Open module home'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '${RouteNames.omegaKnowledgeEngine}?tab=scan-results',
+                        ),
+                        icon: const Icon(Icons.table_view_outlined),
+                        label: const Text('Open outputs'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '${RouteNames.omegaKnowledgeEngine}?tab=settings',
+                        ),
+                        icon: const Icon(Icons.settings_outlined),
+                        label: const Text('Open settings'),
                       ),
                     ],
                   ),
