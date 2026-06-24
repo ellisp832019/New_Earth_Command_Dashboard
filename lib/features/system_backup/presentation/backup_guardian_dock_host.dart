@@ -302,14 +302,23 @@ class _DockBody extends StatelessWidget {
                           color: AppColours.darkText,
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
                     _StatusPill(
                       label: snapshot.healthSummary,
                       accent: healthAccent,
                     ),
-                    if (floating) ...[
-                      const SizedBox(width: 8),
+                    if (floating)
                       AnimatedOpacity(
                         opacity: showFloatingHint ? 1 : 0.18,
                         duration: const Duration(milliseconds: 260),
@@ -340,7 +349,6 @@ class _DockBody extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 12),

@@ -581,8 +581,8 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                         ],
                       ),
                     ),
-                          ),
-                          const SizedBox(height: 12),
+                  ),
+                  const SizedBox(height: 12),
                           Card(
                             child: Padding(
                               padding: const EdgeInsets.all(16),

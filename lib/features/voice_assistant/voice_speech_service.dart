@@ -316,7 +316,7 @@ class VoiceAssistantSpeechService {
         r'$voices | ConvertTo-Json -Compress',
       ].join('\n');
 
-      final output = await Process.run('powershell', <String>[
+      final output = await Process.run('powershell.exe', <String>[
         '-NoLogo',
         '-NoProfile',
         '-NonInteractive',
@@ -324,7 +324,7 @@ class VoiceAssistantSpeechService {
         'Bypass',
         '-EncodedCommand',
         _encodePowerShellCommand(script),
-      ], runInShell: true);
+      ], runInShell: false);
 
       if (output.exitCode != 0) {
         return const <VoiceTtsVoiceOption>[];
@@ -382,7 +382,7 @@ class VoiceAssistantSpeechService {
         rate: rate,
         voiceName: voiceName,
       );
-      final process = await Process.start('powershell', <String>[
+      final process = await Process.start('powershell.exe', <String>[
         '-NoLogo',
         '-NoProfile',
         '-NonInteractive',
@@ -390,7 +390,7 @@ class VoiceAssistantSpeechService {
         'Bypass',
         '-EncodedCommand',
         _encodePowerShellCommand(script),
-      ], runInShell: true);
+      ], runInShell: false);
       _fallbackSpeechProcess = process;
       unawaited(
         process.exitCode.then((_) {
@@ -421,7 +421,7 @@ class VoiceAssistantSpeechService {
         r'}',
       ].join('\n');
 
-      await Process.run('powershell', <String>[
+      await Process.run('powershell.exe', <String>[
         '-NoLogo',
         '-NoProfile',
         '-NonInteractive',
@@ -429,7 +429,7 @@ class VoiceAssistantSpeechService {
         'Bypass',
         '-EncodedCommand',
         _encodePowerShellCommand(script),
-      ], runInShell: true);
+      ], runInShell: false);
     } catch (_) {
       // Best-effort only. This is only to prime the speech engine.
     }
@@ -479,7 +479,7 @@ class VoiceAssistantSpeechService {
         ],
         if (speechTone.isNotEmpty) ...<String>['--instructions', speechTone],
         text.trim(),
-      ], runInShell: true);
+      ], runInShell: false);
 
       _fallbackSpeechProcess = process;
       unawaited(
@@ -627,7 +627,7 @@ class VoiceAssistantSpeechService {
         final result = await Process.run(candidate.command, <String>[
           ...candidate.args,
           '--version',
-        ], runInShell: true);
+        ], runInShell: false);
         if (result.exitCode == 0) {
           return candidate;
         }

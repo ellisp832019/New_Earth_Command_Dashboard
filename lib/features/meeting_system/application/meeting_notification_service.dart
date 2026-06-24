@@ -260,14 +260,14 @@ Start-Sleep -Seconds 6
 ''';
 
     try {
-      await Process.run('powershell', <String>[
+      await Process.run('powershell.exe', <String>[
         '-NoProfile',
         '-STA',
         '-WindowStyle',
         'Hidden',
         '-Command',
         script,
-      ], runInShell: true);
+      ], runInShell: false);
     } catch (_) {
       // Best-effort desktop alert. The in-app notification feed still shows it.
     }

@@ -58,7 +58,13 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
     ref.listen<SecuritySessionState>(securitySessionProvider, (previous, next) {
       final wasUnlocked = previous?.isUnlocked ?? false;
       if (wasUnlocked && !next.isUnlocked) {
-        appRouter.go(RouteNames.securityLock);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final currentPath =
+              appRouter.routeInformationProvider.value.uri.path;
+          if (currentPath != RouteNames.securityLock) {
+            appRouter.go(RouteNames.securityLock);
+          }
+        });
       }
     });
 
@@ -131,7 +137,13 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 LockNowIntent: CallbackAction<LockNowIntent>(
                   onInvoke: (intent) {
                     ref.read(securitySessionProvider.notifier).lockNow();
-                    appRouter.go(RouteNames.securityLock);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final currentPath =
+                          appRouter.routeInformationProvider.value.uri.path;
+                      if (currentPath != RouteNames.securityLock) {
+                        appRouter.go(RouteNames.securityLock);
+                      }
+                    });
                     return null;
                   },
                 ),
