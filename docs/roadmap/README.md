@@ -26,6 +26,8 @@ These are the main roadmap views worth checking first:
 - [`dashboard_ranked_roadmap.md`](dashboard_ranked_roadmap.md)
 - [`dashboard_module_activation_roadmap.md`](dashboard_module_activation_roadmap.md)
 - [`dashboard_module_first_week_plan.md`](dashboard_module_first_week_plan.md)
+- [`commit_split_plan.md`](commit_split_plan.md)
+- [`repo_upgrade_roadmap.md`](repo_upgrade_roadmap.md)
 - [`dashboard_module_20_task_execution_queue.md`](dashboard_module_20_task_execution_queue.md)
 - [`dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
 - [`dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
