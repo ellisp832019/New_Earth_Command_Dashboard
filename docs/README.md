@@ -23,6 +23,7 @@ The repo also carries an Obsidian-facing active project mirror under `01_ACTIVE_
 - [Asset Index](assets/asset_index.md)
 - [Codex Workflow](developer_guide/codex_workflow.md)
 - [Local Build Guide](developer_guide/local_build.md)
+- [Developer Workflow Toolkit](developer_guide/developer_workflow_toolkit.md)
 
 ## Source Documents
 

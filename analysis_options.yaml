@@ -11,8 +11,16 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
+    - .dart_tool/**
+    - build/**
+    - dist/**
+    - tmp/**
     - third_party/**
     - backups/**
+    - modules/**/docs/**
+    - modules/**/data/**
+    - modules/**/output/**
+    - modules/**/codex_prompts/**
 
 linter:
   # The lint rules applied to this project can be customized in the
