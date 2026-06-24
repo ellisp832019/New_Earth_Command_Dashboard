@@ -235,6 +235,7 @@ class OmegaKnowledgeEngineService {
             path.join(Directory.current.path, 'modules', '26_OMEGA_KNOWLEDGE_ENGINE');
 
   final String moduleRootPath;
+  static const Duration _scanTimeout = Duration(minutes: 3);
 
   String get _configPath =>
       path.join(moduleRootPath, 'config', 'knowledge_engine_settings.json');
@@ -342,6 +343,7 @@ class OmegaKnowledgeEngineService {
 
       final stdoutBuffer = StringBuffer();
       final stderrBuffer = StringBuffer();
+      var timedOut = false;
       final stdoutDone = process.stdout
           .transform(utf8.decoder)
           .listen(stdoutBuffer.write)
@@ -350,8 +352,21 @@ class OmegaKnowledgeEngineService {
           .transform(utf8.decoder)
           .listen(stderrBuffer.write)
           .asFuture<void>();
-      final exitCode = await process.exitCode;
+      final exitCode = await process.exitCode.timeout(
+        _scanTimeout,
+        onTimeout: () async {
+          timedOut = true;
+          process.kill();
+          return 124;
+        },
+      );
       await Future.wait([stdoutDone, stderrDone]);
+
+      if (timedOut && stderrBuffer.isEmpty) {
+        stderrBuffer.write(
+          'Omega Knowledge Engine scan timed out after ${_scanTimeout.inMinutes} minutes.',
+        );
+      }
 
       return OmegaKnowledgeEngineRunResult(
         exitCode: exitCode,

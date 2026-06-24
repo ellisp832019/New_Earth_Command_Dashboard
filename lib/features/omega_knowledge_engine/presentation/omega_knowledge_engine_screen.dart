@@ -485,6 +485,11 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     final repoHealth = _buildRepoHealth(snapshot);
     final outputHealth = _buildOutputHealth();
     final outputPreviews = _buildOutputPreviews(snapshot);
+    final healthWarnings = _buildHealthWarnings(
+      snapshot: snapshot,
+      repoHealth: repoHealth,
+      outputHealth: outputHealth,
+    );
     final tabs = const [
       Tab(text: 'Overview'),
       Tab(text: 'Repositories'),
@@ -550,6 +555,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             onOpenProjectMemory: () => _openTab(6),
             onOpenObsidianExport: () => _openTab(7),
             onOpenSettings: _openSettings,
+            healthWarnings: healthWarnings,
           ),
           _RepositoriesTab(
             snapshot: snapshot,
@@ -752,6 +758,42 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     ];
   }
 
+  List<String> _buildHealthWarnings({
+    required OmegaKnowledgeEngineSnapshot snapshot,
+    required List<_PathHealth> repoHealth,
+    required List<_PathHealth> outputHealth,
+  }) {
+    final warnings = <String>[];
+    final missingRepos = repoHealth.where((item) => !item.exists).length;
+    final missingOutputs = outputHealth.where((item) => !item.exists).length;
+
+    if (snapshot.settings.safetyMode != 'scan_report_only') {
+      warnings.add(
+        'Safety mode is set to ${snapshot.settings.safetyMode}; the module is designed to stay in scan/report mode by default.',
+      );
+    }
+
+    if (missingRepos > 0) {
+      warnings.add(
+        '$missingRepos repo target(s) are currently missing on disk.',
+      );
+    }
+
+    if (missingOutputs > 0) {
+      warnings.add(
+        '$missingOutputs expected output file(s) have not been generated yet.',
+      );
+    }
+
+    if (!Directory(snapshot.settings.outputDir).existsSync()) {
+      warnings.add(
+        'The configured output directory does not exist yet: ${snapshot.settings.outputDir}',
+      );
+    }
+
+    return warnings;
+  }
+
   bool _entityExists(String relativePath) {
     return FileSystemEntity.typeSync(relativePath) != FileSystemEntityType.notFound;
   }
@@ -772,6 +814,7 @@ class _OverviewTab extends StatelessWidget {
     required this.onOpenProjectMemory,
     required this.onOpenObsidianExport,
     required this.onOpenSettings,
+    required this.healthWarnings,
   });
 
   final OmegaKnowledgeEngineSnapshot snapshot;
@@ -787,6 +830,7 @@ class _OverviewTab extends StatelessWidget {
   final VoidCallback onOpenProjectMemory;
   final VoidCallback onOpenObsidianExport;
   final VoidCallback onOpenSettings;
+  final List<String> healthWarnings;
 
   @override
   Widget build(BuildContext context) {
@@ -945,6 +989,22 @@ class _OverviewTab extends StatelessWidget {
             ],
           ),
         ),
+        if (healthWarnings.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _PanelCard(
+            title: 'Health notes',
+            subtitle: 'These are the items worth checking before the next scan.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final warning in healthWarnings) ...[
+                  _BulletLine(text: warning),
+                  if (warning != healthWarnings.last) const SizedBox(height: 8),
+                ],
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         _PanelCard(
           title: 'Output previews',
