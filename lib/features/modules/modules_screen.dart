@@ -866,6 +866,31 @@ class _PinnedKnowledgeEngineCard extends StatelessWidget {
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _SummaryChip(label: 'Health', value: module!.health.state.label),
+                      _SummaryChip(
+                        label: 'Last checked',
+                        value: module!.health.lastCheckedLabel,
+                      ),
+                      _SummaryChip(
+                        label: 'Warnings',
+                        value: module!.health.warnings.isEmpty
+                            ? 'None'
+                            : '${module!.health.warnings.length}',
+                      ),
+                    ],
+                  ),
+                  if (module!.health.warnings.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      module!.health.warnings.first,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: 10),
                   Text(module!.description, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 12),
                   Wrap(
@@ -900,6 +925,31 @@ class _PinnedKnowledgeEngineCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.44),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.42),
+        ),
+      ),
+      child: Text(
+        '$label: $value',
+        style: Theme.of(context).textTheme.labelSmall,
       ),
     );
   }

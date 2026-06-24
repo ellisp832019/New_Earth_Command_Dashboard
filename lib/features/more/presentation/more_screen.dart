@@ -236,6 +236,8 @@ class MoreScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const _OmegaKnowledgeEngineBanner(),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
               final crossAxisCount = constraints.maxWidth >= 1000 ? 2 : 1;
@@ -403,4 +405,139 @@ class _MoreItem {
   final IconData icon;
   final String route;
   final String? badge;
+}
+
+class _OmegaKnowledgeEngineBanner extends StatelessWidget {
+  const _OmegaKnowledgeEngineBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => context.push(RouteNames.omegaKnowledgeEngine),
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColours.darkSecondary.withValues(alpha: 0.2),
+              AppColours.darkSurfaceRaised.withValues(alpha: 0.98),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppColours.darkSecondary.withValues(alpha: 0.38),
+          ),
+        ),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: AppColours.darkSecondary.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.travel_explore_outlined,
+                color: AppColours.darkText,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: const [
+                      _OmegaChip(label: 'Scan / report only'),
+                      _OmegaChip(label: 'Local knowledge engine'),
+                      _OmegaChip(label: 'Read only'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Omega Knowledge Engine',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: AppColours.darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Open the local learning and scan workspace for repository indexes, architecture maps, comment suggestions, and export previews.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.push(
+                          RouteNames.omegaKnowledgeEngine,
+                        ),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Open module home'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '${RouteNames.omegaKnowledgeEngine}?tab=scan-results',
+                        ),
+                        icon: const Icon(Icons.table_view_outlined),
+                        label: const Text('Open outputs'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '${RouteNames.omegaKnowledgeEngine}?tab=settings',
+                        ),
+                        icon: const Icon(Icons.settings_outlined),
+                        label: const Text('Open settings'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OmegaChip extends StatelessWidget {
+  const _OmegaChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColours.darkSecondary.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AppColours.darkSecondary.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+      ),
+    );
+  }
 }

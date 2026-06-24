@@ -118,6 +118,11 @@ class ModuleCard extends StatelessWidget {
                       label: module.health.state.label,
                       icon: Icons.health_and_safety_outlined,
                     ),
+                    if (isKnowledgeEngineModule)
+                      const _CompactChip(
+                        label: 'Read only',
+                        icon: Icons.visibility_outlined,
+                      ),
                     if (module.dockable)
                       const _CompactChip(
                         label: 'Dockable',
@@ -139,6 +144,13 @@ class ModuleCard extends StatelessWidget {
                       ),
                   ],
                 ),
+                if (isKnowledgeEngineModule) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Last checked: ${module.health.lastCheckedLabel}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -176,12 +188,26 @@ class ModuleCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () => context.push(
-                        '${RouteNames.omegaKnowledgeEngine}?tab=scan-results',
-                      ),
-                      icon: const Icon(Icons.table_view_outlined),
-                      label: const Text('Open outputs'),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => context.push(
+                            RouteNames.omegaKnowledgeEngine,
+                          ),
+                          icon: const Icon(Icons.open_in_new),
+                          label: const Text('Open overview'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => context.push(
+                            '${RouteNames.omegaKnowledgeEngine}?tab=scan-results',
+                          ),
+                          icon: const Icon(Icons.table_view_outlined),
+                          label: const Text('Open outputs'),
+                        ),
+                      ],
                     ),
                   ),
                 ],

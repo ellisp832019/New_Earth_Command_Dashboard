@@ -709,6 +709,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             : snapshot.repositoryIndexText.split('\n').first,
         open: _openScanResults,
         tabLabel: 'Scan Results',
+        sourceLabel: 'repository_index.*',
       ),
       _OutputPreview(
         label: 'Learning notes',
@@ -718,6 +719,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             : snapshot.learningNotesText.split('\n').first,
         open: () => _openTab(3),
         tabLabel: 'Learning Notes',
+        sourceLabel: 'code_learning_notes.md',
       ),
       _OutputPreview(
         label: 'Architecture map',
@@ -727,6 +729,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             : snapshot.architectureMapText.split('\n').first,
         open: () => _openTab(4),
         tabLabel: 'Architecture Map',
+        sourceLabel: 'architecture_map.md',
       ),
       _OutputPreview(
         label: 'Comment suggestions',
@@ -736,6 +739,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             : snapshot.commentSuggestionsText.split('\n').first,
         open: () => _openTab(5),
         tabLabel: 'Comment Suggestions',
+        sourceLabel: 'comment_suggestions.md',
       ),
       _OutputPreview(
         label: 'Project memory',
@@ -745,6 +749,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             : snapshot.projectMemoryText.split('\n').first,
         open: () => _openTab(6),
         tabLabel: 'Project Memory',
+        sourceLabel: 'project_memory.md',
       ),
       _OutputPreview(
         label: 'Obsidian export',
@@ -754,6 +759,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             : '${snapshot.obsidianExportFiles.length} staged file(s) ready for review.',
         open: () => _openTab(7),
         tabLabel: 'Obsidian Export',
+        sourceLabel: 'obsidian_export/',
       ),
     ];
   }
@@ -1568,6 +1574,7 @@ class _RepoProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final exists = Directory(profile.pathWindows).existsSync();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -1591,10 +1598,11 @@ class _RepoProfileCard extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: const [
-                Chip(label: Text('Scan target')),
-                Chip(label: Text('Read-only')),
-                Chip(label: Text('Local path')),
+              children: [
+                const Chip(label: Text('Scan target')),
+                Chip(label: Text(exists ? 'Path ready' : 'Path missing')),
+                const Chip(label: Text('Read-only')),
+                const Chip(label: Text('Local path')),
               ],
             ),
           ],
@@ -1824,6 +1832,26 @@ class _OutputPreviewCard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
+              _StatusChip(
+                label: isMissing ? 'Missing' : 'Ready',
+                tone: isMissing ? _ChipTone.danger : _ChipTone.success,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusChip(
+                label: preview.tabLabel,
+                tone: _ChipTone.neutral,
+              ),
+              _StatusChip(
+                label: preview.sourceLabel,
+                tone: _ChipTone.info,
+              ),
               TextButton.icon(
                 onPressed: preview.open,
                 icon: const Icon(Icons.open_in_new_outlined),
@@ -1939,6 +1967,7 @@ class _OutputPreview {
     required this.snippet,
     required this.open,
     required this.tabLabel,
+    required this.sourceLabel,
   });
 
   final String label;
@@ -1946,6 +1975,7 @@ class _OutputPreview {
   final String snippet;
   final VoidCallback open;
   final String tabLabel;
+  final String sourceLabel;
 }
 
 class _RepoProfilePreset {
