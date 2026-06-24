@@ -377,7 +377,11 @@ class _UsersDevicesUsersScreenState
                                         _openUserPinsRegistry(context, user.id),
                                   ),
                                 if (userPins.isEmpty)
-                                  const _CardChip(label: 'No PIN set'),
+                                  _CardChip(
+                                    label: 'No PIN set',
+                                    onTap: () =>
+                                        _openUserPinsRegistry(context, user.id),
+                                  ),
                               ],
                               actions: [
                                 OutlinedButton.icon(
@@ -424,12 +428,8 @@ class _UsersDevicesUsersScreenState
                                   label: const Text('Copy PIN summary'),
                                 ),
                                 OutlinedButton.icon(
-                                  onPressed: userPins.isEmpty
-                                      ? null
-                                      : () => _openUserPinsRegistry(
-                                            context,
-                                            user.id,
-                                          ),
+                                  onPressed: () =>
+                                      _openUserPinsRegistry(context, user.id),
                                   icon: const Icon(Icons.pin_end_outlined),
                                   label: const Text('Open PIN Registry'),
                                 ),
