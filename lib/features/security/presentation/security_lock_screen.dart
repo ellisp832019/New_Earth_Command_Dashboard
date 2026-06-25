@@ -198,7 +198,13 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         if (pinDecision.nextStep.isNotEmpty) {
           _detail = '$_detail ${pinDecision.nextStep}';
         }
-        _auditSummary = 'PIN check failed before access control.';
+        _auditSummary = switch (pinDecision.issueCode) {
+          'missing_pin' =>
+            'No PIN check ran because this user has no local PIN yet.',
+          'primary_missing_recovery_available' =>
+            'Primary PIN is missing. Recovery path is available in PIN Registry.',
+          _ => 'PIN check failed before access control.',
+        };
         _latestAuditEventId = null;
       });
       return;
@@ -238,7 +244,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
             : decision.reason;
         _latestAuditEventId = latestAudit?.eventId;
         _auditSummary = latestAudit == null
-            ? 'The access check passed and was recorded locally.'
+            ? (pinDecision.issueCode == 'recovery_allowed'
+                  ? 'Recovery PIN matched and the access check passed locally.'
+                  : 'The access check passed and was recorded locally.')
             : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
       });
       if (!voiceStartupGateEnabled) {
@@ -888,7 +896,7 @@ class _SecuritySidePanel extends StatelessWidget {
 
     return Column(
       children: [
-      _VisualPanel(
+        _VisualPanel(
           title: 'Unlock options',
           subtitle:
               'Use the remembered local identity, or change it deliberately when you need to switch operator.',
@@ -924,7 +932,7 @@ class _SecuritySidePanel extends StatelessWidget {
               _VisualPanel(
                 title: 'Current PINs',
                 subtitle:
-                    "Only the selected user's local active and recovery codes are shown here, masked for quick checking.",
+                    "Only the selected user's local primary and recovery codes are shown here, masked for quick checking.",
                 icon: Icons.pin_outlined,
                 compact: true,
                 child: Column(
@@ -968,7 +976,7 @@ class _SecuritySidePanel extends StatelessWidget {
                               for (final pin in selectedUserPins)
                                 _Badge(
                                   label:
-                                      '${pin.label}: ${_maskPinCode(pin.pinCode)}',
+                                      '${pin.label} (${pin.status}): ${_maskPinCode(pin.pinCode)}',
                                 ),
                             ],
                           ),
@@ -1051,7 +1059,7 @@ class _SecuritySidePanel extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'The PIN is checked only against the selected user above.',
+                'The PIN is checked only against the selected user above. Primary PINs are for normal unlock, and recovery PINs should be revoked after use.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

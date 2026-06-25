@@ -19,7 +19,8 @@ class UsersDevicesPinsScreen extends ConsumerStatefulWidget {
       _UsersDevicesPinsScreenState();
 }
 
-class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen> {
+class _UsersDevicesPinsScreenState
+    extends ConsumerState<UsersDevicesPinsScreen> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _userPinsSectionKey = GlobalKey();
   String? _selectedUserId;
@@ -38,10 +39,12 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
       _selectedUserId = widget.initialUserId;
     } else {
       _selectedUserId = snapshot.users.isNotEmpty
-          ? snapshot.users.firstWhere(
-              (user) => user.status == 'active',
-              orElse: () => snapshot.users.first,
-            ).id
+          ? snapshot.users
+                .firstWhere(
+                  (user) => user.status == 'active',
+                  orElse: () => snapshot.users.first,
+                )
+                .id
           : null;
     }
     _seeded = true;
@@ -91,12 +94,10 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(
-                  (
-                    pinCode: controller.text.trim(),
-                    label: labelController.text.trim(),
-                  ),
-                );
+                Navigator.of(dialogContext).pop((
+                  pinCode: controller.text.trim(),
+                  label: labelController.text.trim(),
+                ));
               },
               child: const Text('Save'),
             ),
@@ -136,6 +137,11 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
         _recentRecoveryPin = null;
       });
       ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Primary PIN saved for the selected user.'),
+        ),
+      );
     }
   }
 
@@ -193,9 +199,7 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
     ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Recovery PIN issued: ${record.pinCode}'),
-      ),
+      SnackBar(content: Text('Recovery PIN issued: ${record.pinCode}')),
     );
   }
 
@@ -209,7 +213,9 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
       _busy = true;
     });
 
-    await ref.read(usersDevicesPinRegistryProvider).revokeAllPinsForUser(userId);
+    await ref
+        .read(usersDevicesPinRegistryProvider)
+        .revokeAllPinsForUser(userId);
     await _auditPinChange(
       userId: userId,
       eventType: 'pin_revoked',
@@ -223,12 +229,13 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
         _recentRecoveryPin = null;
       });
       ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All PINs for this user were revoked.')),
+      );
     }
   }
 
-  Future<void> _revokeRecord(
-    UsersDevicesPinRecord record,
-  ) async {
+  Future<void> _revokeRecord(UsersDevicesPinRecord record) async {
     if (_busy) {
       return;
     }
@@ -250,6 +257,9 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
         _busy = false;
       });
       ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${record.label} was revoked.')));
     }
   }
 
@@ -273,12 +283,16 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
               linkedDevices: [],
             ),
     );
-    final deviceId = user.linkedDevices.isNotEmpty ? user.linkedDevices.first : '';
+    final deviceId = user.linkedDevices.isNotEmpty
+        ? user.linkedDevices.first
+        : '';
     if (userId.isEmpty) {
       return;
     }
 
-    await ref.read(usersDevicesControlRepositoryProvider).createAuditEvent(
+    await ref
+        .read(usersDevicesControlRepositoryProvider)
+        .createAuditEvent(
           actorId: userId,
           deviceId: deviceId,
           eventType: eventType,
@@ -338,7 +352,8 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                             label: const Text('Open Security Lock'),
                           ),
                           OutlinedButton.icon(
-                            onPressed: () => context.go(RouteNames.usersDevices),
+                            onPressed: () =>
+                                context.go(RouteNames.usersDevices),
                             icon: const Icon(Icons.shield_outlined),
                             label: const Text('Back to Users & Devices'),
                           ),
@@ -372,8 +387,8 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
           final selectedUser = users.users.isEmpty
               ? null
               : users.users.any((user) => user.id == _selectedUserId)
-                  ? users.users.firstWhere((user) => user.id == _selectedUserId)
-                  : users.users.first;
+              ? users.users.firstWhere((user) => user.id == _selectedUserId)
+              : users.users.first;
           _maybeScrollToSelectedUser(selectedUser?.id);
 
           return pinsSnapshot.when(
@@ -385,16 +400,19 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
               final userPins = selectedUser == null
                   ? const <UsersDevicesPinRecord>[]
                   : pins.recordsForUser(selectedUser.id);
-              final primaryPins = userPins
-                  .where((pin) => pin.status == 'active')
-                  .toList(growable: false);
-              final activePins = primaryPins.length;
-              final recoveryPins = userPins
-                  .where((pin) => pin.status == 'recovery')
-                  .toList(growable: false);
-              final revokedPins = userPins
-                  .where((pin) => pin.status == 'revoked')
-                  .toList(growable: false);
+              final primaryPins = selectedUser == null
+                  ? const <UsersDevicesPinRecord>[]
+                  : pins.primaryPinsForUser(selectedUser.id);
+              final recoveryPins = selectedUser == null
+                  ? const <UsersDevicesPinRecord>[]
+                  : pins.recoveryPinsForUser(selectedUser.id);
+              final revokedPins = selectedUser == null
+                  ? const <UsersDevicesPinRecord>[]
+                  : pins.revokedPinsForUser(selectedUser.id);
+              final primaryPin = selectedUser == null
+                  ? null
+                  : pins.primaryPinForUser(selectedUser.id);
+              final hasSinglePrimary = primaryPins.length == 1;
 
               return ListView(
                 controller: _scrollController,
@@ -461,9 +479,9 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                                   selectedUser == null
                                       ? 'Selected user'
                                       : 'Selected user: ${selectedUser.displayName}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -476,9 +494,15 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                                   spacing: 8,
                                   runSpacing: 8,
                                   children: [
-                                    _CardChip(label: 'Primary: $activePins'),
-                                    _CardChip(label: 'Recovery: $recoveryPins'),
-                                    _CardChip(label: 'Revoked: $revokedPins'),
+                                    _CardChip(
+                                      label: 'Primary: ${primaryPins.length}',
+                                    ),
+                                    _CardChip(
+                                      label: 'Recovery: ${recoveryPins.length}',
+                                    ),
+                                    _CardChip(
+                                      label: 'Revoked: ${revokedPins.length}',
+                                    ),
                                   ],
                                 ),
                               ],
@@ -497,9 +521,9 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                                 children: [
                                   Text(
                                     'PIN posture',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -516,10 +540,18 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                                         label: 'Primary: ${primaryPins.length}',
                                       ),
                                       _CardChip(
-                                        label: 'Recovery: ${recoveryPins.length}',
+                                        label:
+                                            'Recovery: ${recoveryPins.length}',
                                       ),
                                       _CardChip(
                                         label: 'Revoked: ${revokedPins.length}',
+                                      ),
+                                      _CardChip(
+                                        label: hasSinglePrimary
+                                            ? 'Primary state: clear'
+                                            : primaryPins.isEmpty
+                                            ? 'Primary state: missing'
+                                            : 'Primary state: review',
                                       ),
                                       _CardChip(
                                         label: selectedUser == null
@@ -533,38 +565,70 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                             ),
                           ),
                           const SizedBox(height: 12),
+                          Card(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Unlock guidance',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    selectedUser == null
+                                        ? 'Pick a user to review their unlock posture.'
+                                        : primaryPin == null
+                                        ? 'This user does not have a primary PIN right now. Issue a recovery PIN if they are locked out, then set a fresh primary PIN after they are back in.'
+                                        : 'This user has one active primary PIN. Recovery PINs are temporary and should be revoked after use.',
+                                  ),
+                                  if (primaryPin != null) ...[
+                                    const SizedBox(height: 10),
+                                    _CardChip(
+                                      label:
+                                          'Primary label: ${primaryPin.label}',
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Wrap(
                             spacing: 10,
                             runSpacing: 10,
                             children: [
                               FilledButton.icon(
-                                onPressed:
-                                    selectedUser == null || _busy
-                                        ? null
-                                        : _setPrimaryPin,
+                                onPressed: selectedUser == null || _busy
+                                    ? null
+                                    : _setPrimaryPin,
                                 icon: const Icon(Icons.pin_outlined),
                                 label: const Text('Set primary PIN'),
                               ),
                               FilledButton.tonalIcon(
-                                onPressed:
-                                    selectedUser == null || _busy
-                                        ? null
-                                        : _issueRecoveryPin,
+                                onPressed: selectedUser == null || _busy
+                                    ? null
+                                    : _issueRecoveryPin,
                                 icon: const Icon(Icons.vpn_key_outlined),
-                                label: const Text('Generate recovery PIN'),
+                                label: const Text('Issue recovery PIN'),
                               ),
                               OutlinedButton.icon(
-                                onPressed:
-                                    selectedUser == null || _busy
-                                        ? null
-                                        : _revokeUserPins,
+                                onPressed: selectedUser == null || _busy
+                                    ? null
+                                    : _revokeUserPins,
                                 icon: const Icon(Icons.remove_circle_outline),
                                 label: const Text('Revoke all PINs'),
                               ),
                               OutlinedButton.icon(
-                                onPressed: () => context.push(
-                                  RouteNames.securityLock,
-                                ),
+                                onPressed: () =>
+                                    context.push(RouteNames.securityLock),
                                 icon: const Icon(Icons.lock_outline),
                                 label: const Text('Open Security Lock'),
                               ),
@@ -583,53 +647,53 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'User PINs',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (userPins.isEmpty)
-                                    const Text(
-                                      'No PINs are configured for this user yet.',
-                                    )
-                                  else ...[
-                                    _PinGroupSection(
-                                      title: 'Primary PINs',
-                                      subtitle:
-                                          'The main PIN used for day-to-day unlocks.',
-                                      records: primaryPins,
-                                      context: context,
-                                      onRevokeRecord: _revokeRecord,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _PinGroupSection(
-                                      title: 'Recovery PINs',
-                                      subtitle:
-                                          'Backup codes that should be shared and then revoked after use.',
-                                      records: recoveryPins,
-                                      context: context,
-                                      onRevokeRecord: _revokeRecord,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _PinGroupSection(
-                                      title: 'Revoked PINs',
-                                      subtitle:
-                                          'Historical records kept locally for audit visibility.',
-                                      records: revokedPins,
-                                      context: context,
-                                      onRevokeRecord: _revokeRecord,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'User PINs',
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
+                          const SizedBox(height: 12),
+                          if (userPins.isEmpty)
+                            const Text(
+                              'No PINs are configured for this user yet.',
+                            )
+                          else ...[
+                            _PinGroupSection(
+                              title: 'Primary PINs',
+                              subtitle:
+                                  'The main PIN used for day-to-day unlocks.',
+                              records: primaryPins,
+                              context: context,
+                              onRevokeRecord: _revokeRecord,
+                            ),
+                            const SizedBox(height: 12),
+                            _PinGroupSection(
+                              title: 'Recovery PINs',
+                              subtitle:
+                                  'Backup codes that should be shared and then revoked after use.',
+                              records: recoveryPins,
+                              context: context,
+                              onRevokeRecord: _revokeRecord,
+                            ),
+                            const SizedBox(height: 12),
+                            _PinGroupSection(
+                              title: 'Revoked PINs',
+                              subtitle:
+                                  'Historical records kept locally for audit visibility.',
+                              records: revokedPins,
+                              context: context,
+                              onRevokeRecord: _revokeRecord,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               );
             },
@@ -638,7 +702,6 @@ class _UsersDevicesPinsScreenState extends ConsumerState<UsersDevicesPinsScreen>
       ),
     );
   }
-
 }
 
 String _maskPin(String pinCode) {
@@ -658,7 +721,9 @@ class _PinRevealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+      color: Theme.of(
+        context,
+      ).colorScheme.primaryContainer.withValues(alpha: 0.35),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -666,10 +731,7 @@ class _PinRevealCard extends StatelessWidget {
           children: [
             const Text('Recovery PIN issued'),
             const SizedBox(height: 6),
-            Text(
-              pinCode,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(pinCode, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 6),
             Text(note),
           ],
@@ -739,8 +801,9 @@ class _PinGroupSection extends StatelessWidget {
                         DataCell(Text(record.sourceLabel)),
                         DataCell(
                           Text(
-                            MaterialLocalizations.of(context)
-                                .formatShortDate(record.updatedAt),
+                            MaterialLocalizations.of(
+                              context,
+                            ).formatShortDate(record.updatedAt),
                           ),
                         ),
                         DataCell(
@@ -781,10 +844,7 @@ class _CardChip extends StatelessWidget {
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
         ),
       ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelMedium,
-      ),
+      child: Text(label, style: theme.textTheme.labelMedium),
     );
   }
 }

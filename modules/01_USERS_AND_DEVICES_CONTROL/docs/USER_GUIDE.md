@@ -147,6 +147,8 @@ If the session locks again, the PIN Registry closes back to `Security Lock`.
 PIN policy:
 
 - keep PINs local and user-specific
+- keep one active primary PIN per user
+- keep recovery PINs temporary and issue a fresh one when needed
 - use 4 to 8 digits for the normal unlock code
 - use a recovery PIN only when the primary PIN is unavailable
 - revoke recovery PINs after use
@@ -208,6 +210,7 @@ Use this when you want to give one person their own local unlock code.
 What this does:
 
 - creates or replaces the active PIN for only that selected user
+- revokes any older active primary PIN for that user
 - keeps the PIN bound to the selected local identity
 - leaves other users' PINs untouched
 - records the change in the local audit trail
@@ -229,9 +232,19 @@ What to keep in mind:
 
 - the recovery PIN is still tied to one user only
 - the recovery PIN is generated automatically in the dialog
+- issuing a new recovery PIN replaces the previous recovery path for that user
 - the recovery PIN should be revoked after use
 - if the user forgets the PIN again, issue a fresh recovery code rather than reusing an old one
 - the audit log should show both the issue and the revoke events
+
+## Seed demo PIN
+
+The current seeded demo data includes this default local PIN for Peter Ellis:
+
+- Primary PIN: `2468`
+- Recovery PIN: generated in the seed file and shown masked in the app until you issue a new one
+
+If you have already changed Peter's PIN in the live app, your local database will override the seed example. In that case, use `PIN Registry` to inspect the current record, then test the same user on `Security Lock`.
 
 ## Next access-control task
 

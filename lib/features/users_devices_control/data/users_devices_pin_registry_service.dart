@@ -39,9 +39,11 @@ class UsersDevicesPinRecord {
       status: json['status'] as String? ?? 'active',
       sourceLabel: json['source_label'] as String? ?? 'Local admin',
       notes: json['notes'] as String? ?? '',
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now().toUtc(),
-      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
           DateTime.now().toUtc(),
     );
   }
@@ -89,9 +91,36 @@ class UsersDevicesPinRegistrySnapshot {
   final List<UsersDevicesPinRecord> records;
 
   List<UsersDevicesPinRecord> recordsForUser(String userId) {
-    return records.where((record) => record.userId == userId).toList(
-          growable: false,
-        );
+    return records
+        .where((record) => record.userId == userId)
+        .toList(growable: false);
+  }
+
+  List<UsersDevicesPinRecord> primaryPinsForUser(String userId) {
+    return records
+        .where((record) => record.userId == userId && record.status == 'active')
+        .toList(growable: false);
+  }
+
+  UsersDevicesPinRecord? primaryPinForUser(String userId) {
+    final pins = primaryPinsForUser(userId);
+    return pins.isEmpty ? null : pins.last;
+  }
+
+  List<UsersDevicesPinRecord> recoveryPinsForUser(String userId) {
+    return records
+        .where(
+          (record) => record.userId == userId && record.status == 'recovery',
+        )
+        .toList(growable: false);
+  }
+
+  List<UsersDevicesPinRecord> revokedPinsForUser(String userId) {
+    return records
+        .where(
+          (record) => record.userId == userId && record.status == 'revoked',
+        )
+        .toList(growable: false);
   }
 
   int get activeCount =>
@@ -186,6 +215,7 @@ class UsersDevicesPinRegistryService {
   }) async {
     final now = DateTime.now().toUtc();
     final recoveryPin = _generateNumericPin(6);
+    final pins = await _readPins();
     final record = UsersDevicesPinRecord(
       pinId: 'pin_${now.microsecondsSinceEpoch}',
       userId: userId,
@@ -197,8 +227,15 @@ class UsersDevicesPinRegistryService {
       createdAt: now,
       updatedAt: now,
     );
-    final pins = [...await _readPins(), record];
-    await _writePins(pins);
+    final updated = <UsersDevicesPinRecord>[
+      for (final pin in pins)
+        if (pin.userId == userId && pin.status == 'recovery')
+          pin.copyWith(status: 'revoked', updatedAt: now)
+        else
+          pin,
+      record,
+    ];
+    await _writePins(updated);
     return record;
   }
 
@@ -240,16 +277,11 @@ class UsersDevicesPinRegistryService {
     String userId,
     String pinCode,
   ) async {
-    final pins = await _readPins();
-    final candidatePins = pins
-        .where(
-          (pin) =>
-              pin.userId == userId &&
-              (pin.status == 'active' || pin.status == 'recovery'),
-        )
-        .toList(growable: false);
+    final snapshot = await loadSnapshot();
+    final primaryPin = snapshot.primaryPinForUser(userId);
+    final recoveryPins = snapshot.recoveryPinsForUser(userId);
 
-    if (candidatePins.isEmpty) {
+    if (primaryPin == null && recoveryPins.isEmpty) {
       return const UsersDevicesPinAccessDecision(
         allowed: false,
         reason: 'No local PIN is configured for this user.',
@@ -258,22 +290,45 @@ class UsersDevicesPinRegistryService {
       );
     }
 
-    for (final record in candidatePins) {
+    if (primaryPin != null && primaryPin.pinCode == pinCode) {
+      return UsersDevicesPinAccessDecision(
+        allowed: true,
+        reason: 'Primary PIN matched the selected identity.',
+        nextStep: 'The session can unlock normally.',
+        issueCode: 'primary_allowed',
+        record: primaryPin,
+      );
+    }
+
+    for (final record in recoveryPins) {
       if (record.pinCode == pinCode) {
         return UsersDevicesPinAccessDecision(
           allowed: true,
-          reason: 'Local PIN matched.',
-          nextStep: 'The session can unlock normally.',
-          issueCode: 'allowed',
+          reason: 'Recovery PIN matched the selected identity.',
+          nextStep:
+              'Unlock can continue, but this recovery PIN should be revoked after use and replaced with a fresh primary PIN if needed.',
+          issueCode: 'recovery_allowed',
           record: record,
         );
       }
     }
 
-    return const UsersDevicesPinAccessDecision(
+    if (primaryPin == null && recoveryPins.isNotEmpty) {
+      return const UsersDevicesPinAccessDecision(
+        allowed: false,
+        reason: 'This user does not have an active primary PIN right now.',
+        nextStep:
+            'Use the latest recovery PIN from PIN Registry, then set a fresh primary PIN after unlock.',
+        issueCode: 'primary_missing_recovery_available',
+      );
+    }
+
+    return UsersDevicesPinAccessDecision(
       allowed: false,
       reason: 'Local PIN did not match the selected identity.',
-      nextStep: 'Check the PIN Registry or issue a recovery PIN.',
+      nextStep: recoveryPins.isNotEmpty
+          ? 'Check the primary PIN first, or use the latest recovery PIN from PIN Registry.'
+          : 'Check the PIN Registry or set a fresh primary PIN.',
       issueCode: 'pin_mismatch',
     );
   }
@@ -285,28 +340,24 @@ class UsersDevicesPinRegistryService {
     }
 
     await _migrateLegacyPinsIfNeeded();
-    final rows = await db.customSelect(
-      'SELECT pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at '
-      'FROM users_devices_control_pin_records ORDER BY created_at ASC',
-    ).get();
+    final rows = await db
+        .customSelect(
+          'SELECT pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at '
+          'FROM users_devices_control_pin_records ORDER BY created_at ASC',
+        )
+        .get();
     if (rows.isNotEmpty) {
-      return rows
-          .map(
-            (row) => _recordFromRow(row),
-          )
-          .toList(growable: false);
+      return rows.map((row) => _recordFromRow(row)).toList(growable: false);
     }
 
     await _seedDatabaseFromJson(db);
-    final seededRows = await db.customSelect(
-      'SELECT pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at '
-      'FROM users_devices_control_pin_records ORDER BY created_at ASC',
-    ).get();
-    return seededRows
-        .map(
-          (row) => _recordFromRow(row),
+    final seededRows = await db
+        .customSelect(
+          'SELECT pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at '
+          'FROM users_devices_control_pin_records ORDER BY created_at ASC',
         )
-        .toList(growable: false);
+        .get();
+    return seededRows.map((row) => _recordFromRow(row)).toList(growable: false);
   }
 
   Future<void> _migrateLegacyPinsIfNeeded() async {
@@ -438,9 +489,11 @@ class UsersDevicesPinRegistryService {
       status: row.read<String>('status'),
       sourceLabel: row.read<String>('source_label'),
       notes: row.read<String>('notes'),
-      createdAt: DateTime.tryParse(row.read<String>('created_at')) ??
+      createdAt:
+          DateTime.tryParse(row.read<String>('created_at')) ??
           DateTime.now().toUtc(),
-      updatedAt: DateTime.tryParse(row.read<String>('updated_at')) ??
+      updatedAt:
+          DateTime.tryParse(row.read<String>('updated_at')) ??
           DateTime.now().toUtc(),
     );
   }
