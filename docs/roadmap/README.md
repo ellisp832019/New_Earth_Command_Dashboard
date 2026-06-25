@@ -16,6 +16,7 @@ Use this page as the entry point when you want to understand the project at a gl
 8. [`module_hub_roadmap.md`](module_hub_roadmap.md)
 9. [`visual_program_plan.md`](visual_program_plan.md)
 10. [`major_upgrade_review.md`](major_upgrade_review.md)
+11. [`major_upgrade_checkpoint_2026_06_25.md`](major_upgrade_checkpoint_2026_06_25.md)
 
 ## Planning Views
 
@@ -33,6 +34,7 @@ These are the main roadmap views worth checking first:
 - [`users_devices_commit_queue.md`](users_devices_commit_queue.md)
 - [`repo_upgrade_roadmap.md`](repo_upgrade_roadmap.md)
 - [`major_upgrade_review.md`](major_upgrade_review.md)
+- [`major_upgrade_checkpoint_2026_06_25.md`](major_upgrade_checkpoint_2026_06_25.md)
 - [`dashboard_module_20_task_execution_queue.md`](dashboard_module_20_task_execution_queue.md)
 - [`dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
 - [`dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
