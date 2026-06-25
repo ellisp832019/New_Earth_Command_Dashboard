@@ -13,6 +13,7 @@ Use this page as the entry point when you want to understand the project at a gl
 5. [`future_architecture_map.md`](future_architecture_map.md)
 6. [`module_hub_roadmap.md`](module_hub_roadmap.md)
 7. [`visual_program_plan.md`](visual_program_plan.md)
+8. [`major_upgrade_review.md`](major_upgrade_review.md)
 
 ## Planning Views
 
@@ -29,6 +30,7 @@ These are the main roadmap views worth checking first:
 - [`commit_split_plan.md`](commit_split_plan.md)
 - [`users_devices_commit_queue.md`](users_devices_commit_queue.md)
 - [`repo_upgrade_roadmap.md`](repo_upgrade_roadmap.md)
+- [`major_upgrade_review.md`](major_upgrade_review.md)
 - [`dashboard_module_20_task_execution_queue.md`](dashboard_module_20_task_execution_queue.md)
 - [`dashboard_module_20_task_delivery_phases.md`](dashboard_module_20_task_delivery_phases.md)
 - [`dashboard_phase_1_build_checklist.md`](dashboard_phase_1_build_checklist.md)
