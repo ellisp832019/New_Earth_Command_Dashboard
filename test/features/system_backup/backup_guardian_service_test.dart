@@ -8,6 +8,11 @@ import 'package:new_earth_command_dashboard/features/system_backup/data/backup_g
 
 void main() {
   test('backup guardian load snapshot reads config and status', () async {
+    final now = DateTime.now().toUtc();
+    final backupStartedAt = now.subtract(const Duration(hours: 2));
+    final backupFinishedAt = now.subtract(const Duration(hours: 1, minutes: 55));
+    final statusUpdatedAt = now.subtract(const Duration(hours: 1, minutes: 50));
+
     final tempRoot = await Directory.systemTemp.createTemp(
       'backup_guardian_green_',
     );
@@ -71,8 +76,8 @@ void main() {
           'backup_kind': 'manual',
           'state': 'green',
           'summary': 'Latest backup verified',
-          'started_at': '2026-06-07T05:55:00Z',
-          'finished_at': '2026-06-07T06:00:00Z',
+          'started_at': backupStartedAt.toIso8601String(),
+          'finished_at': backupFinishedAt.toIso8601String(),
           'duration_ms': 300000,
           'files_scanned': 12,
           'files_copied': 12,
@@ -110,8 +115,8 @@ void main() {
       'backup_target': backupTargetDir.path,
       'summary': 'Latest backup verified',
       'latest_backup_status': 'Latest backup verified',
-      'last_backup_at': '2026-06-07T05:00:00Z',
-      'last_verification_at': '2026-06-07T06:00:00Z',
+      'last_backup_at': backupFinishedAt.toIso8601String(),
+      'last_verification_at': backupFinishedAt.toIso8601String(),
       'restore_test_status': 'Not run yet',
       'backup_size_text': 'Not tracked in V1',
       'latest_report_path': path.join(
@@ -120,7 +125,7 @@ void main() {
       ),
       'warnings': <String>[],
       'errors': <String>[],
-      'updated_at': '2026-06-07T06:00:00Z',
+      'updated_at': statusUpdatedAt.toIso8601String(),
       'log_path': path.join(
         reportsDir.path,
         'backup_guardian_20260607_060000.log',
@@ -157,7 +162,12 @@ void main() {
       manifestsDir.path,
       'backup_manifest_20260607_060000.json',
     ));
-    expect(snapshot.warnings, isEmpty);
+    expect(
+      snapshot.warnings,
+      contains(
+        'Scheduler status has not been checked yet. Run Setup Scheduler or Verify Scheduler to confirm the timed tasks.',
+      ),
+    );
     expect(snapshot.errors, isEmpty);
   });
 
@@ -554,7 +564,10 @@ void main() {
 
     final snapshot = await BackupGuardianService(moduleRoot: moduleRoot).loadSnapshot();
 
-    expect(snapshot.verificationSummary, 'Latest backup verification found mismatches between the manifest and current target.');
+    expect(
+      snapshot.verificationSummary,
+      'Latest backup verification found fingerprint, file count, and size differences.',
+    );
     expect(
       snapshot.verificationDetails,
       contains('Manifest: backup_manifest_20260610_060000.json'),

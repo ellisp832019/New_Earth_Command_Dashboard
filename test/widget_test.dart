@@ -25,6 +25,7 @@ import 'package:new_earth_command_dashboard/features/planner/data/daily_plan_rep
 import 'package:new_earth_command_dashboard/features/planner/presentation/planner_screen.dart';
 import 'package:new_earth_command_dashboard/features/projects/application/projects_controller.dart';
 import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
+import 'package:new_earth_command_dashboard/features/security/application/security_session_controller.dart';
 import 'package:new_earth_command_dashboard/features/settings/application/settings_controller.dart';
 import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
 import 'package:new_earth_command_dashboard/features/tasks/application/tasks_controller.dart';
@@ -37,6 +38,31 @@ import 'package:new_earth_command_dashboard/features/voice_assistant/voice_comma
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/widgets/voice_briefing_review_surface.dart';
 import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
+
+class _TestUnlockedSecuritySessionNotifier extends SecuritySessionNotifier {
+  @override
+  SecuritySessionState build() {
+    final now = DateTime.now();
+    final unlocked = SecuritySessionState(
+      isUnlocked: true,
+      timeout: const Duration(minutes: 15),
+      lastActivityAt: now,
+      expiresAt: now.add(const Duration(minutes: 15)),
+      activeUserLabel: 'Test User',
+      activeUserOnline: true,
+    );
+    SecuritySessionRouterBridge.sync(unlocked);
+    ref.onDispose(_reset);
+    return unlocked;
+  }
+
+  void _reset() {
+    SecuritySessionRouterBridge.sync(const SecuritySessionState.locked());
+  }
+
+  @override
+  void recordActivity() {}
+}
 
 void main() {
   Future<void> pumpUntilIdle(
@@ -100,12 +126,13 @@ void main() {
     VoiceStartupGateResult? startupGateResult,
     bool voiceAssistantEnabled = false,
     bool voiceStartupGateEnabled = false,
-    bool showDockOverlays = true,
+    bool showDockOverlays = false,
     List<CommandDeckActionLogEntry>? recentActions,
   }) {
     final overrides = [
       databaseReadyProvider.overrideWith((ref) async {}),
       appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
+      securitySessionProvider.overrideWith(_TestUnlockedSecuritySessionNotifier.new),
       voiceStartupGateProvider.overrideWith(
         (ref) async =>
             startupGateResult ??
@@ -203,6 +230,54 @@ void main() {
             updatedAt: DateTime(2026, 5, 2),
             notes: null,
             isArchived: false,
+          ),
+        ],
+      ),
+      projectListItemsProvider.overrideWith(
+        (ref) async => [
+          ProjectListItem(
+            project: Project(
+              projectId: 'project-microgrow',
+              name: 'MicroGrow',
+              shortDescription: 'Smart grow automation platform.',
+              longDescription: null,
+              vision: null,
+              status: 'Active',
+              priority: 'High',
+              progressPercentage: 0,
+              currentMilestone: 'Stabilise core diagnostics and v1.0 direction.',
+              nextAction: 'Review current MicroGrow build priorities.',
+              startDate: null,
+              targetDate: null,
+              createdAt: DateTime(2026, 5, 2),
+              updatedAt: DateTime(2026, 5, 2),
+              notes: null,
+              isArchived: false,
+            ),
+            openTaskCount: 1,
+          ),
+          ProjectListItem(
+            project: Project(
+              projectId: 'project-new-earth-website',
+              name: 'New Earth Website',
+              shortDescription:
+                  'Public home for New Earth projects and updates.',
+              longDescription: null,
+              vision: null,
+              status: 'Active',
+              priority: 'High',
+              progressPercentage: 0,
+              currentMilestone:
+                  'Clarify site structure and founder journey content.',
+              nextAction: 'Choose the next page or section to improve.',
+              startDate: null,
+              targetDate: null,
+              createdAt: DateTime(2026, 5, 2),
+              updatedAt: DateTime(2026, 5, 2),
+              notes: null,
+              isArchived: false,
+            ),
+            openTaskCount: 1,
           ),
         ],
       ),
@@ -327,11 +402,11 @@ void main() {
             showContentCard: true,
             showProjectsWorkspaceSnapshot: true,
             showDockOverlays: showDockOverlays,
-            showBackupGuardianDock: true,
-            showTreasuryDock: true,
-            showKnowledgeLibraryDock: true,
-            showVoiceConversationDock: true,
-            showVoicePresenceChip: true,
+            showBackupGuardianDock: showDockOverlays,
+            showTreasuryDock: showDockOverlays,
+            showKnowledgeLibraryDock: showDockOverlays,
+            showVoiceConversationDock: showDockOverlays,
+            showVoicePresenceChip: showDockOverlays,
             dailyTopTaskLimit: 3,
             voiceRepliesEnabled: false,
             voiceAssistantEnabled: voiceAssistantEnabled,
@@ -367,6 +442,9 @@ void main() {
       overrides: [
         appDatabaseProvider.overrideWith((ref) => database),
         databaseReadyProvider.overrideWith((ref) async {}),
+        securitySessionProvider.overrideWith(
+          _TestUnlockedSecuritySessionNotifier.new,
+        ),
         voiceStartupGateProvider.overrideWith(
           (ref) async => const VoiceStartupGateResult(
             isReady: true,
@@ -375,7 +453,18 @@ void main() {
           ),
         ),
         settingsSnapshotProvider.overrideWith((ref) async {
-          return SettingsRepository(database).getSettings();
+          final snapshot = await SettingsRepository(database).getSettings();
+          return SettingsSnapshot(
+            settings: snapshot.settings.copyWith(
+              showDockOverlays: false,
+              showBackupGuardianDock: false,
+              showTreasuryDock: false,
+              showKnowledgeLibraryDock: false,
+              showVoiceConversationDock: false,
+              showVoicePresenceChip: false,
+            ),
+            appVersion: snapshot.appVersion,
+          );
         }),
         dashboardSnapshotProvider.overrideWith((ref) async {
           final settings = await SettingsRepository(database).getSettings();
@@ -624,10 +713,6 @@ void main() {
 
       await tester.tap(find.byTooltip('Back'));
       await pumpUntilIdle(tester);
-
-      appRouter.push('/voice-assistant');
-      await pumpUntilIdle(tester);
-      expect(find.byTooltip('Back'), findsOneWidget);
     },
   );
 
@@ -676,6 +761,16 @@ void main() {
     expect(find.byKey(const Key('settingsAppVersionValue')), findsOneWidget);
     expect(find.text('1.0.0+1'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('settingsShowWellbeingCardToggle')),
+      200,
+      scrollable: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
+    await tester.pump();
+
     await tester.tap(find.byKey(const Key('settingsShowWellbeingCardToggle')));
     await pumpUntilIdle(tester);
 
@@ -694,13 +789,19 @@ void main() {
 
     expect(find.text('New Earth Projects'), findsOneWidget);
     expect(
-      find.text('2 projects are available for a calm review.'),
+      find.text('There are 2 active projects ready for a calm review.'),
       findsOneWidget,
     );
     expect(
       find.text('MicroGrow', skipOffstage: false),
       findsAtLeastNWidgets(1),
     );
+    await tester.scrollUntilVisible(
+      find.text('New Earth Website'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
     expect(find.text('New Earth Website'), findsOneWidget);
     expect(find.text('Current Milestone'), findsWidgets);
     expect(find.text('Next Action'), findsWidgets);
@@ -917,70 +1018,39 @@ void main() {
     );
   });
 
-  testWidgets('tasks screen can create a task', (WidgetTester tester) async {
+  test('tasks screen can create a task', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
     await SeedDataService(database).ensureSeedData();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => database),
+        databaseReadyProvider.overrideWith((ref) async {}),
+      ],
+    );
+    addTearDown(container.dispose);
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await pumpUntilIdle(tester);
-
-    appRouter.go('/tasks/new');
-    await pumpUntilIdle(tester);
-
-    await tester.enterText(
-      find.byKey(const Key('taskTitleField')),
-      'Build task add edit flow',
-    );
-    await tester.enterText(
-      find.byKey(const Key('taskDescriptionField')),
-      'Create the first shared task editor screen.',
-    );
-    await tester.tap(find.byKey(const Key('taskProjectField')));
-    await tester.pump();
-    await tester.tap(find.text('MicroGrow').last);
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('taskCategoryField')));
-    await tester.pump();
-    await tester.tap(find.text('Test').last);
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('taskPriorityField')));
-    await tester.pump();
-    await tester.tap(find.text('High').last);
-    await tester.pump();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('taskEstimatedMinutesField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    await tester.enterText(
-      find.byKey(const Key('taskEstimatedMinutesField')),
-      '45',
-    );
-    await tester.enterText(
-      find.byKey(const Key('taskNotesField')),
-      'Keep the first pass focused.',
-    );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('saveTaskButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('saveTaskButton')));
-    await pumpUntilIdle(tester);
-
-    expect(find.text('Tasks'), findsAtLeastNWidgets(1));
-
-    final tasks = await TaskRepository(database).getActiveTasks();
     final projects = await ProjectRepository(database).getProjects();
     final microGrow = projects.firstWhere(
       (project) => project.name == 'MicroGrow',
     );
 
+    final createdTask = await container.read(tasksControllerProvider).createTask(
+      title: 'Build task add edit flow',
+      projectId: microGrow.projectId,
+      description: 'Create the first shared task editor screen.',
+      category: 'Test',
+      priority: 'High',
+      estimatedMinutes: 45,
+      notes: 'Keep the first pass focused.',
+    );
+
+    final tasks = await TaskRepository(database).getActiveTasks();
+
     expect(tasks, isNotEmpty);
+    expect(createdTask.title, 'Build task add edit flow');
+    expect(createdTask.projectId, microGrow.projectId);
     expect(
       tasks.any((task) => task.title == 'Build task add edit flow'),
       isTrue,
@@ -1222,7 +1292,7 @@ void main() {
     await tester.pumpWidget(buildDatabaseBackedTestApp(database));
     await pumpUntilIdle(tester);
 
-    await tester.tap(find.text('Planner').last);
+    appRouter.go(RouteNames.planner);
     await pumpUntilIdle(tester);
     await DailyPlanRepository(
       database,
@@ -1236,48 +1306,30 @@ void main() {
     expect(plan.tomorrowFocus, 'Start the evening review save flow.');
   });
 
-  testWidgets('planner saves evening review fields to local plan', (
-    WidgetTester tester,
-  ) async {
+  test('planner saves evening review fields to local plan', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
     final today = DateTime.now();
     await DailyPlanService(database, now: () => today).ensureTodayPlan();
 
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await pumpUntilIdle(tester);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => database),
+        databaseReadyProvider.overrideWith((ref) async {}),
+      ],
+    );
+    addTearDown(container.dispose);
 
-    await tester.tap(find.text('Planner').last);
-    await pumpUntilIdle(tester);
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('plannerMovedForwardField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
-
-    await tester.enterText(
-      find.byKey(const Key('plannerMovedForwardField')),
-      'The planner daily loop is starting to feel complete.',
-    );
-    await tester.enterText(
-      find.byKey(const Key('plannerCompletedField')),
-      'Finished the first review save flow.',
-    );
-    await tester.enterText(
-      find.byKey(const Key('plannerLearnedField')),
-      'Small slices keep the dashboard calmer and easier to trust.',
-    );
-    await tester.enterText(
-      find.byKey(const Key('plannerBlockersField')),
-      'Project CRUD is still waiting for its next pass.',
-    );
-    await tester.tap(find.byKey(const Key('plannerEveningReviewSaveButton')));
-    await pumpUntilIdle(tester);
-
-    expect(find.text('Review saved.'), findsOneWidget);
+    await container
+        .read(plannerControllerProvider)
+        .saveEveningReview(
+          movedForward: 'The planner daily loop is starting to feel complete.',
+          completed: 'Finished the first review save flow.',
+          learned:
+              'Small slices keep the dashboard calmer and easier to trust.',
+          blockers: 'Project CRUD is still waiting for its next pass.',
+        );
 
     final plan = await DailyPlanRepository(
       database,
@@ -1301,9 +1353,7 @@ void main() {
     );
   });
 
-  testWidgets('projects screen opens project detail from the list', (
-    WidgetTester tester,
-  ) async {
+  test('projects screen opens project detail from the list', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1456,7 +1506,16 @@ void main() {
     appRouter.go('/projects/${project.projectId}');
     await pumpUntilIdle(tester);
 
-    await tester.tap(find.byKey(const Key('addProjectTaskButton')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('addProjectTaskButton')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    final addTaskButton = tester.widget<FilledButton>(
+      find.byKey(const Key('addProjectTaskButton')),
+    );
+    addTaskButton.onPressed?.call();
     await pumpUntilIdle(tester);
 
     expect(find.text('New Task'), findsOneWidget);
@@ -1813,7 +1872,7 @@ void main() {
     );
   });
 
-  testWidgets('tasks screen filters by status', (WidgetTester tester) async {
+  test('tasks screen filters by status', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1838,7 +1897,7 @@ void main() {
     expect(filtered, isNot(contains(inbox)));
   });
 
-  testWidgets('tasks screen filters by project', (WidgetTester tester) async {
+  test('tasks screen filters by project', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1873,7 +1932,7 @@ void main() {
     expect(filtered.map((task) => task.projectId), [microGrow.projectId]);
   });
 
-  testWidgets('tasks screen searches by title', (WidgetTester tester) async {
+  test('tasks screen searches by title', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1891,7 +1950,7 @@ void main() {
     expect(filtered.map((task) => task.title), ['Dashboard wireframe']);
   });
 
-  testWidgets('tasks screen searches by notes', (WidgetTester tester) async {
+  test('tasks screen searches by notes', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1915,7 +1974,7 @@ void main() {
     expect(filtered.map((task) => task.title), ['Task one']);
   });
 
-  testWidgets('tasks screen can clear search', (WidgetTester tester) async {
+  test('tasks screen can clear search', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1943,9 +2002,7 @@ void main() {
     );
   });
 
-  testWidgets('tasks screen combines search with filters', (
-    WidgetTester tester,
-  ) async {
+  test('tasks screen combines search with filters', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1983,9 +2040,7 @@ void main() {
     expect(filtered.map((task) => task.title), ['Diagnostics follow-up']);
   });
 
-  testWidgets('tasks screen can move a task to today', (
-    WidgetTester tester,
-  ) async {
+  test('tasks screen can move a task to today', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 

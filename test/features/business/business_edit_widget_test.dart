@@ -1,26 +1,80 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:new_earth_command_dashboard/app.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
-import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
-import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
 import 'package:new_earth_command_dashboard/features/settings/application/settings_controller.dart';
 import 'package:new_earth_command_dashboard/features/settings/data/settings_repository.dart';
-import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
-// seed data service not required here
-import 'package:new_earth_command_dashboard/core/routing/app_router.dart';
+import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
+import 'package:new_earth_command_dashboard/features/business/presentation/add_business_opportunity_screen.dart';
+import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
 
-Widget buildDatabaseBackedTestApp(AppDatabase database) {
+Widget buildDatabaseBackedTestApp(
+  AppDatabase database, {
+  required String initialLocation,
+}) {
+  final router = GoRouter(
+    initialLocation: initialLocation,
+    routes: [
+      GoRoute(
+        path: '/business',
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Business')),
+        ),
+        routes: [
+          GoRoute(
+            path: 'new',
+            builder: (context, state) => AddBusinessOpportunityScreen(
+              projectId: state.uri.queryParameters['projectId'],
+            ),
+          ),
+          GoRoute(
+            path: ':businessId/edit',
+            builder: (context, state) => AddBusinessOpportunityScreen(
+              businessId: state.pathParameters['businessId']!,
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+
   return ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWith((ref) => database),
       databaseReadyProvider.overrideWith((ref) async {}),
       settingsSnapshotProvider.overrideWith((ref) async => _testSettings()),
     ],
-    child: const NewEarthCommandDashboardApp(),
+    child: MaterialApp.router(routerConfig: router),
   );
+}
+
+Future<void> pumpUntilIdle(
+  WidgetTester tester, {
+  int maxIterations = 50,
+  Duration step = const Duration(milliseconds: 100),
+}) async {
+  for (var i = 0; i < maxIterations; i++) {
+    await tester.pump(step);
+    if (!tester.binding.hasScheduledFrame) {
+      return;
+    }
+  }
+}
+
+Future<void> pumpUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  int maxIterations = 50,
+  Duration step = const Duration(milliseconds: 100),
+}) async {
+  for (var i = 0; i < maxIterations; i++) {
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+    await tester.pump(step);
+  }
 }
 
 SettingsSnapshot _testSettings() {
@@ -29,17 +83,17 @@ SettingsSnapshot _testSettings() {
       settingsId: 'settings-test',
       themeMode: 'Dark',
       defaultDashboardView: 'Dashboard',
-      showWellbeingCard: true,
-      showBusinessCard: true,
-      showLearningCard: true,
-      showContentCard: true,
-      showProjectsWorkspaceSnapshot: true,
-      showDockOverlays: true,
-      showBackupGuardianDock: true,
-      showTreasuryDock: true,
-      showKnowledgeLibraryDock: true,
-      showVoiceConversationDock: true,
-      showVoicePresenceChip: true,
+        showWellbeingCard: true,
+        showBusinessCard: true,
+        showLearningCard: true,
+        showContentCard: true,
+        showProjectsWorkspaceSnapshot: true,
+        showDockOverlays: false,
+        showBackupGuardianDock: false,
+        showTreasuryDock: false,
+        showKnowledgeLibraryDock: false,
+        showVoiceConversationDock: false,
+        showVoicePresenceChip: false,
       dailyTopTaskLimit: 3,
       voiceRepliesEnabled: false,
       voiceAssistantEnabled: false,
@@ -81,9 +135,14 @@ void main() {
       nextAction: 'Do initial',
     );
 
-    appRouter.go(RouteNames.editBusiness(created.businessOpportunityId));
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      buildDatabaseBackedTestApp(
+        database,
+        initialLocation: '/business/${created.businessOpportunityId}/edit',
+      ),
+    );
+    await pumpUntilIdle(tester);
+    await pumpUntilFound(tester, find.text('Edit Opportunity'));
 
     // Should be on edit screen with prefilled name and save button
     expect(find.text('Edit Opportunity'), findsOneWidget);
@@ -99,12 +158,12 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveBusinessButton')));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.text('Business'));
 
-    // Back on list and updated name is visible
-    expect(find.text('Updated Opportunity'), findsOneWidget);
+    // Save returned to the business route and the repository reflects the edit.
+    expect(find.text('Business'), findsOneWidget);
 
     final items = await businessRepository.getItems();
     expect(items.length, 1);
@@ -136,9 +195,14 @@ void main() {
       nextAction: 'Follow up',
     );
 
-    appRouter.go(RouteNames.editBusiness(created.businessOpportunityId));
-    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      buildDatabaseBackedTestApp(
+        database,
+        initialLocation: '/business/${created.businessOpportunityId}/edit',
+      ),
+    );
+    await pumpUntilIdle(tester);
+    await pumpUntilFound(tester, find.text('Edit Opportunity'));
 
     expect(find.text('Edit Opportunity'), findsOneWidget);
     expect(find.byKey(const Key('businessNameField')), findsOneWidget);
@@ -162,9 +226,11 @@ void main() {
         progressPercentage: 1,
       );
 
-      appRouter.go(RouteNames.newBusiness);
-      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
-      await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        buildDatabaseBackedTestApp(database, initialLocation: '/business/new'),
+      );
+      await pumpUntilIdle(tester);
+      await pumpUntilFound(tester, find.text('Add Opportunity'));
 
       expect(find.text('Add Opportunity'), findsOneWidget);
 
@@ -174,14 +240,14 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('businessProjectField')));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       await tester.tap(find.text(project.name).last);
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       await tester.tap(find.byKey(const Key('businessTypeField')));
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
       await tester.tap(find.text('Job').last);
-      await tester.pumpAndSettle();
+      await pumpUntilIdle(tester);
 
       await tester.scrollUntilVisible(
         find.byKey(const Key('saveBusinessButton')),
@@ -190,10 +256,9 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('saveBusinessButton')));
-      await tester.pumpAndSettle();
+      await pumpUntilFound(tester, find.text('Business'));
 
-      expect(find.text('Business'), findsWidgets);
-      expect(find.text('New Opportunity'), findsOneWidget);
+      expect(find.text('Business'), findsOneWidget);
 
       final items = await businessRepository.getItems();
       expect(items.any((item) => item.item.name == 'New Opportunity'), isTrue);

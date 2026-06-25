@@ -7,6 +7,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$RunStamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 
 function Invoke-Step {
   param(
@@ -42,7 +43,7 @@ function Invoke-LoggedFlutterTask {
     [string[]]$FlutterArgs
   )
 
-  $logBase = Join-Path $LogDirectory $Name
+  $logBase = Join-Path $LogDirectory "${Name}_${RunStamp}"
   $stdoutPath = "$logBase.log"
   $stderrPath = "$logBase.err"
 

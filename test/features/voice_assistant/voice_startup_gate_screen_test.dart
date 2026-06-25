@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_screen.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_service.dart';
+
+GoRouter _buildRouter(Widget child) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(path: '/', builder: (context, state) => child),
+      GoRoute(
+        path: RouteNames.dashboard,
+        builder: (context, state) => const Scaffold(body: Text('Dashboard')),
+      ),
+      GoRoute(
+        path: RouteNames.voiceAssistant,
+        builder: (context, state) =>
+            const Scaffold(body: Text('Voice Assistant')),
+      ),
+    ],
+  );
+}
 
 void main() {
   testWidgets('startup gate screen explains the no-device state', (
@@ -51,23 +70,25 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) {
-              return Consumer(
-                builder: (context, ref, _) {
-                  final landingRoute = ref.watch(
-                    voiceStartupGateLandingProvider,
-                  );
-                  return Column(
-                    children: [
-                      Expanded(child: VoiceStartupGateScreen(result: result)),
-                      Text('Landing: ${landingRoute ?? "none"}'),
-                    ],
-                  );
-                },
-              );
-            },
+        child: MaterialApp.router(
+          routerConfig: _buildRouter(
+            Builder(
+              builder: (context) {
+                return Consumer(
+                  builder: (context, ref, _) {
+                    final landingRoute = ref.watch(
+                      voiceStartupGateLandingProvider,
+                    );
+                    return Column(
+                      children: [
+                        Expanded(child: VoiceStartupGateScreen(result: result)),
+                        Text('Landing: ${landingRoute ?? "none"}'),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -89,17 +110,21 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        child: MaterialApp(
-          home: Consumer(
-            builder: (context, ref, _) {
-              final landingRoute = ref.watch(voiceStartupGateLandingProvider);
-              return Column(
-                children: [
-                  Expanded(child: VoiceStartupGateScreen(result: result)),
-                  Text('Landing: ${landingRoute ?? "none"}'),
-                ],
-              );
-            },
+        child: MaterialApp.router(
+          routerConfig: _buildRouter(
+            Consumer(
+              builder: (context, ref, _) {
+                final landingRoute = ref.watch(
+                  voiceStartupGateLandingProvider,
+                );
+                return Column(
+                  children: [
+                    Expanded(child: VoiceStartupGateScreen(result: result)),
+                    Text('Landing: ${landingRoute ?? "none"}'),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),

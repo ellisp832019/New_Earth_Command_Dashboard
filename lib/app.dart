@@ -59,8 +59,7 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
       final wasUnlocked = previous?.isUnlocked ?? false;
       if (wasUnlocked && !next.isUnlocked) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final currentPath =
-              appRouter.routeInformationProvider.value.uri.path;
+          final currentPath = appRouter.routeInformationProvider.value.uri.path;
           if (currentPath != RouteNames.securityLock) {
             appRouter.go(RouteNames.securityLock);
           }
@@ -119,21 +118,18 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                     ),
                 SleepToTrayIntent: CallbackAction<SleepToTrayIntent>(
                   onInvoke: (intent) {
+                    unawaited(DesktopPresenceController.instance.sleep());
+                    return null;
+                  },
+                ),
+                WakeDashboardIntent: CallbackAction<WakeDashboardIntent>(
+                  onInvoke: (intent) {
                     unawaited(
-                      DesktopPresenceController.instance.sleep(),
+                      DesktopPresenceController.instance.openDashboard(),
                     );
                     return null;
                   },
                 ),
-                WakeDashboardIntent:
-                    CallbackAction<WakeDashboardIntent>(
-                      onInvoke: (intent) {
-                        unawaited(
-                          DesktopPresenceController.instance.openDashboard(),
-                        );
-                        return null;
-                      },
-                    ),
                 LockNowIntent: CallbackAction<LockNowIntent>(
                   onInvoke: (intent) {
                     ref.read(securitySessionProvider.notifier).lockNow();
@@ -163,26 +159,22 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 valueListenable: appRouter.routeInformationProvider,
                 builder: (context, routeInfo, _) {
                   final showDockOverlays =
-                      appSettings?.showDockOverlays ?? true;
+                      appSettings?.showDockOverlays ?? false;
                   final showBackupGuardianDock =
-                      appSettings?.showBackupGuardianDock ?? true;
+                      appSettings?.showBackupGuardianDock ?? false;
                   final showTreasuryDock =
-                      appSettings?.showTreasuryDock ?? true;
+                      appSettings?.showTreasuryDock ?? false;
                   final showKnowledgeLibraryDock =
-                      appSettings?.showKnowledgeLibraryDock ?? true;
+                      appSettings?.showKnowledgeLibraryDock ?? false;
 
                   return Stack(
                     fit: StackFit.expand,
                     clipBehavior: Clip.none,
                     children: [
                       if (showDockOverlays && showBackupGuardianDock)
-                        BackupGuardianDockHost(
-                          currentPath: routeInfo.uri.path,
-                        ),
+                        BackupGuardianDockHost(currentPath: routeInfo.uri.path),
                       if (showDockOverlays && showTreasuryDock)
-                        TreasuryDockHost(
-                          currentPath: routeInfo.uri.path,
-                        ),
+                        TreasuryDockHost(currentPath: routeInfo.uri.path),
                       if (showDockOverlays && showKnowledgeLibraryDock)
                         KnowledgeLibraryDockHost(
                           currentPath: routeInfo.uri.path,
@@ -196,19 +188,16 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 right: 16,
                 child: SafeArea(
                   child: SizedBox(
-                    width: math.min(
-                      340,
-                      MediaQuery.sizeOf(context).width - 32,
-                    ),
+                    width: math.min(340, MediaQuery.sizeOf(context).width - 32),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if ((appSettings?.showDockOverlays ?? true) &&
-                            (appSettings?.showVoicePresenceChip ?? true))
+                        if ((appSettings?.showDockOverlays ?? false) &&
+                            (appSettings?.showVoicePresenceChip ?? false))
                           const IgnorePointer(child: VoicePresenceChip()),
-                        if ((appSettings?.showDockOverlays ?? true) &&
-                            (appSettings?.showVoicePresenceChip ?? true))
+                        if ((appSettings?.showDockOverlays ?? false) &&
+                            (appSettings?.showVoicePresenceChip ?? false))
                           const SizedBox(height: 12),
                         _SecuritySessionPill(session: securitySession),
                       ],
@@ -216,9 +205,9 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                   ),
                 ),
               ),
-              if ((appSettings?.showDockOverlays ?? true) &&
-                  (appSettings?.showVoiceConversationDock ?? true) &&
-                  (appSettings?.voiceAssistantEnabled ?? true))
+              if ((appSettings?.showDockOverlays ?? false) &&
+                  (appSettings?.showVoiceConversationDock ?? false) &&
+                  (appSettings?.voiceAssistantEnabled ?? false))
                 const Positioned(
                   right: 0,
                   bottom: 0,
@@ -350,8 +339,8 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
     final accentColor = _accentColor(session);
     final activeUserLabel = _activeUserLabel(session);
     final presenceLabel = _presenceLabel(session);
-    final remainingFraction = session.timeout.inMilliseconds <= 0 ||
-            remaining == null
+    final remainingFraction =
+        session.timeout.inMilliseconds <= 0 || remaining == null
         ? 0.0
         : remaining.inMilliseconds / session.timeout.inMilliseconds;
     final clampedFraction = remainingFraction.clamp(0.0, 1.0);
@@ -370,9 +359,7 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0B1418).withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: accentColor.withValues(alpha: 0.55),
-                ),
+                border: Border.all(color: accentColor.withValues(alpha: 0.55)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.22),
@@ -408,11 +395,11 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                                   Expanded(
                                     child: Text(
                                       'Security session',
-                                      style:
-                                          theme.textTheme.labelMedium?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                      style: theme.textTheme.labelMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                     ),
                                   ),
                                   Chip(
@@ -429,7 +416,9 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                                       horizontal: 8,
                                     ),
                                     side: BorderSide(
-                                      color: accentColor.withValues(alpha: 0.45),
+                                      color: accentColor.withValues(
+                                        alpha: 0.45,
+                                      ),
                                     ),
                                     backgroundColor: accentColor.withValues(
                                       alpha: 0.12,
@@ -537,9 +526,9 @@ class _SessionLabel extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: baseColor,
-              fontWeight: FontWeight.w600,
-            ),
+          color: baseColor,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
