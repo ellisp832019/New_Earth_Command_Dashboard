@@ -370,7 +370,9 @@ class _UsersDevicesUsersScreenState
                                   _CardChip(
                                     label: 'Recovery PIN $recoveryPins',
                                   ),
-                                for (final pinSummary in _pinSummaries(userPins))
+                                for (final pinSummary in _pinSummaries(
+                                  userPins,
+                                ))
                                   _CardChip(
                                     label: pinSummary,
                                     onTap: () =>
@@ -387,7 +389,8 @@ class _UsersDevicesUsersScreenState
                                 OutlinedButton.icon(
                                   onPressed: isSessionLocked
                                       ? null
-                                      : () => _assignUserPin(context, ref, user),
+                                      : () =>
+                                            _assignUserPin(context, ref, user),
                                   icon: const Icon(Icons.pin_outlined),
                                   label: Text(
                                     isSessionLocked
@@ -399,11 +402,11 @@ class _UsersDevicesUsersScreenState
                                   onPressed: isSessionLocked
                                       ? null
                                       : () => _assignUserPin(
-                                            context,
-                                            ref,
-                                            user,
-                                            initialRecoveryMode: true,
-                                          ),
+                                          context,
+                                          ref,
+                                          user,
+                                          initialRecoveryMode: true,
+                                        ),
                                   icon: const Icon(Icons.vpn_key_outlined),
                                   label: Text(
                                     isSessionLocked
@@ -420,10 +423,10 @@ class _UsersDevicesUsersScreenState
                                   onPressed: userPins.isEmpty
                                       ? null
                                       : () => _copyUserPinSummary(
-                                            context,
-                                            user.displayName,
-                                            userPins,
-                                          ),
+                                          context,
+                                          user.displayName,
+                                          userPins,
+                                        ),
                                   icon: const Icon(Icons.copy_outlined),
                                   label: const Text('Copy PIN summary'),
                                 ),
@@ -481,6 +484,9 @@ class _UsersDevicesDevicesScreenState
         onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
       ),
       data: (data) {
+        final ownerLabels = {
+          for (final user in data.users) user.id: user.displayName,
+        };
         final filteredDevices = data.devices
             .where((device) {
               if (_statusFilter != 'all' && device.status != _statusFilter) {
@@ -523,6 +529,12 @@ class _UsersDevicesDevicesScreenState
                     onPressed: () => _openDeviceEditor(context, ref),
                   ),
                   _ActionChip(
+                    label: 'Open onboarding',
+                    icon: Icons.phonelink_setup_outlined,
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesDeviceOnboarding),
+                  ),
+                  _ActionChip(
                     label: 'Seed sample device',
                     icon: Icons.auto_fix_high_outlined,
                     onPressed: () => _registerSampleDevice(context, ref),
@@ -550,7 +562,39 @@ class _UsersDevicesDevicesScreenState
                         .where((device) => device.ownerId.isNotEmpty)
                         .length,
                   ),
+                  (
+                    'Needs review',
+                    data.devices
+                        .where((device) => device.needsOnboardingReview)
+                        .length,
+                  ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Trust posture',
+                subtitle:
+                    'Read this first when you are deciding whether a device is ready for gated modules.',
+                icon: Icons.verified_outlined,
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: const [
+                    _CardChip(
+                      label:
+                          'Registered = recorded locally but not ready for sensitive routes',
+                    ),
+                    _CardChip(
+                      label: 'Trusted = ready for normal gated module access',
+                    ),
+                    _CardChip(
+                      label: 'High trust = suitable for stricter trust floors',
+                    ),
+                    _CardChip(
+                      label: 'Blocked = restore or re-onboard before use',
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _SearchFilterPanel(
@@ -618,7 +662,7 @@ class _UsersDevicesDevicesScreenState
                           title: device.name,
                           subtitle: device.type,
                           body:
-                              'Trust ${device.trustLevel} - ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
+                              '${device.trustPostureSummary}\nTrust T${device.trustLevel} - ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -640,8 +684,14 @@ class _UsersDevicesDevicesScreenState
                           ),
                           chips: [
                             _CardChip(label: 'T${device.trustLevel}'),
+                            _CardChip(label: device.trustPostureLabel),
                             if (device.ownerId.isNotEmpty)
-                              const _CardChip(label: 'Assigned'),
+                              _CardChip(
+                                label:
+                                    'Owner: ${ownerLabels[device.ownerId] ?? device.ownerId}',
+                              ),
+                            if (device.needsOnboardingReview)
+                              const _CardChip(label: 'Review onboarding'),
                           ],
                           actions: [
                             FilledButton.tonal(
@@ -660,6 +710,13 @@ class _UsersDevicesDevicesScreenState
                                     ? 'Restore'
                                     : 'Archive',
                               ),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () => context.go(
+                                RouteNames.usersDevicesDeviceOnboarding,
+                              ),
+                              icon: const Icon(Icons.phonelink_setup_outlined),
+                              label: const Text('Onboarding'),
                             ),
                           ],
                         ),
@@ -1177,6 +1234,12 @@ class _UsersDevicesDeviceOnboardingScreenState
         final trustBands = data.trustLevels;
         final trustedDevices = [...data.devices]
           ..sort((a, b) => b.trustLevel.compareTo(a.trustLevel));
+        final highTrustDevices = trustedDevices
+            .where((device) => device.isHighTrust)
+            .toList(growable: false);
+        final reviewDevices = data.devices
+            .where((device) => device.needsOnboardingReview)
+            .toList(growable: false);
         final trustEvents =
             data.auditLog
                 .where((event) => event.eventType == 'device_trust_confirmed')
@@ -1353,6 +1416,8 @@ class _UsersDevicesDeviceOnboardingScreenState
               _TrustPosturePanel(
                 trustBands: trustBands,
                 trustedDevices: trustedDevices,
+                highTrustDevices: highTrustDevices,
+                reviewDevices: reviewDevices,
                 template: _template,
               ),
               const SizedBox(height: 16),
@@ -1531,7 +1596,7 @@ class _UsersDevicesDeviceOnboardingScreenState
                                       title: device.name,
                                       subtitle: device.type,
                                       body:
-                                          'Trust ${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
+                                          '${device.trustPostureSummary}\nTrust T${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
                                       trailing: Wrap(
                                         spacing: 8,
                                         runSpacing: 8,
@@ -1562,6 +1627,9 @@ class _UsersDevicesDeviceOnboardingScreenState
                                           label: 'T${device.trustLevel}',
                                         ),
                                         _CardChip(label: device.status),
+                                        _CardChip(
+                                          label: device.trustPostureLabel,
+                                        ),
                                       ],
                                       onTap: () => _openDeviceEditor(
                                         context,
@@ -1590,11 +1658,15 @@ class _TrustPosturePanel extends StatelessWidget {
   const _TrustPosturePanel({
     required this.trustBands,
     required this.trustedDevices,
+    required this.highTrustDevices,
+    required this.reviewDevices,
     required this.template,
   });
 
   final List<UsersDevicesControlTrustLevelDefinition> trustBands;
   final List<UsersDevicesControlDevice> trustedDevices;
+  final List<UsersDevicesControlDevice> highTrustDevices;
+  final List<UsersDevicesControlDevice> reviewDevices;
   final String template;
 
   @override
@@ -1614,10 +1686,18 @@ class _TrustPosturePanel extends StatelessWidget {
             children: [
               _CardChip(label: '${trustBands.length} trust bands'),
               _CardChip(label: '${trustedDevices.length} trusted devices'),
+              _CardChip(label: '${highTrustDevices.length} high-trust devices'),
+              _CardChip(label: '${reviewDevices.length} devices need review'),
               _CardChip(label: 'Template: ${template.toUpperCase()}'),
               if (topDevice != null)
                 _CardChip(label: 'Top trust: ${topDevice.name}'),
             ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            reviewDevices.isEmpty
+                ? 'The current device set reads cleanly: every active device is already trusted enough for normal gated routes.'
+                : 'Some devices still need onboarding review before they should be used for sensitive access.',
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -2091,13 +2171,11 @@ class _UsersDevicesRouteGateScreenState
                                   const SizedBox(height: 10),
                                   Text(
                                     'The selected user must have a matching local PIN and trusted device before this screen opens.',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                         ),
                                   ),
                                 ],
@@ -5062,124 +5140,121 @@ Future<void> _confirmResetDemoData(BuildContext context, WidgetRef ref) async {
 Future<void> _assignUserPin(
   BuildContext context,
   WidgetRef ref,
-  UsersDevicesControlUser user,
-  {bool initialRecoveryMode = false}
-) async {
+  UsersDevicesControlUser user, {
+  bool initialRecoveryMode = false,
+}) async {
   final labelController = TextEditingController(text: 'Primary PIN');
   final pinController = TextEditingController();
   var recoveryMode = initialRecoveryMode;
   if (recoveryMode) {
     labelController.text = 'Recovery PIN';
   }
-  final result =
-      await showDialog<({String pinCode, String label, bool recovery})>(
-        context: context,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (dialogContext, setDialogState) {
-              return AlertDialog(
-                title: Text('Assign PIN to ${user.displayName}'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SegmentedButton<bool>(
-                      segments: const [
-                        ButtonSegment<bool>(
-                          value: false,
-                          label: Text('Primary'),
-                          icon: Icon(Icons.pin_outlined),
-                        ),
-                        ButtonSegment<bool>(
-                          value: true,
-                          label: Text('Recovery'),
-                          icon: Icon(Icons.vpn_key_outlined),
-                        ),
-                      ],
-                      selected: {recoveryMode},
-                      onSelectionChanged: (selection) {
-                        setDialogState(() {
-                          recoveryMode = selection.first;
-                          if (recoveryMode &&
-                              labelController.text.trim() == 'Primary PIN') {
-                            labelController.text = 'Recovery PIN';
-                          }
-                        });
-                      },
+  final result = await showDialog<({String pinCode, String label, bool recovery})>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: Text('Assign PIN to ${user.displayName}'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment<bool>(
+                      value: false,
+                      label: Text('Primary'),
+                      icon: Icon(Icons.pin_outlined),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: labelController,
-                      decoration: InputDecoration(
-                        labelText: recoveryMode ? 'Recovery label' : 'Label',
-                        hintText: recoveryMode
-                            ? 'For example: Backup PIN'
-                            : 'For example: Primary PIN',
-                      ),
+                    ButtonSegment<bool>(
+                      value: true,
+                      label: Text('Recovery'),
+                      icon: Icon(Icons.vpn_key_outlined),
                     ),
-                    if (!recoveryMode) ...[
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: pinController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'PIN code',
-                          hintText: 'Use 4 to 8 digits',
-                        ),
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'A recovery PIN will be generated automatically when you save.',
-                        style: Theme.of(dialogContext)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(
-                              color: Theme.of(dialogContext)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                      ),
-                    ],
                   ],
+                  selected: {recoveryMode},
+                  onSelectionChanged: (selection) {
+                    setDialogState(() {
+                      recoveryMode = selection.first;
+                      if (recoveryMode &&
+                          labelController.text.trim() == 'Primary PIN') {
+                        labelController.text = 'Recovery PIN';
+                      }
+                    });
+                  },
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Cancel'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: labelController,
+                  decoration: InputDecoration(
+                    labelText: recoveryMode ? 'Recovery label' : 'Label',
+                    hintText: recoveryMode
+                        ? 'For example: Backup PIN'
+                        : 'For example: Primary PIN',
                   ),
-                  FilledButton(
-                    onPressed: recoveryMode
-                        ? null
-                        : () {
-                            Navigator.of(dialogContext).pop((
-                              pinCode: pinController.text.trim(),
-                              label: labelController.text.trim(),
-                              recovery: false,
-                            ));
-                          },
-                    child: const Text('Save primary PIN'),
+                ),
+                if (!recoveryMode) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: pinController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'PIN code',
+                      hintText: 'Use 4 to 8 digits',
+                    ),
                   ),
-                  FilledButton.tonal(
-                    onPressed: !recoveryMode
-                        ? null
-                        : () {
-                            Navigator.of(dialogContext).pop((
-                              pinCode: '',
-                              label: labelController.text.trim().isEmpty
-                                  ? 'Recovery PIN'
-                                  : labelController.text.trim(),
-                              recovery: true,
-                            ));
-                          },
-                    child: const Text('Generate recovery PIN'),
+                ] else ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'A recovery PIN will be generated automatically when you save.',
+                    style: Theme.of(dialogContext).textTheme.bodySmall
+                        ?.copyWith(
+                          color: Theme.of(
+                            dialogContext,
+                          ).colorScheme.onSurfaceVariant,
+                        ),
                   ),
                 ],
-              );
-            },
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: recoveryMode
+                    ? null
+                    : () {
+                        Navigator.of(dialogContext).pop((
+                          pinCode: pinController.text.trim(),
+                          label: labelController.text.trim(),
+                          recovery: false,
+                        ));
+                      },
+                child: const Text('Save primary PIN'),
+              ),
+              FilledButton.tonal(
+                onPressed: !recoveryMode
+                    ? null
+                    : () {
+                        Navigator.of(dialogContext).pop((
+                          pinCode: '',
+                          label: labelController.text.trim().isEmpty
+                              ? 'Recovery PIN'
+                              : labelController.text.trim(),
+                          recovery: true,
+                        ));
+                      },
+                child: const Text('Generate recovery PIN'),
+              ),
+            ],
           );
         },
       );
+    },
+  );
 
   labelController.dispose();
   pinController.dispose();
@@ -5408,8 +5483,9 @@ Future<void> _openOnboardingWizard(
                     ),
                   )
                   .displayName;
-        final onboardingTrustLabel =
-            trustLevel >= 4 ? 'High-trust confirm required' : 'Standard pairing';
+        final onboardingTrustLabel = trustLevel >= 4
+            ? 'High-trust confirm required'
+            : 'Standard pairing';
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -5583,12 +5659,15 @@ Future<void> _openOnboardingWizard(
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                _CardChip(label: 'ID: ${idController.text.trim()}'),
-                                _CardChip(label: 'Owner: $onboardingOwnerLabel'),
+                                _CardChip(
+                                  label: 'ID: ${idController.text.trim()}',
+                                ),
+                                _CardChip(
+                                  label: 'Owner: $onboardingOwnerLabel',
+                                ),
                                 _CardChip(label: 'Trust: T$trustLevel'),
                                 _CardChip(
-                                  label:
-                                      'Actions: ${selectedActions.length}',
+                                  label: 'Actions: ${selectedActions.length}',
                                 ),
                                 _CardChip(label: onboardingTrustLabel),
                               ],

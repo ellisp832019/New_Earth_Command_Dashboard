@@ -322,7 +322,14 @@ Click-by-click:
 1. Open `Devices`.
 2. Click `Seed sample device`.
 3. Wait for the new device card to appear.
-4. Open the new device and check the trust level and owner.
+4. Open the new device and check the trust level, trust posture, and owner.
+
+Device trust posture:
+
+- `Needs review` means the device is recorded locally but should go back through onboarding before sensitive access
+- `Trusted` means the device is ready for normal gated module access
+- `High trust` means the device can satisfy stricter trust floors
+- `Blocked` means the device must be restored or re-onboarded before use
 
 ### Create a sample approval
 
@@ -377,6 +384,7 @@ Click-by-click:
 2. Click `Reset demo data`.
 3. Open `Users` and confirm `Hayley Arthur` is active.
 4. Open `Devices` and confirm `NEW_EARTH_DEV` is trust level `4`.
+Why this matters: the device card should also read as `High trust`, not just show a raw number.
 5. Open `Access Matrix` and confirm Treasury needs finance permission plus the trust floor.
 6. Open the Treasury gate with `Hayley Arthur` and `NEW_EARTH_DEV`.
 7. Confirm a normal Treasury open is allowed.
@@ -411,29 +419,31 @@ Why this matters: device trust is part of the access decision, not just the user
 Why this matters: it is the seeded trusted device for the normal Treasury path.
 8. Confirm the device is trusted at level `4`.
 Why this matters: Treasury requires the trust floor to be met.
-9. Open `Access Matrix`.
+9. Confirm the device posture reads `High trust`.
+Why this matters: the trust posture label is the quickest way to see whether a device is genuinely ready for sensitive routes.
+10. Open `Access Matrix`.
 Why this matters: the rule tells you what Treasury needs before you try the gate.
-10. Confirm Treasury needs finance permission and a trust floor of `4`.
+11. Confirm Treasury needs finance permission and a trust floor of `4`.
 Why this matters: it confirms the system will check both permission and trust.
-11. Open the Treasury gate.
+12. Open the Treasury gate.
 Why this matters: this is the actual check before Treasury opens.
-12. Select `Hayley Arthur` and `NEW_EARTH_DEV`.
+13. Select `Hayley Arthur` and `NEW_EARTH_DEV`.
 Why this matters: the gate needs both the user and device selected at the same time.
-13. Click `Open screen`.
+14. Click `Open screen`.
 Why this matters: this is the moment the gate either allows or blocks access.
-14. If Treasury opens, test a normal view action.
+15. If Treasury opens, test a normal view action.
 Why this matters: it proves the normal finance path works after the gate passes.
-15. If the gate blocks, read `Why blocked` and fix the missing identity, permission, trust, or approval.
+16. If the gate blocks, read `Why blocked` and fix the missing identity, permission, trust, or approval.
 Why this matters: the block message tells you exactly which part of the rule failed.
-16. If the action needs approval, open `Approval Queue`.
+17. If the action needs approval, open `Approval Queue`.
 Why this matters: approval-required actions should pause for human review.
-17. Review the pending request.
+18. Review the pending request.
 Why this matters: you need to confirm the request is the one you meant to test.
-18. Approve or deny the request.
+19. Approve or deny the request.
 Why this matters: this is the human decision point for sensitive actions.
-19. Try the action again if approval was granted.
+20. Try the action again if approval was granted.
 Why this matters: the action should only continue after approval has been recorded.
-20. Open `Audit Log` and confirm the decision was recorded.
+21. Open `Audit Log` and confirm the decision was recorded.
 Why this matters: the audit trail proves what happened and why.
 
 What you should see:
@@ -474,13 +484,15 @@ Why this matters: human review is the control point for risky actions.
 Why this matters: every allow, deny, or approval should leave a trace.
 13. Open `Device Onboarding` and register a sample device if you want to test trust setup.
 Why this matters: onboarding is how a device becomes trusted enough for later access.
-14. Open `Security Lock` and confirm the selected context matches what you expect.
+14. In `Devices`, check whether the new record reads `Needs review`, `Trusted`, or `High trust`.
+Why this matters: the posture label is the quickest summary of whether onboarding is complete enough for access.
+15. Open `Security Lock` and confirm the selected context matches what you expect.
 Why this matters: the lock view is a quick sanity check for the current local context.
-15. Watch the top-left session box count down while the session stays active, and confirm the active user label and online status match what you expect.
+16. Watch the top-left session box count down while the session stays active, and confirm the active user label and online status match what you expect.
 Why this matters: you can see the live timeout instead of guessing.
-16. Tap the session box to reopen `Security Lock` or use `Access Matrix` if you want to inspect the rule set mid-test.
+17. Tap the session box to reopen `Security Lock` or use `Access Matrix` if you want to inspect the rule set mid-test.
 Why this matters: the corner box is a quick navigation and status shortcut.
-17. Reset demo data and repeat the flow until the results feel familiar.
+18. Reset demo data and repeat the flow until the results feel familiar.
 Why this matters: repetition makes the rules easier to trust and remember.
 
 What you should see:
@@ -500,7 +512,7 @@ Check the person. Confirm the role, permissions, and linked devices.
 
 ### Devices
 
-Check the device. Confirm the trust level, owner, and allowed actions.
+Check the device. Confirm the trust level, trust posture, owner, and allowed actions.
 
 ### Access Matrix
 

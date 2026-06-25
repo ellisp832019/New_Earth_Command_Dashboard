@@ -140,6 +140,45 @@ class UsersDevicesControlDevice {
       notes: notes ?? this.notes,
     );
   }
+
+  bool get isTrusted => trustLevel >= 3 && status != 'blocked';
+
+  bool get isHighTrust => trustLevel >= 4 && status != 'blocked';
+
+  bool get needsOnboardingReview =>
+      status == 'registered' || status == 'blocked' || trustLevel < 3;
+
+  String get trustPostureLabel {
+    if (status == 'blocked') {
+      return 'Blocked';
+    }
+    if (status == 'archived') {
+      return 'Archived';
+    }
+    if (isHighTrust) {
+      return 'High trust';
+    }
+    if (isTrusted) {
+      return 'Trusted';
+    }
+    return 'Needs review';
+  }
+
+  String get trustPostureSummary {
+    if (status == 'blocked') {
+      return 'This device is blocked and cannot satisfy local access checks.';
+    }
+    if (status == 'archived') {
+      return 'This device is archived and should not be used for active access.';
+    }
+    if (isHighTrust) {
+      return 'This device already meets higher-trust module requirements.';
+    }
+    if (isTrusted) {
+      return 'This device is trusted for normal gated module access.';
+    }
+    return 'This device should go back through onboarding before sensitive access.';
+  }
 }
 
 class UsersDevicesControlApprovalRequest {
@@ -275,10 +314,7 @@ class UsersDevicesControlRoleDefinition {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'role': role,
-      'permissions': permissions,
-    };
+    return {'role': role, 'permissions': permissions};
   }
 }
 
@@ -301,10 +337,7 @@ class UsersDevicesControlPermissionDefinition {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'permission': permission,
-      'description': description,
-    };
+    return {'permission': permission, 'description': description};
   }
 }
 
@@ -330,11 +363,7 @@ class UsersDevicesControlTrustLevelDefinition {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'level': level,
-      'name': name,
-      'description': description,
-    };
+    return {'level': level, 'name': name, 'description': description};
   }
 }
 
@@ -610,10 +639,7 @@ class UsersDevicesControlRepository {
     );
   }
 
-  Future<UsersDevicesControlUser> assignRole(
-    String userId,
-    String role,
-  ) async {
+  Future<UsersDevicesControlUser> assignRole(String userId, String role) async {
     final users = await _readUsers();
     final index = users.indexWhere((user) => user.id == userId);
     if (index < 0) {
@@ -625,7 +651,9 @@ class UsersDevicesControlRepository {
     await _writeUsers(users);
     await createAuditEvent(
       actorId: userId,
-      deviceId: updated.linkedDevices.isNotEmpty ? updated.linkedDevices.first : '',
+      deviceId: updated.linkedDevices.isNotEmpty
+          ? updated.linkedDevices.first
+          : '',
       eventType: 'role_assigned',
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'assign_role',
@@ -654,7 +682,9 @@ class UsersDevicesControlRepository {
     await _writeUsers(users);
     await createAuditEvent(
       actorId: userId,
-      deviceId: updated.linkedDevices.isNotEmpty ? updated.linkedDevices.first : '',
+      deviceId: updated.linkedDevices.isNotEmpty
+          ? updated.linkedDevices.first
+          : '',
       eventType: 'permission_assigned',
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'assign_permission',
@@ -679,8 +709,9 @@ class UsersDevicesControlRepository {
     await _writeUsers(users);
     await createAuditEvent(
       actorId: userId,
-      deviceId:
-          updated.linkedDevices.isNotEmpty ? updated.linkedDevices.first : '',
+      deviceId: updated.linkedDevices.isNotEmpty
+          ? updated.linkedDevices.first
+          : '',
       eventType: 'user_archived',
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'archive_user',
@@ -704,8 +735,9 @@ class UsersDevicesControlRepository {
     await _writeUsers(users);
     await createAuditEvent(
       actorId: userId,
-      deviceId:
-          updated.linkedDevices.isNotEmpty ? updated.linkedDevices.first : '',
+      deviceId: updated.linkedDevices.isNotEmpty
+          ? updated.linkedDevices.first
+          : '',
       eventType: 'user_restored',
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'restore_user',
@@ -728,8 +760,9 @@ class UsersDevicesControlRepository {
     await _writeUsers(users);
     await createAuditEvent(
       actorId: removed.id,
-      deviceId:
-          removed.linkedDevices.isNotEmpty ? removed.linkedDevices.first : '',
+      deviceId: removed.linkedDevices.isNotEmpty
+          ? removed.linkedDevices.first
+          : '',
       eventType: 'user_deleted',
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'delete_user',
@@ -752,7 +785,8 @@ class UsersDevicesControlRepository {
       return false;
     }
 
-    if (user.permissions.contains('*') || user.permissions.contains(permission)) {
+    if (user.permissions.contains('*') ||
+        user.permissions.contains(permission)) {
       return true;
     }
 
@@ -765,10 +799,7 @@ class UsersDevicesControlRepository {
     return false;
   }
 
-  Future<bool> checkDeviceTrust(
-    String deviceId,
-    int requiredTrustLevel,
-  ) async {
+  Future<bool> checkDeviceTrust(String deviceId, int requiredTrustLevel) async {
     final device = await getDeviceById(deviceId);
     if (device == null) {
       return false;
@@ -883,11 +914,7 @@ class UsersDevicesControlRepository {
     String requestId, {
     required String reviewedBy,
   }) async {
-    return _reviewRequest(
-      requestId,
-      reviewedBy: reviewedBy,
-      status: 'denied',
-    );
+    return _reviewRequest(requestId, reviewedBy: reviewedBy, status: 'denied');
   }
 
   Future<UsersDevicesControlApprovalRequest> _reviewRequest(
@@ -997,7 +1024,8 @@ class UsersDevicesControlRepository {
       return decision;
     }
 
-    final isPaired = user.linkedDevices.contains(deviceId) || device.ownerId == userId;
+    final isPaired =
+        user.linkedDevices.contains(deviceId) || device.ownerId == userId;
     if (!isPaired) {
       final decision = const UsersDevicesControlAccessDecision(
         allowed: false,
@@ -1071,7 +1099,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: true,
         reason: 'Missing required permission: $requiredPermission.',
-        nextStep: 'Grant the missing permission or switch to a role that already has it.',
+        nextStep:
+            'Grant the missing permission or switch to a role that already has it.',
         issueCode: 'missing_permission',
       );
       await createAuditEvent(
@@ -1091,7 +1120,8 @@ class UsersDevicesControlRepository {
         allowed: false,
         requiresApproval: true,
         reason: 'Action requires approval.',
-        nextStep: 'Open the Approval Queue and wait for a reviewer to approve it.',
+        nextStep:
+            'Open the Approval Queue and wait for a reviewer to approve it.',
         issueCode: 'approval_required',
       );
       await createAuditEvent(
@@ -1231,7 +1261,8 @@ class UsersDevicesControlRepository {
         .toList(growable: false);
   }
 
-  Future<List<UsersDevicesControlPermissionDefinition>> _readPermissions() async {
+  Future<List<UsersDevicesControlPermissionDefinition>>
+  _readPermissions() async {
     final db = database;
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlPermissions).get();
@@ -1258,7 +1289,8 @@ class UsersDevicesControlRepository {
         .toList(growable: false);
   }
 
-  Future<List<UsersDevicesControlTrustLevelDefinition>> _readTrustLevels() async {
+  Future<List<UsersDevicesControlTrustLevelDefinition>>
+  _readTrustLevels() async {
     final db = database;
     if (db != null) {
       final rows = await db.select(db.usersDevicesControlTrustLevels).get();
@@ -1289,7 +1321,9 @@ class UsersDevicesControlRepository {
   Future<List<UsersDevicesControlApprovalRequest>> _readApprovals() async {
     final db = database;
     if (db != null) {
-      final rows = await db.select(db.usersDevicesControlApprovalRequests).get();
+      final rows = await db
+          .select(db.usersDevicesControlApprovalRequests)
+          .get();
       return rows
           .map(
             (row) => UsersDevicesControlApprovalRequest.fromJson(
@@ -1393,7 +1427,8 @@ class UsersDevicesControlRepository {
     return _readAccessRulesFromSource();
   }
 
-  Future<List<UsersDevicesControlAccessRule>> _readAccessRulesFromSource() async {
+  Future<List<UsersDevicesControlAccessRule>>
+  _readAccessRulesFromSource() async {
     final raw = await _readSourceJsonMap(_accessRulesExamplePath);
     final rules = raw['rules'];
     if (rules is! List) {
@@ -1421,9 +1456,7 @@ class UsersDevicesControlRepository {
     return <Map<String, dynamic>>[];
   }
 
-  Future<Map<String, dynamic>> _readSourceJsonMap(
-    String sourcePath,
-  ) async {
+  Future<Map<String, dynamic>> _readSourceJsonMap(String sourcePath) async {
     final file = File(sourcePath);
     if (!await file.exists()) {
       return <String, dynamic>{};
@@ -1447,7 +1480,9 @@ class UsersDevicesControlRepository {
       await db.delete(db.usersDevicesControlUsers).go();
       for (final user in users) {
         final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlUsers).insert(
+        await db
+            .into(db.usersDevicesControlUsers)
+            .insert(
               UsersDevicesControlUsersCompanion.insert(
                 userId: user.id,
                 payloadJson: _encodePayload(user.toJson()),
@@ -1469,7 +1504,9 @@ class UsersDevicesControlRepository {
       await db.delete(db.usersDevicesControlDevices).go();
       for (final device in devices) {
         final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlDevices).insert(
+        await db
+            .into(db.usersDevicesControlDevices)
+            .insert(
               UsersDevicesControlDevicesCompanion.insert(
                 deviceId: device.id,
                 payloadJson: _encodePayload(device.toJson()),
@@ -1493,7 +1530,9 @@ class UsersDevicesControlRepository {
       await db.delete(db.usersDevicesControlApprovalRequests).go();
       for (final request in approvals) {
         final timestamp = DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlApprovalRequests).insert(
+        await db
+            .into(db.usersDevicesControlApprovalRequests)
+            .insert(
               UsersDevicesControlApprovalRequestsCompanion.insert(
                 requestId: request.requestId,
                 payloadJson: _encodePayload(request.toJson()),
@@ -1517,8 +1556,11 @@ class UsersDevicesControlRepository {
       await db.delete(db.usersDevicesControlAuditEvents).go();
       for (final event in events) {
         final timestamp =
-            DateTime.tryParse(event.timestamp)?.toUtc() ?? DateTime.now().toUtc();
-        await db.into(db.usersDevicesControlAuditEvents).insert(
+            DateTime.tryParse(event.timestamp)?.toUtc() ??
+            DateTime.now().toUtc();
+        await db
+            .into(db.usersDevicesControlAuditEvents)
+            .insert(
               UsersDevicesControlAuditEventsCompanion.insert(
                 eventId: event.eventId,
                 payloadJson: _encodePayload(event.toJson()),
@@ -1573,7 +1615,9 @@ class UsersDevicesControlRepository {
 
     for (final user in seedUsers.map(UsersDevicesControlUser.fromJson)) {
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlUsers).insert(
+      await db
+          .into(db.usersDevicesControlUsers)
+          .insert(
             UsersDevicesControlUsersCompanion.insert(
               userId: user.id,
               payloadJson: _encodePayload(user.toJson()),
@@ -1595,7 +1639,9 @@ class UsersDevicesControlRepository {
 
     for (final device in seedDevices.map(UsersDevicesControlDevice.fromJson)) {
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlDevices).insert(
+      await db
+          .into(db.usersDevicesControlDevices)
+          .insert(
             UsersDevicesControlDevicesCompanion.insert(
               deviceId: device.id,
               payloadJson: _encodePayload(device.toJson()),
@@ -1610,15 +1656,20 @@ class UsersDevicesControlRepository {
     AppDatabase db,
     List<Map<String, dynamic>> seedApprovals,
   ) async {
-    final existing = await db.select(db.usersDevicesControlApprovalRequests).get();
+    final existing = await db
+        .select(db.usersDevicesControlApprovalRequests)
+        .get();
     if (existing.isNotEmpty || seedApprovals.isEmpty) {
       return;
     }
 
-    for (final request
-        in seedApprovals.map(UsersDevicesControlApprovalRequest.fromJson)) {
+    for (final request in seedApprovals.map(
+      UsersDevicesControlApprovalRequest.fromJson,
+    )) {
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlApprovalRequests).insert(
+      await db
+          .into(db.usersDevicesControlApprovalRequests)
+          .insert(
             UsersDevicesControlApprovalRequestsCompanion.insert(
               requestId: request.requestId,
               payloadJson: _encodePayload(request.toJson()),
@@ -1638,10 +1689,14 @@ class UsersDevicesControlRepository {
       return;
     }
 
-    for (final event in seedEvents.map(UsersDevicesControlAuditEvent.fromJson)) {
-      final timestamp = DateTime.tryParse(event.timestamp)?.toUtc() ??
-          DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlAuditEvents).insert(
+    for (final event in seedEvents.map(
+      UsersDevicesControlAuditEvent.fromJson,
+    )) {
+      final timestamp =
+          DateTime.tryParse(event.timestamp)?.toUtc() ?? DateTime.now().toUtc();
+      await db
+          .into(db.usersDevicesControlAuditEvents)
+          .insert(
             UsersDevicesControlAuditEventsCompanion.insert(
               eventId: event.eventId,
               payloadJson: _encodePayload(event.toJson()),
@@ -1661,9 +1716,13 @@ class UsersDevicesControlRepository {
       return;
     }
 
-    for (final role in seedRoles.map(UsersDevicesControlRoleDefinition.fromJson)) {
+    for (final role in seedRoles.map(
+      UsersDevicesControlRoleDefinition.fromJson,
+    )) {
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlRoles).insert(
+      await db
+          .into(db.usersDevicesControlRoles)
+          .insert(
             UsersDevicesControlRolesCompanion.insert(
               roleName: role.role,
               permissionsJson: Value(jsonEncode(role.permissions)),
@@ -1684,10 +1743,13 @@ class UsersDevicesControlRepository {
       return;
     }
 
-    for (final permission in seedPermissions
-        .map(UsersDevicesControlPermissionDefinition.fromJson)) {
+    for (final permission in seedPermissions.map(
+      UsersDevicesControlPermissionDefinition.fromJson,
+    )) {
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlPermissions).insert(
+      await db
+          .into(db.usersDevicesControlPermissions)
+          .insert(
             UsersDevicesControlPermissionsCompanion.insert(
               permissionName: permission.permission,
               description: Value(permission.description),
@@ -1708,10 +1770,13 @@ class UsersDevicesControlRepository {
       return;
     }
 
-    for (final trustLevel in seedTrustLevels
-        .map(UsersDevicesControlTrustLevelDefinition.fromJson)) {
+    for (final trustLevel in seedTrustLevels.map(
+      UsersDevicesControlTrustLevelDefinition.fromJson,
+    )) {
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlTrustLevels).insert(
+      await db
+          .into(db.usersDevicesControlTrustLevels)
+          .insert(
             UsersDevicesControlTrustLevelsCompanion.insert(
               trustLevel: Value(trustLevel.level),
               name: Value(trustLevel.name),
@@ -1733,23 +1798,26 @@ class UsersDevicesControlRepository {
       return;
     }
 
-    final existingRules =
-        await db.select(db.usersDevicesControlAccessRules).get();
+    final existingRules = await db
+        .select(db.usersDevicesControlAccessRules)
+        .get();
     final existingModuleIds = existingRules
         .map((row) => row.moduleId)
         .where((moduleId) => moduleId.isNotEmpty)
         .map((moduleId) => moduleId.toLowerCase())
         .toSet();
 
-    for (final rule in accessRules
-        .whereType<Map<String, dynamic>>()
-        .map(UsersDevicesControlAccessRule.fromJson)) {
+    for (final rule in accessRules.whereType<Map<String, dynamic>>().map(
+      UsersDevicesControlAccessRule.fromJson,
+    )) {
       if (rule.moduleId.isNotEmpty &&
           existingModuleIds.contains(rule.moduleId.toLowerCase())) {
         continue;
       }
       final timestamp = DateTime.now().toUtc();
-      await db.into(db.usersDevicesControlAccessRules).insert(
+      await db
+          .into(db.usersDevicesControlAccessRules)
+          .insert(
             UsersDevicesControlAccessRulesCompanion.insert(
               moduleId: rule.moduleId,
               viewPermission: Value(rule.viewPermission),
@@ -1759,8 +1827,9 @@ class UsersDevicesControlRepository {
               executePermission: Value(rule.executePermission),
               controlPermission: Value(rule.controlPermission),
               requiresTrustLevel: Value(rule.requiresTrustLevel),
-              requiresApprovalForJson:
-                  Value(jsonEncode(rule.requiresApprovalFor)),
+              requiresApprovalForJson: Value(
+                jsonEncode(rule.requiresApprovalFor),
+              ),
               payloadJson: _encodePayload(rule.toJson()),
               createdAt: timestamp,
               updatedAt: timestamp,
@@ -1798,7 +1867,8 @@ class UsersDevicesControlRepository {
   String get _rolesExamplePath => '$_dataPath/roles.example.json';
   String get _permissionsExamplePath => '$_dataPath/permissions.example.json';
   String get _trustLevelsExamplePath => '$_dataPath/trust_levels.example.json';
-  String get _approvalQueueExamplePath => '$_dataPath/approval_queue.example.json';
+  String get _approvalQueueExamplePath =>
+      '$_dataPath/approval_queue.example.json';
   String get _auditLogExamplePath => '$_dataPath/audit_log.example.json';
   String get _accessRulesExamplePath => '$_configPath/module_access_rules.json';
 }
