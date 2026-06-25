@@ -94,6 +94,7 @@ import_staging/
 exports_temp/
 reports_temp/
 obsidian_sync/.sync_state.json
+tmp/release_readiness/
 
 # Launchpad runtime state
 modules/new_earth_launchpad_module/dashboard_module/data/runtime/

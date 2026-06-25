@@ -9,11 +9,13 @@ Use this page as the entry point when you want to understand the project at a gl
 1. [`project_now_next_later.md`](project_now_next_later.md)
 2. [`built_vs_planned_checklist.md`](built_vs_planned_checklist.md)
 3. [`release_readiness_summary.md`](release_readiness_summary.md)
-4. [`subsystem_status_audit.md`](subsystem_status_audit.md)
-5. [`future_architecture_map.md`](future_architecture_map.md)
-6. [`module_hub_roadmap.md`](module_hub_roadmap.md)
-7. [`visual_program_plan.md`](visual_program_plan.md)
-8. [`major_upgrade_review.md`](major_upgrade_review.md)
+4. [`release_readiness_pass.md`](release_readiness_pass.md)
+5. [`release_readiness_baseline.md`](release_readiness_baseline.md)
+6. [`subsystem_status_audit.md`](subsystem_status_audit.md)
+7. [`future_architecture_map.md`](future_architecture_map.md)
+8. [`module_hub_roadmap.md`](module_hub_roadmap.md)
+9. [`visual_program_plan.md`](visual_program_plan.md)
+10. [`major_upgrade_review.md`](major_upgrade_review.md)
 
 ## Planning Views
 
@@ -42,6 +44,8 @@ These are the main roadmap views worth checking first:
 - [`treasury_20_task_roadmap.md`](treasury_20_task_roadmap.md)
 - [`future_tasks.md`](future_tasks.md)
 - [`documentation_audit.md`](documentation_audit.md)
+- [`release_readiness_pass.md`](release_readiness_pass.md)
+- [`release_readiness_baseline.md`](release_readiness_baseline.md)
 - [`visual_project_map.md`](visual_project_map.md)
 
 ## Source Of Truth

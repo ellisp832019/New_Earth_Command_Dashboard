@@ -115,7 +115,7 @@ class CompanyCommandCentreReportService {
     final hour = utc.hour.toString().padLeft(2, '0');
     final minute = utc.minute.toString().padLeft(2, '0');
     final second = utc.second.toString().padLeft(2, '0');
-    return '${year}${month}${day}_${hour}${minute}${second}';
+    return '$year$month${day}_$hour$minute$second';
   }
 }
 
