@@ -392,10 +392,6 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                     'No local device selected',
                                 sessionCountdownLabel: sessionCountdownLabel,
                                 sessionCountdownAccent: sessionCountdownAccent,
-                                onUnlock: () => _attemptUnlock(
-                                  voiceStartupGateEnabled:
-                                      voiceStartupGateEnabled,
-                                ),
                                 suggestedUser:
                                     suggestedUser != null &&
                                         suggestedUser.id != selectedUser?.id
@@ -552,7 +548,6 @@ class _SecurityHero extends StatelessWidget {
     required this.selectedDeviceLabel,
     required this.sessionCountdownLabel,
     required this.sessionCountdownAccent,
-    required this.onUnlock,
     required this.suggestedUser,
     required this.selectedDevice,
     required this.onUseSuggestedUser,
@@ -572,7 +567,6 @@ class _SecurityHero extends StatelessWidget {
   final String selectedDeviceLabel;
   final String sessionCountdownLabel;
   final Color sessionCountdownAccent;
-  final VoidCallback onUnlock;
   final UsersDevicesControlUser? suggestedUser;
   final UsersDevicesControlDevice? selectedDevice;
   final VoidCallback? onUseSuggestedUser;
@@ -826,11 +820,6 @@ class _SecurityHero extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              FilledButton.icon(
-                onPressed: onUnlock,
-                icon: const Icon(Icons.lock_open_outlined),
-                label: const Text('Unlock session'),
-              ),
               if (canContinue && onContinue != null)
                 FilledButton.tonalIcon(
                   onPressed: onContinue,
