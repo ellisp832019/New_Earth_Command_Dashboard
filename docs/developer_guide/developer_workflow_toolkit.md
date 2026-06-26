@@ -65,3 +65,11 @@ For a wall-ready reference, see:
 - [`developer_toolkit_cheat_sheet.png`](assets/developer_toolkit_cheat_sheet.png)
 
 It matches the toolkit steps above and is sized for quick printing or lamination.
+
+## Testing Guide
+
+For the practical build-and-test recovery loop, see:
+
+- [`testing_toolkit.md`](testing_toolkit.md)
+
+Use that guide when `flutter run`, widget tests, or Windows builds start behaving strangely.
