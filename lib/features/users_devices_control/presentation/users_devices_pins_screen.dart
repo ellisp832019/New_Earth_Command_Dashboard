@@ -30,6 +30,74 @@ class _UsersDevicesPinsScreenState
   String? _recentRecoveryPin;
   String? _lastAutoScrolledUserId;
 
+  Future<({String reason, String note})?> _promptAuditDetails({
+    required String title,
+    required String submitLabel,
+    required String reasonLabel,
+    String helperText = '',
+  }) async {
+    final reasonController = TextEditingController();
+    final noteController = TextEditingController();
+
+    final result = await showDialog<({String reason, String note})>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: reasonController,
+                decoration: InputDecoration(
+                  labelText: reasonLabel,
+                  hintText: 'Short reason for the audit trail',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'Operator note',
+                  hintText: helperText.isEmpty
+                      ? 'Optional extra context'
+                      : helperText,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop((
+                  reason: reasonController.text.trim(),
+                  note: noteController.text.trim(),
+                ));
+              },
+              child: Text(submitLabel),
+            ),
+          ],
+        );
+      },
+    );
+
+    reasonController.dispose();
+    noteController.dispose();
+    if (result != null && result.reason.isEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add a short reason for the audit trail.')),
+      );
+      return null;
+    }
+    return result;
+  }
+
   void _seedSelection(UsersDevicesControlSnapshot snapshot) {
     if (_seeded) {
       return;
@@ -60,6 +128,15 @@ class _UsersDevicesPinsScreenState
   Future<void> _setPrimaryPin() async {
     final userId = _selectedUserId;
     if (userId == null || _busy) {
+      return;
+    }
+
+    final snapshot = await ref.read(usersDevicesPinRegistrySnapshotProvider.future);
+    final existingPins = snapshot.recordsForUser(userId);
+    final hasExistingUnlockPath = existingPins.any(
+      (pin) => pin.status == 'active' || pin.status == 'recovery',
+    );
+    if (!mounted) {
       return;
     }
 
@@ -114,6 +191,19 @@ class _UsersDevicesPinsScreenState
       return;
     }
 
+    final auditDetails = await _promptAuditDetails(
+      title: hasExistingUnlockPath ? 'Force reset reason' : 'Primary PIN reason',
+      submitLabel: hasExistingUnlockPath ? 'Force reset' : 'Save',
+      reasonLabel: hasExistingUnlockPath
+          ? 'Why is the PIN being reset?'
+          : 'Why is the PIN being set?',
+      helperText:
+          'Add any operator note that will help later if this change is reviewed.',
+    );
+    if (auditDetails == null) {
+      return;
+    }
+
     setState(() {
       _busy = true;
     });
@@ -127,9 +217,12 @@ class _UsersDevicesPinsScreenState
 
     await _auditPinChange(
       userId: userId,
-      eventType: 'pin_set',
-      action: 'set_primary_pin',
-      reason: 'Primary PIN updated locally.',
+      eventType: hasExistingUnlockPath ? 'pin_reset_forced' : 'pin_set',
+      action: hasExistingUnlockPath
+          ? 'force_reset_primary_pin'
+          : 'set_primary_pin',
+      reason: auditDetails.reason,
+      note: auditDetails.note,
     );
 
     if (mounted) {
@@ -176,6 +269,17 @@ class _UsersDevicesPinsScreenState
       return;
     }
 
+    final auditDetails = await _promptAuditDetails(
+      title: 'Issue recovery PIN',
+      submitLabel: 'Issue recovery PIN',
+      reasonLabel: 'Why is recovery access needed?',
+      helperText:
+          'Example: primary PIN lost, user locked out, emergency support call.',
+    );
+    if (auditDetails == null) {
+      return;
+    }
+
     setState(() {
       _busy = true;
     });
@@ -186,7 +290,8 @@ class _UsersDevicesPinsScreenState
       userId: userId,
       eventType: 'pin_recovery_issued',
       action: 'issue_recovery_pin',
-      reason: 'Recovery PIN issued locally.',
+      reason: auditDetails.reason,
+      note: auditDetails.note,
     );
 
     if (!mounted) {
@@ -210,6 +315,17 @@ class _UsersDevicesPinsScreenState
       return;
     }
 
+    final auditDetails = await _promptAuditDetails(
+      title: 'Revoke all PINs',
+      submitLabel: 'Revoke all',
+      reasonLabel: 'Why are all PINs being revoked?',
+      helperText:
+          'Example: user offboarded, compromise suspected, rotate all credentials.',
+    );
+    if (auditDetails == null) {
+      return;
+    }
+
     setState(() {
       _busy = true;
     });
@@ -221,7 +337,8 @@ class _UsersDevicesPinsScreenState
       userId: userId,
       eventType: 'pin_revoked',
       action: 'revoke_all_pins',
-      reason: 'All local PINs revoked for the user.',
+      reason: auditDetails.reason,
+      note: auditDetails.note,
     );
 
     if (mounted) {
@@ -241,6 +358,17 @@ class _UsersDevicesPinsScreenState
       return;
     }
 
+    final auditDetails = await _promptAuditDetails(
+      title: 'Revoke ${record.label}',
+      submitLabel: 'Revoke PIN',
+      reasonLabel: 'Why is this PIN being revoked?',
+      helperText:
+          'Example: recovery PIN consumed, code exposed, or PIN replaced.',
+    );
+    if (auditDetails == null) {
+      return;
+    }
+
     setState(() {
       _busy = true;
     });
@@ -250,7 +378,8 @@ class _UsersDevicesPinsScreenState
       userId: record.userId,
       eventType: 'pin_revoked',
       action: 'revoke_pin',
-      reason: '${record.label} revoked locally.',
+      reason: auditDetails.reason,
+      note: auditDetails.note,
     );
 
     if (mounted) {
@@ -269,6 +398,7 @@ class _UsersDevicesPinsScreenState
     required String eventType,
     required String action,
     required String reason,
+    String note = '',
   }) async {
     final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
     final user = snapshot.users.firstWhere(
@@ -300,7 +430,7 @@ class _UsersDevicesPinsScreenState
           targetModule: '01_USERS_AND_DEVICES_CONTROL',
           action: action,
           result: 'allowed',
-          reason: reason,
+          reason: note.isEmpty ? reason : '$reason Note: $note',
         );
   }
 

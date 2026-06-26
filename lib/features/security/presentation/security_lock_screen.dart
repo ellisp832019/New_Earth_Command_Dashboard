@@ -228,6 +228,19 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     }
 
     if (decision.allowed) {
+      if (pinDecision.issueCode == 'recovery_allowed') {
+        await repository.createAuditEvent(
+          actorId: userId,
+          deviceId: deviceId,
+          eventType: 'pin_recovery_used',
+          targetModule: '01_USERS_AND_DEVICES_CONTROL',
+          action: 'unlock_with_recovery_pin',
+          result: 'allowed',
+          reason:
+              'Recovery PIN was used to unlock the local session and should now be rotated.',
+        );
+      }
+
       final updatedSnapshot = await ref.read(
         usersDevicesControlSnapshotProvider.future,
       );
