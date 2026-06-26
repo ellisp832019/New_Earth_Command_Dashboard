@@ -4,6 +4,10 @@ This queue turns the Users & Devices commit split plan into a ready-to-use order
 
 Use it when the next implementation slice starts.
 
+Pair it with:
+
+- [`users_devices_upgrade_roadmap.md`](users_devices_upgrade_roadmap.md)
+
 ## Queue Rule
 
 Land one commit at a time.
@@ -154,4 +158,3 @@ If only two commits fit into one session, do these first:
 2. PIN registry and per-user PIN handling
 
 That gives the most visible safety improvement with the least ambiguity.
-
