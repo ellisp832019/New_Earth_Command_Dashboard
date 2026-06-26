@@ -1219,10 +1219,27 @@ class _UsersDevicesDeviceOnboardingScreenState
   String _template = 'standard';
   String _historyQuery = '';
   String _historyFilter = 'all';
+  String? _selectedOnboardingUserId;
+
+  void _seedOnboardingUser(UsersDevicesControlSnapshot snapshot) {
+    if (_selectedOnboardingUserId != null &&
+        snapshot.users.any((user) => user.id == _selectedOnboardingUserId)) {
+      return;
+    }
+    _selectedOnboardingUserId = snapshot.users.isEmpty
+        ? null
+        : snapshot.users
+              .firstWhere(
+                (user) => user.status == 'active',
+                orElse: () => snapshot.users.first,
+              )
+              .id;
+  }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    final pinsSnapshot = ref.watch(usersDevicesPinRegistrySnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Device Onboarding'),
       error: (error, stackTrace) => _ErrorScreen(
@@ -1245,6 +1262,56 @@ class _UsersDevicesDeviceOnboardingScreenState
                 .where((event) => event.eventType == 'device_trust_confirmed')
                 .toList(growable: false)
               ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        _seedOnboardingUser(data);
+        final pins = pinsSnapshot.maybeWhen(
+          data: (snapshot) => snapshot,
+          orElse: () => const UsersDevicesPinRegistrySnapshot(
+            records: <UsersDevicesPinRecord>[],
+          ),
+        );
+        final selectedUser = _selectedOnboardingUserId == null
+            ? null
+            : data.users.firstWhere(
+                (user) => user.id == _selectedOnboardingUserId,
+                orElse: () => data.users.first,
+              );
+        final selectedPrimaryPin = selectedUser == null
+            ? null
+            : pins.primaryPinForUser(selectedUser.id);
+        final selectedRecoveryPins = selectedUser == null
+            ? const <UsersDevicesPinRecord>[]
+            : pins.recoveryPinsForUser(selectedUser.id);
+        final linkedDevices = selectedUser == null
+            ? const <UsersDevicesControlDevice>[]
+            : data.devices
+                  .where(
+                    (device) =>
+                        selectedUser.linkedDevices.contains(device.id) ||
+                        device.ownerId == selectedUser.id,
+                  )
+                  .toList(growable: false);
+        final trustedLinkedDevices = linkedDevices
+            .where((device) => device.trustLevel >= 3 && device.status != 'blocked')
+            .toList(growable: false);
+        final hasRoleAndPermissions =
+            selectedUser != null &&
+            selectedUser.role.trim().isNotEmpty &&
+            selectedUser.permissions.isNotEmpty;
+        final hasPrimaryPin = selectedPrimaryPin != null;
+        final hasTrustedDevice = trustedLinkedDevices.isNotEmpty;
+        final accessReady =
+            selectedUser != null &&
+            hasRoleAndPermissions &&
+            hasPrimaryPin &&
+            hasTrustedDevice;
+        final roleStepBody = hasRoleAndPermissions
+            ? '${selectedUser.role} is assigned and local permissions are present.'
+            : 'Open Users to assign the right role and make sure this person carries the permissions they need.';
+        final pinStepBody = hasPrimaryPin
+            ? 'Primary label: ${selectedPrimaryPin.label}. Recovery PINs live alongside it for support only.'
+            : selectedRecoveryPins.isNotEmpty
+            ? 'Recovery PIN exists, but this user still needs a fresh primary PIN for normal unlock.'
+            : 'Open PIN Registry and assign a primary PIN before this user tries to unlock locally.';
         final query = _historyQuery.trim().toLowerCase();
         final filteredTrustEvents = trustEvents
             .where((event) {
@@ -1346,6 +1413,171 @@ class _UsersDevicesDeviceOnboardingScreenState
                         context.go(RouteNames.usersDevicesApprovalQueue),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'User readiness workspace',
+                subtitle:
+                    'Guide one person from identity setup through to a trusted, testable local access posture.',
+                icon: Icons.assignment_turned_in_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedUser?.id,
+                      decoration: const InputDecoration(
+                        labelText: 'Selected user',
+                      ),
+                      items: [
+                        for (final user in data.users)
+                          DropdownMenuItem<String>(
+                            value: user.id,
+                            child: Text('${user.displayName} (${user.role})'),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedOnboardingUserId = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _CardChip(
+                          label: selectedUser == null
+                              ? 'No user selected'
+                              : 'User: ${selectedUser.displayName}',
+                        ),
+                        _CardChip(
+                          label: hasRoleAndPermissions
+                              ? 'Role ready'
+                              : 'Role needs work',
+                        ),
+                        _CardChip(
+                          label: hasPrimaryPin
+                              ? 'Primary PIN set'
+                              : 'Primary PIN missing',
+                        ),
+                        _CardChip(
+                          label: hasTrustedDevice
+                              ? '${trustedLinkedDevices.length} trusted device${trustedLinkedDevices.length == 1 ? '' : 's'}'
+                              : 'Trusted device missing',
+                        ),
+                        _CardChip(
+                          label: accessReady
+                              ? 'Access ready'
+                              : 'Access not verified',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _StepCard(
+                      step: '1',
+                      title: selectedUser == null
+                          ? 'Choose a user'
+                          : 'Identity selected',
+                      body: selectedUser == null
+                          ? 'Pick the local user you want to bring through onboarding.'
+                          : '${selectedUser.displayName} is the active onboarding target for this checklist.',
+                      accentColor: selectedUser != null
+                          ? const Color(0xFF7EE6C5)
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    _StepCard(
+                      step: '2',
+                      title: hasRoleAndPermissions
+                          ? 'Role and permissions set'
+                          : 'Assign role and permissions',
+                      body: roleStepBody,
+                      accentColor: hasRoleAndPermissions
+                          ? const Color(0xFF7EE6C5)
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    _StepCard(
+                      step: '3',
+                      title: hasPrimaryPin
+                          ? 'Primary PIN is ready'
+                          : 'Set a primary PIN',
+                      body: pinStepBody,
+                      accentColor: hasPrimaryPin
+                          ? const Color(0xFF7EE6C5)
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    _StepCard(
+                      step: '4',
+                      title: hasTrustedDevice
+                          ? 'Trusted device linked'
+                          : 'Trust a linked device',
+                      body: hasTrustedDevice
+                          ? 'Trusted device${trustedLinkedDevices.length == 1 ? '' : 's'}: ${trustedLinkedDevices.map((device) => device.name).join(', ')}.'
+                          : linkedDevices.isNotEmpty
+                          ? 'This user has linked devices, but none are trusted enough yet. Use the onboarding wizard to raise the trust posture.'
+                          : 'No linked device is ready. Start onboarding to register and pair a device for this user.',
+                      accentColor: hasTrustedDevice
+                          ? const Color(0xFF7EE6C5)
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    _StepCard(
+                      step: '5',
+                      title: accessReady
+                          ? 'Ready to verify access'
+                          : 'Verify the access path',
+                      body: accessReady
+                          ? 'This user now has identity, role, PIN, and trusted device coverage. Open Security Lock or an access gate to test the route.'
+                          : 'Finish the earlier steps first, then open Security Lock or a gated module to confirm the local route behaves as expected.',
+                      accentColor: accessReady
+                          ? const Color(0xFF7EE6C5)
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(RouteNames.usersDevicesUsers),
+                          icon: const Icon(Icons.people_outline),
+                          label: const Text('Open Users'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(RouteNames.usersDevicesPins),
+                          icon: const Icon(Icons.pin_outlined),
+                          label: const Text('Open PIN Registry'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _openOnboardingWizard(
+                            context,
+                            ref,
+                            template: _template,
+                          ),
+                          icon: const Icon(Icons.phonelink_setup_outlined),
+                          label: const Text('Start onboarding'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(RouteNames.usersDevicesAccessMatrix),
+                          icon: const Icon(Icons.grid_view_outlined),
+                          label: const Text('Open Access Matrix'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: accessReady
+                              ? () => context.go(
+                                    RouteNames.securityLock,
+                                  )
+                              : null,
+                          icon: const Icon(Icons.lock_open_outlined),
+                          label: const Text('Verify access'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _VisualPanel(
@@ -1597,31 +1829,6 @@ class _UsersDevicesDeviceOnboardingScreenState
                                       subtitle: device.type,
                                       body:
                                           '${device.trustPostureSummary}\nTrust T${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
-                                      trailing: Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: [
-                                          OutlinedButton(
-                                            onPressed: () => _openDeviceEditor(
-                                              context,
-                                              ref,
-                                              device: device,
-                                            ),
-                                            child: const Text('Edit device'),
-                                          ),
-                                          FilledButton.tonal(
-                                            onPressed: () =>
-                                                _openOnboardingWizard(
-                                                  context,
-                                                  ref,
-                                                  template: templateForType(
-                                                    device.type,
-                                                  ),
-                                                ),
-                                            child: const Text('Reopen wizard'),
-                                          ),
-                                        ],
-                                      ),
                                       chips: [
                                         _CardChip(
                                           label: 'T${device.trustLevel}',
@@ -1629,6 +1836,26 @@ class _UsersDevicesDeviceOnboardingScreenState
                                         _CardChip(label: device.status),
                                         _CardChip(
                                           label: device.trustPostureLabel,
+                                        ),
+                                      ],
+                                      actions: [
+                                        OutlinedButton(
+                                          onPressed: () => _openDeviceEditor(
+                                            context,
+                                            ref,
+                                            device: device,
+                                          ),
+                                          child: const Text('Edit device'),
+                                        ),
+                                        FilledButton.tonal(
+                                          onPressed: () => _openOnboardingWizard(
+                                            context,
+                                            ref,
+                                            template: templateForType(
+                                              device.type,
+                                            ),
+                                          ),
+                                          child: const Text('Reopen wizard'),
                                         ),
                                       ],
                                       onTap: () => _openDeviceEditor(
@@ -4168,11 +4395,13 @@ class _StepCard extends StatelessWidget {
     required this.step,
     required this.title,
     required this.body,
+    this.accentColor,
   });
 
   final String step;
   final String title;
   final String body;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -4181,7 +4410,19 @@ class _StepCard extends StatelessWidget {
       subtitle: body,
       icon: Icons.looks_one_outlined,
       compact: true,
-      child: const SizedBox.shrink(),
+      child: accentColor == null
+          ? const SizedBox.shrink()
+          : Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 56,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
     );
   }
 }

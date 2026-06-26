@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/features/security/presentation/security_lock_screen.dart';
 import 'package:new_earth_command_dashboard/features/users_devices_control/application/users_devices_control_controller.dart';
+import 'package:new_earth_command_dashboard/features/users_devices_control/application/users_devices_pin_registry_controller.dart';
 import 'package:new_earth_command_dashboard/features/users_devices_control/data/users_devices_control_repository.dart';
+import 'package:new_earth_command_dashboard/features/users_devices_control/data/users_devices_pin_registry_service.dart';
 import 'package:new_earth_command_dashboard/features/users_devices_control/presentation/users_devices_control_screen.dart';
 
 class FakeUsersDevicesControlRepository extends UsersDevicesControlRepository {
@@ -181,12 +183,39 @@ void main() {
   Widget buildTestApp(Widget child) {
     final snapshot = sampleSnapshot();
     final repository = FakeUsersDevicesControlRepository(snapshot);
+    final pins = UsersDevicesPinRegistrySnapshot(
+      records: [
+        UsersDevicesPinRecord(
+          pinId: 'pin_peter_primary',
+          userId: 'user_peter_owner',
+          label: 'Primary PIN',
+          pinCode: '4434',
+          status: 'active',
+          sourceLabel: 'Local admin',
+          createdAt: DateTime(2026, 6, 26),
+          updatedAt: DateTime(2026, 6, 26),
+        ),
+        UsersDevicesPinRecord(
+          pinId: 'pin_hayley_recovery',
+          userId: 'user_hayley_finance',
+          label: 'Recovery PIN',
+          pinCode: '112233',
+          status: 'recovery',
+          sourceLabel: 'Local admin',
+          createdAt: DateTime(2026, 6, 26),
+          updatedAt: DateTime(2026, 6, 26),
+        ),
+      ],
+    );
 
     return ProviderScope(
       overrides: [
         usersDevicesControlRepositoryProvider.overrideWithValue(repository),
         usersDevicesControlSnapshotProvider.overrideWith(
           (ref) async => snapshot,
+        ),
+        usersDevicesPinRegistrySnapshotProvider.overrideWith(
+          (ref) async => pins,
         ),
       ],
       child: MaterialApp(home: child),
@@ -273,9 +302,25 @@ void main() {
 
     expect(find.text('Recommended user'), findsOneWidget);
     expect(find.text('Use suggested user'), findsOneWidget);
-    expect(
-      find.textContaining('Peter Owner already has owner-level access'),
-      findsOneWidget,
+      expect(
+        find.textContaining('Peter Owner already has owner-level access'),
+        findsOneWidget,
+      );
+  });
+
+  testWidgets('device onboarding shows the guided user readiness workspace', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(const UsersDevicesDeviceOnboardingScreen()),
     );
+    await pumpUntilFound(tester, find.text('User readiness workspace'));
+
+    expect(find.text('User readiness workspace'), findsOneWidget);
+    expect(find.textContaining('Role and permissions set'), findsOneWidget);
+    expect(find.textContaining('Primary PIN is ready'), findsOneWidget);
+    expect(find.textContaining('Trusted device linked'), findsOneWidget);
+    expect(find.text('Verify access'), findsWidgets);
+    expect(find.text('Open PIN Registry'), findsOneWidget);
   });
 }
