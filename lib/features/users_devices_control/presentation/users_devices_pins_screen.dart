@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/routing/security_route_policy.dart';
 import '../application/users_devices_control_controller.dart';
 import '../application/users_devices_pin_registry_controller.dart';
 import '../data/users_devices_control_repository.dart';
@@ -347,7 +348,11 @@ class _UsersDevicesPinsScreenState
                         children: [
                           FilledButton.icon(
                             onPressed: () =>
-                                context.go(RouteNames.securityLock),
+                                context.go(
+                                  SecurityRoutePolicy.securityLockFrom(
+                                    GoRouterState.of(context).uri,
+                                  ),
+                                ),
                             icon: const Icon(Icons.lock_outline),
                             label: const Text('Open Security Lock'),
                           ),
@@ -628,7 +633,11 @@ class _UsersDevicesPinsScreenState
                               ),
                               OutlinedButton.icon(
                                 onPressed: () =>
-                                    context.push(RouteNames.securityLock),
+                                    context.push(
+                                      SecurityRoutePolicy.securityLockFrom(
+                                        GoRouterState.of(context).uri,
+                                      ),
+                                    ),
                                 icon: const Icon(Icons.lock_outline),
                                 label: const Text('Open Security Lock'),
                               ),

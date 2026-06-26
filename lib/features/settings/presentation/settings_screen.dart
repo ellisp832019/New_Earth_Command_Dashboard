@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/routing/security_route_policy.dart';
 import '../../security/application/security_session_controller.dart';
 import '../application/settings_controller.dart';
 import '../../voice_assistant/voice_speech_service.dart';
@@ -169,7 +170,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         children: [
                           FilledButton.tonalIcon(
                             onPressed: () {
-                              context.push(RouteNames.securityLock);
+                              context.push(
+                                SecurityRoutePolicy.securityLockFrom(
+                                  GoRouterState.of(context).uri,
+                                ),
+                              );
                             },
                             icon: const Icon(Icons.lock_outline),
                             label: const Text('Open Security Lock'),
@@ -180,7 +185,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ref
                                   .read(securitySessionProvider.notifier)
                                   .lockNow();
-                              context.go(RouteNames.securityLock);
+                              context.go(
+                                SecurityRoutePolicy.securityLockFrom(
+                                  GoRouterState.of(context).uri,
+                                ),
+                              );
                             },
                             icon: const Icon(Icons.lock_reset_outlined),
                             label: const Text('Lock now'),

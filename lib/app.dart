@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/database/app_database.dart';
 import 'core/routing/app_router.dart';
+import 'core/routing/security_route_policy.dart';
 import 'core/routing/route_names.dart';
 import 'core/theme/app_theme.dart';
 import 'features/security/application/security_session_controller.dart';
@@ -59,9 +60,9 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
       final wasUnlocked = previous?.isUnlocked ?? false;
       if (wasUnlocked && !next.isUnlocked) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final currentPath = appRouter.routeInformationProvider.value.uri.path;
-          if (currentPath != RouteNames.securityLock) {
-            appRouter.go(RouteNames.securityLock);
+          final currentUri = appRouter.routeInformationProvider.value.uri;
+          if (currentUri.path != RouteNames.securityLock) {
+            appRouter.go(SecurityRoutePolicy.securityLockFrom(currentUri));
           }
         });
       }
@@ -134,10 +135,12 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                   onInvoke: (intent) {
                     ref.read(securitySessionProvider.notifier).lockNow();
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      final currentPath =
-                          appRouter.routeInformationProvider.value.uri.path;
-                      if (currentPath != RouteNames.securityLock) {
-                        appRouter.go(RouteNames.securityLock);
+                      final currentUri =
+                          appRouter.routeInformationProvider.value.uri;
+                      if (currentUri.path != RouteNames.securityLock) {
+                        appRouter.go(
+                          SecurityRoutePolicy.securityLockFrom(currentUri),
+                        );
                       }
                     });
                     return null;
@@ -280,7 +283,8 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
   }
 
   void _openSecurityLock() {
-    appRouter.go(RouteNames.securityLock);
+    final currentUri = appRouter.routeInformationProvider.value.uri;
+    appRouter.go(SecurityRoutePolicy.securityLockFrom(currentUri));
   }
 
   void _openAccessMatrix() {

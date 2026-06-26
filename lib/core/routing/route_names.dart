@@ -158,6 +158,27 @@ abstract final class RouteNames {
   static const companyCommandCentre = '/modules/company-command-centre';
   static const omegaKnowledgeEngine = '/modules/omega-knowledge-engine';
   static const securityLock = '/security-lock';
+  static String securityLockWithResume(String route) {
+    final trimmedRoute = route.trim();
+    if (trimmedRoute.isEmpty) {
+      return securityLock;
+    }
+
+    final parsedRoute = Uri.tryParse(trimmedRoute);
+    if (parsedRoute == null || parsedRoute.path.isEmpty) {
+      return securityLock;
+    }
+
+    if (parsedRoute.path == securityLock) {
+      return securityLock;
+    }
+
+    return Uri(
+      path: securityLock,
+      queryParameters: {'resume': trimmedRoute},
+    ).toString();
+  }
+
   static const voiceStartupGate = '/voice/startup-gate';
   static const voice = '/voice';
   static const voiceConversation = '/voice/conversation';

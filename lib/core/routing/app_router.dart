@@ -95,6 +95,7 @@ import '../../features/voice_assistant/presentation/voice_startup_gate_route_scr
 import '../../features/wellbeing/presentation/add_wellbeing_checkin_screen.dart';
 import '../../features/wellbeing/presentation/wellbeing_screen.dart';
 import '../widgets/app_shell.dart';
+import 'security_route_policy.dart';
 import 'router_keys.dart';
 import 'route_names.dart';
 import '../modules/module_loader.dart';
@@ -113,19 +114,11 @@ final appRouter = GoRouter(
   initialLocation: RouteNames.securityLock,
   refreshListenable: SecuritySessionRouterBridge.refresh,
   redirect: (context, state) {
-    final path = state.uri.path;
     final session = SecuritySessionRouterBridge.current;
-    final isPublicRoute =
-        path == RouteNames.securityLock ||
-        path == RouteNames.usersDevices ||
-        (path.startsWith('${RouteNames.usersDevices}/') &&
-            path != RouteNames.usersDevicesPins);
-
-    if (!session.isUnlocked || session.isExpired) {
-      return isPublicRoute ? null : RouteNames.securityLock;
-    }
-
-    return null;
+    return SecurityRoutePolicy.redirectForSession(
+      requestedUri: state.uri,
+      session: session,
+    );
   },
   routes: [
     StatefulShellRoute.indexedStack(

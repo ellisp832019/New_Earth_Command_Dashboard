@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../routing/route_names.dart';
+import '../routing/security_route_policy.dart';
 import '../theme/app_colours.dart';
 import '../../features/security/application/security_session_controller.dart';
 import '../windowing/desktop_presence_controller.dart';
@@ -683,7 +684,11 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
               tooltip: 'Lock now',
               onPressed: () async {
                 ref.read(securitySessionProvider.notifier).lockNow();
-                context.go(RouteNames.securityLock);
+                context.go(
+                  SecurityRoutePolicy.securityLockFrom(
+                    GoRouterState.of(context).uri,
+                  ),
+                );
               },
             ),
             _DesktopWindowButton(

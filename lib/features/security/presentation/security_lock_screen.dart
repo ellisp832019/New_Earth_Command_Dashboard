@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/routing/security_route_policy.dart';
 import '../../../core/widgets/desktop_startup_backdrop.dart';
 import '../application/security_session_controller.dart';
 import '../../settings/application/settings_controller.dart';
@@ -36,6 +37,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
   String? _selectedUserId;
   String? _selectedDeviceId;
   bool _seededDefaults = false;
+
+  String? _postUnlockRoute(BuildContext context) {
+    return SecurityRoutePolicy.resumeRouteFrom(GoRouterState.of(context).uri);
+  }
 
   @override
   void initState() {
@@ -253,7 +258,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         if (!mounted) {
           return;
         }
-        context.go(RouteNames.dashboard);
+        context.go(_postUnlockRoute(context) ?? RouteNames.dashboard);
       }
       return;
     }
@@ -420,11 +425,22 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                     ? 'Continue to voice gate'
                                     : 'Open dashboard',
                                 onContinue: _canContinue
-                                    ? () => context.go(
-                                        voiceStartupGateEnabled
-                                            ? RouteNames.voiceStartupGate
-                                            : RouteNames.dashboard,
-                                      )
+                                    ? () {
+                                        final postUnlockRoute =
+                                            _postUnlockRoute(context);
+                                        if (!voiceStartupGateEnabled ||
+                                            (postUnlockRoute != null &&
+                                                postUnlockRoute !=
+                                                    RouteNames.dashboard)) {
+                                          context.go(
+                                            postUnlockRoute ??
+                                                RouteNames.dashboard,
+                                          );
+                                          return;
+                                        }
+
+                                        context.go(RouteNames.voiceStartupGate);
+                                      }
                                     : null,
                                 onOpenUsersDevices: () =>
                                     context.push(RouteNames.usersDevices),
