@@ -61,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -77,6 +77,15 @@ class AppDatabase extends _$AppDatabase {
               source_label TEXT NOT NULL,
               notes TEXT NOT NULL DEFAULT '',
               created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+          ''');
+          await migrator.database.customStatement('''
+            CREATE TABLE IF NOT EXISTS users_devices_control_pin_lockouts (
+              user_id TEXT PRIMARY KEY NOT NULL,
+              failed_attempts INTEGER NOT NULL DEFAULT 0,
+              locked_until TEXT,
+              last_failed_at TEXT,
               updated_at TEXT NOT NULL
             )
           ''');
@@ -153,6 +162,18 @@ class AppDatabase extends _$AppDatabase {
                 source_label TEXT NOT NULL,
                 notes TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+              )
+            ''');
+          }
+
+          if (from < 15) {
+            await migrator.database.customStatement('''
+              CREATE TABLE IF NOT EXISTS users_devices_control_pin_lockouts (
+                user_id TEXT PRIMARY KEY NOT NULL,
+                failed_attempts INTEGER NOT NULL DEFAULT 0,
+                locked_until TEXT,
+                last_failed_at TEXT,
                 updated_at TEXT NOT NULL
               )
             ''');

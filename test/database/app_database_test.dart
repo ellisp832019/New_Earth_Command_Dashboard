@@ -35,6 +35,7 @@ void main() {
         'journal_entries',
         'learning_items',
         'projects',
+        'users_devices_control_pin_lockouts',
         'users_devices_control_pin_records',
         'tasks',
         'voice_audit_logs',
@@ -190,6 +191,6 @@ void main() {
         .map((row) => row.read<int>('user_version'))
         .getSingle();
 
-    expect(userVersion, 14);
+    expect(userVersion, 15);
   });
 }

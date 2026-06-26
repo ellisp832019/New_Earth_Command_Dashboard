@@ -140,6 +140,9 @@ class UsersDevicesPinAccessDecision {
     required this.nextStep,
     required this.issueCode,
     this.record,
+    this.failedAttempts = 0,
+    this.remainingAttempts = 0,
+    this.lockedUntil,
   });
 
   final bool allowed;
@@ -147,6 +150,28 @@ class UsersDevicesPinAccessDecision {
   final String nextStep;
   final String issueCode;
   final UsersDevicesPinRecord? record;
+  final int failedAttempts;
+  final int remainingAttempts;
+  final DateTime? lockedUntil;
+}
+
+class UsersDevicesPinLockoutState {
+  const UsersDevicesPinLockoutState({
+    required this.userId,
+    required this.failedAttempts,
+    required this.updatedAt,
+    this.lockedUntil,
+    this.lastFailedAt,
+  });
+
+  final String userId;
+  final int failedAttempts;
+  final DateTime updatedAt;
+  final DateTime? lockedUntil;
+  final DateTime? lastFailedAt;
+
+  bool isLockedAt(DateTime now) =>
+      lockedUntil != null && lockedUntil!.isAfter(now);
 }
 
 class UsersDevicesPinRegistryService {
@@ -155,12 +180,18 @@ class UsersDevicesPinRegistryService {
     this.moduleRootPath = 'modules/01_USERS_AND_DEVICES_CONTROL',
     this.storageNamespace = 'users_devices_control',
     this.legacyPinsFilePath,
-  });
+    this.maxFailedAttempts = 3,
+    this.lockoutDuration = const Duration(minutes: 5),
+    DateTime Function()? nowProvider,
+  }) : _nowProvider = nowProvider;
 
   final AppDatabase? database;
   final String moduleRootPath;
   final String storageNamespace;
   final String? legacyPinsFilePath;
+  final int maxFailedAttempts;
+  final Duration lockoutDuration;
+  final DateTime Function()? _nowProvider;
 
   Future<UsersDevicesPinRegistrySnapshot> loadSnapshot() async {
     return UsersDevicesPinRegistrySnapshot(records: await _readPins());
@@ -173,6 +204,7 @@ class UsersDevicesPinRegistryService {
     }
 
     await db.customStatement('DELETE FROM users_devices_control_pin_records');
+    await db.customStatement('DELETE FROM users_devices_control_pin_lockouts');
     await _seedDatabaseFromJson(db);
   }
 
@@ -184,7 +216,7 @@ class UsersDevicesPinRegistryService {
     String notes = '',
   }) async {
     final pins = await _readPins();
-    final now = DateTime.now().toUtc();
+    final now = _now();
     final updated = <UsersDevicesPinRecord>[
       for (final pin in pins)
         if (pin.userId == userId && pin.status == 'active')
@@ -204,6 +236,7 @@ class UsersDevicesPinRegistryService {
       ),
     ];
     await _writePins(updated);
+    await _clearLockout(userId);
     return updated.last;
   }
 
@@ -213,7 +246,7 @@ class UsersDevicesPinRegistryService {
     String sourceLabel = 'Local admin',
     String notes = 'Use this if the primary PIN is lost.',
   }) async {
-    final now = DateTime.now().toUtc();
+    final now = _now();
     final recoveryPin = _generateNumericPin(6);
     final pins = await _readPins();
     final record = UsersDevicesPinRecord(
@@ -236,12 +269,13 @@ class UsersDevicesPinRegistryService {
       record,
     ];
     await _writePins(updated);
+    await _clearLockout(userId);
     return record;
   }
 
   Future<void> revokePin(String pinId) async {
     final pins = await _readPins();
-    final now = DateTime.now().toUtc();
+    final now = _now();
     var changed = false;
     final updated = <UsersDevicesPinRecord>[];
     for (final pin in pins) {
@@ -262,7 +296,7 @@ class UsersDevicesPinRegistryService {
 
   Future<void> revokeAllPinsForUser(String userId) async {
     final pins = await _readPins();
-    final now = DateTime.now().toUtc();
+    final now = _now();
     final updated = pins
         .map(
           (pin) => pin.userId == userId && pin.status != 'revoked'
@@ -271,15 +305,32 @@ class UsersDevicesPinRegistryService {
         )
         .toList(growable: false);
     await _writePins(updated);
+    await _clearLockout(userId);
   }
 
   Future<UsersDevicesPinAccessDecision> validatePinForUser(
     String userId,
     String pinCode,
   ) async {
+    final now = _now();
     final snapshot = await loadSnapshot();
+    final lockoutState = await _readLockoutState(userId);
     final primaryPin = snapshot.primaryPinForUser(userId);
     final recoveryPins = snapshot.recoveryPinsForUser(userId);
+
+    if (lockoutState != null && lockoutState.isLockedAt(now)) {
+      return UsersDevicesPinAccessDecision(
+        allowed: false,
+        reason:
+            'Too many failed PIN attempts. Unlock is paused for ${_formatDuration(lockoutState.lockedUntil!.difference(now))}.',
+        nextStep:
+            'Wait for the timer to finish, or issue a fresh PIN from PIN Registry if the user needs help.',
+        issueCode: 'locked_out',
+        failedAttempts: lockoutState.failedAttempts,
+        remainingAttempts: 0,
+        lockedUntil: lockoutState.lockedUntil,
+      );
+    }
 
     if (primaryPin == null && recoveryPins.isEmpty) {
       return const UsersDevicesPinAccessDecision(
@@ -291,6 +342,7 @@ class UsersDevicesPinRegistryService {
     }
 
     if (primaryPin != null && primaryPin.pinCode == pinCode) {
+      await _clearLockout(userId);
       return UsersDevicesPinAccessDecision(
         allowed: true,
         reason: 'Primary PIN matched the selected identity.',
@@ -302,6 +354,7 @@ class UsersDevicesPinRegistryService {
 
     for (final record in recoveryPins) {
       if (record.pinCode == pinCode) {
+        await _clearLockout(userId);
         return UsersDevicesPinAccessDecision(
           allowed: true,
           reason: 'Recovery PIN matched the selected identity.',
@@ -313,13 +366,31 @@ class UsersDevicesPinRegistryService {
       }
     }
 
+    final failedState = await _recordFailedAttempt(userId: userId, now: now);
+
+    if (failedState.isLockedAt(now)) {
+      return UsersDevicesPinAccessDecision(
+        allowed: false,
+        reason:
+            'Too many failed PIN attempts. Unlock is paused for ${_formatDuration(lockoutDuration)}.',
+        nextStep:
+            'Wait for the timer to finish, or issue a recovery PIN from PIN Registry if the user is locked out.',
+        issueCode: 'locked_out',
+        failedAttempts: failedState.failedAttempts,
+        remainingAttempts: 0,
+        lockedUntil: failedState.lockedUntil,
+      );
+    }
+
     if (primaryPin == null && recoveryPins.isNotEmpty) {
-      return const UsersDevicesPinAccessDecision(
+      return UsersDevicesPinAccessDecision(
         allowed: false,
         reason: 'This user does not have an active primary PIN right now.',
         nextStep:
-            'Use the latest recovery PIN from PIN Registry, then set a fresh primary PIN after unlock.',
+            'Use the latest recovery PIN from PIN Registry, then set a fresh primary PIN after unlock. ${_remainingAttemptsMessage(failedState.failedAttempts)}',
         issueCode: 'primary_missing_recovery_available',
+        failedAttempts: failedState.failedAttempts,
+        remainingAttempts: _remainingAttempts(failedState.failedAttempts),
       );
     }
 
@@ -327,9 +398,11 @@ class UsersDevicesPinRegistryService {
       allowed: false,
       reason: 'Local PIN did not match the selected identity.',
       nextStep: recoveryPins.isNotEmpty
-          ? 'Check the primary PIN first, or use the latest recovery PIN from PIN Registry.'
-          : 'Check the PIN Registry or set a fresh primary PIN.',
+          ? 'Check the primary PIN first, or use the latest recovery PIN from PIN Registry. ${_remainingAttemptsMessage(failedState.failedAttempts)}'
+          : 'Check the PIN Registry or set a fresh primary PIN. ${_remainingAttemptsMessage(failedState.failedAttempts)}',
       issueCode: 'pin_mismatch',
+      failedAttempts: failedState.failedAttempts,
+      remainingAttempts: _remainingAttempts(failedState.failedAttempts),
     );
   }
 
@@ -421,6 +494,87 @@ class UsersDevicesPinRegistryService {
     });
   }
 
+  Future<UsersDevicesPinLockoutState?> _readLockoutState(String userId) async {
+    final db = database;
+    if (db == null) {
+      throw StateError('UsersDevicesPinRegistryService requires a database.');
+    }
+
+    final rows = await db
+        .customSelect(
+          'SELECT user_id, failed_attempts, locked_until, last_failed_at, updated_at '
+          'FROM users_devices_control_pin_lockouts WHERE user_id = ? LIMIT 1',
+          variables: [Variable<String>(userId)],
+        )
+        .get();
+    if (rows.isEmpty) {
+      return null;
+    }
+
+    final row = rows.first;
+    return UsersDevicesPinLockoutState(
+      userId: row.read<String>('user_id'),
+      failedAttempts: row.read<int>('failed_attempts'),
+      lockedUntil: _readNullableDateTime(row, 'locked_until'),
+      lastFailedAt: _readNullableDateTime(row, 'last_failed_at'),
+      updatedAt:
+          DateTime.tryParse(row.read<String>('updated_at')) ??
+          DateTime.now().toUtc(),
+    );
+  }
+
+  Future<UsersDevicesPinLockoutState> _recordFailedAttempt({
+    required String userId,
+    required DateTime now,
+  }) async {
+    final previous = await _readLockoutState(userId);
+    final failedAttempts = (previous?.failedAttempts ?? 0) + 1;
+    final lockedUntil = failedAttempts >= maxFailedAttempts
+        ? now.add(lockoutDuration)
+        : null;
+    final state = UsersDevicesPinLockoutState(
+      userId: userId,
+      failedAttempts: failedAttempts,
+      lockedUntil: lockedUntil,
+      lastFailedAt: now,
+      updatedAt: now,
+    );
+    await _writeLockoutState(state);
+    return state;
+  }
+
+  Future<void> _clearLockout(String userId) async {
+    final db = database;
+    if (db == null) {
+      throw StateError('UsersDevicesPinRegistryService requires a database.');
+    }
+
+    await db.customStatement(
+      'DELETE FROM users_devices_control_pin_lockouts WHERE user_id = ?',
+      [userId],
+    );
+  }
+
+  Future<void> _writeLockoutState(UsersDevicesPinLockoutState state) async {
+    final db = database;
+    if (db == null) {
+      throw StateError('UsersDevicesPinRegistryService requires a database.');
+    }
+
+    await db.customStatement(
+      'INSERT OR REPLACE INTO users_devices_control_pin_lockouts '
+      '(user_id, failed_attempts, locked_until, last_failed_at, updated_at) '
+      'VALUES (?, ?, ?, ?, ?)',
+      [
+        state.userId,
+        state.failedAttempts,
+        state.lockedUntil?.toUtc().toIso8601String(),
+        state.lastFailedAt?.toUtc().toIso8601String(),
+        state.updatedAt.toUtc().toIso8601String(),
+      ],
+    );
+  }
+
   Future<void> _seedDatabaseFromJson(AppDatabase db) async {
     final fallbackFile = File(_examplePinsPath);
     if (!await fallbackFile.exists()) {
@@ -440,6 +594,7 @@ class UsersDevicesPinRegistryService {
 
     await db.transaction(() async {
       await db.customStatement('DELETE FROM users_devices_control_pin_records');
+      await db.customStatement('DELETE FROM users_devices_control_pin_lockouts');
       for (final pin in records) {
         await db.customInsert(
           'INSERT INTO users_devices_control_pin_records '
@@ -459,7 +614,7 @@ class UsersDevicesPinRegistryService {
         );
       }
       if (records.isEmpty) {
-        final now = DateTime.now().toUtc();
+        final now = _now();
         await db.customInsert(
           'INSERT INTO users_devices_control_pin_records '
           '(pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at) '
@@ -500,6 +655,45 @@ class UsersDevicesPinRegistryService {
 
   String get _examplePinsPath =>
       path.join(moduleRootPath, 'data', 'pins.example.json');
+
+  DateTime _now() => (_nowProvider?.call() ?? DateTime.now()).toUtc();
+
+  int _remainingAttempts(int failedAttempts) {
+    final remaining = maxFailedAttempts - failedAttempts;
+    return remaining <= 0 ? 0 : remaining;
+  }
+
+  String _remainingAttemptsMessage(int failedAttempts) {
+    final remaining = _remainingAttempts(failedAttempts);
+    if (remaining <= 0) {
+      return 'No attempts remain before lockout.';
+    }
+    if (remaining == 1) {
+      return '1 attempt remains before lockout.';
+    }
+    return '$remaining attempts remain before lockout.';
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.isNegative || duration.inSeconds <= 0) {
+      return '0s';
+    }
+
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60);
+    if (minutes > 0) {
+      return '${minutes}m ${seconds.toString().padLeft(2, '0')}s';
+    }
+    return '${duration.inSeconds}s';
+  }
+
+  DateTime? _readNullableDateTime(dynamic row, String column) {
+    final raw = row.read<String?>(column);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(raw);
+  }
 
   String _generateNumericPin(int length) {
     final random = Random();

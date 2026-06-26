@@ -208,6 +208,8 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
             'No PIN check ran because this user has no local PIN yet.',
           'primary_missing_recovery_available' =>
             'Primary PIN is missing. Recovery path is available in PIN Registry.',
+          'locked_out' =>
+            'Too many PIN attempts were made. Unlock is paused until the cooldown ends.',
           _ => 'PIN check failed before access control.',
         };
         _latestAuditEventId = null;

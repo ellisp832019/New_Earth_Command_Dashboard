@@ -110,4 +110,109 @@ void main() {
         .get();
     expect(storedPins.any((row) => row.read<String>('pin_code') == '4434'), isTrue);
   });
+
+  test('PIN registry locks a user after repeated failed attempts and clears after cooldown', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    var now = DateTime.utc(2026, 6, 26, 9, 0, 0);
+    final service = UsersDevicesPinRegistryService(
+      database: database,
+      maxFailedAttempts: 3,
+      lockoutDuration: const Duration(minutes: 5),
+      nowProvider: () => now,
+    );
+
+    final snapshot = await service.loadSnapshot();
+    final selected = snapshot.records.firstWhere(
+      (record) => record.status == 'active',
+    );
+
+    final firstFailure = await service.validatePinForUser(
+      selected.userId,
+      '000000',
+    );
+    expect(firstFailure.allowed, isFalse);
+    expect(firstFailure.issueCode, 'pin_mismatch');
+    expect(firstFailure.failedAttempts, 1);
+    expect(firstFailure.remainingAttempts, 2);
+
+    final secondFailure = await service.validatePinForUser(
+      selected.userId,
+      '000000',
+    );
+    expect(secondFailure.allowed, isFalse);
+    expect(secondFailure.issueCode, 'pin_mismatch');
+    expect(secondFailure.failedAttempts, 2);
+    expect(secondFailure.remainingAttempts, 1);
+
+    final thirdFailure = await service.validatePinForUser(
+      selected.userId,
+      '000000',
+    );
+    expect(thirdFailure.allowed, isFalse);
+    expect(thirdFailure.issueCode, 'locked_out');
+    expect(thirdFailure.failedAttempts, 3);
+    expect(thirdFailure.remainingAttempts, 0);
+    expect(thirdFailure.lockedUntil, isA<DateTime>());
+
+    final blockedValidPin = await service.validatePinForUser(
+      selected.userId,
+      selected.pinCode,
+    );
+    expect(blockedValidPin.allowed, isFalse);
+    expect(blockedValidPin.issueCode, 'locked_out');
+
+    now = now.add(const Duration(minutes: 6));
+    final postCooldownSuccess = await service.validatePinForUser(
+      selected.userId,
+      selected.pinCode,
+    );
+    expect(postCooldownSuccess.allowed, isTrue);
+    expect(postCooldownSuccess.issueCode, 'primary_allowed');
+
+    final lockoutRows = await database
+        .customSelect(
+          'SELECT failed_attempts FROM users_devices_control_pin_lockouts WHERE user_id = ?',
+          variables: [Variable<String>(selected.userId)],
+        )
+        .get();
+    expect(lockoutRows, isEmpty);
+  });
+
+  test('successful unlock clears earlier failed attempts before the next mismatch', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final service = UsersDevicesPinRegistryService(
+      database: database,
+      maxFailedAttempts: 3,
+    );
+
+    final snapshot = await service.loadSnapshot();
+    final selected = snapshot.records.firstWhere(
+      (record) => record.status == 'active',
+    );
+
+    final firstFailure = await service.validatePinForUser(
+      selected.userId,
+      '999999',
+    );
+    expect(firstFailure.failedAttempts, 1);
+
+    final success = await service.validatePinForUser(
+      selected.userId,
+      selected.pinCode,
+    );
+    expect(success.allowed, isTrue);
+
+    final laterFailure = await service.validatePinForUser(
+      selected.userId,
+      '999999',
+    );
+    expect(laterFailure.allowed, isFalse);
+    expect(laterFailure.issueCode, 'pin_mismatch');
+    expect(laterFailure.failedAttempts, 1);
+    expect(laterFailure.remainingAttempts, 2);
+  });
 }
