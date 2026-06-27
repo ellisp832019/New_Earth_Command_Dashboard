@@ -5,12 +5,15 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/local_pdf_screen.dart';
 import '../application/treasury_monthly_summary_controller.dart';
 import '../../../core/widgets/folder_bootstrap_wizard.dart';
 import '../application/treasury_controller.dart';
 import '../application/treasury_wizard_draft_controller.dart';
 import '../data/treasury_folder_service.dart';
 import '../data/treasury_wizard_flow.dart';
+
+const _treasuryWeeklyPackPdfPath = 'output/pdf/treasury_weekly_reference_pack.pdf';
 
 const _treasuryUnavailableSnapshot = TreasuryWorkspaceSnapshot(
   configPath: 'config/local_paths.json',
@@ -519,6 +522,15 @@ class _TreasuryHeroCard extends StatelessWidget {
                       ),
                       icon: const Icon(Icons.bolt_outlined),
                       label: const Text('Low-energy mode'),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => openLocalPdfDocument(
+                        context,
+                        title: 'Treasury Weekly Pack PDF',
+                        pdfPath: _treasuryWeeklyPackPdfPath,
+                      ),
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Weekly Pack PDF'),
                     ),
                     TextButton.icon(
                       onPressed: onReload,

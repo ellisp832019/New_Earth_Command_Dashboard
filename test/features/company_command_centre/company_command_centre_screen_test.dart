@@ -299,6 +299,7 @@ void main() {
     await scrollToVisible(tester, find.text('Today at a glance'));
     expect(find.text('Today at a glance'), findsOneWidget);
     expect(find.text('Open LinkedIn'), findsWidgets);
+    expect(find.text('Founder Pack PDF'), findsWidgets);
 
     await scrollToVisible(tester, find.text('IP & Asset Register'));
     expect(find.text('IP & Asset Register'), findsOneWidget);

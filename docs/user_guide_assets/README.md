@@ -12,6 +12,12 @@ Files:
 Printable pack:
 
 - `output/pdf/users_devices_onboarding_pack.pdf`
+- `output/pdf/users_devices_recovery_drills_pack.pdf`
+
+Extra rendered drill pages:
+
+- `users_devices_recovery_drills_pack_page_1.png`
+- `users_devices_recovery_drills_pack_page_2.png`
 
 To rebuild the PDF pack:
 

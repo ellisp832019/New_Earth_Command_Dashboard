@@ -126,6 +126,18 @@ A PDF-ready pack is now also included for printing and laminating:
 
 That pack combines the readiness map and the handoff cheat sheet into a clean two-page reference.
 
+### 4. Recovery drills pack
+
+Use this second pack when you want the admin drill version focused on lost PINs and device trust recovery:
+
+- `output/pdf/users_devices_recovery_drills_pack.pdf`
+
+Preview pages:
+
+![Users and Devices recovery drills page 1](../../../docs/user_guide_assets/users_devices_recovery_drills_pack_page_1.png)
+
+![Users and Devices recovery drills page 2](../../../docs/user_guide_assets/users_devices_recovery_drills_pack_page_2.png)
+
 ## Startup flow
 
 Use this flow when you want to understand how the app opens now:

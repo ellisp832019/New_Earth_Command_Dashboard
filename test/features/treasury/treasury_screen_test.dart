@@ -101,6 +101,7 @@ void main() {
 
     expect(find.text('Module Hub'), findsNothing);
     expect(find.text('Back to More'), findsWidgets);
+    expect(find.text('Weekly Pack PDF'), findsOneWidget);
 
     await tester.tap(find.text('Back to More').first);
     await tester.pumpAndSettle();

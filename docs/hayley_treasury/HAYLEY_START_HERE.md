@@ -16,6 +16,18 @@ You should be able to open the Dashboard and quickly see:
 4. Save the review.
 5. Tell Peter the simple truth.
 
+## Printable pack
+
+Use the printable weekly pack when you want the calm wall version:
+
+- `output/pdf/treasury_weekly_reference_pack.pdf`
+
+Preview pages:
+
+![Treasury weekly pack page 1](../treasury_guide_assets/treasury_weekly_reference_pack_page_1.png)
+
+![Treasury weekly pack page 2](../treasury_guide_assets/treasury_weekly_reference_pack_page_2.png)
+
 ## Simple truth format
 ```text
 Green: safe.

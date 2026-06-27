@@ -44,3 +44,15 @@ src/modules/00_COMPANY_COMMAND_CENTRE
 2. Open the Module Hub from `More`.
 3. Select `Company Command Centre`, or open `/modules/company-command-centre` directly.
 4. Use the `Settings` tab to confirm the Omega OS source path.
+
+## Printable founder pack
+
+Use the founder reference pack when you want a calm printed workflow for company ops:
+
+- `output/pdf/company_command_centre_founder_pack.pdf`
+
+Preview pages:
+
+![Company founder pack page 1](../../docs/company_command_centre_assets/company_command_centre_founder_pack_page_1.png)
+
+![Company founder pack page 2](../../docs/company_command_centre_assets/company_command_centre_founder_pack_page_2.png)

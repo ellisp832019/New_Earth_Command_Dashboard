@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/local_pdf_screen.dart';
 import '../../assets/application/assets_controller.dart';
 import '../../assets/data/assets_folder_service.dart';
 import '../data/company_command_centre_config.dart';
@@ -16,6 +17,9 @@ import '../data/company_command_centre_index_service.dart';
 import '../data/company_command_centre_repository.dart';
 import '../data/company_command_centre_report_service.dart';
 import '../data/company_command_centre_write_service.dart';
+
+const _companyFounderPackPdfPath =
+    'output/pdf/company_command_centre_founder_pack.pdf';
 
 class CompanyCommandCentreScreen extends ConsumerStatefulWidget {
   const CompanyCommandCentreScreen({super.key});
@@ -374,6 +378,15 @@ class _OverviewTab extends StatelessWidget {
                   onPressed: () => _jumpToTab(context, 4),
                   icon: const Icon(Icons.cases_outlined),
                   label: const Text('LinkedIn tab'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => openLocalPdfDocument(
+                    context,
+                    title: 'Company Founder Pack PDF',
+                    pdfPath: _companyFounderPackPdfPath,
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('Founder Pack PDF'),
                 ),
                 _CompanyAssetMetric(label: 'Actions', value: '$actionCount'),
                 _CompanyAssetMetric(
