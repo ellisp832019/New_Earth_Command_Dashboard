@@ -171,6 +171,17 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     final deviceId =
         _selectedDeviceId ??
         (pairedDevices.isNotEmpty ? pairedDevices.first.id : '');
+    final selectedDevice = pairedDevices.isNotEmpty
+        ? pairedDevices.firstWhere(
+            (device) => device.id == deviceId,
+            orElse: () => pairedDevices.first,
+          )
+        : snapshot.devices.isEmpty
+        ? null
+        : snapshot.devices.firstWhere(
+            (device) => device.id == deviceId,
+            orElse: () => snapshot.devices.first,
+          );
     if (userId.isEmpty || deviceId.isEmpty) {
       if (!mounted) {
         return;
@@ -250,6 +261,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
           .read(securitySessionProvider.notifier)
           .unlock(
             activeUserLabel: selectedUser?.displayName,
+            activeDeviceLabel: selectedDevice?.name,
             activeUserOnline: selectedUser?.status == 'active',
           );
       final latestAudit = updatedSnapshot.auditLog.isNotEmpty

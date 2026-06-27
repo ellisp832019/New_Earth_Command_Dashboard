@@ -265,10 +265,15 @@ void main() {
     await tester.pumpWidget(buildTestApp(const UsersDevicesControlScreen()));
     await pumpUntilFound(tester, find.text('Register user'));
 
+    expect(find.text('Session checkpoint'), findsOneWidget);
+    expect(find.textContaining('Active user: none'), findsOneWidget);
+    expect(find.text('Open Security Lock'), findsOneWidget);
     expect(find.text('Register user'), findsWidgets);
     expect(find.text('Register device'), findsWidgets);
     expect(find.text('Create approval'), findsWidgets);
     expect(find.text('Open queue'), findsWidgets);
+    expect(find.text('Onboarding pack PDF'), findsWidgets);
+    expect(find.text('Recovery drills PDF'), findsWidgets);
     expect(find.text('Seed demo path'), findsWidgets);
     expect(find.text('Reset demo data'), findsWidgets);
     expect(find.text('Onboarding'), findsWidgets);
@@ -303,10 +308,10 @@ void main() {
 
     expect(find.text('Recommended user'), findsOneWidget);
     expect(find.text('Use suggested user'), findsOneWidget);
-      expect(
-        find.textContaining('Peter Owner already has owner-level access'),
-        findsOneWidget,
-      );
+    expect(
+      find.textContaining('Peter Owner already has owner-level access'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('device onboarding shows the guided user readiness workspace', (
@@ -329,22 +334,25 @@ void main() {
     expect(find.text('Next users to help'), findsOneWidget);
   });
 
-  testWidgets('onboarding report shows filtered admin status and handoff sheet', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      buildTestApp(
-        const UsersDevicesOnboardingReportScreen(
-          initialUserId: 'user_peter_owner',
+  testWidgets(
+    'onboarding report shows filtered admin status and handoff sheet',
+    (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          const UsersDevicesOnboardingReportScreen(
+            initialUserId: 'user_peter_owner',
+          ),
         ),
-      ),
-    );
-    await pumpUntilFound(tester, find.text('Copy summary'));
+      );
+      await pumpUntilFound(tester, find.text('Copy summary'));
 
-    expect(find.text('Onboarding Report'), findsOneWidget);
-    expect(find.text('Open onboarding'), findsOneWidget);
-    expect(find.text('Selected user for handoff sheet'), findsOneWidget);
-    expect(find.text('Copy summary'), findsWidgets);
-    expect(find.text('Ready'), findsWidgets);
-  });
+      expect(find.text('Onboarding Report'), findsOneWidget);
+      expect(find.text('Open onboarding'), findsOneWidget);
+      expect(find.text('Selected user for handoff sheet'), findsOneWidget);
+      expect(find.text('Copy summary'), findsWidgets);
+      expect(find.text('Onboarding pack PDF'), findsWidgets);
+      expect(find.text('Recovery drills PDF'), findsWidgets);
+      expect(find.text('Ready'), findsWidgets);
+    },
+  );
 }

@@ -33,6 +33,7 @@ class _TestUnlockedSecuritySessionNotifier extends SecuritySessionNotifier {
       lastActivityAt: now,
       expiresAt: now.add(const Duration(minutes: 15)),
       activeUserLabel: 'Test User',
+      activeDeviceLabel: 'TEST_DEVICE',
       activeUserOnline: true,
     );
     SecuritySessionRouterBridge.sync(unlocked);
@@ -72,10 +73,7 @@ Future<Project> createMicroGrowProject(AppDatabase database) {
   );
 }
 
-Widget buildDatabaseBackedTestApp(
-  AppDatabase database, {
-  Widget? child,
-}) {
+Widget buildDatabaseBackedTestApp(AppDatabase database, {Widget? child}) {
   return ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWith((ref) => database),

@@ -10,22 +10,25 @@ class SecuritySessionState {
     required this.lastActivityAt,
     required this.expiresAt,
     required this.activeUserLabel,
+    required this.activeDeviceLabel,
     required this.activeUserOnline,
   });
 
   const SecuritySessionState.locked({
     this.timeout = const Duration(minutes: 15),
-  })  : isUnlocked = false,
-        lastActivityAt = null,
-        expiresAt = null,
-        activeUserLabel = null,
-        activeUserOnline = false;
+  }) : isUnlocked = false,
+       lastActivityAt = null,
+       expiresAt = null,
+       activeUserLabel = null,
+       activeDeviceLabel = null,
+       activeUserOnline = false;
 
   final bool isUnlocked;
   final Duration timeout;
   final DateTime? lastActivityAt;
   final DateTime? expiresAt;
   final String? activeUserLabel;
+  final String? activeDeviceLabel;
   final bool activeUserOnline;
 
   bool get isExpired {
@@ -61,6 +64,7 @@ class SecuritySessionState {
     DateTime? lastActivityAt,
     DateTime? expiresAt,
     String? activeUserLabel,
+    String? activeDeviceLabel,
     bool? activeUserOnline,
   }) {
     return SecuritySessionState(
@@ -69,6 +73,7 @@ class SecuritySessionState {
       lastActivityAt: lastActivityAt ?? this.lastActivityAt,
       expiresAt: expiresAt ?? this.expiresAt,
       activeUserLabel: activeUserLabel ?? this.activeUserLabel,
+      activeDeviceLabel: activeDeviceLabel ?? this.activeDeviceLabel,
       activeUserOnline: activeUserOnline ?? this.activeUserOnline,
     );
   }
@@ -88,6 +93,7 @@ class SecuritySessionNotifier extends Notifier<SecuritySessionState> {
   void unlock({
     Duration? timeout,
     String? activeUserLabel,
+    String? activeDeviceLabel,
     bool activeUserOnline = false,
   }) {
     final resolvedTimeout = timeout ?? state.timeout;
@@ -98,6 +104,7 @@ class SecuritySessionNotifier extends Notifier<SecuritySessionState> {
       lastActivityAt: now,
       expiresAt: now.add(resolvedTimeout),
       activeUserLabel: activeUserLabel,
+      activeDeviceLabel: activeDeviceLabel,
       activeUserOnline: activeUserOnline,
     );
     SecuritySessionRouterBridge.sync(state);

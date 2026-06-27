@@ -49,6 +49,7 @@ class _TestUnlockedSecuritySessionNotifier extends SecuritySessionNotifier {
       lastActivityAt: now,
       expiresAt: now.add(const Duration(minutes: 15)),
       activeUserLabel: 'Test User',
+      activeDeviceLabel: 'TEST_DEVICE',
       activeUserOnline: true,
     );
     SecuritySessionRouterBridge.sync(unlocked);
@@ -128,7 +129,9 @@ void main() {
     final overrides = [
       databaseReadyProvider.overrideWith((ref) async {}),
       appThemeModeProvider.overrideWith((ref) => ThemeMode.light),
-      securitySessionProvider.overrideWith(_TestUnlockedSecuritySessionNotifier.new),
+      securitySessionProvider.overrideWith(
+        _TestUnlockedSecuritySessionNotifier.new,
+      ),
       voiceStartupGateProvider.overrideWith(
         (ref) async =>
             startupGateResult ??
@@ -241,7 +244,8 @@ void main() {
               status: 'Active',
               priority: 'High',
               progressPercentage: 0,
-              currentMilestone: 'Stabilise core diagnostics and v1.0 direction.',
+              currentMilestone:
+                  'Stabilise core diagnostics and v1.0 direction.',
               nextAction: 'Review current MicroGrow build priorities.',
               startDate: null,
               targetDate: null,
@@ -433,10 +437,7 @@ void main() {
     );
   }
 
-  Widget buildDatabaseBackedTestApp(
-    AppDatabase database, {
-    Widget? child,
-  }) {
+  Widget buildDatabaseBackedTestApp(AppDatabase database, {Widget? child}) {
     return ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => database),
@@ -1035,15 +1036,17 @@ void main() {
       (project) => project.name == 'MicroGrow',
     );
 
-    final createdTask = await container.read(tasksControllerProvider).createTask(
-      title: 'Build task add edit flow',
-      projectId: microGrow.projectId,
-      description: 'Create the first shared task editor screen.',
-      category: 'Test',
-      priority: 'High',
-      estimatedMinutes: 45,
-      notes: 'Keep the first pass focused.',
-    );
+    final createdTask = await container
+        .read(tasksControllerProvider)
+        .createTask(
+          title: 'Build task add edit flow',
+          projectId: microGrow.projectId,
+          description: 'Create the first shared task editor screen.',
+          category: 'Test',
+          priority: 'High',
+          estimatedMinutes: 45,
+          notes: 'Keep the first pass focused.',
+        );
 
     final tasks = await TaskRepository(database).getActiveTasks();
 
@@ -2158,14 +2161,8 @@ void main() {
     final service = VoiceCommandService();
     final templates = service.getTemplates();
 
-    expect(
-      templates.any((template) => template.id == 'build-day'),
-      isTrue,
-    );
-    expect(
-      templates.any((template) => template.id == 'daily-reset'),
-      isTrue,
-    );
+    expect(templates.any((template) => template.id == 'build-day'), isTrue);
+    expect(templates.any((template) => template.id == 'daily-reset'), isTrue);
     expect(
       templates.any((template) => template.id == 'project-update'),
       isTrue,
@@ -2207,14 +2204,8 @@ void main() {
     final service = VoiceCommandService();
     final templates = service.getTemplates();
 
-    expect(
-      templates.any((template) => template.id == 'carry-forward'),
-      isTrue,
-    );
-    expect(
-      templates.any((template) => template.id == 'meeting-notes'),
-      isTrue,
-    );
+    expect(templates.any((template) => template.id == 'carry-forward'), isTrue);
+    expect(templates.any((template) => template.id == 'meeting-notes'), isTrue);
     expect(
       templates.any((template) => template.id == 'project-checkpoint'),
       isTrue,
@@ -2223,10 +2214,7 @@ void main() {
       templates.any((template) => template.id == 'meeting-summary'),
       isTrue,
     );
-    expect(
-      templates.any((template) => template.id == 'voice-review'),
-      isTrue,
-    );
+    expect(templates.any((template) => template.id == 'voice-review'), isTrue);
   });
 
   testWidgets('voice assistant can open with a preset type from the dock', (
@@ -2362,5 +2350,4 @@ void main() {
     expect(restored?.transcript, transcript);
     expect(controller.text, transcript);
   });
-
 }

@@ -5,12 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/local_pdf_screen.dart';
 import '../../../core/routing/route_names.dart';
 import '../application/users_devices_control_controller.dart';
 import '../application/users_devices_pin_registry_controller.dart';
 import '../data/users_devices_control_repository.dart';
 import '../data/users_devices_pin_registry_service.dart';
 import '../../security/application/security_session_controller.dart';
+
+const _usersDevicesOnboardingPackPdfPath =
+    'output/pdf/users_devices_onboarding_pack.pdf';
+const _usersDevicesRecoveryDrillsPackPdfPath =
+    'output/pdf/users_devices_recovery_drills_pack.pdf';
 
 class UsersDevicesControlScreen extends ConsumerWidget {
   const UsersDevicesControlScreen({super.key});
@@ -100,6 +106,24 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                     onPressed: isSessionLocked
                         ? null
                         : () => context.go(RouteNames.usersDevicesPins),
+                  ),
+                  _ActionChip(
+                    label: 'Onboarding pack PDF',
+                    icon: Icons.picture_as_pdf_outlined,
+                    onPressed: () => openLocalPdfDocument(
+                      context,
+                      title: 'Users & Devices Onboarding Pack PDF',
+                      pdfPath: _usersDevicesOnboardingPackPdfPath,
+                    ),
+                  ),
+                  _ActionChip(
+                    label: 'Recovery drills PDF',
+                    icon: Icons.picture_as_pdf_outlined,
+                    onPressed: () => openLocalPdfDocument(
+                      context,
+                      title: 'Users & Devices Recovery Drills PDF',
+                      pdfPath: _usersDevicesRecoveryDrillsPackPdfPath,
+                    ),
                   ),
                   _ActionChip(
                     label: 'Seed demo path',
@@ -1309,7 +1333,8 @@ class _UsersDevicesDeviceOnboardingScreenState
               .toList(growable: false);
           final userTrustedDevices = userLinkedDevices
               .where(
-                (device) => device.trustLevel >= 3 && device.status != 'blocked',
+                (device) =>
+                    device.trustLevel >= 3 && device.status != 'blocked',
               )
               .toList(growable: false);
           final userHasRoleAndPermissions =
@@ -1341,7 +1366,9 @@ class _UsersDevicesDeviceOnboardingScreenState
                   )
                   .toList(growable: false);
         final trustedLinkedDevices = linkedDevices
-            .where((device) => device.trustLevel >= 3 && device.status != 'blocked')
+            .where(
+              (device) => device.trustLevel >= 3 && device.status != 'blocked',
+            )
             .toList(growable: false);
         final hasRoleAndPermissions =
             selectedUser != null &&
@@ -1380,29 +1407,33 @@ class _UsersDevicesDeviceOnboardingScreenState
         final missingTrustedDeviceUsersCount = onboardingStatuses
             .where((status) => !status.hasTrustedDevice)
             .length;
-        final usersNeedingHelp = onboardingStatuses
-            .where((status) => !status.accessReady)
-            .toList(growable: false)
-          ..sort((a, b) {
-            final scoreA =
-                (a.hasRoleAndPermissions ? 1 : 0) +
-                (a.hasPrimaryPin ? 1 : 0) +
-                (a.hasTrustedDevice ? 1 : 0);
-            final scoreB =
-                (b.hasRoleAndPermissions ? 1 : 0) +
-                (b.hasPrimaryPin ? 1 : 0) +
-                (b.hasTrustedDevice ? 1 : 0);
-            return scoreB.compareTo(scoreA);
-          });
-        final selectedAuditEvents = selectedUser == null
-            ? const <UsersDevicesControlAuditEvent>[]
-            : data.auditLog
-                  .where(
-                    (event) =>
-                        event.actorId == selectedUser.id ||
-                        linkedDevices.any((device) => device.id == event.deviceId),
-                  )
-                  .toList(growable: false)
+        final usersNeedingHelp =
+            onboardingStatuses
+                .where((status) => !status.accessReady)
+                .toList(growable: false)
+              ..sort((a, b) {
+                final scoreA =
+                    (a.hasRoleAndPermissions ? 1 : 0) +
+                    (a.hasPrimaryPin ? 1 : 0) +
+                    (a.hasTrustedDevice ? 1 : 0);
+                final scoreB =
+                    (b.hasRoleAndPermissions ? 1 : 0) +
+                    (b.hasPrimaryPin ? 1 : 0) +
+                    (b.hasTrustedDevice ? 1 : 0);
+                return scoreB.compareTo(scoreA);
+              });
+        final selectedAuditEvents =
+            selectedUser == null
+                  ? const <UsersDevicesControlAuditEvent>[]
+                  : data.auditLog
+                        .where(
+                          (event) =>
+                              event.actorId == selectedUser.id ||
+                              linkedDevices.any(
+                                (device) => device.id == event.deviceId,
+                              ),
+                        )
+                        .toList(growable: false)
               ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
         final latestSelectedAudit = selectedAuditEvents.isEmpty
             ? null
@@ -1644,9 +1675,7 @@ class _UsersDevicesDeviceOnboardingScreenState
                       body: accessReady
                           ? 'This user now has identity, role, PIN, and trusted device coverage. Open Security Lock or an access gate to test the route.'
                           : 'Finish the earlier steps first, then open Security Lock or a gated module to confirm the local route behaves as expected.',
-                      accentColor: accessReady
-                          ? const Color(0xFF7EE6C5)
-                          : null,
+                      accentColor: accessReady ? const Color(0xFF7EE6C5) : null,
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -1654,12 +1683,14 @@ class _UsersDevicesDeviceOnboardingScreenState
                       runSpacing: 10,
                       children: [
                         OutlinedButton.icon(
-                          onPressed: () => context.go(RouteNames.usersDevicesUsers),
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesUsers),
                           icon: const Icon(Icons.people_outline),
                           label: const Text('Open Users'),
                         ),
                         OutlinedButton.icon(
-                          onPressed: () => context.go(RouteNames.usersDevicesPins),
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesPins),
                           icon: const Icon(Icons.pin_outlined),
                           label: const Text('Open PIN Registry'),
                         ),
@@ -1673,15 +1704,14 @@ class _UsersDevicesDeviceOnboardingScreenState
                           label: const Text('Start onboarding'),
                         ),
                         OutlinedButton.icon(
-                          onPressed: () => context.go(RouteNames.usersDevicesAccessMatrix),
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesAccessMatrix),
                           icon: const Icon(Icons.grid_view_outlined),
                           label: const Text('Open Access Matrix'),
                         ),
                         FilledButton.icon(
                           onPressed: accessReady
-                              ? () => context.go(
-                                    RouteNames.securityLock,
-                                  )
+                              ? () => context.go(RouteNames.securityLock)
                               : null,
                           icon: const Icon(Icons.lock_open_outlined),
                           label: const Text('Verify access'),
@@ -1718,11 +1748,11 @@ class _UsersDevicesDeviceOnboardingScreenState
                           child: _EntityCard(
                             icon: Icons.people_outline,
                             title: 'Active onboarding users',
-                            subtitle: '${activeUsers.length} local people in scope',
-                            body:
-                                readyUsersCount == activeUsers.length
-                                    ? 'Every active user has a workable local access path right now.'
-                                    : '${activeUsers.length - readyUsersCount} user${activeUsers.length - readyUsersCount == 1 ? '' : 's'} still need help before they can unlock cleanly.',
+                            subtitle:
+                                '${activeUsers.length} local people in scope',
+                            body: readyUsersCount == activeUsers.length
+                                ? 'Every active user has a workable local access path right now.'
+                                : '${activeUsers.length - readyUsersCount} user${activeUsers.length - readyUsersCount == 1 ? '' : 's'} still need help before they can unlock cleanly.',
                             chips: [
                               _CardChip(label: '$readyUsersCount ready'),
                               _CardChip(
@@ -1809,12 +1839,15 @@ class _UsersDevicesDeviceOnboardingScreenState
                                                 status.user.id;
                                           });
                                         },
-                                        icon: const Icon(Icons.visibility_outlined),
+                                        icon: const Icon(
+                                          Icons.visibility_outlined,
+                                        ),
                                         label: const Text('Review here'),
                                       ),
                                       OutlinedButton.icon(
-                                        onPressed: () =>
-                                            context.go(RouteNames.usersDevicesUsers),
+                                        onPressed: () => context.go(
+                                          RouteNames.usersDevicesUsers,
+                                        ),
                                         icon: const Icon(Icons.people_outline),
                                         label: const Text('Open Users'),
                                       ),
@@ -1857,7 +1890,8 @@ class _UsersDevicesDeviceOnboardingScreenState
                               : 'Trusted device missing',
                         ),
                         _CardChip(
-                          label: '${selectedAuditEvents.length} audit event${selectedAuditEvents.length == 1 ? '' : 's'}',
+                          label:
+                              '${selectedAuditEvents.length} audit event${selectedAuditEvents.length == 1 ? '' : 's'}',
                         ),
                       ],
                     ),
@@ -1873,7 +1907,8 @@ class _UsersDevicesDeviceOnboardingScreenState
                           child: _EntityCard(
                             icon: Icons.badge_outlined,
                             title: 'Identity and permissions',
-                            subtitle: selectedUser?.displayName ?? 'No user selected',
+                            subtitle:
+                                selectedUser?.displayName ?? 'No user selected',
                             body: hasRoleAndPermissions
                                 ? '${selectedUser.role} is assigned and the local permission list is populated.'
                                 : 'This user still needs the correct role or permissions before the route should be treated as complete.',
@@ -1901,7 +1936,9 @@ class _UsersDevicesDeviceOnboardingScreenState
                           child: _EntityCard(
                             icon: Icons.receipt_long_outlined,
                             title: 'Latest audit evidence',
-                            subtitle: latestSelectedAudit?.eventType ?? 'No audit yet',
+                            subtitle:
+                                latestSelectedAudit?.eventType ??
+                                'No audit yet',
                             body: latestSelectedAudit == null
                                 ? 'No related audit event has been found for this user or their linked devices yet.'
                                 : '${latestSelectedAudit.result} - ${latestSelectedAudit.reason}\n${latestSelectedAudit.timestamp}',
@@ -1915,7 +1952,8 @@ class _UsersDevicesDeviceOnboardingScreenState
                       runSpacing: 10,
                       children: [
                         FilledButton.tonalIcon(
-                          onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesAuditLog),
                           icon: const Icon(Icons.receipt_long_outlined),
                           label: const Text('Open audit log'),
                         ),
@@ -2209,13 +2247,14 @@ class _UsersDevicesDeviceOnboardingScreenState
                                           child: const Text('Edit device'),
                                         ),
                                         FilledButton.tonal(
-                                          onPressed: () => _openOnboardingWizard(
-                                            context,
-                                            ref,
-                                            template: templateForType(
-                                              device.type,
-                                            ),
-                                          ),
+                                          onPressed: () =>
+                                              _openOnboardingWizard(
+                                                context,
+                                                ref,
+                                                template: templateForType(
+                                                  device.type,
+                                                ),
+                                              ),
                                           child: const Text('Reopen wizard'),
                                         ),
                                       ],
@@ -2421,17 +2460,21 @@ class _UsersDevicesOnboardingReportScreenState
               .toList(growable: false);
           final userTrustedDevices = userLinkedDevices
               .where(
-                (device) => device.trustLevel >= 3 && device.status != 'blocked',
+                (device) =>
+                    device.trustLevel >= 3 && device.status != 'blocked',
               )
               .toList(growable: false);
-          final relatedAuditEvents = data.auditLog
-              .where(
-                (event) =>
-                    event.actorId == user.id ||
-                    userLinkedDevices.any((device) => device.id == event.deviceId),
-              )
-              .toList(growable: false)
-            ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          final relatedAuditEvents =
+              data.auditLog
+                  .where(
+                    (event) =>
+                        event.actorId == user.id ||
+                        userLinkedDevices.any(
+                          (device) => device.id == event.deviceId,
+                        ),
+                  )
+                  .toList(growable: false)
+                ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
           final userHasRoleAndPermissions =
               user.role.trim().isNotEmpty && user.permissions.isNotEmpty;
           final userHasPrimaryPin = userPrimaryPin != null;
@@ -2450,8 +2493,9 @@ class _UsersDevicesOnboardingReportScreenState
             recoveryPinCount: userRecoveryPins.length,
             linkedDevices: userLinkedDevices,
             trustedDevices: userTrustedDevices,
-            latestAudit:
-                relatedAuditEvents.isEmpty ? null : relatedAuditEvents.first,
+            latestAudit: relatedAuditEvents.isEmpty
+                ? null
+                : relatedAuditEvents.first,
           );
         }
 
@@ -2489,7 +2533,9 @@ class _UsersDevicesOnboardingReportScreenState
         final activeUsers = data.users
             .where((user) => user.status == 'active')
             .toList(growable: false);
-        final statuses = activeUsers.map(readinessForUser).toList(growable: false);
+        final statuses = activeUsers
+            .map(readinessForUser)
+            .toList(growable: false);
         if (statuses.isEmpty) {
           return _SectionScaffold(
             title: 'Onboarding Report',
@@ -2509,26 +2555,28 @@ class _UsersDevicesOnboardingReportScreenState
           orElse: () => statuses.first,
         );
         final query = _searchQuery.trim().toLowerCase();
-        final filteredStatuses = statuses.where((status) {
-          final statusLabel = statusLabelFor(status);
-          if (_statusFilter != 'all' && statusLabel != _statusFilter) {
-            return false;
-          }
-          if (query.isEmpty) {
-            return true;
-          }
-          final haystack = [
-            status.user.displayName,
-            status.user.role,
-            status.user.title,
-            status.user.notes,
-            statusLabel,
-            ...status.user.permissions,
-            ...status.linkedDevices.map((device) => device.name),
-            ...status.linkedDevices.map((device) => device.id),
-          ].join(' ').toLowerCase();
-          return haystack.contains(query);
-        }).toList(growable: false);
+        final filteredStatuses = statuses
+            .where((status) {
+              final statusLabel = statusLabelFor(status);
+              if (_statusFilter != 'all' && statusLabel != _statusFilter) {
+                return false;
+              }
+              if (query.isEmpty) {
+                return true;
+              }
+              final haystack = [
+                status.user.displayName,
+                status.user.role,
+                status.user.title,
+                status.user.notes,
+                statusLabel,
+                ...status.user.permissions,
+                ...status.linkedDevices.map((device) => device.name),
+                ...status.linkedDevices.map((device) => device.id),
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            })
+            .toList(growable: false);
 
         final summaryText = _buildOnboardingReportSummary(
           user: selectedStatus.user,
@@ -2544,7 +2592,8 @@ class _UsersDevicesOnboardingReportScreenState
 
         return _SectionScaffold(
           title: 'Onboarding Report',
-          subtitle: 'Filtered readiness reporting and a print-style handoff sheet',
+          subtitle:
+              'Filtered readiness reporting and a print-style handoff sheet',
           onBack: () => context.go(RouteNames.usersDevices),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2557,14 +2606,14 @@ class _UsersDevicesOnboardingReportScreenState
                   _ActionChip(
                     label: 'Open onboarding',
                     icon: Icons.phonelink_setup_outlined,
-                    onPressed: () => context.go(
-                      RouteNames.usersDevicesDeviceOnboarding,
-                    ),
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesDeviceOnboarding),
                   ),
                   _ActionChip(
                     label: 'Open audit log',
                     icon: Icons.receipt_long_outlined,
-                    onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesAuditLog),
                   ),
                   _ActionChip(
                     label: 'Copy summary',
@@ -2575,12 +2624,33 @@ class _UsersDevicesOnboardingReportScreenState
                       summaryText,
                     ),
                   ),
+                  _ActionChip(
+                    label: 'Onboarding pack PDF',
+                    icon: Icons.picture_as_pdf_outlined,
+                    onPressed: () => openLocalPdfDocument(
+                      context,
+                      title: 'Users & Devices Onboarding Pack PDF',
+                      pdfPath: _usersDevicesOnboardingPackPdfPath,
+                    ),
+                  ),
+                  _ActionChip(
+                    label: 'Recovery drills PDF',
+                    icon: Icons.picture_as_pdf_outlined,
+                    onPressed: () => openLocalPdfDocument(
+                      context,
+                      title: 'Users & Devices Recovery Drills PDF',
+                      pdfPath: _usersDevicesRecoveryDrillsPackPdfPath,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
               _SummaryRow(
                 items: [
-                  ('Ready', statuses.where((status) => status.accessReady).length),
+                  (
+                    'Ready',
+                    statuses.where((status) => status.accessReady).length,
+                  ),
                   (
                     'Need role',
                     statuses
@@ -2593,9 +2663,7 @@ class _UsersDevicesOnboardingReportScreenState
                   ),
                   (
                     'Need trust',
-                    statuses
-                        .where((status) => !status.hasTrustedDevice)
-                        .length,
+                    statuses.where((status) => !status.hasTrustedDevice).length,
                   ),
                 ],
               ),
@@ -2730,7 +2798,9 @@ class _UsersDevicesOnboardingReportScreenState
                                             : _statusFilter,
                                       ),
                                     ),
-                                    icon: const Icon(Icons.open_in_new_outlined),
+                                    icon: const Icon(
+                                      Icons.open_in_new_outlined,
+                                    ),
                                     label: const Text('Open report'),
                                   ),
                                 ],
@@ -2771,7 +2841,9 @@ class _UsersDevicesOnboardingReportScreenState
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
                             .withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
@@ -2780,9 +2852,9 @@ class _UsersDevicesOnboardingReportScreenState
                       ),
                       child: SelectableText(
                         summaryText,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          height: 1.45,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(height: 1.45),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -2800,9 +2872,8 @@ class _UsersDevicesOnboardingReportScreenState
                           label: const Text('Copy summary'),
                         ),
                         OutlinedButton.icon(
-                          onPressed: () => context.go(
-                            RouteNames.usersDevicesAuditLog,
-                          ),
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesAuditLog),
                           icon: const Icon(Icons.receipt_long_outlined),
                           label: const Text('Open audit log'),
                         ),
@@ -4665,7 +4736,7 @@ class _HighlightedAuditBanner extends StatelessWidget {
   }
 }
 
-class _UsersDevicesPageScaffold extends StatelessWidget {
+class _UsersDevicesPageScaffold extends ConsumerWidget {
   const _UsersDevicesPageScaffold({
     required this.title,
     required this.subtitle,
@@ -4683,7 +4754,7 @@ class _UsersDevicesPageScaffold extends StatelessWidget {
   final VoidCallback? onBuilt;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (onBuilt != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => onBuilt?.call());
     }
@@ -4704,7 +4775,11 @@ class _UsersDevicesPageScaffold extends StatelessWidget {
       body: ListView(
         controller: scrollController,
         padding: const EdgeInsets.all(16),
-        children: [child],
+        children: [
+          const _UsersDevicesOperatorSafetyBanner(),
+          const SizedBox(height: 16),
+          child,
+        ],
       ),
     );
   }
@@ -4776,6 +4851,85 @@ class _HeaderTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _UsersDevicesOperatorSafetyBanner extends ConsumerWidget {
+  const _UsersDevicesOperatorSafetyBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final session = ref.watch(securitySessionProvider);
+    final isLocked = !session.isUnlocked || session.isExpired;
+    final activeUserLabel = session.activeUserLabel;
+    final activeDeviceLabel = session.activeDeviceLabel;
+    final remaining = session.remaining;
+
+    return _VisualPanel(
+      title: 'Session checkpoint',
+      subtitle: isLocked
+          ? 'The local session is locked. Protected actions stay closed until Security Lock passes.'
+          : 'The current local user and device stay visible here while you review access, trust, and audit.',
+      icon: isLocked ? Icons.lock_outline : Icons.verified_user_outlined,
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _CardChip(label: isLocked ? 'Locked' : 'Unlocked'),
+              _CardChip(
+                label: activeUserLabel == null || activeUserLabel.isEmpty
+                    ? 'Active user: none'
+                    : 'Active user: $activeUserLabel',
+              ),
+              _CardChip(
+                label: activeDeviceLabel == null || activeDeviceLabel.isEmpty
+                    ? 'Device: none'
+                    : 'Device: $activeDeviceLabel',
+              ),
+              _CardChip(
+                label: remaining == null
+                    ? 'Expires: -'
+                    : 'Expires in ${_formatBannerDuration(remaining)}',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isLocked
+                ? 'Open Security Lock to restore the local route, then return here to continue with Users, Devices, PINs, or onboarding.'
+                : 'This banner helps operators sanity-check the active route context before changing users, trusting devices, or reviewing onboarding readiness.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => context.go(RouteNames.securityLock),
+                icon: const Icon(Icons.lock_open_outlined),
+                label: const Text('Open Security Lock'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.go(RouteNames.usersDevicesOnboardingReport),
+                icon: const Icon(Icons.assignment_outlined),
+                label: Text(
+                  isLocked
+                      ? 'Review onboarding report'
+                      : 'Open onboarding report',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -5542,6 +5696,26 @@ String _maskPinCode(String pinCode) {
   }
 
   return '${'*' * (pinCode.length - 2)}${pinCode.substring(pinCode.length - 2)}';
+}
+
+String _formatBannerDuration(Duration duration) {
+  if (duration.isNegative) {
+    return '0s';
+  }
+
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+
+  if (hours > 0) {
+    return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+  }
+
+  if (minutes > 0) {
+    return '${minutes}m ${seconds.toString().padLeft(2, '0')}s';
+  }
+
+  return '${seconds}s';
 }
 
 void _openUserPinsRegistry(BuildContext context, String userId) {

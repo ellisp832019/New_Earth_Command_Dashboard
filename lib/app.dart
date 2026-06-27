@@ -321,6 +321,15 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
     return 'Active user: $label';
   }
 
+  String _activeDeviceLabel(SecuritySessionState session) {
+    final label = session.activeDeviceLabel;
+    if (label == null || label.isEmpty) {
+      return 'Device: none';
+    }
+
+    return 'Device: $label';
+  }
+
   String _presenceLabel(SecuritySessionState session) {
     final label = session.activeUserLabel;
     if (label == null || label.isEmpty) {
@@ -342,6 +351,7 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
     final remaining = session.remaining;
     final accentColor = _accentColor(session);
     final activeUserLabel = _activeUserLabel(session);
+    final activeDeviceLabel = _activeDeviceLabel(session);
     final presenceLabel = _presenceLabel(session);
     final remainingFraction =
         session.timeout.inMilliseconds <= 0 || remaining == null
@@ -435,6 +445,13 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                                 activeUserLabel,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: const Color(0xFFE4E8EA),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                activeDeviceLabel,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFFC8D7E0),
                                 ),
                               ),
                               const SizedBox(height: 2),
