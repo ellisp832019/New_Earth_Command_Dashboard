@@ -86,9 +86,13 @@ class UsersDevicesPinRecord {
 }
 
 class UsersDevicesPinRegistrySnapshot {
-  const UsersDevicesPinRegistrySnapshot({required this.records});
+  const UsersDevicesPinRegistrySnapshot({
+    required this.records,
+    this.lockouts = const [],
+  });
 
   final List<UsersDevicesPinRecord> records;
+  final List<UsersDevicesPinLockoutState> lockouts;
 
   List<UsersDevicesPinRecord> recordsForUser(String userId) {
     return records
@@ -131,6 +135,20 @@ class UsersDevicesPinRegistrySnapshot {
 
   int get revokedCount =>
       records.where((record) => record.status == 'revoked').length;
+
+  UsersDevicesPinLockoutState? lockoutForUser(String userId) {
+    for (final lockout in lockouts) {
+      if (lockout.userId == userId) {
+        return lockout;
+      }
+    }
+    return null;
+  }
+
+  int get lockedOutCount {
+    final now = DateTime.now().toUtc();
+    return lockouts.where((lockout) => lockout.isLockedAt(now)).length;
+  }
 }
 
 class UsersDevicesPinAccessDecision {
@@ -194,7 +212,10 @@ class UsersDevicesPinRegistryService {
   final DateTime Function()? _nowProvider;
 
   Future<UsersDevicesPinRegistrySnapshot> loadSnapshot() async {
-    return UsersDevicesPinRegistrySnapshot(records: await _readPins());
+    return UsersDevicesPinRegistrySnapshot(
+      records: await _readPins(),
+      lockouts: await _readAllLockoutStates(),
+    );
   }
 
   Future<void> resetToSeedData() async {
@@ -305,6 +326,10 @@ class UsersDevicesPinRegistryService {
         )
         .toList(growable: false);
     await _writePins(updated);
+    await _clearLockout(userId);
+  }
+
+  Future<void> clearLockoutForUser(String userId) async {
     await _clearLockout(userId);
   }
 
@@ -523,6 +548,33 @@ class UsersDevicesPinRegistryService {
     );
   }
 
+  Future<List<UsersDevicesPinLockoutState>> _readAllLockoutStates() async {
+    final db = database;
+    if (db == null) {
+      throw StateError('UsersDevicesPinRegistryService requires a database.');
+    }
+
+    final rows = await db
+        .customSelect(
+          'SELECT user_id, failed_attempts, locked_until, last_failed_at, updated_at '
+          'FROM users_devices_control_pin_lockouts ORDER BY updated_at DESC',
+        )
+        .get();
+    return rows
+        .map(
+          (row) => UsersDevicesPinLockoutState(
+            userId: row.read<String>('user_id'),
+            failedAttempts: row.read<int>('failed_attempts'),
+            lockedUntil: _readNullableDateTime(row, 'locked_until'),
+            lastFailedAt: _readNullableDateTime(row, 'last_failed_at'),
+            updatedAt:
+                DateTime.tryParse(row.read<String>('updated_at')) ??
+                DateTime.now().toUtc(),
+          ),
+        )
+        .toList(growable: false);
+  }
+
   Future<UsersDevicesPinLockoutState> _recordFailedAttempt({
     required String userId,
     required DateTime now,
@@ -594,7 +646,9 @@ class UsersDevicesPinRegistryService {
 
     await db.transaction(() async {
       await db.customStatement('DELETE FROM users_devices_control_pin_records');
-      await db.customStatement('DELETE FROM users_devices_control_pin_lockouts');
+      await db.customStatement(
+        'DELETE FROM users_devices_control_pin_lockouts',
+      );
       for (final pin in records) {
         await db.customInsert(
           'INSERT INTO users_devices_control_pin_records '

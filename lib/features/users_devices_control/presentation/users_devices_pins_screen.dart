@@ -91,7 +91,9 @@ class _UsersDevicesPinsScreenState
     noteController.dispose();
     if (result != null && result.reason.isEmpty && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a short reason for the audit trail.')),
+        const SnackBar(
+          content: Text('Add a short reason for the audit trail.'),
+        ),
       );
       return null;
     }
@@ -131,7 +133,9 @@ class _UsersDevicesPinsScreenState
       return;
     }
 
-    final snapshot = await ref.read(usersDevicesPinRegistrySnapshotProvider.future);
+    final snapshot = await ref.read(
+      usersDevicesPinRegistrySnapshotProvider.future,
+    );
     final existingPins = snapshot.recordsForUser(userId);
     final hasExistingUnlockPath = existingPins.any(
       (pin) => pin.status == 'active' || pin.status == 'recovery',
@@ -192,7 +196,9 @@ class _UsersDevicesPinsScreenState
     }
 
     final auditDetails = await _promptAuditDetails(
-      title: hasExistingUnlockPath ? 'Force reset reason' : 'Primary PIN reason',
+      title: hasExistingUnlockPath
+          ? 'Force reset reason'
+          : 'Primary PIN reason',
       submitLabel: hasExistingUnlockPath ? 'Force reset' : 'Save',
       reasonLabel: hasExistingUnlockPath
           ? 'Why is the PIN being reset?'
@@ -353,6 +359,54 @@ class _UsersDevicesPinsScreenState
     }
   }
 
+  Future<void> _clearUserLockout() async {
+    final userId = _selectedUserId;
+    if (userId == null || _busy) {
+      return;
+    }
+
+    final auditDetails = await _promptAuditDetails(
+      title: 'Clear lockout timer',
+      submitLabel: 'Clear timer',
+      reasonLabel: 'Why is the lockout timer being cleared?',
+      helperText:
+          'Example: identity confirmed by admin, support call completed, or reset drill approved.',
+    );
+    if (auditDetails == null) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+    });
+
+    await ref.read(usersDevicesPinRegistryProvider).clearLockoutForUser(userId);
+    await _auditPinChange(
+      userId: userId,
+      eventType: 'pin_lockout_cleared',
+      action: 'clear_pin_lockout',
+      reason: auditDetails.reason,
+      note: auditDetails.note,
+    );
+
+    if (mounted) {
+      setState(() {
+        _busy = false;
+      });
+      ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lockout timer cleared for this user.')),
+      );
+    }
+  }
+
+  void _focusUser(String userId) {
+    setState(() {
+      _selectedUserId = userId;
+      _recentRecoveryPin = null;
+    });
+  }
+
   Future<void> _revokeRecord(UsersDevicesPinRecord record) async {
     if (_busy) {
       return;
@@ -477,12 +531,11 @@ class _UsersDevicesPinsScreenState
                         runSpacing: 12,
                         children: [
                           FilledButton.icon(
-                            onPressed: () =>
-                                context.go(
-                                  SecurityRoutePolicy.securityLockFrom(
-                                    GoRouterState.of(context).uri,
-                                  ),
-                                ),
+                            onPressed: () => context.go(
+                              SecurityRoutePolicy.securityLockFrom(
+                                GoRouterState.of(context).uri,
+                              ),
+                            ),
                             icon: const Icon(Icons.lock_outline),
                             label: const Text('Open Security Lock'),
                           ),
@@ -532,6 +585,7 @@ class _UsersDevicesPinsScreenState
               child: Text('PIN registry is not ready right now.'),
             ),
             data: (pins) {
+              final now = DateTime.now().toUtc();
               final userPins = selectedUser == null
                   ? const <UsersDevicesPinRecord>[]
                   : pins.recordsForUser(selectedUser.id);
@@ -547,12 +601,80 @@ class _UsersDevicesPinsScreenState
               final primaryPin = selectedUser == null
                   ? null
                   : pins.primaryPinForUser(selectedUser.id);
+              final selectedLockout = selectedUser == null
+                  ? null
+                  : pins.lockoutForUser(selectedUser.id);
               final hasSinglePrimary = primaryPins.length == 1;
+              final supportQueue = _buildSupportQueue(users.users, pins, now);
+              final lockedOutCount = supportQueue
+                  .where((entry) => entry.isLockedOut)
+                  .length;
+              final missingPrimaryCount = supportQueue
+                  .where(
+                    (entry) => entry.primaryState == _PrimaryPinState.missing,
+                  )
+                  .length;
+              final recoveryLiveCount = supportQueue
+                  .where((entry) => entry.hasRecoveryPin)
+                  .length;
 
               return ListView(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(20),
                 children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recovery & reset queue',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Surface the users who need PIN help now so operators can move through reset work calmly and in order.',
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _CardChip(label: 'Queue: ${supportQueue.length}'),
+                              _CardChip(label: 'Locked out: $lockedOutCount'),
+                              _CardChip(
+                                label: 'Missing primary: $missingPrimaryCount',
+                              ),
+                              _CardChip(
+                                label: 'Recovery live: $recoveryLiveCount',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (supportQueue.isEmpty)
+                            const Text(
+                              'No users need PIN recovery help right now. Primary and recovery posture looks calm.',
+                            )
+                          else
+                            Column(
+                              children: [
+                                for (final entry in supportQueue) ...[
+                                  _SupportQueueCard(
+                                    entry: entry,
+                                    isSelected:
+                                        selectedUser?.id == entry.user.id,
+                                    onFocus: () => _focusUser(entry.user.id),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Card(
                     key: _userPinsSectionKey,
                     child: Padding(
@@ -736,6 +858,113 @@ class _UsersDevicesPinsScreenState
                             ),
                           ),
                           const SizedBox(height: 12),
+                          Card(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Admin reset flow',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    selectedUser == null
+                                        ? 'Choose one user, then work through recovery, lockout, and primary reset from this single panel.'
+                                        : _resetFlowSummary(
+                                            selectedUser: selectedUser,
+                                            primaryPins: primaryPins,
+                                            recoveryPins: recoveryPins,
+                                            lockout: selectedLockout,
+                                            now: now,
+                                          ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _CardChip(
+                                        label: selectedLockout == null
+                                            ? 'Lockout: clear'
+                                            : selectedLockout.isLockedAt(now)
+                                            ? 'Lockout: active'
+                                            : 'Lockout: history',
+                                      ),
+                                      _CardChip(
+                                        label: selectedLockout == null
+                                            ? 'Failed attempts: 0'
+                                            : 'Failed attempts: ${selectedLockout.failedAttempts}',
+                                      ),
+                                      _CardChip(
+                                        label: recoveryPins.isEmpty
+                                            ? 'Recovery: none'
+                                            : 'Recovery: ${recoveryPins.length} live',
+                                      ),
+                                      _CardChip(
+                                        label: primaryPins.isEmpty
+                                            ? 'Primary: missing'
+                                            : primaryPins.length == 1
+                                            ? 'Primary: ready'
+                                            : 'Primary: review',
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: [
+                                      FilledButton.icon(
+                                        onPressed: selectedUser == null || _busy
+                                            ? null
+                                            : _setPrimaryPin,
+                                        icon: const Icon(
+                                          Icons.refresh_outlined,
+                                        ),
+                                        label: Text(
+                                          primaryPins.isEmpty
+                                              ? 'Set primary PIN'
+                                              : 'Force reset primary PIN',
+                                        ),
+                                      ),
+                                      FilledButton.tonalIcon(
+                                        onPressed: selectedUser == null || _busy
+                                            ? null
+                                            : _issueRecoveryPin,
+                                        icon: const Icon(
+                                          Icons.vpn_key_outlined,
+                                        ),
+                                        label: const Text('Issue recovery PIN'),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed:
+                                            selectedUser == null ||
+                                                _busy ||
+                                                selectedLockout == null
+                                            ? null
+                                            : _clearUserLockout,
+                                        icon: const Icon(
+                                          Icons.timer_off_outlined,
+                                        ),
+                                        label: const Text(
+                                          'Clear lockout timer',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Wrap(
                             spacing: 10,
                             runSpacing: 10,
@@ -762,12 +991,11 @@ class _UsersDevicesPinsScreenState
                                 label: const Text('Revoke all PINs'),
                               ),
                               OutlinedButton.icon(
-                                onPressed: () =>
-                                    context.push(
-                                      SecurityRoutePolicy.securityLockFrom(
-                                        GoRouterState.of(context).uri,
-                                      ),
-                                    ),
+                                onPressed: () => context.push(
+                                  SecurityRoutePolicy.securityLockFrom(
+                                    GoRouterState.of(context).uri,
+                                  ),
+                                ),
                                 icon: const Icon(Icons.lock_outline),
                                 label: const Text('Open Security Lock'),
                               ),
@@ -849,6 +1077,190 @@ String _maskPin(String pinCode) {
   }
 
   return '${'*' * (pinCode.length - 2)}${pinCode.substring(pinCode.length - 2)}';
+}
+
+enum _PrimaryPinState { missing, ready, review }
+
+class _PinSupportQueueEntry {
+  const _PinSupportQueueEntry({
+    required this.user,
+    required this.primaryCount,
+    required this.recoveryCount,
+    required this.primaryState,
+    required this.isLockedOut,
+    required this.summary,
+  });
+
+  final UsersDevicesControlUser user;
+  final int primaryCount;
+  final int recoveryCount;
+  final _PrimaryPinState primaryState;
+  final bool isLockedOut;
+  final String summary;
+
+  bool get hasRecoveryPin => recoveryCount > 0;
+}
+
+List<_PinSupportQueueEntry> _buildSupportQueue(
+  List<UsersDevicesControlUser> users,
+  UsersDevicesPinRegistrySnapshot pins,
+  DateTime now,
+) {
+  final entries = <_PinSupportQueueEntry>[];
+
+  for (final user in users) {
+    final primaryPins = pins.primaryPinsForUser(user.id);
+    final recoveryPins = pins.recoveryPinsForUser(user.id);
+    final lockout = pins.lockoutForUser(user.id);
+    final isLockedOut = lockout?.isLockedAt(now) ?? false;
+    final primaryState = primaryPins.isEmpty
+        ? _PrimaryPinState.missing
+        : primaryPins.length == 1
+        ? _PrimaryPinState.ready
+        : _PrimaryPinState.review;
+
+    if (!isLockedOut &&
+        primaryState == _PrimaryPinState.ready &&
+        recoveryPins.isEmpty) {
+      continue;
+    }
+
+    final summary = <String>[
+      if (isLockedOut)
+        'Locked for ${_formatInlineDuration(lockout!.lockedUntil!.difference(now))}',
+      if (primaryState == _PrimaryPinState.missing) 'Primary PIN missing',
+      if (primaryState == _PrimaryPinState.review)
+        'Primary PIN history needs review',
+      if (recoveryPins.isNotEmpty) 'Recovery PIN live',
+    ].join(' - ');
+
+    entries.add(
+      _PinSupportQueueEntry(
+        user: user,
+        primaryCount: primaryPins.length,
+        recoveryCount: recoveryPins.length,
+        primaryState: primaryState,
+        isLockedOut: isLockedOut,
+        summary: summary,
+      ),
+    );
+  }
+
+  entries.sort((left, right) {
+    final leftScore =
+        (left.isLockedOut ? 4 : 0) +
+        (left.primaryState == _PrimaryPinState.missing ? 2 : 0) +
+        (left.hasRecoveryPin ? 1 : 0);
+    final rightScore =
+        (right.isLockedOut ? 4 : 0) +
+        (right.primaryState == _PrimaryPinState.missing ? 2 : 0) +
+        (right.hasRecoveryPin ? 1 : 0);
+    return rightScore.compareTo(leftScore);
+  });
+  return entries;
+}
+
+String _resetFlowSummary({
+  required UsersDevicesControlUser selectedUser,
+  required List<UsersDevicesPinRecord> primaryPins,
+  required List<UsersDevicesPinRecord> recoveryPins,
+  required UsersDevicesPinLockoutState? lockout,
+  required DateTime now,
+}) {
+  if (lockout != null && lockout.isLockedAt(now)) {
+    return '${selectedUser.displayName} is currently locked out. Clear the timer only after identity has been confirmed, or issue a recovery PIN if support needs a temporary path back in.';
+  }
+
+  if (primaryPins.isEmpty && recoveryPins.isNotEmpty) {
+    return '${selectedUser.displayName} has no active primary PIN but does have a live recovery code. Use the recovery path to regain entry, then force reset a fresh primary PIN.';
+  }
+
+  if (primaryPins.isEmpty) {
+    return '${selectedUser.displayName} has no active primary PIN. Set a new primary PIN, or issue a recovery PIN first if they need help getting back in right now.';
+  }
+
+  if (recoveryPins.isNotEmpty) {
+    return '${selectedUser.displayName} still has a live recovery PIN. Rotate them back to a clean primary PIN and revoke recovery codes after support is complete.';
+  }
+
+  return '${selectedUser.displayName} has a normal unlock path. Use force reset only if the user has lost their PIN, support has verified identity, or a rotation is required.';
+}
+
+String _formatInlineDuration(Duration duration) {
+  if (duration.isNegative || duration.inSeconds <= 0) {
+    return '0s';
+  }
+
+  final minutes = duration.inMinutes;
+  final seconds = duration.inSeconds.remainder(60);
+  if (minutes > 0) {
+    return '${minutes}m ${seconds.toString().padLeft(2, '0')}s';
+  }
+  return '${duration.inSeconds}s';
+}
+
+class _SupportQueueCard extends StatelessWidget {
+  const _SupportQueueCard({
+    required this.entry,
+    required this.isSelected,
+    required this.onFocus,
+  });
+
+  final _PinSupportQueueEntry entry;
+  final bool isSelected;
+  final VoidCallback onFocus;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      color: isSelected
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.28)
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${entry.user.displayName} (${entry.user.role})',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                if (isSelected) const _CardChip(label: 'Selected'),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(entry.summary),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _CardChip(label: 'Primary: ${entry.primaryCount}'),
+                _CardChip(label: 'Recovery: ${entry.recoveryCount}'),
+                _CardChip(
+                  label: entry.isLockedOut ? 'Lockout active' : 'Needs review',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: onFocus,
+                icon: const Icon(Icons.center_focus_strong_outlined),
+                label: const Text('Focus user'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _PinRevealCard extends StatelessWidget {
