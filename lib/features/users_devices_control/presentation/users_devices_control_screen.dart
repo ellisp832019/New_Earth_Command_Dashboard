@@ -141,6 +141,12 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                     route: RouteNames.usersDevicesDeviceOnboarding,
                   ),
                   _NavTile(
+                    title: 'Onboarding Report',
+                    subtitle: 'Readiness, print summary, and admin view',
+                    icon: Icons.assignment_outlined,
+                    route: RouteNames.usersDevicesOnboardingReport,
+                  ),
+                  _NavTile(
                     title: 'Approval Queue',
                     subtitle:
                         '$pending request${pending == 1 ? '' : 's'} pending',
@@ -1509,6 +1515,15 @@ class _UsersDevicesDeviceOnboardingScreenState
                     onPressed: () =>
                         context.go(RouteNames.usersDevicesApprovalQueue),
                   ),
+                  _ActionChip(
+                    label: 'Open onboarding report',
+                    icon: Icons.assignment_outlined,
+                    onPressed: () => context.go(
+                      RouteNames.usersDevicesOnboardingReportFor(
+                        userId: _selectedOnboardingUserId,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -1903,6 +1918,15 @@ class _UsersDevicesDeviceOnboardingScreenState
                           onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
                           icon: const Icon(Icons.receipt_long_outlined),
                           label: const Text('Open audit log'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(
+                            RouteNames.usersDevicesOnboardingReportFor(
+                              userId: selectedUser?.id,
+                            ),
+                          ),
+                          icon: const Icon(Icons.assignment_outlined),
+                          label: const Text('Open onboarding report'),
                         ),
                         OutlinedButton.icon(
                           onPressed: accessReady
@@ -2305,6 +2329,499 @@ class _TrustPosturePanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class UsersDevicesOnboardingReportScreen extends ConsumerStatefulWidget {
+  const UsersDevicesOnboardingReportScreen({
+    super.key,
+    this.initialUserId,
+    this.initialStatusFilter = 'all',
+  });
+
+  final String? initialUserId;
+  final String initialStatusFilter;
+
+  @override
+  ConsumerState<UsersDevicesOnboardingReportScreen> createState() =>
+      _UsersDevicesOnboardingReportScreenState();
+}
+
+class _UsersDevicesOnboardingReportScreenState
+    extends ConsumerState<UsersDevicesOnboardingReportScreen> {
+  String _searchQuery = '';
+  late String _statusFilter = widget.initialStatusFilter;
+  String? _selectedUserId;
+
+  void _seedSelectedUser(UsersDevicesControlSnapshot snapshot) {
+    if (_selectedUserId != null &&
+        snapshot.users.any((user) => user.id == _selectedUserId)) {
+      return;
+    }
+
+    if (widget.initialUserId != null &&
+        snapshot.users.any((user) => user.id == widget.initialUserId)) {
+      _selectedUserId = widget.initialUserId;
+      return;
+    }
+
+    _selectedUserId = snapshot.users.isEmpty
+        ? null
+        : snapshot.users
+              .firstWhere(
+                (user) => user.status == 'active',
+                orElse: () => snapshot.users.first,
+              )
+              .id;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    final pinsSnapshot = ref.watch(usersDevicesPinRegistrySnapshotProvider);
+    return snapshot.when(
+      loading: () => const _LoadingScaffold(title: 'Onboarding Report'),
+      error: (error, stackTrace) => _ErrorScreen(
+        title: 'Onboarding Report',
+        message: 'The onboarding report could not load right now.',
+        onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
+      ),
+      data: (data) {
+        _seedSelectedUser(data);
+        final pins = pinsSnapshot.maybeWhen(
+          data: (snapshot) => snapshot,
+          orElse: () => const UsersDevicesPinRegistrySnapshot(
+            records: <UsersDevicesPinRecord>[],
+          ),
+        );
+
+        ({
+          UsersDevicesControlUser user,
+          bool hasRoleAndPermissions,
+          bool hasPrimaryPin,
+          bool hasTrustedDevice,
+          bool accessReady,
+          int linkedDeviceCount,
+          int trustedDeviceCount,
+          int recoveryPinCount,
+          List<UsersDevicesControlDevice> linkedDevices,
+          List<UsersDevicesControlDevice> trustedDevices,
+          UsersDevicesControlAuditEvent? latestAudit,
+        })
+        readinessForUser(UsersDevicesControlUser user) {
+          final userPrimaryPin = pins.primaryPinForUser(user.id);
+          final userRecoveryPins = pins.recoveryPinsForUser(user.id);
+          final userLinkedDevices = data.devices
+              .where(
+                (device) =>
+                    user.linkedDevices.contains(device.id) ||
+                    device.ownerId == user.id,
+              )
+              .toList(growable: false);
+          final userTrustedDevices = userLinkedDevices
+              .where(
+                (device) => device.trustLevel >= 3 && device.status != 'blocked',
+              )
+              .toList(growable: false);
+          final relatedAuditEvents = data.auditLog
+              .where(
+                (event) =>
+                    event.actorId == user.id ||
+                    userLinkedDevices.any((device) => device.id == event.deviceId),
+              )
+              .toList(growable: false)
+            ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          final userHasRoleAndPermissions =
+              user.role.trim().isNotEmpty && user.permissions.isNotEmpty;
+          final userHasPrimaryPin = userPrimaryPin != null;
+          final userHasTrustedDevice = userTrustedDevices.isNotEmpty;
+          return (
+            user: user,
+            hasRoleAndPermissions: userHasRoleAndPermissions,
+            hasPrimaryPin: userHasPrimaryPin,
+            hasTrustedDevice: userHasTrustedDevice,
+            accessReady:
+                userHasRoleAndPermissions &&
+                userHasPrimaryPin &&
+                userHasTrustedDevice,
+            linkedDeviceCount: userLinkedDevices.length,
+            trustedDeviceCount: userTrustedDevices.length,
+            recoveryPinCount: userRecoveryPins.length,
+            linkedDevices: userLinkedDevices,
+            trustedDevices: userTrustedDevices,
+            latestAudit:
+                relatedAuditEvents.isEmpty ? null : relatedAuditEvents.first,
+          );
+        }
+
+        String statusLabelFor(
+          ({
+            UsersDevicesControlUser user,
+            bool hasRoleAndPermissions,
+            bool hasPrimaryPin,
+            bool hasTrustedDevice,
+            bool accessReady,
+            int linkedDeviceCount,
+            int trustedDeviceCount,
+            int recoveryPinCount,
+            List<UsersDevicesControlDevice> linkedDevices,
+            List<UsersDevicesControlDevice> trustedDevices,
+            UsersDevicesControlAuditEvent? latestAudit,
+          })
+          status,
+        ) {
+          if (status.accessReady) {
+            return 'ready';
+          }
+          if (!status.hasRoleAndPermissions) {
+            return 'missing-role';
+          }
+          if (!status.hasPrimaryPin) {
+            return 'missing-pin';
+          }
+          if (!status.hasTrustedDevice) {
+            return 'missing-trust';
+          }
+          return 'in-progress';
+        }
+
+        final activeUsers = data.users
+            .where((user) => user.status == 'active')
+            .toList(growable: false);
+        final statuses = activeUsers.map(readinessForUser).toList(growable: false);
+        if (statuses.isEmpty) {
+          return _SectionScaffold(
+            title: 'Onboarding Report',
+            subtitle:
+                'Filtered readiness reporting and a print-style handoff sheet',
+            onBack: () => context.go(RouteNames.usersDevices),
+            child: const _EmptyCollectionState(
+              icon: Icons.person_off_outlined,
+              title: 'No active onboarding users are available yet',
+              body:
+                  'Register or restore a local user first, then reopen the onboarding report.',
+            ),
+          );
+        }
+        final selectedStatus = statuses.firstWhere(
+          (status) => status.user.id == _selectedUserId,
+          orElse: () => statuses.first,
+        );
+        final query = _searchQuery.trim().toLowerCase();
+        final filteredStatuses = statuses.where((status) {
+          final statusLabel = statusLabelFor(status);
+          if (_statusFilter != 'all' && statusLabel != _statusFilter) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+          final haystack = [
+            status.user.displayName,
+            status.user.role,
+            status.user.title,
+            status.user.notes,
+            statusLabel,
+            ...status.user.permissions,
+            ...status.linkedDevices.map((device) => device.name),
+            ...status.linkedDevices.map((device) => device.id),
+          ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        }).toList(growable: false);
+
+        final summaryText = _buildOnboardingReportSummary(
+          user: selectedStatus.user,
+          hasRoleAndPermissions: selectedStatus.hasRoleAndPermissions,
+          hasPrimaryPin: selectedStatus.hasPrimaryPin,
+          hasTrustedDevice: selectedStatus.hasTrustedDevice,
+          accessReady: selectedStatus.accessReady,
+          linkedDevices: selectedStatus.linkedDevices,
+          trustedDevices: selectedStatus.trustedDevices,
+          recoveryPinCount: selectedStatus.recoveryPinCount,
+          latestAudit: selectedStatus.latestAudit,
+        );
+
+        return _SectionScaffold(
+          title: 'Onboarding Report',
+          subtitle: 'Filtered readiness reporting and a print-style handoff sheet',
+          onBack: () => context.go(RouteNames.usersDevices),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ActionStrip(
+                title: 'Report actions',
+                subtitle:
+                    'Filter the local onboarding picture, then copy or verify one user handoff at a time.',
+                actions: [
+                  _ActionChip(
+                    label: 'Open onboarding',
+                    icon: Icons.phonelink_setup_outlined,
+                    onPressed: () => context.go(
+                      RouteNames.usersDevicesDeviceOnboarding,
+                    ),
+                  ),
+                  _ActionChip(
+                    label: 'Open audit log',
+                    icon: Icons.receipt_long_outlined,
+                    onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                  ),
+                  _ActionChip(
+                    label: 'Copy summary',
+                    icon: Icons.copy_outlined,
+                    onPressed: () => _copyOnboardingReportSummary(
+                      context,
+                      selectedStatus.user.displayName,
+                      summaryText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SummaryRow(
+                items: [
+                  ('Ready', statuses.where((status) => status.accessReady).length),
+                  (
+                    'Need role',
+                    statuses
+                        .where((status) => !status.hasRoleAndPermissions)
+                        .length,
+                  ),
+                  (
+                    'Need PIN',
+                    statuses.where((status) => !status.hasPrimaryPin).length,
+                  ),
+                  (
+                    'Need trust',
+                    statuses
+                        .where((status) => !status.hasTrustedDevice)
+                        .length,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _PickerSection(
+                title: 'Report focus',
+                subtitle:
+                    'Select one user for the handoff sheet while keeping the admin filter view live below.',
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedStatus.user.id,
+                    decoration: const InputDecoration(
+                      labelText: 'Selected user for handoff sheet',
+                    ),
+                    items: [
+                      for (final status in statuses)
+                        DropdownMenuItem<String>(
+                          value: status.user.id,
+                          child: Text(
+                            '${status.user.displayName} (${status.user.role})',
+                          ),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedUserId = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SearchFilterPanel(
+                title: 'Filter onboarding status',
+                subtitle:
+                    'Search by person, role, linked device, or status to find who needs help first.',
+                query: _searchQuery,
+                onQueryChanged: (value) => setState(() => _searchQuery = value),
+                chips: [
+                  _SoftChoiceChip(
+                    label: const Text('All'),
+                    selected: _statusFilter == 'all',
+                    onSelected: (_) => setState(() => _statusFilter = 'all'),
+                  ),
+                  _SoftChoiceChip(
+                    label: const Text('Ready'),
+                    selected: _statusFilter == 'ready',
+                    onSelected: (_) => setState(() => _statusFilter = 'ready'),
+                  ),
+                  _SoftChoiceChip(
+                    label: const Text('Need role'),
+                    selected: _statusFilter == 'missing-role',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'missing-role'),
+                  ),
+                  _SoftChoiceChip(
+                    label: const Text('Need PIN'),
+                    selected: _statusFilter == 'missing-pin',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'missing-pin'),
+                  ),
+                  _SoftChoiceChip(
+                    label: const Text('Need trust'),
+                    selected: _statusFilter == 'missing-trust',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'missing-trust'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Filtered onboarding status',
+                subtitle:
+                    'This is the admin report view for local user readiness, missing checkpoints, and next support actions.',
+                icon: Icons.manage_search_outlined,
+                child: filteredStatuses.isEmpty
+                    ? const _EmptyCollectionState(
+                        icon: Icons.filter_alt_off_outlined,
+                        title: 'No users matched the current report filters',
+                        body:
+                            'Try a broader search or return the status filter to All.',
+                      )
+                    : Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          for (final status in filteredStatuses)
+                            SizedBox(
+                              width: 320,
+                              child: _EntityCard(
+                                icon: status.accessReady
+                                    ? Icons.task_alt_outlined
+                                    : Icons.support_agent_outlined,
+                                title: status.user.displayName,
+                                subtitle:
+                                    '${status.user.role} - ${statusLabelFor(status)}',
+                                body:
+                                    'Linked devices: ${status.linkedDeviceCount} - Trusted devices: ${status.trustedDeviceCount} - Recovery PINs: ${status.recoveryPinCount}',
+                                chips: [
+                                  _CardChip(
+                                    label: status.hasRoleAndPermissions
+                                        ? 'Role ready'
+                                        : 'Role missing',
+                                  ),
+                                  _CardChip(
+                                    label: status.hasPrimaryPin
+                                        ? 'Primary PIN ready'
+                                        : 'Primary PIN needed',
+                                  ),
+                                  _CardChip(
+                                    label: status.hasTrustedDevice
+                                        ? 'Trusted device ready'
+                                        : 'Trusted device needed',
+                                  ),
+                                ],
+                                actions: [
+                                  OutlinedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedUserId = status.user.id;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.visibility_outlined),
+                                    label: const Text('Focus sheet'),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: () => context.go(
+                                      RouteNames.usersDevicesOnboardingReportFor(
+                                        userId: status.user.id,
+                                        status: _statusFilter == 'all'
+                                            ? null
+                                            : _statusFilter,
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.open_in_new_outlined),
+                                    label: const Text('Open report'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Print-style handoff sheet',
+                subtitle:
+                    'A calm completion summary for one person that can be copied into the user guide, ops notes, or a printed checklist.',
+                icon: Icons.print_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _CardChip(label: selectedStatus.user.displayName),
+                        _CardChip(label: selectedStatus.user.role),
+                        _CardChip(
+                          label: selectedStatus.accessReady
+                              ? 'Ready to verify locally'
+                              : 'Still in progress',
+                        ),
+                        _CardChip(
+                          label: selectedStatus.hasTrustedDevice
+                              ? '${selectedStatus.trustedDeviceCount} trusted device${selectedStatus.trustedDeviceCount == 1 ? '' : 's'}'
+                              : 'Trusted device missing',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
+                      child: SelectableText(
+                        summaryText,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: () => _copyOnboardingReportSummary(
+                            context,
+                            selectedStatus.user.displayName,
+                            summaryText,
+                          ),
+                          icon: const Icon(Icons.copy_outlined),
+                          label: const Text('Copy summary'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(
+                            RouteNames.usersDevicesAuditLog,
+                          ),
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: const Text('Open audit log'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: selectedStatus.accessReady
+                              ? () => context.go(RouteNames.securityLock)
+                              : null,
+                          icon: const Icon(Icons.lock_open_outlined),
+                          label: const Text('Verify in Security Lock'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -5053,6 +5570,68 @@ Future<void> _copyUserPinSummary(
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Copied PIN summary for $userName.')),
+    );
+  }
+}
+
+String _buildOnboardingReportSummary({
+  required UsersDevicesControlUser user,
+  required bool hasRoleAndPermissions,
+  required bool hasPrimaryPin,
+  required bool hasTrustedDevice,
+  required bool accessReady,
+  required List<UsersDevicesControlDevice> linkedDevices,
+  required List<UsersDevicesControlDevice> trustedDevices,
+  required int recoveryPinCount,
+  required UsersDevicesControlAuditEvent? latestAudit,
+}) {
+  final trustedDeviceNames = trustedDevices.isEmpty
+      ? 'None yet'
+      : trustedDevices.map((device) => device.name).join(', ');
+  final linkedDeviceNames = linkedDevices.isEmpty
+      ? 'None linked'
+      : linkedDevices.map((device) => device.name).join(', ');
+  final auditLine = latestAudit == null
+      ? 'No related audit event recorded yet.'
+      : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason} (${latestAudit.timestamp})';
+
+  return [
+    'ONBOARDING HANDOFF SHEET',
+    '',
+    'User: ${user.displayName}',
+    'Role: ${user.role}',
+    if (user.title.isNotEmpty) 'Title: ${user.title}',
+    'Status: ${accessReady ? 'Ready to verify locally' : 'Still in progress'}',
+    '',
+    'CHECKPOINTS',
+    '- Role and permissions: ${hasRoleAndPermissions ? 'Ready' : 'Needs work'}',
+    '- Primary PIN: ${hasPrimaryPin ? 'Ready' : 'Missing'}',
+    '- Trusted device: ${hasTrustedDevice ? 'Ready' : 'Missing'}',
+    '- Recovery PIN count: $recoveryPinCount',
+    '',
+    'DEVICES',
+    '- Linked devices: $linkedDeviceNames',
+    '- Trusted devices: $trustedDeviceNames',
+    '',
+    'LATEST AUDIT',
+    auditLine,
+    '',
+    'NEXT STEP',
+    accessReady
+        ? 'Open Security Lock or a gated module and verify the route.'
+        : 'Finish the missing checkpoint before treating this user as ready.',
+  ].join('\n');
+}
+
+Future<void> _copyOnboardingReportSummary(
+  BuildContext context,
+  String userName,
+  String summary,
+) async {
+  await Clipboard.setData(ClipboardData(text: summary));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied onboarding summary for $userName.')),
     );
   }
 }

@@ -1089,6 +1089,20 @@ final appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: 'onboarding-report',
+          builder: (context, state) => UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Onboarding Report Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening onboarding reporting.',
+            child: UsersDevicesOnboardingReportScreen(
+              initialUserId: state.uri.queryParameters['userId'],
+              initialStatusFilter:
+                  state.uri.queryParameters['status'] ?? 'all',
+            ),
+          ),
+        ),
+        GoRoute(
           path: 'approvals',
           builder: (context, state) => const UsersDevicesRouteGateScreen(
             moduleId: '01_USERS_AND_DEVICES_CONTROL',

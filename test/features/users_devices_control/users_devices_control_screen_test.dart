@@ -272,6 +272,7 @@ void main() {
     expect(find.text('Seed demo path'), findsWidgets);
     expect(find.text('Reset demo data'), findsWidgets);
     expect(find.text('Onboarding'), findsWidgets);
+    expect(find.text('Onboarding Report'), findsWidgets);
     expect(find.text('Approval Queue'), findsWidgets);
     expect(find.text('Audit Log'), findsWidgets);
   });
@@ -326,5 +327,24 @@ void main() {
     expect(find.text('Verify access'), findsWidgets);
     expect(find.text('Open PIN Registry'), findsOneWidget);
     expect(find.text('Next users to help'), findsOneWidget);
+  });
+
+  testWidgets('onboarding report shows filtered admin status and handoff sheet', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        const UsersDevicesOnboardingReportScreen(
+          initialUserId: 'user_peter_owner',
+        ),
+      ),
+    );
+    await pumpUntilFound(tester, find.text('Copy summary'));
+
+    expect(find.text('Onboarding Report'), findsOneWidget);
+    expect(find.text('Open onboarding'), findsOneWidget);
+    expect(find.text('Selected user for handoff sheet'), findsOneWidget);
+    expect(find.text('Copy summary'), findsWidgets);
+    expect(find.text('Ready'), findsWidgets);
   });
 }

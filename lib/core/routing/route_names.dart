@@ -49,9 +49,26 @@ abstract final class RouteNames {
   static const usersDevicesDevices = '/users-devices/devices';
   static const usersDevicesAccessMatrix = '/users-devices/access-matrix';
   static const usersDevicesDeviceOnboarding = '/users-devices/onboarding';
+  static const usersDevicesOnboardingReport = '/users-devices/onboarding-report';
   static const usersDevicesApprovalQueue = '/users-devices/approvals';
   static const usersDevicesAuditLog = '/users-devices/audit';
   static const usersDevicesPins = '/users-devices/pins';
+  static String usersDevicesOnboardingReportFor({
+    String? userId,
+    String? status,
+  }) {
+    final queryParameters = <String, String>{};
+    if (userId != null && userId.isNotEmpty) {
+      queryParameters['userId'] = userId;
+    }
+    if (status != null && status.isNotEmpty) {
+      queryParameters['status'] = status;
+    }
+    return Uri(
+      path: usersDevicesOnboardingReport,
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+    ).toString();
+  }
   static String usersDevicesAuditLogFor(String eventId) {
     return Uri(
       path: usersDevicesAuditLog,

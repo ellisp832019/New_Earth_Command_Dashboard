@@ -9,6 +9,7 @@ abstract final class SecurityRoutePolicy {
     RouteNames.usersDevicesDevices,
     RouteNames.usersDevicesAccessMatrix,
     RouteNames.usersDevicesDeviceOnboarding,
+    RouteNames.usersDevicesOnboardingReport,
     RouteNames.usersDevicesApprovalQueue,
     RouteNames.usersDevicesAuditLog,
   };
