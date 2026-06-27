@@ -317,10 +317,14 @@ void main() {
     await pumpUntilFound(tester, find.text('User readiness workspace'));
 
     expect(find.text('User readiness workspace'), findsOneWidget);
+    expect(find.text('Operator progress board'), findsOneWidget);
+    expect(find.text('Completion summary'), findsOneWidget);
     expect(find.textContaining('Role and permissions set'), findsOneWidget);
     expect(find.textContaining('Primary PIN is ready'), findsOneWidget);
     expect(find.textContaining('Trusted device linked'), findsOneWidget);
+    expect(find.textContaining('Ready to verify locally'), findsOneWidget);
     expect(find.text('Verify access'), findsWidgets);
     expect(find.text('Open PIN Registry'), findsOneWidget);
+    expect(find.text('Next users to help'), findsOneWidget);
   });
 }

@@ -1281,6 +1281,50 @@ class _UsersDevicesDeviceOnboardingScreenState
         final selectedRecoveryPins = selectedUser == null
             ? const <UsersDevicesPinRecord>[]
             : pins.recoveryPinsForUser(selectedUser.id);
+        ({
+          UsersDevicesControlUser user,
+          bool hasRoleAndPermissions,
+          bool hasPrimaryPin,
+          bool hasTrustedDevice,
+          bool accessReady,
+          int linkedDeviceCount,
+          int trustedDeviceCount,
+          int recoveryPinCount,
+        })
+        readinessForUser(UsersDevicesControlUser user) {
+          final userPrimaryPin = pins.primaryPinForUser(user.id);
+          final userRecoveryPins = pins.recoveryPinsForUser(user.id);
+          final userLinkedDevices = data.devices
+              .where(
+                (device) =>
+                    user.linkedDevices.contains(device.id) ||
+                    device.ownerId == user.id,
+              )
+              .toList(growable: false);
+          final userTrustedDevices = userLinkedDevices
+              .where(
+                (device) => device.trustLevel >= 3 && device.status != 'blocked',
+              )
+              .toList(growable: false);
+          final userHasRoleAndPermissions =
+              user.role.trim().isNotEmpty && user.permissions.isNotEmpty;
+          final userHasPrimaryPin = userPrimaryPin != null;
+          final userHasTrustedDevice = userTrustedDevices.isNotEmpty;
+          return (
+            user: user,
+            hasRoleAndPermissions: userHasRoleAndPermissions,
+            hasPrimaryPin: userHasPrimaryPin,
+            hasTrustedDevice: userHasTrustedDevice,
+            accessReady:
+                userHasRoleAndPermissions &&
+                userHasPrimaryPin &&
+                userHasTrustedDevice,
+            linkedDeviceCount: userLinkedDevices.length,
+            trustedDeviceCount: userTrustedDevices.length,
+            recoveryPinCount: userRecoveryPins.length,
+          );
+        }
+
         final linkedDevices = selectedUser == null
             ? const <UsersDevicesControlDevice>[]
             : data.devices
@@ -1312,6 +1356,59 @@ class _UsersDevicesDeviceOnboardingScreenState
             : selectedRecoveryPins.isNotEmpty
             ? 'Recovery PIN exists, but this user still needs a fresh primary PIN for normal unlock.'
             : 'Open PIN Registry and assign a primary PIN before this user tries to unlock locally.';
+        final activeUsers = data.users
+            .where((user) => user.status == 'active')
+            .toList(growable: false);
+        final onboardingStatuses = activeUsers
+            .map(readinessForUser)
+            .toList(growable: false);
+        final readyUsersCount = onboardingStatuses
+            .where((status) => status.accessReady)
+            .length;
+        final missingRoleUsersCount = onboardingStatuses
+            .where((status) => !status.hasRoleAndPermissions)
+            .length;
+        final missingPrimaryPinUsersCount = onboardingStatuses
+            .where((status) => !status.hasPrimaryPin)
+            .length;
+        final missingTrustedDeviceUsersCount = onboardingStatuses
+            .where((status) => !status.hasTrustedDevice)
+            .length;
+        final usersNeedingHelp = onboardingStatuses
+            .where((status) => !status.accessReady)
+            .toList(growable: false)
+          ..sort((a, b) {
+            final scoreA =
+                (a.hasRoleAndPermissions ? 1 : 0) +
+                (a.hasPrimaryPin ? 1 : 0) +
+                (a.hasTrustedDevice ? 1 : 0);
+            final scoreB =
+                (b.hasRoleAndPermissions ? 1 : 0) +
+                (b.hasPrimaryPin ? 1 : 0) +
+                (b.hasTrustedDevice ? 1 : 0);
+            return scoreB.compareTo(scoreA);
+          });
+        final selectedAuditEvents = selectedUser == null
+            ? const <UsersDevicesControlAuditEvent>[]
+            : data.auditLog
+                  .where(
+                    (event) =>
+                        event.actorId == selectedUser.id ||
+                        linkedDevices.any((device) => device.id == event.deviceId),
+                  )
+                  .toList(growable: false)
+              ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        final latestSelectedAudit = selectedAuditEvents.isEmpty
+            ? null
+            : selectedAuditEvents.first;
+        final completionTone = accessReady
+            ? 'Ready to verify locally'
+            : 'Still completing this onboarding path';
+        final completionBody = selectedUser == null
+            ? 'Choose a local user first so this screen can show the completion summary and audit trail for one person.'
+            : accessReady
+            ? '${selectedUser.displayName} now has local identity, permissions, a primary PIN, and a trusted device. The next calm step is simply to verify the route in Security Lock or a gated module.'
+            : '${selectedUser.displayName} is partway through onboarding. Finish the missing checkpoints below, then use the audit trail to confirm the full path is locally recorded.';
         final query = _historyQuery.trim().toLowerCase();
         final filteredTrustEvents = trustEvents
             .where((event) {
@@ -1573,6 +1670,246 @@ class _UsersDevicesDeviceOnboardingScreenState
                               : null,
                           icon: const Icon(Icons.lock_open_outlined),
                           label: const Text('Verify access'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Operator progress board',
+                subtitle:
+                    'A calm overview for admins and operators to see who is ready, who is blocked, and where the next onboarding help should go.',
+                icon: Icons.monitor_heart_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SummaryRow(
+                      items: [
+                        ('Ready', readyUsersCount),
+                        ('Need role', missingRoleUsersCount),
+                        ('Need PIN', missingPrimaryPinUsersCount),
+                        ('Need trust', missingTrustedDeviceUsersCount),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.people_outline,
+                            title: 'Active onboarding users',
+                            subtitle: '${activeUsers.length} local people in scope',
+                            body:
+                                readyUsersCount == activeUsers.length
+                                    ? 'Every active user has a workable local access path right now.'
+                                    : '${activeUsers.length - readyUsersCount} user${activeUsers.length - readyUsersCount == 1 ? '' : 's'} still need help before they can unlock cleanly.',
+                            chips: [
+                              _CardChip(label: '$readyUsersCount ready'),
+                              _CardChip(
+                                label:
+                                    '${activeUsers.length - readyUsersCount} still in progress',
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.rule_folder_outlined,
+                            title: 'Approvals and trust checks',
+                            subtitle:
+                                '${data.approvalQueue.where((request) => request.status == 'pending').length} pending approvals',
+                            body:
+                                '${trustEvents.length} trust confirmations are already recorded in the audit trail.',
+                            chips: [
+                              _CardChip(
+                                label:
+                                    '${data.approvalQueue.where((request) => request.status == 'pending').length} pending',
+                              ),
+                              _CardChip(
+                                label: '${trustEvents.length} confirmations',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (usersNeedingHelp.isEmpty)
+                      const _EmptyCollectionState(
+                        icon: Icons.task_alt_outlined,
+                        title: 'No onboarding follow-up is waiting',
+                        body:
+                            'Every active user currently has the basics needed for a local unlock path.',
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Next users to help',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              for (final status in usersNeedingHelp.take(3))
+                                SizedBox(
+                                  width: 320,
+                                  child: _EntityCard(
+                                    icon: Icons.support_agent_outlined,
+                                    title: status.user.displayName,
+                                    subtitle: status.user.role,
+                                    body:
+                                        'Linked devices: ${status.linkedDeviceCount} - Trusted: ${status.trustedDeviceCount} - Recovery PINs: ${status.recoveryPinCount}',
+                                    chips: [
+                                      _CardChip(
+                                        label: status.hasRoleAndPermissions
+                                            ? 'Role ready'
+                                            : 'Role missing',
+                                      ),
+                                      _CardChip(
+                                        label: status.hasPrimaryPin
+                                            ? 'Primary PIN ready'
+                                            : 'Primary PIN needed',
+                                      ),
+                                      _CardChip(
+                                        label: status.hasTrustedDevice
+                                            ? 'Trusted device ready'
+                                            : 'Trusted device needed',
+                                      ),
+                                    ],
+                                    actions: [
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedOnboardingUserId =
+                                                status.user.id;
+                                          });
+                                        },
+                                        icon: const Icon(Icons.visibility_outlined),
+                                        label: const Text('Review here'),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: () =>
+                                            context.go(RouteNames.usersDevicesUsers),
+                                        icon: const Icon(Icons.people_outline),
+                                        label: const Text('Open Users'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Completion summary',
+                subtitle:
+                    'When one user is ready, this panel gives a calm handoff summary and the audit evidence behind it.',
+                icon: Icons.fact_check_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _CardChip(label: completionTone),
+                        if (selectedUser != null)
+                          _CardChip(label: selectedUser.displayName),
+                        if (selectedUser != null)
+                          _CardChip(label: selectedUser.role),
+                        _CardChip(
+                          label: hasPrimaryPin
+                              ? 'Primary PIN set'
+                              : 'Primary PIN missing',
+                        ),
+                        _CardChip(
+                          label: hasTrustedDevice
+                              ? '${trustedLinkedDevices.length} trusted device${trustedLinkedDevices.length == 1 ? '' : 's'}'
+                              : 'Trusted device missing',
+                        ),
+                        _CardChip(
+                          label: '${selectedAuditEvents.length} audit event${selectedAuditEvents.length == 1 ? '' : 's'}',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(completionBody),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.badge_outlined,
+                            title: 'Identity and permissions',
+                            subtitle: selectedUser?.displayName ?? 'No user selected',
+                            body: hasRoleAndPermissions
+                                ? '${selectedUser.role} is assigned and the local permission list is populated.'
+                                : 'This user still needs the correct role or permissions before the route should be treated as complete.',
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.devices_outlined,
+                            title: 'Device trust posture',
+                            subtitle: hasTrustedDevice
+                                ? 'Trusted route is present'
+                                : 'Trusted route still missing',
+                            body: hasTrustedDevice
+                                ? trustedLinkedDevices
+                                      .map((device) => device.name)
+                                      .join(', ')
+                                : linkedDevices.isEmpty
+                                ? 'No device is linked to this user yet.'
+                                : 'A device is linked, but it still needs more trust before it should unlock sensitive routes.',
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'Latest audit evidence',
+                            subtitle: latestSelectedAudit?.eventType ?? 'No audit yet',
+                            body: latestSelectedAudit == null
+                                ? 'No related audit event has been found for this user or their linked devices yet.'
+                                : '${latestSelectedAudit.result} - ${latestSelectedAudit.reason}\n${latestSelectedAudit.timestamp}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: const Text('Open audit log'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: accessReady
+                              ? () => context.go(RouteNames.securityLock)
+                              : null,
+                          icon: const Icon(Icons.lock_open_outlined),
+                          label: const Text('Verify in Security Lock'),
                         ),
                       ],
                     ),
