@@ -85,6 +85,47 @@ This shows how a device moves from detected to trusted and ready for gated acces
 
 This shows how a PIN is assigned, confirmed, stored locally, and recovered safely.
 
+## Onboarding report visuals
+
+Use these when you want a calmer admin-ready view of onboarding status and a print-friendly handoff reference.
+
+### 1. Onboarding readiness map
+
+![Users and Devices onboarding readiness map](../../../docs/user_guide_assets/users_devices_onboarding_readiness_map.svg)
+
+Rendered version:
+
+![Users and Devices onboarding readiness map rendered](../../../docs/user_guide_assets/users_devices_onboarding_rendered_map.png)
+
+What it shows:
+
+- the quickest path from user creation to trusted unlock
+- where role, PIN, trust, and audit checks sit
+- the difference between `Ready`, `Needs PIN`, `Needs trust`, and `Needs role`
+
+### 2. Handoff cheat sheet
+
+![Users and Devices onboarding handoff cheat sheet](../../../docs/user_guide_assets/users_devices_onboarding_handoff_cheatsheet.svg)
+
+Rendered version:
+
+![Users and Devices onboarding handoff cheat sheet rendered](../../../docs/user_guide_assets/users_devices_onboarding_rendered_cheatsheet.png)
+
+What it shows:
+
+- the operator handoff path
+- the unlock test path
+- the recovery path when a user loses a PIN
+- the fastest admin checks before a sensitive route is tested
+
+### 3. Printable pack
+
+A PDF-ready pack is now also included for printing and laminating:
+
+- `output/pdf/users_devices_onboarding_pack.pdf`
+
+That pack combines the readiness map and the handoff cheat sheet into a clean two-page reference.
+
 ## Startup flow
 
 Use this flow when you want to understand how the app opens now:
@@ -189,6 +230,39 @@ Use this when you want the fastest safe path from user card to test unlock.
 7. Select the same user and matching device.
 8. Enter the new PIN and unlock.
 9. Check `Audit Log` to confirm the change was recorded locally.
+
+## Onboarding report screen
+
+Use `Onboarding Report` when you want one place to review user readiness, handoff status, and the print-style summary.
+
+Where to find it:
+
+1. Open `Users & Devices Control`.
+2. Click `Onboarding Report` from the module home.
+3. Or open `Device Onboarding` and click `Open onboarding report`.
+
+What it does:
+
+- shows readiness counts for active users
+- lets you filter by status
+- lets you focus the report on one user
+- builds a print-style handoff sheet
+- gives you a quick `Copy summary` action for local notes or admin handoff
+
+Status meanings:
+
+- `Ready`: user has role coverage, a primary PIN, a trusted device, and recent audit context
+- `Needs PIN`: the user still needs a primary unlock PIN
+- `Needs trust`: the linked device is not trusted enough yet
+- `Needs role`: the user still lacks the role or permission shape expected for the workflow
+
+Quick test:
+
+1. Open `Onboarding Report`.
+2. Pick Peter or Hayley as the focused user.
+3. Change the filter and confirm the user cards move between groups correctly.
+4. Click `Copy summary`.
+5. Paste the result into a note to confirm the handoff sheet text is complete.
 
 ## Assign a PIN to one user
 

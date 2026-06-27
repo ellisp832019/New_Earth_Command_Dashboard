@@ -1,0 +1,58 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1000" fill="#08141F"/>
+  <rect x="52" y="44" width="1496" height="912" rx="32" fill="#102332" stroke="#1E445B" stroke-width="2"/>
+  <text x="96" y="112" fill="#B7F171" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">USERS &amp; DEVICES</text>
+  <text x="96" y="160" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="48" font-weight="700">Onboarding Readiness Map</text>
+  <text x="96" y="200" fill="#9BB0C0" font-family="Segoe UI, Arial, sans-serif" font-size="22">How the new onboarding workspace, operator progress board, and onboarding report fit together.</text>
+
+  <rect x="96" y="258" width="320" height="178" rx="24" fill="#132B3A" stroke="#58C3FF" stroke-width="2"/>
+  <text x="126" y="308" fill="#58C3FF" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">1. User Readiness Workspace</text>
+  <text x="126" y="346" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Choose one user</text>
+  <text x="126" y="378" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Check role + permissions</text>
+  <text x="126" y="410" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Check primary PIN</text>
+  <text x="126" y="442" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Check trusted device</text>
+
+  <rect x="484" y="258" width="320" height="178" rx="24" fill="#132B3A" stroke="#63D0C2" stroke-width="2"/>
+  <text x="514" y="308" fill="#63D0C2" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">2. Operator Progress Board</text>
+  <text x="514" y="346" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">See who is ready</text>
+  <text x="514" y="378" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">See who needs role help</text>
+  <text x="514" y="410" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">See who needs PIN help</text>
+  <text x="514" y="442" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">See who needs trust help</text>
+
+  <rect x="872" y="258" width="320" height="178" rx="24" fill="#132B3A" stroke="#FFCC66" stroke-width="2"/>
+  <text x="902" y="308" fill="#FFCC66" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">3. Completion Summary</text>
+  <text x="902" y="346" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Confirm selected user is complete</text>
+  <text x="902" y="378" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Show trusted device posture</text>
+  <text x="902" y="410" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Show latest audit evidence</text>
+  <text x="902" y="442" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Link to Security Lock</text>
+
+  <rect x="1260" y="258" width="232" height="178" rx="24" fill="#132B3A" stroke="#B7F171" stroke-width="2"/>
+  <text x="1290" y="308" fill="#B7F171" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">4. Verify Access</text>
+  <text x="1290" y="346" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Open Security Lock</text>
+  <text x="1290" y="378" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Use real PIN</text>
+  <text x="1290" y="410" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Confirm route unlocks</text>
+
+  <rect x="160" y="554" width="1280" height="304" rx="28" fill="#0E1F2C" stroke="#1E445B" stroke-width="2"/>
+  <text x="202" y="610" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Admin Readiness Logic</text>
+  <text x="202" y="654" fill="#9BB0C0" font-family="Segoe UI, Arial, sans-serif" font-size="22">A user is only “Ready” when all four local checks pass:</text>
+
+  <rect x="202" y="704" width="260" height="98" rx="18" fill="#132B3A" stroke="#58C3FF"/>
+  <text x="230" y="748" fill="#58C3FF" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Identity</text>
+  <text x="230" y="782" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Local user selected</text>
+
+  <rect x="500" y="704" width="260" height="98" rx="18" fill="#132B3A" stroke="#63D0C2"/>
+  <text x="528" y="748" fill="#63D0C2" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Role + Permissions</text>
+  <text x="528" y="782" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Correct local scopes assigned</text>
+
+  <rect x="798" y="704" width="260" height="98" rx="18" fill="#132B3A" stroke="#FFCC66"/>
+  <text x="826" y="748" fill="#FFCC66" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Primary PIN</text>
+  <text x="826" y="782" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Normal unlock path present</text>
+
+  <rect x="1096" y="704" width="302" height="98" rx="18" fill="#132B3A" stroke="#B7F171"/>
+  <text x="1124" y="748" fill="#B7F171" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Trusted Device</text>
+  <text x="1124" y="782" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="20">Trust level 3+ and not blocked</text>
+
+  <path d="M416 347H484" stroke="#58C3FF" stroke-width="6" stroke-linecap="round"/>
+  <path d="M804 347H872" stroke="#63D0C2" stroke-width="6" stroke-linecap="round"/>
+  <path d="M1192 347H1260" stroke="#FFCC66" stroke-width="6" stroke-linecap="round"/>
+</svg>
