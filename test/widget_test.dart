@@ -169,6 +169,7 @@ void main() {
           showLearningCard: true,
           showContentCard: true,
           energyLabel: 'High',
+          hasEveningReview: false,
           nextStepTitle: 'Next useful move',
           nextStepSummary:
               'Continue MicroGrow with Review the next useful diagnostics step.',
@@ -437,7 +438,11 @@ void main() {
     );
   }
 
-  Widget buildDatabaseBackedTestApp(AppDatabase database, {Widget? child}) {
+  Widget buildDatabaseBackedTestApp(
+    AppDatabase database, {
+    Widget? child,
+    bool useLiveDashboardSnapshot = false,
+  }) {
     return ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => database),
@@ -467,6 +472,9 @@ void main() {
           );
         }),
         dashboardSnapshotProvider.overrideWith((ref) async {
+          if (useLiveDashboardSnapshot) {
+            return DashboardRepository(database).loadTodaySnapshot();
+          }
           final settings = await SettingsRepository(database).getSettings();
           return DashboardSnapshot(
             date: DateTime(2026, 5, 2),
@@ -495,6 +503,7 @@ void main() {
             showLearningCard: settings.settings.showLearningCard,
             showContentCard: settings.settings.showContentCard,
             energyLabel: 'High',
+            hasEveningReview: false,
             nextStepTitle: 'Next useful move',
             nextStepSummary:
                 'Continue MicroGrow with Review the next useful diagnostics step.',
@@ -661,7 +670,9 @@ void main() {
 
       await SeedDataService(database).ensureSeedData();
 
-      await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+      await tester.pumpWidget(
+        buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+      );
       await pumpUntilIdle(tester);
 
       appRouter.push('/journal');
@@ -1307,6 +1318,125 @@ void main() {
     ).getTodayPlan();
     expect(plan.tomorrowFocus, 'Start the evening review save flow.');
   });
+
+  testWidgets(
+    'dashboard evening review card shows tomorrow focus after planner save',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      await DailyPlanService(database).ensureTodayPlan();
+
+      await tester.pumpWidget(
+        buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+      );
+      await pumpUntilIdle(tester);
+
+      appRouter.go(RouteNames.planner);
+      await pumpUntilIdle(tester);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('plannerTomorrowFocusField')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const Key('plannerTomorrowFocusField')),
+        'Begin with the next calm build pass.',
+      );
+      await tester.tap(find.byKey(const Key('plannerTomorrowFocusSaveButton')));
+      await pumpUntilIdle(tester);
+
+      appRouter.go(RouteNames.dashboard);
+      await pumpUntilIdle(tester);
+
+      expect(find.text('Tomorrow queued'), findsOneWidget);
+      expect(find.text('Tomorrow\'s likely focus'), findsOneWidget);
+      expect(find.text('Begin with the next calm build pass.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'dashboard evening review card shows review and carry forward handoff',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      await DailyPlanService(database).ensureTodayPlan();
+
+      await tester.pumpWidget(
+        buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+      );
+      await pumpUntilIdle(tester);
+
+      appRouter.go('${RouteNames.planner}?section=review');
+      await pumpUntilIdle(tester);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('plannerMovedForwardField')),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const Key('plannerMovedForwardField')),
+        'The planner handoff became visible from the dashboard.',
+      );
+      await tester.enterText(
+        find.byKey(const Key('plannerCompletedField')),
+        'Saved the first evening review pass.',
+      );
+      await tester.enterText(
+        find.byKey(const Key('plannerLearnedField')),
+        'A gentle summary is enough to keep the loop trustworthy.',
+      );
+      await tester.enterText(
+        find.byKey(const Key('plannerBlockersField')),
+        'No blocker worth carrying tonight.',
+      );
+      final reviewSaveButton = find.byKey(
+        const Key('plannerEveningReviewSaveButton'),
+      );
+      await tester.ensureVisible(reviewSaveButton);
+      await tester.pumpAndSettle();
+      await tester.tap(reviewSaveButton);
+      await pumpUntilIdle(tester);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('plannerCarryForwardField')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const Key('plannerCarryForwardField')),
+        'Carry the backlog tidy-up into tomorrow if energy stays low.',
+      );
+      final carryForwardSaveButton = find.byKey(
+        const Key('plannerCarryForwardSaveButton'),
+      );
+      await tester.ensureVisible(carryForwardSaveButton);
+      await tester.pumpAndSettle();
+      await tester.tap(carryForwardSaveButton);
+      await pumpUntilIdle(tester);
+
+      appRouter.go(RouteNames.dashboard);
+      await pumpUntilIdle(tester);
+
+      expect(find.text('Review saved'), findsOneWidget);
+      expect(find.text('Carry forward noted'), findsOneWidget);
+      expect(find.text('Carry forward'), findsOneWidget);
+      expect(
+        find.text(
+          'Carry the backlog tidy-up into tomorrow if energy stays low.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Continue Planner'), findsOneWidget);
+    },
+  );
 
   test('planner saves evening review fields to local plan', () async {
     final database = AppDatabase(NativeDatabase.memory());

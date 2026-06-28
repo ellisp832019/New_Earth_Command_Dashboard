@@ -131,6 +131,7 @@ Widget buildDatabaseBackedTestApp(AppDatabase database, {Widget? child}) {
           showLearningCard: settings.settings.showLearningCard,
           showContentCard: settings.settings.showContentCard,
           energyLabel: 'High',
+          hasEveningReview: false,
           nextStepTitle: 'Next useful move',
           nextStepSummary:
               'Continue MicroGrow with Review the next useful diagnostics step.',
@@ -979,12 +980,20 @@ void main() {
 
     expect(find.text('Parked capture'), findsAtLeastNWidgets(1));
     expect(find.text('Fresh capture'), findsNothing);
-    expect(find.text('Parked items stay here until you move them on'), findsOneWidget);
+    expect(
+      find.text('Parked items stay here until you move them on'),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.byKey(Key('reviewInboxItemButton-${parkedItem.inboxItemId}')));
+    await tester.tap(
+      find.byKey(Key('reviewInboxItemButton-${parkedItem.inboxItemId}')),
+    );
     await pumpUntilIdle(tester);
 
-    expect(find.text('Choose the calmest next home for this capture.'), findsOneWidget);
+    expect(
+      find.text('Choose the calmest next home for this capture.'),
+      findsOneWidget,
+    );
     expect(find.text('Convert to Task'), findsOneWidget);
     expect(find.text('Convert to Journal Entry'), findsOneWidget);
     expect(find.text('Other destinations'), findsOneWidget);
@@ -1018,7 +1027,9 @@ void main() {
 
     expect(find.text('Return to New Queue'), findsOneWidget);
 
-    await tester.tap(find.byKey(Key('parkInboxItemButton-${parkedItem.inboxItemId}')));
+    await tester.tap(
+      find.byKey(Key('parkInboxItemButton-${parkedItem.inboxItemId}')),
+    );
     await pumpUntilIdle(tester);
 
     expect(

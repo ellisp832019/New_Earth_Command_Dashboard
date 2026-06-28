@@ -18,9 +18,13 @@ class DashboardSnapshot {
     required this.showLearningCard,
     required this.showContentCard,
     required this.energyLabel,
+    required this.hasEveningReview,
     this.mainFocus,
     this.focusReason,
     this.morningIntention,
+    this.eveningReview,
+    this.carryForwardNotes,
+    this.tomorrowFocus,
   });
 
   final DateTime date;
@@ -34,12 +38,16 @@ class DashboardSnapshot {
   final bool showLearningCard;
   final bool showContentCard;
   final String energyLabel;
+  final bool hasEveningReview;
   final String nextStepTitle;
   final String nextStepSummary;
   final String nextStepReason;
   final String? mainFocus;
   final String? focusReason;
   final String? morningIntention;
+  final String? eveningReview;
+  final String? carryForwardNotes;
+  final String? tomorrowFocus;
 }
 
 class DashboardProjectSummary {
@@ -103,9 +111,13 @@ class DashboardRepository {
     return DashboardSnapshot(
       date: today,
       hasTodayPlan: todayPlan != null,
+      hasEveningReview: todayPlan?.eveningReview?.trim().isNotEmpty == true,
       mainFocus: todayPlan?.mainFocus,
       focusReason: todayPlan?.focusReason,
       morningIntention: todayPlan?.morningIntention,
+      eveningReview: todayPlan?.eveningReview,
+      carryForwardNotes: todayPlan?.carryForwardNotes,
+      tomorrowFocus: todayPlan?.tomorrowFocus,
       activeProjectCount: activeProjectCount,
       activeProjects: activeProjects,
       topTasks: topTasks,
@@ -174,8 +186,9 @@ class DashboardRepository {
   }) {
     final mainFocus = todayPlan?.mainFocus?.trim();
     final firstTask = topTasks.isNotEmpty ? topTasks.first : null;
-    final firstProject =
-        activeProjects.isNotEmpty ? activeProjects.first : null;
+    final firstProject = activeProjects.isNotEmpty
+        ? activeProjects.first
+        : null;
     final isLowEnergy = energyLabel.toLowerCase().contains('low');
 
     if (mainFocus != null && mainFocus.isNotEmpty && firstTask != null) {
@@ -207,14 +220,14 @@ class DashboardRepository {
     }
 
     if (firstProject != null) {
-      final projectLine = firstProject.nextAction ??
+      final projectLine =
+          firstProject.nextAction ??
           firstProject.currentMilestone ??
           'one small step';
       return _DashboardGuidance(
         title: 'Next useful move',
         summary: 'Continue ${firstProject.name} with $projectLine.',
-        reason:
-            'It uses the strongest project context available right now.',
+        reason: 'It uses the strongest project context available right now.',
       );
     }
 

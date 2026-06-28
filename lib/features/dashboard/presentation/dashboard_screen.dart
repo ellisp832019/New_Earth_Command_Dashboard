@@ -104,7 +104,7 @@ class _DashboardContent extends StatelessWidget {
                     const SizedBox(height: 14),
                     _SupportModuleGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
-                    const _DashboardEveningReviewCard(),
+                    _DashboardEveningReviewCard(snapshot: snapshot),
                     const SizedBox(height: 20),
                     _DashboardFooter(isDark: isDark),
                   ],
@@ -3463,44 +3463,142 @@ class _ActiveProjectsPanel extends StatelessWidget {
 }
 
 class _DashboardEveningReviewCard extends StatelessWidget {
-  const _DashboardEveningReviewCard();
+  const _DashboardEveningReviewCard({required this.snapshot});
+
+  final DashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCarryForward =
+        snapshot.carryForwardNotes?.trim().isNotEmpty == true;
+    final hasTomorrowFocus = snapshot.tomorrowFocus?.trim().isNotEmpty == true;
+    final hasReview = snapshot.hasEveningReview;
+    final headline = hasReview
+        ? 'The day-close handoff is already in motion.'
+        : 'Record what moved forward before the day ends.';
+    final buttonLabel = hasReview || hasCarryForward || hasTomorrowFocus
+        ? 'Continue Planner'
+        : 'Start Evening Review';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.nightlight_round, color: AppColours.darkPurple),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Evening Review',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColours.darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      headline,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                key: const Key('dashboardStartEveningReviewButton'),
+                onPressed: () =>
+                    context.go('${RouteNames.planner}?section=review'),
+                icon: const Icon(Icons.nightlight_round),
+                label: Text(buttonLabel),
+              ),
+            ],
+          ),
+          if (hasReview || hasCarryForward || hasTomorrowFocus) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (hasReview)
+                  const _InlineTag(
+                    label: 'Review saved',
+                    accent: AppColours.darkSuccess,
+                    foreground: AppColours.darkSuccess,
+                  ),
+                if (hasCarryForward)
+                  const _InlineTag(
+                    label: 'Carry forward noted',
+                    accent: AppColours.darkAmber,
+                    foreground: AppColours.darkAmber,
+                  ),
+                if (hasTomorrowFocus)
+                  const _InlineTag(
+                    label: 'Tomorrow queued',
+                    accent: AppColours.darkSecondary,
+                    foreground: AppColours.darkSecondary,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (hasTomorrowFocus)
+              _DashboardReviewLine(
+                label: 'Tomorrow\'s likely focus',
+                value: snapshot.tomorrowFocus!,
+              ),
+            if (hasCarryForward) ...[
+              const SizedBox(height: 10),
+              _DashboardReviewLine(
+                label: 'Carry forward',
+                value: snapshot.carryForwardNotes!,
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardReviewLine extends StatelessWidget {
+  const _DashboardReviewLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: _panelDecoration(context),
-      child: Row(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.nightlight_round, color: AppColours.darkPurple),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Evening Review',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Record what moved forward before the day ends.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
-                ),
-              ],
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 16),
-          FilledButton.icon(
-            key: const Key('dashboardStartEveningReviewButton'),
-            onPressed: () => context.go('${RouteNames.planner}?section=review'),
-            icon: const Icon(Icons.nightlight_round),
-            label: const Text('Start Evening Review'),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkText),
           ),
         ],
       ),
