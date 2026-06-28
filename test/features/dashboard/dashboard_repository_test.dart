@@ -81,4 +81,71 @@ void main() {
       );
     },
   );
+
+  test(
+    'dashboard repository prefers tomorrow focus after evening review is saved',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final today = DateTime(2026, 5, 2, 20);
+      await DailyPlanService(database, now: () => today).ensureTodayPlan();
+      final dailyPlanRepository = DailyPlanRepository(
+        database,
+        now: () => today,
+      );
+
+      await dailyPlanRepository.updateTomorrowFocus(
+        'Start with the next calm dashboard pass.',
+      );
+      await dailyPlanRepository.updateEveningReview(
+        movedForward: 'Closed the day without losing the thread.',
+        completed: 'Saved the handoff state.',
+        learned: 'A visible handoff reduces restart friction.',
+        blockers: '',
+      );
+
+      final snapshot = await DashboardRepository(
+        database,
+        now: () => today,
+      ).loadTodaySnapshot();
+
+      expect(snapshot.hasEveningReview, isTrue);
+      expect(snapshot.nextStepTitle, 'Tomorrow is already lined up');
+      expect(
+        snapshot.nextStepSummary,
+        'Start with the next calm dashboard pass.',
+      );
+      expect(snapshot.nextStepReason, contains('next useful move is waiting'));
+    },
+  );
+
+  test(
+    'dashboard repository falls back to carry forward notes before generic guidance',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final today = DateTime(2026, 5, 2, 20);
+      await DailyPlanService(database, now: () => today).ensureTodayPlan();
+      await DailyPlanRepository(
+        database,
+        now: () => today,
+      ).updateCarryForwardNotes(
+        'Carry forward the project cleanup before adding anything new.',
+      );
+
+      final snapshot = await DashboardRepository(
+        database,
+        now: () => today,
+      ).loadTodaySnapshot();
+
+      expect(snapshot.nextStepTitle, 'Pick up the handoff gently');
+      expect(
+        snapshot.nextStepSummary,
+        'Carry forward the project cleanup before adding anything new.',
+      );
+      expect(snapshot.nextStepReason, contains('carry-forward note'));
+    },
+  );
 }

@@ -1432,11 +1432,49 @@ void main() {
         find.text(
           'Carry the backlog tidy-up into tomorrow if energy stays low.',
         ),
-        findsOneWidget,
+        findsAtLeastNWidgets(1),
       );
       expect(find.text('Continue Planner'), findsOneWidget);
     },
   );
+
+  testWidgets('dashboard handoff card can reopen parked tasks directly', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    await DailyPlanService(database).ensureTodayPlan();
+    final task = await TaskRepository(database).createTask(
+      title: 'Parked website tidy-up',
+      notes: 'Resume this after the review closes.',
+    );
+    await TaskRepository(database).parkTask(task.taskId);
+    await DailyPlanRepository(
+      database,
+    ).updateCarryForwardNotes('Resume this after the review closes.');
+
+    await tester.pumpWidget(
+      buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+    );
+    await pumpUntilIdle(tester);
+
+    appRouter.go(RouteNames.dashboard);
+    await pumpUntilIdle(tester);
+
+    final reviewParkedButton = find.byKey(
+      const Key('dashboardReviewParkedButton'),
+    );
+    await tester.ensureVisible(reviewParkedButton);
+    await tester.pumpAndSettle();
+    await tester.tap(reviewParkedButton);
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Tasks'), findsWidgets);
+    final parkedChip = tester.widget<ChoiceChip>(
+      find.byKey(const Key('taskStatusFilter-Parked')),
+    );
+    expect(parkedChip.selected, isTrue);
+  });
 
   test('planner saves evening review fields to local plan', () async {
     final database = AppDatabase(NativeDatabase.memory());

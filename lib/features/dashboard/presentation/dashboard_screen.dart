@@ -3462,13 +3462,13 @@ class _ActiveProjectsPanel extends StatelessWidget {
   }
 }
 
-class _DashboardEveningReviewCard extends StatelessWidget {
+class _DashboardEveningReviewCard extends ConsumerWidget {
   const _DashboardEveningReviewCard({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final hasCarryForward =
         snapshot.carryForwardNotes?.trim().isNotEmpty == true;
     final hasTomorrowFocus = snapshot.tomorrowFocus?.trim().isNotEmpty == true;
@@ -3560,10 +3560,50 @@ class _DashboardEveningReviewCard extends StatelessWidget {
                 value: snapshot.carryForwardNotes!,
               ),
             ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                if (hasCarryForward)
+                  FilledButton.tonalIcon(
+                    key: const Key('dashboardReviewParkedButton'),
+                    onPressed: () => _openParkedTasks(ref, context),
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: const Text('Review Parked'),
+                  ),
+                TextButton.icon(
+                  key: const Key('dashboardOpenTasksHandoffButton'),
+                  onPressed: () => _openTasks(ref, context),
+                  icon: const Icon(Icons.task_alt_outlined),
+                  label: const Text('Open Tasks'),
+                ),
+                TextButton.icon(
+                  key: const Key('dashboardOpenProjectsHandoffButton'),
+                  onPressed: () => context.go(RouteNames.projectsWorkspace),
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: const Text('Open Projects'),
+                ),
+              ],
+            ),
           ],
         ],
       ),
     );
+  }
+
+  void _openParkedTasks(WidgetRef ref, BuildContext context) {
+    ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('Parked');
+    ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(null);
+    ref.read(taskSearchQueryProvider.notifier).clear();
+    context.go(RouteNames.tasks);
+  }
+
+  void _openTasks(WidgetRef ref, BuildContext context) {
+    ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('All');
+    ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(null);
+    ref.read(taskSearchQueryProvider.notifier).clear();
+    context.go(RouteNames.tasks);
   }
 }
 

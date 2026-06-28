@@ -185,6 +185,10 @@ class DashboardRepository {
     required String energyLabel,
   }) {
     final mainFocus = todayPlan?.mainFocus?.trim();
+    final tomorrowFocus = todayPlan?.tomorrowFocus?.trim();
+    final carryForwardNotes = todayPlan?.carryForwardNotes?.trim();
+    final hasEveningReview =
+        todayPlan?.eveningReview?.trim().isNotEmpty == true;
     final firstTask = topTasks.isNotEmpty ? topTasks.first : null;
     final firstProject = activeProjects.isNotEmpty
         ? activeProjects.first
@@ -206,6 +210,24 @@ class DashboardRepository {
         summary: 'Start with $mainFocus.',
         reason:
             'It gives the day one clear anchor before anything else competes for attention.',
+      );
+    }
+
+    if (hasEveningReview && tomorrowFocus != null && tomorrowFocus.isNotEmpty) {
+      return _DashboardGuidance(
+        title: 'Tomorrow is already lined up',
+        summary: _tomorrowFocusSummary(tomorrowFocus),
+        reason:
+            'You already closed the last loop, so the next useful move is waiting for you.',
+      );
+    }
+
+    if (carryForwardNotes != null && carryForwardNotes.isNotEmpty) {
+      return _DashboardGuidance(
+        title: 'Pick up the handoff gently',
+        summary: _carryForwardSummary(carryForwardNotes),
+        reason:
+            'You left yourself a clear carry-forward note, so nothing important needs to be rediscovered.',
       );
     }
 
@@ -237,6 +259,27 @@ class DashboardRepository {
       reason:
           'Nothing is pinned yet, so one simple choice will keep the day steady.',
     );
+  }
+
+  String _carryForwardSummary(String carryForwardNotes) {
+    if (carryForwardNotes.length <= 110) {
+      return carryForwardNotes;
+    }
+
+    return '${carryForwardNotes.substring(0, 107).trimRight()}...';
+  }
+
+  String _tomorrowFocusSummary(String tomorrowFocus) {
+    final normalized = tomorrowFocus.trim();
+    final sentence = normalized.endsWith('.')
+        ? normalized.substring(0, normalized.length - 1)
+        : normalized;
+    final lower = sentence.toLowerCase();
+    if (lower.startsWith('start with ')) {
+      return '${sentence[0].toUpperCase()}${sentence.substring(1)}.';
+    }
+
+    return 'Start with $sentence.';
   }
 
   Future<List<DashboardTopTask>> _topTasks(DailyPlan? todayPlan) async {
