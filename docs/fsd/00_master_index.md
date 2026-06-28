@@ -41,6 +41,9 @@ Codex must treat these files as the source of truth for the project.
 11. `11_build_instructions.md`
    - First coding tasks, Codex prompts, repo setup.
 
+12. `12_major_upgrade_plan.md`
+   - Repo-wide upgrade order, cross-module priorities, release gates, and parked work.
+
 ## Roadmaps
 
 - [App Roadmap](../roadmap/app_roadmap.md)
