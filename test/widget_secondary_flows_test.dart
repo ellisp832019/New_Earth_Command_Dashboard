@@ -990,6 +990,54 @@ void main() {
     expect(find.text('Other destinations'), findsOneWidget);
   });
 
+  testWidgets('parked inbox item can return to the new queue', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final project = await createMicroGrowProject(database);
+    final inboxRepository = InboxRepository(database);
+
+    final parkedItem = await inboxRepository.createItem(
+      title: 'Bring me back',
+      body: 'This should rejoin the new queue.',
+      type: 'Idea',
+      projectId: project.projectId,
+      status: 'Parked',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await pumpUntilIdle(tester);
+
+    appRouter.go('/inbox');
+    await pumpUntilIdle(tester);
+
+    await tester.tap(find.text('Parked 1'));
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Return to New Queue'), findsOneWidget);
+
+    await tester.tap(find.byKey(Key('parkInboxItemButton-${parkedItem.inboxItemId}')));
+    await pumpUntilIdle(tester);
+
+    expect(
+      find.text(
+        'Nothing is parked right now. If something is not for today, you can park it here for later review.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('New 1'));
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Bring me back'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: New'), findsOneWidget);
+
+    final refreshedItem = await inboxRepository.getById(parkedItem.inboxItemId);
+    expect(refreshedItem.status, 'New');
+  });
+
   testWidgets('dashboard quick capture saves a new inbox item', (
     WidgetTester tester,
   ) async {

@@ -20,6 +20,13 @@ final inboxItemsProvider = FutureProvider<List<InboxListItem>>((ref) async {
   return ref.watch(inboxRepositoryProvider).getItems();
 });
 
+final inboxRecentlyProcessedProvider = FutureProvider<List<InboxListItem>>((
+  ref,
+) async {
+  await ref.watch(databaseReadyProvider.future);
+  return ref.watch(inboxRepositoryProvider).getRecentlyProcessedItems();
+});
+
 final inboxActionsControllerProvider = Provider<InboxActionsController>((ref) {
   return InboxActionsController(ref);
 });
@@ -52,6 +59,14 @@ class InboxActionsController {
 
   Future<InboxItem> parkItem(String inboxItemId) async {
     final item = await _ref.read(inboxRepositoryProvider).parkItem(inboxItemId);
+    _refreshInboxViews();
+    return item;
+  }
+
+  Future<InboxItem> returnToNewQueue(String inboxItemId) async {
+    final item = await _ref
+        .read(inboxRepositoryProvider)
+        .returnToNewQueue(inboxItemId);
     _refreshInboxViews();
     return item;
   }
@@ -270,6 +285,7 @@ class InboxActionsController {
 
   void _refreshInboxViews({String? projectId}) {
     _ref.invalidate(inboxItemsProvider);
+    _ref.invalidate(inboxRecentlyProcessedProvider);
     _ref.invalidate(dashboardSnapshotProvider);
     if (projectId != null) {
       _ref.invalidate(projectDetailProvider(projectId));

@@ -356,4 +356,39 @@ void main() {
       expect(parkedItem.convertedToId, isNull);
     },
   );
+
+  test(
+    'inbox actions controller can return a parked item to the new queue',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final inboxRepository = InboxRepository(database);
+
+      final inboxItem = await inboxRepository.createItem(
+        title: 'Bring this back',
+        body: 'This belongs back in the active queue.',
+        status: 'Parked',
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => database),
+          databaseReadyProvider.overrideWith((ref) async {}),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(inboxActionsControllerProvider)
+          .returnToNewQueue(inboxItem.inboxItemId);
+
+      final inboxItems = await container.read(inboxItemsProvider.future);
+      final refreshedItem = await inboxRepository.getById(inboxItem.inboxItemId);
+
+      expect(inboxItems, hasLength(1));
+      expect(inboxItems.single.item.status, 'New');
+      expect(refreshedItem.status, 'New');
+    },
+  );
 }

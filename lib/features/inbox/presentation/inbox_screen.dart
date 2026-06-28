@@ -20,6 +20,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final items = ref.watch(inboxItemsProvider);
+    final recentProcessed = ref.watch(inboxRecentlyProcessedProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -36,6 +37,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       body: items.when(
         data: (inboxItems) {
           final filteredItems = _applyFilter(inboxItems);
+          final recentHistory = recentProcessed.asData?.value ?? const <InboxListItem>[];
+          final hasHistory = recentHistory.isNotEmpty;
 
           if (inboxItems.isEmpty) {
             return Center(
@@ -63,6 +66,10 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 ),
                 const SizedBox(height: 12),
                 _InboxTriageHintCard(filter: _filter),
+                if (hasHistory) ...[
+                  const SizedBox(height: 12),
+                  _InboxProcessedHistoryCard(items: recentHistory),
+                ],
                 const SizedBox(height: 12),
                 Card(
                   elevation: 0,
@@ -89,7 +96,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: filteredItems.length + 2,
+            itemCount: filteredItems.length + (hasHistory ? 3 : 2),
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -106,7 +113,13 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 return _InboxTriageHintCard(filter: _filter);
               }
 
-              return _InboxItemCard(item: filteredItems[index - 2]);
+              if (index == 2 && hasHistory) {
+                return _InboxProcessedHistoryCard(items: recentHistory);
+              }
+
+              final itemOffset = hasHistory ? 3 : 2;
+
+              return _InboxItemCard(item: filteredItems[index - itemOffset]);
             },
           );
         },
@@ -239,12 +252,18 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
                 OutlinedButton.icon(
                   key: Key('parkInboxItemButton-${item.item.inboxItemId}'),
                   onPressed: _isProcessing || item.item.status == 'Parked'
-                      ? null
+                      ? _isProcessing
+                            ? null
+                            : _returnToNewQueue
                       : _parkItem,
-                  icon: const Icon(Icons.push_pin_outlined),
+                  icon: Icon(
+                    item.item.status == 'Parked'
+                        ? Icons.unarchive_outlined
+                        : Icons.push_pin_outlined,
+                  ),
                   label: Text(
                     item.item.status == 'Parked'
-                        ? 'Already Parked'
+                        ? 'Return to New Queue'
                         : 'Park for Later',
                   ),
                 ),
@@ -334,6 +353,13 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
                   onTap: () =>
                       Navigator.of(context).pop(_InboxReviewAction.park),
                 ),
+              if (item.item.status == 'Parked')
+                _ConversionChoiceTile(
+                  icon: Icons.unarchive_outlined,
+                  label: 'Return to New Queue',
+                  onTap: () =>
+                      Navigator.of(context).pop(_InboxReviewAction.returnToNew),
+                ),
               const Divider(height: 1),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -396,6 +422,14 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           'Inbox item parked.',
         );
         break;
+      case _InboxReviewAction.returnToNew:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .returnToNewQueue(widget.item.item.inboxItemId),
+          'Inbox item returned to the new queue.',
+        );
+        break;
       case _InboxReviewAction.content:
         await _performAction(
           () => ref
@@ -450,6 +484,15 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
         setState(() => _isProcessing = false);
       }
     }
+  }
+
+  Future<void> _returnToNewQueue() async {
+    await _performAction(
+      () => ref
+          .read(inboxActionsControllerProvider)
+          .returnToNewQueue(widget.item.item.inboxItemId),
+      'Inbox item returned to the new queue.',
+    );
   }
 }
 
@@ -552,6 +595,80 @@ class _InboxOverviewCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _InboxProcessedHistoryCard extends StatelessWidget {
+  const _InboxProcessedHistoryCard({required this.items});
+
+  final List<InboxListItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surface.withValues(alpha: 0.94),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.88),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Recently processed', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              'A quick read on what has already been moved on.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            ...items.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle_outline, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.item.title ?? 'Untitled Capture',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _processedLabel(entry),
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _processedLabel(InboxListItem item) {
+    final destination = item.item.convertedToType ?? 'Item';
+    final project = item.projectName;
+    if (project != null && project.isNotEmpty) {
+      return '$destination · $project';
+    }
+    return destination;
   }
 }
 
@@ -669,4 +786,12 @@ class _InboxFilterChip extends StatelessWidget {
 
 enum _InboxStatusFilter { all, newOnly, parkedOnly }
 
-enum _InboxReviewAction { task, journal, park, content, learning, business }
+enum _InboxReviewAction {
+  task,
+  journal,
+  park,
+  returnToNew,
+  content,
+  learning,
+  business,
+}

@@ -62,6 +62,50 @@ class InboxRepository {
         .toList();
   }
 
+  Future<List<InboxListItem>> getRecentlyProcessedItems({int limit = 3}) async {
+    final items =
+        await (_database.select(_database.inboxItems)
+              ..where(
+                (table) =>
+                    table.isArchived.equals(false) &
+                    table.status.equals('Processed'),
+              )
+              ..orderBy([(table) => OrderingTerm.desc(table.processedAt)])
+              ..limit(limit))
+            .get();
+
+    if (items.isEmpty) {
+      return const [];
+    }
+
+    final projectIds = items
+        .map((item) => item.projectId)
+        .whereType<String>()
+        .toSet()
+        .toList();
+
+    final projects = projectIds.isEmpty
+        ? const <Project>[]
+        : await (_database.select(
+            _database.projects,
+          )..where((table) => table.projectId.isIn(projectIds))).get();
+
+    final projectNames = {
+      for (final project in projects) project.projectId: project.name,
+    };
+
+    return items
+        .map(
+          (item) => InboxListItem(
+            item: item,
+            projectName: item.projectId == null
+                ? null
+                : projectNames[item.projectId],
+          ),
+        )
+        .toList();
+  }
+
   Future<InboxItem> createItem({
     String? title,
     String? body,
@@ -152,6 +196,10 @@ class InboxRepository {
 
   Future<InboxItem> parkItem(String inboxItemId) {
     return updateItem(inboxItemId: inboxItemId, status: 'Parked');
+  }
+
+  Future<InboxItem> returnToNewQueue(String inboxItemId) {
+    return updateItem(inboxItemId: inboxItemId, status: 'New');
   }
 
   String? _normalizeText(String? value) {
