@@ -8,6 +8,7 @@ class ProjectDetailSnapshot {
     required this.project,
     required this.activeTasks,
     required this.blockedTasks,
+    required this.parkedTasks,
     required this.recentJournalEntries,
     required this.recentLearningItems,
     required this.recentContentItems,
@@ -21,6 +22,7 @@ class ProjectDetailSnapshot {
   final Project project;
   final List<Task> activeTasks;
   final List<Task> blockedTasks;
+  final List<Task> parkedTasks;
   final List<ProjectLinkedJournalEntry> recentJournalEntries;
   final List<ProjectLinkedLearningItem> recentLearningItems;
   final List<ProjectLinkedContentItem> recentContentItems;
@@ -193,6 +195,7 @@ class ProjectRepository {
     final blockedTasks = tasks
         .where((task) => task.status == 'Blocked')
         .toList();
+    final parkedTasks = tasks.where((task) => task.status == 'Parked').toList();
 
     final journalEntries =
         await (_database.select(_database.journalEntries)
@@ -260,6 +263,7 @@ class ProjectRepository {
       project: project,
       activeTasks: activeTasks,
       blockedTasks: blockedTasks,
+      parkedTasks: parkedTasks,
       recentJournalEntries: recentJournalEntries,
       recentLearningItems: learningItems
           .take(3)

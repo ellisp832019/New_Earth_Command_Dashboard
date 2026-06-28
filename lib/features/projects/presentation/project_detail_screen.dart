@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../tasks/application/tasks_controller.dart';
 import '../application/projects_controller.dart';
 import '../data/project_repository.dart';
 
@@ -219,6 +220,22 @@ class ProjectDetailScreen extends ConsumerWidget {
                       detail: detail,
                     ),
                     const SizedBox(height: 14),
+                    _ProjectResumeThreadCard(
+                      detail: detail,
+                      onReviewParked: detail.parkedTasks.isEmpty
+                          ? null
+                          : () => _openProjectParkedTasks(
+                              context,
+                              ref,
+                              project.projectId,
+                            ),
+                      onOpenPlanner: () => context.push(
+                        '${RouteNames.planner}?section=carryForward',
+                      ),
+                      onOpenTasks: () =>
+                          _openProjectTasks(context, ref, project.projectId),
+                    ),
+                    const SizedBox(height: 14),
                     Text(
                       'Linked modules',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -416,6 +433,128 @@ class ProjectDetailScreen extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('${project.name} archived.')));
+  }
+
+  void _openProjectTasks(
+    BuildContext context,
+    WidgetRef ref,
+    String projectId,
+  ) {
+    ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('All');
+    ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(projectId);
+    ref.read(taskSearchQueryProvider.notifier).clear();
+    context.push(RouteNames.tasks);
+  }
+
+  void _openProjectParkedTasks(
+    BuildContext context,
+    WidgetRef ref,
+    String projectId,
+  ) {
+    ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('Parked');
+    ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(projectId);
+    ref.read(taskSearchQueryProvider.notifier).clear();
+    context.push(RouteNames.tasks);
+  }
+}
+
+class _ProjectResumeThreadCard extends StatelessWidget {
+  const _ProjectResumeThreadCard({
+    required this.detail,
+    required this.onOpenPlanner,
+    required this.onOpenTasks,
+    this.onReviewParked,
+  });
+
+  final ProjectDetailSnapshot detail;
+  final VoidCallback onOpenPlanner;
+  final VoidCallback onOpenTasks;
+  final VoidCallback? onReviewParked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasParkedTasks = detail.parkedTasks.isNotEmpty;
+    final hasNextAction = detail.project.nextAction?.trim().isNotEmpty == true;
+    final headline = hasParkedTasks
+        ? 'There is parked project work ready to reopen.'
+        : hasNextAction
+        ? 'The project already has a visible next thread.'
+        : 'Keep the next project thread easy to reopen.';
+    final supportingCopy = hasParkedTasks
+        ? 'Review the parked tasks first so the project can restart from a known point.'
+        : hasNextAction
+        ? detail.project.nextAction!.trim()
+        : 'Use Planner or Tasks to leave a calm next step for the next session.';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _projectPanelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Resume thread',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            headline,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            supportingCopy,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColours.darkText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ProjectInfoChip(
+                label: 'Active tasks: ${detail.activeTasks.length}',
+              ),
+              _ProjectInfoChip(label: 'Blocked: ${detail.blockedTasks.length}'),
+              _ProjectInfoChip(label: 'Parked: ${detail.parkedTasks.length}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              if (onReviewParked != null)
+                FilledButton.icon(
+                  key: const Key('projectResumeReviewParkedButton'),
+                  onPressed: onReviewParked,
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Review Parked'),
+                ),
+              FilledButton.tonalIcon(
+                key: const Key('projectResumeOpenTasksButton'),
+                onPressed: onOpenTasks,
+                icon: const Icon(Icons.task_outlined),
+                label: const Text('Open Project Tasks'),
+              ),
+              OutlinedButton.icon(
+                key: const Key('projectResumePlannerButton'),
+                onPressed: onOpenPlanner,
+                icon: const Icon(Icons.event_note_outlined),
+                label: const Text('Open Carry Forward'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -137,6 +137,9 @@ Widget buildDatabaseBackedTestApp(AppDatabase database, {Widget? child}) {
               'Continue MicroGrow with Review the next useful diagnostics step.',
           nextStepReason:
               'It uses the strongest project context available right now.',
+          nextStepActionType: DashboardNextStepActionType.projectDetail,
+          nextStepActionLabel: 'Open Project',
+          nextStepProjectId: 'project-microgrow',
           mainFocus: null,
           focusReason: null,
           morningIntention: null,

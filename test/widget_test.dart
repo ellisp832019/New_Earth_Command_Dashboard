@@ -175,6 +175,9 @@ void main() {
               'Continue MicroGrow with Review the next useful diagnostics step.',
           nextStepReason:
               'It uses the strongest project context available right now.',
+          nextStepActionType: DashboardNextStepActionType.projectDetail,
+          nextStepActionLabel: 'Open Project',
+          nextStepProjectId: 'project-microgrow',
           mainFocus: null,
           focusReason: null,
           morningIntention: null,
@@ -509,6 +512,9 @@ void main() {
                 'Continue MicroGrow with Review the next useful diagnostics step.',
             nextStepReason:
                 'It uses the strongest project context available right now.',
+            nextStepActionType: DashboardNextStepActionType.projectDetail,
+            nextStepActionLabel: 'Open Project',
+            nextStepProjectId: 'project-microgrow',
             mainFocus: null,
             focusReason: null,
             morningIntention: null,
@@ -1476,6 +1482,42 @@ void main() {
     expect(parkedChip.selected, isTrue);
   });
 
+  testWidgets(
+    'dashboard primary next-step button can open the recommended project',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final project = await ProjectRepository(database).createProject(
+        name: 'Recommended Project',
+        status: 'Active',
+        priority: 'High',
+        currentMilestone: 'Keep the next thread visible.',
+        nextAction: 'Open the project and continue the next useful move.',
+      );
+      await DailyPlanService(database).ensureTodayPlan();
+
+      await tester.pumpWidget(
+        buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+      );
+      await pumpUntilIdle(tester);
+
+      appRouter.go(RouteNames.dashboard);
+      await pumpUntilIdle(tester);
+
+      expect(
+        find.byKey(const Key('dashboardPrimaryNextStepButton')),
+        findsOneWidget,
+      );
+      expect(find.text('Open Project'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('dashboardPrimaryNextStepButton')));
+      await pumpUntilIdle(tester);
+
+      expect(find.text('Project Detail'), findsOneWidget);
+      expect(find.text(project.name), findsOneWidget);
+    },
+  );
+
   test('planner saves evening review fields to local plan', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -1520,6 +1562,47 @@ void main() {
       contains(
         'Moved forward: The planner daily loop is starting to feel complete.',
       ),
+    );
+  });
+
+  test('planner can create a journal entry from evening review', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime.now();
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => database),
+        databaseReadyProvider.overrideWith((ref) async {}),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(plannerControllerProvider)
+        .createJournalFromEveningReview(
+          movedForward: 'The daily loop now hands off more cleanly.',
+          completed: 'Finished the first review journal bridge.',
+          learned: 'Saving a short reflection preserves build memory.',
+          blockers: 'Nothing critical blocked the close-out.',
+          carryForward: 'Carry forward the quiet tidy-up tomorrow.',
+          tomorrowFocus: 'Start with the dashboard follow-through.',
+        );
+
+    final entries = await JournalRepository(database).getEntries();
+    expect(entries, isNotEmpty);
+    final latest = entries.first.entry;
+    expect(latest.title, contains('Daily Review'));
+    expect(latest.category, 'Build Log');
+    expect(
+      latest.whatIWorkedOn,
+      contains('Moved forward: The daily loop now hands off more cleanly.'),
+    );
+    expect(
+      latest.nextActions,
+      contains('Tomorrow focus: Start with the dashboard follow-through.'),
     );
   });
 
@@ -1707,6 +1790,56 @@ void main() {
     final createdTask = (await TaskRepository(database).getActiveTasks())
         .firstWhere((task) => task.title == 'Add task from project detail');
     expect(createdTask.projectId, project.projectId);
+  });
+
+  testWidgets('project detail resume thread can reopen parked work', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final taskRepository = TaskRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Resume Thread Project',
+      status: 'Active',
+      priority: 'High',
+      nextAction: 'Reopen the parked cleanup thread.',
+    );
+    final parkedTask = await taskRepository.createTask(
+      title: 'Project parked cleanup',
+      projectId: project.projectId,
+      notes: 'Resume this when the thread is stable again.',
+    );
+    await taskRepository.parkTask(parkedTask.taskId);
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await pumpUntilIdle(tester);
+
+    appRouter.go('/projects/${project.projectId}');
+    await pumpUntilIdle(tester);
+
+    await tester.scrollUntilVisible(
+      find.text('Resume thread'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Resume thread'), findsOneWidget);
+    expect(find.text('Parked: 1'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('projectResumeReviewParkedButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tasks'), findsWidgets);
+    final tasksScreenContext = tester.element(find.byType(TasksScreen).first);
+    final tasksContainer = ProviderScope.containerOf(tasksScreenContext);
+    expect(tasksContainer.read(selectedTaskStatusFilterProvider), 'Parked');
+    expect(
+      tasksContainer.read(selectedTaskProjectFilterProvider),
+      project.projectId,
+    );
   });
 
   testWidgets('project detail shows linked journal entries and opens edit', (

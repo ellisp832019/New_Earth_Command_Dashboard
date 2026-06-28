@@ -118,13 +118,13 @@ class _DashboardContent extends StatelessWidget {
   }
 }
 
-class _DashboardHero extends StatelessWidget {
+class _DashboardHero extends ConsumerWidget {
   const _DashboardHero({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final weekday = DateFormat('EEEE').format(snapshot.date);
     final shortDate = DateFormat('d MMM y').format(snapshot.date);
@@ -211,6 +211,12 @@ class _DashboardHero extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
+              FilledButton.icon(
+                key: const Key('dashboardPrimaryNextStepButton'),
+                onPressed: () => _openNextStep(ref, context),
+                icon: Icon(_nextStepIcon(snapshot.nextStepActionType)),
+                label: Text(snapshot.nextStepActionLabel),
+              ),
               FilledButton.tonalIcon(
                 onPressed: () => context.push(RouteNames.commandPalette),
                 icon: const Icon(Icons.search),
@@ -276,6 +282,47 @@ class _DashboardHero extends StatelessWidget {
         },
       ),
     );
+  }
+
+  void _openNextStep(WidgetRef ref, BuildContext context) {
+    switch (snapshot.nextStepActionType) {
+      case DashboardNextStepActionType.planner:
+        context.push(RouteNames.planner);
+        return;
+      case DashboardNextStepActionType.tasks:
+        ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('All');
+        ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(null);
+        ref.read(taskSearchQueryProvider.notifier).clear();
+        context.push(RouteNames.tasks);
+        return;
+      case DashboardNextStepActionType.parkedTasks:
+        ref.read(selectedTaskStatusFilterProvider.notifier).setFilter('Parked');
+        ref.read(selectedTaskProjectFilterProvider.notifier).setFilter(null);
+        ref.read(taskSearchQueryProvider.notifier).clear();
+        context.push(RouteNames.tasks);
+        return;
+      case DashboardNextStepActionType.projectDetail:
+        final projectId = snapshot.nextStepProjectId;
+        if (projectId == null) {
+          context.push(RouteNames.projectsWorkspace);
+          return;
+        }
+        context.push(RouteNames.projectDetail(projectId));
+        return;
+    }
+  }
+
+  IconData _nextStepIcon(DashboardNextStepActionType actionType) {
+    switch (actionType) {
+      case DashboardNextStepActionType.planner:
+        return Icons.event_note_outlined;
+      case DashboardNextStepActionType.tasks:
+        return Icons.task_alt_outlined;
+      case DashboardNextStepActionType.parkedTasks:
+        return Icons.inventory_2_outlined;
+      case DashboardNextStepActionType.projectDetail:
+        return Icons.folder_open_outlined;
+    }
   }
 }
 

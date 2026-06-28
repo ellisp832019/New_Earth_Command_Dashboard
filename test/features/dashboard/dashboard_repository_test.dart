@@ -31,6 +31,11 @@ void main() {
       expect(snapshot.nextStepTitle, 'Next useful move');
       expect(snapshot.nextStepSummary, startsWith('Continue '));
       expect(snapshot.nextStepReason, contains('project context'));
+      expect(
+        snapshot.nextStepActionType,
+        DashboardNextStepActionType.projectDetail,
+      );
+      expect(snapshot.nextStepActionLabel, 'Open Project');
     },
   );
 
@@ -79,6 +84,8 @@ void main() {
         snapshot.nextStepReason,
         'It is already in the Top 3, so it is the clearest local move.',
       );
+      expect(snapshot.nextStepActionType, DashboardNextStepActionType.tasks);
+      expect(snapshot.nextStepActionLabel, 'Open Tasks');
     },
   );
 
@@ -117,6 +124,8 @@ void main() {
         'Start with the next calm dashboard pass.',
       );
       expect(snapshot.nextStepReason, contains('next useful move is waiting'));
+      expect(snapshot.nextStepActionType, DashboardNextStepActionType.planner);
+      expect(snapshot.nextStepActionLabel, 'Continue Planner');
     },
   );
 
@@ -146,6 +155,11 @@ void main() {
         'Carry forward the project cleanup before adding anything new.',
       );
       expect(snapshot.nextStepReason, contains('carry-forward note'));
+      expect(
+        snapshot.nextStepActionType,
+        DashboardNextStepActionType.parkedTasks,
+      );
+      expect(snapshot.nextStepActionLabel, 'Review Parked');
     },
   );
 }

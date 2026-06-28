@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 
+enum DashboardNextStepActionType { planner, tasks, parkedTasks, projectDetail }
+
 class DashboardSnapshot {
   const DashboardSnapshot({
     required this.date,
@@ -13,6 +15,8 @@ class DashboardSnapshot {
     required this.nextStepTitle,
     required this.nextStepSummary,
     required this.nextStepReason,
+    required this.nextStepActionType,
+    required this.nextStepActionLabel,
     required this.showWellbeingCard,
     required this.showBusinessCard,
     required this.showLearningCard,
@@ -25,6 +29,7 @@ class DashboardSnapshot {
     this.eveningReview,
     this.carryForwardNotes,
     this.tomorrowFocus,
+    this.nextStepProjectId,
   });
 
   final DateTime date;
@@ -42,12 +47,15 @@ class DashboardSnapshot {
   final String nextStepTitle;
   final String nextStepSummary;
   final String nextStepReason;
+  final DashboardNextStepActionType nextStepActionType;
+  final String nextStepActionLabel;
   final String? mainFocus;
   final String? focusReason;
   final String? morningIntention;
   final String? eveningReview;
   final String? carryForwardNotes;
   final String? tomorrowFocus;
+  final String? nextStepProjectId;
 }
 
 class DashboardProjectSummary {
@@ -125,6 +133,9 @@ class DashboardRepository {
       nextStepTitle: guidance.title,
       nextStepSummary: guidance.summary,
       nextStepReason: guidance.reason,
+      nextStepActionType: guidance.actionType,
+      nextStepActionLabel: guidance.actionLabel,
+      nextStepProjectId: guidance.projectId,
       showWellbeingCard: settings?.showWellbeingCard ?? true,
       showBusinessCard: settings?.showBusinessCard ?? true,
       showLearningCard: settings?.showLearningCard ?? true,
@@ -201,6 +212,8 @@ class DashboardRepository {
         summary: 'Start with $mainFocus, then move into ${firstTask.title}.',
         reason:
             'It follows the plan you already set and keeps the day anchored.',
+        actionType: DashboardNextStepActionType.tasks,
+        actionLabel: 'Open Tasks',
       );
     }
 
@@ -210,6 +223,8 @@ class DashboardRepository {
         summary: 'Start with $mainFocus.',
         reason:
             'It gives the day one clear anchor before anything else competes for attention.',
+        actionType: DashboardNextStepActionType.planner,
+        actionLabel: 'Open Planner',
       );
     }
 
@@ -219,6 +234,8 @@ class DashboardRepository {
         summary: _tomorrowFocusSummary(tomorrowFocus),
         reason:
             'You already closed the last loop, so the next useful move is waiting for you.',
+        actionType: DashboardNextStepActionType.planner,
+        actionLabel: 'Continue Planner',
       );
     }
 
@@ -228,6 +245,8 @@ class DashboardRepository {
         summary: _carryForwardSummary(carryForwardNotes),
         reason:
             'You left yourself a clear carry-forward note, so nothing important needs to be rediscovered.',
+        actionType: DashboardNextStepActionType.parkedTasks,
+        actionLabel: 'Review Parked',
       );
     }
 
@@ -238,6 +257,8 @@ class DashboardRepository {
         reason: isLowEnergy
             ? 'Energy looks low, so one clear step is enough to keep momentum.'
             : 'It is already in the Top 3, so it is the clearest local move.',
+        actionType: DashboardNextStepActionType.tasks,
+        actionLabel: 'Open Tasks',
       );
     }
 
@@ -250,6 +271,9 @@ class DashboardRepository {
         title: 'Next useful move',
         summary: 'Continue ${firstProject.name} with $projectLine.',
         reason: 'It uses the strongest project context available right now.',
+        actionType: DashboardNextStepActionType.projectDetail,
+        actionLabel: 'Open Project',
+        projectId: firstProject.projectId,
       );
     }
 
@@ -258,6 +282,8 @@ class DashboardRepository {
       summary: 'Open Planner and pick one small focus for today.',
       reason:
           'Nothing is pinned yet, so one simple choice will keep the day steady.',
+      actionType: DashboardNextStepActionType.planner,
+      actionLabel: 'Open Planner',
     );
   }
 
@@ -379,9 +405,15 @@ class _DashboardGuidance {
     required this.title,
     required this.summary,
     required this.reason,
+    required this.actionType,
+    required this.actionLabel,
+    this.projectId,
   });
 
   final String title;
   final String summary;
   final String reason;
+  final DashboardNextStepActionType actionType;
+  final String actionLabel;
+  final String? projectId;
 }

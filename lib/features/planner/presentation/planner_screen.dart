@@ -110,6 +110,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
   bool _isSavingCarryForward = false;
   bool _isSavingTomorrowFocus = false;
   bool _isSavingEveningReview = false;
+  bool _isCreatingReviewJournal = false;
   bool _isSavingTopThree = false;
   late List<String> _selectedTopTaskIds;
 
@@ -318,7 +319,9 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
             learnedController: _learnedController,
             blockersController: _blockersController,
             isSaving: _isSavingEveningReview,
+            isCreatingJournal: _isCreatingReviewJournal,
             onSave: () => _saveEveningReview(context),
+            onCreateJournal: () => _createReviewJournal(context),
           ),
         ),
         const SizedBox(height: 12),
@@ -465,6 +468,31 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
     } finally {
       if (mounted) {
         setState(() => _isSavingEveningReview = false);
+      }
+    }
+  }
+
+  Future<void> _createReviewJournal(BuildContext context) async {
+    setState(() => _isCreatingReviewJournal = true);
+
+    try {
+      await ref
+          .read(plannerControllerProvider)
+          .createJournalFromEveningReview(
+            movedForward: _movedForwardController.text,
+            completed: _completedController.text,
+            learned: _learnedController.text,
+            blockers: _blockersController.text,
+            carryForward: _carryForwardController.text,
+            tomorrowFocus: _tomorrowFocusController.text,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Review saved to Journal.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isCreatingReviewJournal = false);
       }
     }
   }
@@ -730,7 +758,9 @@ class _EveningReviewPlannerCard extends StatelessWidget {
     required this.learnedController,
     required this.blockersController,
     required this.isSaving,
+    required this.isCreatingJournal,
     required this.onSave,
+    required this.onCreateJournal,
   });
 
   final String title;
@@ -739,7 +769,9 @@ class _EveningReviewPlannerCard extends StatelessWidget {
   final TextEditingController learnedController;
   final TextEditingController blockersController;
   final bool isSaving;
+  final bool isCreatingJournal;
   final Future<void> Function() onSave;
+  final Future<void> Function() onCreateJournal;
 
   @override
   Widget build(BuildContext context) {
@@ -784,17 +816,35 @@ class _EveningReviewPlannerCard extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              key: const Key('plannerEveningReviewSaveButton'),
-              onPressed: isSaving ? null : onSave,
-              icon: isSaving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.nightlight_round),
-              label: const Text('Save Review'),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  key: const Key('plannerEveningReviewSaveButton'),
+                  onPressed: isSaving ? null : onSave,
+                  icon: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.nightlight_round),
+                  label: const Text('Save Review'),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('plannerReviewJournalButton'),
+                  onPressed: isCreatingJournal ? null : onCreateJournal,
+                  icon: isCreatingJournal
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.menu_book_outlined),
+                  label: const Text('Save to Journal'),
+                ),
+              ],
             ),
           ),
         ],
