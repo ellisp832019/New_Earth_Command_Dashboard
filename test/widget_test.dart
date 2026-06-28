@@ -1748,7 +1748,16 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Archive'));
+    final archiveDialog = find.byType(AlertDialog);
+    final confirmArchiveButton = find.descendant(
+      of: archiveDialog,
+      matching: find.widgetWithText(FilledButton, 'Archive'),
+    );
+    final archiveButtonWidget = tester.widget<FilledButton>(
+      confirmArchiveButton,
+    );
+    archiveButtonWidget.onPressed!.call();
+    await tester.pump();
     await pumpUntilIdle(tester);
 
     expect(find.text('Project Detail'), findsNothing);
