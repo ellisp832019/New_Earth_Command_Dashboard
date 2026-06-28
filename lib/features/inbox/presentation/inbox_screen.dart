@@ -6,11 +6,18 @@ import '../../../core/routing/route_names.dart';
 import '../application/inbox_controller.dart';
 import '../data/inbox_repository.dart';
 
-class InboxScreen extends ConsumerWidget {
+class InboxScreen extends ConsumerStatefulWidget {
   const InboxScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InboxScreen> createState() => _InboxScreenState();
+}
+
+class _InboxScreenState extends ConsumerState<InboxScreen> {
+  _InboxStatusFilter _filter = _InboxStatusFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final items = ref.watch(inboxItemsProvider);
 
@@ -28,6 +35,8 @@ class InboxScreen extends ConsumerWidget {
       ),
       body: items.when(
         data: (inboxItems) {
+          final filteredItems = _applyFilter(inboxItems);
+
           if (inboxItems.isEmpty) {
             return Center(
               child: Padding(
@@ -41,20 +50,63 @@ class InboxScreen extends ConsumerWidget {
             );
           }
 
+          if (filteredItems.isEmpty) {
+            return ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                _InboxOverviewCard(
+                  itemCount: inboxItems.length,
+                  newCount: _countByStatus(inboxItems, 'New'),
+                  parkedCount: _countByStatus(inboxItems, 'Parked'),
+                  filter: _filter,
+                  onFilterChanged: _setFilter,
+                ),
+                const SizedBox(height: 12),
+                _InboxTriageHintCard(filter: _filter),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 0,
+                  color: theme.colorScheme.surface.withValues(alpha: 0.94),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    side: BorderSide(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.88,
+                      ),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Text(
+                      _emptyFilterMessage(_filter),
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: inboxItems.length + 2,
+            itemCount: filteredItems.length + 2,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _InboxOverviewCard(itemCount: inboxItems.length);
+                return _InboxOverviewCard(
+                  itemCount: inboxItems.length,
+                  newCount: _countByStatus(inboxItems, 'New'),
+                  parkedCount: _countByStatus(inboxItems, 'Parked'),
+                  filter: _filter,
+                  onFilterChanged: _setFilter,
+                );
               }
 
               if (index == 1) {
-                return _InboxTriageHintCard();
+                return _InboxTriageHintCard(filter: _filter);
               }
 
-              return _InboxItemCard(item: inboxItems[index - 2]);
+              return _InboxItemCard(item: filteredItems[index - 2]);
             },
           );
         },
@@ -71,6 +123,36 @@ class InboxScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  List<InboxListItem> _applyFilter(List<InboxListItem> items) {
+    switch (_filter) {
+      case _InboxStatusFilter.all:
+        return items;
+      case _InboxStatusFilter.newOnly:
+        return items.where((item) => item.item.status == 'New').toList();
+      case _InboxStatusFilter.parkedOnly:
+        return items.where((item) => item.item.status == 'Parked').toList();
+    }
+  }
+
+  int _countByStatus(List<InboxListItem> items, String status) {
+    return items.where((item) => item.item.status == status).length;
+  }
+
+  void _setFilter(_InboxStatusFilter filter) {
+    setState(() => _filter = filter);
+  }
+
+  String _emptyFilterMessage(_InboxStatusFilter filter) {
+    switch (filter) {
+      case _InboxStatusFilter.all:
+        return 'Nothing needs triage right now.';
+      case _InboxStatusFilter.newOnly:
+        return 'No brand-new captures are waiting right now. Parked items are still here when you want them.';
+      case _InboxStatusFilter.parkedOnly:
+        return 'Nothing is parked right now. If something is not for today, you can park it here for later review.';
+    }
   }
 }
 
@@ -141,24 +223,30 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
               runSpacing: 8,
               children: [
                 FilledButton.icon(
-                  key: Key('convertInboxItemButton-${item.item.inboxItemId}'),
-                  onPressed: _isProcessing ? null : _showConvertOptions,
+                  key: Key('reviewInboxItemButton-${item.item.inboxItemId}'),
+                  onPressed: _isProcessing ? null : _showReviewSheet,
                   icon: _isProcessing
                       ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.play_arrow_outlined),
+                      : const Icon(Icons.visibility_outlined),
                   label: Text(
-                    _isProcessing ? 'Processing...' : 'Review & Convert',
+                    _isProcessing ? 'Processing...' : 'Open Review',
                   ),
                 ),
                 OutlinedButton.icon(
                   key: Key('parkInboxItemButton-${item.item.inboxItemId}'),
-                  onPressed: _isProcessing ? null : _parkItem,
+                  onPressed: _isProcessing || item.item.status == 'Parked'
+                      ? null
+                      : _parkItem,
                   icon: const Icon(Icons.push_pin_outlined),
-                  label: const Text('Park for Later'),
+                  label: Text(
+                    item.item.status == 'Parked'
+                        ? 'Already Parked'
+                        : 'Park for Later',
+                  ),
                 ),
               ],
             ),
@@ -177,63 +265,114 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
     );
   }
 
-  Future<void> _showConvertOptions() async {
-    final target = await showModalBottomSheet<_InboxConversionTarget>(
+  Future<void> _showReviewSheet() async {
+    final item = widget.item;
+    final action = await showModalBottomSheet<_InboxReviewAction>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Review and Move'),
-              subtitle: const Text(
-                'Choose the calmest next home for this capture.',
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.item.title ?? 'Untitled Capture',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (item.item.type?.isNotEmpty == true)
+                          _InboxInfoChip(label: item.item.type!),
+                        if (item.projectName != null)
+                          _InboxInfoChip(label: item.projectName!),
+                        _InboxInfoChip(label: 'Status: ${item.item.status}'),
+                      ],
+                    ),
+                    if (item.item.body?.isNotEmpty == true) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        item.item.body!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Text(
+                      'Choose the calmest next home for this capture.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            _ConversionChoiceTile(
-              icon: Icons.task_alt_outlined,
-              label: 'Task',
-              onTap: () =>
-                  Navigator.of(context).pop(_InboxConversionTarget.task),
-            ),
-            _ConversionChoiceTile(
-              icon: Icons.book_outlined,
-              label: 'Journal Entry',
-              onTap: () =>
-                  Navigator.of(context).pop(_InboxConversionTarget.journal),
-            ),
-            _ConversionChoiceTile(
-              icon: Icons.article_outlined,
-              label: 'Content Idea',
-              onTap: () =>
-                  Navigator.of(context).pop(_InboxConversionTarget.content),
-            ),
-            _ConversionChoiceTile(
-              icon: Icons.school_outlined,
-              label: 'Learning Item',
-              onTap: () =>
-                  Navigator.of(context).pop(_InboxConversionTarget.learning),
-            ),
-            _ConversionChoiceTile(
-              icon: Icons.account_balance_wallet_outlined,
-              label: 'Business Opportunity',
-              onTap: () =>
-                  Navigator.of(context).pop(_InboxConversionTarget.business),
-            ),
-            const SizedBox(height: 8),
-          ],
+              const Divider(height: 1),
+              _ConversionChoiceTile(
+                icon: Icons.task_alt_outlined,
+                label: 'Convert to Task',
+                onTap: () =>
+                    Navigator.of(context).pop(_InboxReviewAction.task),
+              ),
+              _ConversionChoiceTile(
+                icon: Icons.book_outlined,
+                label: 'Convert to Journal Entry',
+                onTap: () =>
+                    Navigator.of(context).pop(_InboxReviewAction.journal),
+              ),
+              if (item.item.status != 'Parked')
+                _ConversionChoiceTile(
+                  icon: Icons.push_pin_outlined,
+                  label: 'Park for Later',
+                  onTap: () =>
+                      Navigator.of(context).pop(_InboxReviewAction.park),
+                ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Text(
+                  'Other destinations',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              _ConversionChoiceTile(
+                icon: Icons.article_outlined,
+                label: 'Convert to Content Idea',
+                onTap: () =>
+                    Navigator.of(context).pop(_InboxReviewAction.content),
+              ),
+              _ConversionChoiceTile(
+                icon: Icons.school_outlined,
+                label: 'Convert to Learning Item',
+                onTap: () =>
+                    Navigator.of(context).pop(_InboxReviewAction.learning),
+              ),
+              _ConversionChoiceTile(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Convert to Business Opportunity',
+                onTap: () =>
+                    Navigator.of(context).pop(_InboxReviewAction.business),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
 
-    if (target == null) {
+    if (action == null) {
       return;
     }
 
-    switch (target) {
-      case _InboxConversionTarget.task:
+    switch (action) {
+      case _InboxReviewAction.task:
         await _performAction(
           () => ref
               .read(inboxActionsControllerProvider)
@@ -241,7 +380,7 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           'Inbox item converted to Task.',
         );
         break;
-      case _InboxConversionTarget.journal:
+      case _InboxReviewAction.journal:
         await _performAction(
           () => ref
               .read(inboxActionsControllerProvider)
@@ -249,7 +388,15 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           'Inbox item converted to Journal Entry.',
         );
         break;
-      case _InboxConversionTarget.content:
+      case _InboxReviewAction.park:
+        await _performAction(
+          () => ref
+              .read(inboxActionsControllerProvider)
+              .parkItem(widget.item.item.inboxItemId),
+          'Inbox item parked.',
+        );
+        break;
+      case _InboxReviewAction.content:
         await _performAction(
           () => ref
               .read(inboxActionsControllerProvider)
@@ -257,7 +404,7 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           'Inbox item converted to Content Idea.',
         );
         break;
-      case _InboxConversionTarget.learning:
+      case _InboxReviewAction.learning:
         await _performAction(
           () => ref
               .read(inboxActionsControllerProvider)
@@ -265,7 +412,7 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
           'Inbox item converted to Learning Item.',
         );
         break;
-      case _InboxConversionTarget.business:
+      case _InboxReviewAction.business:
         await _performAction(
           () => ref
               .read(inboxActionsControllerProvider)
@@ -335,9 +482,19 @@ class _InboxInfoChip extends StatelessWidget {
 }
 
 class _InboxOverviewCard extends StatelessWidget {
-  const _InboxOverviewCard({required this.itemCount});
+  const _InboxOverviewCard({
+    required this.itemCount,
+    required this.newCount,
+    required this.parkedCount,
+    required this.filter,
+    required this.onFilterChanged,
+  });
 
   final int itemCount;
+  final int newCount;
+  final int parkedCount;
+  final _InboxStatusFilter filter;
+  final ValueChanged<_InboxStatusFilter> onFilterChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -364,6 +521,29 @@ class _InboxOverviewCard extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _InboxFilterChip(
+                  label: 'All $itemCount',
+                  selected: filter == _InboxStatusFilter.all,
+                  onSelected: () => onFilterChanged(_InboxStatusFilter.all),
+                ),
+                _InboxFilterChip(
+                  label: 'New $newCount',
+                  selected: filter == _InboxStatusFilter.newOnly,
+                  onSelected: () => onFilterChanged(_InboxStatusFilter.newOnly),
+                ),
+                _InboxFilterChip(
+                  label: 'Parked $parkedCount',
+                  selected: filter == _InboxStatusFilter.parkedOnly,
+                  onSelected: () =>
+                      onFilterChanged(_InboxStatusFilter.parkedOnly),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             Text(
               'New and parked items stay here. Processed items leave the list when they have been moved on.',
               style: theme.textTheme.bodySmall,
@@ -376,6 +556,10 @@ class _InboxOverviewCard extends StatelessWidget {
 }
 
 class _InboxTriageHintCard extends StatelessWidget {
+  const _InboxTriageHintCard({required this.filter});
+
+  final _InboxStatusFilter filter;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -397,11 +581,13 @@ class _InboxTriageHintCard extends StatelessWidget {
           children: [
             _InboxHintChip(
               icon: Icons.push_pin_outlined,
-              label: 'Park to keep for later',
+              label: filter == _InboxStatusFilter.parkedOnly
+                  ? 'Parked items stay here until you move them on'
+                  : 'Park to keep for later',
             ),
             _InboxHintChip(
-              icon: Icons.play_arrow_outlined,
-              label: 'Convert to move it on',
+              icon: Icons.visibility_outlined,
+              label: 'Open review to choose the next home',
             ),
           ],
         ),
@@ -460,4 +646,27 @@ class _InboxHintChip extends StatelessWidget {
   }
 }
 
-enum _InboxConversionTarget { task, journal, content, learning, business }
+class _InboxFilterChip extends StatelessWidget {
+  const _InboxFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      selected: selected,
+      label: Text(label),
+      onSelected: (_) => onSelected(),
+    );
+  }
+}
+
+enum _InboxStatusFilter { all, newOnly, parkedOnly }
+
+enum _InboxReviewAction { task, journal, park, content, learning, business }

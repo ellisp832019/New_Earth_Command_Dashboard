@@ -940,6 +940,56 @@ void main() {
     expect(items.first.projectName, 'MicroGrow');
   });
 
+  testWidgets('inbox screen filters parked items and opens the review sheet', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final project = await createMicroGrowProject(database);
+    final inboxRepository = InboxRepository(database);
+
+    await inboxRepository.createItem(
+      title: 'Fresh capture',
+      body: 'Keep this in the new queue.',
+      type: 'Idea',
+      projectId: project.projectId,
+      status: 'New',
+    );
+    final parkedItem = await inboxRepository.createItem(
+      title: 'Parked capture',
+      body: 'Review this later when the day is calmer.',
+      type: 'Journal Note',
+      projectId: project.projectId,
+      status: 'Parked',
+    );
+
+    await tester.pumpWidget(buildDatabaseBackedTestApp(database));
+    await pumpUntilIdle(tester);
+
+    appRouter.go('/inbox');
+    await pumpUntilIdle(tester);
+
+    expect(find.text('All 2'), findsOneWidget);
+    expect(find.text('New 1'), findsOneWidget);
+    expect(find.text('Parked 1'), findsOneWidget);
+
+    await tester.tap(find.text('Parked 1'));
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Parked capture'), findsAtLeastNWidgets(1));
+    expect(find.text('Fresh capture'), findsNothing);
+    expect(find.text('Parked items stay here until you move them on'), findsOneWidget);
+
+    await tester.tap(find.byKey(Key('reviewInboxItemButton-${parkedItem.inboxItemId}')));
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Choose the calmest next home for this capture.'), findsOneWidget);
+    expect(find.text('Convert to Task'), findsOneWidget);
+    expect(find.text('Convert to Journal Entry'), findsOneWidget);
+    expect(find.text('Other destinations'), findsOneWidget);
+  });
+
   testWidgets('dashboard quick capture saves a new inbox item', (
     WidgetTester tester,
   ) async {
