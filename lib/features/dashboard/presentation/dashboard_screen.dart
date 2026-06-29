@@ -89,8 +89,8 @@ class _DashboardContent extends StatelessWidget {
                     const _CompanyCommandCentreCard(),
                     const SizedBox(height: 22),
                     _DashboardSectionHeader(
-                      title: 'Primary work surface',
-                      subtitle: 'Focus, projects, next action.',
+                      title: 'Primary work',
+                      subtitle: 'Keep the next useful move, focus, and projects close together.',
                     ),
                     const SizedBox(height: 14),
                     _TopTaskShowcase(snapshot: snapshot),
@@ -98,8 +98,8 @@ class _DashboardContent extends StatelessWidget {
                     _SecondaryPanelGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     _DashboardSectionHeader(
-                      title: 'Supporting tools',
-                      subtitle: 'Secondary tools only.',
+                      title: 'Support stack',
+                      subtitle: 'Open these only when they help the day move more clearly.',
                     ),
                     const SizedBox(height: 14),
                     _SupportModuleGrid(snapshot: snapshot),
@@ -207,7 +207,7 @@ class _DashboardHero extends ConsumerWidget {
             ],
           );
 
-          final actions = Wrap(
+          final coreActions = Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
@@ -232,6 +232,13 @@ class _DashboardHero extends ConsumerWidget {
                 icon: const Icon(Icons.event_note_outlined),
                 label: const Text('Open Planner'),
               ),
+            ],
+          );
+
+          final moduleActions = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
               TextButton.icon(
                 onPressed: () => context.push(RouteNames.treasury),
                 icon: const Icon(Icons.account_balance_wallet_outlined),
@@ -243,6 +250,15 @@ class _DashboardHero extends ConsumerWidget {
                 icon: const Icon(Icons.receipt_long_outlined),
                 label: const Text('Open Grants'),
               ),
+            ],
+          );
+
+          final actions = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              coreActions,
+              const SizedBox(height: 10),
+              moduleActions,
             ],
           );
 
@@ -1217,7 +1233,7 @@ class _CompactModuleTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
                     height: 1.35,
                   ),
@@ -4333,8 +4349,8 @@ class _HeaderMetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 128),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      constraints: const BoxConstraints(minWidth: 118),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(16),

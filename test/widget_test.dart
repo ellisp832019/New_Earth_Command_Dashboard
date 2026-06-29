@@ -562,6 +562,13 @@ void main() {
       find.byKey(const Key('dashboardQuickCaptureButton')),
       findsOneWidget,
     );
+    expect(find.text('Primary work'), findsOneWidget);
+    expect(find.text('Support stack'), findsOneWidget);
+    expect(find.text('Security session'), findsOneWidget);
+    expect(find.text('Test User'), findsOneWidget);
+    expect(find.text('Online'), findsOneWidget);
+    expect(find.text('TEST_DEVICE'), findsOneWidget);
+    expect(find.text('Open matrix'), findsOneWidget);
     expect(find.text('Dashboard'), findsWidgets);
     expect(find.text('Projects'), findsWidgets);
     expect(find.text('Tasks'), findsWidgets);

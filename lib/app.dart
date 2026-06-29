@@ -191,7 +191,7 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 right: 16,
                 child: SafeArea(
                   child: SizedBox(
-                    width: math.min(340, MediaQuery.sizeOf(context).width - 32),
+                    width: math.min(312, MediaQuery.sizeOf(context).width - 32),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -315,28 +315,28 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
   String _activeUserLabel(SecuritySessionState session) {
     final label = session.activeUserLabel;
     if (label == null || label.isEmpty) {
-      return 'Active user: none';
+      return 'No active user';
     }
 
-    return 'Active user: $label';
+    return label;
   }
 
-  String _activeDeviceLabel(SecuritySessionState session) {
+  String? _activeDeviceLabel(SecuritySessionState session) {
     final label = session.activeDeviceLabel;
     if (label == null || label.isEmpty) {
-      return 'Device: none';
+      return null;
     }
 
-    return 'Device: $label';
+    return label;
   }
 
   String _presenceLabel(SecuritySessionState session) {
     final label = session.activeUserLabel;
     if (label == null || label.isEmpty) {
-      return 'Status: offline';
+      return 'Offline';
     }
 
-    return session.activeUserOnline ? 'Status: online' : 'Status: offline';
+    return session.activeUserOnline ? 'Online' : 'Offline';
   }
 
   @override
@@ -445,13 +445,7 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                                 activeUserLabel,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: const Color(0xFFE4E8EA),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                activeDeviceLabel,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: const Color(0xFFC8D7E0),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -484,10 +478,12 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                       spacing: 10,
                       runSpacing: 6,
                       children: [
+                        if (activeDeviceLabel != null)
+                          _SessionLabel(label: activeDeviceLabel),
                         _SessionLabel(
                           label: durationSinceConnect == null
-                              ? 'Connected: -'
-                              : 'Connected ${_formatDuration(durationSinceConnect)} ago',
+                              ? 'Live -'
+                              : 'Live ${_formatDuration(durationSinceConnect)}',
                         ),
                         _SessionLabel(
                           label: 'Timeout ${_formatDuration(session.timeout)}',
