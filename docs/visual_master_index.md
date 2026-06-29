@@ -31,6 +31,8 @@ Start here if you want the fastest tour of the core system and current release-r
 | [![Backup / recovery control flow](../assets/diagrams/backup_recovery_control_flow.png)](../assets/diagrams/backup_recovery_control_flow.png) | [Backup / recovery control flow](../assets/diagrams/backup_recovery_control_flow.png) |
 | [![Full repo topology](../assets/diagrams/full_repo_topology.png)](../assets/diagrams/full_repo_topology.png) | [Full repo topology](../assets/diagrams/full_repo_topology.png) |
 | [![Module Hub status matrix](architecture/module_hub/visuals/module_hub_status_matrix.png)](architecture/module_hub/visuals/module_hub_status_matrix.png) | [Module Hub status matrix](architecture/module_hub/visuals/module_hub_status_matrix.png) |
+| [![Dashboard calmness review](roadmap/images/dashboard_calmness_review.png)](roadmap/images/dashboard_calmness_review.png) | [Dashboard calmness review](roadmap/images/dashboard_calmness_review.png) |
+| [![Dashboard daily flow tools](roadmap/images/dashboard_daily_flow_tools.png)](roadmap/images/dashboard_daily_flow_tools.png) | [Dashboard daily flow tools](roadmap/images/dashboard_daily_flow_tools.png) |
 
 ## Gallery
 
@@ -113,7 +115,10 @@ These visual families are already in good shape and should be kept current:
 
 ## Recently Rendered
 
-This pass filled the previously missing visuals in the current plan, and they now appear in the gallery above.
+This pass filled the previously missing visuals in the current plan, including:
+
+- [Dashboard calmness review](roadmap/images/dashboard_calmness_review.png)
+- [Dashboard daily flow tools](roadmap/images/dashboard_daily_flow_tools.png)
 
 ## Recommended Order
 
