@@ -1,20 +1,23 @@
-# TASK - Inbox Processing Foundation
+# TASK - Dashboard Calm Session Layer
 
 ## Status
 
 Ready to start.
 
-The app already supports Quick Capture into Inbox and has the broader local daily loop in place.
-This slice finishes the next missing part of that loop:
-turning Inbox into a calm processing space instead of only a holding area.
+Users & Devices has now gone through a stronger trust hardening and release-verification pass.
+The next best slice is to make the main dashboard feel calmer, clearer, and more intentional around session and access state.
+
+This slice should not add more dashboard noise.
+It should make the existing home experience easier to trust at a glance.
 
 ## Goal
 
-Build the first practical Inbox processing flow so captured items can be reviewed, converted, and parked without breaking the app's calm daily rhythm.
+Tighten the dashboard home hierarchy and session/access presentation so the app opens with clearer orientation, quieter module entry points, and a more dependable trust signal.
 
-This slice sits inside the wider upgrade stream:
+This slice sits inside the wider upgrade streams:
 
-- `Core Daily Loop Completion`
+- `Dashboard Calm Session Layer`
+- `Foundation Hardening`
 
 ## Source of Truth
 
@@ -22,87 +25,79 @@ Read these files first:
 
 - `docs/fsd/00_master_index.md`
 - `docs/fsd/04_screen_specification.md`
-- `docs/fsd/06_functional_requirements.md`
 - `docs/fsd/07_non_functional_requirements.md`
 - `docs/fsd/08_technical_architecture.md`
 - `docs/fsd/10_testing_release.md`
 - `docs/fsd/12_major_upgrade_plan.md`
-- `docs/roadmap/mvp_execution_plan.md`
+- `docs/fsd/13_upgrade_execution_plan.md`
+- `docs/roadmap/dashboard_future_roadmap.md`
+- `docs/roadmap/major_upgrade_review.md`
 
 Pay special attention to:
 
-- `FR-INBOX-001` to `FR-INBOX-006`
-- `FR-PLAN-005` and `FR-PLAN-006`
-- `NFR-USE-003`
-- `NFR-USE-005`
-- `NFR-EMO-001`
-- `NFR-EMO-004`
+- dashboard clarity and hierarchy guidance
+- calm UX and non-overwhelm rules
+- session and access visibility expectations
+- release-readiness and verification discipline
 
 ## Requirements
 
-1. Keep the Inbox local-first and offline-first.
-2. Preserve the calm capture-first model:
-   captures should stay quick, processing should happen later.
-3. Allow the user to clearly review unprocessed Inbox items.
-4. Add the first safe conversion flow from Inbox into real records.
-5. Prefer the simplest useful conversions first instead of building every path at once.
-6. Add a clear parked/later state where appropriate instead of forcing immediate processing.
-7. Keep wording gentle and non-overwhelming.
-8. Do not make the Dashboard noisier just to support Inbox processing.
-9. Keep repository, controller, and UI responsibilities separated cleanly.
-10. Do not break existing Quick Capture flows.
+1. Keep the dashboard local-first and offline-first.
+2. Keep the home screen calm and focused on the next useful action.
+3. Keep session and access state visible without turning the dashboard into a security console.
+4. Preserve the Today hero and Top 3 rhythm as the main orientation surface.
+5. Keep quick actions and module entry points readable and visually consistent.
+6. Do not make the dashboard more crowded just to surface more status.
+7. Keep wording calm, practical, and low-pressure.
+8. Do not break existing navigation, session lock, or module launch flows.
+9. Keep implementation small, reviewable, and testable.
+10. If runtime behavior changes, verify analyzer, tests, and Windows build flow honestly.
 
 ## First Slice Scope
 
 This slice should focus on the most useful minimum:
 
-1. Show unprocessed Inbox items clearly.
-2. Let the user open one Inbox item and choose a next action.
-3. Support at least one real conversion path cleanly.
-4. Support parking an Inbox item for later.
-5. Persist the processing result correctly after app restart.
+1. tighten dashboard hierarchy and spacing where session/access elements appear
+2. make the session box/pill feel intentional and consistent
+3. keep access shortcuts easy to reach but visually quiet
+4. align dashboard module entry actions with the calmer card style
+5. preserve fast orientation on app open
 
-Recommended first conversion targets:
+Recommended first focus:
 
-- Inbox item -> Task
-- Inbox item -> Journal Entry
-
-If only one conversion path is practical in the first pass, choose:
-
-- Inbox item -> Task
+- dashboard session visibility consistency
+- hero and quick-action hierarchy restraint
+- calmer module snapshot actions
 
 ## Out of Scope
 
-Do not add these in this slice unless they are already trivial once the core flow works:
+Do not add these in this slice unless they are already trivial once the core work is done:
 
-- bulk Inbox processing
-- advanced automation
-- AI triage
-- cloud sync
-- broad export features
-- external integrations
-- complicated multi-step wizards
+- broad dashboard personalization
+- new analytics surfaces
+- live cloud or account state
+- AI dashboard overlays
+- new integrations
+- heavy module redesigns outside the home screen
 
 ## Expected Result
 
 After this slice:
 
-1. Quick Capture can still save into Inbox safely.
-2. The Inbox screen feels like a real review surface.
-3. The user can process at least one Inbox item into a useful destination.
-4. The user can park an Inbox item without deleting it.
-5. Data still persists cleanly after closing and reopening the app.
+1. the dashboard remains calm even with session/access state visible
+2. the session surface feels trustworthy and consistent
+3. the user can understand the next useful action quickly
+4. module entry actions feel visually aligned
+5. the home screen better supports the secured startup flow
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. Inbox processing UI exists.
-2. Processing state saves locally.
-3. Converted items are created correctly.
-4. Parked items behave clearly and remain recoverable.
-5. Related screens refresh correctly after conversion.
-6. Focused tests are added or updated.
-7. `flutter analyze` passes.
-8. `flutter test` passes.
-9. `flutter build windows` passes if runtime code changed.
+1. dashboard hierarchy changes are implemented cleanly
+2. session/access presentation feels consistent across the home screen
+3. related navigation still behaves correctly
+4. focused tests are added or updated where practical
+5. `flutter analyze` passes
+6. `flutter test` passes
+7. `flutter build windows` passes if runtime code changed
