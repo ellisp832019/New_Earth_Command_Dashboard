@@ -675,6 +675,35 @@ void main() {
     expect(find.text('Visual Capture'), findsOneWidget);
   });
 
+  testWidgets('dashboard daily flow cues stay calm and connected', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    expect(find.byKey(const Key('dashboardFocusBridgeCard')), findsOneWidget);
+    expect(find.text('Top 3 not set yet'), findsOneWidget);
+    expect(
+      find.text('Next step: choose up to 3 tasks that make this focus real.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Use projects as support context for the committed work above.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('dashboardQuickCaptureGuidanceCard')),
+      findsOneWidget,
+    );
+    expect(find.text('Safe place to park it'), findsOneWidget);
+    expect(
+      find.text(
+        'Capture a thought quickly, then return to the strongest next move.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'supporting screens show a back button when opened from the app',
     (WidgetTester tester) async {

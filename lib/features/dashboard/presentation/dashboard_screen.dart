@@ -978,7 +978,7 @@ class _SecondaryPanelGrid extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(child: _ActiveProjectsPanel(snapshot: snapshot)),
               const SizedBox(width: 16),
-              const Expanded(child: _DashboardQuickCaptureCard()),
+              Expanded(child: _DashboardQuickCaptureCard(snapshot: snapshot)),
             ],
           );
         }
@@ -989,7 +989,7 @@ class _SecondaryPanelGrid extends StatelessWidget {
             const SizedBox(height: 16),
             _ActiveProjectsPanel(snapshot: snapshot),
             const SizedBox(height: 16),
-            const _DashboardQuickCaptureCard(),
+            _DashboardQuickCaptureCard(snapshot: snapshot),
           ],
         );
       },
@@ -3305,6 +3305,19 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
     final hasFocus = widget.snapshot.mainFocus?.isNotEmpty == true;
     final hasReason = widget.snapshot.focusReason?.isNotEmpty == true;
     final hasIntention = widget.snapshot.morningIntention?.isNotEmpty == true;
+    final topTaskCount = widget.snapshot.topTasks.length;
+    final focusBridgeLabel = switch (topTaskCount) {
+      0 => 'Top 3 not set yet',
+      1 => '1 of 3 tasks committed',
+      2 => '2 of 3 tasks committed',
+      _ => 'Top 3 in motion',
+    };
+    final focusBridgeCopy = switch (topTaskCount) {
+      0 => 'Next step: choose up to 3 tasks that make this focus real.',
+      1 => 'Next step: add a little support around the first committed task.',
+      2 => 'Next step: keep the final slot open unless it truly helps today.',
+      _ => 'Next step: let the Top 3 carry this focus before opening anything else.',
+    };
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -3419,6 +3432,37 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
               ),
             ),
             const SizedBox(height: 16),
+            Container(
+              key: const Key('dashboardFocusBridgeCard'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColours.darkPrimary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColours.darkPrimary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _InlineTag(
+                    label: focusBridgeLabel,
+                    accent: AppColours.darkPrimary,
+                    foreground: AppColours.darkPrimary,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    focusBridgeCopy,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColours.darkText,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             _FocusDetailRow(
               label: 'Why It Matters',
               value: hasReason
@@ -3508,6 +3552,30 @@ class _ActiveProjectsPanel extends StatelessWidget {
               TextButton(
                 onPressed: () => context.go(RouteNames.projectsWorkspace),
                 child: const Text('View all'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Use projects as support context for the committed work above.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InlineTag(
+                label: '${snapshot.activeProjectCount} active',
+                accent: AppColours.darkSecondary,
+                foreground: AppColours.darkSecondary,
+              ),
+              _InlineTag(
+                label: snapshot.topTasks.isEmpty ? 'Context first' : 'Supports Top 3',
+                accent: AppColours.darkPrimary,
+                foreground: AppColours.darkPrimary,
               ),
             ],
           ),
@@ -3719,7 +3787,9 @@ class _DashboardReviewLine extends StatelessWidget {
 }
 
 class _DashboardQuickCaptureCard extends ConsumerStatefulWidget {
-  const _DashboardQuickCaptureCard();
+  const _DashboardQuickCaptureCard({required this.snapshot});
+
+  final DashboardSnapshot snapshot;
 
   @override
   ConsumerState<_DashboardQuickCaptureCard> createState() =>
@@ -3732,6 +3802,26 @@ class _DashboardQuickCaptureCardState
 
   @override
   Widget build(BuildContext context) {
+    final hasCarryForward =
+        widget.snapshot.carryForwardNotes?.trim().isNotEmpty == true;
+    final hasTomorrowFocus =
+        widget.snapshot.tomorrowFocus?.trim().isNotEmpty == true;
+    final hasFocus = widget.snapshot.mainFocus?.trim().isNotEmpty == true;
+    final guidanceLabel = hasTomorrowFocus
+        ? 'Tomorrow already has a cue'
+        : hasCarryForward
+        ? 'Carry-forward already noted'
+        : hasFocus
+        ? 'Protect the current focus'
+        : 'Safe place to park it';
+    final guidanceCopy = hasTomorrowFocus
+        ? 'Capture only what should wait for later, not work that already belongs to tomorrow.'
+        : hasCarryForward
+        ? 'Use capture for fresh thoughts, not for work that is already being carried forward.'
+        : hasFocus
+        ? 'Use this only for thoughts that should not interrupt the current Top 3.'
+        : 'Capture a thought quickly, then return to the strongest next move.';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _panelDecoration(context),
@@ -3755,10 +3845,41 @@ class _DashboardQuickCaptureCardState
           ),
           const SizedBox(height: 12),
           Text(
-            'Capture one thought quickly, then return to the day.',
+            'Park a thought quickly, then return to the committed work above.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            key: const Key('dashboardQuickCaptureGuidanceCard'),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColours.darkSecondary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColours.darkSecondary.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _InlineTag(
+                  label: guidanceLabel,
+                  accent: AppColours.darkSecondary,
+                  foreground: AppColours.darkSecondary,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  guidanceCopy,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           Container(
@@ -4162,7 +4283,16 @@ class _ProjectProgressRow extends StatelessWidget {
             if ((project.nextAction ?? '').isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                project.nextAction!,
+                'Support next: ${project.nextAction!}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+            ],
+            if ((project.currentMilestone ?? '').isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Milestone: ${project.currentMilestone!}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkMutedText,
                 ),
