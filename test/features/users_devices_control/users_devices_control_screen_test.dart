@@ -89,16 +89,29 @@ void main() {
           ownerId: 'user_peter_owner',
           allowedActions: ['dashboard.view', 'users.manage'],
           notes: 'Trusted local development device.',
+          trustSource: 'owner review',
+          trustReviewedBy: 'user_peter_owner',
+          trustReviewedAt: '2026-06-28T09:00:00Z',
+          lastSeenAt: '2026-06-29T08:30:00Z',
+          operatorNote: 'Primary workstation for admin tasks.',
         ),
         UsersDevicesControlDevice(
           id: 'device_phone_scanner',
           name: 'Phone Scanner',
           type: 'phone',
           trustLevel: 2,
-          status: 'registered',
-          ownerId: 'user_guest',
+          status: 'quarantined',
+          ownerId: 'user_hayley_finance',
           allowedActions: ['dashboard.view'],
           notes: 'Lower trust test device.',
+          trustSource: 'onboarding check',
+          trustReviewedBy: 'user_peter_owner',
+          trustReviewedAt: '2026-06-29T07:15:00Z',
+          lastSeenAt: '2026-06-29T07:10:00Z',
+          operatorNote: 'Needs another pairing review.',
+          quarantineReason:
+              'Unexpected device posture during finance onboarding.',
+          quarantinedAt: '2026-06-29T07:16:00Z',
         ),
       ],
       roles: [
@@ -331,7 +344,21 @@ void main() {
     expect(find.textContaining('Ready to verify locally'), findsOneWidget);
     expect(find.text('Verify access'), findsWidgets);
     expect(find.text('Open PIN Registry'), findsOneWidget);
+    expect(find.text('Next operator step'), findsOneWidget);
     expect(find.text('Next users to help'), findsOneWidget);
+  });
+
+  testWidgets('devices screen shows trust evidence and quarantine review', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp(const UsersDevicesDevicesScreen()));
+    await pumpUntilFound(tester, find.text('Trust evidence queue'));
+
+    expect(find.text('Trust evidence queue'), findsOneWidget);
+    expect(find.text('Quarantined devices'), findsOneWidget);
+    expect(find.text('Quarantine watchlist'), findsOneWidget);
+    expect(find.textContaining('Unexpected device posture'), findsWidgets);
+    expect(find.text('Quarantine'), findsOneWidget);
   });
 
   testWidgets(

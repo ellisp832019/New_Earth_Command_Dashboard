@@ -13,18 +13,20 @@ What already exists:
 - local PIN registry with database-first storage
 - per-user primary and recovery PIN handling
 - device trust and access matrix checks
+- locked-route enforcement for sensitive admin surfaces
+- failed PIN cooldown and clearer lockout audit events
+- recovery and forced reset governance with manual test coverage
+- guided onboarding workspace with next-step and completion views
+- device trust evidence fields and quarantine flow
 - audit trail and approval surfacing
 - session side panel with countdown and active user state
 - user guide diagrams and walkthroughs
 
 What is still missing:
 
-- stronger route-level enforcement across every module entry
-- cleaner admin governance for PIN resets and user recovery
-- richer device trust evidence and quarantine flow
-- better lockout and failed-attempt handling
-- clearer operator dashboards for onboarding and exceptions
+- clearer operator dashboards for approvals and security review
 - release-grade migration coverage across the whole data layer
+- broader repo-wide verification and guide refresh
 
 ## Upgrade Goal
 
@@ -228,14 +230,18 @@ After each upgrade:
 4. Launch `flutter run -d windows`
 5. Manually test one happy path and one blocked path
 
+Companion manual pass:
+
+- `docs/roadmap/users_devices_manual_test_checklist.md`
+
 ## Best Next Build
 
 If only one upgrade should start next, do this one first:
 
-- **Upgrade 1 - Route protection sweep**
+- **Upgrade 7 - Approval workflow polish**
 
 Reason:
 
-- it closes the most important bypass risk
-- it improves the whole app, not just the module screen
-- it gives every later upgrade a safer base
+- the trust spine is now much stronger, so the next friction is operator readability
+- approvals are the remaining calmness gap in day-to-day gated access work
+- a cleaner approval surface sets up the later security review dashboard well

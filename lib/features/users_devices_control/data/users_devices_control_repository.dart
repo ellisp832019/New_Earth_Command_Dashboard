@@ -83,6 +83,13 @@ class UsersDevicesControlDevice {
     required this.ownerId,
     required this.allowedActions,
     this.notes = '',
+    this.trustSource = '',
+    this.trustReviewedBy = '',
+    this.trustReviewedAt,
+    this.lastSeenAt,
+    this.operatorNote = '',
+    this.quarantineReason = '',
+    this.quarantinedAt,
   });
 
   final String id;
@@ -93,6 +100,13 @@ class UsersDevicesControlDevice {
   final String ownerId;
   final List<String> allowedActions;
   final String notes;
+  final String trustSource;
+  final String trustReviewedBy;
+  final String? trustReviewedAt;
+  final String? lastSeenAt;
+  final String operatorNote;
+  final String quarantineReason;
+  final String? quarantinedAt;
 
   factory UsersDevicesControlDevice.fromJson(Map<String, dynamic> json) {
     return UsersDevicesControlDevice(
@@ -104,6 +118,13 @@ class UsersDevicesControlDevice {
       ownerId: json['owner_id'] as String? ?? '',
       allowedActions: _stringList(json['allowed_actions']),
       notes: json['notes'] as String? ?? '',
+      trustSource: json['trust_source'] as String? ?? '',
+      trustReviewedBy: json['trust_reviewed_by'] as String? ?? '',
+      trustReviewedAt: json['trust_reviewed_at'] as String?,
+      lastSeenAt: json['last_seen_at'] as String?,
+      operatorNote: json['operator_note'] as String? ?? '',
+      quarantineReason: json['quarantine_reason'] as String? ?? '',
+      quarantinedAt: json['quarantined_at'] as String?,
     );
   }
 
@@ -117,6 +138,13 @@ class UsersDevicesControlDevice {
       'owner_id': ownerId,
       'allowed_actions': allowedActions,
       'notes': notes,
+      'trust_source': trustSource,
+      'trust_reviewed_by': trustReviewedBy,
+      if (trustReviewedAt != null) 'trust_reviewed_at': trustReviewedAt,
+      if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
+      'operator_note': operatorNote,
+      'quarantine_reason': quarantineReason,
+      if (quarantinedAt != null) 'quarantined_at': quarantinedAt,
     };
   }
 
@@ -128,6 +156,13 @@ class UsersDevicesControlDevice {
     String? ownerId,
     List<String>? allowedActions,
     String? notes,
+    String? trustSource,
+    String? trustReviewedBy,
+    String? trustReviewedAt,
+    String? lastSeenAt,
+    String? operatorNote,
+    String? quarantineReason,
+    String? quarantinedAt,
   }) {
     return UsersDevicesControlDevice(
       id: id,
@@ -138,17 +173,34 @@ class UsersDevicesControlDevice {
       ownerId: ownerId ?? this.ownerId,
       allowedActions: allowedActions ?? this.allowedActions,
       notes: notes ?? this.notes,
+      trustSource: trustSource ?? this.trustSource,
+      trustReviewedBy: trustReviewedBy ?? this.trustReviewedBy,
+      trustReviewedAt: trustReviewedAt ?? this.trustReviewedAt,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+      operatorNote: operatorNote ?? this.operatorNote,
+      quarantineReason: quarantineReason ?? this.quarantineReason,
+      quarantinedAt: quarantinedAt ?? this.quarantinedAt,
     );
   }
 
-  bool get isTrusted => trustLevel >= 3 && status != 'blocked';
+  bool get isTrusted =>
+      trustLevel >= 3 && status != 'blocked' && status != 'quarantined';
 
-  bool get isHighTrust => trustLevel >= 4 && status != 'blocked';
+  bool get isHighTrust =>
+      trustLevel >= 4 && status != 'blocked' && status != 'quarantined';
+
+  bool get isQuarantined => status == 'quarantined';
 
   bool get needsOnboardingReview =>
-      status == 'registered' || status == 'blocked' || trustLevel < 3;
+      status == 'registered' ||
+      status == 'blocked' ||
+      status == 'quarantined' ||
+      trustLevel < 3;
 
   String get trustPostureLabel {
+    if (status == 'quarantined') {
+      return 'Quarantined';
+    }
     if (status == 'blocked') {
       return 'Blocked';
     }
@@ -165,6 +217,9 @@ class UsersDevicesControlDevice {
   }
 
   String get trustPostureSummary {
+    if (status == 'quarantined') {
+      return 'This device is quarantined and should be reviewed before it can satisfy local access checks.';
+    }
     if (status == 'blocked') {
       return 'This device is blocked and cannot satisfy local access checks.';
     }
@@ -178,6 +233,31 @@ class UsersDevicesControlDevice {
       return 'This device is trusted for normal gated module access.';
     }
     return 'This device should go back through onboarding before sensitive access.';
+  }
+
+  String get trustEvidenceSummary {
+    final parts = <String>[];
+    if (trustSource.trim().isNotEmpty) {
+      parts.add('Source: $trustSource');
+    }
+    if (trustReviewedBy.trim().isNotEmpty) {
+      parts.add('Reviewed by $trustReviewedBy');
+    }
+    if (trustReviewedAt != null && trustReviewedAt!.trim().isNotEmpty) {
+      parts.add('Reviewed $trustReviewedAt');
+    }
+    if (lastSeenAt != null && lastSeenAt!.trim().isNotEmpty) {
+      parts.add('Last seen $lastSeenAt');
+    }
+    if (isQuarantined && quarantineReason.trim().isNotEmpty) {
+      parts.add('Quarantine: $quarantineReason');
+    }
+    if (operatorNote.trim().isNotEmpty) {
+      parts.add('Note: $operatorNote');
+    }
+    return parts.isEmpty
+        ? 'No trust evidence has been recorded for this device yet.'
+        : parts.join(' - ');
   }
 }
 
@@ -602,7 +682,11 @@ class UsersDevicesControlRepository {
       throw StateError('Device not found: $deviceId');
     }
 
-    final updated = devices[index].copyWith(status: 'trusted');
+    final updated = devices[index].copyWith(
+      status: 'trusted',
+      quarantineReason: '',
+      quarantinedAt: '',
+    );
     devices[index] = updated;
     await _writeDevices(devices);
     await createAuditEvent(
@@ -611,6 +695,37 @@ class UsersDevicesControlRepository {
       eventType: 'device_restored',
       targetModule: '01_USERS_AND_DEVICES_CONTROL',
       action: 'restore_device',
+      result: 'allowed',
+      reason: reason,
+    );
+  }
+
+  Future<void> quarantineDevice(
+    String deviceId, {
+    required String reviewedBy,
+    required String reason,
+  }) async {
+    final devices = await _readDevices();
+    final index = devices.indexWhere((device) => device.id == deviceId);
+    if (index < 0) {
+      throw StateError('Device not found: $deviceId');
+    }
+
+    final updated = devices[index].copyWith(
+      status: 'quarantined',
+      trustReviewedBy: reviewedBy,
+      trustReviewedAt: DateTime.now().toUtc().toIso8601String(),
+      quarantinedAt: DateTime.now().toUtc().toIso8601String(),
+      quarantineReason: reason,
+    );
+    devices[index] = updated;
+    await _writeDevices(devices);
+    await createAuditEvent(
+      actorId: reviewedBy,
+      deviceId: updated.id,
+      eventType: 'device_quarantined',
+      targetModule: '01_USERS_AND_DEVICES_CONTROL',
+      action: 'quarantine_device',
       result: 'allowed',
       reason: reason,
     );
@@ -805,7 +920,9 @@ class UsersDevicesControlRepository {
       return false;
     }
 
-    if (device.status == 'archived' || device.status == 'blocked') {
+    if (device.status == 'archived' ||
+        device.status == 'blocked' ||
+        device.status == 'quarantined') {
       return false;
     }
 
@@ -1004,11 +1121,13 @@ class UsersDevicesControlRepository {
       return decision;
     }
 
-    if (device.status == 'archived' || device.status == 'blocked') {
+    if (device.status == 'archived' ||
+        device.status == 'blocked' ||
+        device.status == 'quarantined') {
       final decision = const UsersDevicesControlAccessDecision(
         allowed: false,
         requiresApproval: false,
-        reason: 'Device is archived or blocked.',
+        reason: 'Device is archived, blocked, or quarantined.',
         nextStep: 'Restore the device or choose a trusted device.',
         issueCode: 'blocked_device',
       );

@@ -142,6 +142,30 @@ Done looks like:
 - reason capture is mandatory where it matters
 - support flow is easy to explain and test
 
+### Slice 4 - Onboarding workspace tightening
+
+Goal:
+
+- give operators one guided place to see which user is ready, what is missing, and what the next safe step should be
+
+Done looks like:
+
+- onboarding status reads clearly from role, PIN, trust, and audit state
+- the next operator action is visible without guessing
+- completion view explains whether the user is ready to verify locally
+
+### Slice 5 - Device trust evidence and quarantine flow
+
+Goal:
+
+- make trust explainable and give operators a deliberate way to pause risky devices
+
+Done looks like:
+
+- devices show trust source, review context, last-seen info, and operator notes
+- quarantined devices are visible in the device workspace
+- quarantined devices fail trust checks until restored
+
 ## Repo-Wide Gates Before The Next Stream
 
 Do not move on from Stream 1 until:
@@ -152,6 +176,7 @@ Do not move on from Stream 1 until:
 4. `flutter build windows` passes if runtime code changed
 5. locked and unlocked manual route checks are complete
 6. Users & Devices guide wording still matches the real flow
+7. trust evidence and quarantine surfaces are covered by focused widget and repository tests
 
 ## Manual Test Themes For This Phase
 

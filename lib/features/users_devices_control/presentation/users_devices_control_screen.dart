@@ -517,6 +517,12 @@ class _UsersDevicesDevicesScreenState
         final ownerLabels = {
           for (final user in data.users) user.id: user.displayName,
         };
+        final quarantinedDevices = data.devices
+            .where((device) => device.status == 'quarantined')
+            .toList(growable: false);
+        final reviewDevices = data.devices
+            .where((device) => device.needsOnboardingReview)
+            .toList(growable: false);
         final filteredDevices = data.devices
             .where((device) {
               if (_statusFilter != 'all' && device.status != _statusFilter) {
@@ -534,6 +540,12 @@ class _UsersDevicesDevicesScreenState
                 device.status,
                 device.ownerId,
                 device.notes,
+                device.trustSource,
+                device.trustReviewedBy,
+                device.trustReviewedAt ?? '',
+                device.lastSeenAt ?? '',
+                device.operatorNote,
+                device.quarantineReason,
                 device.trustLevel.toString(),
                 ...device.allowedActions,
               ].join(' ').toLowerCase();
@@ -576,16 +588,9 @@ class _UsersDevicesDevicesScreenState
                 items: [
                   (
                     'Trusted',
-                    data.devices
-                        .where((device) => device.trustLevel >= 3)
-                        .length,
+                    data.devices.where((device) => device.isTrusted).length,
                   ),
-                  (
-                    'Critical',
-                    data.devices
-                        .where((device) => device.status == 'critical')
-                        .length,
-                  ),
+                  ('Quarantined', quarantinedDevices.length),
                   (
                     'Owned',
                     data.devices
@@ -623,6 +628,104 @@ class _UsersDevicesDevicesScreenState
                     _CardChip(
                       label: 'Blocked = restore or re-onboard before use',
                     ),
+                    _CardChip(
+                      label:
+                          'Quarantined = hold access until the device is reviewed and restored',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Trust evidence queue',
+                subtitle:
+                    'Use this to see which devices still need operator review and which ones are paused in quarantine.',
+                icon: Icons.health_and_safety_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.pause_circle_outline,
+                            title: 'Quarantined devices',
+                            subtitle:
+                                '${quarantinedDevices.length} device${quarantinedDevices.length == 1 ? '' : 's'} paused',
+                            body: quarantinedDevices.isEmpty
+                                ? 'No local devices are currently quarantined.'
+                                : quarantinedDevices
+                                      .take(3)
+                                      .map((device) => device.name)
+                                      .join(', '),
+                            chips: [
+                              _CardChip(
+                                label: '${quarantinedDevices.length} paused',
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.fact_check_outlined,
+                            title: 'Review queue',
+                            subtitle:
+                                '${reviewDevices.length} device${reviewDevices.length == 1 ? '' : 's'} still need attention',
+                            body: reviewDevices.isEmpty
+                                ? 'The device list currently has local trust coverage.'
+                                : 'Focus first on registered, blocked, or quarantined devices before raising trust.',
+                            chips: [
+                              _CardChip(
+                                label: '${reviewDevices.length} in review',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (quarantinedDevices.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Quarantine watchlist',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          for (final device in quarantinedDevices.take(3))
+                            SizedBox(
+                              width: 320,
+                              child: _EntityCard(
+                                icon: Icons.shield_moon_outlined,
+                                title: device.name,
+                                subtitle: device.type,
+                                body: device.trustEvidenceSummary,
+                                chips: [
+                                  const _CardChip(label: 'Quarantined'),
+                                  _CardChip(label: 'T${device.trustLevel}'),
+                                ],
+                                actions: [
+                                  OutlinedButton.icon(
+                                    onPressed: () => _openDeviceEditor(
+                                      context,
+                                      ref,
+                                      device: device,
+                                    ),
+                                    icon: const Icon(Icons.edit_outlined),
+                                    label: const Text('Review device'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -664,6 +767,12 @@ class _UsersDevicesDevicesScreenState
                         setState(() => _statusFilter = 'blocked'),
                   ),
                   _SoftChoiceChip(
+                    label: const Text('Quarantined'),
+                    selected: _statusFilter == 'quarantined',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'quarantined'),
+                  ),
+                  _SoftChoiceChip(
                     label: const Text('Archived'),
                     selected: _statusFilter == 'archived',
                     onSelected: (_) =>
@@ -692,7 +801,7 @@ class _UsersDevicesDevicesScreenState
                           title: device.name,
                           subtitle: device.type,
                           body:
-                              '${device.trustPostureSummary}\nTrust T${device.trustLevel} - ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}',
+                              '${device.trustPostureSummary}\nTrust T${device.trustLevel} - ${device.allowedActions.length} allowed action${device.allowedActions.length == 1 ? '' : 's'}\n${device.trustEvidenceSummary}',
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -720,6 +829,11 @@ class _UsersDevicesDevicesScreenState
                                 label:
                                     'Owner: ${ownerLabels[device.ownerId] ?? device.ownerId}',
                               ),
+                            if (device.trustSource.trim().isNotEmpty)
+                              _CardChip(label: 'Source: ${device.trustSource}'),
+                            if (device.lastSeenAt != null &&
+                                device.lastSeenAt!.trim().isNotEmpty)
+                              _CardChip(label: 'Seen ${device.lastSeenAt!}'),
                             if (device.needsOnboardingReview)
                               const _CardChip(label: 'Review onboarding'),
                           ],
@@ -731,6 +845,20 @@ class _UsersDevicesDevicesScreenState
                                 device: device,
                               ),
                               child: const Text('Edit'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  _toggleDeviceQuarantine(context, ref, device),
+                              icon: Icon(
+                                device.isQuarantined
+                                    ? Icons.verified_user_outlined
+                                    : Icons.pause_circle_outline,
+                              ),
+                              label: Text(
+                                device.isQuarantined
+                                    ? 'Restore trust'
+                                    : 'Quarantine',
+                              ),
                             ),
                             OutlinedButton(
                               onPressed: () =>
@@ -1334,7 +1462,9 @@ class _UsersDevicesDeviceOnboardingScreenState
           final userTrustedDevices = userLinkedDevices
               .where(
                 (device) =>
-                    device.trustLevel >= 3 && device.status != 'blocked',
+                    device.trustLevel >= 3 &&
+                    device.status != 'blocked' &&
+                    device.status != 'quarantined',
               )
               .toList(growable: false);
           final userHasRoleAndPermissions =
@@ -1367,8 +1497,14 @@ class _UsersDevicesDeviceOnboardingScreenState
                   .toList(growable: false);
         final trustedLinkedDevices = linkedDevices
             .where(
-              (device) => device.trustLevel >= 3 && device.status != 'blocked',
+              (device) =>
+                  device.trustLevel >= 3 &&
+                  device.status != 'blocked' &&
+                  device.status != 'quarantined',
             )
+            .toList(growable: false);
+        final quarantinedLinkedDevices = linkedDevices
+            .where((device) => device.status == 'quarantined')
             .toList(growable: false);
         final hasRoleAndPermissions =
             selectedUser != null &&
@@ -1389,6 +1525,17 @@ class _UsersDevicesDeviceOnboardingScreenState
             : selectedRecoveryPins.isNotEmpty
             ? 'Recovery PIN exists, but this user still needs a fresh primary PIN for normal unlock.'
             : 'Open PIN Registry and assign a primary PIN before this user tries to unlock locally.';
+        final nextOperatorStep = selectedUser == null
+            ? 'Choose the next local user to start onboarding.'
+            : !hasRoleAndPermissions
+            ? 'Open Users and assign the correct role and permissions first.'
+            : !hasPrimaryPin
+            ? 'Open PIN Registry and issue a primary PIN for ${selectedUser.displayName}.'
+            : quarantinedLinkedDevices.isNotEmpty
+            ? 'Review the quarantined device${quarantinedLinkedDevices.length == 1 ? '' : 's'} linked to ${selectedUser.displayName} before trying to verify access.'
+            : !hasTrustedDevice
+            ? 'Raise trust on one linked device or complete device onboarding for this user.'
+            : 'Open Security Lock or a module gate and verify the live local route.';
         final activeUsers = data.users
             .where((user) => user.status == 'active')
             .toList(growable: false);
@@ -1609,6 +1756,11 @@ class _UsersDevicesDeviceOnboardingScreenState
                               ? '${trustedLinkedDevices.length} trusted device${trustedLinkedDevices.length == 1 ? '' : 's'}'
                               : 'Trusted device missing',
                         ),
+                        if (quarantinedLinkedDevices.isNotEmpty)
+                          _CardChip(
+                            label:
+                                '${quarantinedLinkedDevices.length} quarantined device${quarantinedLinkedDevices.length == 1 ? '' : 's'}',
+                          ),
                         _CardChip(
                           label: accessReady
                               ? 'Access ready'
@@ -1659,6 +1811,8 @@ class _UsersDevicesDeviceOnboardingScreenState
                           : 'Trust a linked device',
                       body: hasTrustedDevice
                           ? 'Trusted device${trustedLinkedDevices.length == 1 ? '' : 's'}: ${trustedLinkedDevices.map((device) => device.name).join(', ')}.'
+                          : quarantinedLinkedDevices.isNotEmpty
+                          ? 'A linked device is currently quarantined. Review the device evidence and restore trust before trying to verify access.'
                           : linkedDevices.isNotEmpty
                           ? 'This user has linked devices, but none are trusted enough yet. Use the onboarding wizard to raise the trust posture.'
                           : 'No linked device is ready. Start onboarding to register and pair a device for this user.',
@@ -1676,6 +1830,13 @@ class _UsersDevicesDeviceOnboardingScreenState
                           ? 'This user now has identity, role, PIN, and trusted device coverage. Open Security Lock or an access gate to test the route.'
                           : 'Finish the earlier steps first, then open Security Lock or a gated module to confirm the local route behaves as expected.',
                       accentColor: accessReady ? const Color(0xFF7EE6C5) : null,
+                    ),
+                    const SizedBox(height: 12),
+                    _EntityCard(
+                      icon: Icons.route_outlined,
+                      title: 'Next operator step',
+                      subtitle: selectedUser?.displayName ?? 'No user selected',
+                      body: nextOperatorStep,
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -1926,9 +2087,26 @@ class _UsersDevicesDeviceOnboardingScreenState
                                 ? trustedLinkedDevices
                                       .map((device) => device.name)
                                       .join(', ')
+                                : quarantinedLinkedDevices.isNotEmpty
+                                ? 'Quarantined: ${quarantinedLinkedDevices.map((device) => device.name).join(', ')}'
                                 : linkedDevices.isEmpty
                                 ? 'No device is linked to this user yet.'
                                 : 'A device is linked, but it still needs more trust before it should unlock sensitive routes.',
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.verified_user_outlined,
+                            title: 'Trust evidence',
+                            subtitle: quarantinedLinkedDevices.isNotEmpty
+                                ? 'Quarantine review needed'
+                                : hasTrustedDevice
+                                ? 'Evidence recorded'
+                                : 'Evidence still thin',
+                            body: linkedDevices.isEmpty
+                                ? 'No linked device evidence exists for this user yet.'
+                                : linkedDevices.first.trustEvidenceSummary,
                           ),
                         ),
                         SizedBox(
@@ -2077,6 +2255,12 @@ class _UsersDevicesDeviceOnboardingScreenState
                     'Blocked',
                     data.devices
                         .where((device) => device.status == 'blocked')
+                        .length,
+                  ),
+                  (
+                    'Quarantined',
+                    data.devices
+                        .where((device) => device.status == 'quarantined')
                         .length,
                   ),
                   (
@@ -2461,7 +2645,9 @@ class _UsersDevicesOnboardingReportScreenState
           final userTrustedDevices = userLinkedDevices
               .where(
                 (device) =>
-                    device.trustLevel >= 3 && device.status != 'blocked',
+                    device.trustLevel >= 3 &&
+                    device.status != 'blocked' &&
+                    device.status != 'quarantined',
               )
               .toList(growable: false);
           final relatedAuditEvents =
@@ -6694,6 +6880,11 @@ Future<void> _seedDemoPath(BuildContext context, WidgetRef ref) async {
       ownerId: userId,
       allowedActions: [actionScope],
       notes: 'Created from the UI demo path.',
+      trustSource: 'module hub demo',
+      trustReviewedBy: 'user_peter_owner',
+      trustReviewedAt: DateTime.now().toUtc().toIso8601String(),
+      lastSeenAt: DateTime.now().toUtc().toIso8601String(),
+      operatorNote: 'Demo onboarding path.',
     ),
   );
   await repository.createApprovalRequest(
@@ -7118,6 +7309,14 @@ Future<void> _openOnboardingWizard(
                         ownerId: ownerId,
                         allowedActions: selectedActions.toList(growable: false),
                         notes: notesController.text.trim(),
+                        trustSource: 'device onboarding',
+                        trustReviewedBy: ownerId,
+                        trustReviewedAt: DateTime.now()
+                            .toUtc()
+                            .toIso8601String(),
+                        lastSeenAt: DateTime.now().toUtc().toIso8601String(),
+                        operatorNote:
+                            'Created from the guided onboarding flow.',
                       ),
                     );
                   },
@@ -7549,6 +7748,24 @@ Future<void> _openDeviceEditor(
   final nameController = TextEditingController(text: device?.name ?? '');
   final typeController = TextEditingController(text: device?.type ?? '');
   final notesController = TextEditingController(text: device?.notes ?? '');
+  final trustSourceController = TextEditingController(
+    text: device?.trustSource ?? '',
+  );
+  final trustReviewedByController = TextEditingController(
+    text: device?.trustReviewedBy ?? '',
+  );
+  final trustReviewedAtController = TextEditingController(
+    text: device?.trustReviewedAt ?? '',
+  );
+  final lastSeenAtController = TextEditingController(
+    text: device?.lastSeenAt ?? '',
+  );
+  final operatorNoteController = TextEditingController(
+    text: device?.operatorNote ?? '',
+  );
+  final quarantineReasonController = TextEditingController(
+    text: device?.quarantineReason ?? '',
+  );
   final formKey = GlobalKey<FormState>();
   final messenger = ScaffoldMessenger.maybeOf(context);
   var status = device?.status ?? 'registered';
@@ -7664,6 +7881,14 @@ Future<void> _openDeviceEditor(
                               value: 'blocked',
                               child: Text('blocked'),
                             ),
+                            DropdownMenuItem(
+                              value: 'quarantined',
+                              child: Text('quarantined'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'archived',
+                              child: Text('archived'),
+                            ),
                           ],
                           onChanged: (value) {
                             if (value == null) {
@@ -7693,6 +7918,38 @@ Future<void> _openDeviceEditor(
                           onChanged: (value) {
                             setState(() => ownerId = value ?? '');
                           },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: trustSourceController,
+                          decoration: const InputDecoration(
+                            labelText: 'Trust source',
+                            hintText: 'e.g. onboarding review',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: trustReviewedByController,
+                          decoration: const InputDecoration(
+                            labelText: 'Reviewed by',
+                            hintText: 'e.g. user_peter_owner',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: trustReviewedAtController,
+                          decoration: const InputDecoration(
+                            labelText: 'Reviewed at',
+                            hintText: '2026-06-29T09:15:00Z',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: lastSeenAtController,
+                          decoration: const InputDecoration(
+                            labelText: 'Last seen at',
+                            hintText: '2026-06-29T08:45:00Z',
+                          ),
                         ),
                         const SizedBox(height: 12),
                         _PickerSection(
@@ -7803,6 +8060,24 @@ Future<void> _openDeviceEditor(
                           maxLines: 4,
                           decoration: const InputDecoration(labelText: 'Notes'),
                         ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: operatorNoteController,
+                          minLines: 2,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            labelText: 'Operator note',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: quarantineReasonController,
+                          minLines: 2,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Quarantine reason',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -7831,6 +8106,24 @@ Future<void> _openDeviceEditor(
                     ownerId: ownerId,
                     allowedActions: selectedActions.toList(growable: false),
                     notes: notesController.text.trim(),
+                    trustSource: trustSourceController.text.trim(),
+                    trustReviewedBy: trustReviewedByController.text.trim(),
+                    trustReviewedAt: _normalizedNullableText(
+                      trustReviewedAtController.text,
+                    ),
+                    lastSeenAt: _normalizedNullableText(
+                      lastSeenAtController.text,
+                    ),
+                    operatorNote: operatorNoteController.text.trim(),
+                    quarantineReason: quarantineReasonController.text.trim(),
+                    quarantinedAt: status == 'quarantined'
+                        ? _normalizedNullableText(
+                            quarantineReasonController.text.trim().isNotEmpty &&
+                                    device?.quarantinedAt == null
+                                ? DateTime.now().toUtc().toIso8601String()
+                                : device?.quarantinedAt ?? '',
+                          )
+                        : null,
                   ),
                 );
               },
@@ -7859,6 +8152,12 @@ Future<void> _openDeviceEditor(
     nameController.dispose();
     typeController.dispose();
     notesController.dispose();
+    trustSourceController.dispose();
+    trustReviewedByController.dispose();
+    trustReviewedAtController.dispose();
+    lastSeenAtController.dispose();
+    operatorNoteController.dispose();
+    quarantineReasonController.dispose();
     customActionController.dispose();
   }
 }
@@ -7910,6 +8209,103 @@ Future<void> _toggleDeviceArchive(
         ),
       ),
     );
+  }
+}
+
+String? _normalizedNullableText(String value) {
+  final normalized = value.trim();
+  return normalized.isEmpty ? null : normalized;
+}
+
+Future<void> _toggleDeviceQuarantine(
+  BuildContext context,
+  WidgetRef ref,
+  UsersDevicesControlDevice device,
+) async {
+  final repository = ref.read(usersDevicesControlRepositoryProvider);
+  if (device.isQuarantined) {
+    await repository.restoreDevice(
+      device.id,
+      reason: 'Device restored from quarantine locally.',
+    );
+    ref.invalidate(usersDevicesControlSnapshotProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${device.name} restored from quarantine.')),
+      );
+    }
+    return;
+  }
+
+  final reasonController = TextEditingController(text: device.quarantineReason);
+  final reviewedByController = TextEditingController(
+    text: device.trustReviewedBy.isEmpty
+        ? 'user_peter_owner'
+        : device.trustReviewedBy,
+  );
+
+  try {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Quarantine ${device.name}?'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: reviewedByController,
+                decoration: const InputDecoration(labelText: 'Reviewed by'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Quarantine reason',
+                  hintText: 'Why should this device be paused from access?',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Quarantine'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await repository.quarantineDevice(
+      device.id,
+      reviewedBy: reviewedByController.text.trim().isEmpty
+          ? 'user_peter_owner'
+          : reviewedByController.text.trim(),
+      reason: reasonController.text.trim().isEmpty
+          ? 'Operator requested local quarantine review.'
+          : reasonController.text.trim(),
+    );
+    ref.invalidate(usersDevicesControlSnapshotProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${device.name} quarantined locally.')),
+      );
+    }
+  } finally {
+    reasonController.dispose();
+    reviewedByController.dispose();
   }
 }
 
