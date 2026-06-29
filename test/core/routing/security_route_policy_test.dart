@@ -6,29 +6,29 @@ import 'package:new_earth_command_dashboard/features/security/application/securi
 
 void main() {
   group('SecurityRoutePolicy', () {
-    test('allows explicit users and devices routes while locked', () {
+    test('only allows security lock while locked', () {
       const locked = SecuritySessionState.locked();
 
       expect(
         SecurityRoutePolicy.redirectForSession(
-          requestedUri: Uri.parse(RouteNames.usersDevices),
+          requestedUri: Uri.parse(RouteNames.securityLock),
           session: locked,
         ),
         isNull,
       );
       expect(
         SecurityRoutePolicy.redirectForSession(
-          requestedUri: Uri.parse(RouteNames.usersDevicesUsers),
+          requestedUri: Uri.parse(RouteNames.usersDevices),
           session: locked,
         ),
-        isNull,
+        isNotNull,
       );
       expect(
         SecurityRoutePolicy.redirectForSession(
           requestedUri: Uri.parse(RouteNames.usersDevicesAuditLog),
           session: locked,
         ),
-        isNull,
+        isNotNull,
       );
     });
 
@@ -61,17 +61,20 @@ void main() {
       expect(Uri.parse(redirect!).path, RouteNames.securityLock);
     });
 
-    test('does not treat future users-devices child routes as public by prefix', () {
-      const locked = SecuritySessionState.locked();
+    test(
+      'does not treat future users-devices child routes as public by prefix',
+      () {
+        const locked = SecuritySessionState.locked();
 
-      final redirect = SecurityRoutePolicy.redirectForSession(
-        requestedUri: Uri.parse('/users-devices/future-admin-surface'),
-        session: locked,
-      );
+        final redirect = SecurityRoutePolicy.redirectForSession(
+          requestedUri: Uri.parse('/users-devices/future-admin-surface'),
+          session: locked,
+        );
 
-      expect(redirect, isNotNull);
-      expect(Uri.parse(redirect!).path, RouteNames.securityLock);
-    });
+        expect(redirect, isNotNull);
+        expect(Uri.parse(redirect!).path, RouteNames.securityLock);
+      },
+    );
 
     test('resume route parser ignores empty and self-referential values', () {
       expect(
@@ -87,7 +90,9 @@ void main() {
       expect(
         SecurityRoutePolicy.resumeRouteFrom(
           Uri.parse(
-            RouteNames.securityLockWithResume(RouteNames.usersDevicesAccessMatrix),
+            RouteNames.securityLockWithResume(
+              RouteNames.usersDevicesAccessMatrix,
+            ),
           ),
         ),
         RouteNames.usersDevicesAccessMatrix,

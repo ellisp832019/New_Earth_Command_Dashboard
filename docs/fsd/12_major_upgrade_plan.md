@@ -124,6 +124,12 @@ Done looks like:
 - device trust reasons are readable
 - failed access and recovery events are auditable
 
+Current execution note:
+
+- start with a route protection sweep
+- remove locked-state bypasses into Users & Devices admin surfaces
+- keep the Security Lock as the single public entry point while locked
+
 ### 3. Dashboard Calmness And Session Layer
 
 Goal:

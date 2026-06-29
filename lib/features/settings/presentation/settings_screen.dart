@@ -195,25 +195,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             label: const Text('Lock now'),
                           ),
                           OutlinedButton.icon(
-                            onPressed: () {
-                              context.push(RouteNames.usersDevices);
-                            },
+                            onPressed: isSessionLocked
+                                ? null
+                                : () {
+                                    context.push(RouteNames.usersDevices);
+                                  },
                             icon: const Icon(Icons.shield_outlined),
-                            label: const Text('Open Users & Devices'),
+                            label: Text(
+                              isSessionLocked
+                                  ? 'Unlock to open Users & Devices'
+                                  : 'Open Users & Devices',
+                            ),
                           ),
                           OutlinedButton.icon(
-                            onPressed: () {
-                              context.push(RouteNames.usersDevicesUsers);
-                            },
+                            onPressed: isSessionLocked
+                                ? null
+                                : () {
+                                    context.push(RouteNames.usersDevicesUsers);
+                                  },
                             icon: const Icon(Icons.people_outline),
-                            label: const Text('Manage Users'),
+                            label: Text(
+                              isSessionLocked
+                                  ? 'Unlock to manage users'
+                                  : 'Manage Users',
+                            ),
                           ),
                           OutlinedButton.icon(
-                            onPressed: () {
-                              context.push(RouteNames.usersDevicesDevices);
-                            },
+                            onPressed: isSessionLocked
+                                ? null
+                                : () {
+                                    context.push(
+                                      RouteNames.usersDevicesDevices,
+                                    );
+                                  },
                             icon: const Icon(Icons.devices_outlined),
-                            label: const Text('Manage Devices'),
+                            label: Text(
+                              isSessionLocked
+                                  ? 'Unlock to manage devices'
+                                  : 'Manage Devices',
+                            ),
                           ),
                           OutlinedButton.icon(
                             onPressed: isSessionLocked
@@ -265,7 +285,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         children: [
                           const _SettingsNote(
                             icon: Icons.auto_awesome_outlined,
-                            text: 'DeterministicLocal and InMemoryLocal are the current defaults.',
+                            text:
+                                'DeterministicLocal and InMemoryLocal are the current defaults.',
                           ),
                           TextButton.icon(
                             onPressed: () {
@@ -447,7 +468,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         runSpacing: 12,
                         children: [
                           FilledButton.tonalIcon(
-                            key: const Key('settingsOpenVoiceStartupGateButton'),
+                            key: const Key(
+                              'settingsOpenVoiceStartupGateButton',
+                            ),
                             onPressed: voiceStartupGateEnabled
                                 ? () {
                                     context.push(RouteNames.voiceStartupGate);
@@ -688,8 +711,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ExpansionTile(
                         key: const Key('settingsDockDetailsExpansionTile'),
                         tilePadding: EdgeInsets.zero,
-                        childrenPadding:
-                            const EdgeInsets.only(left: 4, top: 4),
+                        childrenPadding: const EdgeInsets.only(left: 4, top: 4),
                         title: Text(
                           'Individual dock controls',
                           style: theme.textTheme.titleSmall,
@@ -859,10 +881,7 @@ class _SessionStatusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Security session',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Security session', style: theme.textTheme.titleSmall),
             const SizedBox(height: 4),
             Text(
               isUnlocked
@@ -875,19 +894,11 @@ class _SessionStatusCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                Chip(label: Text(isUnlocked ? 'Active' : 'Locked')),
                 Chip(
-                  label: Text(
-                    isUnlocked ? 'Active' : 'Locked',
-                  ),
+                  label: Text('Timeout: ${session.timeout.inMinutes} minutes'),
                 ),
-                Chip(
-                  label: Text(
-                    'Timeout: ${session.timeout.inMinutes} minutes',
-                  ),
-                ),
-                Chip(
-                  label: Text(_formatRemaining(session.remaining)),
-                ),
+                Chip(label: Text(_formatRemaining(session.remaining))),
               ],
             ),
           ],

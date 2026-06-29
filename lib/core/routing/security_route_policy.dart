@@ -2,17 +2,7 @@ import '../../features/security/application/security_session_controller.dart';
 import 'route_names.dart';
 
 abstract final class SecurityRoutePolicy {
-  static const Set<String> _publicWhileLockedPaths = {
-    RouteNames.securityLock,
-    RouteNames.usersDevices,
-    RouteNames.usersDevicesUsers,
-    RouteNames.usersDevicesDevices,
-    RouteNames.usersDevicesAccessMatrix,
-    RouteNames.usersDevicesDeviceOnboarding,
-    RouteNames.usersDevicesOnboardingReport,
-    RouteNames.usersDevicesApprovalQueue,
-    RouteNames.usersDevicesAuditLog,
-  };
+  static const Set<String> _publicWhileLockedPaths = {RouteNames.securityLock};
 
   static bool isPublicWhileLocked(Uri uri) {
     return _publicWhileLockedPaths.contains(uri.path);

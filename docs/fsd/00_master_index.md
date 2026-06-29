@@ -44,6 +44,9 @@ Codex must treat these files as the source of truth for the project.
 12. `12_major_upgrade_plan.md`
    - Repo-wide upgrade order, cross-module priorities, release gates, and parked work.
 
+13. `13_upgrade_execution_plan.md`
+   - Current major-upgrade execution order, active stream definitions, and the next hardening slices to build.
+
 ## Roadmaps
 
 - [App Roadmap](../roadmap/app_roadmap.md)

@@ -202,12 +202,36 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       enteredPin,
     );
     if (!pinDecision.allowed) {
+      UsersDevicesControlAuditEvent? pinAuditEvent;
+      if (userId.isNotEmpty) {
+        pinAuditEvent = await repository.createAuditEvent(
+          actorId: userId,
+          deviceId: deviceId,
+          eventType: switch (pinDecision.issueCode) {
+            'missing_pin' => 'pin_check_missing',
+            'primary_missing_recovery_available' => 'pin_check_primary_missing',
+            'locked_out_triggered' => 'pin_lockout_triggered',
+            'locked_out_active' => 'pin_lockout_active',
+            _ => 'pin_check_failed',
+          },
+          targetModule: '01_USERS_AND_DEVICES_CONTROL',
+          action: 'unlock_with_pin',
+          result: 'denied',
+          reason: pinDecision.nextStep.isEmpty
+              ? pinDecision.reason
+              : '${pinDecision.reason} ${pinDecision.nextStep}',
+        );
+      }
       if (!mounted) {
         return;
       }
       setState(() {
         _busy = false;
-        _status = 'Locked';
+        _status = switch (pinDecision.issueCode) {
+          'locked_out_triggered' => 'Cooldown started',
+          'locked_out_active' => 'Cooldown active',
+          _ => 'Locked',
+        };
         _detail = pinDecision.reason.isNotEmpty
             ? pinDecision.reason
             : 'The local PIN was not accepted.';
@@ -219,11 +243,13 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
             'No PIN check ran because this user has no local PIN yet.',
           'primary_missing_recovery_available' =>
             'Primary PIN is missing. Recovery path is available in PIN Registry.',
-          'locked_out' =>
+          'locked_out_triggered' =>
+            'Too many PIN attempts were made. Cooldown started and the event was written to the audit trail.',
+          'locked_out_active' =>
             'Too many PIN attempts were made. Unlock is paused until the cooldown ends.',
           _ => 'PIN check failed before access control.',
         };
-        _latestAuditEventId = null;
+        _latestAuditEventId = pinAuditEvent?.eventId;
       });
       return;
     }
@@ -357,6 +383,8 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
               data: (snapshot) => snapshot.settings.voiceStartupGateEnabled,
               orElse: () => false,
             );
+            final canOpenAdminRoutes =
+                securitySession.isUnlocked && !securitySession.isExpired;
             _seedSelections(data);
             final selectedUser = data.users.isEmpty
                 ? null
@@ -469,6 +497,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                         context.go(RouteNames.voiceStartupGate);
                                       }
                                     : null,
+                                canOpenAdminRoutes: canOpenAdminRoutes,
                                 onOpenUsersDevices: () =>
                                     context.push(RouteNames.usersDevices),
                                 onOpenAuditLog: () => context.push(
@@ -505,6 +534,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                   });
                                 },
                                 isBusy: _busy,
+                                canOpenAdminRoutes: canOpenAdminRoutes,
                                 onOpenUsersDevices: () =>
                                     context.push(RouteNames.usersDevices),
                                 onUnlock: () => _attemptUnlock(
@@ -605,6 +635,7 @@ class _SecurityHero extends StatelessWidget {
     required this.canContinue,
     required this.continueLabel,
     required this.onContinue,
+    required this.canOpenAdminRoutes,
     required this.onOpenUsersDevices,
     required this.onOpenAuditLog,
   });
@@ -624,6 +655,7 @@ class _SecurityHero extends StatelessWidget {
   final bool canContinue;
   final String continueLabel;
   final VoidCallback? onContinue;
+  final bool canOpenAdminRoutes;
   final VoidCallback onOpenUsersDevices;
   final VoidCallback onOpenAuditLog;
 
@@ -769,7 +801,9 @@ class _SecurityHero extends StatelessWidget {
                             icon: Icons.verified_outlined,
                             compact: true,
                             child: TextButton.icon(
-                              onPressed: onOpenAuditLog,
+                              onPressed: canOpenAdminRoutes
+                                  ? onOpenAuditLog
+                                  : null,
                               icon: const Icon(Icons.receipt_long_outlined),
                               label: const Text('Open audit log'),
                             ),
@@ -831,7 +865,7 @@ class _SecurityHero extends StatelessWidget {
                     icon: Icons.verified_outlined,
                     compact: true,
                     child: TextButton.icon(
-                      onPressed: onOpenAuditLog,
+                      onPressed: canOpenAdminRoutes ? onOpenAuditLog : null,
                       icon: const Icon(Icons.receipt_long_outlined),
                       label: const Text('Open audit log'),
                     ),
@@ -878,7 +912,7 @@ class _SecurityHero extends StatelessWidget {
                   label: Text(continueLabel),
                 ),
               OutlinedButton.icon(
-                onPressed: onOpenUsersDevices,
+                onPressed: canOpenAdminRoutes ? onOpenUsersDevices : null,
                 icon: const Icon(Icons.shield_outlined),
                 label: const Text('Open Users & Devices'),
               ),
@@ -903,6 +937,7 @@ class _SecuritySidePanel extends StatelessWidget {
     required this.onDeviceChanged,
     required this.isBusy,
     required this.onToggleIdentityPicker,
+    required this.canOpenAdminRoutes,
     required this.onOpenUsersDevices,
     required this.onUnlock,
   });
@@ -918,6 +953,7 @@ class _SecuritySidePanel extends StatelessWidget {
   final ValueChanged<String?> onDeviceChanged;
   final bool isBusy;
   final VoidCallback onToggleIdentityPicker;
+  final bool canOpenAdminRoutes;
   final VoidCallback onOpenUsersDevices;
   final VoidCallback onUnlock;
 
@@ -1001,12 +1037,16 @@ class _SecuritySidePanel extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'No PINs are currently set for this user. Add or restore one in Users & Devices before unlocking.',
+                                canOpenAdminRoutes
+                                    ? 'No PINs are currently set for this user. Add or restore one in Users & Devices before unlocking.'
+                                    : 'No PINs are currently set for this user. Unlock the local session first, then open Users & Devices to add or restore one.',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               const SizedBox(height: 8),
                               TextButton.icon(
-                                onPressed: onOpenUsersDevices,
+                                onPressed: canOpenAdminRoutes
+                                    ? onOpenUsersDevices
+                                    : null,
                                 icon: const Icon(Icons.shield_outlined),
                                 label: const Text('Open Users & Devices'),
                               ),
