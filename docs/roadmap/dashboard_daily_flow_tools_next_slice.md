@@ -83,6 +83,7 @@ These rendered assets support this handoff:
 
 - [Dashboard calmness review](images/dashboard_calmness_review.png)
 - [Dashboard daily flow tools](images/dashboard_daily_flow_tools.png)
+- [Dashboard daily flow slice 1](images/dashboard_daily_flow_slice_1.png)
 
 ## Suggested test themes
 
