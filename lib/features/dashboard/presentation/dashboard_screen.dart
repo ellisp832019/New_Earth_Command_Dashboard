@@ -3943,6 +3943,8 @@ class _DashboardQuickCaptureCard extends ConsumerStatefulWidget {
 class _DashboardQuickCaptureCardState
     extends ConsumerState<_DashboardQuickCaptureCard> {
   bool _isSaving = false;
+  String? _lastSavedCaptureLabel;
+  String? _lastSavedCaptureType;
 
   @override
   Widget build(BuildContext context) {
@@ -3965,6 +3967,12 @@ class _DashboardQuickCaptureCardState
         : hasFocus
         ? 'Use this only for thoughts that should not interrupt the current Top 3.'
         : 'Capture a thought quickly, then return to the strongest next move.';
+    final captureHandoffLabel = _lastSavedCaptureLabel == null
+        ? 'Inbox first'
+        : 'Last saved to Inbox';
+    final captureHandoffCopy = _lastSavedCaptureLabel == null
+        ? 'New captures land in Inbox first, so you can review them calmly before turning them into tasks or planner work.'
+        : '$_lastSavedCaptureLabel is waiting in Inbox for calm review and routing.';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -4052,6 +4060,74 @@ class _DashboardQuickCaptureCardState
             ],
           ),
           const SizedBox(height: 16),
+          Container(
+            key: const Key('dashboardQuickCaptureHandoffCard'),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColours.darkSuccess.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColours.darkSuccess.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _InlineTag(
+                      label: captureHandoffLabel,
+                      accent: AppColours.darkSuccess,
+                      foreground: AppColours.darkSuccess,
+                    ),
+                    if ((_lastSavedCaptureType ?? '').isNotEmpty)
+                      _InlineTag(
+                        label: _lastSavedCaptureType!,
+                        accent: AppColours.darkSecondary,
+                        foreground: AppColours.darkSecondary,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  captureHandoffCopy,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    TextButton.icon(
+                      key: const Key('dashboardQuickCaptureOpenInboxButton'),
+                      onPressed: () => context.go(RouteNames.inbox),
+                      icon: const Icon(Icons.inbox_outlined),
+                      label: const Text('Open Inbox'),
+                    ),
+                    TextButton.icon(
+                      key: const Key('dashboardQuickCaptureOpenTasksButton'),
+                      onPressed: () => context.go(RouteNames.tasks),
+                      icon: const Icon(Icons.task_alt_outlined),
+                      label: const Text('Open Tasks'),
+                    ),
+                    TextButton.icon(
+                      key: const Key('dashboardQuickCaptureOpenPlannerButton'),
+                      onPressed: () => context.go(RouteNames.planner),
+                      icon: const Icon(Icons.event_note_outlined),
+                      label: const Text('Open Planner'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           FilledButton.icon(
             key: const Key('dashboardQuickCaptureButton'),
             onPressed: _isSaving ? null : () => _openQuickCapture(),
@@ -4097,6 +4173,10 @@ class _DashboardQuickCaptureCardState
       }
 
       final label = item.title ?? item.body ?? 'Inbox item saved.';
+      setState(() {
+        _lastSavedCaptureLabel = label;
+        _lastSavedCaptureType = result.type;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('$label saved to Inbox.')));

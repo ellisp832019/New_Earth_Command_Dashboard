@@ -697,6 +697,11 @@ void main() {
     );
     expect(find.text('Safe place to park it'), findsOneWidget);
     expect(
+      find.byKey(const Key('dashboardQuickCaptureHandoffCard')),
+      findsOneWidget,
+    );
+    expect(find.text('Inbox first'), findsOneWidget);
+    expect(
       find.text(
         'Capture a thought quickly, then return to the strongest next move.',
       ),
@@ -708,6 +713,114 @@ void main() {
     );
     expect(
       find.byKey(const Key('dashboardTopTasksOpenPlannerButton')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('dashboard quick capture handoff actions open inbox tasks and planner', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    final openInboxButton = find.byKey(
+      const Key('dashboardQuickCaptureOpenInboxButton'),
+    );
+    await tester.scrollUntilVisible(
+      openInboxButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(openInboxButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openInboxButton);
+    await pumpUntilIdle(tester);
+    expect(find.text('Inbox'), findsWidgets);
+
+    appRouter.go(RouteNames.dashboard);
+    await pumpUntilIdle(tester);
+
+    final openTasksButton = find.byKey(
+      const Key('dashboardQuickCaptureOpenTasksButton'),
+    );
+    await tester.scrollUntilVisible(
+      openTasksButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(openTasksButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openTasksButton);
+    await pumpUntilIdle(tester);
+    expect(find.text('Tasks'), findsWidgets);
+
+    appRouter.go(RouteNames.dashboard);
+    await pumpUntilIdle(tester);
+
+    final openPlannerButton = find.byKey(
+      const Key('dashboardQuickCaptureOpenPlannerButton'),
+    );
+    await tester.scrollUntilVisible(
+      openPlannerButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(openPlannerButton);
+    await tester.pumpAndSettle();
+    final plannerButtonWidget = tester.widget<TextButton>(openPlannerButton);
+    plannerButtonWidget.onPressed!.call();
+    await pumpUntilIdle(tester);
+    expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('dashboard quick capture shows last saved inbox handoff', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    await DailyPlanService(database).ensureTodayPlan();
+
+    await tester.pumpWidget(
+      buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+    );
+    await pumpUntilIdle(tester);
+
+    appRouter.go(RouteNames.dashboard);
+    await pumpUntilIdle(tester);
+
+    final quickCaptureButton = find.byKey(
+      const Key('dashboardQuickCaptureButton'),
+    );
+    await tester.scrollUntilVisible(
+      quickCaptureButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(quickCaptureButton);
+    await tester.pumpAndSettle();
+    await tester.tap(quickCaptureButton);
+    await pumpUntilIdle(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('dashboardQuickCaptureTitleField')),
+      'Capture follow-through note',
+    );
+    await tester.enterText(
+      find.byKey(const Key('dashboardQuickCaptureBodyField')),
+      'Keep this safe until the planner review.',
+    );
+    await tester.tap(find.byKey(const Key('dashboardQuickCaptureSaveButton')));
+    await pumpUntilIdle(tester);
+
+    expect(find.text('Last saved to Inbox'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Capture follow-through note is waiting in Inbox for calm review and routing.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Capture follow-through note saved to Inbox.'),
       findsOneWidget,
     );
   });
