@@ -574,6 +574,7 @@ class _TreasuryOverviewPanel extends StatelessWidget {
                   const _PanelTitle(
                     title: 'Treasury',
                     icon: Icons.account_balance_wallet_outlined,
+                    accent: AppColours.darkSecondary,
                   ),
                   const Spacer(),
                   _InlineTag(
@@ -821,6 +822,7 @@ class _CompanyCommandCentrePanel extends StatelessWidget {
                   const _PanelTitle(
                     title: 'Company',
                     icon: Icons.domain_outlined,
+                    accent: AppColours.darkAccent,
                   ),
                   const Spacer(),
                   _InlineTag(
@@ -1005,42 +1007,42 @@ class _SupportModuleGrid extends StatelessWidget {
     final summaryTiles = <_CompactModuleTile>[
       const _CompactModuleTile(
         title: 'Command Deck',
-        description: 'Launch shortcuts.',
+        description: 'Shortcut hub.',
         icon: Icons.space_dashboard_outlined,
         route: RouteNames.commandDeck,
         accent: AppColours.darkSecondary,
       ),
       const _CompactModuleTile(
         title: 'Launchpad',
-        description: 'Campaign readiness.',
+        description: 'Launch readiness.',
         icon: Icons.rocket_launch_outlined,
         route: RouteNames.launchpad,
         accent: AppColours.darkSuccess,
       ),
       const _CompactModuleTile(
         title: 'Meetings',
-        description: 'Notes and follow-ups.',
+        description: 'Notes and follow-up.',
         icon: Icons.groups_outlined,
         route: RouteNames.meetingDashboard,
         accent: AppColours.darkAmber,
       ),
       const _CompactModuleTile(
         title: 'Knowledge',
-        description: 'Local reference.',
+        description: 'Local library.',
         icon: Icons.menu_book_outlined,
         route: RouteNames.knowledgeLibrary,
         accent: AppColours.darkPurple,
       ),
       const _CompactModuleTile(
         title: 'Repo Bridge',
-        description: 'Read-only intelligence.',
+        description: 'Read-only repo view.',
         icon: Icons.device_hub_outlined,
         route: RouteNames.repoIntelligenceBridge,
         accent: AppColours.darkPrimary,
       ),
       const _CompactModuleTile(
         title: 'Experiment',
-        description: 'Validation workspace.',
+        description: 'Validation space.',
         icon: Icons.science_outlined,
         route: RouteNames.experimentWorkspace,
         accent: AppColours.darkSecondary,
@@ -1206,11 +1208,14 @@ class _CompactModuleTile extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.12),
+                        color: accent.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.22),
+                        ),
                       ),
                       child: Icon(icon, size: 20, color: accent),
                     ),
@@ -1235,7 +1240,7 @@ class _CompactModuleTile extends StatelessWidget {
                   description,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
-                    height: 1.35,
+                    height: 1.25,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1332,6 +1337,7 @@ class BackupGuardianDashboardCard extends ConsumerWidget {
                       const _PanelTitle(
                         title: 'Backup Guardian',
                         icon: Icons.backup_outlined,
+                        accent: AppColours.darkSuccess,
                       ),
                       const Spacer(),
                       _InlineTag(
@@ -3344,6 +3350,7 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
                     const _PanelTitle(
                       title: 'Today\'s Focus',
                       icon: Icons.flag_outlined,
+                      accent: AppColours.darkPrimary,
                     ),
                     const SizedBox(height: 12),
                     Wrap(spacing: 8, runSpacing: 8, children: actions),
@@ -3356,6 +3363,7 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
                   const _PanelTitle(
                     title: 'Today\'s Focus',
                     icon: Icons.flag_outlined,
+                    accent: AppColours.darkPrimary,
                   ),
                   const Spacer(),
                   Wrap(spacing: 8, runSpacing: 8, children: actions),
@@ -3494,6 +3502,7 @@ class _ActiveProjectsPanel extends StatelessWidget {
               const _PanelTitle(
                 title: 'Active Projects',
                 icon: Icons.folder_copy_outlined,
+                accent: AppColours.darkSecondary,
               ),
               const Spacer(),
               TextButton(
@@ -3734,6 +3743,7 @@ class _DashboardQuickCaptureCardState
               const _PanelTitle(
                 title: 'Quick Capture',
                 icon: Icons.add_circle_outline,
+                accent: AppColours.darkSuccess,
               ),
               const Spacer(),
               _InlineTag(
@@ -4105,8 +4115,16 @@ class _ProjectProgressRow extends StatelessWidget {
     return InkWell(
       onTap: () => context.push(RouteNames.projectDetail(project.projectId)),
       borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColours.darkSurfaceAlt.withValues(alpha: 0.62),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColours.darkOutline.withValues(alpha: 0.72),
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -4165,10 +4183,10 @@ class _MiniModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColours.darkSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(24),
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppColours.darkOutline.withValues(alpha: 0.94),
         ),
@@ -4186,19 +4204,14 @@ class _MiniModuleCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: state.accent.withValues(alpha: 0.16),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: state.accent.withValues(alpha: 0.32),
-                  ),
-                ),
-                child: Icon(state.icon, size: 14, color: state.accent),
+              _DashboardIconBadge(
+                icon: state.icon,
+                accent: state.accent,
+                size: 28,
+                iconSize: 15,
+                rounded: 10,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   state.title,
@@ -4312,25 +4325,66 @@ class _DashboardFooter extends StatelessWidget {
 }
 
 class _PanelTitle extends StatelessWidget {
-  const _PanelTitle({required this.title, required this.icon});
+  const _PanelTitle({required this.title, required this.icon, this.accent});
 
   final String title;
   final IconData icon;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedAccent = accent ?? AppColours.darkSecondary;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: AppColours.darkSecondary, size: 20),
+        _DashboardIconBadge(
+          icon: icon,
+          accent: resolvedAccent,
+          size: 34,
+          iconSize: 18,
+          rounded: 12,
+        ),
         const SizedBox(width: 10),
         Text(
           title,
           style: Theme.of(
             context,
-          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
+          ).textTheme.titleMedium?.copyWith(
+            color: AppColours.darkText,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _DashboardIconBadge extends StatelessWidget {
+  const _DashboardIconBadge({
+    required this.icon,
+    required this.accent,
+    required this.size,
+    required this.iconSize,
+    required this.rounded,
+  });
+
+  final IconData icon;
+  final Color accent;
+  final double size;
+  final double iconSize;
+  final double rounded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(rounded),
+        border: Border.all(color: accent.withValues(alpha: 0.24)),
+      ),
+      child: Icon(icon, color: accent, size: iconSize),
     );
   }
 }
