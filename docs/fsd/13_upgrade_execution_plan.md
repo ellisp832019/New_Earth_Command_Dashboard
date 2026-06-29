@@ -49,6 +49,9 @@ Immediate slices:
 3. recovery and admin reset workflow polish
 4. onboarding workspace tightening
 5. device trust evidence and quarantine flow
+6. approval workflow polish
+7. access review dashboard
+8. persistence and migration hardening
 
 ### Stream 2 - Dashboard Calm Session Layer
 
@@ -166,6 +169,40 @@ Done looks like:
 - quarantined devices are visible in the device workspace
 - quarantined devices fail trust checks until restored
 
+### Slice 6 - Approval workflow polish
+
+Goal:
+
+- make operator review easier to scan and less ambiguous
+
+Done looks like:
+
+- approval statuses are normalized consistently
+- triage view highlights stale, risky, or blocked requests
+- approval cards explain whether a deeper trust or rule issue still needs fixing first
+
+### Slice 7 - Access review dashboard
+
+Goal:
+
+- give admins one calm summary for lockouts, recovery, quarantine, approvals, and denied unlocks
+
+Done looks like:
+
+- key security posture counts are visible from the module home
+- drill-down links open the right admin surfaces directly
+
+### Slice 8 - Persistence and migration hardening
+
+Goal:
+
+- prove that new trust evidence and older approval data survive local reloads cleanly
+
+Done looks like:
+
+- repository tests cover trust evidence round-trip
+- legacy approval statuses normalize on load and stay consistent after write-back
+
 ## Repo-Wide Gates Before The Next Stream
 
 Do not move on from Stream 1 until:
@@ -177,6 +214,7 @@ Do not move on from Stream 1 until:
 5. locked and unlocked manual route checks are complete
 6. Users & Devices guide wording still matches the real flow
 7. trust evidence and quarantine surfaces are covered by focused widget and repository tests
+8. approval queue and access review surfaces are covered by focused widget tests
 
 ## Manual Test Themes For This Phase
 

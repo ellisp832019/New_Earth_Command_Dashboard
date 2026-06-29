@@ -288,6 +288,33 @@ class UsersDevicesControlApprovalRequest {
   final String? reviewedBy;
   final String? reviewedAt;
 
+  String get normalizedStatus {
+    switch (status.trim().toLowerCase()) {
+      case 'allowed':
+      case 'approve':
+      case 'approved':
+        return 'approved';
+      case 'deny':
+      case 'denied':
+        return 'denied';
+      case 'open':
+      case 'waiting':
+      case 'queued':
+      case 'pending':
+        return 'pending';
+      default:
+        return status.trim().toLowerCase().isEmpty
+            ? 'pending'
+            : status.trim().toLowerCase();
+    }
+  }
+
+  bool get isPending => normalizedStatus == 'pending';
+
+  bool get isApproved => normalizedStatus == 'approved';
+
+  bool get isDenied => normalizedStatus == 'denied';
+
   factory UsersDevicesControlApprovalRequest.fromJson(
     Map<String, dynamic> json,
   ) {
@@ -314,7 +341,7 @@ class UsersDevicesControlApprovalRequest {
       'device_id': deviceId,
       'target_module': targetModule,
       'action': action,
-      'status': status,
+      'status': normalizedStatus,
       'risk_level': riskLevel,
       'reason': reason,
       if (reviewedBy != null) 'reviewed_by': reviewedBy,

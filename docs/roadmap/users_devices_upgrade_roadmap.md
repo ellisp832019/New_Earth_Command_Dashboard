@@ -18,14 +18,16 @@ What already exists:
 - recovery and forced reset governance with manual test coverage
 - guided onboarding workspace with next-step and completion views
 - device trust evidence fields and quarantine flow
+- approval queue triage and normalized review statuses
+- access review dashboard for lockouts, recovery, trust pressure, and approvals
+- repository persistence coverage for trust evidence and legacy approval status normalization
 - audit trail and approval surfacing
 - session side panel with countdown and active user state
 - user guide diagrams and walkthroughs
 
 What is still missing:
 
-- clearer operator dashboards for approvals and security review
-- release-grade migration coverage across the whole data layer
+- broader release-grade migration coverage across the whole data layer
 - broader repo-wide verification and guide refresh
 
 ## Upgrade Goal
@@ -238,10 +240,10 @@ Companion manual pass:
 
 If only one upgrade should start next, do this one first:
 
-- **Upgrade 7 - Approval workflow polish**
+- **Upgrade 10 - Release verification and docs pass**
 
 Reason:
 
-- the trust spine is now much stronger, so the next friction is operator readability
-- approvals are the remaining calmness gap in day-to-day gated access work
-- a cleaner approval surface sets up the later security review dashboard well
+- the operational trust surfaces are now much stronger
+- the next risk is drift between the real flow, the tests, and the operator guide
+- release confidence now matters more than adding another admin surface

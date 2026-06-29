@@ -376,4 +376,84 @@ void main() {
       expect(device.quarantinedAt, isNotNull);
     },
   );
+
+  test(
+    'legacy approval statuses normalize on load and survive round trip',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      await database.delete(database.usersDevicesControlApprovalRequests).go();
+      await database
+          .into(database.usersDevicesControlApprovalRequests)
+          .insert(
+            UsersDevicesControlApprovalRequestsCompanion.insert(
+              requestId: 'approval_legacy_status',
+              payloadJson:
+                  '{"request_id":"approval_legacy_status","timestamp":"2026-06-20T00:00:00Z","requested_by":"user_guest","device_id":"device_phone_scanner","target_module":"01_USERS_AND_DEVICES_CONTROL","action":"assign_role","status":"allowed","risk_level":"medium","reason":"Legacy allowed status."}',
+              createdAt: DateTime.parse('2026-06-20T00:00:00Z').toUtc(),
+              updatedAt: DateTime.parse('2026-06-20T00:00:00Z').toUtc(),
+            ),
+          );
+
+      final snapshot = await repository.loadSnapshot();
+      final request = snapshot.approvalQueue.singleWhere(
+        (item) => item.requestId == 'approval_legacy_status',
+      );
+
+      expect(request.normalizedStatus, 'approved');
+      expect(request.isApproved, isTrue);
+
+      await repository.approveRequest(
+        request.requestId,
+        reviewedBy: 'user_peter_owner',
+      );
+
+      final reloaded = await repository.loadSnapshot();
+      final persisted = reloaded.approvalQueue.singleWhere(
+        (item) => item.requestId == 'approval_legacy_status',
+      );
+      expect(persisted.normalizedStatus, 'approved');
+    },
+  );
+
+  test('device trust evidence survives SQLite round trip', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    await repository.registerDevice(
+      const UsersDevicesControlDevice(
+        id: 'device_trust_round_trip',
+        name: 'Trust Round Trip Device',
+        type: 'tablet',
+        trustLevel: 4,
+        status: 'trusted',
+        ownerId: 'user_peter_owner',
+        allowedActions: ['dashboard.view'],
+        notes: 'Round trip test device.',
+        trustSource: 'manual review',
+        trustReviewedBy: 'user_peter_owner',
+        trustReviewedAt: '2026-06-29T08:00:00Z',
+        lastSeenAt: '2026-06-29T08:30:00Z',
+        operatorNote: 'Evidence should persist.',
+      ),
+    );
+
+    final snapshot = await repository.loadSnapshot();
+    final device = snapshot.devices.singleWhere(
+      (item) => item.id == 'device_trust_round_trip',
+    );
+
+    expect(device.trustSource, 'manual review');
+    expect(device.trustReviewedBy, 'user_peter_owner');
+    expect(device.trustReviewedAt, '2026-06-29T08:00:00Z');
+    expect(device.lastSeenAt, '2026-06-29T08:30:00Z');
+    expect(device.operatorNote, 'Evidence should persist.');
+  });
 }

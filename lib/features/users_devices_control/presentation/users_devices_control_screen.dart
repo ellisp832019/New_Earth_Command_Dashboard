@@ -40,8 +40,16 @@ class UsersDevicesControlScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(usersDevicesControlSnapshotProvider),
         ),
         data: (data) {
+          final pins = ref
+              .watch(usersDevicesPinRegistrySnapshotProvider)
+              .maybeWhen(
+                data: (snapshot) => snapshot,
+                orElse: () => UsersDevicesPinRegistrySnapshot(
+                  records: const <UsersDevicesPinRecord>[],
+                ),
+              );
           final pending = data.approvalQueue
-              .where((request) => request.status == 'pending')
+              .where((request) => request.isPending)
               .length;
           final trustedDevices = data.devices
               .where((device) => device.trustLevel >= 3)
@@ -55,6 +63,8 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                 pendingRequests: pending,
                 trustedDevices: trustedDevices,
               ),
+              const SizedBox(height: 16),
+              _AccessReviewDashboardPanel(data: data, pins: pins),
               const SizedBox(height: 16),
               _VisualPanel(
                 title: 'Access plan',
@@ -1929,13 +1939,13 @@ class _UsersDevicesDeviceOnboardingScreenState
                             icon: Icons.rule_folder_outlined,
                             title: 'Approvals and trust checks',
                             subtitle:
-                                '${data.approvalQueue.where((request) => request.status == 'pending').length} pending approvals',
+                                '${data.approvalQueue.where((request) => request.isPending).length} pending approvals',
                             body:
                                 '${trustEvents.length} trust confirmations are already recorded in the audit trail.',
                             chips: [
                               _CardChip(
                                 label:
-                                    '${data.approvalQueue.where((request) => request.status == 'pending').length} pending',
+                                    '${data.approvalQueue.where((request) => request.isPending).length} pending',
                               ),
                               _CardChip(
                                 label: '${trustEvents.length} confirmations',
@@ -3784,7 +3794,7 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
       orElse: () => rows.first,
     );
     final pendingApprovals = data.approvalQueue
-        .where((request) => request.status == 'pending')
+        .where((request) => request.isPending)
         .length;
 
     return _VisualPanel(
@@ -3891,6 +3901,141 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
   }
 }
 
+class _AccessReviewDashboardPanel extends StatelessWidget {
+  const _AccessReviewDashboardPanel({required this.data, required this.pins});
+
+  final UsersDevicesControlSnapshot data;
+  final UsersDevicesPinRegistrySnapshot pins;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now().toUtc();
+    final activeLockouts = pins.lockouts
+        .where(
+          (lockout) =>
+              lockout.lockedUntil != null && lockout.lockedUntil!.isAfter(now),
+        )
+        .length;
+    final recoveryPins = pins.records
+        .where((record) => record.status == 'recovery')
+        .length;
+    final quarantinedDevices = data.devices
+        .where((device) => device.status == 'quarantined')
+        .length;
+    final pendingApprovals = data.approvalQueue
+        .where((request) => request.isPending)
+        .length;
+    final recentFailedUnlocks = data.auditLog
+        .where(
+          (event) =>
+              event.result == 'denied' &&
+              (event.eventType.contains('pin_') ||
+                  event.eventType.contains('unlock')),
+        )
+        .length;
+
+    return _VisualPanel(
+      title: 'Access review dashboard',
+      subtitle:
+          'One calm admin read for lockouts, recovery, quarantine, approvals, and recent denied unlock events.',
+      icon: Icons.dashboard_customize_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SummaryRow(
+            items: [
+              ('Lockouts', activeLockouts),
+              ('Recovery PINs', recoveryPins),
+              ('Quarantined', quarantinedDevices),
+              ('Pending approvals', pendingApprovals),
+              ('Recent denied unlocks', recentFailedUnlocks),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.lock_clock_outlined,
+                  title: 'Session lockouts',
+                  subtitle: '$activeLockouts active cooldowns',
+                  body: activeLockouts == 0
+                      ? 'No user is currently paused by repeated bad PIN attempts.'
+                      : 'Open the PIN Registry to review cooldown windows and recovery paths.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.key_outlined,
+                  title: 'Recovery coverage',
+                  subtitle: '$recoveryPins recovery PINs',
+                  body: recoveryPins == 0
+                      ? 'No recovery PINs are active right now.'
+                      : 'Recovery PINs are available, but should stay secondary to normal unlock.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.shield_moon_outlined,
+                  title: 'Device trust pressure',
+                  subtitle: '$quarantinedDevices quarantined devices',
+                  body: quarantinedDevices == 0
+                      ? 'No device is currently paused from trusted use.'
+                      : 'Review quarantined devices before troubleshooting module access.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.rule_folder_outlined,
+                  title: 'Approval workload',
+                  subtitle: '$pendingApprovals pending requests',
+                  body: pendingApprovals == 0
+                      ? 'No approval review is waiting.'
+                      : 'Open the queue to review the highest-risk or stalest requests first.',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: () =>
+                    context.go(RouteNames.usersDevicesApprovalQueue),
+                icon: const Icon(Icons.rule_folder_outlined),
+                label: const Text('Open approval queue'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.usersDevicesPins),
+                icon: const Icon(Icons.pin_outlined),
+                label: const Text('Open PIN Registry'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.usersDevicesDevices),
+                icon: const Icon(Icons.devices_outlined),
+                label: const Text('Open Devices'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Open audit log'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 List<_GatekeeperModuleRow> _gatekeeperRows(UsersDevicesControlSnapshot data) {
   final auditIndex = <String, UsersDevicesControlAuditEvent>{};
   for (final event in data.auditLog) {
@@ -3902,7 +4047,7 @@ List<_GatekeeperModuleRow> _gatekeeperRows(UsersDevicesControlSnapshot data) {
 
   final approvalCounts = <String, int>{};
   for (final request in data.approvalQueue) {
-    if (request.status == 'pending') {
+    if (request.isPending) {
       approvalCounts[request.targetModule] =
           (approvalCounts[request.targetModule] ?? 0) + 1;
     }
@@ -4187,11 +4332,18 @@ class _UsersDevicesApprovalQueueScreenState
       ),
       data: (data) {
         final pendingCount = data.approvalQueue
-            .where((request) => request.status == 'pending')
+            .where((request) => request.isPending)
+            .length;
+        final approvedCount = data.approvalQueue
+            .where((request) => request.isApproved)
+            .length;
+        final deniedCount = data.approvalQueue
+            .where((request) => request.isDenied)
             .length;
         final filteredRequests = data.approvalQueue
             .where((request) {
-              if (_statusFilter != 'all' && request.status != _statusFilter) {
+              if (_statusFilter != 'all' &&
+                  request.normalizedStatus != _statusFilter) {
                 return false;
               }
               final query = _query.trim().toLowerCase();
@@ -4204,7 +4356,7 @@ class _UsersDevicesApprovalQueueScreenState
                 request.deviceId,
                 request.targetModule,
                 request.action,
-                request.status,
+                request.normalizedStatus,
                 request.riskLevel,
                 request.reason,
                 request.reviewedBy ?? '',
@@ -4270,27 +4422,14 @@ class _UsersDevicesApprovalQueueScreenState
               const SizedBox(height: 16),
               _ApprovalQueueSnapshotPanel(data: data),
               const SizedBox(height: 16),
+              _ApprovalTriagePanel(data: data),
+              const SizedBox(height: 16),
               _SummaryRow(
                 items: [
                   ('All', data.approvalQueue.length),
-                  (
-                    'Pending',
-                    data.approvalQueue
-                        .where((request) => request.status == 'pending')
-                        .length,
-                  ),
-                  (
-                    'Allowed',
-                    data.approvalQueue
-                        .where((request) => request.status == 'allowed')
-                        .length,
-                  ),
-                  (
-                    'Denied',
-                    data.approvalQueue
-                        .where((request) => request.status == 'denied')
-                        .length,
-                  ),
+                  ('Pending', pendingCount),
+                  ('Approved', approvedCount),
+                  ('Denied', deniedCount),
                 ],
               ),
               const SizedBox(height: 16),
@@ -4313,10 +4452,10 @@ class _UsersDevicesApprovalQueueScreenState
                     onSelected: (_) => setState(() => _statusFilter = 'all'),
                   ),
                   _SoftChoiceChip(
-                    label: const Text('Allowed'),
-                    selected: _statusFilter == 'allowed',
+                    label: const Text('Approved'),
+                    selected: _statusFilter == 'approved',
                     onSelected: (_) =>
-                        setState(() => _statusFilter = 'allowed'),
+                        setState(() => _statusFilter = 'approved'),
                   ),
                   _SoftChoiceChip(
                     label: const Text('Denied'),
@@ -4342,8 +4481,9 @@ class _UsersDevicesApprovalQueueScreenState
                       SizedBox(
                         width: 450,
                         child: _ApprovalRequestCard(
+                          data: data,
                           request: request,
-                          onApprove: request.status == 'pending'
+                          onApprove: request.isPending
                               ? () async {
                                   await ref
                                       .read(
@@ -4365,7 +4505,7 @@ class _UsersDevicesApprovalQueueScreenState
                                   }
                                 }
                               : null,
-                          onDeny: request.status == 'pending'
+                          onDeny: request.isPending
                               ? () async {
                                   await ref
                                       .read(
@@ -4410,7 +4550,7 @@ class _ApprovalQueueSnapshotPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final pendingByModule = <String, int>{};
     for (final request in data.approvalQueue) {
-      if (request.status == 'pending') {
+      if (request.isPending) {
         pendingByModule[request.targetModule] =
             (pendingByModule[request.targetModule] ?? 0) + 1;
       }
@@ -4508,6 +4648,108 @@ class _ApprovalQueueSnapshotPanel extends StatelessWidget {
   }
 }
 
+class _ApprovalTriagePanel extends StatelessWidget {
+  const _ApprovalTriagePanel({required this.data});
+
+  final UsersDevicesControlSnapshot data;
+
+  @override
+  Widget build(BuildContext context) {
+    final pendingRequests = data.approvalQueue
+        .where((request) => request.isPending)
+        .toList(growable: false);
+    final highRiskPending = pendingRequests
+        .where((request) => request.riskLevel == 'high')
+        .length;
+    final stalePending = pendingRequests
+        .where((request) => _approvalAgeHours(request) >= 24)
+        .length;
+
+    return _VisualPanel(
+      title: 'Triage view',
+      subtitle:
+          'See which approvals are urgent, stale, or blocked by a deeper issue before you review them one by one.',
+      icon: Icons.support_agent_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.priority_high_outlined,
+                  title: 'High-risk waiting',
+                  subtitle:
+                      '$highRiskPending request${highRiskPending == 1 ? '' : 's'}',
+                  body: highRiskPending == 0
+                      ? 'No high-risk requests are currently waiting.'
+                      : 'Review the highest-risk requests first so sensitive actions do not sit in limbo.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.timelapse_outlined,
+                  title: 'Stale requests',
+                  subtitle: '$stalePending older than 24h',
+                  body: stalePending == 0
+                      ? 'No pending request has gone stale yet. Local v1 does not auto-expire approvals.'
+                      : 'These requests have been waiting long enough that the original context should be rechecked.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.rule_folder_outlined,
+                  title: 'Module spread',
+                  subtitle:
+                      '${pendingRequests.map((request) => request.targetModule).toSet().length} module${pendingRequests.map((request) => request.targetModule).toSet().length == 1 ? '' : 's'} involved',
+                  body: pendingRequests.isEmpty
+                      ? 'The queue is clear right now.'
+                      : 'Use the module mix below to decide whether one area needs a focused review sweep.',
+                ),
+              ),
+            ],
+          ),
+          if (pendingRequests.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Requests needing attention first',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final request in _prioritizedApprovalRequests(
+                  data,
+                ).take(3))
+                  SizedBox(
+                    width: 320,
+                    child: _EntityCard(
+                      icon: Icons.fact_check_outlined,
+                      title: _approvalModuleLabel(request.targetModule),
+                      subtitle: '${request.action} - ${request.riskLevel} risk',
+                      body: _approvalPrerequisiteHint(data, request),
+                      chips: [
+                        _CardChip(label: 'Age ${_approvalAgeLabel(request)}'),
+                        _CardChip(label: 'Requester ${request.requestedBy}'),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 String _approvalModuleLabel(String moduleId) {
   switch (moduleId) {
     case '01_USERS_AND_DEVICES_CONTROL':
@@ -4530,14 +4772,96 @@ String _approvalStatusMix(
   String moduleId,
 ) {
   final matches = requests.where((request) => request.targetModule == moduleId);
-  final pending = matches
-      .where((request) => request.status == 'pending')
-      .length;
-  final allowed = matches
-      .where((request) => request.status == 'allowed')
-      .length;
-  final denied = matches.where((request) => request.status == 'denied').length;
-  return '$pending pending, $allowed allowed, $denied denied';
+  final pending = matches.where((request) => request.isPending).length;
+  final approved = matches.where((request) => request.isApproved).length;
+  final denied = matches.where((request) => request.isDenied).length;
+  return '$pending pending, $approved approved, $denied denied';
+}
+
+List<UsersDevicesControlApprovalRequest> _prioritizedApprovalRequests(
+  UsersDevicesControlSnapshot data,
+) {
+  final requests = data.approvalQueue
+      .where((request) => request.isPending)
+      .toList(growable: false);
+  requests.sort((left, right) {
+    final riskCompare = _approvalRiskScore(
+      right.riskLevel,
+    ).compareTo(_approvalRiskScore(left.riskLevel));
+    if (riskCompare != 0) {
+      return riskCompare;
+    }
+    return _approvalAgeHours(right).compareTo(_approvalAgeHours(left));
+  });
+  return requests;
+}
+
+int _approvalRiskScore(String riskLevel) {
+  switch (riskLevel.trim().toLowerCase()) {
+    case 'high':
+      return 3;
+    case 'medium':
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+int _approvalAgeHours(UsersDevicesControlApprovalRequest request) {
+  final createdAt = DateTime.tryParse(request.timestamp)?.toUtc();
+  if (createdAt == null) {
+    return 0;
+  }
+  return DateTime.now().toUtc().difference(createdAt).inHours;
+}
+
+String _approvalAgeLabel(UsersDevicesControlApprovalRequest request) {
+  final hours = _approvalAgeHours(request);
+  if (hours < 1) {
+    return '<1h';
+  }
+  if (hours < 24) {
+    return '${hours}h';
+  }
+  final days = (hours / 24).floor();
+  return '${days}d';
+}
+
+String _approvalPrerequisiteHint(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlApprovalRequest request,
+) {
+  final requester = data.users.where((user) => user.id == request.requestedBy);
+  final device = data.devices.where((item) => item.id == request.deviceId);
+  final matchingRule = data.accessRules.where(
+    (rule) => rule.moduleId == request.targetModule,
+  );
+  final user = requester.isEmpty ? null : requester.first;
+  final deviceMatch = device.isEmpty ? null : device.first;
+  final rule = matchingRule.isEmpty ? null : matchingRule.first;
+
+  if (user == null) {
+    return 'Requester is no longer present in the local user registry. Review identity first.';
+  }
+  if (deviceMatch == null) {
+    return 'The linked device is missing from the local registry. Reconfirm the endpoint before approval.';
+  }
+  if (deviceMatch.status == 'quarantined') {
+    return 'This device is quarantined. Restore or replace the device before approving the action.';
+  }
+  if (deviceMatch.status == 'blocked' || deviceMatch.status == 'archived') {
+    return 'The device is not in an active trust state. Fix trust posture before approving.';
+  }
+  if (rule == null) {
+    return 'No matching module rule exists right now. Review the Access Matrix before approving.';
+  }
+  if (!rule.requiresApprovalFor.contains(request.action)) {
+    return 'This action no longer appears in the module approval rule. Sanity-check whether approval is still needed.';
+  }
+  if (deviceMatch.trustLevel < rule.requiresTrustLevel) {
+    return 'The device still sits below this module trust floor. Raise trust or switch device before approval.';
+  }
+  return 'Prerequisites look healthy. This request mainly needs an operator decision and audit follow-through.';
 }
 
 class UsersDevicesAuditLogScreen extends ConsumerStatefulWidget {
@@ -6296,12 +6620,14 @@ Color _metricAccentColor(String label) {
 
 class _ApprovalRequestCard extends StatelessWidget {
   const _ApprovalRequestCard({
+    required this.data,
     required this.request,
     required this.onApprove,
     required this.onDeny,
     this.onOpenAuditLog,
   });
 
+  final UsersDevicesControlSnapshot data;
   final UsersDevicesControlApprovalRequest request;
   final VoidCallback? onApprove;
   final VoidCallback? onDeny;
@@ -6310,6 +6636,7 @@ class _ApprovalRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final prerequisiteHint = _approvalPrerequisiteHint(data, request);
     final riskColor = request.riskLevel == 'high'
         ? theme.colorScheme.error
         : request.riskLevel == 'medium'
@@ -6345,33 +6672,22 @@ class _ApprovalRequestCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          request.action,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${request.targetModule} - ${request.riskLevel} risk',
-                        ),
-                      ],
-                    ),
+                  Text(request.action, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_approvalModuleLabel(request.targetModule)} - ${request.riskLevel} risk',
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    alignment: WrapAlignment.end,
                     children: [
-                      _CardChip(label: request.status.toUpperCase()),
+                      _CardChip(label: request.normalizedStatus.toUpperCase()),
                       _CardChip(label: request.riskLevel.toUpperCase()),
-                      if (request.status == 'pending')
+                      if (request.isPending)
                         const _CardChip(label: 'Waiting for reviewer'),
                     ],
                   ),
@@ -6379,6 +6695,8 @@ class _ApprovalRequestCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(request.reason, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 10),
+              Text(prerequisiteHint, style: theme.textTheme.bodySmall),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 6,
@@ -6386,9 +6704,12 @@ class _ApprovalRequestCard extends StatelessWidget {
                 children: [
                   _CardChip(label: 'Requester ${request.requestedBy}'),
                   _CardChip(label: 'Device ${request.deviceId}'),
-                  _CardChip(label: 'Module ${request.targetModule}'),
+                  _CardChip(
+                    label:
+                        'Module ${_approvalModuleLabel(request.targetModule)}',
+                  ),
                   _CardChip(label: 'Action ${request.action}'),
-                  _CardChip(label: 'Time ${request.timestamp}'),
+                  _CardChip(label: 'Age ${_approvalAgeLabel(request)}'),
                 ],
               ),
               if (request.reviewedBy != null || request.reviewedAt != null) ...[
@@ -6586,7 +6907,7 @@ Future<void> _reviewFirstPendingApproval(
   final repository = ref.read(usersDevicesControlRepositoryProvider);
   final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
   final pending = snapshot.approvalQueue.firstWhere(
-    (request) => request.status == 'pending',
+    (request) => request.isPending,
     orElse: () => throw StateError('No pending approval requests available.'),
   );
 

@@ -151,6 +151,32 @@ void main() {
           riskLevel: 'high',
           reason: 'Sample approval request for queue review.',
         ),
+        UsersDevicesControlApprovalRequest(
+          requestId: 'approval_demo_2',
+          timestamp: '2026-06-17T00:00:00Z',
+          requestedBy: 'user_peter_owner',
+          deviceId: 'device_new_earth_dev',
+          targetModule: '17_FINANCE_AND_TREASURY',
+          action: 'export_data',
+          status: 'allowed',
+          riskLevel: 'medium',
+          reason: 'Legacy approval status sample.',
+          reviewedBy: 'user_peter_owner',
+          reviewedAt: '2026-06-17T01:00:00Z',
+        ),
+        UsersDevicesControlApprovalRequest(
+          requestId: 'approval_demo_3',
+          timestamp: '2026-06-16T00:00:00Z',
+          requestedBy: 'user_hayley_finance',
+          deviceId: 'device_phone_scanner',
+          targetModule: '17_FINANCE_AND_TREASURY',
+          action: 'change_bank_details',
+          status: 'denied',
+          riskLevel: 'high',
+          reason: 'Denied sample request.',
+          reviewedBy: 'user_peter_owner',
+          reviewedAt: '2026-06-16T02:00:00Z',
+        ),
       ],
       auditLog: [
         UsersDevicesControlAuditEvent(
@@ -295,6 +321,18 @@ void main() {
     expect(find.text('Audit Log'), findsWidgets);
   });
 
+  testWidgets('module home shows the access review dashboard', (tester) async {
+    await tester.pumpWidget(buildTestApp(const UsersDevicesControlScreen()));
+    await pumpUntilFound(tester, find.text('Access review dashboard'));
+
+    expect(find.text('Access review dashboard'), findsOneWidget);
+    expect(find.text('Session lockouts'), findsOneWidget);
+    expect(find.text('Recovery coverage'), findsOneWidget);
+    expect(find.text('Device trust pressure'), findsOneWidget);
+    expect(find.text('Approval workload'), findsOneWidget);
+    expect(find.text('Open approval queue'), findsOneWidget);
+  });
+
   testWidgets('route gate suggests a stronger local user when one is available', (
     tester,
   ) async {
@@ -359,6 +397,20 @@ void main() {
     expect(find.text('Quarantine watchlist'), findsOneWidget);
     expect(find.textContaining('Unexpected device posture'), findsWidgets);
     expect(find.text('Quarantine'), findsOneWidget);
+  });
+
+  testWidgets('approval queue shows triage and normalized approval statuses', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(const UsersDevicesApprovalQueueScreen()),
+    );
+    await pumpUntilFound(tester, find.text('Triage view'));
+
+    expect(find.text('Triage view'), findsOneWidget);
+    expect(find.text('Requests needing attention first'), findsOneWidget);
+    expect(find.text('Approved'), findsWidgets);
+    expect(find.textContaining('This device is quarantined'), findsWidgets);
   });
 
   testWidgets(
