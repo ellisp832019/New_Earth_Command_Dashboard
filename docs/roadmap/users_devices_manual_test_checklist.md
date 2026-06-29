@@ -105,6 +105,30 @@ This is the practical operator test pass for the local trust layer.
 5. Reopen it.
 6. Confirm the locked state is still enforced on startup.
 
+## 11. Access review dashboard
+
+1. Unlock the session.
+2. Open `Users & Devices Control` module home.
+3. Review the `Access review dashboard`.
+4. Confirm the summary cards show:
+   - lockout pressure
+   - recovery PIN pressure
+   - quarantined device pressure
+   - pending approvals
+   - recent denied unlocks
+5. Use one drill-down action.
+6. Confirm it opens the matching admin surface directly.
+
+## 12. Approval Queue triage
+
+1. Open `Approval Queue`.
+2. Confirm the summary reads with normalized statuses.
+3. Create or locate at least one pending request.
+4. Confirm the request card shows module, user, device, and reason clearly.
+5. Confirm any prerequisite hint explains whether permission, trust, or identity still needs work.
+6. Approve or deny the request.
+7. Confirm the final state is reflected in `Audit Log`.
+
 ## Pass Criteria
 
 This slice is healthy when:
@@ -113,4 +137,6 @@ This slice is healthy when:
 2. correct PINs unlock cleanly
 3. repeated wrong PINs trigger cooldown
 4. recovery and reset actions are traceable
-5. restart and relock behaviour stay predictable
+5. access review drill-downs open the right admin surfaces
+6. approval triage is readable without guesswork
+7. restart and relock behaviour stay predictable

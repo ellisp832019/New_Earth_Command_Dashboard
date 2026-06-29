@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#081822"/>
+  <rect x="48" y="40" width="1504" height="820" rx="28" fill="#112733" stroke="#1f4556" stroke-width="2"/>
+  <text x="88" y="110" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="700">Users &amp; Devices Access Review Dashboard</text>
+  <text x="88" y="150" fill="#86a8b7" font-family="Segoe UI, Arial, sans-serif" font-size="20">Calm module-home map for lockouts, recovery pressure, trust issues, approvals, and audit follow-up.</text>
+  <rect x="88" y="200" width="1424" height="94" rx="22" fill="#17303d" stroke="#71e3d2" stroke-width="3"/>
+  <text x="120" y="246" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">Start here: Module home review strip</text>
+  <text x="120" y="278" fill="#a8c0cb" font-family="Segoe UI, Arial, sans-serif" font-size="19">Read the top summary first, then drill down only where the count or warning shows pressure.</text>
+  <rect x="88" y="338" width="260" height="138" rx="20" fill="#182d39" stroke="#78d98a" stroke-width="2"/>
+  <text x="116" y="384" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700">Locked users</text>
+  <text x="116" y="420" fill="#a8c0cb" font-family="Segoe UI, Arial, sans-serif" font-size="18">People in cooldown or still blocked after repeated failed PIN use.</text>
+  <text x="116" y="456" fill="#b8f26d" font-family="Segoe UI, Arial, sans-serif" font-size="18">Open: PIN Registry or Audit Log</text>
+  <rect x="382" y="338" width="260" height="138" rx="20" fill="#182d39" stroke="#f0c36b" stroke-width="2"/>
+  <text x="410" y="384" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700">Recovery PINs</text>
+  <text x="410" y="420" fill="#a8c0cb" font-family="Segoe UI, Arial, sans-serif" font-size="18">Temporary unlock pressure that should shrink after safe reset or revoke.</text>
+  <text x="410" y="456" fill="#b8f26d" font-family="Segoe UI, Arial, sans-serif" font-size="18">Open: PIN Registry</text>
+  <rect x="676" y="338" width="260" height="138" rx="20" fill="#182d39" stroke="#e48b8b" stroke-width="2"/>
+  <text x="704" y="384" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700">Quarantined devices</text>
+  <text x="704" y="420" fill="#a8c0cb" font-family="Segoe UI, Arial, sans-serif" font-size="18">Devices paused from trusted use until review, restore, or re-onboarding.</text>
+  <text x="704" y="456" fill="#b8f26d" font-family="Segoe UI, Arial, sans-serif" font-size="18">Open: Devices</text>
+  <rect x="970" y="338" width="260" height="138" rx="20" fill="#182d39" stroke="#79b9ff" stroke-width="2"/>
+  <text x="998" y="384" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700">Pending approvals</text>
+  <text x="998" y="420" fill="#a8c0cb" font-family="Segoe UI, Arial, sans-serif" font-size="18">Valid requests still waiting for a human decision before the action can continue.</text>
+  <text x="998" y="456" fill="#b8f26d" font-family="Segoe UI, Arial, sans-serif" font-size="18">Open: Approval Queue</text>
+  <rect x="1264" y="338" width="248" height="138" rx="20" fill="#182d39" stroke="#b38dff" stroke-width="2"/>
+  <text x="1292" y="384" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700">Recent denied unlocks</text>
+  <text x="1292" y="420" fill="#a8c0cb" font-family="Segoe UI, Arial, sans-serif" font-size="18">Fast signal for repeated mismatch, wrong-user, or wrong-device tests.</text>
+  <text x="1292" y="456" fill="#b8f26d" font-family="Segoe UI, Arial, sans-serif" font-size="18">Open: Audit Log</text>
+  <path d="M218 476 L218 560" stroke="#71e3d2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M512 476 L512 560" stroke="#71e3d2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M806 476 L806 560" stroke="#71e3d2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1100 476 L1100 560" stroke="#71e3d2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1388 476 L1388 560" stroke="#71e3d2" stroke-width="4" stroke-linecap="round"/>
+  <rect x="88" y="560" width="1424" height="232" rx="24" fill="#10232d" stroke="#2d5366" stroke-width="2"/>
+  <text x="120" y="606" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">How to use it well</text>
+  <text x="120" y="648" fill="#d5e4ea" font-family="Segoe UI, Arial, sans-serif" font-size="21">1. Read the counts before opening deeper screens.</text>
+  <text x="120" y="684" fill="#d5e4ea" font-family="Segoe UI, Arial, sans-serif" font-size="21">2. Follow the drill-down link that matches the pressure card.</text>
+  <text x="120" y="720" fill="#d5e4ea" font-family="Segoe UI, Arial, sans-serif" font-size="21">3. Fix the issue in that dedicated screen, then confirm the result in the audit trail.</text>
+  <text x="120" y="756" fill="#d5e4ea" font-family="Segoe UI, Arial, sans-serif" font-size="21">4. Come back to module home and confirm the review strip is calmer.</text>
+  <rect x="1040" y="600" width="420" height="150" rx="20" fill="#163240" stroke="#b8f26d" stroke-width="2"/>
+  <text x="1070" y="642" fill="#b8f26d" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Healthy state</text>
+  <text x="1070" y="680" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="20">Low or zero pressure counts,</text>
+  <text x="1070" y="710" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="20">clear audit history, and no</text>
+  <text x="1070" y="740" fill="#f2f7f8" font-family="Segoe UI, Arial, sans-serif" font-size="20">surprise trust or unlock drift.</text>
+</svg>

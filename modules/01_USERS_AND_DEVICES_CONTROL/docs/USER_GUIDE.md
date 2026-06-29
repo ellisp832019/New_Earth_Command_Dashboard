@@ -41,6 +41,10 @@ That gives you a clearer first choice before you start typing a PIN.
 
 When the app is locked, the `Users & Devices` area stays open, but `PIN Registry` is blocked until a local session is unlocked. Everything else redirects back to `Security Lock`.
 
+The module home now also includes an `Access review dashboard`. That gives you one calm review surface for lockouts, recovery pressure, quarantined devices, pending approvals, and recent denied unlocks.
+
+`Approval Queue` now includes a triage summary so you can spot stale, risky, or blocked approval requests before you open every card one by one.
+
 ## Access System
 
 Use these diagrams when you want to understand the full access flow quickly.
@@ -137,6 +141,18 @@ Preview pages:
 ![Users and Devices recovery drills page 1](../../../docs/user_guide_assets/users_devices_recovery_drills_pack_page_1.png)
 
 ![Users and Devices recovery drills page 2](../../../docs/user_guide_assets/users_devices_recovery_drills_pack_page_2.png)
+
+### 5. Access review dashboard map
+
+![Users and Devices access review dashboard map](../../../docs/user_guide_assets/users_devices_access_review_dashboard_map.svg)
+
+This shows how the module home review cards link back into approvals, PINs, devices, and audit work.
+
+### 6. Approval triage map
+
+![Users and Devices approval triage map](../../../docs/user_guide_assets/users_devices_approval_triage_map.svg)
+
+This shows how to read `Pending`, `Approved`, and `Denied` states without guessing which queue item needs attention first.
 
 ## Startup flow
 
@@ -275,6 +291,39 @@ Quick test:
 3. Change the filter and confirm the user cards move between groups correctly.
 4. Click `Copy summary`.
 5. Paste the result into a note to confirm the handoff sheet text is complete.
+
+## Access review dashboard
+
+Use `Access review dashboard` when you want the fastest health check for the local trust system without jumping through every admin tab first.
+
+Where to find it:
+
+1. Open `Users & Devices Control`.
+2. Stay on the module home screen.
+3. Look for the review panel with summary cards and drill-down actions.
+
+What it shows:
+
+- locked or cooling-down users
+- active recovery PIN pressure
+- quarantined or revoked trust devices
+- pending approvals
+- recent denied unlock signals
+
+What to do with it:
+
+1. Open the module home.
+2. Check whether any summary count looks unexpectedly high.
+3. Use the matching drill-down button.
+4. Confirm the deeper screen opens already focused on the right admin area.
+5. Review `Audit Log` after any recovery, unlock, revoke, or approval action.
+
+Use this screen first when:
+
+- a user says they still cannot get in after a reset
+- you suspect trust drift across multiple devices
+- you want a quick daily admin review
+- you want to confirm the system is calm before finance or treasury testing
 
 ## Assign a PIN to one user
 
@@ -440,6 +489,34 @@ Click-by-click:
 3. Review the new request.
 4. Approve it or deny it.
 5. Check `Audit Log` to see the recorded decision.
+
+## Approval Queue triage
+
+Use `Approval Queue` when a valid action still needs human review before it can continue.
+
+What is new in the triage view:
+
+- requests are grouped with clearer normalized states
+- `Approved` replaces older mixed wording like `Allowed`
+- stale or risky requests are easier to spot
+- cards show whether a deeper permission or trust fix is still needed first
+
+How to read the states:
+
+- `Pending`: still waiting for operator review
+- `Approved`: human review passed, but the action may still need the user, device, or trust context to be valid when retried
+- `Denied`: the operator rejected the request and the action should remain blocked
+
+Fast triage pass:
+
+1. Open `Approval Queue`.
+2. Look at the top summary first.
+3. Open the oldest pending request.
+4. Read the module, user, device, and reason.
+5. Check whether the card hints that trust, permission, or identity still needs fixing.
+6. Approve or deny the request.
+7. Retry the original action if approval was granted.
+8. Confirm the final result in `Audit Log`.
 
 ### Reset demo data
 
@@ -612,9 +689,41 @@ Use this when a new device needs to become trusted.
 
 Use this when a valid action needs human review before it can continue.
 
+### Access review dashboard
+
+Use this when you want the quickest module-home summary of lockouts, recovery load, trust pressure, and approval backlog before doing deeper admin work.
+
 ### Audit Log
 
 Use this to verify what happened and why the system allowed, denied, or paused access.
+
+## Release verification pass
+
+Use this final pass when you want to confirm the current Users & Devices release slice is healthy enough for daily testing by someone other than the builder.
+
+Run these checks in order:
+
+1. Run `flutter analyze`.
+2. Run the focused Users & Devices tests first.
+3. Launch the app from a fully closed state.
+4. Walk through `docs/roadmap/users_devices_manual_test_checklist.md`.
+5. Confirm the startup lock, unlock, relock, and protected-route behaviour all match this guide.
+6. Confirm `Access review dashboard`, `Approval Queue`, `PIN Registry`, and `Onboarding Report` all open and read clearly.
+7. Confirm Treasury still passes with the trusted seeded path and still blocks the wrong path.
+
+Focused test files:
+
+- `test/features/users_devices_control/users_devices_control_repository_test.dart`
+- `test/features/users_devices_control/users_devices_control_screen_test.dart`
+
+What healthy looks like:
+
+- locked routes stay blocked
+- the right PIN unlocks the right user only
+- recovery and reset actions leave clear audit entries
+- quarantined devices fail trust checks
+- pending approvals are easy to review
+- the guide matches what you see on screen without guesswork
 
 ## Full Treasury walkthrough
 

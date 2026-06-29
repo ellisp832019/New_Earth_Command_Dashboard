@@ -6,6 +6,8 @@ Files:
 
 - `users_devices_onboarding_readiness_map.svg`
 - `users_devices_onboarding_handoff_cheatsheet.svg`
+- `users_devices_access_review_dashboard_map.svg`
+- `users_devices_approval_triage_map.svg`
 - `users_devices_onboarding_rendered_map.png`
 - `users_devices_onboarding_rendered_cheatsheet.png`
 

@@ -28,7 +28,7 @@ What already exists:
 What is still missing:
 
 - broader release-grade migration coverage across the whole data layer
-- broader repo-wide verification and guide refresh
+- broader repo-wide verification
 
 ## Upgrade Goal
 
