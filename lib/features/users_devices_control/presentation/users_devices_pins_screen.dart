@@ -903,6 +903,13 @@ class _UsersDevicesPinsScreenState
                                             ? 'Failed attempts: 0'
                                             : 'Failed attempts: ${selectedLockout.failedAttempts}',
                                       ),
+                                      if (selectedLockout != null &&
+                                          selectedLockout.isLockedAt(now) &&
+                                          selectedLockout.lockedUntil != null)
+                                        _CardChip(
+                                          label:
+                                              'Cooldown: ${_formatInlineDuration(selectedLockout.lockedUntil!.difference(now))}',
+                                        ),
                                       _CardChip(
                                         label: recoveryPins.isEmpty
                                             ? 'Recovery: none'
@@ -918,6 +925,14 @@ class _UsersDevicesPinsScreenState
                                     ],
                                   ),
                                   const SizedBox(height: 12),
+                                  if (selectedLockout != null) ...[
+                                    Text(
+                                      selectedLockout.isLockedAt(now)
+                                          ? 'This user is currently in a cooldown window after repeated failed PIN attempts. Clear the timer only after identity has been checked.'
+                                          : 'This user has lockout history recorded. Review whether the primary PIN should be rotated or whether recovery access should be revoked.',
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
                                   Wrap(
                                     spacing: 10,
                                     runSpacing: 10,

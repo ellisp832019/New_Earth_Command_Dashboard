@@ -191,6 +191,11 @@ void main() {
     expect(find.text('Recovery live: 1', skipOffstage: false), findsOneWidget);
     expect(find.text('Admin reset flow'), findsOneWidget);
     expect(find.text('Clear lockout timer'), findsOneWidget);
+    expect(find.textContaining('Cooldown:'), findsOneWidget);
+    expect(
+      find.textContaining('currently in a cooldown window'),
+      findsOneWidget,
+    );
     expect(find.text('Set primary PIN'), findsWidgets);
     expect(find.text('Hayley Arthur (Co-founder)'), findsWidgets);
     expect(find.text('Focus user', skipOffstage: false), findsWidgets);

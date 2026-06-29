@@ -350,7 +350,7 @@ class UsersDevicesPinRegistryService {
             'Too many failed PIN attempts. Unlock is paused for ${_formatDuration(lockoutState.lockedUntil!.difference(now))}.',
         nextStep:
             'Wait for the timer to finish, or issue a fresh PIN from PIN Registry if the user needs help.',
-        issueCode: 'locked_out',
+        issueCode: 'locked_out_active',
         failedAttempts: lockoutState.failedAttempts,
         remainingAttempts: 0,
         lockedUntil: lockoutState.lockedUntil,
@@ -400,7 +400,7 @@ class UsersDevicesPinRegistryService {
             'Too many failed PIN attempts. Unlock is paused for ${_formatDuration(lockoutDuration)}.',
         nextStep:
             'Wait for the timer to finish, or issue a recovery PIN from PIN Registry if the user is locked out.',
-        issueCode: 'locked_out',
+        issueCode: 'locked_out_triggered',
         failedAttempts: failedState.failedAttempts,
         remainingAttempts: 0,
         lockedUntil: failedState.lockedUntil,
