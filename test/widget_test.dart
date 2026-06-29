@@ -702,6 +702,81 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('dashboardTopTasksOpenTasksButton')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('dashboardTopTasksOpenPlannerButton')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('dashboard top task handoff actions open tasks and planner', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    final openTasksButton = find.byKey(
+      const Key('dashboardTopTasksOpenTasksButton'),
+    );
+    await tester.ensureVisible(openTasksButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openTasksButton);
+    await pumpUntilIdle(tester);
+    expect(find.text('Tasks'), findsWidgets);
+
+    appRouter.go(RouteNames.dashboard);
+    await pumpUntilIdle(tester);
+
+    final openPlannerButton = find.byKey(
+      const Key('dashboardTopTasksOpenPlannerButton'),
+    );
+    await tester.ensureVisible(openPlannerButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openPlannerButton);
+    await pumpUntilIdle(tester);
+    expect(find.text('Planner'), findsWidgets);
+  });
+
+  testWidgets('dashboard surfaces carry-forward and tomorrow preview near Top 3', (
+    WidgetTester tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    await DailyPlanService(database).ensureTodayPlan();
+
+    await DailyPlanRepository(database).updateCarryForwardNotes(
+      'Resume the calm documentation pass tomorrow morning.',
+    );
+    await DailyPlanRepository(
+      database,
+    ).updateTomorrowFocus('Open the planner and close the next useful loop.');
+
+    await tester.pumpWidget(
+      buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+    );
+    await pumpUntilIdle(tester);
+
+    appRouter.go(RouteNames.dashboard);
+    await pumpUntilIdle(tester);
+
+    expect(
+      find.byKey(const Key('dashboardTopTaskHandoffPreview')),
+      findsOneWidget,
+    );
+    expect(find.text('Later is already held safely'), findsOneWidget);
+    expect(find.text('Tomorrow focus preview'), findsOneWidget);
+    expect(find.text('Carry-forward preview'), findsOneWidget);
+    expect(
+      find.text('Open the planner and close the next useful loop.'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(
+      find.text('Resume the calm documentation pass tomorrow morning.'),
+      findsAtLeastNWidgets(1),
+    );
   });
 
   testWidgets(
@@ -1393,9 +1468,12 @@ void main() {
       appRouter.go(RouteNames.dashboard);
       await pumpUntilIdle(tester);
 
-      expect(find.text('Tomorrow queued'), findsOneWidget);
+      expect(find.text('Tomorrow queued'), findsAtLeastNWidgets(1));
       expect(find.text('Tomorrow\'s likely focus'), findsOneWidget);
-      expect(find.text('Begin with the next calm build pass.'), findsOneWidget);
+      expect(
+        find.text('Begin with the next calm build pass.'),
+        findsAtLeastNWidgets(1),
+      );
     },
   );
 
@@ -1476,7 +1554,7 @@ void main() {
         ),
         findsAtLeastNWidgets(1),
       );
-      expect(find.text('Continue Planner'), findsOneWidget);
+      expect(find.text('Continue Planner'), findsAtLeastNWidgets(1));
     },
   );
 

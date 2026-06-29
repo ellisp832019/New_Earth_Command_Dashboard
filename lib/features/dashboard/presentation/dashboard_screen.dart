@@ -350,6 +350,16 @@ class _TopTaskShowcase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tasks = snapshot.topTasks;
+    final hasCarryForward =
+        snapshot.carryForwardNotes?.trim().isNotEmpty == true;
+    final hasTomorrowFocus = snapshot.tomorrowFocus?.trim().isNotEmpty == true;
+    final taskCount = tasks.length;
+    final sectionSubtitle = switch (taskCount) {
+      0 => 'Choose up to 3 tasks that turn today\'s focus into real work.',
+      1 => 'One task is committed. Add only what truly supports it.',
+      2 => 'Two tasks are committed. Leave the last slot open unless it helps.',
+      _ => 'Your Top 3 is set. Let it carry the day before opening more work.',
+    };
     final cards = tasks.isEmpty
         ? [
             const _ShowcaseTaskState(
@@ -383,14 +393,83 @@ class _TopTaskShowcase extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 12),
-          child: Text(
-            'Today\'s Focus',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
+          padding: const EdgeInsets.only(left: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Today\'s Focus',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                sectionSubtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InlineTag(
+                    label: taskCount == 0
+                        ? 'Top 3 not set'
+                        : '$taskCount of 3 committed',
+                    accent: AppColours.darkPrimary,
+                    foreground: AppColours.darkPrimary,
+                  ),
+                  if (snapshot.mainFocus?.trim().isNotEmpty == true)
+                    const _InlineTag(
+                      label: 'Focus set',
+                      accent: AppColours.darkSuccess,
+                      foreground: AppColours.darkSuccess,
+                    ),
+                  if (hasCarryForward)
+                    const _InlineTag(
+                      label: 'Carry forward waiting',
+                      accent: AppColours.darkAmber,
+                      foreground: AppColours.darkAmber,
+                    ),
+                  if (hasTomorrowFocus)
+                    const _InlineTag(
+                      label: 'Tomorrow queued',
+                      accent: AppColours.darkSecondary,
+                      foreground: AppColours.darkSecondary,
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
+        const SizedBox(height: 12),
+        if (hasCarryForward || hasTomorrowFocus) ...[
+          _DashboardFlowHandoffPreview(snapshot: snapshot),
+          const SizedBox(height: 14),
+        ],
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            FilledButton.tonalIcon(
+              key: const Key('dashboardTopTasksOpenTasksButton'),
+              onPressed: () => context.go(RouteNames.tasks),
+              icon: const Icon(Icons.task_alt_outlined),
+              label: const Text('Open Tasks'),
+            ),
+            TextButton.icon(
+              key: const Key('dashboardTopTasksOpenPlannerButton'),
+              onPressed: () => context.go(RouteNames.planner),
+              icon: const Icon(Icons.event_note_outlined),
+              label: const Text('Open Planner'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
             final useThreeColumns = constraints.maxWidth >= 860;
@@ -426,6 +505,71 @@ class _TopTaskShowcase extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _DashboardFlowHandoffPreview extends StatelessWidget {
+  const _DashboardFlowHandoffPreview({required this.snapshot});
+
+  final DashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCarryForward =
+        snapshot.carryForwardNotes?.trim().isNotEmpty == true;
+    final hasTomorrowFocus = snapshot.tomorrowFocus?.trim().isNotEmpty == true;
+
+    return Container(
+      key: const Key('dashboardTopTaskHandoffPreview'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColours.darkPurple.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColours.darkPurple.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _InlineTag(
+            label: 'Later is already held safely',
+            accent: AppColours.darkPurple,
+            foreground: AppColours.darkPurple,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Carry-forward and tomorrow cues stay visible so nothing important needs rediscovering later.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkText,
+              height: 1.3,
+            ),
+          ),
+          if (hasTomorrowFocus) ...[
+            const SizedBox(height: 10),
+            _DashboardReviewLine(
+              label: 'Tomorrow focus preview',
+              value: snapshot.tomorrowFocus!,
+            ),
+          ],
+          if (hasCarryForward) ...[
+            const SizedBox(height: 10),
+            _DashboardReviewLine(
+              label: 'Carry-forward preview',
+              value: snapshot.carryForwardNotes!,
+            ),
+          ],
+          const SizedBox(height: 10),
+          TextButton.icon(
+            key: const Key('dashboardTopTasksContinuePlannerButton'),
+            onPressed: () => context.go('${RouteNames.planner}?section=review'),
+            icon: const Icon(Icons.nightlight_round),
+            label: const Text('Continue Planner'),
+          ),
+        ],
+      ),
     );
   }
 }
