@@ -210,6 +210,8 @@ class UsersDevicesPinRegistryService {
   final int maxFailedAttempts;
   final Duration lockoutDuration;
   final DateTime Function()? _nowProvider;
+  final Random _idRandom = Random();
+  int _pinIdSequence = 0;
 
   Future<UsersDevicesPinRegistrySnapshot> loadSnapshot() async {
     return UsersDevicesPinRegistrySnapshot(
@@ -245,7 +247,7 @@ class UsersDevicesPinRegistryService {
         else
           pin,
       UsersDevicesPinRecord(
-        pinId: 'pin_${now.microsecondsSinceEpoch}',
+        pinId: _buildPinId(now, userId: userId),
         userId: userId,
         label: label,
         pinCode: pinCode,
@@ -271,7 +273,7 @@ class UsersDevicesPinRegistryService {
     final recoveryPin = _generateNumericPin(6);
     final pins = await _readPins();
     final record = UsersDevicesPinRecord(
-      pinId: 'pin_${now.microsecondsSinceEpoch}',
+      pinId: _buildPinId(now, userId: userId),
       userId: userId,
       label: label,
       pinCode: recoveryPin,
@@ -674,7 +676,7 @@ class UsersDevicesPinRegistryService {
           '(pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at) '
           'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
           variables: [
-            Variable<String>('pin_${now.microsecondsSinceEpoch}'),
+            Variable<String>(_buildPinId(now, userId: 'user_peter_owner')),
             const Variable<String>('user_peter_owner'),
             const Variable<String>('Primary PIN'),
             Variable<String>(_generateNumericPin(6)),
@@ -711,6 +713,13 @@ class UsersDevicesPinRegistryService {
       path.join(moduleRootPath, 'data', 'pins.example.json');
 
   DateTime _now() => (_nowProvider?.call() ?? DateTime.now()).toUtc();
+
+  String _buildPinId(DateTime now, {required String userId}) {
+    _pinIdSequence++;
+    final sanitizedUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_');
+    final entropy = _idRandom.nextInt(0x7fffffff).toRadixString(16);
+    return 'pin_${now.microsecondsSinceEpoch}_${sanitizedUserId}_$_pinIdSequence$entropy';
+  }
 
   int _remainingAttempts(int failedAttempts) {
     final remaining = maxFailedAttempts - failedAttempts;

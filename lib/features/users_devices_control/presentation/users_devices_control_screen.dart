@@ -3072,7 +3072,8 @@ class _UsersDevicesOnboardingReportScreenState
                   _ActionChip(
                     label: 'Open exports',
                     icon: Icons.folder_open_outlined,
-                    onPressed: () => _openUsersDevicesExportsFolder(context, ref),
+                    onPressed: () =>
+                        _openUsersDevicesExportsFolder(context, ref),
                   ),
                   _ActionChip(
                     label: 'Onboarding pack PDF',
@@ -3477,7 +3478,8 @@ class UsersDevicesMigrationHealthScreen extends ConsumerWidget {
       error: (error, stackTrace) => _ErrorScreen(
         title: 'Migration Health',
         message: 'The local migration posture could not be read right now.',
-        onRetry: () => ref.invalidate(usersDevicesControlMigrationHealthProvider),
+        onRetry: () =>
+            ref.invalidate(usersDevicesControlMigrationHealthProvider),
       ),
       data: (data) => _SectionScaffold(
         title: 'Migration Health',
@@ -3671,6 +3673,8 @@ class _UsersDevicesRouteGateScreenState
   String? _latestAuditEventId;
   String? _selectedUserId;
   String? _selectedDeviceId;
+  String? _selectedUserLabel;
+  String? _selectedDeviceLabel;
   List<String> _blockedHints = const [];
 
   String get _moduleLabel {
@@ -3832,6 +3836,12 @@ class _UsersDevicesRouteGateScreenState
     final updatedSnapshot = await ref.read(
       usersDevicesControlSnapshotProvider.future,
     );
+    final unlockedUser = updatedSnapshot.users
+        .cast<UsersDevicesControlUser?>()
+        .firstWhere((user) => user?.id == userId, orElse: () => null);
+    final unlockedDevice = updatedSnapshot.devices
+        .cast<UsersDevicesControlDevice?>()
+        .firstWhere((device) => device?.id == deviceId, orElse: () => null);
     final latestAudit = updatedSnapshot.auditLog.isNotEmpty
         ? updatedSnapshot.auditLog.last
         : null;
@@ -3845,6 +3855,8 @@ class _UsersDevicesRouteGateScreenState
           ? '${decision.reason} ${decision.nextStep}'
           : decision.reason;
       _latestAuditEventId = latestAudit?.eventId;
+      _selectedUserLabel = unlockedUser?.displayName;
+      _selectedDeviceLabel = unlockedDevice?.name;
       _auditSummary = latestAudit == null
           ? 'The access check was recorded locally.'
           : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
@@ -3916,7 +3928,19 @@ class _UsersDevicesRouteGateScreenState
   @override
   Widget build(BuildContext context) {
     if (_unlocked) {
-      return widget.child;
+      if (widget.moduleId == '01_USERS_AND_DEVICES_CONTROL') {
+        return widget.child;
+      }
+      return _ProtectedRouteContextShell(
+        moduleLabel: _moduleLabel,
+        moduleFocus: _moduleFocus,
+        status: _status,
+        detail: _detail,
+        selectedUserLabel: _selectedUserLabel ?? 'No user selected',
+        selectedDeviceLabel: _selectedDeviceLabel ?? 'No device selected',
+        latestAuditEventId: _latestAuditEventId,
+        child: widget.child,
+      );
     }
 
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
@@ -6112,6 +6136,100 @@ class _UsersDevicesPageScaffold extends ConsumerWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+class _ProtectedRouteContextShell extends ConsumerWidget {
+  const _ProtectedRouteContextShell({
+    required this.moduleLabel,
+    required this.moduleFocus,
+    required this.status,
+    required this.detail,
+    required this.selectedUserLabel,
+    required this.selectedDeviceLabel,
+    required this.latestAuditEventId,
+    required this.child,
+  });
+
+  final String moduleLabel;
+  final String moduleFocus;
+  final String status;
+  final String detail;
+  final String selectedUserLabel;
+  final String selectedDeviceLabel;
+  final String? latestAuditEventId;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(securitySessionProvider);
+    final isLocked = !session.isUnlocked || session.isExpired;
+    final remaining = session.remaining;
+
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 16,
+          right: 16,
+          child: SafeArea(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Material(
+                color: Colors.transparent,
+                child: _VisualPanel(
+                  title: 'Protected route context',
+                  subtitle: isLocked
+                      ? 'The local session needs refreshing. This module context stays visible so the next unlock remains deliberate.'
+                      : moduleFocus,
+                  icon: isLocked
+                      ? Icons.lock_outline
+                      : Icons.verified_user_outlined,
+                  compact: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _CardChip(label: moduleLabel),
+                          _CardChip(label: status),
+                          _CardChip(label: 'User: $selectedUserLabel'),
+                          _CardChip(label: 'Device: $selectedDeviceLabel'),
+                          _CardChip(
+                            label: remaining == null
+                                ? 'Expires: -'
+                                : 'Expires in ${_formatBannerDuration(remaining)}',
+                          ),
+                          if (latestAuditEventId != null)
+                            _CardChip(label: 'Audit recorded'),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        detail,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.go(RouteNames.securityLock),
+                        icon: const Icon(Icons.lock_open_outlined),
+                        label: Text(
+                          isLocked
+                              ? 'Refresh Security Lock'
+                              : 'Open Security Lock',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

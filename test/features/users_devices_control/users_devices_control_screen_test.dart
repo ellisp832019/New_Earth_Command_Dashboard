@@ -18,7 +18,8 @@ class FakeUsersDevicesControlRepository extends UsersDevicesControlRepository {
   Future<UsersDevicesControlSnapshot> loadSnapshot() async => _snapshot;
 
   @override
-  Future<UsersDevicesControlMigrationHealthSnapshot> loadMigrationHealth() async {
+  Future<UsersDevicesControlMigrationHealthSnapshot>
+  loadMigrationHealth() async {
     return const UsersDevicesControlMigrationHealthSnapshot(
       usingDatabase: true,
       schemaVersion: 15,
@@ -32,7 +33,8 @@ class FakeUsersDevicesControlRepository extends UsersDevicesControlRepository {
         ),
         UsersDevicesControlMigrationSeedFileStatus(
           label: 'Access rules config',
-          path: 'modules/01_USERS_AND_DEVICES_CONTROL/config/module_access_rules.json',
+          path:
+              'modules/01_USERS_AND_DEVICES_CONTROL/config/module_access_rules.json',
           exists: true,
         ),
       ],
@@ -403,6 +405,33 @@ void main() {
       find.textContaining('Peter Owner already has owner-level access'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('route gate keeps protected context visible after unlock', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        const UsersDevicesRouteGateScreen(
+          moduleId: '17_FINANCE_AND_TREASURY',
+          title: 'Treasury Access Gate',
+          subtitle:
+              'Confirm local identity and device trust before opening finance and treasury.',
+          child: Scaffold(body: Center(child: Text('Treasury workspace'))),
+        ),
+      ),
+    );
+    await pumpUntilFound(tester, find.text('Open screen'));
+
+    await tester.ensureVisible(find.text('Open screen').first);
+    await tester.tap(find.text('Open screen').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Treasury workspace'), findsOneWidget);
+    expect(find.text('Protected route context'), findsOneWidget);
+    expect(find.textContaining('User: '), findsWidgets);
+    expect(find.textContaining('Device: '), findsWidgets);
+    expect(find.textContaining('Security Lock'), findsOneWidget);
   });
 
   testWidgets('device onboarding shows the guided user readiness workspace', (

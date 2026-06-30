@@ -269,17 +269,70 @@ void main() {
     },
   );
 
+  test('PIN and lockout state survive a fresh service reload', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    var now = DateTime.utc(2026, 6, 27, 10, 0, 0);
+    final service = UsersDevicesPinRegistryService(
+      database: database,
+      maxFailedAttempts: 2,
+      lockoutDuration: const Duration(minutes: 4),
+      nowProvider: () => now,
+    );
+
+    final snapshot = await service.loadSnapshot();
+    final selected = snapshot.records.firstWhere(
+      (record) => record.status == 'active',
+    );
+
+    await service.setPrimaryPin(
+      userId: selected.userId,
+      pinCode: '4434',
+      notes: 'Reload persistence test primary PIN.',
+    );
+    final recovery = await service.issueRecoveryPin(userId: selected.userId);
+
+    await service.validatePinForUser(selected.userId, '000000');
+    final triggerFailure = await service.validatePinForUser(
+      selected.userId,
+      '000000',
+    );
+    expect(triggerFailure.issueCode, 'locked_out_triggered');
+
+    final reloaded = UsersDevicesPinRegistryService(
+      database: database,
+      maxFailedAttempts: 2,
+      lockoutDuration: const Duration(minutes: 4),
+      nowProvider: () => now,
+    );
+
+    final reloadedSnapshot = await reloaded.loadSnapshot();
+    expect(
+      reloadedSnapshot.primaryPinForUser(selected.userId)?.pinCode,
+      '4434',
+    );
+    expect(
+      reloadedSnapshot
+          .recoveryPinsForUser(selected.userId)
+          .any((pin) => pin.pinCode == recovery.pinCode),
+      isTrue,
+    );
+    expect(
+      reloadedSnapshot.lockoutForUser(selected.userId)?.isLockedAt(now),
+      isTrue,
+    );
+  });
+
   test(
-    'PIN and lockout state survive a fresh service reload',
+    'primary and recovery PIN issuance stay unique on the same timestamp tick',
     () async {
       final database = AppDatabase(NativeDatabase.memory());
       addTearDown(database.close);
 
-      var now = DateTime.utc(2026, 6, 27, 10, 0, 0);
+      final now = DateTime.utc(2026, 6, 27, 12, 30, 0);
       final service = UsersDevicesPinRegistryService(
         database: database,
-        maxFailedAttempts: 2,
-        lockoutDuration: const Duration(minutes: 4),
         nowProvider: () => now,
       );
 
@@ -288,42 +341,24 @@ void main() {
         (record) => record.status == 'active',
       );
 
-      await service.setPrimaryPin(
+      final primary = await service.setPrimaryPin(
         userId: selected.userId,
         pinCode: '4434',
-        notes: 'Reload persistence test primary PIN.',
       );
-      now = now.add(const Duration(seconds: 1));
       final recovery = await service.issueRecoveryPin(userId: selected.userId);
 
-      await service.validatePinForUser(selected.userId, '000000');
-      final triggerFailure = await service.validatePinForUser(
-        selected.userId,
-        '000000',
-      );
-      expect(triggerFailure.issueCode, 'locked_out_triggered');
+      expect(primary.pinId, isNot(equals(recovery.pinId)));
 
-      final reloaded = UsersDevicesPinRegistryService(
-        database: database,
-        maxFailedAttempts: 2,
-        lockoutDuration: const Duration(minutes: 4),
-        nowProvider: () => now,
-      );
-
-      final reloadedSnapshot = await reloaded.loadSnapshot();
+      final reloaded = await service.loadSnapshot();
       expect(
-        reloadedSnapshot.primaryPinForUser(selected.userId)?.pinCode,
-        '4434',
-      );
-      expect(
-        reloadedSnapshot.recoveryPinsForUser(selected.userId).any(
-          (pin) => pin.pinCode == recovery.pinCode,
-        ),
-        isTrue,
-      );
-      expect(
-        reloadedSnapshot.lockoutForUser(selected.userId)?.isLockedAt(now),
-        isTrue,
+        reloaded.records
+            .where((record) => record.userId == selected.userId)
+            .map((record) => record.pinId)
+            .toSet()
+            .length,
+        reloaded.records
+            .where((record) => record.userId == selected.userId)
+            .length,
       );
     },
   );
