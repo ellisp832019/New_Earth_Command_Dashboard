@@ -431,12 +431,30 @@ void main() {
       await pumpUntilFound(tester, find.text('Copy summary'));
 
       expect(find.text('Onboarding Report'), findsOneWidget);
+      expect(find.text('Readiness dashboard'), findsOneWidget);
       expect(find.text('Open onboarding'), findsOneWidget);
       expect(find.text('Selected user for handoff sheet'), findsOneWidget);
       expect(find.text('Copy summary'), findsWidgets);
       expect(find.text('Onboarding pack PDF'), findsWidgets);
       expect(find.text('Recovery drills PDF'), findsWidgets);
+      expect(find.text('Blocked'), findsWidgets);
+      expect(find.text('Archived'), findsWidgets);
+      expect(find.text('Exceptions'), findsWidgets);
       expect(find.text('Ready'), findsWidgets);
     },
   );
+
+  testWidgets('audit log shows grouped and risk reporting panels', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp(const UsersDevicesAuditLogScreen()));
+    await pumpUntilFound(tester, find.text('Audit posture'));
+
+    expect(find.text('Latest risk panel'), findsOneWidget);
+    expect(find.text('Grouped audit view'), findsOneWidget);
+    expect(find.text('By user'), findsOneWidget);
+    expect(find.text('By device'), findsOneWidget);
+    expect(find.text('By module'), findsOneWidget);
+    expect(find.text('By action family'), findsOneWidget);
+  });
 }

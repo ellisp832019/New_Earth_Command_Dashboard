@@ -2819,6 +2819,10 @@ class _UsersDevicesOnboardingReportScreenState
           int linkedDeviceCount,
           int trustedDeviceCount,
           int recoveryPinCount,
+          int deniedAuditCount,
+          int pendingAuditCount,
+          bool hasBlockedLinkedDevice,
+          bool hasQuarantinedLinkedDevice,
           List<UsersDevicesControlDevice> linkedDevices,
           List<UsersDevicesControlDevice> trustedDevices,
           UsersDevicesControlAuditEvent? latestAudit,
@@ -2868,6 +2872,18 @@ class _UsersDevicesOnboardingReportScreenState
             linkedDeviceCount: userLinkedDevices.length,
             trustedDeviceCount: userTrustedDevices.length,
             recoveryPinCount: userRecoveryPins.length,
+            deniedAuditCount: relatedAuditEvents
+                .where((event) => event.result == 'denied')
+                .length,
+            pendingAuditCount: relatedAuditEvents
+                .where((event) => event.result == 'pending')
+                .length,
+            hasBlockedLinkedDevice: userLinkedDevices.any(
+              (device) => device.status == 'blocked',
+            ),
+            hasQuarantinedLinkedDevice: userLinkedDevices.any(
+              (device) => device.status == 'quarantined',
+            ),
             linkedDevices: userLinkedDevices,
             trustedDevices: userTrustedDevices,
             latestAudit: relatedAuditEvents.isEmpty
@@ -2886,12 +2902,30 @@ class _UsersDevicesOnboardingReportScreenState
             int linkedDeviceCount,
             int trustedDeviceCount,
             int recoveryPinCount,
+            int deniedAuditCount,
+            int pendingAuditCount,
+            bool hasBlockedLinkedDevice,
+            bool hasQuarantinedLinkedDevice,
             List<UsersDevicesControlDevice> linkedDevices,
             List<UsersDevicesControlDevice> trustedDevices,
             UsersDevicesControlAuditEvent? latestAudit,
           })
           status,
         ) {
+          if (status.user.status == 'archived' ||
+              status.user.status == 'disabled') {
+            return 'archived';
+          }
+          if (status.hasBlockedLinkedDevice ||
+              status.hasQuarantinedLinkedDevice) {
+            return 'blocked';
+          }
+          if (status.accessReady &&
+              (status.deniedAuditCount > 0 ||
+                  status.pendingAuditCount > 0 ||
+                  status.recoveryPinCount > 0)) {
+            return 'exception-only';
+          }
           if (status.accessReady) {
             return 'ready';
           }
@@ -2907,10 +2941,7 @@ class _UsersDevicesOnboardingReportScreenState
           return 'in-progress';
         }
 
-        final activeUsers = data.users
-            .where((user) => user.status == 'active')
-            .toList(growable: false);
-        final statuses = activeUsers
+        final statuses = data.users
             .map(readinessForUser)
             .toList(growable: false);
         if (statuses.isEmpty) {
@@ -2927,6 +2958,9 @@ class _UsersDevicesOnboardingReportScreenState
             ),
           );
         }
+        final activeStatuses = statuses
+            .where((status) => status.user.status == 'active')
+            .toList(growable: false);
         final selectedStatus = statuses.firstWhere(
           (status) => status.user.id == _selectedUserId,
           orElse: () => statuses.first,
@@ -2954,6 +2988,15 @@ class _UsersDevicesOnboardingReportScreenState
               return haystack.contains(query);
             })
             .toList(growable: false);
+        final blockedCount = statuses
+            .where((status) => statusLabelFor(status) == 'blocked')
+            .length;
+        final archivedCount = statuses
+            .where((status) => statusLabelFor(status) == 'archived')
+            .length;
+        final exceptionOnlyCount = statuses
+            .where((status) => statusLabelFor(status) == 'exception-only')
+            .length;
 
         final summaryText = _buildOnboardingReportSummary(
           user: selectedStatus.user,
@@ -3026,23 +3069,101 @@ class _UsersDevicesOnboardingReportScreenState
                 items: [
                   (
                     'Ready',
-                    statuses.where((status) => status.accessReady).length,
+                    activeStatuses.where((status) => status.accessReady).length,
                   ),
                   (
                     'Need role',
-                    statuses
+                    activeStatuses
                         .where((status) => !status.hasRoleAndPermissions)
                         .length,
                   ),
                   (
                     'Need PIN',
-                    statuses.where((status) => !status.hasPrimaryPin).length,
+                    activeStatuses
+                        .where((status) => !status.hasPrimaryPin)
+                        .length,
                   ),
                   (
                     'Need trust',
-                    statuses.where((status) => !status.hasTrustedDevice).length,
+                    activeStatuses
+                        .where((status) => !status.hasTrustedDevice)
+                        .length,
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Readiness dashboard',
+                subtitle:
+                    'A broader admin read across active, archived, blocked, and exception-only local onboarding posture.',
+                icon: Icons.dashboard_customize_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SummaryRow(
+                      items: [
+                        ('Active', activeStatuses.length),
+                        ('Blocked', blockedCount),
+                        ('Archived', archivedCount),
+                        ('Exceptions', exceptionOnlyCount),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.task_alt_outlined,
+                            title: 'Ready and active',
+                            subtitle:
+                                '${activeStatuses.where((status) => status.accessReady).length} user${activeStatuses.where((status) => status.accessReady).length == 1 ? '' : 's'}',
+                            body:
+                                'These users already have role, PIN, trusted device coverage, and a workable local route.',
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.gpp_bad_outlined,
+                            title: 'Blocked trust path',
+                            subtitle:
+                                '$blockedCount user${blockedCount == 1 ? '' : 's'}',
+                            body: blockedCount == 0
+                                ? 'No user currently has a blocked or quarantined linked device in report scope.'
+                                : 'These users are carrying a blocked or quarantined endpoint and should not be treated as trust-ready.',
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.archive_outlined,
+                            title: 'Archived or disabled',
+                            subtitle:
+                                '$archivedCount user${archivedCount == 1 ? '' : 's'}',
+                            body: archivedCount == 0
+                                ? 'No archived or disabled users are currently in the local report set.'
+                                : 'These records stay visible for local context, but should not be treated as active onboarding work.',
+                          ),
+                        ),
+                        SizedBox(
+                          width: 280,
+                          child: _EntityCard(
+                            icon: Icons.warning_amber_outlined,
+                            title: 'Exception-only follow-up',
+                            subtitle:
+                                '$exceptionOnlyCount user${exceptionOnlyCount == 1 ? '' : 's'}',
+                            body: exceptionOnlyCount == 0
+                                ? 'No otherwise-ready user is currently carrying denied, pending, or recovery-only follow-up.'
+                                : 'These users look structurally ready, but still have local follow-up signals that deserve a quick review.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _PickerSection(
@@ -3108,6 +3229,24 @@ class _UsersDevicesOnboardingReportScreenState
                     onSelected: (_) =>
                         setState(() => _statusFilter = 'missing-trust'),
                   ),
+                  _SoftChoiceChip(
+                    label: const Text('Blocked'),
+                    selected: _statusFilter == 'blocked',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'blocked'),
+                  ),
+                  _SoftChoiceChip(
+                    label: const Text('Archived'),
+                    selected: _statusFilter == 'archived',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'archived'),
+                  ),
+                  _SoftChoiceChip(
+                    label: const Text('Exceptions'),
+                    selected: _statusFilter == 'exception-only',
+                    onSelected: (_) =>
+                        setState(() => _statusFilter = 'exception-only'),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -3140,6 +3279,7 @@ class _UsersDevicesOnboardingReportScreenState
                                 body:
                                     'Linked devices: ${status.linkedDeviceCount} - Trusted devices: ${status.trustedDeviceCount} - Recovery PINs: ${status.recoveryPinCount}',
                                 chips: [
+                                  _CardChip(label: status.user.status),
                                   _CardChip(
                                     label: status.hasRoleAndPermissions
                                         ? 'Role ready'
@@ -3155,6 +3295,16 @@ class _UsersDevicesOnboardingReportScreenState
                                         ? 'Trusted device ready'
                                         : 'Trusted device needed',
                                   ),
+                                  if (status.deniedAuditCount > 0)
+                                    _CardChip(
+                                      label:
+                                          '${status.deniedAuditCount} denied audit${status.deniedAuditCount == 1 ? '' : 's'}',
+                                    ),
+                                  if (status.pendingAuditCount > 0)
+                                    _CardChip(
+                                      label:
+                                          '${status.pendingAuditCount} pending audit${status.pendingAuditCount == 1 ? '' : 's'}',
+                                    ),
                                 ],
                                 actions: [
                                   OutlinedButton.icon(
@@ -5045,6 +5195,55 @@ String _approvalPrerequisiteHint(
   return 'Prerequisites look healthy. This request mainly needs an operator decision and audit follow-through.';
 }
 
+String _auditActionFamily(UsersDevicesControlAuditEvent event) {
+  final eventType = event.eventType.toLowerCase();
+  final action = event.action.toLowerCase();
+
+  if (eventType.contains('pin_') || action.contains('pin')) {
+    return 'PIN governance';
+  }
+  if (eventType.contains('unlock') || action.contains('unlock')) {
+    return 'Unlock flow';
+  }
+  if (eventType.contains('approval') || action.contains('approve')) {
+    return 'Approval flow';
+  }
+  if (eventType.contains('trust') || action.contains('trust')) {
+    return 'Device trust';
+  }
+  if (eventType.contains('role') || action.contains('role')) {
+    return 'Role assignment';
+  }
+  if (eventType.contains('permission') || action.contains('permission')) {
+    return 'Permission update';
+  }
+  if (eventType.contains('device') || action.contains('device')) {
+    return 'Device lifecycle';
+  }
+  if (eventType.contains('module_access') || action.contains('open_')) {
+    return 'Module access';
+  }
+  return 'General audit';
+}
+
+List<MapEntry<String, int>> _topAuditCounts(
+  List<UsersDevicesControlAuditEvent> events,
+  String Function(UsersDevicesControlAuditEvent event) keyFor,
+) {
+  final counts = <String, int>{};
+  for (final event in events) {
+    final key = keyFor(event).trim();
+    if (key.isEmpty) {
+      continue;
+    }
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+
+  final entries = counts.entries.toList(growable: false)
+    ..sort((left, right) => right.value.compareTo(left.value));
+  return entries;
+}
+
 class UsersDevicesAuditLogScreen extends ConsumerStatefulWidget {
   const UsersDevicesAuditLogScreen({super.key, this.highlightEventId});
 
@@ -5156,6 +5355,10 @@ class _UsersDevicesAuditLogScreenState
             ),
             const SizedBox(height: 16),
             _AuditSnapshotPanel(events: data.auditLog),
+            const SizedBox(height: 16),
+            _AuditRiskPanel(data: data),
+            const SizedBox(height: 16),
+            _AuditGroupingPanel(events: data.auditLog),
             const SizedBox(height: 16),
             if (_filteredAuditEvents(data.auditLog).isEmpty)
               _EmptyCollectionState(
@@ -5370,6 +5573,200 @@ class _AuditSnapshotPanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AuditRiskPanel extends StatelessWidget {
+  const _AuditRiskPanel({required this.data});
+
+  final UsersDevicesControlSnapshot data;
+
+  @override
+  Widget build(BuildContext context) {
+    final failedUnlocks = data.auditLog
+        .where(
+          (event) =>
+              event.result == 'denied' &&
+              (event.eventType.contains('pin_') ||
+                  event.eventType.contains('unlock')),
+        )
+        .length;
+    final deniedByActor = <String, int>{};
+    for (final event in data.auditLog.where(
+      (event) => event.result == 'denied',
+    )) {
+      deniedByActor[event.actorId] = (deniedByActor[event.actorId] ?? 0) + 1;
+    }
+    final repeatedDenialActors = deniedByActor.values
+        .where((count) => count >= 2)
+        .length;
+    final staleTrustDevices = data.devices
+        .where((device) => device.needsOnboardingReview)
+        .length;
+    final pendingApprovals = data.approvalQueue
+        .where((request) => request.isPending)
+        .length;
+
+    return _VisualPanel(
+      title: 'Latest risk panel',
+      subtitle:
+          'One calm view of the pressure building inside failed unlocks, repeated denials, stale trust, and pending approvals.',
+      icon: Icons.warning_amber_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SummaryRow(
+            items: [
+              ('Failed unlocks', failedUnlocks),
+              ('Repeat denials', repeatedDenialActors),
+              ('Stale trust', staleTrustDevices),
+              ('Pending approvals', pendingApprovals),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.lock_person_outlined,
+                  title: 'Failed unlocks',
+                  subtitle: '$failedUnlocks denied attempts',
+                  body: failedUnlocks == 0
+                      ? 'No denied PIN or unlock attempts are currently visible in the local audit trail.'
+                      : 'Review whether the failures point to a forgotten PIN, wrong identity selection, or a deeper trust problem.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.groups_2_outlined,
+                  title: 'Repeated denials',
+                  subtitle:
+                      '$repeatedDenialActors actor${repeatedDenialActors == 1 ? '' : 's'}',
+                  body: repeatedDenialActors == 0
+                      ? 'No one is currently showing a repeated denied pattern.'
+                      : 'These actors have hit denied flows more than once and may need a calmer support review.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.verified_user_outlined,
+                  title: 'Stale trust pressure',
+                  subtitle:
+                      '$staleTrustDevices device${staleTrustDevices == 1 ? '' : 's'} needing review',
+                  body: staleTrustDevices == 0
+                      ? 'Every device in the current local set looks healthy enough for the present access model.'
+                      : 'These devices still need onboarding review, trust repair, or quarantine follow-up.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.rule_folder_outlined,
+                  title: 'Approval backlog',
+                  subtitle:
+                      '$pendingApprovals request${pendingApprovals == 1 ? '' : 's'} pending',
+                  body: pendingApprovals == 0
+                      ? 'No approval backlog is currently waiting.'
+                      : 'Queue pressure is still present, so sensitive actions may need review before the route can finish.',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuditGroupingPanel extends StatelessWidget {
+  const _AuditGroupingPanel({required this.events});
+
+  final List<UsersDevicesControlAuditEvent> events;
+
+  @override
+  Widget build(BuildContext context) {
+    final byActor = _topAuditCounts(
+      events,
+      (event) => event.actorId.isEmpty ? 'unknown' : event.actorId,
+    );
+    final byDevice = _topAuditCounts(
+      events,
+      (event) => event.deviceId.isEmpty ? 'unknown' : event.deviceId,
+    );
+    final byModule = _topAuditCounts(events, (event) => event.targetModule);
+    final byActionFamily = _topAuditCounts(
+      events,
+      (event) => _auditActionFamily(event),
+    );
+
+    return _VisualPanel(
+      title: 'Grouped audit view',
+      subtitle:
+          'Read the trail by user, device, module, and action family before diving into individual events.',
+      icon: Icons.account_tree_outlined,
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          SizedBox(
+            width: 320,
+            child: _AuditGroupCard(title: 'By user', entries: byActor),
+          ),
+          SizedBox(
+            width: 320,
+            child: _AuditGroupCard(title: 'By device', entries: byDevice),
+          ),
+          SizedBox(
+            width: 320,
+            child: _AuditGroupCard(
+              title: 'By module',
+              entries: byModule
+                  .map(
+                    (entry) =>
+                        MapEntry(_approvalModuleLabel(entry.key), entry.value),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+          SizedBox(
+            width: 320,
+            child: _AuditGroupCard(
+              title: 'By action family',
+              entries: byActionFamily,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuditGroupCard extends StatelessWidget {
+  const _AuditGroupCard({required this.title, required this.entries});
+
+  final String title;
+  final List<MapEntry<String, int>> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EntityCard(
+      icon: Icons.stacked_bar_chart_outlined,
+      title: title,
+      subtitle: entries.isEmpty
+          ? 'No events yet'
+          : '${entries.length} visible groups',
+      body: entries.isEmpty
+          ? 'No audit events have been recorded in this group yet.'
+          : entries
+                .take(4)
+                .map((entry) => '${entry.key}: ${entry.value}')
+                .join('\n'),
     );
   }
 }

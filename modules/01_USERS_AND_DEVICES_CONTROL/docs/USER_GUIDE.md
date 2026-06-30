@@ -282,6 +282,7 @@ Where to find it:
 What it does:
 
 - shows readiness counts for active users
+- adds a broader `Readiness dashboard` for active, blocked, archived, and exception-only posture
 - lets you filter by status
 - lets you focus the report on one user
 - builds a print-style handoff sheet
@@ -293,6 +294,9 @@ Status meanings:
 - `Needs PIN`: the user still needs a primary unlock PIN
 - `Needs trust`: the linked device is not trusted enough yet
 - `Needs role`: the user still lacks the role or permission shape expected for the workflow
+- `Blocked`: the user is carrying a blocked or quarantined device path
+- `Archived`: the user record is still visible for context, but is no longer active onboarding work
+- `Exceptions`: the user looks structurally ready, but still carries denied, pending, or recovery-heavy follow-up
 
 Quick test:
 
@@ -334,6 +338,24 @@ Use this screen first when:
 - you suspect trust drift across multiple devices
 - you want a quick daily admin review
 - you want to confirm the system is calm before finance or treasury testing
+
+## Audit Log
+
+Use `Audit Log` when you need more than a flat event list.
+
+What is new in this reporting pass:
+
+- `Latest risk panel` highlights failed unlocks, repeated denials, stale trust, and approval backlog
+- `Grouped audit view` breaks the trail down by user, device, module, and action family
+- the event list still stays underneath for detailed review
+
+Quick audit review:
+
+1. Open `Audit Log`.
+2. Read `Latest risk panel` first.
+3. Check `Grouped audit view` to see whether one actor, device, or module is dominating the trail.
+4. Use search or result chips to narrow the event list.
+5. Open the related admin screen only after the grouped view tells you where the pressure is.
 
 ## Assign a PIN to one user
 
