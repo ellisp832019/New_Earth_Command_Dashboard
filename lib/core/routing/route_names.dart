@@ -1,4 +1,5 @@
 abstract final class RouteNames {
+  static const startup = '/startup';
   static const dashboard = '/dashboard';
   static const commandPalette = '/dashboard/search';
   static const assets = '/assets';
@@ -49,7 +50,8 @@ abstract final class RouteNames {
   static const usersDevicesDevices = '/users-devices/devices';
   static const usersDevicesAccessMatrix = '/users-devices/access-matrix';
   static const usersDevicesDeviceOnboarding = '/users-devices/onboarding';
-  static const usersDevicesOnboardingReport = '/users-devices/onboarding-report';
+  static const usersDevicesOnboardingReport =
+      '/users-devices/onboarding-report';
   static const usersDevicesApprovalQueue = '/users-devices/approvals';
   static const usersDevicesAuditLog = '/users-devices/audit';
   static const usersDevicesPins = '/users-devices/pins';
@@ -69,12 +71,14 @@ abstract final class RouteNames {
       queryParameters: queryParameters.isEmpty ? null : queryParameters,
     ).toString();
   }
+
   static String usersDevicesAuditLogFor(String eventId) {
     return Uri(
       path: usersDevicesAuditLog,
       queryParameters: {'eventId': eventId},
     ).toString();
   }
+
   static String aboutHelpSection(String sectionId, {String? documentPath}) {
     final queryParameters = <String, String>{'section': sectionId};
     if (documentPath != null && documentPath.isNotEmpty) {

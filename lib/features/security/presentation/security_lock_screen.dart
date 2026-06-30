@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/routing/security_route_policy.dart';
+import '../../../core/windowing/desktop_presence_controller.dart';
 import '../../../core/widgets/desktop_startup_backdrop.dart';
 import '../application/security_session_controller.dart';
 import '../../settings/application/settings_controller.dart';
@@ -40,6 +41,14 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
 
   String? _postUnlockRoute(BuildContext context) {
     return SecurityRoutePolicy.resumeRouteFrom(GoRouterState.of(context).uri);
+  }
+
+  Future<void> _sleepApp() async {
+    await DesktopPresenceController.instance.sleep();
+  }
+
+  Future<void> _exitApp() async {
+    await DesktopPresenceController.instance.requestShutdown();
   }
 
   @override
@@ -497,6 +506,12 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                         context.go(RouteNames.voiceStartupGate);
                                       }
                                     : null,
+                                onSleep: () {
+                                  unawaited(_sleepApp());
+                                },
+                                onExit: () {
+                                  unawaited(_exitApp());
+                                },
                                 canOpenAdminRoutes: canOpenAdminRoutes,
                                 onOpenUsersDevices: () =>
                                     context.push(RouteNames.usersDevices),
@@ -635,6 +650,8 @@ class _SecurityHero extends StatelessWidget {
     required this.canContinue,
     required this.continueLabel,
     required this.onContinue,
+    required this.onSleep,
+    required this.onExit,
     required this.canOpenAdminRoutes,
     required this.onOpenUsersDevices,
     required this.onOpenAuditLog,
@@ -655,6 +672,8 @@ class _SecurityHero extends StatelessWidget {
   final bool canContinue;
   final String continueLabel;
   final VoidCallback? onContinue;
+  final VoidCallback onSleep;
+  final VoidCallback onExit;
   final bool canOpenAdminRoutes;
   final VoidCallback onOpenUsersDevices;
   final VoidCallback onOpenAuditLog;
@@ -911,6 +930,16 @@ class _SecurityHero extends StatelessWidget {
                   icon: const Icon(Icons.arrow_forward_outlined),
                   label: Text(continueLabel),
                 ),
+              TextButton.icon(
+                onPressed: onSleep,
+                icon: const Icon(Icons.bedtime_outlined),
+                label: const Text('Sleep quietly'),
+              ),
+              TextButton.icon(
+                onPressed: onExit,
+                icon: const Icon(Icons.power_settings_new_rounded),
+                label: const Text('Exit completely'),
+              ),
               OutlinedButton.icon(
                 onPressed: canOpenAdminRoutes ? onOpenUsersDevices : null,
                 icon: const Icon(Icons.shield_outlined),

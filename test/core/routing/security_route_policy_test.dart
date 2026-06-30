@@ -61,6 +61,37 @@ void main() {
       expect(Uri.parse(redirect!).path, RouteNames.securityLock);
     });
 
+    test('blocks users-devices admin child routes while locked', () {
+      const locked = SecuritySessionState.locked();
+
+      final protectedRoutes = [
+        RouteNames.usersDevicesUsers,
+        RouteNames.usersDevicesDevices,
+        RouteNames.usersDevicesAccessMatrix,
+        RouteNames.usersDevicesDeviceOnboarding,
+        RouteNames.usersDevicesOnboardingReport,
+        RouteNames.usersDevicesApprovalQueue,
+        RouteNames.usersDevicesAuditLog,
+        RouteNames.usersDevicesPins,
+      ];
+
+      for (final route in protectedRoutes) {
+        final redirect = SecurityRoutePolicy.redirectForSession(
+          requestedUri: Uri.parse(route),
+          session: locked,
+        );
+
+        expect(
+          redirect,
+          isNotNull,
+          reason: 'Expected $route to redirect while locked.',
+        );
+        final redirectUri = Uri.parse(redirect!);
+        expect(redirectUri.path, RouteNames.securityLock);
+        expect(redirectUri.queryParameters['resume'], route);
+      }
+    });
+
     test(
       'does not treat future users-devices child routes as public by prefix',
       () {
@@ -95,6 +126,19 @@ void main() {
             ),
           ),
         ),
+        RouteNames.usersDevicesAccessMatrix,
+      );
+    });
+
+    test('securityLockFrom preserves current protected destination', () {
+      final redirect = SecurityRoutePolicy.securityLockFrom(
+        Uri.parse(RouteNames.usersDevicesAccessMatrix),
+      );
+
+      final redirectUri = Uri.parse(redirect);
+      expect(redirectUri.path, RouteNames.securityLock);
+      expect(
+        redirectUri.queryParameters['resume'],
         RouteNames.usersDevicesAccessMatrix,
       );
     });

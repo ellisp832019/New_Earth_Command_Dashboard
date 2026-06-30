@@ -79,6 +79,7 @@ import '../../features/projects/presentation/projects_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/omega_os_folder_health_screen.dart';
 import '../../features/security/presentation/security_lock_screen.dart';
+import '../../features/security/presentation/security_startup_screen.dart';
 import '../../features/security/application/security_session_controller.dart';
 import '../../features/tasks/presentation/add_edit_task_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
@@ -111,7 +112,7 @@ final _shellNavigatorMoreKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: RouteNames.securityLock,
+  initialLocation: RouteNames.startup,
   refreshListenable: SecuritySessionRouterBridge.refresh,
   redirect: (context, state) {
     final session = SecuritySessionRouterBridge.current;
@@ -342,12 +343,12 @@ final appRouter = GoRouter(
                       path: 'settings',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Bridge Settings Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening bridge settings.',
-                        child: RepoIntelligenceBridgeSettingsScreen(),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Bridge Settings Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening bridge settings.',
+                            child: RepoIntelligenceBridgeSettingsScreen(),
+                          ),
                     ),
                   ],
                 ),
@@ -430,13 +431,16 @@ final appRouter = GoRouter(
                   routes: [
                     GoRoute(
                       path: 'experiments',
-                      builder: (context, state) => const OmegaExperimentScreen(),
+                      builder: (context, state) =>
+                          const OmegaExperimentScreen(),
                       routes: [
                         GoRoute(
                           path: 'new',
-                          builder: (context, state) => const OmegaExperimentScreen(
-                            initialSection: OmegaExperimentScreenSection.create,
-                          ),
+                          builder: (context, state) =>
+                              const OmegaExperimentScreen(
+                                initialSection:
+                                    OmegaExperimentScreenSection.create,
+                              ),
                         ),
                         GoRoute(
                           path: 'evidence',
@@ -612,79 +616,79 @@ final appRouter = GoRouter(
                       path: 'scanner',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Scanner Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening the scanner.',
-                        child: RepoResearchEngineScreen(
-                          initialSection: 'scanner',
-                        ),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Scanner Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening the scanner.',
+                            child: RepoResearchEngineScreen(
+                              initialSection: 'scanner',
+                            ),
+                          ),
                     ),
                     GoRoute(
                       path: 'reports',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Reports Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening reports.',
-                        child: RepoResearchEngineScreen(
-                          initialSection: 'reports',
-                        ),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Reports Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening reports.',
+                            child: RepoResearchEngineScreen(
+                              initialSection: 'reports',
+                            ),
+                          ),
                     ),
                     GoRoute(
                       path: 'profiles',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Profiles Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening profiles.',
-                        child: RepoResearchEngineScreen(
-                          initialSection: 'profiles',
-                        ),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Profiles Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening profiles.',
+                            child: RepoResearchEngineScreen(
+                              initialSection: 'profiles',
+                            ),
+                          ),
                     ),
                     GoRoute(
                       path: 'exports',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Exports Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening exports.',
-                        child: RepoResearchEngineScreen(
-                          initialSection: 'exports',
-                        ),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Exports Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening exports.',
+                            child: RepoResearchEngineScreen(
+                              initialSection: 'exports',
+                            ),
+                          ),
                     ),
                     GoRoute(
                       path: 'prompts',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Prompts Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening prompts.',
-                        child: RepoResearchEngineScreen(
-                          initialSection: 'prompts',
-                        ),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Prompts Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening prompts.',
+                            child: RepoResearchEngineScreen(
+                              initialSection: 'prompts',
+                            ),
+                          ),
                     ),
                     GoRoute(
                       path: 'settings',
                       builder: (context, state) =>
                           const UsersDevicesRouteGateScreen(
-                        moduleId: 'repo_research_engine',
-                        title: 'Repo Settings Gate',
-                        subtitle:
-                            'Confirm local identity and device trust before opening settings.',
-                        child: RepoResearchEngineScreen(
-                          initialSection: 'settings',
-                        ),
-                      ),
+                            moduleId: 'repo_research_engine',
+                            title: 'Repo Settings Gate',
+                            subtitle:
+                                'Confirm local identity and device trust before opening settings.',
+                            child: RepoResearchEngineScreen(
+                              initialSection: 'settings',
+                            ),
+                          ),
                     ),
                   ],
                 ),
@@ -1037,6 +1041,11 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.startup,
+      builder: (context, state) => const SecurityStartupScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.voiceStartupGate,
       builder: (context, state) => const VoiceStartupGateRouteScreen(),
     ),
@@ -1097,8 +1106,7 @@ final appRouter = GoRouter(
                 'Confirm local identity and device trust before opening onboarding reporting.',
             child: UsersDevicesOnboardingReportScreen(
               initialUserId: state.uri.queryParameters['userId'],
-              initialStatusFilter:
-                  state.uri.queryParameters['status'] ?? 'all',
+              initialStatusFilter: state.uri.queryParameters['status'] ?? 'all',
             ),
           ),
         ),

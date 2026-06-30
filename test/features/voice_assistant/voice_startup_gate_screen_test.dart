@@ -54,6 +54,8 @@ void main() {
     );
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('Skip Voice'), findsOneWidget);
+    expect(find.text('Sleep quietly'), findsOneWidget);
+    expect(find.text('Exit completely'), findsOneWidget);
     expect(find.text('Continue with Voice'), findsOneWidget);
   });
 
@@ -114,9 +116,7 @@ void main() {
           routerConfig: _buildRouter(
             Consumer(
               builder: (context, ref, _) {
-                final landingRoute = ref.watch(
-                  voiceStartupGateLandingProvider,
-                );
+                final landingRoute = ref.watch(voiceStartupGateLandingProvider);
                 return Column(
                   children: [
                     Expanded(child: VoiceStartupGateScreen(result: result)),

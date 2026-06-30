@@ -288,6 +288,11 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
   }
 
   void _openAccessMatrix() {
+    if (!widget.session.isUnlocked || widget.session.isExpired) {
+      _openSecurityLock();
+      return;
+    }
+
     appRouter.go(RouteNames.usersDevicesAccessMatrix);
   }
 
@@ -507,9 +512,9 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
                           onPressed: _openSecurityLock,
                         ),
                         _MiniSessionAction(
-                          label: 'Open matrix',
+                          label: isUnlocked ? 'Open matrix' : 'Matrix locked',
                           icon: Icons.grid_view_outlined,
-                          onPressed: _openAccessMatrix,
+                          onPressed: isUnlocked ? _openAccessMatrix : null,
                         ),
                       ],
                     ),
@@ -560,7 +565,7 @@ class _MiniSessionAction extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

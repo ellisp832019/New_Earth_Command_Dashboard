@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/widgets/desktop_startup_backdrop.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/windowing/desktop_presence_controller.dart';
 import '../settings/application/settings_controller.dart';
 import 'application/voice_startup_gate_controller.dart';
 import 'desktop_speech_bridge_service.dart';
@@ -286,6 +287,14 @@ class _VoiceStartupGateScreenState
                           context.go(RouteNames.dashboard);
                         }
                       },
+                      onSleep: () {
+                        unawaited(DesktopPresenceController.instance.sleep());
+                      },
+                      onExit: () {
+                        unawaited(
+                          DesktopPresenceController.instance.requestShutdown(),
+                        );
+                      },
                       onRunDiagnostics: _showVoiceDiagnostics,
                     ),
                   ),
@@ -329,6 +338,8 @@ class _VoiceGateFloatingPanel extends StatelessWidget {
     required this.onCheckAgain,
     required this.onHaveVoice,
     required this.onNoVoice,
+    required this.onSleep,
+    required this.onExit,
     required this.onRunDiagnostics,
   });
 
@@ -342,6 +353,8 @@ class _VoiceGateFloatingPanel extends StatelessWidget {
   final VoidCallback onCheckAgain;
   final VoidCallback onHaveVoice;
   final VoidCallback onNoVoice;
+  final VoidCallback onSleep;
+  final VoidCallback onExit;
   final Future<void> Function() onRunDiagnostics;
 
   @override
@@ -509,6 +522,18 @@ class _VoiceGateFloatingPanel extends StatelessWidget {
                               onPressed: onNoVoice,
                               icon: const Icon(Icons.volume_off_outlined),
                               label: const Text('Skip Voice'),
+                            ),
+                            TextButton.icon(
+                              onPressed: onSleep,
+                              icon: const Icon(Icons.bedtime_outlined),
+                              label: const Text('Sleep quietly'),
+                            ),
+                            TextButton.icon(
+                              onPressed: onExit,
+                              icon: const Icon(
+                                Icons.power_settings_new_rounded,
+                              ),
+                              label: const Text('Exit completely'),
                             ),
                             TextButton.icon(
                               onPressed: onRunDiagnostics,
