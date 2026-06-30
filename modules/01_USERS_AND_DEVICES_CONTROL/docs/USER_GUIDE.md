@@ -83,6 +83,12 @@ This shows the path from a new user record to trusted access.
 
 This shows how a device moves from detected to trusted and ready for gated access.
 
+### 2a. Device quarantine and restore
+
+![Device quarantine and restore flow](assets/device-quarantine-review-flow.svg)
+
+This shows the operator path for reviewing a risky endpoint, quarantining it, restoring it, and confirming the audit trail.
+
 ### 3. PIN assignment and recovery
 
 ![PIN assignment and recovery workflow](assets/pin-assignment-recovery.svg)
@@ -546,6 +552,22 @@ Device trust posture:
 - `Trusted` means the device is ready for normal gated module access
 - `High trust` means the device can satisfy stricter trust floors
 - `Blocked` means the device must be restored or re-onboarded before use
+
+What is new in the device review flow:
+
+- `Trust decision checklist` gives you one focused device at a time
+- `Focus device` lets you bring the most urgent review item into that checklist
+- quarantine and restore actions are now part of the same visible review path
+
+Fast trust review pass:
+
+1. Open `Devices`.
+2. Read `Trust evidence queue`.
+3. In `Device trust review queue`, click `Focus device` on the endpoint you want to work on.
+4. Read `Trust decision checklist`.
+5. Use `Review device`, `Quarantine`, `Restore trust`, or `Open onboarding`.
+6. Recheck the device card and confirm the trust posture changed as expected.
+7. Open `Audit Log` if you want to confirm the trust decision was recorded locally.
 
 ### Create a sample approval
 

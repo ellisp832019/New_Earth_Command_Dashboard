@@ -465,8 +465,11 @@ void main() {
     await pumpUntilFound(tester, find.text('Trust evidence queue'));
 
     expect(find.text('Trust evidence queue'), findsOneWidget);
+    expect(find.text('Trust decision checklist'), findsOneWidget);
     expect(find.text('Quarantined devices'), findsOneWidget);
     expect(find.text('Quarantine watchlist'), findsOneWidget);
+    expect(find.text('Focus device'), findsWidgets);
+    expect(find.text('Review device'), findsWidgets);
     expect(find.textContaining('Unexpected device posture'), findsWidgets);
     expect(find.text('Quarantine'), findsOneWidget);
   });

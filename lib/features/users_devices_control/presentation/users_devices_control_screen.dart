@@ -525,6 +525,7 @@ class _UsersDevicesDevicesScreenState
     extends ConsumerState<UsersDevicesDevicesScreen> {
   String _searchQuery = '';
   String _statusFilter = 'all';
+  String? _focusedReviewDeviceId;
 
   @override
   Widget build(BuildContext context) {
@@ -546,6 +547,13 @@ class _UsersDevicesDevicesScreenState
         final reviewDevices = data.devices
             .where((device) => device.needsOnboardingReview)
             .toList(growable: false);
+        reviewDevices.sort(_compareDeviceReviewPriority);
+        final focusedReviewDevice = reviewDevices.isEmpty
+            ? null
+            : reviewDevices.firstWhere(
+                (device) => device.id == _focusedReviewDeviceId,
+                orElse: () => reviewDevices.first,
+              );
         final filteredDevices = data.devices
             .where((device) {
               if (_statusFilter != 'all' && device.status != _statusFilter) {
@@ -734,6 +742,14 @@ class _UsersDevicesDevicesScreenState
                                   _CardChip(label: 'T${device.trustLevel}'),
                                 ],
                                 actions: [
+                                  if (device.needsOnboardingReview)
+                                    FilledButton.tonal(
+                                      onPressed: () => setState(
+                                        () =>
+                                            _focusedReviewDeviceId = device.id,
+                                      ),
+                                      child: const Text('Focus device'),
+                                    ),
                                   OutlinedButton.icon(
                                     onPressed: () => _openDeviceEditor(
                                       context,
@@ -751,6 +767,113 @@ class _UsersDevicesDevicesScreenState
                     ],
                   ],
                 ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Trust decision checklist',
+                subtitle:
+                    'Use one focused device at a time so quarantine, restore, and trust changes stay deliberate.',
+                icon: Icons.rule_folder_outlined,
+                child: focusedReviewDevice == null
+                    ? const _EmptyCollectionState(
+                        icon: Icons.verified_user_outlined,
+                        title: 'No device trust follow-up is waiting',
+                        body:
+                            'Every active local device already has enough posture for the current trust scope.',
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _CardChip(label: focusedReviewDevice.name),
+                              _CardChip(
+                                label:
+                                    'Owner: ${ownerLabels[focusedReviewDevice.ownerId] ?? focusedReviewDevice.ownerId}',
+                              ),
+                              _CardChip(
+                                label:
+                                    'Trust ${focusedReviewDevice.trustLevel}',
+                              ),
+                              _CardChip(
+                                label: 'Status: ${focusedReviewDevice.status}',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _buildDeviceTrustChecklistSummary(
+                              focusedReviewDevice,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _StepCard(
+                            step: '1',
+                            title: 'Read the evidence first',
+                            body: focusedReviewDevice.trustEvidenceSummary,
+                          ),
+                          const SizedBox(height: 12),
+                          _StepCard(
+                            step: '2',
+                            title: 'Choose the posture',
+                            body: focusedReviewDevice.isQuarantined
+                                ? 'Keep the device quarantined until the reason is resolved, or restore it only after the endpoint is safe again.'
+                                : focusedReviewDevice.status == 'blocked'
+                                ? 'Restore or re-onboard the device before expecting it to satisfy local access checks.'
+                                : 'Either raise trust with a clear reason, or keep the device in review until the evidence is stronger.',
+                          ),
+                          const SizedBox(height: 12),
+                          const _StepCard(
+                            step: '3',
+                            title: 'Write the outcome',
+                            body:
+                                'Use Review device, Quarantine, Restore trust, or Onboarding, then confirm the audit trail reflects the decision.',
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              FilledButton.tonal(
+                                onPressed: () => _openDeviceEditor(
+                                  context,
+                                  ref,
+                                  device: focusedReviewDevice,
+                                ),
+                                child: const Text('Review device'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () => _toggleDeviceQuarantine(
+                                  context,
+                                  ref,
+                                  focusedReviewDevice,
+                                ),
+                                icon: Icon(
+                                  focusedReviewDevice.isQuarantined
+                                      ? Icons.verified_user_outlined
+                                      : Icons.pause_circle_outline,
+                                ),
+                                label: Text(
+                                  focusedReviewDevice.isQuarantined
+                                      ? 'Restore trust'
+                                      : 'Quarantine',
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () => context.go(
+                                  RouteNames.usersDevicesDeviceOnboarding,
+                                ),
+                                icon: const Icon(
+                                  Icons.phonelink_setup_outlined,
+                                ),
+                                label: const Text('Open onboarding'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
               ),
               const SizedBox(height: 16),
               _SearchFilterPanel(
@@ -861,6 +984,13 @@ class _UsersDevicesDevicesScreenState
                               const _CardChip(label: 'Review onboarding'),
                           ],
                           actions: [
+                            if (device.needsOnboardingReview)
+                              FilledButton.tonal(
+                                onPressed: () => setState(
+                                  () => _focusedReviewDeviceId = device.id,
+                                ),
+                                child: const Text('Focus device'),
+                              ),
                             FilledButton.tonal(
                               onPressed: () => _openDeviceEditor(
                                 context,
@@ -2143,6 +2273,34 @@ class _UsersDevicesDeviceOnboardingScreenState
                                           '${device.allowedActions.length} local scopes',
                                     ),
                                 ],
+                                actions: [
+                                  OutlinedButton.icon(
+                                    onPressed: () => _openDeviceEditor(
+                                      context,
+                                      ref,
+                                      device: device,
+                                    ),
+                                    icon: const Icon(Icons.edit_outlined),
+                                    label: const Text('Review device'),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: () => _toggleDeviceQuarantine(
+                                      context,
+                                      ref,
+                                      device,
+                                    ),
+                                    icon: Icon(
+                                      device.isQuarantined
+                                          ? Icons.verified_user_outlined
+                                          : Icons.pause_circle_outline,
+                                    ),
+                                    label: Text(
+                                      device.isQuarantined
+                                          ? 'Restore trust'
+                                          : 'Quarantine',
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                         ],
@@ -2667,6 +2825,36 @@ class _UsersDevicesDeviceOnboardingScreenState
       },
     );
   }
+}
+
+int _compareDeviceReviewPriority(
+  UsersDevicesControlDevice left,
+  UsersDevicesControlDevice right,
+) {
+  int score(UsersDevicesControlDevice device) {
+    var value = 0;
+    if (device.status == 'quarantined') value += 6;
+    if (device.status == 'blocked') value += 5;
+    if (device.trustLevel < 3) value += 3;
+    if (device.status == 'registered') value += 2;
+    if (device.needsOnboardingReview) value += 1;
+    return value;
+  }
+
+  return score(right).compareTo(score(left));
+}
+
+String _buildDeviceTrustChecklistSummary(UsersDevicesControlDevice device) {
+  if (device.isQuarantined) {
+    return '${device.name} is quarantined right now. Resolve the quarantine reason first, then restore trust only when the endpoint is safe to rejoin gated local work.';
+  }
+  if (device.status == 'blocked') {
+    return '${device.name} is blocked and should not be used for sensitive module access until it is restored or re-onboarded.';
+  }
+  if (device.trustLevel < 3) {
+    return '${device.name} is still below the normal trust floor. Review the endpoint evidence before raising trust or using it for protected routes.';
+  }
+  return '${device.name} still needs onboarding review. Confirm the owner, trust source, and local purpose before treating it as ready.';
 }
 
 class _TrustPosturePanel extends StatelessWidget {
