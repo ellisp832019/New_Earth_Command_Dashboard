@@ -203,6 +203,10 @@ The startup lock is the first check. The voice gate is optional and should only 
 
 Use `PIN Registry` when a user has lost their local PIN or when you want to rotate it. It is only available after the main Users & Devices screen or Settings is open.
 
+Visual reference:
+
+- `docs/assets/pin_onboarding_confidence_flow.svg`
+
 You can also assign a PIN directly from an individual user card in `Users`.
 That card shows the PIN counts for that person, such as `Primary PIN 1` or `Recovery PIN 1`.
 Use `Assign PIN` on the card for the fastest path:
@@ -229,6 +233,9 @@ It supports:
 - issue recovery PIN
 - revoke all PINs for a user
 - revoke a single PIN record
+- review the `Recovery & reset queue`
+- read the `Recovery rotation guidance` panel
+- inspect the per-user `PIN event timeline`
 
 When to use it:
 
@@ -241,9 +248,12 @@ Click-by-click:
 1. Open `Users & Devices Control`.
 2. Click `Manage PINs` from `Users & Devices Control` or `Settings`.
 3. Pick the user.
-4. Set a primary PIN or issue a recovery PIN.
-5. Use `Security Lock` to test the new PIN.
-6. Revoke the old PIN once the user is back in.
+4. Read `Recovery & reset queue` first if the user is locked out or missing a primary PIN.
+5. Check `Recovery rotation guidance` to see whether a live recovery PIN should now be revoked or rotated away.
+6. Set a primary PIN or issue a recovery PIN.
+7. Use `Security Lock` to test the new PIN.
+8. Review `PIN event timeline` to confirm the local audit trail recorded the reset, recovery, or lockout path cleanly.
+9. Revoke the old PIN once the user is back in.
 
 ## Quick operator flow
 
@@ -684,6 +694,20 @@ Check the rule. Confirm the required permission, trust floor, and approval rules
 ### Device Onboarding
 
 Use this when a new device needs to become trusted.
+
+The screen now gives you three calm operator views at once:
+
+- `User readiness workspace` for one person at a time
+- `Device trust review queue` for endpoints that still need attention
+- `Trust drill checklist` for the practical steps to clear trust gaps
+
+Use this flow:
+
+1. Pick the user you are onboarding.
+2. Check `Current blocker summary` to see what is still missing.
+3. Review `Device trust review queue` if the linked device is blocked, quarantined, or still below the trust floor.
+4. Use `Trust drill checklist` to confirm the endpoint, read the evidence, and resolve the gap.
+5. Return to `Security Lock` or a protected module gate to verify the route once the user shows `Access ready`.
 
 ### Approval Queue
 

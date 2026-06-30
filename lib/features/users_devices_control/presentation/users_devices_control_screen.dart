@@ -1546,6 +1546,16 @@ class _UsersDevicesDeviceOnboardingScreenState
             : !hasTrustedDevice
             ? 'Raise trust on one linked device or complete device onboarding for this user.'
             : 'Open Security Lock or a module gate and verify the live local route.';
+        final blockerSummary = selectedUser == null
+            ? 'No user is selected yet.'
+            : accessReady
+            ? '${selectedUser.displayName} has a workable local unlock path right now.'
+            : [
+                if (!hasRoleAndPermissions) 'role or permission assignment',
+                if (!hasPrimaryPin) 'primary PIN setup',
+                if (!hasTrustedDevice) 'trusted device coverage',
+                if (quarantinedLinkedDevices.isNotEmpty) 'quarantine review',
+              ].join(' - ');
         final activeUsers = data.users
             .where((user) => user.status == 'active')
             .toList(growable: false);
@@ -1647,6 +1657,15 @@ class _UsersDevicesDeviceOnboardingScreenState
               return haystack.contains(query) && device.trustLevel >= 3;
             })
             .toList(growable: false);
+        String ownerLabelFor(String ownerId) {
+          for (final user in data.users) {
+            if (user.id == ownerId) {
+              return user.displayName;
+            }
+          }
+          return ownerId.isEmpty ? 'Unassigned' : ownerId;
+        }
+
         UsersDevicesControlDevice? deviceForId(String id) {
           for (final device in data.devices) {
             if (device.id == id) {
@@ -1849,6 +1868,15 @@ class _UsersDevicesDeviceOnboardingScreenState
                       body: nextOperatorStep,
                     ),
                     const SizedBox(height: 12),
+                    _EntityCard(
+                      icon: Icons.warning_amber_outlined,
+                      title: 'Current blocker summary',
+                      subtitle: accessReady
+                          ? 'All core checkpoints are green'
+                          : 'Still needs operator follow-up',
+                      body: blockerSummary,
+                    ),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 10,
                       runSpacing: 10,
@@ -2034,6 +2062,105 @@ class _UsersDevicesDeviceOnboardingScreenState
               ),
               const SizedBox(height: 16),
               _VisualPanel(
+                title: 'Device trust review queue',
+                subtitle:
+                    'See which endpoints still need review before they should support sensitive local access.',
+                icon: Icons.privacy_tip_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SummaryRow(
+                      items: [
+                        ('Needs review', reviewDevices.length),
+                        (
+                          'Quarantined',
+                          reviewDevices
+                              .where((device) => device.status == 'quarantined')
+                              .length,
+                        ),
+                        (
+                          'Blocked',
+                          reviewDevices
+                              .where((device) => device.status == 'blocked')
+                              .length,
+                        ),
+                        (
+                          'Below trust 3',
+                          reviewDevices
+                              .where((device) => device.trustLevel < 3)
+                              .length,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (reviewDevices.isEmpty)
+                      const _EmptyCollectionState(
+                        icon: Icons.verified_user_outlined,
+                        title: 'No device trust follow-up is waiting',
+                        body:
+                            'Every active local device already has enough posture for the current onboarding scope.',
+                      )
+                    else
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          for (final device in reviewDevices.take(6))
+                            SizedBox(
+                              width: 320,
+                              child: _EntityCard(
+                                icon: device.status == 'quarantined'
+                                    ? Icons.gpp_bad_outlined
+                                    : device.status == 'blocked'
+                                    ? Icons.block_outlined
+                                    : Icons.devices_outlined,
+                                title: device.name,
+                                subtitle:
+                                    '${ownerLabelFor(device.ownerId)} - ${device.trustPostureLabel}',
+                                body:
+                                    '${device.trustPostureSummary}\n${device.trustEvidenceSummary}',
+                                chips: [
+                                  _CardChip(
+                                    label: 'Trust ${device.trustLevel}',
+                                  ),
+                                  _CardChip(label: 'Status: ${device.status}'),
+                                  if (device.allowedActions.isNotEmpty)
+                                    _CardChip(
+                                      label:
+                                          '${device.allowedActions.length} local scopes',
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesDevices),
+                          icon: const Icon(Icons.devices_outlined),
+                          label: const Text('Open Devices'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _openOnboardingWizard(
+                            context,
+                            ref,
+                            template: _template,
+                          ),
+                          icon: const Icon(Icons.phonelink_setup_outlined),
+                          label: const Text('Run trust drill'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
                 title: 'Completion summary',
                 subtitle:
                     'When one user is ready, this panel gives a calm handoff summary and the audit evidence behind it.',
@@ -2162,6 +2289,60 @@ class _UsersDevicesDeviceOnboardingScreenState
                           label: const Text('Verify in Security Lock'),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VisualPanel(
+                title: 'Trust drill checklist',
+                subtitle:
+                    'Use this when a device still needs review, quarantine follow-up, or a fresh trust confirmation.',
+                icon: Icons.checklist_rtl_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _CardChip(
+                          label: selectedUser == null
+                              ? 'User: none'
+                              : 'User: ${selectedUser.displayName}',
+                        ),
+                        _CardChip(
+                          label: linkedDevices.isEmpty
+                              ? 'Linked devices: 0'
+                              : 'Linked devices: ${linkedDevices.length}',
+                        ),
+                        _CardChip(
+                          label: quarantinedLinkedDevices.isEmpty
+                              ? 'Quarantine clear'
+                              : 'Quarantine: ${quarantinedLinkedDevices.length}',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const _StepCard(
+                      step: '1',
+                      title: 'Confirm the endpoint',
+                      body:
+                          'Check the device name, owner, purpose, and whether it is still the right endpoint for this person.',
+                    ),
+                    const SizedBox(height: 12),
+                    const _StepCard(
+                      step: '2',
+                      title: 'Read the trust evidence',
+                      body:
+                          'Review the trust source, reviewer, last seen signal, and any quarantine note before changing posture.',
+                    ),
+                    const SizedBox(height: 12),
+                    const _StepCard(
+                      step: '3',
+                      title: 'Resolve the gap',
+                      body:
+                          'Either raise trust, keep the device quarantined, or replace it with a cleaner endpoint. Record the reason in the local audit trail.',
                     ),
                   ],
                 ),

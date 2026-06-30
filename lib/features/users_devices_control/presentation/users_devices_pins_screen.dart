@@ -586,6 +586,12 @@ class _UsersDevicesPinsScreenState
             ),
             data: (pins) {
               final now = DateTime.now().toUtc();
+              final activePinEvents =
+                  users.auditLog.where(_isPinAuditEvent).toList(growable: false)
+                    ..sort(
+                      (left, right) =>
+                          right.timestamp.compareTo(left.timestamp),
+                    );
               final userPins = selectedUser == null
                   ? const <UsersDevicesPinRecord>[]
                   : pins.recordsForUser(selectedUser.id);
@@ -606,6 +612,26 @@ class _UsersDevicesPinsScreenState
                   : pins.lockoutForUser(selectedUser.id);
               final hasSinglePrimary = primaryPins.length == 1;
               final supportQueue = _buildSupportQueue(users.users, pins, now);
+              final staleRecoveryCount = pins.records
+                  .where(
+                    (record) =>
+                        record.status == 'recovery' &&
+                        now.difference(record.updatedAt) >=
+                            const Duration(hours: 24),
+                  )
+                  .length;
+              final selectedPinEvents = selectedUser == null
+                  ? const <UsersDevicesControlAuditEvent>[]
+                  : activePinEvents
+                        .where((event) => event.actorId == selectedUser.id)
+                        .toList(growable: false);
+              final recoveryRotationSummary = _buildRecoveryRotationSummary(
+                now: now,
+                selectedUser: selectedUser,
+                recoveryPins: recoveryPins,
+                selectedLockout: selectedLockout,
+                staleRecoveryCount: staleRecoveryCount,
+              );
               final lockedOutCount = supportQueue
                   .where((entry) => entry.isLockedOut)
                   .length;
@@ -980,6 +1006,52 @@ class _UsersDevicesPinsScreenState
                             ),
                           ),
                           const SizedBox(height: 12),
+                          Card(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.14),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Recovery rotation guidance',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(recoveryRotationSummary.message),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _CardChip(
+                                        label:
+                                            'Selected recovery: ${recoveryPins.length}',
+                                      ),
+                                      _CardChip(
+                                        label:
+                                            'Queue with recovery: $recoveryLiveCount',
+                                      ),
+                                      _CardChip(
+                                        label:
+                                            'Older than 24h: ${recoveryRotationSummary.staleRecoveryCount}',
+                                      ),
+                                      _CardChip(
+                                        label:
+                                            'Active lockouts: $lockedOutCount',
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Wrap(
                             spacing: 10,
                             runSpacing: 10,
@@ -1024,6 +1096,46 @@ class _UsersDevicesPinsScreenState
                                   'Share this generated recovery code with the user, then revoke it after use.',
                             ),
                           ],
+                          const SizedBox(height: 12),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'PIN event timeline',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    selectedUser == null
+                                        ? 'Choose a user to review their recent PIN, recovery, and lockout events.'
+                                        : 'Recent local events for ${selectedUser.displayName} so reset and recovery decisions stay grounded in evidence.',
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (selectedUser == null)
+                                    const Text('No user is selected yet.')
+                                  else if (selectedPinEvents.isEmpty)
+                                    const Text(
+                                      'No PIN-related audit events have been recorded for this user yet.',
+                                    )
+                                  else
+                                    Column(
+                                      children: [
+                                        for (final event
+                                            in selectedPinEvents.take(6)) ...[
+                                          _PinAuditEventTile(event: event),
+                                          const SizedBox(height: 10),
+                                        ],
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1092,6 +1204,54 @@ String _maskPin(String pinCode) {
   }
 
   return '${'*' * (pinCode.length - 2)}${pinCode.substring(pinCode.length - 2)}';
+}
+
+bool _isPinAuditEvent(UsersDevicesControlAuditEvent event) {
+  return event.eventType.startsWith('pin_') ||
+      event.action.contains('pin') ||
+      event.action.contains('unlock');
+}
+
+({String message, int staleRecoveryCount}) _buildRecoveryRotationSummary({
+  required DateTime now,
+  required UsersDevicesControlUser? selectedUser,
+  required List<UsersDevicesPinRecord> recoveryPins,
+  required UsersDevicesPinLockoutState? selectedLockout,
+  required int staleRecoveryCount,
+}) {
+  if (selectedUser == null) {
+    return (
+      message:
+          'Pick a user first to review how recovery PINs and cooldown windows should be handled.',
+      staleRecoveryCount: staleRecoveryCount,
+    );
+  }
+
+  if (selectedLockout != null && selectedLockout.isLockedAt(now)) {
+    return (
+      message:
+          '${selectedUser.displayName} is in an active cooldown window. Use a recovery PIN only after identity has been checked, then rotate back to a fresh primary PIN once support is complete.',
+      staleRecoveryCount: staleRecoveryCount,
+    );
+  }
+
+  if (recoveryPins.isEmpty) {
+    return (
+      message:
+          '${selectedUser.displayName} does not have a live recovery PIN right now. That is the calm default when the primary path is healthy.',
+      staleRecoveryCount: staleRecoveryCount,
+    );
+  }
+
+  final oldestRecovery = recoveryPins
+      .map((record) => now.difference(record.updatedAt))
+      .reduce((left, right) => left > right ? left : right);
+  final oldestLabel = _formatInlineDuration(oldestRecovery);
+  return (
+    message:
+        '${selectedUser.displayName} has ${recoveryPins.length} live recovery PIN${recoveryPins.length == 1 ? '' : 's'}. Revoke recovery access after use, and rotate the user back to one clean primary PIN. Oldest live recovery age: $oldestLabel.',
+    staleRecoveryCount: staleRecoveryCount,
+  );
 }
 
 enum _PrimaryPinState { missing, ready, review }
@@ -1302,6 +1462,58 @@ class _PinRevealCard extends StatelessWidget {
             Text(note),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PinAuditEventTile extends StatelessWidget {
+  const _PinAuditEventTile({required this.event});
+
+  final UsersDevicesControlAuditEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final toneColor = switch (event.result.toLowerCase()) {
+      'allowed' => const Color(0xFF7EE6C5),
+      'approved' => const Color(0xFF7EE6C5),
+      'denied' => theme.colorScheme.errorContainer,
+      _ => theme.colorScheme.surfaceContainerHighest,
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: toneColor.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _CardChip(label: event.eventType),
+              _CardChip(label: event.result),
+              _CardChip(label: event.action),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(event.reason, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 8),
+          Text(
+            event.timestamp,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

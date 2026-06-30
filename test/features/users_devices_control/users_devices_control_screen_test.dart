@@ -268,6 +268,8 @@ void main() {
     await pumpUntilFound(tester, find.text('Unlock session'));
 
     expect(find.text('Unlock session'), findsWidgets);
+    expect(find.text('Sleep quietly'), findsWidgets);
+    expect(find.text('Exit completely'), findsWidgets);
     expect(find.text('Open Users & Devices'), findsWidgets);
     expect(find.text('Open audit log'), findsOneWidget);
   });
@@ -375,6 +377,8 @@ void main() {
 
     expect(find.text('User readiness workspace'), findsOneWidget);
     expect(find.text('Operator progress board'), findsOneWidget);
+    expect(find.text('Device trust review queue'), findsOneWidget);
+    expect(find.text('Trust drill checklist'), findsOneWidget);
     expect(find.text('Completion summary'), findsOneWidget);
     expect(find.textContaining('Role and permissions set'), findsOneWidget);
     expect(find.textContaining('Primary PIN is ready'), findsOneWidget);
@@ -383,6 +387,7 @@ void main() {
     expect(find.text('Verify access'), findsWidgets);
     expect(find.text('Open PIN Registry'), findsOneWidget);
     expect(find.text('Next operator step'), findsOneWidget);
+    expect(find.text('Current blocker summary'), findsOneWidget);
     expect(find.text('Next users to help'), findsOneWidget);
   });
 

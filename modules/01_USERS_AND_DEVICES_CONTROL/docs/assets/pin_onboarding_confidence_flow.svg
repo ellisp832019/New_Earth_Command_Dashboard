@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="920" viewBox="0 0 1400 920">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#07141d"/>
+      <stop offset="100%" stop-color="#102734"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #eef6f3; }
+      .subtitle { font: 400 18px 'Segoe UI', Arial, sans-serif; fill: #9fc0bc; }
+      .cardTitle { font: 700 24px 'Segoe UI', Arial, sans-serif; fill: #eef6f3; }
+      .body { font: 400 18px 'Segoe UI', Arial, sans-serif; fill: #d5e6e1; }
+      .small { font: 400 15px 'Segoe UI', Arial, sans-serif; fill: #9fc0bc; }
+      .chip { font: 700 14px 'Segoe UI', Arial, sans-serif; fill: #a8df58; }
+    </style>
+  </defs>
+  <rect width="1400" height="920" fill="url(#bg)"/>
+  <text x="72" y="78" class="title">Users &amp; Devices Trust Confidence Flow</text>
+  <text x="72" y="112" class="subtitle">PIN governance, lockout confidence, and onboarding trust review in one calm local loop</text>
+
+  <rect x="72" y="162" width="380" height="230" rx="26" fill="#132833" stroke="#244757"/>
+  <text x="102" y="206" class="cardTitle">1. Security Lock</text>
+  <text x="102" y="244" class="body">Select local user and trusted device.</text>
+  <text x="102" y="276" class="body">Check the primary PIN first.</text>
+  <text x="102" y="308" class="body">If the PIN fails, read the lockout reason.</text>
+  <text x="102" y="340" class="body">If cooldown starts, pause and support safely.</text>
+  <text x="102" y="372" class="small">Only this screen should be the honest public entry while locked.</text>
+
+  <rect x="510" y="162" width="380" height="230" rx="26" fill="#132833" stroke="#244757"/>
+  <text x="540" y="206" class="cardTitle">2. PIN Registry</text>
+  <text x="540" y="244" class="body">Read the Recovery &amp; reset queue.</text>
+  <text x="540" y="276" class="body">Check Recovery rotation guidance.</text>
+  <text x="540" y="308" class="body">Set primary PIN, issue recovery PIN, or clear lockout.</text>
+  <text x="540" y="340" class="body">Review the PIN event timeline before closing.</text>
+  <text x="540" y="372" class="small">Recovery is temporary. Rotate back to one clean primary PIN.</text>
+
+  <rect x="948" y="162" width="380" height="230" rx="26" fill="#132833" stroke="#244757"/>
+  <text x="978" y="206" class="cardTitle">3. Device Onboarding</text>
+  <text x="978" y="244" class="body">Read the Current blocker summary.</text>
+  <text x="978" y="276" class="body">Work through the Device trust review queue.</text>
+  <text x="978" y="308" class="body">Use the Trust drill checklist.</text>
+  <text x="978" y="340" class="body">Return only when the route is trust-ready.</text>
+  <text x="978" y="372" class="small">Trust evidence should explain why a device is ready, blocked, or quarantined.</text>
+
+  <rect x="160" y="506" width="320" height="182" rx="24" fill="#16333d" stroke="#2b5a63"/>
+  <text x="188" y="548" class="cardTitle">When PIN fails</text>
+  <text x="188" y="586" class="body">1. Check remaining attempts.</text>
+  <text x="188" y="616" class="body">2. Respect cooldown timer.</text>
+  <text x="188" y="646" class="body">3. Use recovery only after identity check.</text>
+
+  <rect x="540" y="506" width="320" height="182" rx="24" fill="#16333d" stroke="#2b5a63"/>
+  <text x="568" y="548" class="cardTitle">When recovery is used</text>
+  <text x="568" y="586" class="body">1. Unlock the session.</text>
+  <text x="568" y="616" class="body">2. Set a fresh primary PIN.</text>
+  <text x="568" y="646" class="body">3. Revoke the recovery PIN.</text>
+
+  <rect x="920" y="506" width="320" height="182" rx="24" fill="#16333d" stroke="#2b5a63"/>
+  <text x="948" y="548" class="cardTitle">When trust is missing</text>
+  <text x="948" y="586" class="body">1. Confirm owner and endpoint.</text>
+  <text x="948" y="616" class="body">2. Read trust evidence or quarantine note.</text>
+  <text x="948" y="646" class="body">3. Raise trust or keep the block in place.</text>
+
+  <path d="M452 278 H510" stroke="#a8df58" stroke-width="5" fill="none"/>
+  <polygon points="500,266 522,278 500,290" fill="#a8df58"/>
+  <path d="M890 278 H948" stroke="#a8df58" stroke-width="5" fill="none"/>
+  <polygon points="938,266 960,278 938,290" fill="#a8df58"/>
+
+  <path d="M700 392 V468" stroke="#7ee6c5" stroke-width="5" fill="none"/>
+  <polygon points="688,458 700,480 712,458" fill="#7ee6c5"/>
+
+  <text x="76" y="792" class="chip">CALM RULES</text>
+  <text x="76" y="828" class="body">Keep one active primary PIN per user. Treat recovery as temporary. Trust the device only when the local evidence is readable. Verify the route again from Security Lock after changes.</text>
+</svg>

@@ -191,6 +191,8 @@ void main() {
     expect(find.text('Recovery live: 1', skipOffstage: false), findsOneWidget);
     expect(find.text('Admin reset flow'), findsOneWidget);
     expect(find.text('Clear lockout timer'), findsOneWidget);
+    expect(find.text('Recovery rotation guidance'), findsOneWidget);
+    expect(find.text('PIN event timeline'), findsOneWidget);
     expect(find.textContaining('Cooldown:'), findsOneWidget);
     expect(
       find.textContaining('currently in a cooldown window'),
@@ -263,6 +265,8 @@ void main() {
         find.text('Recovery live: 0', skipOffstage: false),
         findsOneWidget,
       );
+      expect(find.text('Recovery rotation guidance'), findsOneWidget);
+      expect(find.text('PIN event timeline'), findsOneWidget);
     },
   );
 }
