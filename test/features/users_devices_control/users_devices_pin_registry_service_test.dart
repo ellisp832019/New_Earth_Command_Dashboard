@@ -268,4 +268,63 @@ void main() {
       expect(activeLockout.lockedUntil, triggerFailure.lockedUntil);
     },
   );
+
+  test(
+    'PIN and lockout state survive a fresh service reload',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      var now = DateTime.utc(2026, 6, 27, 10, 0, 0);
+      final service = UsersDevicesPinRegistryService(
+        database: database,
+        maxFailedAttempts: 2,
+        lockoutDuration: const Duration(minutes: 4),
+        nowProvider: () => now,
+      );
+
+      final snapshot = await service.loadSnapshot();
+      final selected = snapshot.records.firstWhere(
+        (record) => record.status == 'active',
+      );
+
+      await service.setPrimaryPin(
+        userId: selected.userId,
+        pinCode: '4434',
+        notes: 'Reload persistence test primary PIN.',
+      );
+      now = now.add(const Duration(seconds: 1));
+      final recovery = await service.issueRecoveryPin(userId: selected.userId);
+
+      await service.validatePinForUser(selected.userId, '000000');
+      final triggerFailure = await service.validatePinForUser(
+        selected.userId,
+        '000000',
+      );
+      expect(triggerFailure.issueCode, 'locked_out_triggered');
+
+      final reloaded = UsersDevicesPinRegistryService(
+        database: database,
+        maxFailedAttempts: 2,
+        lockoutDuration: const Duration(minutes: 4),
+        nowProvider: () => now,
+      );
+
+      final reloadedSnapshot = await reloaded.loadSnapshot();
+      expect(
+        reloadedSnapshot.primaryPinForUser(selected.userId)?.pinCode,
+        '4434',
+      );
+      expect(
+        reloadedSnapshot.recoveryPinsForUser(selected.userId).any(
+          (pin) => pin.pinCode == recovery.pinCode,
+        ),
+        isTrue,
+      );
+      expect(
+        reloadedSnapshot.lockoutForUser(selected.userId)?.isLockedAt(now),
+        isTrue,
+      );
+    },
+  );
 }

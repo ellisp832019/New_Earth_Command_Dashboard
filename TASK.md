@@ -1,20 +1,20 @@
-# TASK - Users & Devices Export And Migration Health
+# TASK - Users & Devices Persistence And Migration Hardening
 
 ## Status
 
 Ready to start.
 
-The reporting and audit hardening slice has completed.
+The export and migration health slice has completed.
 
 The next active trust-hardening slice should deepen local operator confidence in:
 
-- exportable readiness summaries
-- calmer incident reporting for audit review
-- SQLite migration health visibility for local support
+- SQLite persistence confidence
+- repeat-load migration stability
+- proof that PIN and approval state survive local reloads cleanly
 
 ## Goal
 
-Make the `Onboarding Report`, `Audit Log`, and module home feel like dependable local operator support tools by adding exportable summaries and a clear migration-health view for the SQLite-first trust layer.
+Make the Users & Devices trust layer feel dependable under reload, restart, and migration conditions by proving that SQLite-first state stays stable and older data normalizes cleanly.
 
 This slice sits inside the wider upgrade streams:
 
@@ -36,18 +36,18 @@ Read these files first:
 Pay special attention to:
 
 - onboarding readiness and trust review posture
-- calmer export and handoff patterns
 - SQLite-first migration confidence
-- seed fallback visibility for local support
+- approval normalization on reload
+- PIN persistence and lockout persistence
 - persistence and release verification discipline
 
 ## Requirements
 
 1. Keep the app local-first and offline-first.
 2. Keep wording calm, practical, and low-pressure.
-3. Keep exported summaries readable enough for handoff and review.
-4. Make migration posture understandable without requiring database knowledge.
-5. Keep file export local and review-first.
+3. Keep persistence checks focused on real local operator risk.
+4. Prefer repository and service proof over visual noise.
+5. Keep seed fallback behaviour predictable and non-duplicating.
 6. Keep wording calm, practical, and low-pressure.
 7. Keep changes small, reviewable, and testable.
 8. If runtime behaviour changes, verify analyzer, tests, and Windows build honestly.
@@ -56,17 +56,16 @@ Pay special attention to:
 
 This slice should focus on the most useful minimum:
 
-1. add a local readiness summary export from `Onboarding Report`
-2. add a calmer incident summary export from `Audit Log`
-3. add a small `Migration Health` admin screen for SQLite-first support
-4. surface the migration screen from the Users & Devices module home
-5. prove the new export and migration panels with focused tests
+1. prove repeated repository loads do not duplicate seeded trust data
+2. prove PIN state and lockout state survive a fresh service reload
+3. prove migration health reflects the real SQLite table state
+4. update the focused tests and guide wording only where needed
 
 Recommended first focus:
 
-- export clarity
 - migration confidence
-- local support usefulness
+- repeat-load stability
+- restart safety
 
 ## Out of Scope
 
@@ -81,19 +80,19 @@ Do not add these in this slice unless they are already trivial once the core wor
 
 After this slice:
 
-1. operators can export a calm readiness summary without leaving the app
-2. audit review can produce a calmer local incident summary
-3. local support can inspect whether the Users & Devices trust layer is seeded and living in SQLite as expected
-4. the reporting and migration layer feels stronger without becoming noisy
+1. repeated local loads stay stable without seed duplication
+2. PIN and lockout state survive a fresh service round-trip
+3. migration health remains honest about table presence and row counts
+4. the SQLite-first trust layer feels safer to rely on day to day
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. Onboarding Report exposes a local readiness export path
-2. Audit Log exposes a local incident export path
-3. Users & Devices shows a dedicated Migration Health support screen
-3. focused Users & Devices tests are added or updated where practical
+1. repository tests prove repeated loads stay stable
+2. PIN registry tests prove PIN and lockout state survive a fresh reload
+3. migration health is covered by focused persistence tests where practical
+4. focused Users & Devices tests are added or updated where practical
 5. `flutter analyze` passes
 6. `flutter test` passes
 7. `flutter build windows` passes if runtime code changed

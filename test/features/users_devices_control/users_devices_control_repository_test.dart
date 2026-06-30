@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/core/database/app_database.dart'
     hide
@@ -10,6 +13,8 @@ import 'package:new_earth_command_dashboard/core/database/app_database.dart'
 import 'package:new_earth_command_dashboard/features/users_devices_control/data/users_devices_control_repository.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('repository seeds the full local registry into Drift once', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -455,5 +460,87 @@ void main() {
     expect(device.trustReviewedAt, '2026-06-29T08:00:00Z');
     expect(device.lastSeenAt, '2026-06-29T08:30:00Z');
     expect(device.operatorNote, 'Evidence should persist.');
+  });
+
+  test('repeated repository loads do not duplicate seeded local rows', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+
+    await repository.loadSnapshot();
+    await repository.loadSnapshot();
+    await repository.loadSnapshot();
+
+    final users = await database.select(database.usersDevicesControlUsers).get();
+    final devices = await database
+        .select(database.usersDevicesControlDevices)
+        .get();
+    final approvals = await database
+        .select(database.usersDevicesControlApprovalRequests)
+        .get();
+    final audit = await database
+        .select(database.usersDevicesControlAuditEvents)
+        .get();
+
+    expect(users, hasLength(7));
+    expect(devices, hasLength(9));
+    expect(approvals, hasLength(1));
+    expect(audit, hasLength(1));
+  });
+
+  test('migration health reports sqlite table posture and row counts', () async {
+    final tempDir = await Directory.systemTemp.createTemp(
+      'users_devices_migration_health_',
+    );
+    addTearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    const channel = MethodChannel('plugins.flutter.io/path_provider');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'getApplicationDocumentsDirectory') {
+            return tempDir.path;
+          }
+          return null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    final health = await repository.loadMigrationHealth();
+
+    expect(health.usingDatabase, isTrue);
+    expect(health.schemaVersion, 15);
+    expect(health.tables.any((table) => table.tableName == 'users_devices_control_users'), isTrue);
+    expect(
+      health.tables.firstWhere(
+        (table) => table.tableName == 'users_devices_control_users',
+      ).rowCount,
+      7,
+    );
+    expect(
+      health.tables.firstWhere(
+        (table) => table.tableName == 'users_devices_control_pin_records',
+      ).exists,
+      isTrue,
+    );
+    expect(
+      health.seedFiles.any(
+        (file) =>
+            file.path.endsWith('users.example.json') && file.exists,
+      ),
+      isTrue,
+    );
   });
 }
