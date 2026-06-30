@@ -632,6 +632,13 @@ class _UsersDevicesPinsScreenState
                 selectedLockout: selectedLockout,
                 staleRecoveryCount: staleRecoveryCount,
               );
+              final governedResetChecklist = _buildGovernedResetChecklist(
+                selectedUser: selectedUser,
+                primaryPins: primaryPins,
+                recoveryPins: recoveryPins,
+                selectedLockout: selectedLockout,
+                now: now,
+              );
               final lockedOutCount = supportQueue
                   .where((entry) => entry.isLockedOut)
                   .length;
@@ -789,6 +796,67 @@ class _UsersDevicesPinsScreenState
                                   ],
                                 ),
                               ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.15),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Governed reset checklist',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(governedResetChecklist.summary),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _CardChip(
+                                        label: selectedUser == null
+                                            ? 'User: none'
+                                            : 'User: ${selectedUser.displayName}',
+                                      ),
+                                      _CardChip(
+                                        label: governedResetChecklist
+                                            .identityLabel,
+                                      ),
+                                      _CardChip(
+                                        label: governedResetChecklist
+                                            .recoveryLabel,
+                                      ),
+                                      _CardChip(
+                                        label:
+                                            governedResetChecklist.primaryLabel,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  for (
+                                    var i = 0;
+                                    i < governedResetChecklist.steps.length;
+                                    i++
+                                  ) ...[
+                                    _ResetChecklistStep(
+                                      index: i + 1,
+                                      text: governedResetChecklist.steps[i],
+                                    ),
+                                    if (i !=
+                                        governedResetChecklist.steps.length - 1)
+                                      const SizedBox(height: 10),
+                                  ],
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -1254,6 +1322,141 @@ bool _isPinAuditEvent(UsersDevicesControlAuditEvent event) {
   );
 }
 
+class _GovernedResetChecklist {
+  const _GovernedResetChecklist({
+    required this.summary,
+    required this.identityLabel,
+    required this.recoveryLabel,
+    required this.primaryLabel,
+    required this.steps,
+  });
+
+  final String summary;
+  final String identityLabel;
+  final String recoveryLabel;
+  final String primaryLabel;
+  final List<String> steps;
+}
+
+_GovernedResetChecklist _buildGovernedResetChecklist({
+  required UsersDevicesControlUser? selectedUser,
+  required List<UsersDevicesPinRecord> primaryPins,
+  required List<UsersDevicesPinRecord> recoveryPins,
+  required UsersDevicesPinLockoutState? selectedLockout,
+  required DateTime now,
+}) {
+  if (selectedUser == null) {
+    return const _GovernedResetChecklist(
+      summary:
+          'Choose one user first so recovery issuance, lockout clearance, and forced reset all stay tied to the same identity.',
+      identityLabel: 'Identity: choose user',
+      recoveryLabel: 'Recovery: pending',
+      primaryLabel: 'Primary: pending',
+      steps: [
+        'Select the local user who needs support.',
+        'Review whether they are missing a primary PIN, carrying a live recovery PIN, or sitting inside a cooldown window.',
+        'Only then decide whether to set a primary PIN, issue recovery access, or clear a lockout timer.',
+      ],
+    );
+  }
+
+  final isLockedOut = selectedLockout?.isLockedAt(now) ?? false;
+  final primaryState = primaryPins.isEmpty
+      ? 'Primary: missing'
+      : primaryPins.length == 1
+      ? 'Primary: ready'
+      : 'Primary: review';
+  final recoveryState = recoveryPins.isEmpty
+      ? 'Recovery: none live'
+      : 'Recovery: ${recoveryPins.length} live';
+  final identityState = isLockedOut
+      ? 'Identity: verify before clear'
+      : 'Identity: operator confirmed';
+
+  if (isLockedOut) {
+    return _GovernedResetChecklist(
+      summary:
+          '${selectedUser.displayName} is in an active cooldown window. Treat this as support work: verify identity, decide whether a temporary recovery path is justified, and only clear the timer when you can explain why.',
+      identityLabel: identityState,
+      recoveryLabel: recoveryState,
+      primaryLabel: primaryState,
+      steps: [
+        'Verify the person and confirm you are working on ${selectedUser.displayName}.',
+        'Capture a reason before clearing the timer or issuing a recovery PIN.',
+        'If urgent access is needed, issue one fresh recovery PIN and share it through a safe local path.',
+        'After the user is back in, set or confirm one clean primary PIN.',
+        'Revoke the recovery PIN and review the PIN event timeline so the support path is complete.',
+      ],
+    );
+  }
+
+  if (primaryPins.isEmpty && recoveryPins.isNotEmpty) {
+    return _GovernedResetChecklist(
+      summary:
+          '${selectedUser.displayName} is missing a day-to-day primary PIN but still has recovery access available. Use that as the temporary bridge, then rotate back to one stable primary PIN.',
+      identityLabel: identityState,
+      recoveryLabel: recoveryState,
+      primaryLabel: primaryState,
+      steps: [
+        'Confirm ${selectedUser.displayName} really needs recovery access instead of a normal unlock.',
+        'Use the live recovery PIN, or issue a fresh one if the current path is stale or uncertain.',
+        'Once access is restored, force reset a new primary PIN with a clear admin reason.',
+        'Retire the temporary recovery path so only the new primary PIN remains active.',
+        'Check the audit timeline to confirm issue, reset, and revoke events all landed locally.',
+      ],
+    );
+  }
+
+  if (primaryPins.isEmpty) {
+    return _GovernedResetChecklist(
+      summary:
+          '${selectedUser.displayName} does not have an active primary PIN right now. This is a setup or recovery gap, so the next safe step is to create the normal unlock path first.',
+      identityLabel: identityState,
+      recoveryLabel: recoveryState,
+      primaryLabel: primaryState,
+      steps: [
+        'Confirm the selected user is correct and that the missing primary PIN is expected.',
+        'Set a new primary PIN if the user can resume normally.',
+        'If support needs a temporary path first, issue one recovery PIN and then come back to set the primary PIN.',
+        'Test the result through Security Lock using the same user and trusted device.',
+        'Review the event timeline so the new setup or recovery path is recorded cleanly.',
+      ],
+    );
+  }
+
+  if (recoveryPins.isNotEmpty) {
+    return _GovernedResetChecklist(
+      summary:
+          '${selectedUser.displayName} already has a normal unlock path, but a recovery PIN is still live. That means the support loop is not fully closed yet.',
+      identityLabel: identityState,
+      recoveryLabel: recoveryState,
+      primaryLabel: primaryState,
+      steps: [
+        'Confirm the primary PIN is working before touching recovery access.',
+        'If the primary path is healthy, revoke the live recovery PIN.',
+        'If the primary path is not healthy, reset the primary PIN first and only keep recovery access for the shortest useful time.',
+        'Test unlock once, then remove the temporary recovery path.',
+        'Use the event timeline to confirm the revoke or reset sequence is complete.',
+      ],
+    );
+  }
+
+  return _GovernedResetChecklist(
+    summary:
+        '${selectedUser.displayName} already has a clean local unlock path. Any reset from here should be a deliberate admin action, not a routine habit.',
+    identityLabel: identityState,
+    recoveryLabel: recoveryState,
+    primaryLabel: primaryState,
+    steps: [
+      'Use force reset only when the user has genuinely lost the PIN or a rotation is required.',
+      'Capture the admin reason before changing the primary PIN.',
+      'Test the new primary PIN through Security Lock.',
+      'Keep recovery access off unless a real support path is needed.',
+      'Review the timeline afterwards so the reset remains auditable.',
+    ],
+  );
+}
+
 enum _PrimaryPinState { missing, ready, review }
 
 class _PinSupportQueueEntry {
@@ -1463,6 +1666,35 @@ class _PinRevealCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ResetChecklistStep extends StatelessWidget {
+  const _ResetChecklistStep({required this.index, required this.text});
+
+  final int index;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text('$index', style: theme.textTheme.labelMedium),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+      ],
     );
   }
 }

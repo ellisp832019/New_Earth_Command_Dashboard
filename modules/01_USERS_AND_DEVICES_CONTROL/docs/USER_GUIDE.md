@@ -234,6 +234,7 @@ It supports:
 - revoke all PINs for a user
 - revoke a single PIN record
 - review the `Recovery & reset queue`
+- follow the `Governed reset checklist`
 - read the `Recovery rotation guidance` panel
 - inspect the per-user `PIN event timeline`
 
@@ -249,11 +250,13 @@ Click-by-click:
 2. Click `Manage PINs` from `Users & Devices Control` or `Settings`.
 3. Pick the user.
 4. Read `Recovery & reset queue` first if the user is locked out or missing a primary PIN.
-5. Check `Recovery rotation guidance` to see whether a live recovery PIN should now be revoked or rotated away.
-6. Set a primary PIN or issue a recovery PIN.
-7. Use `Security Lock` to test the new PIN.
-8. Review `PIN event timeline` to confirm the local audit trail recorded the reset, recovery, or lockout path cleanly.
-9. Revoke the old PIN once the user is back in.
+5. Read `Admin reset flow` for the current lockout, primary, and recovery posture.
+6. Follow `Governed reset checklist` so identity verification, recovery issuance, forced reset, and revoke steps happen in the right order.
+7. Check `Recovery rotation guidance` to see whether a live recovery PIN should now be revoked or rotated away.
+8. Set a primary PIN or issue a recovery PIN.
+9. Use `Security Lock` to test the new PIN.
+10. Review `PIN event timeline` to confirm the local audit trail recorded the reset, recovery, or lockout path cleanly.
+11. Revoke the old or temporary PIN once the user is back in.
 
 ## Quick operator flow
 
@@ -427,6 +430,28 @@ What to keep in mind:
 - the recovery PIN should be revoked after use
 - if the user forgets the PIN again, issue a fresh recovery code rather than reusing an old one
 - the audit log should show both the issue and the revoke events
+
+## Force reset a primary PIN
+
+Use this when the user still exists, identity has been checked, and you need to replace the normal unlock PIN directly.
+
+1. Open `Users & Devices Control`.
+2. Open `PIN Registry`.
+3. Pick the affected user.
+4. Read `Admin reset flow`.
+5. Follow `Governed reset checklist`.
+6. Click `Force reset primary PIN` or `Set primary PIN`, depending on the posture shown.
+7. Enter the replacement primary PIN.
+8. Add the force-reset reason when prompted.
+9. Test the new PIN through `Security Lock`.
+10. Review `PIN event timeline`.
+
+What this means in practice:
+
+- recovery PIN issuance is separate from a primary reset
+- lockout timer clearance is separate from both
+- every reset needs a reason for the audit trail
+- the safest finish state is one active primary PIN and no lingering recovery PIN
 
 ## Seed demo PIN
 

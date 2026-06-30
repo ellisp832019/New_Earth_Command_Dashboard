@@ -190,12 +190,17 @@ void main() {
     );
     expect(find.text('Recovery live: 1', skipOffstage: false), findsOneWidget);
     expect(find.text('Admin reset flow'), findsOneWidget);
+    expect(find.text('Governed reset checklist'), findsOneWidget);
     expect(find.text('Clear lockout timer'), findsOneWidget);
     expect(find.text('Recovery rotation guidance'), findsOneWidget);
     expect(find.text('PIN event timeline'), findsOneWidget);
     expect(find.textContaining('Cooldown:'), findsOneWidget);
     expect(
       find.textContaining('currently in a cooldown window'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Verify the person and confirm you are working on'),
       findsOneWidget,
     );
     expect(find.text('Set primary PIN'), findsWidgets);
@@ -257,6 +262,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Locked out: 0', skipOffstage: false), findsOneWidget);
+      expect(find.text('Governed reset checklist'), findsOneWidget);
       expect(
         find.text('Missing primary: 0', skipOffstage: false),
         findsOneWidget,
