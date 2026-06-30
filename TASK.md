@@ -1,20 +1,20 @@
-# TASK - Users & Devices Reporting And Audit Hardening
+# TASK - Users & Devices Export And Migration Health
 
 ## Status
 
 Ready to start.
 
-The PIN governance and onboarding confidence slice has completed.
+The reporting and audit hardening slice has completed.
 
-The next active trust-hardening slice should deepen operator reporting confidence in:
+The next active trust-hardening slice should deepen local operator confidence in:
 
-- broader onboarding readiness reporting
-- grouped audit visibility
-- calmer risk summaries for failed unlocks, denials, and stale trust
+- exportable readiness summaries
+- calmer incident reporting for audit review
+- SQLite migration health visibility for local support
 
 ## Goal
 
-Make the `Onboarding Report` and `Audit Log` screens feel like dependable local operator reporting tools by surfacing readiness exceptions, grouped audit context, and latest-risk signals more clearly.
+Make the `Onboarding Report`, `Audit Log`, and module home feel like dependable local operator support tools by adding exportable summaries and a clear migration-health view for the SQLite-first trust layer.
 
 This slice sits inside the wider upgrade streams:
 
@@ -36,17 +36,18 @@ Read these files first:
 Pay special attention to:
 
 - onboarding readiness and trust review posture
-- grouped audit visibility by user, device, module, and action family
-- latest-risk reporting for failed unlocks, denials, and stale trust
+- calmer export and handoff patterns
+- SQLite-first migration confidence
+- seed fallback visibility for local support
 - persistence and release verification discipline
 
 ## Requirements
 
 1. Keep the app local-first and offline-first.
 2. Keep wording calm, practical, and low-pressure.
-3. Keep readiness reporting calm, readable, and useful for handoff.
-4. Show enough grouped audit history for a local operator to understand where trust pressure is building.
-5. Make latest-risk signals actionable without turning the screen into a security panic board.
+3. Keep exported summaries readable enough for handoff and review.
+4. Make migration posture understandable without requiring database knowledge.
+5. Keep file export local and review-first.
 6. Keep wording calm, practical, and low-pressure.
 7. Keep changes small, reviewable, and testable.
 8. If runtime behaviour changes, verify analyzer, tests, and Windows build honestly.
@@ -55,16 +56,17 @@ Pay special attention to:
 
 This slice should focus on the most useful minimum:
 
-1. expand `Onboarding Report` into a broader readiness dashboard
-2. add filters for archived, blocked, and exception-only users where useful
-3. add grouped audit summaries and a latest-risk panel in `Audit Log`
-4. prove the new reporting panels with focused tests
+1. add a local readiness summary export from `Onboarding Report`
+2. add a calmer incident summary export from `Audit Log`
+3. add a small `Migration Health` admin screen for SQLite-first support
+4. surface the migration screen from the Users & Devices module home
+5. prove the new export and migration panels with focused tests
 
 Recommended first focus:
 
-- readiness dashboard clarity
-- grouped audit visibility
-- risk summary usefulness
+- export clarity
+- migration confidence
+- local support usefulness
 
 ## Out of Scope
 
@@ -79,17 +81,18 @@ Do not add these in this slice unless they are already trivial once the core wor
 
 After this slice:
 
-1. operators can review onboarding readiness with clearer exception filters
-2. audit events can be read by grouped context rather than only as a flat list
-3. failed unlock and stale-trust signals are easier to spot quickly
-4. the reporting layer feels stronger without becoming noisy
+1. operators can export a calm readiness summary without leaving the app
+2. audit review can produce a calmer local incident summary
+3. local support can inspect whether the Users & Devices trust layer is seeded and living in SQLite as expected
+4. the reporting and migration layer feels stronger without becoming noisy
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. Onboarding Report shows a broader readiness dashboard
-2. Audit Log shows grouped summaries and latest-risk signals
+1. Onboarding Report exposes a local readiness export path
+2. Audit Log exposes a local incident export path
+3. Users & Devices shows a dedicated Migration Health support screen
 3. focused Users & Devices tests are added or updated where practical
 5. `flutter analyze` passes
 6. `flutter test` passes

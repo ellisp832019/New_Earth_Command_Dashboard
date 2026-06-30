@@ -15,3 +15,9 @@ final usersDevicesControlSnapshotProvider =
   final repository = ref.watch(usersDevicesControlRepositoryProvider);
   return repository.loadSnapshot();
 });
+
+final usersDevicesControlMigrationHealthProvider =
+    FutureProvider<UsersDevicesControlMigrationHealthSnapshot>((ref) async {
+      final repository = ref.watch(usersDevicesControlRepositoryProvider);
+      return repository.loadMigrationHealth();
+    });

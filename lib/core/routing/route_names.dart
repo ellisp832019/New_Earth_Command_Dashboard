@@ -55,6 +55,7 @@ abstract final class RouteNames {
   static const usersDevicesApprovalQueue = '/users-devices/approvals';
   static const usersDevicesAuditLog = '/users-devices/audit';
   static const usersDevicesPins = '/users-devices/pins';
+  static const usersDevicesMigrationHealth = '/users-devices/migration-health';
   static String usersDevicesOnboardingReportFor({
     String? userId,
     String? status,

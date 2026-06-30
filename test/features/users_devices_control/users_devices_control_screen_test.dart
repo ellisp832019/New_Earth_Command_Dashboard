@@ -18,6 +18,42 @@ class FakeUsersDevicesControlRepository extends UsersDevicesControlRepository {
   Future<UsersDevicesControlSnapshot> loadSnapshot() async => _snapshot;
 
   @override
+  Future<UsersDevicesControlMigrationHealthSnapshot> loadMigrationHealth() async {
+    return const UsersDevicesControlMigrationHealthSnapshot(
+      usingDatabase: true,
+      schemaVersion: 15,
+      databasePath: 'C:/Users/test/Documents/new_earth_command_dashboard.db',
+      databaseFileExists: true,
+      seedFiles: [
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Users seed',
+          path: 'modules/01_USERS_AND_DEVICES_CONTROL/data/users.example.json',
+          exists: true,
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Access rules config',
+          path: 'modules/01_USERS_AND_DEVICES_CONTROL/config/module_access_rules.json',
+          exists: true,
+        ),
+      ],
+      tables: [
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Users',
+          tableName: 'users_devices_control_users',
+          exists: true,
+          rowCount: 3,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'PIN records',
+          tableName: 'users_devices_control_pin_records',
+          exists: true,
+          rowCount: 2,
+        ),
+      ],
+    );
+  }
+
+  @override
   Future<UsersDevicesControlAccessDecision> canOpenModule(
     String userId,
     String deviceId,
@@ -315,12 +351,14 @@ void main() {
     expect(find.text('Open queue'), findsWidgets);
     expect(find.text('Onboarding pack PDF'), findsWidgets);
     expect(find.text('Recovery drills PDF'), findsWidgets);
+    expect(find.text('Migration health'), findsWidgets);
     expect(find.text('Seed demo path'), findsWidgets);
     expect(find.text('Reset demo data'), findsWidgets);
     expect(find.text('Onboarding'), findsWidgets);
     expect(find.text('Onboarding Report'), findsWidgets);
     expect(find.text('Approval Queue'), findsWidgets);
     expect(find.text('Audit Log'), findsWidgets);
+    expect(find.text('Migration Health'), findsWidgets);
   });
 
   testWidgets('module home shows the access review dashboard', (tester) async {
@@ -435,6 +473,8 @@ void main() {
       expect(find.text('Open onboarding'), findsOneWidget);
       expect(find.text('Selected user for handoff sheet'), findsOneWidget);
       expect(find.text('Copy summary'), findsWidgets);
+      expect(find.text('Export readiness'), findsWidgets);
+      expect(find.text('Open exports'), findsWidgets);
       expect(find.text('Onboarding pack PDF'), findsWidgets);
       expect(find.text('Recovery drills PDF'), findsWidgets);
       expect(find.text('Blocked'), findsWidgets);
@@ -450,11 +490,27 @@ void main() {
     await tester.pumpWidget(buildTestApp(const UsersDevicesAuditLogScreen()));
     await pumpUntilFound(tester, find.text('Audit posture'));
 
+    expect(find.text('Export incident'), findsOneWidget);
+    expect(find.text('Open exports'), findsOneWidget);
     expect(find.text('Latest risk panel'), findsOneWidget);
     expect(find.text('Grouped audit view'), findsOneWidget);
     expect(find.text('By user'), findsOneWidget);
     expect(find.text('By device'), findsOneWidget);
     expect(find.text('By module'), findsOneWidget);
     expect(find.text('By action family'), findsOneWidget);
+  });
+
+  testWidgets('migration health shows sqlite and seed posture', (tester) async {
+    await tester.pumpWidget(
+      buildTestApp(const UsersDevicesMigrationHealthScreen()),
+    );
+    await pumpUntilFound(tester, find.text('SQLite-first posture'));
+
+    expect(find.text('Migration Health'), findsOneWidget);
+    expect(find.text('SQLite-first posture'), findsOneWidget);
+    expect(find.text('Tracked tables'), findsOneWidget);
+    expect(find.text('Tracked seed and config files'), findsOneWidget);
+    expect(find.text('Database mode'), findsOneWidget);
+    expect(find.text('Database file'), findsOneWidget);
   });
 }

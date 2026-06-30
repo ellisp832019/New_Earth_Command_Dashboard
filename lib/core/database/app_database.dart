@@ -415,13 +415,15 @@ Future<bool> _columnExists(
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(
-      path.join(directory.path, 'new_earth_command_dashboard.db'),
-    );
+    final file = File(await appDatabaseFilePath());
 
     return NativeDatabase.createInBackground(file);
   });
+}
+
+Future<String> appDatabaseFilePath() async {
+  final directory = await getApplicationDocumentsDirectory();
+  return path.join(directory.path, 'new_earth_command_dashboard.db');
 }
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {

@@ -10,6 +10,7 @@ import '../../../core/routing/route_names.dart';
 import '../application/users_devices_control_controller.dart';
 import '../application/users_devices_pin_registry_controller.dart';
 import '../data/users_devices_control_repository.dart';
+import '../data/users_devices_control_report_service.dart';
 import '../data/users_devices_pin_registry_service.dart';
 import '../../security/application/security_session_controller.dart';
 
@@ -118,6 +119,12 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                         : () => context.go(RouteNames.usersDevicesPins),
                   ),
                   _ActionChip(
+                    label: 'Migration health',
+                    icon: Icons.storage_outlined,
+                    onPressed: () =>
+                        context.go(RouteNames.usersDevicesMigrationHealth),
+                  ),
+                  _ActionChip(
                     label: 'Onboarding pack PDF',
                     icon: Icons.picture_as_pdf_outlined,
                     onPressed: () => openLocalPdfDocument(
@@ -200,6 +207,12 @@ class UsersDevicesControlScreen extends ConsumerWidget {
                         : 'Set or recover local PINs',
                     icon: Icons.pin_outlined,
                     route: isSessionLocked ? null : RouteNames.usersDevicesPins,
+                  ),
+                  _NavTile(
+                    title: 'Migration Health',
+                    subtitle: 'SQLite, seed, and support posture',
+                    icon: Icons.storage_outlined,
+                    route: RouteNames.usersDevicesMigrationHealth,
                   ),
                 ],
               ),
@@ -3045,6 +3058,23 @@ class _UsersDevicesOnboardingReportScreenState
                     ),
                   ),
                   _ActionChip(
+                    label: 'Export readiness',
+                    icon: Icons.file_download_outlined,
+                    onPressed: () => _exportReadinessSummary(
+                      context: context,
+                      ref: ref,
+                      snapshot: data,
+                      pins: pins,
+                      focusedUserId: selectedStatus.user.id,
+                      statusFilter: _statusFilter,
+                    ),
+                  ),
+                  _ActionChip(
+                    label: 'Open exports',
+                    icon: Icons.folder_open_outlined,
+                    onPressed: () => _openUsersDevicesExportsFolder(context, ref),
+                  ),
+                  _ActionChip(
                     label: 'Onboarding pack PDF',
                     icon: Icons.picture_as_pdf_outlined,
                     onPressed: () => openLocalPdfDocument(
@@ -3399,6 +3429,18 @@ class _UsersDevicesOnboardingReportScreenState
                           label: const Text('Copy summary'),
                         ),
                         OutlinedButton.icon(
+                          onPressed: () => _exportReadinessSummary(
+                            context: context,
+                            ref: ref,
+                            snapshot: data,
+                            pins: pins,
+                            focusedUserId: selectedStatus.user.id,
+                            statusFilter: _statusFilter,
+                          ),
+                          icon: const Icon(Icons.file_download_outlined),
+                          label: const Text('Export readiness'),
+                        ),
+                        OutlinedButton.icon(
                           onPressed: () =>
                               context.go(RouteNames.usersDevicesAuditLog),
                           icon: const Icon(Icons.receipt_long_outlined),
@@ -3420,6 +3462,177 @@ class _UsersDevicesOnboardingReportScreenState
           ),
         );
       },
+    );
+  }
+}
+
+class UsersDevicesMigrationHealthScreen extends ConsumerWidget {
+  const UsersDevicesMigrationHealthScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final health = ref.watch(usersDevicesControlMigrationHealthProvider);
+    return health.when(
+      loading: () => const _LoadingScaffold(title: 'Migration Health'),
+      error: (error, stackTrace) => _ErrorScreen(
+        title: 'Migration Health',
+        message: 'The local migration posture could not be read right now.',
+        onRetry: () => ref.invalidate(usersDevicesControlMigrationHealthProvider),
+      ),
+      data: (data) => _SectionScaffold(
+        title: 'Migration Health',
+        subtitle: 'SQLite-first support posture for Users & Devices',
+        onBack: () => context.go(RouteNames.usersDevices),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ActionStrip(
+              title: 'Support actions',
+              subtitle:
+                  'Use this view when you want one calm read across SQLite, seed files, and support-facing table health.',
+              actions: [
+                _ActionChip(
+                  label: 'Open exports',
+                  icon: Icons.folder_open_outlined,
+                  onPressed: () => _openUsersDevicesExportsFolder(context, ref),
+                ),
+                _ActionChip(
+                  label: 'Open PIN Registry',
+                  icon: Icons.pin_outlined,
+                  onPressed: () => context.go(RouteNames.usersDevicesPins),
+                ),
+                _ActionChip(
+                  label: 'Open audit log',
+                  icon: Icons.receipt_long_outlined,
+                  onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _SummaryRow(
+              items: [
+                ('Schema', data.schemaVersion),
+                ('Tables', data.tables.length),
+                ('Rows', data.totalRows),
+                ('Missing seeds', data.missingSeedFileCount),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _VisualPanel(
+              title: 'SQLite-first posture',
+              subtitle:
+                  'This view confirms whether the trust layer is living in SQLite and whether the seed fallback still exists for first-run support.',
+              icon: Icons.storage_outlined,
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: 280,
+                    child: _EntityCard(
+                      icon: Icons.dns_outlined,
+                      title: 'Database mode',
+                      subtitle: data.usingDatabase
+                          ? 'SQLite attached'
+                          : 'Fallback-only mode',
+                      body: data.usingDatabase
+                          ? 'Users & Devices is connected to the local database and can keep trust state inside SQLite.'
+                          : 'The repository is not attached to SQLite right now, so support should treat this as a fallback-only state.',
+                    ),
+                  ),
+                  SizedBox(
+                    width: 280,
+                    child: _EntityCard(
+                      icon: Icons.insert_drive_file_outlined,
+                      title: 'Database file',
+                      subtitle: data.databaseFileExists
+                          ? 'Database file present'
+                          : 'Database file missing',
+                      body: data.databasePath,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 280,
+                    child: _EntityCard(
+                      icon: Icons.table_chart_outlined,
+                      title: 'Core tables',
+                      subtitle:
+                          '${data.tables.where((table) => table.exists).length}/${data.tables.length} present',
+                      body: data.missingTableCount == 0
+                          ? 'All tracked Users & Devices tables are present in the local database.'
+                          : '${data.missingTableCount} tracked tables are missing and should be reviewed before deeper support work.',
+                    ),
+                  ),
+                  SizedBox(
+                    width: 280,
+                    child: _EntityCard(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'Seed fallback',
+                      subtitle:
+                          '${data.seedFiles.where((file) => file.exists).length}/${data.seedFiles.length} files present',
+                      body: data.missingSeedFileCount == 0
+                          ? 'All tracked seed and config files are still available for first-run demo and fallback support.'
+                          : '${data.missingSeedFileCount} seed or config files are missing from the tracked local support set.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _VisualPanel(
+              title: 'Tracked tables',
+              subtitle:
+                  'Row counts help confirm whether trust records, approvals, audit entries, and PIN data are living in SQLite as expected.',
+              icon: Icons.dataset_outlined,
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final table in data.tables)
+                    SizedBox(
+                      width: 280,
+                      child: _EntityCard(
+                        icon: table.exists
+                            ? Icons.check_circle_outline
+                            : Icons.error_outline,
+                        title: table.label,
+                        subtitle: table.exists
+                            ? '${table.rowCount} row${table.rowCount == 1 ? '' : 's'}'
+                            : 'Missing',
+                        body: table.tableName,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _VisualPanel(
+              title: 'Tracked seed and config files',
+              subtitle:
+                  'These files stay local and give the module its first-run demo and fallback material.',
+              icon: Icons.file_copy_outlined,
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final file in data.seedFiles)
+                    SizedBox(
+                      width: 320,
+                      child: _EntityCard(
+                        icon: file.exists
+                            ? Icons.task_alt_outlined
+                            : Icons.warning_amber_outlined,
+                        title: file.label,
+                        subtitle: file.exists ? 'Present' : 'Missing',
+                        body: file.path,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -5324,6 +5537,36 @@ class _UsersDevicesAuditLogScreenState
               ],
             ),
             const SizedBox(height: 16),
+            _ActionStrip(
+              title: 'Audit actions',
+              subtitle:
+                  'Export a calmer local incident summary before diving into individual events.',
+              actions: [
+                _ActionChip(
+                  label: 'Export incident',
+                  icon: Icons.file_download_outlined,
+                  onPressed: () => _exportIncidentSummary(
+                    context: context,
+                    ref: ref,
+                    snapshot: data,
+                    resultFilter: _resultFilter,
+                    query: _query,
+                  ),
+                ),
+                _ActionChip(
+                  label: 'Open exports',
+                  icon: Icons.folder_open_outlined,
+                  onPressed: () => _openUsersDevicesExportsFolder(context, ref),
+                ),
+                _ActionChip(
+                  label: 'Open onboarding report',
+                  icon: Icons.assignment_outlined,
+                  onPressed: () =>
+                      context.go(RouteNames.usersDevicesOnboardingReport),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             _SearchFilterPanel(
               title: 'Search audit events',
               subtitle:
@@ -6894,6 +7137,66 @@ Future<void> _copyOnboardingReportSummary(
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Copied onboarding summary for $userName.')),
+    );
+  }
+}
+
+Future<void> _exportReadinessSummary({
+  required BuildContext context,
+  required WidgetRef ref,
+  required UsersDevicesControlSnapshot snapshot,
+  required UsersDevicesPinRegistrySnapshot pins,
+  required String? focusedUserId,
+  required String statusFilter,
+}) async {
+  final result = await ref
+      .read(usersDevicesControlReportServiceProvider)
+      .exportReadinessSummary(
+        snapshot: snapshot,
+        pins: pins,
+        focusedUserId: focusedUserId,
+        statusFilter: statusFilter,
+      );
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${result.message} ${result.reportPath}')),
+    );
+  }
+}
+
+Future<void> _exportIncidentSummary({
+  required BuildContext context,
+  required WidgetRef ref,
+  required UsersDevicesControlSnapshot snapshot,
+  required String resultFilter,
+  required String query,
+}) async {
+  final result = await ref
+      .read(usersDevicesControlReportServiceProvider)
+      .exportIncidentSummary(
+        snapshot: snapshot,
+        resultFilter: resultFilter,
+        query: query,
+      );
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${result.message} ${result.reportPath}')),
+    );
+  }
+}
+
+Future<void> _openUsersDevicesExportsFolder(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  await ref.read(usersDevicesControlReportServiceProvider).openExportsFolder();
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Opened the local Users & Devices export folder.'),
+      ),
     );
   }
 }

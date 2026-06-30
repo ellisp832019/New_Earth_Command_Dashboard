@@ -548,6 +548,59 @@ class UsersDevicesControlSnapshot {
   final List<UsersDevicesControlAccessRule> accessRules;
 }
 
+class UsersDevicesControlMigrationHealthSnapshot {
+  const UsersDevicesControlMigrationHealthSnapshot({
+    required this.usingDatabase,
+    required this.schemaVersion,
+    required this.databasePath,
+    required this.databaseFileExists,
+    required this.seedFiles,
+    required this.tables,
+  });
+
+  final bool usingDatabase;
+  final int schemaVersion;
+  final String databasePath;
+  final bool databaseFileExists;
+  final List<UsersDevicesControlMigrationSeedFileStatus> seedFiles;
+  final List<UsersDevicesControlMigrationTableStatus> tables;
+
+  int get missingSeedFileCount =>
+      seedFiles.where((file) => !file.exists).length;
+
+  int get missingTableCount =>
+      tables.where((table) => !table.exists).length;
+
+  int get totalRows =>
+      tables.fold(0, (sum, table) => sum + table.rowCount);
+}
+
+class UsersDevicesControlMigrationSeedFileStatus {
+  const UsersDevicesControlMigrationSeedFileStatus({
+    required this.label,
+    required this.path,
+    required this.exists,
+  });
+
+  final String label;
+  final String path;
+  final bool exists;
+}
+
+class UsersDevicesControlMigrationTableStatus {
+  const UsersDevicesControlMigrationTableStatus({
+    required this.label,
+    required this.tableName,
+    required this.exists,
+    required this.rowCount,
+  });
+
+  final String label;
+  final String tableName;
+  final bool exists;
+  final int rowCount;
+}
+
 class UsersDevicesControlAccessDecision {
   const UsersDevicesControlAccessDecision({
     required this.allowed,
@@ -585,6 +638,62 @@ class UsersDevicesControlRepository {
       approvalQueue: await _readApprovals(),
       auditLog: await _readAuditLog(),
       accessRules: await _readAccessRules(),
+    );
+  }
+
+  Future<UsersDevicesControlMigrationHealthSnapshot> loadMigrationHealth() async {
+    await _ensureDatabaseSeeded();
+    final db = database;
+    final databasePath = await appDatabaseFilePath();
+
+    return UsersDevicesControlMigrationHealthSnapshot(
+      usingDatabase: db != null,
+      schemaVersion: db?.schemaVersion ?? 0,
+      databasePath: databasePath,
+      databaseFileExists: File(databasePath).existsSync(),
+      seedFiles: [
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Users seed',
+          path: _usersExamplePath,
+          exists: File(_usersExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Devices seed',
+          path: _devicesExamplePath,
+          exists: File(_devicesExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Approvals seed',
+          path: _approvalQueueExamplePath,
+          exists: File(_approvalQueueExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Audit seed',
+          path: _auditLogExamplePath,
+          exists: File(_auditLogExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Roles seed',
+          path: _rolesExamplePath,
+          exists: File(_rolesExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Permissions seed',
+          path: _permissionsExamplePath,
+          exists: File(_permissionsExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Trust levels seed',
+          path: _trustLevelsExamplePath,
+          exists: File(_trustLevelsExamplePath).existsSync(),
+        ),
+        UsersDevicesControlMigrationSeedFileStatus(
+          label: 'Access rules config',
+          path: _accessRulesExamplePath,
+          exists: File(_accessRulesExamplePath).existsSync(),
+        ),
+      ],
+      tables: await _loadMigrationTableStatuses(),
     );
   }
 
@@ -2017,6 +2126,118 @@ class UsersDevicesControlRepository {
       '$_dataPath/approval_queue.example.json';
   String get _auditLogExamplePath => '$_dataPath/audit_log.example.json';
   String get _accessRulesExamplePath => '$_configPath/module_access_rules.json';
+
+  Future<List<UsersDevicesControlMigrationTableStatus>>
+  _loadMigrationTableStatuses() async {
+    final db = database;
+    if (db == null) {
+      return const [
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Users',
+          tableName: 'users_devices_control_users',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Devices',
+          tableName: 'users_devices_control_devices',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Approvals',
+          tableName: 'users_devices_control_approval_requests',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Audit',
+          tableName: 'users_devices_control_audit_events',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Roles',
+          tableName: 'users_devices_control_roles',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Permissions',
+          tableName: 'users_devices_control_permissions',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Trust levels',
+          tableName: 'users_devices_control_trust_levels',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'Access rules',
+          tableName: 'users_devices_control_access_rules',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'PIN records',
+          tableName: 'users_devices_control_pin_records',
+          exists: false,
+          rowCount: 0,
+        ),
+        UsersDevicesControlMigrationTableStatus(
+          label: 'PIN lockouts',
+          tableName: 'users_devices_control_pin_lockouts',
+          exists: false,
+          rowCount: 0,
+        ),
+      ];
+    }
+
+    final specs = const [
+      ('Users', 'users_devices_control_users'),
+      ('Devices', 'users_devices_control_devices'),
+      ('Approvals', 'users_devices_control_approval_requests'),
+      ('Audit', 'users_devices_control_audit_events'),
+      ('Roles', 'users_devices_control_roles'),
+      ('Permissions', 'users_devices_control_permissions'),
+      ('Trust levels', 'users_devices_control_trust_levels'),
+      ('Access rules', 'users_devices_control_access_rules'),
+      ('PIN records', 'users_devices_control_pin_records'),
+      ('PIN lockouts', 'users_devices_control_pin_lockouts'),
+    ];
+
+    final statuses = <UsersDevicesControlMigrationTableStatus>[];
+    for (final spec in specs) {
+      final exists = await _tableExists(db, spec.$2);
+      final rowCount = exists ? await _rowCount(db, spec.$2) : 0;
+      statuses.add(
+        UsersDevicesControlMigrationTableStatus(
+          label: spec.$1,
+          tableName: spec.$2,
+          exists: exists,
+          rowCount: rowCount,
+        ),
+      );
+    }
+    return statuses;
+  }
+
+  Future<bool> _tableExists(AppDatabase db, String tableName) async {
+    final row = await db.customSelect(
+      "SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+      variables: [Variable<String>(tableName)],
+    ).getSingleOrNull();
+    return row != null;
+  }
+
+  Future<int> _rowCount(AppDatabase db, String tableName) async {
+    final row = await db.customSelect(
+      'SELECT COUNT(*) AS count FROM $tableName',
+    ).getSingle();
+    return row.read<int>('count');
+  }
 }
 
 List<String> _stringList(dynamic value) {

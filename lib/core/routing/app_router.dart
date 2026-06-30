@@ -1144,6 +1144,16 @@ final appRouter = GoRouter(
             ),
           ),
         ),
+        GoRoute(
+          path: 'migration-health',
+          builder: (context, state) => const UsersDevicesRouteGateScreen(
+            moduleId: '01_USERS_AND_DEVICES_CONTROL',
+            title: 'Migration Health Gate',
+            subtitle:
+                'Confirm local identity and device trust before opening migration health.',
+            child: UsersDevicesMigrationHealthScreen(),
+          ),
+        ),
       ],
     ),
     GoRoute(

@@ -287,6 +287,7 @@ What it does:
 - lets you focus the report on one user
 - builds a print-style handoff sheet
 - gives you a quick `Copy summary` action for local notes or admin handoff
+- lets you `Export readiness` to a saved local markdown handoff file
 
 Status meanings:
 
@@ -305,6 +306,7 @@ Quick test:
 3. Change the filter and confirm the user cards move between groups correctly.
 4. Click `Copy summary`.
 5. Paste the result into a note to confirm the handoff sheet text is complete.
+6. Click `Export readiness` to save a local report into the Users & Devices export folder.
 
 ## Access review dashboard
 
@@ -348,6 +350,7 @@ What is new in this reporting pass:
 - `Latest risk panel` highlights failed unlocks, repeated denials, stale trust, and approval backlog
 - `Grouped audit view` breaks the trail down by user, device, module, and action family
 - the event list still stays underneath for detailed review
+- `Export incident` writes a calmer local incident summary for handoff or review
 
 Quick audit review:
 
@@ -356,6 +359,27 @@ Quick audit review:
 3. Check `Grouped audit view` to see whether one actor, device, or module is dominating the trail.
 4. Use search or result chips to narrow the event list.
 5. Open the related admin screen only after the grouped view tells you where the pressure is.
+6. Click `Export incident` when you want a saved local markdown summary of the current audit posture.
+
+## Migration Health
+
+Use `Migration Health` when you want one support-facing view of the SQLite-first Users & Devices posture.
+
+What it shows:
+
+- whether the module is attached to SQLite
+- where the local database file lives
+- which tracked Users & Devices tables exist and how many rows they hold
+- which seed and config files still exist for fallback support
+
+Quick migration check:
+
+1. Open `Users & Devices Control`.
+2. Click `Migration Health`.
+3. Confirm `Database mode` reads as `SQLite attached`.
+4. Check `Database file` to confirm the local file path is present.
+5. Review `Tracked tables` for row counts across users, devices, approvals, audit, and PIN storage.
+6. Review `Tracked seed and config files` before any reset or local support handoff.
 
 ## Assign a PIN to one user
 
