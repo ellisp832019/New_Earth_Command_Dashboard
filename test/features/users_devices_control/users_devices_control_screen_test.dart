@@ -488,6 +488,10 @@ void main() {
     expect(find.text('Trust blockers'), findsOneWidget);
     expect(find.text('Matrix check'), findsOneWidget);
     expect(find.text('Module pressure board'), findsOneWidget);
+    expect(find.text('Review focus'), findsOneWidget);
+    expect(find.text('Trust-blocked'), findsOneWidget);
+    expect(find.text('Matrix review'), findsOneWidget);
+    expect(find.text('Stale only'), findsOneWidget);
     expect(find.text('Requests needing attention first'), findsOneWidget);
     expect(find.text('Open Devices'), findsWidgets);
     expect(find.text('Open audit'), findsWidgets);
@@ -513,6 +517,7 @@ void main() {
       expect(find.text('Selected user for handoff sheet'), findsOneWidget);
       expect(find.text('Copy summary'), findsWidgets);
       expect(find.text('Export readiness'), findsWidgets);
+      expect(find.text('Export review pack'), findsWidgets);
       expect(find.text('Open exports'), findsWidgets);
       expect(find.text('Onboarding pack PDF'), findsWidgets);
       expect(find.text('Recovery drills PDF'), findsWidgets);
@@ -530,9 +535,15 @@ void main() {
     await pumpUntilFound(tester, find.text('Audit posture'));
 
     expect(find.text('Export incident'), findsOneWidget);
+    expect(find.text('Export review pack'), findsOneWidget);
     expect(find.text('Open exports'), findsOneWidget);
+    expect(find.text('Review pack'), findsOneWidget);
     expect(find.text('Latest risk panel'), findsOneWidget);
     expect(find.text('Grouped audit view'), findsOneWidget);
+    expect(find.text('Top denied user'), findsOneWidget);
+    expect(find.text('Top denied device'), findsOneWidget);
+    expect(find.text('Top denied module'), findsOneWidget);
+    expect(find.text('Top denied action family'), findsOneWidget);
     expect(find.text('By user'), findsOneWidget);
     expect(find.text('By device'), findsOneWidget);
     expect(find.text('By module'), findsOneWidget);

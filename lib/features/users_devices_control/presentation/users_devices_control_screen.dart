@@ -3258,6 +3258,18 @@ class _UsersDevicesOnboardingReportScreenState
                     ),
                   ),
                   _ActionChip(
+                    label: 'Export review pack',
+                    icon: Icons.inventory_2_outlined,
+                    onPressed: () => _exportAdminReviewPack(
+                      context: context,
+                      ref: ref,
+                      snapshot: data,
+                      pins: pins,
+                      focusedUserId: selectedStatus.user.id,
+                      statusFilter: _statusFilter,
+                    ),
+                  ),
+                  _ActionChip(
                     label: 'Open exports',
                     icon: Icons.folder_open_outlined,
                     onPressed: () =>
@@ -3628,6 +3640,18 @@ class _UsersDevicesOnboardingReportScreenState
                           ),
                           icon: const Icon(Icons.file_download_outlined),
                           label: const Text('Export readiness'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _exportAdminReviewPack(
+                            context: context,
+                            ref: ref,
+                            snapshot: data,
+                            pins: pins,
+                            focusedUserId: selectedStatus.user.id,
+                            statusFilter: _statusFilter,
+                          ),
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('Export review pack'),
                         ),
                         OutlinedButton.icon(
                           onPressed: () =>
@@ -5120,6 +5144,7 @@ class _UsersDevicesApprovalQueueScreenState
     extends ConsumerState<UsersDevicesApprovalQueueScreen> {
   String _query = '';
   String _statusFilter = 'pending';
+  String _focusFilter = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -5145,6 +5170,9 @@ class _UsersDevicesApprovalQueueScreenState
             .where((request) {
               if (_statusFilter != 'all' &&
                   request.normalizedStatus != _statusFilter) {
+                return false;
+              }
+              if (!_approvalMatchesFocusFilter(data, request, _focusFilter)) {
                 return false;
               }
               final query = _query.trim().toLowerCase();
@@ -5264,6 +5292,48 @@ class _UsersDevicesApprovalQueueScreenState
                     onSelected: (_) => setState(() => _statusFilter = 'denied'),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              _VisualPanel(
+                title: 'Review focus',
+                subtitle:
+                    'Use one narrow lens when you want the queue to answer a very specific support question fast.',
+                icon: Icons.filter_list_outlined,
+                compact: true,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _SoftChoiceChip(
+                      label: const Text('All focus'),
+                      selected: _focusFilter == 'all',
+                      onSelected: (_) => setState(() => _focusFilter = 'all'),
+                    ),
+                    _SoftChoiceChip(
+                      label: const Text('Trust-blocked'),
+                      selected: _focusFilter == 'trust-blocked',
+                      onSelected: (_) =>
+                          setState(() => _focusFilter = 'trust-blocked'),
+                    ),
+                    _SoftChoiceChip(
+                      label: const Text('Matrix review'),
+                      selected: _focusFilter == 'matrix-review',
+                      onSelected: (_) =>
+                          setState(() => _focusFilter = 'matrix-review'),
+                    ),
+                    _SoftChoiceChip(
+                      label: const Text('Stale only'),
+                      selected: _focusFilter == 'stale',
+                      onSelected: (_) => setState(() => _focusFilter = 'stale'),
+                    ),
+                    _SoftChoiceChip(
+                      label: const Text('High risk'),
+                      selected: _focusFilter == 'high-risk',
+                      onSelected: (_) =>
+                          setState(() => _focusFilter = 'high-risk'),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               if (filteredRequests.isEmpty)
@@ -5707,6 +5777,25 @@ String _approvalAgeLabel(UsersDevicesControlApprovalRequest request) {
   return '${days}d';
 }
 
+bool _approvalMatchesFocusFilter(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlApprovalRequest request,
+  String focusFilter,
+) {
+  switch (focusFilter) {
+    case 'trust-blocked':
+      return _approvalHasTrustBlocker(data, request);
+    case 'matrix-review':
+      return _approvalNeedsMatrixReview(data, request);
+    case 'stale':
+      return _approvalAgeHours(request) >= 24;
+    case 'high-risk':
+      return request.riskLevel.trim().toLowerCase() == 'high';
+    default:
+      return true;
+  }
+}
+
 String _approvalPrerequisiteHint(
   UsersDevicesControlSnapshot data,
   UsersDevicesControlApprovalRequest request,
@@ -5878,24 +5967,6 @@ String _auditActionFamily(UsersDevicesControlAuditEvent event) {
   return 'General audit';
 }
 
-List<MapEntry<String, int>> _topAuditCounts(
-  List<UsersDevicesControlAuditEvent> events,
-  String Function(UsersDevicesControlAuditEvent event) keyFor,
-) {
-  final counts = <String, int>{};
-  for (final event in events) {
-    final key = keyFor(event).trim();
-    if (key.isEmpty) {
-      continue;
-    }
-    counts[key] = (counts[key] ?? 0) + 1;
-  }
-
-  final entries = counts.entries.toList(growable: false)
-    ..sort((left, right) => right.value.compareTo(left.value));
-  return entries;
-}
-
 class UsersDevicesAuditLogScreen extends ConsumerStatefulWidget {
   const UsersDevicesAuditLogScreen({super.key, this.highlightEventId});
 
@@ -5924,6 +5995,7 @@ class _UsersDevicesAuditLogScreenState
   Widget build(BuildContext context) {
     final highlightEventId = widget.highlightEventId;
     final snapshot = ref.watch(usersDevicesControlSnapshotProvider);
+    final pinsSnapshot = ref.watch(usersDevicesPinRegistrySnapshotProvider);
     return snapshot.when(
       loading: () => const _LoadingScaffold(title: 'Audit Log'),
       error: (error, stackTrace) => _ErrorScreen(
@@ -5993,6 +6065,26 @@ class _UsersDevicesAuditLogScreenState
                   ),
                 ),
                 _ActionChip(
+                  label: 'Export review pack',
+                  icon: Icons.inventory_2_outlined,
+                  onPressed: () {
+                    final pins = pinsSnapshot.maybeWhen(
+                      data: (snapshot) => snapshot,
+                      orElse: () => const UsersDevicesPinRegistrySnapshot(
+                        records: <UsersDevicesPinRecord>[],
+                      ),
+                    );
+                    _exportAdminReviewPack(
+                      context: context,
+                      ref: ref,
+                      snapshot: data,
+                      pins: pins,
+                      resultFilter: _resultFilter,
+                      query: _query,
+                    );
+                  },
+                ),
+                _ActionChip(
                   label: 'Open exports',
                   icon: Icons.folder_open_outlined,
                   onPressed: () => _openUsersDevicesExportsFolder(context, ref),
@@ -6004,6 +6096,24 @@ class _UsersDevicesAuditLogScreenState
                       context.go(RouteNames.usersDevicesOnboardingReport),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            _VisualPanel(
+              title: 'Review pack',
+              subtitle:
+                  'Use one calmer local pack when you need to hand over readiness, approval pressure, and incident posture together.',
+              icon: Icons.inventory_2_outlined,
+              compact: true,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: const [
+                  _CardChip(label: 'Readiness posture'),
+                  _CardChip(label: 'Approval pressure'),
+                  _CardChip(label: 'Grouped audit pressure'),
+                  _CardChip(label: 'Latest matching events'),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             _SearchFilterPanel(
@@ -6373,55 +6483,125 @@ class _AuditGroupingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final byActor = _topAuditCounts(
+    final byActor = _auditGroupSummaryRows(
       events,
       (event) => event.actorId.isEmpty ? 'unknown' : event.actorId,
     );
-    final byDevice = _topAuditCounts(
+    final byDevice = _auditGroupSummaryRows(
       events,
       (event) => event.deviceId.isEmpty ? 'unknown' : event.deviceId,
     );
-    final byModule = _topAuditCounts(events, (event) => event.targetModule);
-    final byActionFamily = _topAuditCounts(
+    final byModule = _auditGroupSummaryRows(
+      events,
+      (event) => event.targetModule,
+      labelFor: (value) => _approvalModuleLabel(value),
+    );
+    final byActionFamily = _auditGroupSummaryRows(
       events,
       (event) => _auditActionFamily(event),
     );
+    final topDeniedActor = byActor.where((row) => row.deniedCount > 0).toList();
+    final topDeniedDevice = byDevice
+        .where((row) => row.deniedCount > 0)
+        .toList();
+    final topDeniedModule = byModule
+        .where((row) => row.deniedCount > 0)
+        .toList();
+    final topDeniedActionFamily = byActionFamily
+        .where((row) => row.deniedCount > 0)
+        .toList();
 
     return _VisualPanel(
       title: 'Grouped audit view',
       subtitle:
           'Read the trail by user, device, module, and action family before diving into individual events.',
       icon: Icons.account_tree_outlined,
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 320,
-            child: _AuditGroupCard(title: 'By user', entries: byActor),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.person_search_outlined,
+                  title: 'Top denied user',
+                  subtitle: topDeniedActor.isEmpty
+                      ? 'No denied user pressure'
+                      : '${topDeniedActor.first.label} - ${topDeniedActor.first.deniedCount} denied',
+                  body: topDeniedActor.isEmpty
+                      ? 'The current audit slice does not show one actor dominating denied events.'
+                      : 'Start here when one person needs the quickest support or identity review.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.devices_outlined,
+                  title: 'Top denied device',
+                  subtitle: topDeniedDevice.isEmpty
+                      ? 'No denied device pressure'
+                      : '${topDeniedDevice.first.label} - ${topDeniedDevice.first.deniedCount} denied',
+                  body: topDeniedDevice.isEmpty
+                      ? 'No one endpoint is dominating denied events right now.'
+                      : 'Start here when one device keeps surfacing in denied or failed access paths.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.hub_outlined,
+                  title: 'Top denied module',
+                  subtitle: topDeniedModule.isEmpty
+                      ? 'No denied module pressure'
+                      : '${topDeniedModule.first.label} - ${topDeniedModule.first.deniedCount} denied',
+                  body: topDeniedModule.isEmpty
+                      ? 'No protected module is dominating the denied trail right now.'
+                      : 'Use this when one protected route is causing most of the support friction.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.rule_folder_outlined,
+                  title: 'Top denied action family',
+                  subtitle: topDeniedActionFamily.isEmpty
+                      ? 'No denied family pressure'
+                      : '${topDeniedActionFamily.first.label} - ${topDeniedActionFamily.first.deniedCount} denied',
+                  body: topDeniedActionFamily.isEmpty
+                      ? 'No action family is dominating denied events right now.'
+                      : 'This points to the kind of support issue making the most local noise first.',
+                ),
+              ),
+            ],
           ),
-          SizedBox(
-            width: 320,
-            child: _AuditGroupCard(title: 'By device', entries: byDevice),
-          ),
-          SizedBox(
-            width: 320,
-            child: _AuditGroupCard(
-              title: 'By module',
-              entries: byModule
-                  .map(
-                    (entry) =>
-                        MapEntry(_approvalModuleLabel(entry.key), entry.value),
-                  )
-                  .toList(growable: false),
-            ),
-          ),
-          SizedBox(
-            width: 320,
-            child: _AuditGroupCard(
-              title: 'By action family',
-              entries: byActionFamily,
-            ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 380,
+                child: _AuditGroupCard(title: 'By user', entries: byActor),
+              ),
+              SizedBox(
+                width: 380,
+                child: _AuditGroupCard(title: 'By device', entries: byDevice),
+              ),
+              SizedBox(
+                width: 380,
+                child: _AuditGroupCard(title: 'By module', entries: byModule),
+              ),
+              SizedBox(
+                width: 380,
+                child: _AuditGroupCard(
+                  title: 'By action family',
+                  entries: byActionFamily,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -6429,11 +6609,69 @@ class _AuditGroupingPanel extends StatelessWidget {
   }
 }
 
+class _AuditGroupSummaryRow {
+  const _AuditGroupSummaryRow({
+    required this.label,
+    required this.totalCount,
+    required this.allowedCount,
+    required this.deniedCount,
+    required this.pendingCount,
+  });
+
+  final String label;
+  final int totalCount;
+  final int allowedCount;
+  final int deniedCount;
+  final int pendingCount;
+}
+
+List<_AuditGroupSummaryRow> _auditGroupSummaryRows(
+  List<UsersDevicesControlAuditEvent> events,
+  String Function(UsersDevicesControlAuditEvent event) keyFor, {
+  String Function(String value)? labelFor,
+}) {
+  final grouped = <String, List<UsersDevicesControlAuditEvent>>{};
+  for (final event in events) {
+    final key = keyFor(event).trim();
+    if (key.isEmpty) {
+      continue;
+    }
+    grouped.putIfAbsent(key, () => []).add(event);
+  }
+
+  final rows = grouped.entries
+      .map(
+        (entry) => _AuditGroupSummaryRow(
+          label: labelFor?.call(entry.key) ?? entry.key,
+          totalCount: entry.value.length,
+          allowedCount: entry.value
+              .where((event) => event.result == 'allowed')
+              .length,
+          deniedCount: entry.value
+              .where((event) => event.result == 'denied')
+              .length,
+          pendingCount: entry.value
+              .where((event) => event.result == 'pending')
+              .length,
+        ),
+      )
+      .toList(growable: false);
+
+  rows.sort((left, right) {
+    final rightScore =
+        right.deniedCount * 5 + right.pendingCount * 3 + right.totalCount;
+    final leftScore =
+        left.deniedCount * 5 + left.pendingCount * 3 + left.totalCount;
+    return rightScore.compareTo(leftScore);
+  });
+  return rows;
+}
+
 class _AuditGroupCard extends StatelessWidget {
   const _AuditGroupCard({required this.title, required this.entries});
 
   final String title;
-  final List<MapEntry<String, int>> entries;
+  final List<_AuditGroupSummaryRow> entries;
 
   @override
   Widget build(BuildContext context) {
@@ -6447,7 +6685,10 @@ class _AuditGroupCard extends StatelessWidget {
           ? 'No audit events have been recorded in this group yet.'
           : entries
                 .take(4)
-                .map((entry) => '${entry.key}: ${entry.value}')
+                .map(
+                  (entry) =>
+                      '${entry.label}: ${entry.totalCount} total - ${entry.deniedCount} denied - ${entry.pendingCount} pending',
+                )
                 .join('\n'),
     );
   }
@@ -7709,6 +7950,34 @@ Future<void> _exportIncidentSummary({
       .read(usersDevicesControlReportServiceProvider)
       .exportIncidentSummary(
         snapshot: snapshot,
+        resultFilter: resultFilter,
+        query: query,
+      );
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${result.message} ${result.reportPath}')),
+    );
+  }
+}
+
+Future<void> _exportAdminReviewPack({
+  required BuildContext context,
+  required WidgetRef ref,
+  required UsersDevicesControlSnapshot snapshot,
+  required UsersDevicesPinRegistrySnapshot pins,
+  String? focusedUserId,
+  String statusFilter = 'all',
+  String resultFilter = 'all',
+  String query = '',
+}) async {
+  final result = await ref
+      .read(usersDevicesControlReportServiceProvider)
+      .exportAdminReviewPack(
+        snapshot: snapshot,
+        pins: pins,
+        focusedUserId: focusedUserId,
+        statusFilter: statusFilter,
         resultFilter: resultFilter,
         query: query,
       );

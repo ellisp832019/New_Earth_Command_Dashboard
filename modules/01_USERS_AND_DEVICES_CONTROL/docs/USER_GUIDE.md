@@ -297,6 +297,7 @@ What it does:
 - builds a print-style handoff sheet
 - gives you a quick `Copy summary` action for local notes or admin handoff
 - lets you `Export readiness` to a saved local markdown handoff file
+- lets you `Export review pack` to bundle readiness, approval pressure, and audit posture together
 
 Status meanings:
 
@@ -316,6 +317,7 @@ Quick test:
 4. Click `Copy summary`.
 5. Paste the result into a note to confirm the handoff sheet text is complete.
 6. Click `Export readiness` to save a local report into the Users & Devices export folder.
+7. Click `Export review pack` when you want one broader admin handoff pack instead of a single-user readiness summary.
 
 ## Access review dashboard
 
@@ -358,8 +360,10 @@ What is new in this reporting pass:
 
 - `Latest risk panel` highlights failed unlocks, repeated denials, stale trust, and approval backlog
 - `Grouped audit view` breaks the trail down by user, device, module, and action family
+- grouped cards now also show the hottest denied user, device, module, and action family first
 - the event list still stays underneath for detailed review
 - `Export incident` writes a calmer local incident summary for handoff or review
+- `Export review pack` writes one combined markdown pack with readiness posture, approval pressure, grouped audit pressure, and latest matching events
 
 Quick audit review:
 
@@ -369,6 +373,7 @@ Quick audit review:
 4. Use search or result chips to narrow the event list.
 5. Open the related admin screen only after the grouped view tells you where the pressure is.
 6. Click `Export incident` when you want a saved local markdown summary of the current audit posture.
+7. Click `Export review pack` when you want a broader admin handoff file instead of just the incident slice.
 
 ## Migration Health
 
@@ -603,6 +608,7 @@ What is new in the triage view:
 - `Approved` replaces older mixed wording like `Allowed`
 - stale or risky requests are easier to spot
 - cards show whether a deeper permission or trust fix is still needed first
+- `Review focus` chips let you isolate `Trust-blocked`, `Matrix review`, `Stale only`, or `High risk` requests
 
 How to read the states:
 
@@ -620,6 +626,13 @@ Fast triage pass:
 6. Approve or deny the request.
 7. Retry the original action if approval was granted.
 8. Confirm the final result in `Audit Log`.
+
+Focused triage shortcuts:
+
+- `Trust-blocked`: only show requests still blocked by device trust posture
+- `Matrix review`: only show requests that need an Access Matrix sanity check
+- `Stale only`: only show pending requests older than 24 hours
+- `High risk`: narrow the queue to the most sensitive pending actions first
 
 ### Reset demo data
 
