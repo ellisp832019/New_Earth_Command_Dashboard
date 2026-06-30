@@ -372,6 +372,8 @@ void main() {
     expect(find.text('Recovery coverage'), findsOneWidget);
     expect(find.text('Device trust pressure'), findsOneWidget);
     expect(find.text('Approval workload'), findsOneWidget);
+    expect(find.text('Review pressure points'), findsOneWidget);
+    expect(find.textContaining('High-risk pending:'), findsOneWidget);
     expect(find.text('Open approval queue'), findsOneWidget);
   });
 
@@ -483,7 +485,12 @@ void main() {
     await pumpUntilFound(tester, find.text('Triage view'));
 
     expect(find.text('Triage view'), findsOneWidget);
+    expect(find.text('Trust blockers'), findsOneWidget);
+    expect(find.text('Matrix check'), findsOneWidget);
+    expect(find.text('Module pressure board'), findsOneWidget);
     expect(find.text('Requests needing attention first'), findsOneWidget);
+    expect(find.text('Open Devices'), findsWidgets);
+    expect(find.text('Open audit'), findsWidgets);
     expect(find.text('Approved'), findsWidgets);
     expect(find.textContaining('This device is quarantined'), findsWidgets);
   });

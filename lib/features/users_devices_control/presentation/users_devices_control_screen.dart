@@ -4681,6 +4681,14 @@ class _AccessReviewDashboardPanel extends StatelessWidget {
     final pendingApprovals = data.approvalQueue
         .where((request) => request.isPending)
         .length;
+    final highRiskPendingApprovals = data.approvalQueue
+        .where((request) => request.isPending && request.riskLevel == 'high')
+        .length;
+    final stalePendingApprovals = data.approvalQueue
+        .where(
+          (request) => request.isPending && _approvalAgeHours(request) >= 24,
+        )
+        .length;
     final recentFailedUnlocks = data.auditLog
         .where(
           (event) =>
@@ -4750,13 +4758,50 @@ class _AccessReviewDashboardPanel extends StatelessWidget {
                 child: _EntityCard(
                   icon: Icons.rule_folder_outlined,
                   title: 'Approval workload',
-                  subtitle: '$pendingApprovals pending requests',
+                  subtitle:
+                      '$pendingApprovals pending - $highRiskPendingApprovals high risk',
                   body: pendingApprovals == 0
                       ? 'No approval review is waiting.'
-                      : 'Open the queue to review the highest-risk or stalest requests first.',
+                      : stalePendingApprovals == 0
+                      ? 'Open the queue to review the highest-risk requests first.'
+                      : 'Open the queue to review the highest-risk requests first and recheck stale context.',
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          _VisualPanel(
+            title: 'Review pressure points',
+            subtitle:
+                'Use this to jump straight to the part of the trust system creating the most friction.',
+            icon: Icons.insights_outlined,
+            compact: true,
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _CardChip(
+                  label: highRiskPendingApprovals == 0
+                      ? 'High-risk queue calm'
+                      : 'High-risk pending: $highRiskPendingApprovals',
+                ),
+                _CardChip(
+                  label: stalePendingApprovals == 0
+                      ? 'No stale approvals'
+                      : 'Stale approvals: $stalePendingApprovals',
+                ),
+                _CardChip(
+                  label: recentFailedUnlocks == 0
+                      ? 'Denied unlocks calm'
+                      : 'Denied unlocks: $recentFailedUnlocks',
+                ),
+                _CardChip(
+                  label: quarantinedDevices == 0
+                      ? 'Trust pressure low'
+                      : 'Quarantine follow-up: $quarantinedDevices',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -5420,6 +5465,13 @@ class _ApprovalTriagePanel extends StatelessWidget {
     final stalePending = pendingRequests
         .where((request) => _approvalAgeHours(request) >= 24)
         .length;
+    final trustBlockedPending = pendingRequests
+        .where((request) => _approvalHasTrustBlocker(data, request))
+        .length;
+    final matrixCheckPending = pendingRequests
+        .where((request) => _approvalNeedsMatrixReview(data, request))
+        .length;
+    final modulePressure = _approvalModulePressureRows(data);
 
     return _VisualPanel(
       title: 'Triage view',
@@ -5459,6 +5511,30 @@ class _ApprovalTriagePanel extends StatelessWidget {
               SizedBox(
                 width: 260,
                 child: _EntityCard(
+                  icon: Icons.shield_moon_outlined,
+                  title: 'Trust blockers',
+                  subtitle:
+                      '$trustBlockedPending request${trustBlockedPending == 1 ? '' : 's'}',
+                  body: trustBlockedPending == 0
+                      ? 'No pending request is blocked by a risky device right now.'
+                      : 'Open Devices before approving these requests so trust posture is fixed first.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
+                  icon: Icons.grid_view_outlined,
+                  title: 'Matrix check',
+                  subtitle:
+                      '$matrixCheckPending request${matrixCheckPending == 1 ? '' : 's'}',
+                  body: matrixCheckPending == 0
+                      ? 'No pending request currently points at a missing or outdated access rule.'
+                      : 'Review the Access Matrix before approving these requests.',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _EntityCard(
                   icon: Icons.rule_folder_outlined,
                   title: 'Module spread',
                   subtitle:
@@ -5470,6 +5546,32 @@ class _ApprovalTriagePanel extends StatelessWidget {
               ),
             ],
           ),
+          if (modulePressure.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Module pressure board',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final row in modulePressure.take(3))
+                  SizedBox(
+                    width: 320,
+                    child: _EntityCard(
+                      icon: Icons.hub_outlined,
+                      title: _approvalModuleLabel(row.moduleId),
+                      subtitle:
+                          '${row.pendingCount} pending - ${row.highRiskCount} high risk',
+                      body:
+                          '${row.staleCount} stale, ${row.trustBlockedCount} trust-blocked, ${row.matrixCheckCount} need matrix review.',
+                    ),
+                  ),
+              ],
+            ),
+          ],
           if (pendingRequests.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -5494,6 +5596,28 @@ class _ApprovalTriagePanel extends StatelessWidget {
                       chips: [
                         _CardChip(label: 'Age ${_approvalAgeLabel(request)}'),
                         _CardChip(label: 'Requester ${request.requestedBy}'),
+                      ],
+                      actions: [
+                        if (_approvalHasTrustBlocker(data, request))
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go(RouteNames.usersDevicesDevices),
+                            icon: const Icon(Icons.devices_outlined),
+                            label: const Text('Open Devices'),
+                          ),
+                        if (_approvalNeedsMatrixReview(data, request))
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go(RouteNames.usersDevicesAccessMatrix),
+                            icon: const Icon(Icons.grid_view_outlined),
+                            label: const Text('Open matrix'),
+                          ),
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              context.go(RouteNames.usersDevicesAuditLog),
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: const Text('Open audit'),
+                        ),
                       ],
                     ),
                   ),
@@ -5618,6 +5742,109 @@ String _approvalPrerequisiteHint(
     return 'The device still sits below this module trust floor. Raise trust or switch device before approval.';
   }
   return 'Prerequisites look healthy. This request mainly needs an operator decision and audit follow-through.';
+}
+
+bool _approvalHasTrustBlocker(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlApprovalRequest request,
+) {
+  final device = data.devices.where((item) => item.id == request.deviceId);
+  final rule = data.accessRules.where(
+    (entry) => entry.moduleId == request.targetModule,
+  );
+  final deviceMatch = device.isEmpty ? null : device.first;
+  final matchingRule = rule.isEmpty ? null : rule.first;
+  if (deviceMatch == null) {
+    return false;
+  }
+  if (deviceMatch.status == 'quarantined' ||
+      deviceMatch.status == 'blocked' ||
+      deviceMatch.status == 'archived') {
+    return true;
+  }
+  if (matchingRule == null) {
+    return false;
+  }
+  return deviceMatch.trustLevel < matchingRule.requiresTrustLevel;
+}
+
+bool _approvalNeedsMatrixReview(
+  UsersDevicesControlSnapshot data,
+  UsersDevicesControlApprovalRequest request,
+) {
+  final matchingRule = data.accessRules.where(
+    (rule) => rule.moduleId == request.targetModule,
+  );
+  if (matchingRule.isEmpty) {
+    return true;
+  }
+  return !matchingRule.first.requiresApprovalFor.contains(request.action);
+}
+
+class _ApprovalModulePressureRow {
+  const _ApprovalModulePressureRow({
+    required this.moduleId,
+    required this.pendingCount,
+    required this.highRiskCount,
+    required this.staleCount,
+    required this.trustBlockedCount,
+    required this.matrixCheckCount,
+  });
+
+  final String moduleId;
+  final int pendingCount;
+  final int highRiskCount;
+  final int staleCount;
+  final int trustBlockedCount;
+  final int matrixCheckCount;
+}
+
+List<_ApprovalModulePressureRow> _approvalModulePressureRows(
+  UsersDevicesControlSnapshot data,
+) {
+  final grouped = <String, List<UsersDevicesControlApprovalRequest>>{};
+  for (final request in data.approvalQueue.where((entry) => entry.isPending)) {
+    grouped.putIfAbsent(request.targetModule, () => []).add(request);
+  }
+
+  final rows = grouped.entries
+      .map((entry) {
+        final requests = entry.value;
+        return _ApprovalModulePressureRow(
+          moduleId: entry.key,
+          pendingCount: requests.length,
+          highRiskCount: requests
+              .where((item) => item.riskLevel == 'high')
+              .length,
+          staleCount: requests
+              .where((item) => _approvalAgeHours(item) >= 24)
+              .length,
+          trustBlockedCount: requests
+              .where((item) => _approvalHasTrustBlocker(data, item))
+              .length,
+          matrixCheckCount: requests
+              .where((item) => _approvalNeedsMatrixReview(data, item))
+              .length,
+        );
+      })
+      .toList(growable: false);
+
+  rows.sort((left, right) {
+    final rightScore =
+        right.highRiskCount * 5 +
+        right.trustBlockedCount * 4 +
+        right.staleCount * 3 +
+        right.matrixCheckCount * 2 +
+        right.pendingCount;
+    final leftScore =
+        left.highRiskCount * 5 +
+        left.trustBlockedCount * 4 +
+        left.staleCount * 3 +
+        left.matrixCheckCount * 2 +
+        left.pendingCount;
+    return rightScore.compareTo(leftScore);
+  });
+  return rows;
 }
 
 String _auditActionFamily(UsersDevicesControlAuditEvent event) {
