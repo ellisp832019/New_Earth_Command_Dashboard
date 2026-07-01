@@ -1,26 +1,27 @@
-# TASK - Users & Devices Persistence And Migration Hardening
+# TASK - Users & Devices Release Verification Pass
 
 ## Status
 
 Ready to start.
 
-The export and migration health slice has completed.
+The persistence and migration hardening slice has completed.
 
-The next active trust-hardening slice should deepen local operator confidence in:
-
-- SQLite persistence confidence
-- repeat-load migration stability
-- proof that PIN and approval state survive local reloads cleanly
+The next active slice should finish the release-confidence pass for the local trust layer so the module is easier to verify, explain, and hand over.
 
 ## Goal
 
-Make the Users & Devices trust layer feel dependable under reload, restart, and migration conditions by proving that SQLite-first state stays stable and older data normalizes cleanly.
+Make Users & Devices Control feel release-ready from an operator point of view by tightening the final verification path around:
 
-This slice sits inside the wider upgrade streams:
+- route trust confidence
+- restart and relock predictability
+- guide and checklist alignment
+- focused test and manual proof discipline
 
-- `Users & Devices Security Hardening`
+This slice sits inside:
+
 - `Users & Devices Trust Completion`
 - `Foundation Hardening`
+- `Repo Upgrade Program`
 
 ## Source of Truth
 
@@ -29,70 +30,73 @@ Read these files first:
 - `docs/fsd/00_master_index.md`
 - `docs/fsd/04_screen_specification.md`
 - `docs/fsd/10_testing_release.md`
-- `docs/fsd/12_major_upgrade_plan.md`
 - `docs/fsd/13_upgrade_execution_plan.md`
+- `docs/fsd/14_repo_upgrade_program.md`
+- `docs/roadmap/repo_upgrade_20_task_execution_queue.md`
+- `docs/roadmap/users_devices_upgrade_roadmap.md`
+- `docs/roadmap/users_devices_manual_test_checklist.md`
 - `modules/01_USERS_AND_DEVICES_CONTROL/docs/UPGRADE_PLAN_NEXT_SLICE.md`
 
 Pay special attention to:
 
-- onboarding readiness and trust review posture
-- SQLite-first migration confidence
-- approval normalization on reload
-- PIN persistence and lockout persistence
-- persistence and release verification discipline
+- locked-route behaviour
+- resume-after-unlock behaviour
+- PIN recovery and lockout proof
+- restart and relock confidence
+- access review drill-down accuracy
+- guide wording that should match the real screens exactly
 
 ## Requirements
 
 1. Keep the app local-first and offline-first.
 2. Keep wording calm, practical, and low-pressure.
-3. Keep persistence checks focused on real local operator risk.
-4. Prefer repository and service proof over visual noise.
-5. Keep seed fallback behaviour predictable and non-duplicating.
-6. Keep wording calm, practical, and low-pressure.
-7. Keep changes small, reviewable, and testable.
-8. If runtime behaviour changes, verify analyzer, tests, and Windows build honestly.
+3. Prefer proof, alignment, and clarity over adding more surface area.
+4. Keep the slice small, reviewable, and testable.
+5. Update documentation only where the runtime flow truly changed or needs clearer verification wording.
+6. If runtime behaviour changes, verify analyzer, tests, and Windows build honestly.
 
 ## Slice Scope
 
 This slice should focus on the most useful minimum:
 
-1. prove repeated repository loads do not duplicate seeded trust data
-2. prove PIN state and lockout state survive a fresh service reload
-3. prove migration health reflects the real SQLite table state
-4. update the focused tests and guide wording only where needed
+1. verify the Users & Devices route-protection and relock flow still behaves exactly as intended
+2. tighten any final release-confidence gaps found in the active trust flow
+3. align the user guide and manual checklist with the real runtime flow
+4. strengthen focused proof where practical without widening the module into new feature work
 
 Recommended first focus:
 
-- migration confidence
-- repeat-load stability
-- restart safety
+- manual verification alignment
+- route and session confidence
+- operator handoff clarity
 
 ## Out of Scope
 
-Do not add these in this slice unless they are already trivial once the core work is done:
+Do not add these in this slice unless they are already trivial once the verification work is done:
 
 - cloud or account-linked workflow
 - external authentication
-- write-back beyond the existing local admin tools
+- new major admin surfaces
 - unrelated dashboard redesign
+- broader integration work
+- speculative security expansion beyond the current local model
 
 ## Expected Result
 
 After this slice:
 
-1. repeated local loads stay stable without seed duplication
-2. PIN and lockout state survive a fresh service round-trip
-3. migration health remains honest about table presence and row counts
-4. the SQLite-first trust layer feels safer to rely on day to day
+1. the module’s locked, unlocked, relock, and restart flow is easier to verify
+2. the guide and checklist match the real app more closely
+3. remaining trust-flow ambiguity is reduced without adding unnecessary new UI
+4. Users & Devices feels more ready for a broader release-confidence review
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. repository tests prove repeated loads stay stable
-2. PIN registry tests prove PIN and lockout state survive a fresh reload
-3. migration health is covered by focused persistence tests where practical
-4. focused Users & Devices tests are added or updated where practical
-5. `flutter analyze` passes
-6. `flutter test` passes
-7. `flutter build windows` passes if runtime code changed
+1. the relevant Users & Devices route, PIN, and screen tests still pass
+2. any touched runtime flow is manually checked against `users_devices_manual_test_checklist.md`
+3. guide wording and checklist wording match the real route flow where updated
+4. `flutter analyze` passes
+5. focused `flutter test` passes
+6. `flutter build windows` passes if runtime code changed
