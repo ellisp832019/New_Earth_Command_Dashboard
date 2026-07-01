@@ -47,6 +47,9 @@ Codex must treat these files as the source of truth for the project.
 13. `13_upgrade_execution_plan.md`
    - Current major-upgrade execution order, active stream definitions, and the next hardening slices to build.
 
+14. `14_repo_upgrade_program.md`
+   - Repo-wide maturity read, major upgrade streams, sequencing rules, release gates, and the recommended next-wave program.
+
 ## Roadmaps
 
 - [App Roadmap](../roadmap/app_roadmap.md)
