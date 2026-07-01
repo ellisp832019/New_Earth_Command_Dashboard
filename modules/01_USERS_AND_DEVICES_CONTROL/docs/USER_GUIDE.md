@@ -183,6 +183,23 @@ Quick checks:
 - `Status: online` should appear when the local session is active
 - The countdown should keep moving once per second
 
+## Release verification quick pass
+
+Use this when you want the shortest reliable proof that the local trust layer is still behaving properly after a change.
+
+1. Launch from a fully closed app and confirm `Security Lock` opens first.
+2. While locked, try to open `Users`, `Devices`, `Access Matrix`, `Audit Log`, `PIN Registry`, and `Treasury`.
+3. Confirm each blocked route returns to `Security Lock`.
+4. Unlock with a correct primary PIN and confirm the intended route resumes.
+5. Enter wrong PINs until cooldown starts, then confirm a correct PIN is still blocked during the timer.
+6. Issue a recovery PIN or forced reset from `PIN Registry`, then confirm unlock works again.
+7. Open `Access review dashboard` and use one drill-down action.
+8. Confirm the matching admin surface opens already focused on the right problem area.
+9. Lock the session again or let it timeout.
+10. Close the app, reopen it, and confirm startup still returns to `Security Lock`.
+
+For the full operator pass, use [users_devices_manual_test_checklist.md](D:/Dev/Projects/New%20Earth%20-%20Command%20Dashboard/docs/roadmap/users_devices_manual_test_checklist.md).
+
 ## Start here
 
 If you are opening the module for the first time, do this first:

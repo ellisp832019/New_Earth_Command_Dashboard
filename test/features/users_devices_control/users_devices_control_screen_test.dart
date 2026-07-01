@@ -228,6 +228,17 @@ void main() {
           result: 'allowed',
           reason: 'Sample audit event.',
         ),
+        UsersDevicesControlAuditEvent(
+          eventId: 'audit_demo_2',
+          timestamp: '2026-06-18T01:00:00Z',
+          actorId: 'user_hayley_finance',
+          deviceId: 'device_phone_scanner',
+          eventType: 'pin_unlock_denied',
+          targetModule: '17_FINANCE_AND_TREASURY',
+          action: 'unlock_session',
+          result: 'denied',
+          reason: 'Sample denied unlock event.',
+        ),
       ],
       accessRules: [
         UsersDevicesControlAccessRule(
@@ -557,6 +568,33 @@ void main() {
     expect(find.text('By action family'), findsOneWidget);
     expect(find.byIcon(Icons.filter_alt_outlined), findsWidgets);
   });
+
+  testWidgets(
+    'audit log drill-down filters denied events into the event list',
+    (tester) async {
+      await tester.pumpWidget(buildTestApp(const UsersDevicesAuditLogScreen()));
+      await pumpUntilFound(tester, find.text('Grouped audit view'));
+
+      expect(find.text('pin_unlock_denied'), findsOneWidget);
+      expect(find.text('module_access_checked'), findsOneWidget);
+
+      final filterButton = find.widgetWithText(
+        OutlinedButton,
+        'Filter denied events',
+      );
+      await tester.scrollUntilVisible(
+        filterButton.first,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(filterButton.first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('pin_unlock_denied'), findsOneWidget);
+      expect(find.text('module_access_checked'), findsNothing);
+    },
+  );
 
   testWidgets('migration health shows sqlite and seed posture', (tester) async {
     await tester.pumpWidget(

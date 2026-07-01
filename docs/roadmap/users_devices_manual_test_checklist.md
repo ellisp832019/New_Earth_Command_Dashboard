@@ -140,3 +140,16 @@ This slice is healthy when:
 5. access review drill-downs open the right admin surfaces
 6. approval triage is readable without guesswork
 7. restart and relock behaviour stay predictable
+
+## Minimum Release Pass
+
+Use this shorter pass when you want the fastest honest check before calling the module healthy enough for broader review.
+
+1. Run sections `1`, `2`, and `3` to prove startup, blocking, and normal unlock.
+2. Run section `5` to prove cooldown still blocks bad retry loops.
+3. Run section `6` or `7` to prove recovery or forced reset still works.
+4. Run section `10` to prove relock and restart remain predictable.
+5. Run section `11` to prove the `Access review dashboard` still drills into the right place.
+6. Run section `12` to prove approval triage still reads clearly.
+
+If any one of those fails, the slice should not be treated as release-ready yet.
