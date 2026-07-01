@@ -325,6 +325,35 @@ void main() {
   });
 
   test(
+    'repeated PIN registry loads do not duplicate seeded local rows',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final service = UsersDevicesPinRegistryService(database: database);
+
+      final first = await service.loadSnapshot();
+      await service.loadSnapshot();
+      final third = await service.loadSnapshot();
+
+      final storedPins = await database
+          .customSelect(
+            'SELECT COUNT(*) AS count FROM users_devices_control_pin_records',
+          )
+          .getSingle();
+      final storedLockouts = await database
+          .customSelect(
+            'SELECT COUNT(*) AS count FROM users_devices_control_pin_lockouts',
+          )
+          .getSingle();
+
+      expect(storedPins.read<int>('count'), first.records.length);
+      expect(third.records.length, first.records.length);
+      expect(storedLockouts.read<int>('count'), 0);
+    },
+  );
+
+  test(
     'primary and recovery PIN issuance stay unique on the same timestamp tick',
     () async {
       final database = AppDatabase(NativeDatabase.memory());

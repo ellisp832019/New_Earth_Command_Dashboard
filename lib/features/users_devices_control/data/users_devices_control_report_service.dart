@@ -203,6 +203,7 @@ class UsersDevicesControlReportService {
     required String title,
     required String markdownContent,
   }) async {
+    final fonts = await _loadPdfFonts();
     final pdf = pw.Document();
     final lines = markdownContent.split('\n');
     pdf.addPage(
@@ -211,17 +212,52 @@ class UsersDevicesControlReportService {
         build: (context) => [
           pw.Text(
             title,
-            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+            style: pw.TextStyle(
+              fontSize: 20,
+              fontWeight: pw.FontWeight.bold,
+              font: fonts.regular,
+              fontBold: fonts.bold,
+            ),
           ),
           pw.SizedBox(height: 12),
-          ..._pdfWidgetsForMarkdownLines(lines),
+          ..._pdfWidgetsForMarkdownLines(lines, fonts),
         ],
       ),
     );
     return pdf.save();
   }
 
-  List<pw.Widget> _pdfWidgetsForMarkdownLines(List<String> lines) {
+  Future<_PdfFontBundle> _loadPdfFonts() async {
+    final regular = await _loadPdfFontFromCandidates(const [
+      r'C:\Windows\Fonts\arial.ttf',
+      r'C:\Windows\Fonts\segoeui.ttf',
+      '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+      '/usr/share/fonts/TTF/DejaVuSans.ttf',
+    ]);
+    final bold = await _loadPdfFontFromCandidates(const [
+      r'C:\Windows\Fonts\arialbd.ttf',
+      r'C:\Windows\Fonts\segoeuib.ttf',
+      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+      '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
+    ]);
+    return _PdfFontBundle(regular: regular, bold: bold);
+  }
+
+  Future<pw.Font?> _loadPdfFontFromCandidates(List<String> candidates) async {
+    for (final candidate in candidates) {
+      final file = File(candidate);
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        return pw.Font.ttf(ByteData.sublistView(bytes));
+      }
+    }
+    return null;
+  }
+
+  List<pw.Widget> _pdfWidgetsForMarkdownLines(
+    List<String> lines,
+    _PdfFontBundle fonts,
+  ) {
     final widgets = <pw.Widget>[];
     for (final rawLine in lines) {
       final line = rawLine.trimRight();
@@ -236,7 +272,12 @@ class UsersDevicesControlReportService {
             padding: const pw.EdgeInsets.only(top: 10, bottom: 6),
             child: pw.Text(
               trimmed.substring(2),
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                font: fonts.regular,
+                fontBold: fonts.bold,
+              ),
             ),
           ),
         );
@@ -248,7 +289,12 @@ class UsersDevicesControlReportService {
             padding: const pw.EdgeInsets.only(top: 8, bottom: 4),
             child: pw.Text(
               trimmed.substring(3),
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                font: fonts.regular,
+                fontBold: fonts.bold,
+              ),
             ),
           ),
         );
@@ -261,8 +307,22 @@ class UsersDevicesControlReportService {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('- '),
-                pw.Expanded(child: pw.Text(trimmed.substring(2))),
+                pw.Text(
+                  '- ',
+                  style: pw.TextStyle(
+                    font: fonts.regular,
+                    fontBold: fonts.bold,
+                  ),
+                ),
+                pw.Expanded(
+                  child: pw.Text(
+                    trimmed.substring(2),
+                    style: pw.TextStyle(
+                      font: fonts.regular,
+                      fontBold: fonts.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -272,7 +332,10 @@ class UsersDevicesControlReportService {
       widgets.add(
         pw.Padding(
           padding: const pw.EdgeInsets.only(bottom: 3),
-          child: pw.Text(trimmed),
+          child: pw.Text(
+            trimmed,
+            style: pw.TextStyle(font: fonts.regular, fontBold: fonts.bold),
+          ),
         ),
       );
     }
@@ -1014,6 +1077,13 @@ class UsersDevicesControlReportService {
     final second = utc.second.toString().padLeft(2, '0');
     return '$year$month${day}_$hour$minute$second';
   }
+}
+
+class _PdfFontBundle {
+  const _PdfFontBundle({required this.regular, required this.bold});
+
+  final pw.Font? regular;
+  final pw.Font? bold;
 }
 
 class UsersDevicesControlReportExportResult {

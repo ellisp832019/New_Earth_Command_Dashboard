@@ -27,6 +27,12 @@ The local PIN registry now lives inside the same security area. Use `PIN Registr
 
 The PIN registry now stores records in the local SQLite database first, with the seeded JSON files acting as the fallback demo source. That keeps per-user PIN changes, recovery codes, and audit flow local while the rest of the access store catches up.
 
+The local access store now also proves three safety points more clearly during support work:
+
+- repeated repository loads do not duplicate seeded users, devices, approvals, or audit rows
+- PIN records and lockout state survive a fresh local service reload
+- `Migration health` reflects the real SQLite table posture and live row counts, including PIN records and lockouts
+
 If you already had a local PIN saved before the database switch, the app will import that legacy PIN file into SQLite the first time the registry loads. That keeps existing demo PINs and personal test PINs working during the transition.
 
 The current PINs now show in two places:
