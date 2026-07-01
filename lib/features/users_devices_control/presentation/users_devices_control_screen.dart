@@ -3258,6 +3258,19 @@ class _UsersDevicesOnboardingReportScreenState
                     ),
                   ),
                   _ActionChip(
+                    label: 'Readiness PDF',
+                    icon: Icons.picture_as_pdf_outlined,
+                    onPressed: () => _exportReadinessSummary(
+                      context: context,
+                      ref: ref,
+                      snapshot: data,
+                      pins: pins,
+                      focusedUserId: selectedStatus.user.id,
+                      statusFilter: _statusFilter,
+                      openPdfAfterExport: true,
+                    ),
+                  ),
+                  _ActionChip(
                     label: 'Export review pack',
                     icon: Icons.inventory_2_outlined,
                     onPressed: () => _exportAdminReviewPack(
@@ -3267,6 +3280,19 @@ class _UsersDevicesOnboardingReportScreenState
                       pins: pins,
                       focusedUserId: selectedStatus.user.id,
                       statusFilter: _statusFilter,
+                    ),
+                  ),
+                  _ActionChip(
+                    label: 'Review pack PDF',
+                    icon: Icons.picture_as_pdf_outlined,
+                    onPressed: () => _exportAdminReviewPack(
+                      context: context,
+                      ref: ref,
+                      snapshot: data,
+                      pins: pins,
+                      focusedUserId: selectedStatus.user.id,
+                      statusFilter: _statusFilter,
+                      openPdfAfterExport: true,
                     ),
                   ),
                   _ActionChip(
@@ -3642,6 +3668,19 @@ class _UsersDevicesOnboardingReportScreenState
                           label: const Text('Export readiness'),
                         ),
                         OutlinedButton.icon(
+                          onPressed: () => _exportReadinessSummary(
+                            context: context,
+                            ref: ref,
+                            snapshot: data,
+                            pins: pins,
+                            focusedUserId: selectedStatus.user.id,
+                            statusFilter: _statusFilter,
+                            openPdfAfterExport: true,
+                          ),
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          label: const Text('Readiness PDF'),
+                        ),
+                        OutlinedButton.icon(
                           onPressed: () => _exportAdminReviewPack(
                             context: context,
                             ref: ref,
@@ -3652,6 +3691,19 @@ class _UsersDevicesOnboardingReportScreenState
                           ),
                           icon: const Icon(Icons.inventory_2_outlined),
                           label: const Text('Export review pack'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _exportAdminReviewPack(
+                            context: context,
+                            ref: ref,
+                            snapshot: data,
+                            pins: pins,
+                            focusedUserId: selectedStatus.user.id,
+                            statusFilter: _statusFilter,
+                            openPdfAfterExport: true,
+                          ),
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          label: const Text('Review pack PDF'),
                         ),
                         OutlinedButton.icon(
                           onPressed: () =>
@@ -4681,14 +4733,14 @@ class _GatekeeperSnapshotPanel extends StatelessWidget {
   }
 }
 
-class _AccessReviewDashboardPanel extends StatelessWidget {
+class _AccessReviewDashboardPanel extends ConsumerWidget {
   const _AccessReviewDashboardPanel({required this.data, required this.pins});
 
   final UsersDevicesControlSnapshot data;
   final UsersDevicesPinRegistrySnapshot pins;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now().toUtc();
     final activeLockouts = pins.lockouts
         .where(
@@ -4852,6 +4904,38 @@ class _AccessReviewDashboardPanel extends StatelessWidget {
                 onPressed: () => context.go(RouteNames.usersDevicesAuditLog),
                 icon: const Icon(Icons.receipt_long_outlined),
                 label: const Text('Open audit log'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _exportIncidentSummary(
+                  context: context,
+                  ref: ref,
+                  snapshot: data,
+                  resultFilter: 'all',
+                  query: '',
+                ),
+                icon: const Icon(Icons.file_download_outlined),
+                label: const Text('Export incident'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _exportAdminReviewPack(
+                  context: context,
+                  ref: ref,
+                  snapshot: data,
+                  pins: pins,
+                ),
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Export review pack'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _exportAdminReviewPack(
+                  context: context,
+                  ref: ref,
+                  snapshot: data,
+                  pins: pins,
+                  openPdfAfterExport: true,
+                ),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Review pack PDF'),
               ),
             ],
           ),
@@ -6065,6 +6149,18 @@ class _UsersDevicesAuditLogScreenState
                   ),
                 ),
                 _ActionChip(
+                  label: 'Incident PDF',
+                  icon: Icons.picture_as_pdf_outlined,
+                  onPressed: () => _exportIncidentSummary(
+                    context: context,
+                    ref: ref,
+                    snapshot: data,
+                    resultFilter: _resultFilter,
+                    query: _query,
+                    openPdfAfterExport: true,
+                  ),
+                ),
+                _ActionChip(
                   label: 'Export review pack',
                   icon: Icons.inventory_2_outlined,
                   onPressed: () {
@@ -6081,6 +6177,27 @@ class _UsersDevicesAuditLogScreenState
                       pins: pins,
                       resultFilter: _resultFilter,
                       query: _query,
+                    );
+                  },
+                ),
+                _ActionChip(
+                  label: 'Review pack PDF',
+                  icon: Icons.picture_as_pdf_outlined,
+                  onPressed: () {
+                    final pins = pinsSnapshot.maybeWhen(
+                      data: (snapshot) => snapshot,
+                      orElse: () => const UsersDevicesPinRegistrySnapshot(
+                        records: <UsersDevicesPinRecord>[],
+                      ),
+                    );
+                    _exportAdminReviewPack(
+                      context: context,
+                      ref: ref,
+                      snapshot: data,
+                      pins: pins,
+                      resultFilter: _resultFilter,
+                      query: _query,
+                      openPdfAfterExport: true,
                     );
                   },
                 ),
@@ -6150,7 +6267,10 @@ class _UsersDevicesAuditLogScreenState
             const SizedBox(height: 16),
             _AuditRiskPanel(data: data),
             const SizedBox(height: 16),
-            _AuditGroupingPanel(events: data.auditLog),
+            _AuditGroupingPanel(
+              events: data.auditLog,
+              onDrillDown: _applyAuditDrillDown,
+            ),
             const SizedBox(height: 16),
             if (_filteredAuditEvents(data.auditLog).isEmpty)
               _EmptyCollectionState(
@@ -6234,10 +6354,20 @@ class _UsersDevicesAuditLogScreenState
             event.action,
             event.result,
             event.reason,
+            _auditActionFamily(event),
           ].join(' ').toLowerCase();
           return haystack.contains(query);
         })
         .toList(growable: false);
+  }
+
+  void _applyAuditDrillDown({required String query, String? resultFilter}) {
+    setState(() {
+      _query = query;
+      if (resultFilter != null) {
+        _resultFilter = resultFilter;
+      }
+    });
   }
 }
 
@@ -6477,9 +6607,11 @@ class _AuditRiskPanel extends StatelessWidget {
 }
 
 class _AuditGroupingPanel extends StatelessWidget {
-  const _AuditGroupingPanel({required this.events});
+  const _AuditGroupingPanel({required this.events, required this.onDrillDown});
 
   final List<UsersDevicesControlAuditEvent> events;
+  final void Function({required String query, String? resultFilter})
+  onDrillDown;
 
   @override
   Widget build(BuildContext context) {
@@ -6534,6 +6666,18 @@ class _AuditGroupingPanel extends StatelessWidget {
                   body: topDeniedActor.isEmpty
                       ? 'The current audit slice does not show one actor dominating denied events.'
                       : 'Start here when one person needs the quickest support or identity review.',
+                  actions: topDeniedActor.isEmpty
+                      ? const []
+                      : [
+                          OutlinedButton.icon(
+                            onPressed: () => onDrillDown(
+                              query: topDeniedActor.first.queryValue,
+                              resultFilter: 'denied',
+                            ),
+                            icon: const Icon(Icons.filter_alt_outlined),
+                            label: const Text('Filter denied events'),
+                          ),
+                        ],
                 ),
               ),
               SizedBox(
@@ -6547,6 +6691,18 @@ class _AuditGroupingPanel extends StatelessWidget {
                   body: topDeniedDevice.isEmpty
                       ? 'No one endpoint is dominating denied events right now.'
                       : 'Start here when one device keeps surfacing in denied or failed access paths.',
+                  actions: topDeniedDevice.isEmpty
+                      ? const []
+                      : [
+                          OutlinedButton.icon(
+                            onPressed: () => onDrillDown(
+                              query: topDeniedDevice.first.queryValue,
+                              resultFilter: 'denied',
+                            ),
+                            icon: const Icon(Icons.filter_alt_outlined),
+                            label: const Text('Filter denied events'),
+                          ),
+                        ],
                 ),
               ),
               SizedBox(
@@ -6560,6 +6716,18 @@ class _AuditGroupingPanel extends StatelessWidget {
                   body: topDeniedModule.isEmpty
                       ? 'No protected module is dominating the denied trail right now.'
                       : 'Use this when one protected route is causing most of the support friction.',
+                  actions: topDeniedModule.isEmpty
+                      ? const []
+                      : [
+                          OutlinedButton.icon(
+                            onPressed: () => onDrillDown(
+                              query: topDeniedModule.first.queryValue,
+                              resultFilter: 'denied',
+                            ),
+                            icon: const Icon(Icons.filter_alt_outlined),
+                            label: const Text('Filter denied events'),
+                          ),
+                        ],
                 ),
               ),
               SizedBox(
@@ -6573,6 +6741,18 @@ class _AuditGroupingPanel extends StatelessWidget {
                   body: topDeniedActionFamily.isEmpty
                       ? 'No action family is dominating denied events right now.'
                       : 'This points to the kind of support issue making the most local noise first.',
+                  actions: topDeniedActionFamily.isEmpty
+                      ? const []
+                      : [
+                          OutlinedButton.icon(
+                            onPressed: () => onDrillDown(
+                              query: topDeniedActionFamily.first.queryValue,
+                              resultFilter: 'denied',
+                            ),
+                            icon: const Icon(Icons.filter_alt_outlined),
+                            label: const Text('Filter denied events'),
+                          ),
+                        ],
                 ),
               ),
             ],
@@ -6584,21 +6764,34 @@ class _AuditGroupingPanel extends StatelessWidget {
             children: [
               SizedBox(
                 width: 380,
-                child: _AuditGroupCard(title: 'By user', entries: byActor),
+                child: _AuditGroupCard(
+                  title: 'By user',
+                  entries: byActor,
+                  onDrillDown: onDrillDown,
+                ),
               ),
               SizedBox(
                 width: 380,
-                child: _AuditGroupCard(title: 'By device', entries: byDevice),
+                child: _AuditGroupCard(
+                  title: 'By device',
+                  entries: byDevice,
+                  onDrillDown: onDrillDown,
+                ),
               ),
               SizedBox(
                 width: 380,
-                child: _AuditGroupCard(title: 'By module', entries: byModule),
+                child: _AuditGroupCard(
+                  title: 'By module',
+                  entries: byModule,
+                  onDrillDown: onDrillDown,
+                ),
               ),
               SizedBox(
                 width: 380,
                 child: _AuditGroupCard(
                   title: 'By action family',
                   entries: byActionFamily,
+                  onDrillDown: onDrillDown,
                 ),
               ),
             ],
@@ -6612,6 +6805,7 @@ class _AuditGroupingPanel extends StatelessWidget {
 class _AuditGroupSummaryRow {
   const _AuditGroupSummaryRow({
     required this.label,
+    required this.queryValue,
     required this.totalCount,
     required this.allowedCount,
     required this.deniedCount,
@@ -6619,6 +6813,7 @@ class _AuditGroupSummaryRow {
   });
 
   final String label;
+  final String queryValue;
   final int totalCount;
   final int allowedCount;
   final int deniedCount;
@@ -6643,6 +6838,7 @@ List<_AuditGroupSummaryRow> _auditGroupSummaryRows(
       .map(
         (entry) => _AuditGroupSummaryRow(
           label: labelFor?.call(entry.key) ?? entry.key,
+          queryValue: entry.key,
           totalCount: entry.value.length,
           allowedCount: entry.value
               .where((event) => event.result == 'allowed')
@@ -6668,10 +6864,16 @@ List<_AuditGroupSummaryRow> _auditGroupSummaryRows(
 }
 
 class _AuditGroupCard extends StatelessWidget {
-  const _AuditGroupCard({required this.title, required this.entries});
+  const _AuditGroupCard({
+    required this.title,
+    required this.entries,
+    required this.onDrillDown,
+  });
 
   final String title;
   final List<_AuditGroupSummaryRow> entries;
+  final void Function({required String query, String? resultFilter})
+  onDrillDown;
 
   @override
   Widget build(BuildContext context) {
@@ -6690,6 +6892,18 @@ class _AuditGroupCard extends StatelessWidget {
                       '${entry.label}: ${entry.totalCount} total - ${entry.deniedCount} denied - ${entry.pendingCount} pending',
                 )
                 .join('\n'),
+      actions: entries.isEmpty
+          ? const []
+          : entries
+                .take(3)
+                .map(
+                  (entry) => OutlinedButton.icon(
+                    onPressed: () => onDrillDown(query: entry.queryValue),
+                    icon: const Icon(Icons.filter_alt_outlined),
+                    label: Text('Filter ${entry.label}'),
+                  ),
+                )
+                .toList(growable: false),
     );
   }
 }
@@ -7922,6 +8136,7 @@ Future<void> _exportReadinessSummary({
   required UsersDevicesPinRegistrySnapshot pins,
   required String? focusedUserId,
   required String statusFilter,
+  bool openPdfAfterExport = false,
 }) async {
   final result = await ref
       .read(usersDevicesControlReportServiceProvider)
@@ -7932,9 +8147,23 @@ Future<void> _exportReadinessSummary({
         statusFilter: statusFilter,
       );
 
+  if (openPdfAfterExport && context.mounted && result.pdfPath != null) {
+    await openLocalPdfDocument(
+      context,
+      title: 'Users & Devices Readiness Summary PDF',
+      pdfPath: result.pdfPath!,
+    );
+  }
+
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${result.message} ${result.reportPath}')),
+      SnackBar(
+        content: Text(
+          result.pdfPath == null
+              ? '${result.message} ${result.reportPath}'
+              : '${result.message} ${result.reportPath} PDF: ${result.pdfPath}',
+        ),
+      ),
     );
   }
 }
@@ -7945,6 +8174,7 @@ Future<void> _exportIncidentSummary({
   required UsersDevicesControlSnapshot snapshot,
   required String resultFilter,
   required String query,
+  bool openPdfAfterExport = false,
 }) async {
   final result = await ref
       .read(usersDevicesControlReportServiceProvider)
@@ -7954,9 +8184,23 @@ Future<void> _exportIncidentSummary({
         query: query,
       );
 
+  if (openPdfAfterExport && context.mounted && result.pdfPath != null) {
+    await openLocalPdfDocument(
+      context,
+      title: 'Users & Devices Incident Summary PDF',
+      pdfPath: result.pdfPath!,
+    );
+  }
+
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${result.message} ${result.reportPath}')),
+      SnackBar(
+        content: Text(
+          result.pdfPath == null
+              ? '${result.message} ${result.reportPath}'
+              : '${result.message} ${result.reportPath} PDF: ${result.pdfPath}',
+        ),
+      ),
     );
   }
 }
@@ -7970,6 +8214,7 @@ Future<void> _exportAdminReviewPack({
   String statusFilter = 'all',
   String resultFilter = 'all',
   String query = '',
+  bool openPdfAfterExport = false,
 }) async {
   final result = await ref
       .read(usersDevicesControlReportServiceProvider)
@@ -7982,9 +8227,23 @@ Future<void> _exportAdminReviewPack({
         query: query,
       );
 
+  if (openPdfAfterExport && context.mounted && result.pdfPath != null) {
+    await openLocalPdfDocument(
+      context,
+      title: 'Users & Devices Admin Review Pack PDF',
+      pdfPath: result.pdfPath!,
+    );
+  }
+
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${result.message} ${result.reportPath}')),
+      SnackBar(
+        content: Text(
+          result.pdfPath == null
+              ? '${result.message} ${result.reportPath}'
+              : '${result.message} ${result.reportPath} PDF: ${result.pdfPath}',
+        ),
+      ),
     );
   }
 }

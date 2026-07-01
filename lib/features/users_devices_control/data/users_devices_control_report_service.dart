@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
+import 'package:pdf/widgets.dart' as pw;
 
 import 'users_devices_control_repository.dart';
 import 'users_devices_pin_registry_service.dart';
@@ -37,20 +39,24 @@ class UsersDevicesControlReportService {
       );
     }
 
-    await reportFile.writeAsString(
-      _buildReadinessSummaryReport(
-        snapshot: snapshot,
-        pins: pins,
-        focusedUserId: focusedUserId,
-        statusFilter: statusFilter,
-      ),
-      flush: true,
+    final reportContent = _buildReadinessSummaryReport(
+      snapshot: snapshot,
+      pins: pins,
+      focusedUserId: focusedUserId,
+      statusFilter: statusFilter,
+    );
+    await reportFile.writeAsString(reportContent, flush: true);
+    final pdfFile = await _writePdfReport(
+      pdfPath: readinessSummaryPdfPath,
+      title: 'Users & Devices Readiness Summary',
+      markdownContent: reportContent,
     );
 
     return UsersDevicesControlReportExportResult.success(
       message: 'Exported the readiness summary.',
       reportPath: reportFile.path,
       backupPath: backupPath,
+      pdfPath: pdfFile.path,
     );
   }
 
@@ -70,19 +76,23 @@ class UsersDevicesControlReportService {
       );
     }
 
-    await reportFile.writeAsString(
-      _buildIncidentSummaryReport(
-        snapshot: snapshot,
-        resultFilter: resultFilter,
-        query: query,
-      ),
-      flush: true,
+    final reportContent = _buildIncidentSummaryReport(
+      snapshot: snapshot,
+      resultFilter: resultFilter,
+      query: query,
+    );
+    await reportFile.writeAsString(reportContent, flush: true);
+    final pdfFile = await _writePdfReport(
+      pdfPath: incidentSummaryPdfPath,
+      title: 'Users & Devices Incident Summary',
+      markdownContent: reportContent,
     );
 
     return UsersDevicesControlReportExportResult.success(
       message: 'Exported the incident summary.',
       reportPath: reportFile.path,
       backupPath: backupPath,
+      pdfPath: pdfFile.path,
     );
   }
 
@@ -105,22 +115,26 @@ class UsersDevicesControlReportService {
       );
     }
 
-    await reportFile.writeAsString(
-      _buildAdminReviewPack(
-        snapshot: snapshot,
-        pins: pins,
-        focusedUserId: focusedUserId,
-        statusFilter: statusFilter,
-        resultFilter: resultFilter,
-        query: query,
-      ),
-      flush: true,
+    final reportContent = _buildAdminReviewPack(
+      snapshot: snapshot,
+      pins: pins,
+      focusedUserId: focusedUserId,
+      statusFilter: statusFilter,
+      resultFilter: resultFilter,
+      query: query,
+    );
+    await reportFile.writeAsString(reportContent, flush: true);
+    final pdfFile = await _writePdfReport(
+      pdfPath: adminReviewPackPdfPath,
+      title: 'Users & Devices Admin Review Pack',
+      markdownContent: reportContent,
     );
 
     return UsersDevicesControlReportExportResult.success(
       message: 'Exported the admin review pack.',
       reportPath: reportFile.path,
       backupPath: backupPath,
+      pdfPath: pdfFile.path,
     );
   }
 
@@ -141,6 +155,17 @@ class UsersDevicesControlReportService {
   String get adminReviewPackPath =>
       path.join(exportsRootPath, 'users_devices_admin_review_pack.md');
 
+  String get pdfExportsRootPath => path.join(moduleRootPath, 'output', 'pdf');
+
+  String get readinessSummaryPdfPath =>
+      path.join(pdfExportsRootPath, 'users_devices_readiness_summary.pdf');
+
+  String get incidentSummaryPdfPath =>
+      path.join(pdfExportsRootPath, 'users_devices_incident_summary.pdf');
+
+  String get adminReviewPackPdfPath =>
+      path.join(pdfExportsRootPath, 'users_devices_admin_review_pack.pdf');
+
   Future<String> _backupExistingReport({
     required File sourceFile,
     required String reportSlug,
@@ -157,6 +182,101 @@ class UsersDevicesControlReportService {
     await backupFile.parent.create(recursive: true);
     await sourceFile.copy(backupFile.path);
     return backupFile.path;
+  }
+
+  Future<File> _writePdfReport({
+    required String pdfPath,
+    required String title,
+    required String markdownContent,
+  }) async {
+    final pdfFile = File(pdfPath);
+    await pdfFile.parent.create(recursive: true);
+    final pdfBytes = await _buildReportPdfBytes(
+      title: title,
+      markdownContent: markdownContent,
+    );
+    await pdfFile.writeAsBytes(pdfBytes, flush: true);
+    return pdfFile;
+  }
+
+  Future<Uint8List> _buildReportPdfBytes({
+    required String title,
+    required String markdownContent,
+  }) async {
+    final pdf = pw.Document();
+    final lines = markdownContent.split('\n');
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: pw.PageTheme(margin: const pw.EdgeInsets.all(28)),
+        build: (context) => [
+          pw.Text(
+            title,
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 12),
+          ..._pdfWidgetsForMarkdownLines(lines),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  List<pw.Widget> _pdfWidgetsForMarkdownLines(List<String> lines) {
+    final widgets = <pw.Widget>[];
+    for (final rawLine in lines) {
+      final line = rawLine.trimRight();
+      if (line.trim().isEmpty) {
+        widgets.add(pw.SizedBox(height: 6));
+        continue;
+      }
+      final trimmed = line.trimLeft();
+      if (trimmed.startsWith('# ')) {
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 10, bottom: 6),
+            child: pw.Text(
+              trimmed.substring(2),
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        );
+        continue;
+      }
+      if (trimmed.startsWith('## ')) {
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 8, bottom: 4),
+            child: pw.Text(
+              trimmed.substring(3),
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        );
+        continue;
+      }
+      if (trimmed.startsWith('- ')) {
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(left: 10, bottom: 3),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('- '),
+                pw.Expanded(child: pw.Text(trimmed.substring(2))),
+              ],
+            ),
+          ),
+        );
+        continue;
+      }
+      widgets.add(
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 3),
+          child: pw.Text(trimmed),
+        ),
+      );
+    }
+    return widgets;
   }
 
   String _buildReadinessSummaryReport({
@@ -733,6 +853,7 @@ class UsersDevicesControlReportService {
             event.action,
             event.result,
             event.reason,
+            _actionFamily(event),
           ].join(' ').toLowerCase();
           return haystack.contains(trimmed);
         })
@@ -901,18 +1022,21 @@ class UsersDevicesControlReportExportResult {
     required this.message,
     required this.reportPath,
     this.backupPath,
+    this.pdfPath,
   });
 
   factory UsersDevicesControlReportExportResult.success({
     required String message,
     required String reportPath,
     String? backupPath,
+    String? pdfPath,
   }) {
     return UsersDevicesControlReportExportResult._(
       success: true,
       message: message,
       reportPath: reportPath,
       backupPath: backupPath,
+      pdfPath: pdfPath,
     );
   }
 
@@ -920,6 +1044,7 @@ class UsersDevicesControlReportExportResult {
   final String message;
   final String reportPath;
   final String? backupPath;
+  final String? pdfPath;
 }
 
 class _ReadinessStatus {

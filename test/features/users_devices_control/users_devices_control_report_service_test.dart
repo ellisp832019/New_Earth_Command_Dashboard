@@ -120,6 +120,8 @@ void main() {
 
       expect(result.success, isTrue);
       expect(File(result.reportPath).existsSync(), isTrue);
+      expect(result.pdfPath, isNotNull);
+      expect(File(result.pdfPath!).existsSync(), isTrue);
 
       final content = await File(result.reportPath).readAsString();
       expect(content, contains('# Users & Devices Admin Review Pack'));

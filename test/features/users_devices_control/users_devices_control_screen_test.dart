@@ -375,6 +375,9 @@ void main() {
     expect(find.text('Review pressure points'), findsOneWidget);
     expect(find.textContaining('High-risk pending:'), findsOneWidget);
     expect(find.text('Open approval queue'), findsOneWidget);
+    expect(find.text('Export incident'), findsOneWidget);
+    expect(find.text('Export review pack'), findsOneWidget);
+    expect(find.text('Review pack PDF'), findsOneWidget);
   });
 
   testWidgets('route gate suggests a stronger local user when one is available', (
@@ -517,7 +520,9 @@ void main() {
       expect(find.text('Selected user for handoff sheet'), findsOneWidget);
       expect(find.text('Copy summary'), findsWidgets);
       expect(find.text('Export readiness'), findsWidgets);
+      expect(find.text('Readiness PDF'), findsWidgets);
       expect(find.text('Export review pack'), findsWidgets);
+      expect(find.text('Review pack PDF'), findsWidgets);
       expect(find.text('Open exports'), findsWidgets);
       expect(find.text('Onboarding pack PDF'), findsWidgets);
       expect(find.text('Recovery drills PDF'), findsWidgets);
@@ -535,7 +540,9 @@ void main() {
     await pumpUntilFound(tester, find.text('Audit posture'));
 
     expect(find.text('Export incident'), findsOneWidget);
+    expect(find.text('Incident PDF'), findsOneWidget);
     expect(find.text('Export review pack'), findsOneWidget);
+    expect(find.text('Review pack PDF'), findsOneWidget);
     expect(find.text('Open exports'), findsOneWidget);
     expect(find.text('Review pack'), findsOneWidget);
     expect(find.text('Latest risk panel'), findsOneWidget);
@@ -548,6 +555,7 @@ void main() {
     expect(find.text('By device'), findsOneWidget);
     expect(find.text('By module'), findsOneWidget);
     expect(find.text('By action family'), findsOneWidget);
+    expect(find.byIcon(Icons.filter_alt_outlined), findsWidgets);
   });
 
   testWidgets('migration health shows sqlite and seed posture', (tester) async {

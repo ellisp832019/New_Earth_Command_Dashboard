@@ -298,6 +298,7 @@ What it does:
 - gives you a quick `Copy summary` action for local notes or admin handoff
 - lets you `Export readiness` to a saved local markdown handoff file
 - lets you `Export review pack` to bundle readiness, approval pressure, and audit posture together
+- lets you generate `Readiness PDF` and `Review pack PDF` when you want printable local copies
 
 Status meanings:
 
@@ -318,6 +319,7 @@ Quick test:
 5. Paste the result into a note to confirm the handoff sheet text is complete.
 6. Click `Export readiness` to save a local report into the Users & Devices export folder.
 7. Click `Export review pack` when you want one broader admin handoff pack instead of a single-user readiness summary.
+8. Click `Readiness PDF` or `Review pack PDF` when you want a print-ready version straight away.
 
 ## Access review dashboard
 
@@ -336,6 +338,7 @@ What it shows:
 - quarantined or revoked trust devices
 - pending approvals
 - recent denied unlock signals
+- direct export actions for `Incident summary`, `Review pack`, and `Review pack PDF`
 
 What to do with it:
 
@@ -344,6 +347,8 @@ What to do with it:
 3. Use the matching drill-down button.
 4. Confirm the deeper screen opens already focused on the right admin area.
 5. Review `Audit Log` after any recovery, unlock, revoke, or approval action.
+6. Use `Export incident` or `Export review pack` when you want a saved admin handoff without opening deeper screens first.
+7. Use `Review pack PDF` when you want a print-ready local copy.
 
 Use this screen first when:
 
@@ -364,6 +369,7 @@ What is new in this reporting pass:
 - the event list still stays underneath for detailed review
 - `Export incident` writes a calmer local incident summary for handoff or review
 - `Export review pack` writes one combined markdown pack with readiness posture, approval pressure, grouped audit pressure, and latest matching events
+- `Incident PDF` and `Review pack PDF` generate print-ready local versions of those exports
 
 Quick audit review:
 
@@ -374,6 +380,7 @@ Quick audit review:
 5. Open the related admin screen only after the grouped view tells you where the pressure is.
 6. Click `Export incident` when you want a saved local markdown summary of the current audit posture.
 7. Click `Export review pack` when you want a broader admin handoff file instead of just the incident slice.
+8. Click the grouped audit filter buttons when you want the event list narrowed straight to one user, device, module, or action family.
 
 ## Migration Health
 
