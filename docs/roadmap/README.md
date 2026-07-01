@@ -33,6 +33,7 @@ These are the main roadmap views worth checking first:
 - [`commit_split_plan.md`](commit_split_plan.md)
 - [`users_devices_commit_queue.md`](users_devices_commit_queue.md)
 - [`repo_upgrade_roadmap.md`](repo_upgrade_roadmap.md)
+- [`repo_upgrade_20_task_execution_queue.md`](repo_upgrade_20_task_execution_queue.md)
 - [`major_upgrade_review.md`](major_upgrade_review.md)
 - [`major_upgrade_checkpoint_2026_06_25.md`](major_upgrade_checkpoint_2026_06_25.md)
 - [`dashboard_module_20_task_execution_queue.md`](dashboard_module_20_task_execution_queue.md)
