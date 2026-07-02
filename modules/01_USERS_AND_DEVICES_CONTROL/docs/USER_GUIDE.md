@@ -822,6 +822,7 @@ Check the person. Confirm the role, permissions, and linked devices.
 ### Devices
 
 Check the device. Confirm the trust level, trust posture, owner, and allowed actions.
+The device cards now also show a short trust-posture reason so you can see why a device is trusted, needs review, is blocked, or is quarantined without opening the code or logs.
 
 ### Access Matrix
 
@@ -844,6 +845,11 @@ Use this flow:
 3. Review `Device trust review queue` if the linked device is blocked, quarantined, or still below the trust floor.
 4. Use `Trust drill checklist` to confirm the endpoint, read the evidence, and resolve the gap.
 5. Return to `Security Lock` or a protected module gate to verify the route once the user shows `Access ready`.
+
+### Device trust posture
+
+Trusted devices now show a short reason line in the device cards and the review queue.
+That helps you see whether the endpoint is trusted, needs review, is blocked, or is quarantined without guessing from the raw status alone.
 
 ### Approval Queue
 

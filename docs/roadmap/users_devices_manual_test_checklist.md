@@ -126,8 +126,9 @@ This is the practical operator test pass for the local trust layer.
 3. Create or locate at least one pending request.
 4. Confirm the request card shows module, user, device, and reason clearly.
 5. Confirm any prerequisite hint explains whether permission, trust, or identity still needs work.
-6. Approve or deny the request.
-7. Confirm the final state is reflected in `Audit Log`.
+6. Confirm the device context and posture wording explain *why* the device is trusted, blocked, quarantined, or still under review.
+7. Approve or deny the request.
+8. Confirm the final state is reflected in `Audit Log`.
 
 ## Pass Criteria
 
