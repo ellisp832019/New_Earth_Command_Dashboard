@@ -6,6 +6,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/routing/security_route_policy.dart';
 import '../../security/application/security_session_controller.dart';
+import '../../security/presentation/security_locked_notice_card.dart';
 import '../application/settings_controller.dart';
 import '../../voice_assistant/voice_speech_service.dart';
 
@@ -163,6 +164,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         'This is where local identity, device trust, approvals, and PIN controls should sit.',
                         style: theme.textTheme.bodyMedium,
                       ),
+                      if (isSessionLocked) ...[
+                        const SizedBox(height: 12),
+                        SecurityLockedNoticeCard(
+                          title: 'Security controls are waiting on local unlock',
+                          message:
+                              'Open Security Lock before you manage users, devices, or PINs from Settings.',
+                          detail:
+                              'The settings screen stays visible, but protected admin actions wait until the same local session is active again.',
+                          secondaryActionLabel: 'Open Module Hub',
+                          onSecondaryAction: () {
+                            context.push(RouteNames.moduleHub);
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 10,

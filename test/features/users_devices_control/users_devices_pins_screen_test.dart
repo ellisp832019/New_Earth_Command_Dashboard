@@ -41,6 +41,20 @@ class _UnlockedSecuritySessionNotifier extends SecuritySessionNotifier {
   }
 }
 
+class _LockedSecuritySessionNotifier extends SecuritySessionNotifier {
+  @override
+  SecuritySessionState build() {
+    const locked = SecuritySessionState.locked();
+    SecuritySessionRouterBridge.sync(locked);
+    ref.onDispose(_reset);
+    return locked;
+  }
+
+  void _reset() {
+    SecuritySessionRouterBridge.sync(const SecuritySessionState.locked());
+  }
+}
+
 void main() {
   UsersDevicesControlSnapshot sampleSnapshot() {
     return const UsersDevicesControlSnapshot(
@@ -111,6 +125,7 @@ void main() {
   Widget buildTestApp({
     String? initialUserId,
     required UsersDevicesPinRegistrySnapshot pinSnapshot,
+    bool unlockedSession = true,
   }) {
     final snapshot = sampleSnapshot();
     return ProviderScope(
@@ -125,7 +140,9 @@ void main() {
           (ref) async => pinSnapshot,
         ),
         securitySessionProvider.overrideWith(
-          _UnlockedSecuritySessionNotifier.new,
+          unlockedSession
+              ? _UnlockedSecuritySessionNotifier.new
+              : _LockedSecuritySessionNotifier.new,
         ),
       ],
       child: MaterialApp(
@@ -275,4 +292,22 @@ void main() {
       expect(find.text('PIN event timeline'), findsOneWidget);
     },
   );
+
+  testWidgets('pins screen shows shared locked-session notice when locked', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        pinSnapshot: UsersDevicesPinRegistrySnapshot(records: const []),
+        unlockedSession: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('PIN Registry is locked'), findsOneWidget);
+    expect(find.text('Security session locked'), findsOneWidget);
+    expect(find.text('Protected actions paused'), findsOneWidget);
+    expect(find.text('Open Security Lock'), findsOneWidget);
+    expect(find.text('Back to Users & Devices'), findsOneWidget);
+  });
 }

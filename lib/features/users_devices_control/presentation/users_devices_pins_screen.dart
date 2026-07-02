@@ -9,6 +9,7 @@ import '../application/users_devices_pin_registry_controller.dart';
 import '../data/users_devices_control_repository.dart';
 import '../data/users_devices_pin_registry_service.dart';
 import '../../security/application/security_session_controller.dart';
+import '../../security/presentation/security_locked_notice_card.dart';
 
 class UsersDevicesPinsScreen extends ConsumerStatefulWidget {
   const UsersDevicesPinsScreen({super.key, this.initialUserId});
@@ -510,46 +511,14 @@ class _UsersDevicesPinsScreenState
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PIN Registry is locked',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Open Security Lock and unlock the local session before managing user PINs.',
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          FilledButton.icon(
-                            onPressed: () => context.go(
-                              SecurityRoutePolicy.securityLockFrom(
-                                GoRouterState.of(context).uri,
-                              ),
-                            ),
-                            icon: const Icon(Icons.lock_outline),
-                            label: const Text('Open Security Lock'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                context.go(RouteNames.usersDevices),
-                            icon: const Icon(Icons.shield_outlined),
-                            label: const Text('Back to Users & Devices'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+              child: SecurityLockedNoticeCard(
+                title: 'PIN Registry is locked',
+                message:
+                    'Open Security Lock and unlock the local session before managing user PINs.',
+                detail:
+                    'This keeps per-user PIN changes, recovery actions, and lockout resets inside one deliberate local session.',
+                secondaryActionLabel: 'Back to Users & Devices',
+                onSecondaryAction: () => context.go(RouteNames.usersDevices),
               ),
             ),
           ),
