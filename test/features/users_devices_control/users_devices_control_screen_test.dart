@@ -355,8 +355,9 @@ void main() {
     await tester.pumpWidget(buildTestApp(const UsersDevicesControlScreen()));
     await pumpUntilFound(tester, find.text('Register user'));
 
-    expect(find.text('Session checkpoint'), findsOneWidget);
+    expect(find.text('Security session'), findsOneWidget);
     expect(find.textContaining('Active user: none'), findsOneWidget);
+    expect(find.textContaining('Active device: none'), findsOneWidget);
     expect(find.text('Open Security Lock'), findsOneWidget);
     expect(find.text('Register user'), findsWidgets);
     expect(find.text('Register device'), findsWidgets);

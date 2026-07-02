@@ -7177,10 +7177,10 @@ class _UsersDevicesOperatorSafetyBanner extends ConsumerWidget {
     final remaining = session.remaining;
 
     return _VisualPanel(
-      title: 'Session checkpoint',
+      title: 'Security session',
       subtitle: isLocked
-          ? 'The local session is locked. Protected actions stay closed until Security Lock passes.'
-          : 'The current local user and device stay visible here while you review access, trust, and audit.',
+          ? 'Locked. Open Security Lock to start a local session.'
+          : 'Unlocked locally. The current local user and device stay visible while you review access, trust, and audit.',
       icon: isLocked ? Icons.lock_outline : Icons.verified_user_outlined,
       compact: true,
       child: Column(
@@ -7198,8 +7198,8 @@ class _UsersDevicesOperatorSafetyBanner extends ConsumerWidget {
               ),
               _CardChip(
                 label: activeDeviceLabel == null || activeDeviceLabel.isEmpty
-                    ? 'Device: none'
-                    : 'Device: $activeDeviceLabel',
+                    ? 'Active device: none'
+                    : 'Active device: $activeDeviceLabel',
               ),
               _CardChip(
                 label: remaining == null
