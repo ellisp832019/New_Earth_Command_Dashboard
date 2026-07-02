@@ -290,6 +290,7 @@ void main() {
         find.text('Recovery live: 0', skipOffstage: false),
         findsOneWidget,
       );
+      expect(find.text('Replace primary PIN'), findsWidgets);
       expect(find.text('Recovery rotation guidance'), findsOneWidget);
       expect(find.text('PIN event timeline'), findsOneWidget);
     },

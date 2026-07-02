@@ -198,11 +198,11 @@ class _UsersDevicesPinsScreenState
 
     final auditDetails = await _promptAuditDetails(
       title: hasExistingUnlockPath
-          ? 'Force reset reason'
+          ? 'Replace primary PIN reason'
           : 'Primary PIN reason',
-      submitLabel: hasExistingUnlockPath ? 'Force reset' : 'Save',
+      submitLabel: hasExistingUnlockPath ? 'Replace PIN' : 'Save',
       reasonLabel: hasExistingUnlockPath
-          ? 'Why is the PIN being reset?'
+          ? 'Why is the PIN being replaced?'
           : 'Why is the PIN being set?',
       helperText:
           'Add any operator note that will help later if this change is reviewed.',
@@ -1048,6 +1048,15 @@ class _UsersDevicesPinsScreenState
                                           ),
                                   ),
                                   const SizedBox(height: 10),
+                                  if (primaryPins.isNotEmpty) ...[
+                                    Text(
+                                      'Primary PIN replacement revokes the current active primary PIN before writing the new one.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall,
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
@@ -1108,7 +1117,7 @@ class _UsersDevicesPinsScreenState
                                         label: Text(
                                           primaryPins.isEmpty
                                               ? 'Set primary PIN'
-                                              : 'Force reset primary PIN',
+                                              : 'Replace primary PIN',
                                         ),
                                       ),
                                       FilledButton.tonalIcon(
