@@ -9,7 +9,7 @@ This is the practical operator test pass for the local trust layer.
 1. Launch the app from a fully closed state.
 2. Confirm the app opens on `Security Lock`.
 3. Confirm no protected module opens first.
-4. Confirm the session pill shows `Locked`.
+4. Confirm the right-side `Security session` box shows `Locked`.
 
 ## 2. Locked-route protection
 
@@ -30,7 +30,7 @@ This is the practical operator test pass for the local trust layer.
 2. Enter the correct primary PIN.
 3. Confirm unlock succeeds.
 4. Confirm the app resumes to the intended protected route.
-5. Confirm the session pill shows `Active`.
+5. Confirm the right-side `Security session` box shows `Active`.
 
 ## 4. Failed PIN attempt visibility
 

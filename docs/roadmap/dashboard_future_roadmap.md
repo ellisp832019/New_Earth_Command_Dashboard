@@ -54,7 +54,7 @@ Make security visible without making it intrusive.
 
 Targets:
 
-- keep the top-left session pill live
+- keep the right-side security session box live
 - show active user, online state, and expiry countdown clearly
 - keep the warning colour shift for nearing timeout
 - keep Security Lock and Access Matrix one tap away
@@ -113,6 +113,5 @@ If we start on this roadmap immediately, the first slice should be:
 
 1. tighten the dashboard home hierarchy
 2. keep the Top 3 / active projects / quick capture rhythm readable
-3. make the session pill and access controls feel intentional
+3. make the security session box and access controls feel intentional
 4. keep module entry points consistent with the dashboard card style
-

@@ -6,6 +6,20 @@ This is the next practical upgrade plan for the module after the onboarding repo
 
 Move the access layer from a good guided demo into a stronger local operator system without losing clarity.
 
+## Next recommended order after the release-verification pass
+
+Once the current release-confidence slice is green, take the next Users & Devices work in this order:
+
+1. lock-state banner consistency across protected routes
+2. clearer selected user and device context on protected screens
+3. stronger blocked-state summaries for missing role, PIN, trust, and approval
+
+Why this order:
+
+- it stays inside operator safety first
+- it deepens the current trust loop instead of widening the module
+- it keeps the next changes easy to explain, test, and hand over
+
 ## Phase 1 - Operator safety
 
 1. Add a dedicated lock-state banner to every protected module route.

@@ -26,7 +26,7 @@ Goal:
 - make the startup lock path the single clear entry point
 - keep the remembered identity flow stable
 - remove duplicate unlock affordances
-- keep the session pill readable
+- keep the security session box readable
 
 Suggested commit message:
 

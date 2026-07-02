@@ -21,7 +21,7 @@ The module home now also shows a short access plan so the main security flow is 
 
 The main app now opens on `Security Lock` first. That screen uses the New Earth desktop startup image in the background, then lets you continue into the dashboard or the optional voice gate.
 
-A small opaque security session box now sits in the top-left corner of the desktop shell. It shows whether the session is active, the active user, whether that user is online, the timeout window, and a live countdown to expiry. You can tap it to return to `Security Lock` or jump to `Access Matrix`.
+A small opaque security session box now sits on the right side of the desktop shell. It shows whether the session is active, the active user, whether that user is online, the timeout window, and a live countdown to expiry. You can tap it to return to `Security Lock` or jump to `Access Matrix`.
 
 The local PIN registry now lives inside the same security area. Use `PIN Registry` from `Users & Devices Control` or `Settings` when you need to set, revoke, or recover a local PIN. The lock screen no longer opens the registry directly.
 
@@ -175,7 +175,7 @@ Use this flow when you want to understand how the app opens now:
 3. Pick the local user and device.
 4. Unlock into the dashboard, or into the voice gate if that option is turned on.
 5. Open `Settings` if you want to show or hide the voice startup gate.
-6. Use the top-left session box to check the live countdown, active user, and online status during testing.
+6. Use the right-side security session box to check the live countdown, active user, and online status during testing.
 
 Quick checks:
 
@@ -705,7 +705,7 @@ Why this matters: the device card should also read as `High trust`, not just sho
 13. Open `Security Lock` from app start and confirm the New Earth desktop image appears behind the gate.
 14. Turn the voice startup gate on in `Settings` if you want the headset check after unlock.
 15. Turn it off again if you want startup to go straight from `Security Lock` to the dashboard.
-16. Watch the top-left security session box count down while the session is active.
+16. Watch the right-side security session box count down while the session is active.
 17. Tap the box to return to `Security Lock`, or use the `Access Matrix` shortcut inside it when you want to inspect the rules again.
 
 ## Step-by-step Treasury walkthrough
@@ -797,7 +797,7 @@ Why this matters: onboarding is how a device becomes trusted enough for later ac
 Why this matters: the posture label is the quickest summary of whether onboarding is complete enough for access.
 15. Open `Security Lock` and confirm the selected context matches what you expect.
 Why this matters: the lock view is a quick sanity check for the current local context.
-16. Watch the top-left session box count down while the session stays active, and confirm the active user label and online status match what you expect.
+16. Watch the right-side security session box count down while the session stays active, and confirm the active user label and online status match what you expect.
 Why this matters: you can see the live timeout instead of guessing.
 17. Tap the session box to reopen `Security Lock` or use `Access Matrix` if you want to inspect the rule set mid-test.
 Why this matters: the corner box is a quick navigation and status shortcut.

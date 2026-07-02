@@ -18,7 +18,7 @@ Scope:
 - tighten the startup lock path
 - keep the remembered user/device flow stable
 - remove duplicate unlock affordances
-- keep the session pill and countdown clear
+- keep the security session box and countdown clear
 
 Suggested commit message:
 
@@ -99,4 +99,3 @@ Before each commit:
 - confirm the app still starts
 - test the touched flow once
 - keep the diff scoped to one idea
-
