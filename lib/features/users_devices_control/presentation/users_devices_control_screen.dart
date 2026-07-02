@@ -4539,23 +4539,31 @@ class _UsersDevicesRouteGateScreenState
                             _VisualPanel(
                               title: 'Selected access context',
                               subtitle:
-                                  'See the active local identity and device before the child route opens.',
+                                  'See the active local identity, role, trust, and device before the child route opens.',
                               icon: Icons.person_search_outlined,
                               child: Wrap(
                                 spacing: 10,
                                 runSpacing: 10,
                                 children: [
                                   if (selectedUser != null) ...[
-                                    _CardChip(label: selectedUser.displayName),
-                                    _CardChip(label: selectedUser.role),
-                                    _CardChip(label: selectedUser.status),
+                                    _CardChip(
+                                      label: 'User: ${selectedUser.displayName}',
+                                    ),
+                                    _CardChip(label: 'Role: ${selectedUser.role}'),
+                                    _CardChip(
+                                      label: 'Status: ${selectedUser.status}',
+                                    ),
                                   ],
                                   if (selectedDevice != null) ...[
-                                    _CardChip(label: selectedDevice.name),
                                     _CardChip(
-                                      label: 'T${selectedDevice.trustLevel}',
+                                      label: 'Device: ${selectedDevice.name}',
                                     ),
-                                    _CardChip(label: selectedDevice.status),
+                                    _CardChip(
+                                      label: 'Trust: T${selectedDevice.trustLevel}',
+                                    ),
+                                    _CardChip(
+                                      label: 'Device status: ${selectedDevice.status}',
+                                    ),
                                   ],
                                   if (_latestAuditEventId != null)
                                     _CardChip(
@@ -8070,6 +8078,22 @@ List<String> buildUsersDevicesBlockedHints({
     hints.add(
       'Restore the device or switch to a trusted device before trying again.',
     );
+  }
+  if (issueCode == 'missing_pin' || lowerReason.contains('no local pin is configured')) {
+    hints.add('Open PIN Registry and issue or restore a primary PIN first.');
+    hints.add('A user needs a local PIN before Security Lock can open.');
+  }
+  if (issueCode == 'locked_out_active' || issueCode == 'locked_out_triggered') {
+    hints.add('Wait for the cooldown to finish, or clear the lockout from PIN Registry.');
+    hints.add('Use recovery only if the user needs help right now.');
+  }
+  if (issueCode == 'primary_missing_recovery_available') {
+    hints.add('Use the latest recovery PIN, then set a fresh primary PIN after unlock.');
+    hints.add('Keep the recovery PIN temporary so the user returns to a normal primary PIN.');
+  }
+  if (issueCode == 'pin_mismatch' || lowerReason.contains('pin did not match')) {
+    hints.add('Check the primary PIN for this user, or use the latest recovery PIN if one exists.');
+    hints.add('Open PIN Registry to confirm the current local PIN state.');
   }
   if (lowerReason.contains('trust must be at least level')) {
     final match = RegExp(r'level (\d+)').firstMatch(lowerReason);

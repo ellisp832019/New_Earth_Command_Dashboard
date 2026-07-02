@@ -514,6 +514,25 @@ void main() {
           'Grant the missing permission from the Access Matrix or switch to a role that already has it.',
         ),
       );
+
+      final pinHints = buildUsersDevicesBlockedHints(
+        reason: 'Local PIN did not match the selected identity.',
+        nextStep: 'Check the PIN Registry or set a fresh primary PIN.',
+        userId: 'user_peter_owner',
+        deviceId: 'device_new_earth_dev',
+        issueCode: 'pin_mismatch',
+        selectedUserRole: 'Owner',
+        selectedDeviceTrustLevel: 5,
+        selectedDeviceStatus: 'trusted',
+      );
+      expect(
+        pinHints,
+        contains('Check the primary PIN for this user, or use the latest recovery PIN if one exists.'),
+      );
+      expect(
+        pinHints,
+        contains('Open PIN Registry to confirm the current local PIN state.'),
+      );
     },
   );
 
