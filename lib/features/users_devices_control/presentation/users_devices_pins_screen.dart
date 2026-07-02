@@ -281,7 +281,7 @@ class _UsersDevicesPinsScreenState
       submitLabel: 'Issue recovery PIN',
       reasonLabel: 'Why is recovery access needed?',
       helperText:
-          'Example: primary PIN lost, user locked out, emergency support call.',
+          'Example: primary PIN lost, user locked out, emergency support call. Keep the recovery PIN temporary and rotate back to a fresh primary PIN after use.',
     );
     if (auditDetails == null) {
       return;
@@ -765,6 +765,53 @@ class _UsersDevicesPinsScreenState
                                   ],
                                 ),
                               ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.14),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Recovery expiry guidance',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    recoveryPins.isEmpty
+                                        ? 'No recovery PIN is live right now. That is the calm default. If support needs a temporary bridge, issue one recovery PIN and plan to rotate back to a fresh primary PIN as soon as possible.'
+                                        : 'Recovery PINs are temporary support tools. Revoke them after use and rotate the user back to a fresh primary PIN. Treat anything older than 24h as stale and review it before sharing again.',
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _CardChip(
+                                        label:
+                                            'Live recovery: ${recoveryPins.length}',
+                                      ),
+                                      _CardChip(
+                                        label:
+                                            'Stale over 24h: ${recoveryRotationSummary.staleRecoveryCount}',
+                                      ),
+                                      _CardChip(
+                                        label: recoveryPins.isEmpty
+                                            ? 'Temporary only'
+                                            : 'Rotate after use',
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
