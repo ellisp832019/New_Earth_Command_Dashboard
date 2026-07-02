@@ -596,7 +596,10 @@ void main() {
     expect(find.text('Open Devices'), findsWidgets);
     expect(find.text('Open audit'), findsWidgets);
     expect(find.text('Approved'), findsWidgets);
-    expect(find.textContaining('This device is quarantined'), findsWidgets);
+    expect(
+      find.textContaining('This device is quarantined'),
+      findsWidgets,
+    );
   });
 
   testWidgets(

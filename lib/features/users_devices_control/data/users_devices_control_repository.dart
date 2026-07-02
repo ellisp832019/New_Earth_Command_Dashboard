@@ -235,6 +235,29 @@ class UsersDevicesControlDevice {
     return 'This device should go back through onboarding before sensitive access.';
   }
 
+  String get trustPostureReason {
+    if (status == 'quarantined') {
+      final reason = quarantineReason.trim();
+      if (reason.isNotEmpty) {
+        return 'Quarantined because: $reason';
+      }
+      return 'Quarantined until the local review reason is cleared.';
+    }
+    if (status == 'blocked') {
+      return 'Blocked until the local issue is cleared and the device is re-approved.';
+    }
+    if (status == 'archived') {
+      return 'Archived, so it should stay out of active access until it is restored.';
+    }
+    if (isHighTrust) {
+      return 'High-trust endpoint with enough evidence for stricter module access.';
+    }
+    if (isTrusted) {
+      return 'Trusted for normal gated access, but still worth checking the evidence before raising the floor.';
+    }
+    return 'Needs review because the device is still below the normal trust floor.';
+  }
+
   String get trustEvidenceSummary {
     final parts = <String>[];
     if (trustSource.trim().isNotEmpty) {

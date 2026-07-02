@@ -2261,7 +2261,7 @@ class _UsersDevicesDeviceOnboardingScreenState
                                 subtitle:
                                     '${ownerLabelFor(device.ownerId)} - ${device.trustPostureLabel}',
                                 body:
-                                    '${device.trustPostureSummary}\n${device.trustEvidenceSummary}',
+                                    '${device.trustPostureReason}\n${device.trustEvidenceSummary}',
                                 chips: [
                                   _CardChip(
                                     label: 'Trust ${device.trustLevel}',
@@ -2773,7 +2773,7 @@ class _UsersDevicesDeviceOnboardingScreenState
                                       title: device.name,
                                       subtitle: device.type,
                                       body:
-                                          '${device.trustPostureSummary}\nTrust T${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
+                                          '${device.trustPostureReason}\nTrust T${device.trustLevel} - ${device.status} - owner ${device.ownerId.isEmpty ? 'unassigned' : device.ownerId}',
                                       chips: [
                                         _CardChip(
                                           label: 'T${device.trustLevel}',
