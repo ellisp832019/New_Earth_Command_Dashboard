@@ -446,9 +446,75 @@ void main() {
     expect(find.text('Treasury workspace'), findsOneWidget);
     expect(find.text('Protected route context'), findsOneWidget);
     expect(find.textContaining('User: '), findsWidgets);
+    expect(find.textContaining('Role: '), findsWidgets);
     expect(find.textContaining('Device: '), findsWidgets);
+    expect(find.textContaining('Device status: '), findsWidgets);
+    expect(find.textContaining('Trust: T'), findsWidgets);
     expect(find.textContaining('Security Lock'), findsOneWidget);
   });
+
+  test(
+    'route gate explains blocked trust, role, and approval guidance clearly',
+    () {
+      final trustHints = buildUsersDevicesBlockedHints(
+        reason: 'Device trust must be at least level 4.',
+        nextStep: 'Use a higher-trust device or raise the device trust level.',
+        userId: 'user_hayley_finance',
+        deviceId: 'device_phone_scanner',
+        issueCode: 'trust_floor',
+        selectedUserRole: 'Co-founder',
+        selectedDeviceTrustLevel: 2,
+        selectedDeviceStatus: 'registered',
+      );
+      expect(trustHints, contains('Selected device trust: T2.'));
+      expect(trustHints, contains('Required trust floor: T4.'));
+      expect(
+        trustHints,
+        contains('Choose a higher-trust device, or raise trust during onboarding.'),
+      );
+
+      final approvalHints = buildUsersDevicesBlockedHints(
+        reason: 'Action requires approval.',
+        nextStep: 'Open the Approval Queue and wait for a reviewer to approve it.',
+        userId: 'user_guest_ops',
+        deviceId: 'device_guest_tablet',
+        issueCode: 'approval_required',
+        selectedUserRole: 'Operator',
+        selectedDeviceTrustLevel: 3,
+        selectedDeviceStatus: 'registered',
+      );
+      expect(
+        approvalHints,
+        contains('This action waits for a reviewer before the route can open.'),
+      );
+      expect(
+        approvalHints,
+        contains('Open the Approval Queue and review the pending request.'),
+      );
+      expect(
+        approvalHints,
+        contains('A trusted reviewer needs to approve this action first.'),
+      );
+
+      final roleHints = buildUsersDevicesBlockedHints(
+        reason: 'Missing required permission: finance.edit.',
+        nextStep: 'Grant the missing permission or switch to a role that already has it.',
+        userId: 'user_guest_ops',
+        deviceId: 'device_guest_tablet',
+        issueCode: 'missing_permission',
+        selectedUserRole: 'Operator',
+        selectedDeviceTrustLevel: 3,
+        selectedDeviceStatus: 'registered',
+      );
+      expect(roleHints, contains('Selected role: Operator.'));
+      expect(
+        roleHints,
+        contains(
+          'Grant the missing permission from the Access Matrix or switch to a role that already has it.',
+        ),
+      );
+    },
+  );
 
   testWidgets('device onboarding shows the guided user readiness workspace', (
     tester,

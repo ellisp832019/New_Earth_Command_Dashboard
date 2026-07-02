@@ -3938,7 +3938,10 @@ class _UsersDevicesRouteGateScreenState
   String? _selectedUserId;
   String? _selectedDeviceId;
   String? _selectedUserLabel;
+  String? _selectedUserRole;
   String? _selectedDeviceLabel;
+  String? _selectedDeviceStatus;
+  int? _selectedDeviceTrustLevel;
   List<String> _blockedHints = const [];
 
   String get _moduleLabel {
@@ -4120,7 +4123,10 @@ class _UsersDevicesRouteGateScreenState
           : decision.reason;
       _latestAuditEventId = latestAudit?.eventId;
       _selectedUserLabel = unlockedUser?.displayName;
+      _selectedUserRole = unlockedUser?.role;
       _selectedDeviceLabel = unlockedDevice?.name;
+      _selectedDeviceStatus = unlockedDevice?.status;
+      _selectedDeviceTrustLevel = unlockedDevice?.trustLevel;
       _auditSummary = latestAudit == null
           ? 'The access check was recorded locally.'
           : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
@@ -4131,6 +4137,10 @@ class _UsersDevicesRouteGateScreenState
               nextStep: decision.nextStep,
               userId: userId,
               deviceId: deviceId,
+              issueCode: decision.issueCode,
+              selectedUserRole: unlockedUser?.role ?? '',
+              selectedDeviceTrustLevel: unlockedDevice?.trustLevel ?? 0,
+              selectedDeviceStatus: unlockedDevice?.status ?? '',
             );
     });
   }
@@ -4140,53 +4150,21 @@ class _UsersDevicesRouteGateScreenState
     required String nextStep,
     required String userId,
     required String deviceId,
+    required String issueCode,
+    required String selectedUserRole,
+    required int selectedDeviceTrustLevel,
+    required String selectedDeviceStatus,
   }) {
-    final lowerReason = reason.toLowerCase();
-    final hints = <String>[];
-
-    if (nextStep.isNotEmpty) {
-      hints.add(nextStep);
-    }
-
-    if (lowerReason.contains('unknown user')) {
-      hints.add('Pick a local user that exists in the registry.');
-      hints.add('Seed a sample user if you are just testing the flow.');
-    }
-    if (lowerReason.contains('unknown device')) {
-      hints.add('Pick a local device that exists in the registry.');
-      hints.add('Register or seed a device before trying again.');
-    }
-    if (lowerReason.contains('archived or disabled')) {
-      hints.add('Restore the user or select a different active identity.');
-      hints.add('Check the Users screen if the account was parked.');
-    }
-    if (lowerReason.contains('archived or blocked')) {
-      hints.add('Use a trusted device or restore the blocked device first.');
-      hints.add('Open the Devices screen to review the device state.');
-    }
-    if (lowerReason.contains('trust must be at least level')) {
-      hints.add(
-        'Choose a higher-trust device, or raise trust during onboarding.',
-      );
-      hints.add('Open Device Onboarding to review the pairing history.');
-    }
-    if (lowerReason.contains('missing required permission')) {
-      hints.add(
-        'Use the recommended user if one is shown, or grant the missing permission from the Access Matrix.',
-      );
-      hints.add('Check the selected role for the expected capability.');
-    }
-    if (lowerReason.contains('requires approval')) {
-      hints.add('Open the Approval Queue and review the pending request.');
-      hints.add('A trusted reviewer needs to approve this action first.');
-    }
-    if (hints.isEmpty) {
-      hints.add('Review the selected user and device before trying again.');
-      hints.add('Open the latest audit entry for more context.');
-    }
-    hints.add('Selected user: $userId');
-    hints.add('Selected device: $deviceId');
-    return hints;
+    return buildUsersDevicesBlockedHints(
+      reason: reason,
+      nextStep: nextStep,
+      userId: userId,
+      deviceId: deviceId,
+      issueCode: issueCode,
+      selectedUserRole: selectedUserRole,
+      selectedDeviceTrustLevel: selectedDeviceTrustLevel,
+      selectedDeviceStatus: selectedDeviceStatus,
+    );
   }
 
   @override
@@ -4201,7 +4179,10 @@ class _UsersDevicesRouteGateScreenState
         status: _status,
         detail: _detail,
         selectedUserLabel: _selectedUserLabel ?? 'No user selected',
+        selectedUserRole: _selectedUserRole ?? 'No role selected',
         selectedDeviceLabel: _selectedDeviceLabel ?? 'No device selected',
+        selectedDeviceStatus: _selectedDeviceStatus ?? 'No device selected',
+        selectedDeviceTrustLevel: _selectedDeviceTrustLevel ?? 0,
         latestAuditEventId: _latestAuditEventId,
         child: widget.child,
       );
@@ -7017,7 +6998,10 @@ class _ProtectedRouteContextShell extends ConsumerWidget {
     required this.status,
     required this.detail,
     required this.selectedUserLabel,
+    required this.selectedUserRole,
     required this.selectedDeviceLabel,
+    required this.selectedDeviceStatus,
+    required this.selectedDeviceTrustLevel,
     required this.latestAuditEventId,
     required this.child,
   });
@@ -7027,7 +7011,10 @@ class _ProtectedRouteContextShell extends ConsumerWidget {
   final String status;
   final String detail;
   final String selectedUserLabel;
+  final String selectedUserRole;
   final String selectedDeviceLabel;
+  final String selectedDeviceStatus;
+  final int selectedDeviceTrustLevel;
   final String? latestAuditEventId;
   final Widget child;
 
@@ -7067,7 +7054,10 @@ class _ProtectedRouteContextShell extends ConsumerWidget {
                           _CardChip(label: moduleLabel),
                           _CardChip(label: status),
                           _CardChip(label: 'User: $selectedUserLabel'),
+                          _CardChip(label: 'Role: $selectedUserRole'),
                           _CardChip(label: 'Device: $selectedDeviceLabel'),
+                          _CardChip(label: 'Device status: $selectedDeviceStatus'),
+                          _CardChip(label: 'Trust: T$selectedDeviceTrustLevel'),
                           _CardChip(
                             label: remaining == null
                                 ? 'Expires: -'
@@ -8035,6 +8025,85 @@ String _formatBannerDuration(Duration duration) {
   }
 
   return '${seconds}s';
+}
+
+List<String> buildUsersDevicesBlockedHints({
+  required String reason,
+  required String nextStep,
+  required String userId,
+  required String deviceId,
+  required String issueCode,
+  required String selectedUserRole,
+  required int selectedDeviceTrustLevel,
+  required String selectedDeviceStatus,
+}) {
+  final lowerReason = reason.toLowerCase();
+  final hints = <String>[];
+
+  if (nextStep.isNotEmpty) {
+    hints.add(nextStep);
+  }
+
+  if (lowerReason.contains('unknown user')) {
+    hints.add('Pick a local user that exists in the registry.');
+    hints.add('Seed a sample user if you are just testing the flow.');
+  }
+  if (lowerReason.contains('unknown device')) {
+    hints.add('Pick a local device that exists in the registry.');
+    hints.add('Register or seed a device before trying again.');
+  }
+  if (lowerReason.contains('archived or disabled')) {
+    hints.add('Restore the user or select a different active identity.');
+    hints.add('Check the Users screen if the account was parked.');
+  }
+  if (lowerReason.contains('archived or blocked')) {
+    hints.add('Use a trusted device or restore the blocked device first.');
+    hints.add('Open the Devices screen to review the device state.');
+  }
+  if (issueCode == 'inactive_user') {
+    hints.add('Select another active identity or restore the archived user first.');
+  }
+  if (issueCode == 'blocked_device') {
+    if (selectedDeviceStatus.trim().isNotEmpty) {
+      hints.add('Selected device status: $selectedDeviceStatus.');
+    }
+    hints.add(
+      'Restore the device or switch to a trusted device before trying again.',
+    );
+  }
+  if (lowerReason.contains('trust must be at least level')) {
+    final match = RegExp(r'level (\d+)').firstMatch(lowerReason);
+    final requiredTrust = match?.group(1);
+    if (selectedDeviceTrustLevel > 0) {
+      hints.add('Selected device trust: T$selectedDeviceTrustLevel.');
+    }
+    if (requiredTrust != null) {
+      hints.add('Required trust floor: T$requiredTrust.');
+    }
+    hints.add('Choose a higher-trust device, or raise trust during onboarding.');
+    hints.add('Open Device Onboarding to review the pairing history.');
+  }
+  if (lowerReason.contains('missing required permission')) {
+    if (selectedUserRole.trim().isNotEmpty) {
+      hints.add('Selected role: $selectedUserRole.');
+    }
+    hints.add(
+      'Grant the missing permission from the Access Matrix or switch to a role that already has it.',
+    );
+    hints.add('Check the selected role for the expected capability.');
+  }
+  if (issueCode == 'approval_required' || lowerReason.contains('requires approval')) {
+    hints.add('This action waits for a reviewer before the route can open.');
+    hints.add('Open the Approval Queue and review the pending request.');
+    hints.add('A trusted reviewer needs to approve this action first.');
+  }
+  if (hints.isEmpty) {
+    hints.add('Review the selected user and device before trying again.');
+    hints.add('Open the latest audit entry for more context.');
+  }
+  hints.add('Selected user: $userId');
+  hints.add('Selected device: $deviceId');
+  return hints;
 }
 
 void _openUserPinsRegistry(BuildContext context, String userId) {
