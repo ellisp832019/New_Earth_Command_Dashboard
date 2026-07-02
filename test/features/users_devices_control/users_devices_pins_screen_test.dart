@@ -209,6 +209,7 @@ void main() {
     expect(find.text('Admin reset flow'), findsOneWidget);
     expect(find.text('Governed reset checklist'), findsOneWidget);
     expect(find.text('Clear lockout timer'), findsOneWidget);
+    expect(find.text('Per-user PIN summary'), findsOneWidget);
     expect(find.text('Recovery expiry guidance'), findsOneWidget);
     expect(find.text('Recovery rotation guidance'), findsOneWidget);
     expect(find.text('PIN event timeline'), findsOneWidget);

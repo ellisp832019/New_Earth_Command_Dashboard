@@ -769,6 +769,57 @@ class _UsersDevicesPinsScreenState
                           ),
                           const SizedBox(height: 12),
                           Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Per-user PIN summary',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    selectedUser == null
+                                        ? 'Pick a user to see the latest PIN activity summary.'
+                                        : 'A quick read on the user\'s latest PIN history before you open the full timeline.',
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _CardChip(
+                                        label: selectedUser == null
+                                            ? 'No user selected'
+                                            : 'User: ${selectedUser.displayName}',
+                                      ),
+                                      _CardChip(
+                                        label: 'Primary: ${primaryPins.length}',
+                                      ),
+                                      _CardChip(
+                                        label: 'Recovery: ${recoveryPins.length}',
+                                      ),
+                                      _CardChip(
+                                        label: lockedOutCount == 0
+                                            ? 'Lockout clear'
+                                            : 'Lockout active: $lockedOutCount',
+                                      ),
+                                      _CardChip(
+                                        label: selectedPinEvents.isEmpty
+                                            ? 'No events yet'
+                                            : 'Latest: ${selectedPinEvents.first.eventType}',
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
                             color: Theme.of(context)
                                 .colorScheme
                                 .surfaceContainerHighest
