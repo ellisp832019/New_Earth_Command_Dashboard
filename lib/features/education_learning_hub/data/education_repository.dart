@@ -80,9 +80,129 @@ class LocalEducationRepository implements EducationRepository {
   }
 
   List<Lesson> _buildLessons() {
-    return _lessonSeeds()
-        .map((entry) => Lesson.fromJson(entry))
+    final lessons = <Lesson>[
+      ..._lessonSeeds().map((entry) => Lesson.fromJson(entry)),
+      ..._importedLessonsFromDocs(),
+    ];
+
+    final unique = <String, Lesson>{};
+    for (final lesson in lessons) {
+      unique[lesson.id] = lesson;
+    }
+    return unique.values.toList(growable: false);
+  }
+
+  List<Lesson> _importedLessonsFromDocs() {
+    final directory = Directory(path.join(moduleRootPath, '04_LEARNING_PATHWAYS'));
+    if (!directory.existsSync()) {
+      return const [];
+    }
+
+    final lessons = <Lesson>[];
+    final pathwayDocs = directory
+        .listSync()
+        .whereType<File>()
+        .where((file) => path.extension(file.path).toLowerCase() == '.md')
+        .where((file) => path.basename(file.path).toUpperCase() != 'PATHWAYS_OVERVIEW.MD')
         .toList(growable: false);
+
+    for (final file in pathwayDocs) {
+      final fileName = path.basenameWithoutExtension(file.path);
+      final pathwayId = _pathwayIdForFile(fileName);
+      final content = _readText(file);
+      final title = _markdownHeading(content) ?? _friendlyLabel(fileName);
+      final goal = _markdownSection(content, 'Goal') ??
+          _markdownSection(content, 'Summary') ??
+          'Imported pathway lesson for $title.';
+      final skills = _markdownBulletList(content, 'Skills gained');
+      final evidence = _markdownBulletList(content, 'Evidence');
+      final units = _markdownNumberedList(content, 'Units');
+      lessons.add(
+        Lesson(
+          id: 'import_${fileName.toLowerCase()}',
+          pathwayId: pathwayId,
+          unitId: '${pathwayId}_overview',
+          title: '$title overview',
+          summary: goal,
+          objective: goal,
+          estimatedMinutes: 25,
+          difficulty: fileName.contains('ADVANCED') ? 'Intermediate' : 'Beginner',
+          audiences: const ['student', 'mentor', 'parentGuardian', 'admin'],
+          tags: [
+            'imported',
+            ...skills.take(3).map((item) => item.toLowerCase()),
+          ],
+          steps: [
+            if (units.isNotEmpty) ...units.take(4),
+            'Review the pathway notes.',
+            'Choose one practical action.',
+            'Record a calm reflection.',
+          ],
+          resourceIds: _resourceIdsForPathway(pathwayId),
+          reflectionPrompt: evidence.isNotEmpty
+              ? evidence.first
+              : 'What would help this pathway feel practical and usable?',
+          sourceTitle: title,
+          sourcePath: file.path,
+          sourceKind: 'Pathway document',
+        ),
+      );
+    }
+
+    final contentLibrary = Directory(path.join(moduleRootPath, '05_CONTENT_LIBRARY'));
+    if (contentLibrary.existsSync()) {
+      for (final file in contentLibrary.listSync().whereType<File>()) {
+        if (path.extension(file.path).toLowerCase() != '.md') {
+          continue;
+        }
+        final basename = path.basename(file.path);
+        if (!basename.startsWith('SAMPLE_LESSON_')) {
+          continue;
+        }
+
+        final fileName = path.basenameWithoutExtension(file.path);
+        final content = _readText(file);
+        final title = _markdownHeading(content) ?? _friendlyLabel(fileName);
+        final summary = _markdownSection(content, 'Summary') ??
+            'Imported sample lesson from the module docs.';
+        final outcomes = _markdownBulletList(content, 'Learning outcomes');
+        final materials = _markdownBulletList(content, 'Materials');
+        final activitySteps = _markdownNumberedList(content, 'Activity');
+        final reflectionPrompt = _markdownSection(content, 'Reflection') ??
+            'What did this sample lesson help you notice?';
+        lessons.add(
+          Lesson(
+            id: 'import_${fileName.toLowerCase()}',
+            pathwayId: _pathwayIdForLessonFile(fileName),
+            unitId: '${_pathwayIdForLessonFile(fileName)}_lesson_pack',
+            title: title,
+            summary: summary,
+            objective: outcomes.isNotEmpty
+                ? outcomes.first
+                : 'Practice a small, practical learning step.',
+            estimatedMinutes: 25,
+            difficulty: 'Beginner',
+            audiences: const ['student', 'mentor', 'parentGuardian'],
+            tags: [
+              'imported',
+              ..._keywordsFrom(fileName, summary),
+            ],
+            steps: [
+              if (materials.isNotEmpty) 'Materials: ${materials.take(4).join(', ')}',
+              if (activitySteps.isNotEmpty) ...activitySteps.take(5),
+              'Save one note or photo as evidence.',
+            ],
+            resourceIds: const ['res_calm_build_checklist'],
+            reflectionPrompt: reflectionPrompt,
+            sourceTitle: title,
+            sourcePath: file.path,
+            sourceKind: 'Sample lesson',
+          ),
+        );
+      }
+    }
+
+    return lessons;
   }
 
   List<PracticalProject> _buildProjects() {
@@ -220,6 +340,143 @@ class LocalEducationRepository implements EducationRepository {
       'Systems Thinking',
       'Responsible AI Use',
     ];
+  }
+
+  String _readText(File file) {
+    try {
+      return file.readAsStringSync();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String? _markdownHeading(String content) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('# ')) {
+        return trimmed.substring(2).trim();
+      }
+    }
+    return null;
+  }
+
+  String? _markdownSection(String content, String heading) {
+    final lines = content.split('\n');
+    var inSection = false;
+    final buffer = <String>[];
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('## ')) {
+        final currentHeading = trimmed.substring(3).trim();
+        if (inSection && currentHeading != heading) {
+          break;
+        }
+        inSection = currentHeading.toLowerCase() == heading.toLowerCase();
+        continue;
+      }
+      if (inSection) {
+        if (trimmed.isNotEmpty) {
+          buffer.add(trimmed);
+        }
+      }
+    }
+    if (buffer.isEmpty) {
+      return null;
+    }
+    return buffer.join(' ');
+  }
+
+  List<String> _markdownBulletList(String content, String heading) {
+    final lines = content.split('\n');
+    var inSection = false;
+    final items = <String>[];
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('## ')) {
+        final currentHeading = trimmed.substring(3).trim();
+        if (inSection && currentHeading != heading) {
+          break;
+        }
+        inSection = currentHeading.toLowerCase() == heading.toLowerCase();
+        continue;
+      }
+      if (inSection && trimmed.startsWith('- ')) {
+        items.add(trimmed.substring(2).trim());
+      }
+    }
+    return items;
+  }
+
+  List<String> _markdownNumberedList(String content, String heading) {
+    final lines = content.split('\n');
+    var inSection = false;
+    final items = <String>[];
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('## ')) {
+        final currentHeading = trimmed.substring(3).trim();
+        if (inSection && currentHeading != heading) {
+          break;
+        }
+        inSection = currentHeading.toLowerCase() == heading.toLowerCase();
+        continue;
+      }
+      if (inSection && RegExp(r'^\d+\.\s+').hasMatch(trimmed)) {
+        items.add(trimmed.replaceFirst(RegExp(r'^\d+\.\s+'), '').trim());
+      }
+    }
+    return items;
+  }
+
+  List<String> _keywordsFrom(String fileName, String summary) {
+    final source = '$fileName $summary'.toLowerCase();
+    final keywords = <String>{};
+    if (source.contains('electronics')) keywords.add('electronics');
+    if (source.contains('microgrow')) keywords.add('microgrow');
+    if (source.contains('biocalm')) keywords.add('biocalm');
+    if (source.contains('ai ' ) || source.contains('ai-') || source.contains('ai_')) {
+      keywords.add('ai');
+    }
+    if (source.contains('food')) keywords.add('food resilience');
+    if (source.contains('youth')) keywords.add('leadership');
+    if (source.contains('safety')) keywords.add('safety');
+    return keywords.toList(growable: false);
+  }
+
+  String _pathwayIdForFile(String fileName) {
+    final normalized = fileName.toLowerCase();
+    if (normalized.contains('electronics')) return 'electronics_foundations';
+    if (normalized.contains('embedded')) return 'embedded_systems';
+    if (normalized.contains('microgrow')) return 'microgrow_operator';
+    if (normalized.contains('biocalm')) return 'biocalm_foundations';
+    if (normalized.contains('ai')) return 'ai_literacy';
+    if (normalized.contains('food')) return 'food_resilience';
+    if (normalized.contains('youth')) return 'youth_innovation';
+    if (normalized.contains('workshop')) return 'workshop_safety';
+    if (normalized.contains('business')) return 'business_enterprise';
+    if (normalized.contains('systems')) return 'sustainability_regeneration';
+    return 'electronics_foundations';
+  }
+
+  String _pathwayIdForLessonFile(String fileName) {
+    final normalized = fileName.toLowerCase();
+    if (normalized.contains('electronics')) return 'electronics_foundations';
+    if (normalized.contains('microgrow')) return 'microgrow_operator';
+    return _pathwayIdForFile(fileName);
+  }
+
+  List<String> _resourceIdsForPathway(String pathwayId) {
+    return switch (pathwayId) {
+      'electronics_foundations' => ['res_electronics_intro', 'res_parts_reference'],
+      'embedded_systems' => ['res_board_setup', 'res_pin_map', 'res_debug_notes'],
+      'microgrow_operator' => ['res_microgrow_intro', 'res_microgrow_checklist'],
+      'biocalm_foundations' => ['res_biocalm_intro'],
+      'ai_literacy' => ['res_ai_prompting'],
+      'food_resilience' => ['res_food_systems'],
+      'workshop_safety' => ['res_calm_build_checklist'],
+      'business_enterprise' => ['res_tool_safety'],
+      _ => ['res_calm_build_checklist'],
+    };
   }
 
   List<Map<String, dynamic>> _pathwaySeeds() {

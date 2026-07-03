@@ -126,6 +126,9 @@ class Lesson {
     required this.steps,
     required this.resourceIds,
     required this.reflectionPrompt,
+    this.sourceTitle = '',
+    this.sourcePath = '',
+    this.sourceKind = 'Seed',
   });
 
   final String id;
@@ -141,6 +144,9 @@ class Lesson {
   final List<String> steps;
   final List<String> resourceIds;
   final String reflectionPrompt;
+  final String sourceTitle;
+  final String sourcePath;
+  final String sourceKind;
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
     return Lesson(
@@ -159,6 +165,9 @@ class Lesson {
       steps: _stringList(json['steps']),
       resourceIds: _stringList(json['resourceIds']),
       reflectionPrompt: json['reflectionPrompt']?.toString() ?? '',
+      sourceTitle: json['sourceTitle']?.toString() ?? '',
+      sourcePath: json['sourcePath']?.toString() ?? '',
+      sourceKind: json['sourceKind']?.toString() ?? 'Seed',
     );
   }
 
@@ -177,6 +186,9 @@ class Lesson {
       'steps': steps,
       'resourceIds': resourceIds,
       'reflectionPrompt': reflectionPrompt,
+      'sourceTitle': sourceTitle,
+      'sourcePath': sourcePath,
+      'sourceKind': sourceKind,
     };
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as path;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
@@ -1563,9 +1564,18 @@ class _LessonCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MiniBadge(label: lesson.difficulty),
+                if (lesson.sourceKind.isNotEmpty)
+                  _MiniBadge(label: lesson.sourceKind),
                 for (final tag in lesson.tags.take(3)) _MiniBadge(label: tag),
               ],
             ),
+            if (lesson.sourcePath.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Source: ${lesson.sourceTitle.isNotEmpty ? lesson.sourceTitle : path.basename(lesson.sourcePath)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
             if (showActions) ...[
               const SizedBox(height: 10),
               Wrap(
