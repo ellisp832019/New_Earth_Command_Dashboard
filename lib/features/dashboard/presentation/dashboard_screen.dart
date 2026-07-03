@@ -3695,13 +3695,13 @@ class _ActiveProjectsPanel extends StatelessWidget {
               const Spacer(),
               TextButton(
                 onPressed: () => context.go(RouteNames.projectsWorkspace),
-                child: const Text('View all'),
+                child: const Text('Open Projects'),
               ),
             ],
           ),
           const SizedBox(height: 14),
           Text(
-            'Use projects as support context for the committed work above, not as a competing priority.',
+            'Use projects as support context for today\'s focus, not as a competing priority.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
@@ -3720,6 +3720,11 @@ class _ActiveProjectsPanel extends StatelessWidget {
                 label: snapshot.topTasks.isEmpty ? 'Context first' : 'Supports Top 3',
                 accent: AppColours.darkPrimary,
                 foreground: AppColours.darkPrimary,
+              ),
+              const _InlineTag(
+                label: 'Secondary lane',
+                accent: AppColours.darkSurfaceRaised,
+                foreground: AppColours.darkMutedText,
               ),
             ],
           ),

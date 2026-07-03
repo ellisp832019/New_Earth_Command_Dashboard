@@ -689,7 +689,7 @@ void main() {
     );
     expect(
       find.text(
-        'Use projects as support context for the committed work above, not as a competing priority.',
+        'Use projects as support context for today\'s focus, not as a competing priority.',
       ),
       findsOneWidget,
     );
@@ -697,7 +697,7 @@ void main() {
       find.byKey(const Key('dashboardQuickCaptureGuidanceCard')),
       findsOneWidget,
     );
-    expect(find.text('Secondary lane'), findsOneWidget);
+    expect(find.text('Secondary lane'), findsWidgets);
     expect(
       find.byKey(const Key('dashboardQuickCaptureHandoffCard')),
       findsOneWidget,
