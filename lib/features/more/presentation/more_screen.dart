@@ -47,6 +47,14 @@ class MoreScreen extends StatelessWidget {
       badge: 'Company',
     ),
     _MoreItem(
+      title: 'Education & Learning Hub',
+      description:
+          'Open lesson libraries, pathways, projects, progress, and tutor placeholders.',
+      icon: Icons.school_outlined,
+      route: RouteNames.educationLearningHub,
+      badge: 'Learn',
+    ),
+    _MoreItem(
       title: 'Systems',
       description:
           'Protect the full D: drive, review backup status, and keep recovery tools calm.',

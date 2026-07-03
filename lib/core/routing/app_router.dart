@@ -33,6 +33,7 @@ import '../../features/dashboard/presentation/calm_ui_demo_screen.dart';
 import '../../features/content/presentation/content_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/company_command_centre/presentation/company_command_centre_screen.dart';
+import '../../features/education_learning_hub/presentation/education_learning_hub_screen.dart';
 import '../../features/dashboard/presentation/command_palette_screen.dart';
 import '../../features/inbox/presentation/add_inbox_item_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
@@ -1028,6 +1029,11 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.companyCommandCentre,
       builder: (context, state) => const CompanyCommandCentreScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.educationLearningHub,
+      builder: (context, state) => const EducationLearningHubScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

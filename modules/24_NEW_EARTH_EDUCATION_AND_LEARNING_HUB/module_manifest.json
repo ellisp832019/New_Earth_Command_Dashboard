@@ -1,0 +1,29 @@
+{
+  "id": "24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB",
+  "name": "Education & Learning Hub",
+  "description": "Local-first learning environment for pathways, lessons, projects, progress, tutor placeholders, and certificates.",
+  "category": "Knowledge & Research",
+  "version": "0.1.0",
+  "status": "installed",
+  "enabled": true,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "iconKey": "school_outlined",
+  "routes": ["/modules/education-learning-hub"],
+  "permissions": [
+    {
+      "type": "file_read",
+      "state": "allowed",
+      "notes": "Read local lesson, pathway, and resource content."
+    },
+    {
+      "type": "omega_os_access",
+      "state": "allowed",
+      "notes": "Surface integration-ready hooks for Omega Knowledge Engine and GAIA."
+    }
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB",
+  "storagePath": "modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB/storage",
+  "tags": ["education", "learning", "pathways", "offline"],
+  "notes": "Local-first, mock-first, and safe by default."
+}

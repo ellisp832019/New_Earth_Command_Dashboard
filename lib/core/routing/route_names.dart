@@ -178,6 +178,7 @@ abstract final class RouteNames {
   static const newInbox = '/inbox/new';
   static const settings = '/settings';
   static const companyCommandCentre = '/modules/company-command-centre';
+  static const educationLearningHub = '/modules/education-learning-hub';
   static const omegaKnowledgeEngine = '/modules/omega-knowledge-engine';
   static const securityLock = '/security-lock';
   static String securityLockWithResume(String route) {

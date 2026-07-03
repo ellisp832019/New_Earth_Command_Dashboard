@@ -128,6 +128,18 @@ IconData moduleIconFor(
     case 'description':
     case 'description_outlined':
       return Icons.description_outlined;
+    case 'school':
+    case 'school_outlined':
+      return Icons.school_outlined;
+    case 'menu_book':
+    case 'menu_book_outlined':
+      return Icons.menu_book_outlined;
+    case 'workspace_premium':
+    case 'workspace_premium_outlined':
+      return Icons.workspace_premium_outlined;
+    case 'psychology':
+    case 'psychology_outlined':
+      return Icons.psychology_outlined;
     case 'biotech':
     case 'biotech_outlined':
       return Icons.biotech_outlined;

@@ -1,0 +1,1400 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as path;
+
+import '../domain/education_models.dart';
+
+abstract class EducationRepository {
+  Future<EducationHubSnapshot> loadSnapshot();
+
+  Future<void> saveSnapshot(EducationHubSnapshot snapshot);
+}
+
+class LocalEducationRepository implements EducationRepository {
+  LocalEducationRepository({
+    this.moduleRootPath = 'modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB',
+  });
+
+  final String moduleRootPath;
+  EducationHubSnapshot? _cachedSnapshot;
+
+  @override
+  Future<EducationHubSnapshot> loadSnapshot() async {
+    final cachedSnapshot = _cachedSnapshot;
+    if (cachedSnapshot != null) {
+      return cachedSnapshot;
+    }
+
+    final settings = EducationHubSettings.defaults(
+      moduleRootPath: moduleRootPath,
+    );
+    final snapshot = EducationHubSnapshot(
+      settings: settings,
+      pathways: _buildPathways(),
+      lessons: _buildLessons(),
+      projects: _buildProjects(),
+      students: _buildStudents(),
+      progressRecords: _buildProgressRecords(),
+      assessments: _buildAssessments(),
+      reflections: _buildReflections(),
+      mentorNotes: _buildMentorNotes(),
+      certificates: _buildCertificates(),
+      resources: _buildResources(),
+      skillLibrary: _loadSkillLibrary(),
+    );
+    _cachedSnapshot = snapshot;
+    return snapshot;
+  }
+
+  @override
+  Future<void> saveSnapshot(EducationHubSnapshot snapshot) async {
+    _cachedSnapshot = snapshot;
+  }
+
+  List<LearningPathway> _buildPathways() {
+    final seedFile = File(
+      path.join(moduleRootPath, '16_SAMPLE_DATA', 'pathways.json'),
+    );
+    final samplePathways = <Map<String, dynamic>>[];
+    if (seedFile.existsSync()) {
+      try {
+        final decoded = jsonDecode(seedFile.readAsStringSync());
+        if (decoded is List) {
+          samplePathways.addAll(
+            decoded.whereType<Map>().map((item) {
+              return item.map((key, value) => MapEntry(key.toString(), value));
+            }),
+          );
+        }
+      } catch (_) {
+        // Fall back to the embedded seeds below.
+      }
+    }
+
+    final seeded = samplePathways.isEmpty ? _pathwaySeeds() : samplePathways;
+    return seeded
+        .map((entry) => LearningPathway.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<Lesson> _buildLessons() {
+    return _lessonSeeds()
+        .map((entry) => Lesson.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<PracticalProject> _buildProjects() {
+    return _projectSeeds()
+        .map((entry) => PracticalProject.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<StudentProfile> _buildStudents() {
+    return _studentSeeds()
+        .map((entry) => StudentProfile.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<ProgressRecord> _buildProgressRecords() {
+    return _progressSeeds()
+        .map((entry) => ProgressRecord.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<Assessment> _buildAssessments() {
+    return _assessmentSeeds()
+        .map((entry) => Assessment.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<ReflectionEntry> _buildReflections() {
+    return _reflectionSeeds()
+        .map((entry) => ReflectionEntry.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<MentorNote> _buildMentorNotes() {
+    return _mentorNoteSeeds()
+        .map((entry) => MentorNote.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<Certificate> _buildCertificates() {
+    return _certificateSeeds()
+        .map((entry) => Certificate.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<ResourceItem> _buildResources() {
+    return _resourceSeeds()
+        .map((entry) => ResourceItem.fromJson(entry))
+        .toList(growable: false);
+  }
+
+  List<String> _loadSkillLibrary() {
+    final seedFile = File(
+      path.join(moduleRootPath, '16_SAMPLE_DATA', 'skills.json'),
+    );
+    if (seedFile.existsSync()) {
+      try {
+        final decoded = jsonDecode(seedFile.readAsStringSync());
+        if (decoded is List) {
+          final values = decoded
+              .whereType<Map>()
+              .map(
+                (item) => (item['name'] ?? item['title'] ?? '')
+                    .toString()
+                    .trim(),
+              )
+              .where((item) => item.isNotEmpty)
+              .toList(growable: false);
+          if (values.isNotEmpty) {
+            return values;
+          }
+        }
+      } catch (_) {
+        // Fall back to the embedded list below.
+      }
+    }
+
+    return const [
+      'Safe Low-Voltage Working',
+      'Sensor Observation',
+      'Reflective Learning',
+      'Systems Thinking',
+      'Responsible AI Use',
+    ];
+  }
+
+  List<Map<String, dynamic>> _pathwaySeeds() {
+    return [
+      _pathway(
+        id: 'electronics_foundations',
+        title: 'Electronics Foundations',
+        summary: 'Learn the calm basics of circuits, components, and safe build habits.',
+        level: 'Beginner',
+        estimatedHours: 12,
+        domain: 'Electronics',
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Safe Low-Voltage Working', 'Sensor Observation'],
+        units: [
+          _unit(
+            id: 'electronics_basics',
+            title: 'Electronics basics',
+            summary: 'Voltage, current, resistance, and breadboard habits.',
+            estimatedHours: 4,
+            lessons: const ['lesson_circuits_intro', 'lesson_component_identification'],
+          ),
+          _unit(
+            id: 'electronics_build',
+            title: 'First calm build',
+            summary: 'Read a diagram, wire a simple circuit, and reflect.',
+            estimatedHours: 8,
+            lessons: const ['lesson_led_calm_build', 'lesson_multimeter_intro'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'embedded_systems',
+        title: 'Embedded Systems',
+        summary: 'Work with microcontrollers, sensors, and practical debugging.',
+        level: 'Beginner to Intermediate',
+        estimatedHours: 20,
+        domain: 'Engineering',
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Sensor Observation', 'Systems Thinking'],
+        units: [
+          _unit(
+            id: 'embedded_setup',
+            title: 'Setup and sensing',
+            summary: 'Board setup, pin mapping, and signal reading.',
+            estimatedHours: 8,
+            lessons: const ['lesson_board_setup', 'lesson_pin_mapping'],
+          ),
+          _unit(
+            id: 'embedded_debug',
+            title: 'Debug calmly',
+            summary: 'Check logs, isolate faults, and capture evidence.',
+            estimatedHours: 12,
+            lessons: const ['lesson_serial_monitor', 'lesson_fault_isolation'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'microgrow_operator',
+        title: 'MicroGrow Operator',
+        summary: 'Run and support the MicroGrow learning path and field workflow.',
+        level: 'Beginner',
+        estimatedHours: 10,
+        domain: 'MicroGrow',
+        audiences: const ['student', 'mentor', 'parentGuardian', 'admin'],
+        skillTags: const ['Systems Thinking', 'Reflective Learning'],
+        units: [
+          _unit(
+            id: 'microgrow_overview',
+            title: 'System overview',
+            summary: 'Understand the grow cycle and local operating checks.',
+            estimatedHours: 4,
+            lessons: const ['lesson_microgrow_intro', 'lesson_microgrow_checks'],
+          ),
+          _unit(
+            id: 'microgrow_actions',
+            title: 'Daily operator actions',
+            summary: 'Read the dashboard, record observations, and keep the system steady.',
+            estimatedHours: 6,
+            lessons: const ['lesson_microgrow_routine', 'lesson_microgrow_reflection'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'biocalm_foundations',
+        title: 'BioCalm Foundations',
+        summary: 'Explore calm wearable concepts, sensing, and human-centered design.',
+        level: 'Beginner',
+        estimatedHours: 8,
+        domain: 'BioCalm',
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Systems Thinking', 'Responsible AI Use'],
+        units: [
+          _unit(
+            id: 'biocalm_basics',
+            title: 'Foundations',
+            summary: 'Signals, comfort, and safe design thinking.',
+            estimatedHours: 4,
+            lessons: const ['lesson_biocalm_intro', 'lesson_biocalm_safety'],
+          ),
+          _unit(
+            id: 'biocalm_practice',
+            title: 'Practice build',
+            summary: 'Build a calm prototype and document what it teaches.',
+            estimatedHours: 4,
+            lessons: const ['lesson_biocalm_practice', 'lesson_biocalm_reflection'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'ai_literacy',
+        title: 'AI Literacy',
+        summary: 'Use AI safely, understand limitations, and ask better questions.',
+        level: 'Beginner',
+        estimatedHours: 6,
+        domain: 'AI',
+        audiences: const ['student', 'mentor', 'parentGuardian', 'admin'],
+        skillTags: const ['Responsible AI Use', 'Reflective Learning'],
+        units: [
+          _unit(
+            id: 'ai_basics',
+            title: 'AI basics',
+            summary: 'What AI can and cannot do, in calm language.',
+            estimatedHours: 3,
+            lessons: const ['lesson_ai_intro', 'lesson_ai_prompting'],
+          ),
+          _unit(
+            id: 'ai_safety',
+            title: 'Safety and checking',
+            summary: 'Verify outputs, avoid over-trust, and keep adults in the loop.',
+            estimatedHours: 3,
+            lessons: const ['lesson_ai_safety', 'lesson_ai_checking'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'food_resilience',
+        title: 'Food Resilience',
+        summary: 'Link growing, food systems, and practical resilience learning.',
+        level: 'Beginner',
+        estimatedHours: 10,
+        domain: 'Regeneration',
+        audiences: const ['student', 'mentor', 'parentGuardian'],
+        skillTags: const ['Systems Thinking', 'Reflective Learning'],
+        units: [
+          _unit(
+            id: 'food_systems',
+            title: 'Food systems',
+            summary: 'Observe growing cycles and resource needs.',
+            estimatedHours: 5,
+            lessons: const ['lesson_food_systems', 'lesson_food_observation'],
+          ),
+          _unit(
+            id: 'food_actions',
+            title: 'Small practical actions',
+            summary: 'Plan local actions that help resilience feel achievable.',
+            estimatedHours: 5,
+            lessons: const ['lesson_food_practice', 'lesson_food_reflection'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'sustainability_regeneration',
+        title: 'Sustainability & Regeneration',
+        summary: 'Connect projects to stewardship, repair, reuse, and gentle systems change.',
+        level: 'Intermediate',
+        estimatedHours: 14,
+        domain: 'Regeneration',
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Systems Thinking', 'Reflective Learning'],
+        units: [
+          _unit(
+            id: 'regeneration_foundations',
+            title: 'Regeneration foundations',
+            summary: 'Understand cycles, waste, and repair.',
+            estimatedHours: 7,
+            lessons: const ['lesson_regeneration_intro', 'lesson_regeneration_cycles'],
+          ),
+          _unit(
+            id: 'regeneration_projects',
+            title: 'Practical projects',
+            summary: 'Link small repairs and stewardship to daily actions.',
+            estimatedHours: 7,
+            lessons: const ['lesson_regeneration_practice', 'lesson_regeneration_review'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'youth_innovation',
+        title: 'Youth Innovation & Leadership',
+        summary: 'Support young people to build, present, and lead with confidence.',
+        level: 'Beginner to Intermediate',
+        estimatedHours: 12,
+        domain: 'Community',
+        audiences: const ['student', 'mentor', 'parentGuardian', 'admin'],
+        skillTags: const ['Reflective Learning', 'Systems Thinking'],
+        units: [
+          _unit(
+            id: 'innovation_skills',
+            title: 'Innovation skills',
+            summary: 'Idea to prototype, one gentle step at a time.',
+            estimatedHours: 6,
+            lessons: const ['lesson_innovation_intro', 'lesson_innovation_prototype'],
+          ),
+          _unit(
+            id: 'leadership_skills',
+            title: 'Leadership habits',
+            summary: 'Communication, decision making, and peer support.',
+            estimatedHours: 6,
+            lessons: const ['lesson_leadership_intro', 'lesson_leadership_reflection'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'workshop_safety',
+        title: 'Workshop Safety',
+        summary: 'Keep builds calm, careful, and safe in physical learning spaces.',
+        level: 'Beginner',
+        estimatedHours: 5,
+        domain: 'Safety',
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Safe Low-Voltage Working', 'Reflective Learning'],
+        units: [
+          _unit(
+            id: 'safety_basics',
+            title: 'Safety basics',
+            summary: 'Simple habits for handling tools and equipment.',
+            estimatedHours: 3,
+            lessons: const ['lesson_safety_intro', 'lesson_safety_habits'],
+          ),
+          _unit(
+            id: 'safety_review',
+            title: 'Review and readiness',
+            summary: 'Check what is ready before the build begins.',
+            estimatedHours: 2,
+            lessons: const ['lesson_safety_review'],
+          ),
+        ],
+      ),
+      _pathway(
+        id: 'business_enterprise',
+        title: 'Business & Enterprise Basics',
+        summary: 'Connect learning to practical value, planning, and delivery.',
+        level: 'Beginner',
+        estimatedHours: 8,
+        domain: 'Enterprise',
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Systems Thinking', 'Reflective Learning'],
+        units: [
+          _unit(
+            id: 'enterprise_basics',
+            title: 'Enterprise basics',
+            summary: 'Turn ideas into a practical plan.',
+            estimatedHours: 4,
+            lessons: const ['lesson_enterprise_intro', 'lesson_enterprise_value'],
+          ),
+          _unit(
+            id: 'enterprise_delivery',
+            title: 'Delivery and evidence',
+            summary: 'Track what was made, learned, and proven.',
+            estimatedHours: 4,
+            lessons: const ['lesson_enterprise_delivery', 'lesson_enterprise_review'],
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _lessonSeeds() {
+    return [
+      _lesson(
+        id: 'lesson_circuits_intro',
+        pathwayId: 'electronics_foundations',
+        unitId: 'electronics_basics',
+        title: 'Circuits in calm steps',
+        summary: 'Understand a simple circuit without overload.',
+        objective: 'Identify the path of power and the role of each component.',
+        estimatedMinutes: 20,
+        difficulty: 'Beginner',
+        audiences: const ['student', 'mentor'],
+        tags: const ['circuits', 'safety'],
+        steps: const [
+          'Look at the diagram.',
+          'Name each component.',
+          'Trace the flow of power.',
+          'Record one thing you noticed.',
+        ],
+        resourceIds: const ['res_electronics_intro'],
+        reflectionPrompt: 'What made the circuit easier to understand?',
+      ),
+      _lesson(
+        id: 'lesson_component_identification',
+        pathwayId: 'electronics_foundations',
+        unitId: 'electronics_basics',
+        title: 'Component spotting',
+        summary: 'Learn the names and roles of common parts.',
+        objective: 'Match a part to its purpose.',
+        estimatedMinutes: 25,
+        difficulty: 'Beginner',
+        audiences: const ['student', 'mentor', 'parentGuardian'],
+        tags: const ['components', 'identification'],
+        steps: const ['Sort parts.', 'Read the label.', 'Write the purpose.'],
+        resourceIds: const ['res_parts_reference'],
+        reflectionPrompt: 'Which part felt most familiar after the exercise?',
+      ),
+      _lesson(
+        id: 'lesson_led_calm_build',
+        pathwayId: 'electronics_foundations',
+        unitId: 'electronics_build',
+        title: 'LED calm build',
+        summary: 'Complete a gentle first build and log the evidence.',
+        objective: 'Wire a simple LED circuit safely.',
+        estimatedMinutes: 30,
+        difficulty: 'Beginner',
+        audiences: const ['student', 'mentor'],
+        tags: const ['build', 'evidence'],
+        steps: const ['Prepare the board.', 'Wire the LED.', 'Test power.', 'Capture a photo.'],
+        resourceIds: const ['res_calm_build_checklist'],
+        reflectionPrompt: 'What helped you stay steady while building?',
+      ),
+      _lesson(
+        id: 'lesson_multimeter_intro',
+        pathwayId: 'electronics_foundations',
+        unitId: 'electronics_build',
+        title: 'Introduce the multimeter',
+        summary: 'Measure a few values and compare them to expectation.',
+        objective: 'Use a multimeter with care and confidence.',
+        estimatedMinutes: 30,
+        difficulty: 'Beginner',
+        audiences: const ['student', 'mentor'],
+        tags: const ['measurement', 'tools'],
+        steps: const ['Choose the setting.', 'Measure the value.', 'Note the reading.', 'Compare it calmly.'],
+        resourceIds: const ['res_tool_safety'],
+        reflectionPrompt: 'What changed when you started measuring rather than guessing?',
+      ),
+      _lesson(
+        id: 'lesson_board_setup',
+        pathwayId: 'embedded_systems',
+        unitId: 'embedded_setup',
+        title: 'Board setup',
+        summary: 'Prepare the board and understand the pins.',
+        objective: 'Set up a microcontroller for a clean first run.',
+        estimatedMinutes: 25,
+        difficulty: 'Beginner',
+        audiences: const ['student', 'mentor', 'admin'],
+        tags: const ['embedded', 'setup'],
+        steps: const ['Check the board.', 'Review the pins.', 'Connect power.', 'Confirm the toolchain.'],
+        resourceIds: const ['res_board_setup'],
+        reflectionPrompt: 'Which step felt most important to check twice?',
+      ),
+      _lesson(
+        id: 'lesson_pin_mapping',
+        pathwayId: 'embedded_systems',
+        unitId: 'embedded_setup',
+        title: 'Pin mapping basics',
+        summary: 'Map a board pin to a practical task.',
+        objective: 'Relate a physical pin to a software label.',
+        estimatedMinutes: 30,
+        difficulty: 'Beginner',
+        audiences: const ['student', 'mentor'],
+        tags: const ['pins', 'mapping'],
+        steps: const ['Open the pin map.', 'Match the label.', 'Mark the intended use.'],
+        resourceIds: const ['res_pin_map'],
+        reflectionPrompt: 'What made the pin map easier to read?',
+      ),
+      _lesson(
+        id: 'lesson_serial_monitor',
+        pathwayId: 'embedded_systems',
+        unitId: 'embedded_debug',
+        title: 'Reading serial output',
+        summary: 'Use logs as a calm debugging companion.',
+        objective: 'Spot useful information in the serial log.',
+        estimatedMinutes: 25,
+        difficulty: 'Beginner to Intermediate',
+        audiences: const ['student', 'mentor'],
+        tags: const ['debugging', 'logs'],
+        steps: const ['Start the monitor.', 'Read the output.', 'Identify a signal.', 'Write the next action.'],
+        resourceIds: const ['res_debug_notes'],
+        reflectionPrompt: 'Which line in the log helped you most?',
+      ),
+      _lesson(
+        id: 'lesson_fault_isolation',
+        pathwayId: 'embedded_systems',
+        unitId: 'embedded_debug',
+        title: 'Fault isolation',
+        summary: 'Break a problem into small checks.',
+        objective: 'Use a step-by-step debugging flow.',
+        estimatedMinutes: 35,
+        difficulty: 'Intermediate',
+        audiences: const ['student', 'mentor', 'admin'],
+        tags: const ['debugging', 'analysis'],
+        steps: const ['Observe the issue.', 'Check power.', 'Check signal.', 'Document the fix.'],
+        resourceIds: const ['res_debug_flow'],
+        reflectionPrompt: 'What helped you narrow the fault down?',
+      ),
+      ..._genericLessonSeeds(),
+    ];
+  }
+
+  List<Map<String, dynamic>> _projectSeeds() {
+    return [
+      _project(
+        id: 'project_microgrow_sensor_calibration',
+        title: 'MicroGrow Sensor Calibration',
+        summary: 'Calibrate sensor readings and keep the grow system steady.',
+        domain: 'MicroGrow',
+        estimatedHours: 6,
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Sensor Observation', 'Systems Thinking'],
+        materials: const ['Microcontroller board', 'Sensor', 'Notebook'],
+        steps: const ['Check the sensor.', 'Capture a baseline.', 'Compare readings.', 'Record the result.'],
+        resourceIds: const ['res_microgrow_intro', 'res_microgrow_checklist'],
+      ),
+      _project(
+        id: 'project_biocalm_signal_glance',
+        title: 'BioCalm Signal Glance',
+        summary: 'Prototype a calm signal-view concept with safe feedback.',
+        domain: 'BioCalm',
+        estimatedHours: 5,
+        audiences: const ['student', 'mentor'],
+        skillTags: const ['Responsible AI Use', 'Systems Thinking'],
+        materials: const ['Prototype board', 'Paper sketch', 'Colour markers'],
+        steps: const ['Sketch the flow.', 'Define the signal.', 'Review the safety note.'],
+        resourceIds: const ['res_biocalm_intro'],
+      ),
+      _project(
+        id: 'project_food_resilience_observation',
+        title: 'Food Resilience Observation Log',
+        summary: 'Track simple observations from a growing space and reflect on patterns.',
+        domain: 'Regeneration',
+        estimatedHours: 4,
+        audiences: const ['student', 'mentor', 'parentGuardian'],
+        skillTags: const ['Reflective Learning', 'Systems Thinking'],
+        materials: const ['Notebook', 'Camera', 'Observation sheet'],
+        steps: const ['Observe the space.', 'Write one note.', 'Capture evidence.', 'Reflect on the pattern.'],
+        resourceIds: const ['res_food_systems'],
+      ),
+      _project(
+        id: 'project_ai_prompt_practice',
+        title: 'AI Prompt Practice',
+        summary: 'Learn to ask for help without handing over judgment.',
+        domain: 'AI',
+        estimatedHours: 3,
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Responsible AI Use'],
+        materials: const ['Prompt cards', 'Reflection log'],
+        steps: const ['Ask a question.', 'Check the response.', 'List what still needs human review.'],
+        resourceIds: const ['res_ai_prompting'],
+      ),
+      _project(
+        id: 'project_workshop_ready_check',
+        title: 'Workshop Ready Check',
+        summary: 'Confirm tools, space, and safety before a build session.',
+        domain: 'Safety',
+        estimatedHours: 2,
+        audiences: const ['student', 'mentor', 'admin'],
+        skillTags: const ['Safe Low-Voltage Working'],
+        materials: const ['Checklist', 'Safety notes'],
+        steps: const ['Open the checklist.', 'Check the space.', 'Confirm readiness.'],
+        resourceIds: const ['res_tool_safety'],
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _studentSeeds() {
+    return [
+      _student(
+        id: 'student_hayley',
+        name: 'Hayley Arthur',
+        role: 'Student',
+        stage: 'Project learner',
+        mentorName: 'Peter Ellis',
+        guardianName: 'Mia Arthur',
+        activePathwayId: 'electronics_foundations',
+        badgeIds: const ['badge_safe_starter', 'badge_reflector'],
+      ),
+      _student(
+        id: 'student_peter',
+        name: 'Peter Ellis',
+        role: 'Mentor',
+        stage: 'Founder support',
+        mentorName: 'Peter Ellis',
+        guardianName: 'Not set',
+        activePathwayId: 'ai_literacy',
+        badgeIds: const ['badge_mentor_support'],
+      ),
+      _student(
+        id: 'student_mia',
+        name: 'Mia Arthur',
+        role: 'Parent / Guardian',
+        stage: 'Support view',
+        mentorName: 'Peter Ellis',
+        guardianName: 'Mia Arthur',
+        activePathwayId: 'workshop_safety',
+        badgeIds: const ['badge_guardian_support'],
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _progressSeeds() {
+    return [
+      _progress(
+        id: 'progress_pathway_electronics',
+        studentId: 'student_hayley',
+        entityId: 'electronics_foundations',
+        entityType: 'pathway',
+        status: 'in progress',
+        progressPercent: 68,
+        updatedAt: DateTime.utc(2026, 7, 1, 9, 0),
+        note: 'Comfortable with the first two lessons.',
+      ),
+      _progress(
+        id: 'progress_lesson_led',
+        studentId: 'student_hayley',
+        entityId: 'lesson_led_calm_build',
+        entityType: 'lesson',
+        status: 'complete',
+        progressPercent: 100,
+        updatedAt: DateTime.utc(2026, 6, 30, 16, 0),
+        note: 'Completed with a clean reflection.',
+      ),
+      _progress(
+        id: 'progress_project_microgrow',
+        studentId: 'student_hayley',
+        entityId: 'project_microgrow_sensor_calibration',
+        entityType: 'project',
+        status: 'in progress',
+        progressPercent: 45,
+        updatedAt: DateTime.utc(2026, 7, 2, 10, 0),
+        note: 'Need one more baseline reading.',
+      ),
+      _progress(
+        id: 'progress_ai',
+        studentId: 'student_peter',
+        entityId: 'ai_literacy',
+        entityType: 'pathway',
+        status: 'planned',
+        progressPercent: 18,
+        updatedAt: DateTime.utc(2026, 7, 1, 8, 30),
+        note: 'Preparing a safe prompt pack.',
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _assessmentSeeds() {
+    return [
+      _assessment(
+        id: 'assessment_led_check',
+        title: 'LED build check',
+        kind: 'Practical checklist',
+        summary: 'Confirm safe wiring and clear evidence capture.',
+        maxScore: 10,
+        score: 9,
+        studentId: 'student_hayley',
+        pathwayId: 'electronics_foundations',
+        criteria: const ['Safe wiring', 'Clear evidence', 'Calm reflection'],
+        completedAt: DateTime.utc(2026, 6, 30, 16, 20),
+        audiences: const ['student', 'mentor'],
+        mentorFeedback: 'Steady pace and strong observation.',
+      ),
+      _assessment(
+        id: 'assessment_ai_reflection',
+        title: 'AI reflection check',
+        kind: 'Reflection review',
+        summary: 'Explain what the AI helped with and what still needs a human check.',
+        maxScore: 8,
+        score: 0,
+        studentId: 'student_peter',
+        pathwayId: 'ai_literacy',
+        criteria: const ['Safe use', 'Human review', 'Clear notes'],
+        completedAt: null,
+        audiences: const ['mentor', 'admin'],
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _reflectionSeeds() {
+    return [
+      _reflection(
+        id: 'reflection_hayley_1',
+        studentId: 'student_hayley',
+        title: 'First calm build',
+        body: 'The build felt easier once I broke it into tiny steps.',
+        mood: 'Calm',
+        createdAt: DateTime.utc(2026, 6, 30, 16, 40),
+        audiences: const ['student', 'mentor', 'parentGuardian'],
+        linkedLessonId: 'lesson_led_calm_build',
+      ),
+      _reflection(
+        id: 'reflection_hayley_2',
+        studentId: 'student_hayley',
+        title: 'Sensor reading day',
+        body: 'I noticed that careful checking helped me trust the sensor result.',
+        mood: 'Focused',
+        createdAt: DateTime.utc(2026, 7, 2, 10, 30),
+        audiences: const ['student', 'mentor'],
+        linkedProjectId: 'project_microgrow_sensor_calibration',
+      ),
+      _reflection(
+        id: 'reflection_peter_1',
+        studentId: 'student_peter',
+        title: 'Prompt checking',
+        body: 'The best prompts leave space for human judgement.',
+        mood: 'Thoughtful',
+        createdAt: DateTime.utc(2026, 7, 1, 9, 10),
+        audiences: const ['mentor', 'admin'],
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _mentorNoteSeeds() {
+    return [
+      _mentorNote(
+        id: 'note_hayley_1',
+        studentId: 'student_hayley',
+        author: 'Peter Ellis',
+        content: 'Good pace today. Keep the next lesson short and practical.',
+        createdAt: DateTime.utc(2026, 7, 2, 10, 45),
+        priority: 'medium',
+      ),
+      _mentorNote(
+        id: 'note_hayley_2',
+        studentId: 'student_hayley',
+        author: 'Peter Ellis',
+        content: 'Add one more evidence photo before sign-off.',
+        createdAt: DateTime.utc(2026, 7, 2, 11, 15),
+        priority: 'high',
+      ),
+      _mentorNote(
+        id: 'note_peter_1',
+        studentId: 'student_peter',
+        author: 'System',
+        content: 'Mentor view ready for pathway review and reflection capture.',
+        createdAt: DateTime.utc(2026, 7, 1, 9, 30),
+        priority: 'low',
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _certificateSeeds() {
+    return [
+      _certificate(
+        id: 'certificate_safe_starter',
+        studentId: 'student_hayley',
+        title: 'Safe Starter Badge',
+        summary: 'Completed the workshop safety introduction and evidence review.',
+        badgeLevel: 'Bronze',
+        issuedBy: 'New Earth Learning Hub',
+        awardedAt: DateTime.utc(2026, 6, 30, 16, 50),
+      ),
+      _certificate(
+        id: 'certificate_reflector',
+        studentId: 'student_hayley',
+        title: 'Reflective Learner Badge',
+        summary: 'Captured useful reflections across multiple sessions.',
+        badgeLevel: 'Bronze',
+        issuedBy: 'New Earth Learning Hub',
+        awardedAt: DateTime.utc(2026, 7, 2, 11, 45),
+      ),
+      _certificate(
+        id: 'certificate_mentor_support',
+        studentId: 'student_peter',
+        title: 'Mentor Support Badge',
+        summary: 'Maintained calm support, notes, and sign-off guidance.',
+        badgeLevel: 'Silver',
+        issuedBy: 'New Earth Learning Hub',
+        awardedAt: DateTime.utc(2026, 7, 1, 10, 0),
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _resourceSeeds() {
+    return [
+      _resource(
+        id: 'res_electronics_intro',
+        title: 'Electronics foundations note',
+        type: 'lesson',
+        category: 'Electronics',
+        path: '$moduleRootPath/04_LEARNING_PATHWAYS/ELECTRONICS_FOUNDATIONS.md',
+        description: 'Read before the first circuit walkthrough.',
+      ),
+      _resource(
+        id: 'res_parts_reference',
+        title: 'Component reference',
+        type: 'reference',
+        category: 'Electronics',
+        path: '$moduleRootPath/05_CONTENT_LIBRARY/LESSON_TEMPLATE.md',
+        description: 'Use this to keep a lesson structure calm and repeatable.',
+      ),
+      _resource(
+        id: 'res_calm_build_checklist',
+        title: 'Calm build checklist',
+        type: 'checklist',
+        category: 'Workshop',
+        path: '$moduleRootPath/13_SECURITY_AND_SAFETY/LEARNER_SAFETY.md',
+        description: 'A simple checklist for safe physical work.',
+      ),
+      _resource(
+        id: 'res_board_setup',
+        title: 'Embedded setup notes',
+        type: 'lesson',
+        category: 'Embedded',
+        path: '$moduleRootPath/04_LEARNING_PATHWAYS/EMBEDDED_SYSTEMS.md',
+        description: 'A safe starting point for board setup.',
+      ),
+      _resource(
+        id: 'res_microgrow_intro',
+        title: 'MicroGrow pathway',
+        type: 'pathway',
+        category: 'MicroGrow',
+        path: '$moduleRootPath/04_LEARNING_PATHWAYS/MICROGROW_OPERATOR.md',
+        description: 'Follow the operator flow and keep observations steady.',
+      ),
+      _resource(
+        id: 'res_biocalm_intro',
+        title: 'BioCalm foundations',
+        type: 'pathway',
+        category: 'BioCalm',
+        path: '$moduleRootPath/04_LEARNING_PATHWAYS/BIOCALM_FOUNDATIONS.md',
+        description: 'Calm wearable concepts and safe design thinking.',
+      ),
+      _resource(
+        id: 'res_ai_prompting',
+        title: 'AI prompt library',
+        type: 'prompt',
+        category: 'AI',
+        path: '$moduleRootPath/06_AI_TUTOR/PROMPT_LIBRARY.md',
+        description: 'Prompt starters for a safe AI tutor experience.',
+      ),
+      _resource(
+        id: 'res_food_systems',
+        title: 'Food resilience pathway',
+        type: 'pathway',
+        category: 'Regeneration',
+        path: '$moduleRootPath/04_LEARNING_PATHWAYS/FOOD_RESILIENCE.md',
+        description: 'Use for practical food and resilience learning.',
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _genericLessonSeeds() {
+    const lessonData = [
+      (
+        id: 'lesson_microgrow_intro',
+        pathwayId: 'microgrow_operator',
+        unitId: 'microgrow_overview',
+        title: 'MicroGrow overview',
+        summary: 'Understand the system and the learner role.',
+      ),
+      (
+        id: 'lesson_microgrow_checks',
+        pathwayId: 'microgrow_operator',
+        unitId: 'microgrow_overview',
+        title: 'Daily checks',
+        summary: 'Notice the calm daily operator checks.',
+      ),
+      (
+        id: 'lesson_microgrow_routine',
+        pathwayId: 'microgrow_operator',
+        unitId: 'microgrow_actions',
+        title: 'Operator routine',
+        summary: 'Track the steady sequence of actions.',
+      ),
+      (
+        id: 'lesson_microgrow_reflection',
+        pathwayId: 'microgrow_operator',
+        unitId: 'microgrow_actions',
+        title: 'Operator reflection',
+        summary: 'Record what the system taught you.',
+      ),
+      (
+        id: 'lesson_biocalm_intro',
+        pathwayId: 'biocalm_foundations',
+        unitId: 'biocalm_basics',
+        title: 'BioCalm introduction',
+        summary: 'Introduce the wearable concept gently.',
+      ),
+      (
+        id: 'lesson_biocalm_safety',
+        pathwayId: 'biocalm_foundations',
+        unitId: 'biocalm_basics',
+        title: 'BioCalm safety',
+        summary: 'Keep the first design decisions safe and human-led.',
+      ),
+      (
+        id: 'lesson_biocalm_practice',
+        pathwayId: 'biocalm_foundations',
+        unitId: 'biocalm_practice',
+        title: 'Practice prototype',
+        summary: 'Draft one calm prototype step.',
+      ),
+      (
+        id: 'lesson_biocalm_reflection',
+        pathwayId: 'biocalm_foundations',
+        unitId: 'biocalm_practice',
+        title: 'BioCalm reflection',
+        summary: 'Reflect on comfort and usefulness.',
+      ),
+      (
+        id: 'lesson_ai_intro',
+        pathwayId: 'ai_literacy',
+        unitId: 'ai_basics',
+        title: 'AI basics',
+        summary: 'What AI is for and where it needs help.',
+      ),
+      (
+        id: 'lesson_ai_prompting',
+        pathwayId: 'ai_literacy',
+        unitId: 'ai_basics',
+        title: 'Prompt crafting',
+        summary: 'Ask a good question and keep the output in context.',
+      ),
+      (
+        id: 'lesson_ai_safety',
+        pathwayId: 'ai_literacy',
+        unitId: 'ai_safety',
+        title: 'AI safety',
+        summary: 'Verify, annotate, and involve a human reviewer.',
+      ),
+      (
+        id: 'lesson_ai_checking',
+        pathwayId: 'ai_literacy',
+        unitId: 'ai_safety',
+        title: 'Checking outputs',
+        summary: 'Separate useful hints from final decisions.',
+      ),
+      (
+        id: 'lesson_food_systems',
+        pathwayId: 'food_resilience',
+        unitId: 'food_systems',
+        title: 'Food systems observation',
+        summary: 'Notice how inputs and outputs move through the system.',
+      ),
+      (
+        id: 'lesson_food_observation',
+        pathwayId: 'food_resilience',
+        unitId: 'food_systems',
+        title: 'Observation log',
+        summary: 'Write down a small, useful observation.',
+      ),
+      (
+        id: 'lesson_food_practice',
+        pathwayId: 'food_resilience',
+        unitId: 'food_actions',
+        title: 'Small resilience action',
+        summary: 'Choose one action that is realistic today.',
+      ),
+      (
+        id: 'lesson_food_reflection',
+        pathwayId: 'food_resilience',
+        unitId: 'food_actions',
+        title: 'Resilience reflection',
+        summary: 'Capture what changed and why it matters.',
+      ),
+      (
+        id: 'lesson_regeneration_intro',
+        pathwayId: 'sustainability_regeneration',
+        unitId: 'regeneration_foundations',
+        title: 'Regeneration intro',
+        summary: 'Understand stewardship and repair as practical habits.',
+      ),
+      (
+        id: 'lesson_regeneration_cycles',
+        pathwayId: 'sustainability_regeneration',
+        unitId: 'regeneration_foundations',
+        title: 'Cycles and reuse',
+        summary: 'Spot cycles in materials and learning.',
+      ),
+      (
+        id: 'lesson_regeneration_practice',
+        pathwayId: 'sustainability_regeneration',
+        unitId: 'regeneration_projects',
+        title: 'Practical stewardship',
+        summary: 'Complete one local stewardship step.',
+      ),
+      (
+        id: 'lesson_regeneration_review',
+        pathwayId: 'sustainability_regeneration',
+        unitId: 'regeneration_projects',
+        title: 'Stewardship review',
+        summary: 'Review what the project changed locally.',
+      ),
+      (
+        id: 'lesson_innovation_intro',
+        pathwayId: 'youth_innovation',
+        unitId: 'innovation_skills',
+        title: 'Idea to prototype',
+        summary: 'Move one idea into a tiny prototype.',
+      ),
+      (
+        id: 'lesson_innovation_prototype',
+        pathwayId: 'youth_innovation',
+        unitId: 'innovation_skills',
+        title: 'Prototype practice',
+        summary: 'Try a simple version and record the result.',
+      ),
+      (
+        id: 'lesson_leadership_intro',
+        pathwayId: 'youth_innovation',
+        unitId: 'leadership_skills',
+        title: 'Leadership basics',
+        summary: 'Use calm language to support others.',
+      ),
+      (
+        id: 'lesson_leadership_reflection',
+        pathwayId: 'youth_innovation',
+        unitId: 'leadership_skills',
+        title: 'Leadership reflection',
+        summary: 'Notice what helped the group move forward.',
+      ),
+      (
+        id: 'lesson_safety_intro',
+        pathwayId: 'workshop_safety',
+        unitId: 'safety_basics',
+        title: 'Safety introduction',
+        summary: 'Set the tone for a careful workshop session.',
+      ),
+      (
+        id: 'lesson_safety_habits',
+        pathwayId: 'workshop_safety',
+        unitId: 'safety_basics',
+        title: 'Safety habits',
+        summary: 'Build a short safety routine.',
+      ),
+      (
+        id: 'lesson_safety_review',
+        pathwayId: 'workshop_safety',
+        unitId: 'safety_review',
+        title: 'Readiness review',
+        summary: 'Confirm the workspace is ready.',
+      ),
+      (
+        id: 'lesson_enterprise_intro',
+        pathwayId: 'business_enterprise',
+        unitId: 'enterprise_basics',
+        title: 'Enterprise intro',
+        summary: 'Connect a learning project to value and audience.',
+      ),
+      (
+        id: 'lesson_enterprise_value',
+        pathwayId: 'business_enterprise',
+        unitId: 'enterprise_basics',
+        title: 'Value thinking',
+        summary: 'State why the work matters in one sentence.',
+      ),
+      (
+        id: 'lesson_enterprise_delivery',
+        pathwayId: 'business_enterprise',
+        unitId: 'enterprise_delivery',
+        title: 'Delivery tracking',
+        summary: 'Track evidence and next steps clearly.',
+      ),
+      (
+        id: 'lesson_enterprise_review',
+        pathwayId: 'business_enterprise',
+        unitId: 'enterprise_delivery',
+        title: 'Review and handoff',
+        summary: 'Review the work and prepare the handoff.',
+      ),
+    ];
+
+    return lessonData
+        .map(
+          (lesson) => _lesson(
+            id: lesson.id,
+            pathwayId: lesson.pathwayId,
+            unitId: lesson.unitId,
+            title: lesson.title,
+            summary: lesson.summary,
+            objective: 'Practice the learning step in a calm, practical way.',
+            estimatedMinutes: 25,
+            difficulty: 'Beginner',
+            audiences: const ['student', 'mentor', 'admin'],
+            tags: const ['learning', 'practice'],
+            steps: const ['Read the note.', 'Do the activity.', 'Write a reflection.'],
+            resourceIds: const ['res_calm_build_checklist'],
+            reflectionPrompt: 'What helped this lesson feel manageable?',
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  Map<String, dynamic> _pathway({
+    required String id,
+    required String title,
+    required String summary,
+    required String level,
+    required int estimatedHours,
+    required String domain,
+    required List<String> audiences,
+    required List<String> skillTags,
+    required List<Map<String, dynamic>> units,
+  }) {
+    return {
+      'id': id,
+      'title': title,
+      'summary': summary,
+      'level': level,
+      'estimatedHours': estimatedHours,
+      'domain': domain,
+      'audiences': audiences,
+      'skillTags': skillTags,
+      'units': units,
+    };
+  }
+
+  Map<String, dynamic> _unit({
+    required String id,
+    required String title,
+    required String summary,
+    required int estimatedHours,
+    required List<String> lessons,
+  }) {
+    return {
+      'id': id,
+      'title': title,
+      'summary': summary,
+      'estimatedHours': estimatedHours,
+      'lessons': lessons,
+    };
+  }
+
+  Map<String, dynamic> _lesson({
+    required String id,
+    required String pathwayId,
+    required String unitId,
+    required String title,
+    required String summary,
+    required String objective,
+    required int estimatedMinutes,
+    required String difficulty,
+    required List<String> audiences,
+    required List<String> tags,
+    required List<String> steps,
+    required List<String> resourceIds,
+    required String reflectionPrompt,
+  }) {
+    return {
+      'id': id,
+      'pathwayId': pathwayId,
+      'unitId': unitId,
+      'title': title,
+      'summary': summary,
+      'objective': objective,
+      'estimatedMinutes': estimatedMinutes,
+      'difficulty': difficulty,
+      'audiences': audiences,
+      'tags': tags,
+      'steps': steps,
+      'resourceIds': resourceIds,
+      'reflectionPrompt': reflectionPrompt,
+    };
+  }
+
+  Map<String, dynamic> _project({
+    required String id,
+    required String title,
+    required String summary,
+    required String domain,
+    required int estimatedHours,
+    required List<String> audiences,
+    required List<String> skillTags,
+    required List<String> materials,
+    required List<String> steps,
+    required List<String> resourceIds,
+  }) {
+    return {
+      'id': id,
+      'title': title,
+      'summary': summary,
+      'domain': domain,
+      'estimatedHours': estimatedHours,
+      'audiences': audiences,
+      'skillTags': skillTags,
+      'materials': materials,
+      'steps': steps,
+      'resourceIds': resourceIds,
+    };
+  }
+
+  Map<String, dynamic> _student({
+    required String id,
+    required String name,
+    required String role,
+    required String stage,
+    required String mentorName,
+    required String guardianName,
+    required String activePathwayId,
+    required List<String> badgeIds,
+  }) {
+    return {
+      'id': id,
+      'name': name,
+      'role': role,
+      'stage': stage,
+      'mentorName': mentorName,
+      'guardianName': guardianName,
+      'activePathwayId': activePathwayId,
+      'badgeIds': badgeIds,
+    };
+  }
+
+  Map<String, dynamic> _progress({
+    required String id,
+    required String studentId,
+    required String entityId,
+    required String entityType,
+    required String status,
+    required int progressPercent,
+    required DateTime updatedAt,
+    required String note,
+  }) {
+    return {
+      'id': id,
+      'studentId': studentId,
+      'entityId': entityId,
+      'entityType': entityType,
+      'status': status,
+      'progressPercent': progressPercent,
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
+      'note': note,
+    };
+  }
+
+  Map<String, dynamic> _assessment({
+    required String id,
+    required String title,
+    required String kind,
+    required String summary,
+    required int maxScore,
+    required int score,
+    required String studentId,
+    required String pathwayId,
+    required List<String> criteria,
+    required DateTime? completedAt,
+    required List<String> audiences,
+    String mentorFeedback = '',
+  }) {
+    return {
+      'id': id,
+      'title': title,
+      'kind': kind,
+      'summary': summary,
+      'maxScore': maxScore,
+      'score': score,
+      'studentId': studentId,
+      'pathwayId': pathwayId,
+      'criteria': criteria,
+      'completedAt': completedAt?.toUtc().toIso8601String(),
+      'audiences': audiences,
+      'mentorFeedback': mentorFeedback,
+    };
+  }
+
+  Map<String, dynamic> _reflection({
+    required String id,
+    required String studentId,
+    required String title,
+    required String body,
+    required String mood,
+    required DateTime createdAt,
+    required List<String> audiences,
+    String linkedLessonId = '',
+    String linkedProjectId = '',
+  }) {
+    return {
+      'id': id,
+      'studentId': studentId,
+      'title': title,
+      'body': body,
+      'mood': mood,
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'audiences': audiences,
+      'linkedLessonId': linkedLessonId,
+      'linkedProjectId': linkedProjectId,
+    };
+  }
+
+  Map<String, dynamic> _mentorNote({
+    required String id,
+    required String studentId,
+    required String author,
+    required String content,
+    required DateTime createdAt,
+    required String priority,
+  }) {
+    return {
+      'id': id,
+      'studentId': studentId,
+      'author': author,
+      'content': content,
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'priority': priority,
+    };
+  }
+
+  Map<String, dynamic> _certificate({
+    required String id,
+    required String studentId,
+    required String title,
+    required String summary,
+    required String badgeLevel,
+    required String issuedBy,
+    required DateTime awardedAt,
+  }) {
+    return {
+      'id': id,
+      'studentId': studentId,
+      'title': title,
+      'summary': summary,
+      'badgeLevel': badgeLevel,
+      'issuedBy': issuedBy,
+      'awardedAt': awardedAt.toUtc().toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> _resource({
+    required String id,
+    required String title,
+    required String type,
+    required String category,
+    required String path,
+    required String description,
+  }) {
+    return {
+      'id': id,
+      'title': title,
+      'type': type,
+      'category': category,
+      'path': path,
+      'description': description,
+    };
+  }
+}
