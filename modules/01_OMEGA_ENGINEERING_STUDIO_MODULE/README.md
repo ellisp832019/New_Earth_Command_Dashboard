@@ -31,3 +31,16 @@ Central engineering workspace for the New Earth Omega Dashboard.
 - Route notes: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/ROUTE_REGISTRATION.md`
 - Developer notes: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/DEVELOPER_NOTES.md`
 - TODO list: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/TODO.md`
+
+## Rendered assets
+
+Rendered UI baselines for the module live under:
+
+- `test/features/omega_engineering_studio/goldens/`
+- `test/features/omega_engineering_studio/goldens/sections/`
+
+Regenerate them with:
+
+```bash
+flutter test test/features/omega_engineering_studio --update-goldens
+```

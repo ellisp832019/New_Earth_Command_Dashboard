@@ -1,13 +1,18 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/features/omega_engineering_studio/application/engineering_services.dart';
+import 'package:new_earth_command_dashboard/features/omega_engineering_studio/data/engineering_database.dart';
 import 'package:new_earth_command_dashboard/features/omega_engineering_studio/data/engineering_repository.dart';
 
 void main() {
   group('LocalEngineeringRepository', () {
     test('loads seeded engineering data', () async {
+      final database = EngineeringLocalDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
       final repository = LocalEngineeringRepository(
         moduleRootPath: 'modules/01_OMEGA_ENGINEERING_STUDIO_MODULE',
+        database: database,
       );
 
       final snapshot = await repository.loadSnapshot();
@@ -22,8 +27,11 @@ void main() {
     });
 
     test('searches across the engineering workspace', () async {
+      final database = EngineeringLocalDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
       final repository = LocalEngineeringRepository(
         moduleRootPath: 'modules/01_OMEGA_ENGINEERING_STUDIO_MODULE',
+        database: database,
       );
       final snapshot = await repository.loadSnapshot();
       final search = EngineeringSearchService(snapshot);
@@ -35,8 +43,11 @@ void main() {
     });
 
     test('filters low stock components', () async {
+      final database = EngineeringLocalDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
       final repository = LocalEngineeringRepository(
         moduleRootPath: 'modules/01_OMEGA_ENGINEERING_STUDIO_MODULE',
+        database: database,
       );
       final snapshot = await repository.loadSnapshot();
       final service = ComponentInventoryService(snapshot);

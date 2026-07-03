@@ -12,16 +12,49 @@ abstract class EngineeringRepository {
   Future<void> saveSnapshot(EngineeringSnapshot snapshot);
 
   Future<void> resetLocalState();
+
+  Future<EngineeringProject> createProject({
+    required String title,
+    required String summary,
+    required String status,
+    required String priority,
+    required int progressPercent,
+    required String milestone,
+    required String nextAction,
+    required String system,
+    DateTime? targetDate,
+    required List<String> tags,
+  });
+
+  Future<EngineeringProject> updateProject(EngineeringProject project);
+
+  Future<CircuitBlock> upsertCircuitBlock(CircuitBlock block);
+
+  Future<PCBRevision> upsertPcbRevision(PCBRevision revision);
+
+  Future<FirmwareBuild> upsertFirmwareBuild(FirmwareBuild build);
+
+  Future<DeviceNode> upsertDeviceNode(DeviceNode device);
+
+  Future<EngineeringDocument> upsertDocument(EngineeringDocument document);
+
+  Future<EngineeringAttachment> upsertAttachment(
+    EngineeringAttachment attachment,
+  );
+
+  Future<void> exportSnapshot(File destination);
+
+  Future<EngineeringSnapshot> importSnapshot(File source);
 }
 
 class LocalEngineeringRepository implements EngineeringRepository {
   LocalEngineeringRepository({
     this.moduleRootPath = 'modules/01_OMEGA_ENGINEERING_STUDIO_MODULE',
     EngineeringLocalDatabase? database,
-  });
+  }) : _database = database ?? EngineeringLocalDatabase();
 
   final String moduleRootPath;
-  final EngineeringLocalDatabase _database = EngineeringLocalDatabase();
+  final EngineeringLocalDatabase _database;
 
   EngineeringSnapshot? _cachedSnapshot;
 
@@ -48,9 +81,10 @@ class LocalEngineeringRepository implements EngineeringRepository {
       validationResults: _buildValidationResults(),
       manufacturingSteps: _buildManufacturingSteps(),
       documents: _buildDocuments(),
+      attachments: _buildAttachments(),
       decisions: _buildDecisions(),
     );
-    final snapshot = _mergePersistedState(baseSnapshot);
+    final snapshot = await _loadPersistedSnapshot(baseSnapshot);
     _cachedSnapshot = snapshot;
     return snapshot;
   }
@@ -58,26 +92,222 @@ class LocalEngineeringRepository implements EngineeringRepository {
   @override
   Future<void> saveSnapshot(EngineeringSnapshot snapshot) async {
     _cachedSnapshot = snapshot;
-    await _writeState(snapshot);
+    await _persistSnapshot(snapshot);
   }
 
   @override
   Future<void> resetLocalState() async {
-    final file = _stateFile();
-    if (file.existsSync()) {
-      await file.delete();
-    }
+    await (_database.delete(
+      _database.engineeringSnapshotRecords,
+    )..where((table) => table.snapshotId.equals('default'))).go();
     _cachedSnapshot = null;
   }
 
-  EngineeringSnapshot _mergePersistedState(EngineeringSnapshot snapshot) {
-    final file = _stateFile();
-    if (!file.existsSync()) {
+  Future<EngineeringProject> upsertProject(EngineeringProject project) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.projects.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == project.id);
+    if (index >= 0) {
+      updated[index] = project;
+    } else {
+      updated.add(project);
+    }
+    await saveSnapshot(snapshot.copyWith(projects: updated));
+    return project;
+  }
+
+  @override
+  Future<EngineeringProject> createProject({
+    required String title,
+    required String summary,
+    required String status,
+    required String priority,
+    required int progressPercent,
+    required String milestone,
+    required String nextAction,
+    required String system,
+    DateTime? targetDate,
+    List<String> tags = const [],
+  }) async {
+    final project = EngineeringProject(
+      id: 'project_${DateTime.now().microsecondsSinceEpoch}',
+      title: title.trim(),
+      summary: summary.trim(),
+      status: status,
+      priority: priority,
+      progressPercent: progressPercent.clamp(0, 100),
+      milestone: milestone.trim(),
+      nextAction: nextAction.trim(),
+      system: system.trim(),
+      updatedAt: DateTime.now().toUtc(),
+      openTaskCount: 0,
+      blockedTaskCount: 0,
+      tags: tags,
+      targetDate: targetDate,
+    );
+    return upsertProject(project);
+  }
+
+  @override
+  Future<EngineeringProject> updateProject(EngineeringProject project) {
+    return upsertProject(
+      EngineeringProject(
+        id: project.id,
+        title: project.title.trim(),
+        summary: project.summary.trim(),
+        status: project.status,
+        priority: project.priority,
+        progressPercent: project.progressPercent.clamp(0, 100),
+        milestone: project.milestone.trim(),
+        nextAction: project.nextAction.trim(),
+        system: project.system.trim(),
+        updatedAt: DateTime.now().toUtc(),
+        openTaskCount: project.openTaskCount,
+        blockedTaskCount: project.blockedTaskCount,
+        tags: project.tags,
+        targetDate: project.targetDate,
+      ),
+    );
+  }
+
+  @override
+  Future<CircuitBlock> upsertCircuitBlock(CircuitBlock block) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.circuitBlocks.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == block.id);
+    if (index >= 0) {
+      updated[index] = block;
+    } else {
+      updated.add(block);
+    }
+    await saveSnapshot(snapshot.copyWith(circuitBlocks: updated));
+    return block;
+  }
+
+  @override
+  Future<PCBRevision> upsertPcbRevision(PCBRevision revision) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.pcbRevisions.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == revision.id);
+    if (index >= 0) {
+      updated[index] = revision;
+    } else {
+      updated.add(revision);
+    }
+    await saveSnapshot(snapshot.copyWith(pcbRevisions: updated));
+    return revision;
+  }
+
+  @override
+  Future<FirmwareBuild> upsertFirmwareBuild(FirmwareBuild build) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.firmwareBuilds.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == build.id);
+    if (index >= 0) {
+      updated[index] = build;
+    } else {
+      updated.add(build);
+    }
+    await saveSnapshot(snapshot.copyWith(firmwareBuilds: updated));
+    return build;
+  }
+
+  @override
+  Future<DeviceNode> upsertDeviceNode(DeviceNode device) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.deviceNodes.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == device.id);
+    if (index >= 0) {
+      updated[index] = device;
+    } else {
+      updated.add(device);
+    }
+    await saveSnapshot(snapshot.copyWith(deviceNodes: updated));
+    return device;
+  }
+
+  @override
+  Future<EngineeringDocument> upsertDocument(
+    EngineeringDocument document,
+  ) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.documents.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == document.id);
+    if (index >= 0) {
+      updated[index] = document;
+    } else {
+      updated.add(document);
+    }
+    await saveSnapshot(snapshot.copyWith(documents: updated));
+    return document;
+  }
+
+  @override
+  Future<EngineeringAttachment> upsertAttachment(
+    EngineeringAttachment attachment,
+  ) async {
+    final snapshot = await loadSnapshot();
+    final updated = snapshot.attachments.toList(growable: true);
+    final index = updated.indexWhere((item) => item.id == attachment.id);
+    if (index >= 0) {
+      updated[index] = attachment;
+    } else {
+      updated.add(attachment);
+    }
+    await saveSnapshot(snapshot.copyWith(attachments: updated));
+    return attachment;
+  }
+
+  @override
+  Future<void> exportSnapshot(File destination) async {
+    final snapshot = await loadSnapshot();
+    final payload = <String, dynamic>{
+      'exportedAt': DateTime.now().toUtc().toIso8601String(),
+      'snapshot': _snapshotToJson(snapshot),
+    };
+    await destination.parent.create(recursive: true);
+    await destination.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(payload),
+    );
+  }
+
+  @override
+  Future<EngineeringSnapshot> importSnapshot(File source) async {
+    final raw = await source.readAsString();
+    final decoded = jsonDecode(raw);
+    final map = decoded is Map<String, dynamic>
+        ? decoded
+        : decoded is Map
+        ? decoded.map((key, value) => MapEntry(key.toString(), value))
+        : <String, dynamic>{};
+    final snapshotData = map['snapshot'];
+    if (snapshotData is! Map) {
+      throw FormatException('Invalid engineering snapshot file.');
+    }
+    final snapshotMap = snapshotData.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+    final snapshot = _snapshotFromJson(snapshotMap);
+    await saveSnapshot(snapshot);
+    return snapshot;
+  }
+
+  Future<EngineeringSnapshot> _loadPersistedSnapshot(
+    EngineeringSnapshot snapshot,
+  ) async {
+    final row =
+        await (_database.select(_database.engineeringSnapshotRecords)
+              ..where((table) => table.snapshotId.equals('default'))
+              ..limit(1))
+            .getSingleOrNull();
+
+    if (row == null) {
+      await _persistSnapshot(snapshot);
       return snapshot;
     }
 
     try {
-      final decoded = jsonDecode(file.readAsStringSync());
+      final decoded = jsonDecode(row.payload);
       final map = decoded is Map<String, dynamic>
           ? decoded
           : decoded is Map
@@ -115,6 +345,8 @@ class LocalEngineeringRepository implements EngineeringRepository {
             _manufacturingStepsFromJson(map['manufacturingSteps']) ??
             snapshot.manufacturingSteps,
         documents: _documentsFromJson(map['documents']) ?? snapshot.documents,
+        attachments:
+            _attachmentsFromJson(map['attachments']) ?? snapshot.attachments,
         decisions: _decisionsFromJson(map['decisions']) ?? snapshot.decisions,
       );
     } catch (_) {
@@ -122,10 +354,22 @@ class LocalEngineeringRepository implements EngineeringRepository {
     }
   }
 
-  Future<void> _writeState(EngineeringSnapshot snapshot) async {
-    final file = _stateFile();
-    await file.parent.create(recursive: true);
-    final payload = <String, dynamic>{
+  Future<void> _persistSnapshot(EngineeringSnapshot snapshot) async {
+    final payload = _snapshotToJson(snapshot);
+
+    await (_database.into(
+      _database.engineeringSnapshotRecords,
+    )).insertOnConflictUpdate(
+      EngineeringSnapshotRecordsCompanion.insert(
+        snapshotId: 'default',
+        payload: const JsonEncoder.withIndent('  ').convert(payload),
+        updatedAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
+
+  Map<String, dynamic> _snapshotToJson(EngineeringSnapshot snapshot) {
+    return {
       'updatedAt': DateTime.now().toUtc().toIso8601String(),
       'settings': snapshot.settings.toJson(),
       'projects': snapshot.projects
@@ -161,20 +405,50 @@ class LocalEngineeringRepository implements EngineeringRepository {
       'documents': snapshot.documents
           .map((item) => item.toJson())
           .toList(growable: false),
+      'attachments': snapshot.attachments
+          .map((item) => item.toJson())
+          .toList(growable: false),
       'decisions': snapshot.decisions
           .map((item) => item.toJson())
           .toList(growable: false),
     };
-    await file.writeAsString(
-      const JsonEncoder.withIndent('  ').convert(payload),
-    );
   }
 
-  File _stateFile() {
-    final resolved =
-        stateFilePath ??
-        path.join(moduleRootPath, 'data', 'engineering_state.json');
-    return File(resolved);
+  EngineeringSnapshot _snapshotFromJson(Map<String, dynamic> json) {
+    return EngineeringSnapshot(
+      settings:
+          _settingsFromJson(json['settings']) ??
+          EngineeringModuleSettings.defaults(moduleRootPath: moduleRootPath),
+      projects: _projectsFromJson(json['projects']) ?? _buildProjects(),
+      circuitBlocks:
+          _circuitBlocksFromJson(json['circuitBlocks']) ??
+          _buildCircuitBlocks(),
+      pcbRevisions:
+          _pcbRevisionsFromJson(json['pcbRevisions']) ?? _buildPcbRevisions(),
+      firmwareBuilds:
+          _firmwareBuildsFromJson(json['firmwareBuilds']) ??
+          _buildFirmwareBuilds(),
+      deviceNodes:
+          _deviceNodesFromJson(json['deviceNodes']) ?? _buildDeviceNodes(),
+      componentItems:
+          _componentItemsFromJson(json['componentItems']) ??
+          _buildComponentItems(),
+      experiments:
+          _experimentsFromJson(json['experiments']) ?? _buildExperiments(),
+      testProcedures:
+          _testProceduresFromJson(json['testProcedures']) ??
+          _buildTestProcedures(),
+      validationResults:
+          _validationResultsFromJson(json['validationResults']) ??
+          _buildValidationResults(),
+      manufacturingSteps:
+          _manufacturingStepsFromJson(json['manufacturingSteps']) ??
+          _buildManufacturingSteps(),
+      documents: _documentsFromJson(json['documents']) ?? _buildDocuments(),
+      attachments:
+          _attachmentsFromJson(json['attachments']) ?? _buildAttachments(),
+      decisions: _decisionsFromJson(json['decisions']) ?? _buildDecisions(),
+    );
   }
 
   List<EngineeringProject> _buildProjects() {
@@ -1002,6 +1276,67 @@ class LocalEngineeringRepository implements EngineeringRepository {
     ];
   }
 
+  List<EngineeringAttachment> _buildAttachments() {
+    return [
+      EngineeringAttachment.fromJson(
+        _attachment(
+          id: 'attachment_microgrow_schematic',
+          ownerType: 'pcb',
+          ownerId: 'pcb_microgrow_a1',
+          title: 'MicroGrow schematic',
+          kind: 'Schematic',
+          filePath: 'assets/engineering/microgrow/schematic.pdf',
+          status: 'Linked',
+          updatedAt: DateTime.utc(2026, 7, 2, 9, 15),
+          notes: 'Primary field sensor schematic.',
+          tags: ['schematic', 'microgrow'],
+        ),
+      ),
+      EngineeringAttachment.fromJson(
+        _attachment(
+          id: 'attachment_biocalm_board',
+          ownerType: 'pcb',
+          ownerId: 'pcb_biocalm_a1',
+          title: 'BioCalm board files',
+          kind: 'Board File',
+          filePath: 'assets/engineering/biocalm/board.zip',
+          status: 'Linked',
+          updatedAt: DateTime.utc(2026, 7, 2, 9, 25),
+          notes: 'Fabrication package staged locally.',
+          tags: ['board', 'pcb'],
+        ),
+      ),
+      EngineeringAttachment.fromJson(
+        _attachment(
+          id: 'attachment_firmware_release',
+          ownerType: 'firmware',
+          ownerId: 'firmware_biocalm_010',
+          title: 'BioCalm firmware artifact',
+          kind: 'Firmware Artifact',
+          filePath: 'build/firmware/biocalm_010.bin',
+          status: 'Linked',
+          updatedAt: DateTime.utc(2026, 7, 2, 13, 10),
+          notes: 'Release artifact ready for deployment.',
+          tags: ['firmware', 'artifact'],
+        ),
+      ),
+      EngineeringAttachment.fromJson(
+        _attachment(
+          id: 'attachment_validation_evidence',
+          ownerType: 'validation',
+          ownerId: 'validation_power_cycle',
+          title: 'Power cycle evidence pack',
+          kind: 'Validation Evidence',
+          filePath: 'docs/evidence/power_cycle_pack.zip',
+          status: 'Linked',
+          updatedAt: DateTime.utc(2026, 7, 2, 16, 5),
+          notes: 'Captured results and logs for the validation pass.',
+          tags: ['evidence', 'validation'],
+        ),
+      ),
+    ];
+  }
+
   List<EngineeringDecision> _buildDecisions() {
     return [
       EngineeringDecision.fromJson(
@@ -1128,6 +1463,10 @@ class LocalEngineeringRepository implements EngineeringRepository {
 
   List<EngineeringDocument>? _documentsFromJson(dynamic raw) {
     return _listFromJson(raw, EngineeringDocument.fromJson);
+  }
+
+  List<EngineeringAttachment>? _attachmentsFromJson(dynamic raw) {
+    return _listFromJson(raw, EngineeringAttachment.fromJson);
   }
 
   List<EngineeringDecision>? _decisionsFromJson(dynamic raw) {
@@ -1462,6 +1801,32 @@ class LocalEngineeringRepository implements EngineeringRepository {
       'updatedAt': updatedAt.toUtc().toIso8601String(),
       'summary': summary,
       'filePath': filePath,
+      'tags': tags,
+    };
+  }
+
+  Map<String, dynamic> _attachment({
+    required String id,
+    required String ownerType,
+    required String ownerId,
+    required String title,
+    required String kind,
+    required String filePath,
+    required String status,
+    required DateTime updatedAt,
+    required String notes,
+    required List<String> tags,
+  }) {
+    return {
+      'id': id,
+      'ownerType': ownerType,
+      'ownerId': ownerId,
+      'title': title,
+      'kind': kind,
+      'filePath': filePath,
+      'status': status,
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
+      'notes': notes,
       'tags': tags,
     };
   }

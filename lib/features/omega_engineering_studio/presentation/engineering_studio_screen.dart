@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../application/engineering_services.dart';
+import '../application/engineering_integration_adapters.dart';
 import '../data/engineering_repository.dart';
 import '../domain/engineering_models.dart';
 import 'widgets/engineering_widgets.dart';
@@ -27,6 +31,12 @@ class EngineeringStudioScreen extends StatefulWidget {
 class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
   late final EngineeringRepository _repository =
       widget.repository ?? LocalEngineeringRepository();
+  late final EngineeringKnowledgeEngineAdapter _knowledgeEngineAdapter =
+      const LocalEngineeringKnowledgeEngineAdapter();
+  late final EngineeringGaiaAssistantAdapter _gaiaAssistantAdapter =
+      const LocalEngineeringGaiaAssistantAdapter();
+  late final EngineeringAccessPolicy _accessPolicy =
+      const EngineeringAccessPolicy.localOnly();
   late final TextEditingController _searchController;
 
   EngineeringSnapshot? _snapshot;
@@ -112,6 +122,1008 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     });
   }
 
+  Future<void> _openCommandPalette() async {
+    final snapshot = _snapshotOrThrow;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return _EngineeringCommandPaletteDialog(
+          snapshot: snapshot,
+          currentSection: _section,
+          actions: _commandPaletteActions(dialogContext, snapshot),
+        );
+      },
+    );
+  }
+
+  List<_EngineeringPaletteAction> _commandPaletteActions(
+    BuildContext dialogContext,
+    EngineeringSnapshot snapshot,
+  ) {
+    return [
+      for (final section in EngineeringSection.values)
+        _EngineeringPaletteAction(
+          id: 'open_${section.routeSegment.isEmpty ? 'dashboard' : section.routeSegment}',
+          label: 'Open ${section.label}',
+          subtitle: section == EngineeringSection.dashboard
+              ? 'Return to the calm overview.'
+              : 'Jump to ${section.label.toLowerCase()}.',
+          icon: Icons.arrow_forward_outlined,
+          onSelected: () {
+            Navigator.of(dialogContext).pop();
+            _setSection(section);
+          },
+        ),
+      _EngineeringPaletteAction(
+        id: 'new_project',
+        label: 'Add project',
+        subtitle: 'Create a local engineering project draft.',
+        icon: Icons.create_new_folder_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _editProject();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'new_pcb',
+        label: 'Add PCB revision',
+        subtitle: 'Create a board record for fabrication.',
+        icon: Icons.view_in_ar_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _editPcbRevision();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'new_firmware',
+        label: 'Add firmware build',
+        subtitle: 'Track a release candidate locally.',
+        icon: Icons.memory_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _editFirmwareBuild();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'new_device',
+        label: 'Add device node',
+        subtitle: 'Record a new ESP32 or field node.',
+        icon: Icons.devices_other_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _editDeviceNode();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'new_document',
+        label: 'Add document',
+        subtitle: 'Capture a note, brief, or release pack.',
+        icon: Icons.description_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _editDocument();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'export_snapshot',
+        label: 'Export snapshot',
+        subtitle: 'Write the local module state to JSON.',
+        icon: Icons.download_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _exportSnapshot();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'import_snapshot',
+        label: 'Import snapshot',
+        subtitle: 'Restore local engineering state from JSON.',
+        icon: Icons.upload_file_outlined,
+        onSelected: () async {
+          Navigator.of(dialogContext).pop();
+          await _importSnapshot();
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'open_knowledge',
+        label: 'Open Knowledge Engine',
+        subtitle: 'Jump to the Omega Knowledge Engine hook.',
+        icon: Icons.travel_explore_outlined,
+        onSelected: () {
+          Navigator.of(dialogContext).pop();
+          unawaited(_knowledgeEngineAdapter.open(context));
+        },
+      ),
+      _EngineeringPaletteAction(
+        id: 'open_gaia',
+        label: 'Open GAIA',
+        subtitle: 'Jump to the GAIA assistant hook.',
+        icon: Icons.auto_awesome_outlined,
+        onSelected: () {
+          Navigator.of(dialogContext).pop();
+          unawaited(_gaiaAssistantAdapter.open(context));
+        },
+      ),
+      if (snapshot.attachments.isNotEmpty)
+        _EngineeringPaletteAction(
+          id: 'attachment_count',
+          label: 'Review attachments',
+          subtitle: 'See schematics, board files, firmware, and evidence.',
+          icon: Icons.attach_file_outlined,
+          onSelected: () {
+            Navigator.of(dialogContext).pop();
+            _setSection(EngineeringSection.documentation);
+          },
+        ),
+    ];
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _refreshSnapshot() async {
+    try {
+      final snapshot = await _repository.loadSnapshot();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _snapshot = snapshot;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = error.toString();
+      });
+    }
+  }
+
+  Future<void> _exportSnapshot() async {
+    final directory = Directory(
+      '${_snapshotOrThrow.settings.moduleRootPath}\\data\\backups',
+    );
+    final file = File(
+      '${directory.path}\\engineering_snapshot_${DateTime.now().toUtc().toIso8601String().replaceAll(':', '-').replaceAll('.', '-')}.json',
+    );
+    await _repository.exportSnapshot(file);
+    _showSnackBar('Snapshot exported to ${file.path}.');
+  }
+
+  Future<void> _importSnapshot() async {
+    final picked = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+      allowMultiple: false,
+    );
+    final path = picked?.files.single.path;
+    if (path == null) {
+      return;
+    }
+    await _repository.importSnapshot(File(path));
+    await _refreshSnapshot();
+    _showSnackBar('Snapshot imported from local file.');
+  }
+
+  List<String> _tagsFromText(String text) {
+    return text
+        .split(',')
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  DateTime? _tryParseDate(String text) {
+    final parsed = DateTime.tryParse(text.trim());
+    return parsed?.toUtc();
+  }
+
+  String _dateText(DateTime? value) {
+    return value?.toUtc().toIso8601String().split('T').first ?? '';
+  }
+
+  Future<void> _editProject([EngineeringProject? project]) async {
+    final titleController = TextEditingController(text: project?.title ?? '');
+    final summaryController = TextEditingController(
+      text: project?.summary ?? '',
+    );
+    final statusController = TextEditingController(
+      text: project?.status ?? 'Active',
+    );
+    final priorityController = TextEditingController(
+      text: project?.priority ?? 'Medium',
+    );
+    final progressController = TextEditingController(
+      text: '${project?.progressPercent ?? 0}',
+    );
+    final milestoneController = TextEditingController(
+      text: project?.milestone ?? '',
+    );
+    final nextActionController = TextEditingController(
+      text: project?.nextAction ?? '',
+    );
+    final systemController = TextEditingController(text: project?.system ?? '');
+    final targetDateController = TextEditingController(
+      text: _dateText(project?.targetDate),
+    );
+    final tagsController = TextEditingController(
+      text: project?.tags.join(', ') ?? '',
+    );
+
+    try {
+      final draft = await showDialog<EngineeringProject>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(project == null ? 'Add project' : 'Edit project'),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 560,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Title'),
+                    ),
+                    TextField(
+                      controller: summaryController,
+                      decoration: const InputDecoration(labelText: 'Summary'),
+                      maxLines: 2,
+                    ),
+                    TextField(
+                      controller: statusController,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                    ),
+                    TextField(
+                      controller: priorityController,
+                      decoration: const InputDecoration(labelText: 'Priority'),
+                    ),
+                    TextField(
+                      controller: progressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Progress percent',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    TextField(
+                      controller: milestoneController,
+                      decoration: const InputDecoration(labelText: 'Milestone'),
+                    ),
+                    TextField(
+                      controller: nextActionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Next action',
+                      ),
+                    ),
+                    TextField(
+                      controller: systemController,
+                      decoration: const InputDecoration(labelText: 'System'),
+                    ),
+                    TextField(
+                      controller: targetDateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Target date (YYYY-MM-DD)',
+                      ),
+                    ),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags, comma separated',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final title = titleController.text.trim();
+                  if (title.isEmpty) {
+                    return;
+                  }
+                  final draft = EngineeringProject(
+                    id:
+                        project?.id ??
+                        'project_${DateTime.now().microsecondsSinceEpoch}',
+                    title: title,
+                    summary: summaryController.text.trim(),
+                    status: statusController.text.trim(),
+                    priority: priorityController.text.trim(),
+                    progressPercent:
+                        int.tryParse(progressController.text.trim()) ?? 0,
+                    milestone: milestoneController.text.trim(),
+                    nextAction: nextActionController.text.trim(),
+                    system: systemController.text.trim(),
+                    updatedAt: DateTime.now().toUtc(),
+                    openTaskCount: project?.openTaskCount ?? 0,
+                    blockedTaskCount: project?.blockedTaskCount ?? 0,
+                    tags: _tagsFromText(tagsController.text),
+                    targetDate: _tryParseDate(targetDateController.text),
+                  );
+                  Navigator.of(dialogContext).pop(draft);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+      if (draft == null) {
+        return;
+      }
+      if (project == null) {
+        await _repository.createProject(
+          title: draft.title,
+          summary: draft.summary,
+          status: draft.status,
+          priority: draft.priority,
+          progressPercent: draft.progressPercent,
+          milestone: draft.milestone,
+          nextAction: draft.nextAction,
+          system: draft.system,
+          targetDate: draft.targetDate,
+          tags: draft.tags,
+        );
+      } else {
+        await _repository.updateProject(draft);
+      }
+      await _refreshSnapshot();
+      _showSnackBar(
+        project == null ? 'Project added locally.' : 'Project updated locally.',
+      );
+    } finally {
+      titleController.dispose();
+      summaryController.dispose();
+      statusController.dispose();
+      priorityController.dispose();
+      progressController.dispose();
+      milestoneController.dispose();
+      nextActionController.dispose();
+      systemController.dispose();
+      targetDateController.dispose();
+      tagsController.dispose();
+    }
+  }
+
+  Future<void> _editPcbRevision([PCBRevision? pcb]) async {
+    final boardController = TextEditingController(text: pcb?.boardName ?? '');
+    final revisionController = TextEditingController(text: pcb?.revision ?? '');
+    final projectController = TextEditingController(text: pcb?.projectId ?? '');
+    final statusController = TextEditingController(
+      text: pcb?.status ?? 'Draft',
+    );
+    final layersController = TextEditingController(text: '${pcb?.layers ?? 2}');
+    final progressController = TextEditingController(
+      text: '${pcb?.progressPercent ?? 0}',
+    );
+    final partnerController = TextEditingController(
+      text: pcb?.manufacturingPartner ?? '',
+    );
+    final nextActionController = TextEditingController(
+      text: pcb?.nextAction ?? '',
+    );
+    final notesController = TextEditingController(text: pcb?.notes ?? '');
+    final tagsController = TextEditingController(
+      text: pcb?.tags.join(', ') ?? '',
+    );
+    var fabReady = pcb?.fabReady ?? false;
+
+    try {
+      final draft = await showDialog<PCBRevision>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: Text(
+                  pcb == null ? 'Add PCB revision' : 'Edit PCB revision',
+                ),
+                content: SingleChildScrollView(
+                  child: SizedBox(
+                    width: 560,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: boardController,
+                          decoration: const InputDecoration(
+                            labelText: 'Board name',
+                          ),
+                        ),
+                        TextField(
+                          controller: revisionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Revision',
+                          ),
+                        ),
+                        TextField(
+                          controller: projectController,
+                          decoration: const InputDecoration(
+                            labelText: 'Project ID',
+                          ),
+                        ),
+                        TextField(
+                          controller: statusController,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                          ),
+                        ),
+                        TextField(
+                          controller: layersController,
+                          decoration: const InputDecoration(
+                            labelText: 'Layers',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        TextField(
+                          controller: progressController,
+                          decoration: const InputDecoration(
+                            labelText: 'Progress percent',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        TextField(
+                          controller: partnerController,
+                          decoration: const InputDecoration(
+                            labelText: 'Manufacturing partner',
+                          ),
+                        ),
+                        TextField(
+                          controller: nextActionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Next action',
+                          ),
+                        ),
+                        TextField(
+                          controller: notesController,
+                          decoration: const InputDecoration(labelText: 'Notes'),
+                          maxLines: 2,
+                        ),
+                        TextField(
+                          controller: tagsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Tags, comma separated',
+                          ),
+                        ),
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: fabReady,
+                          onChanged: (value) =>
+                              setDialogState(() => fabReady = value ?? false),
+                          title: const Text('Fab ready'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (boardController.text.trim().isEmpty ||
+                          revisionController.text.trim().isEmpty) {
+                        return;
+                      }
+                      Navigator.of(dialogContext).pop(
+                        PCBRevision(
+                          id:
+                              pcb?.id ??
+                              'pcb_${DateTime.now().microsecondsSinceEpoch}',
+                          projectId: projectController.text.trim(),
+                          boardName: boardController.text.trim(),
+                          revision: revisionController.text.trim(),
+                          status: statusController.text.trim(),
+                          layers:
+                              int.tryParse(layersController.text.trim()) ?? 2,
+                          progressPercent:
+                              int.tryParse(progressController.text.trim()) ?? 0,
+                          fabReady: fabReady,
+                          manufacturingPartner: partnerController.text.trim(),
+                          nextAction: nextActionController.text.trim(),
+                          tags: _tagsFromText(tagsController.text),
+                          notes: notesController.text.trim(),
+                        ),
+                      );
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+      if (draft == null) {
+        return;
+      }
+      await _repository.upsertPcbRevision(draft);
+      await _refreshSnapshot();
+      _showSnackBar(
+        pcb == null ? 'PCB added locally.' : 'PCB updated locally.',
+      );
+    } finally {
+      boardController.dispose();
+      revisionController.dispose();
+      projectController.dispose();
+      statusController.dispose();
+      layersController.dispose();
+      progressController.dispose();
+      partnerController.dispose();
+      nextActionController.dispose();
+      notesController.dispose();
+      tagsController.dispose();
+    }
+  }
+
+  Future<void> _editFirmwareBuild([FirmwareBuild? build]) async {
+    final projectController = TextEditingController(
+      text: build?.projectId ?? '',
+    );
+    final targetController = TextEditingController(
+      text: build?.targetDevice ?? '',
+    );
+    final versionController = TextEditingController(text: build?.version ?? '');
+    final statusController = TextEditingController(
+      text: build?.status ?? 'Draft',
+    );
+    final progressController = TextEditingController(
+      text: '${build?.progressPercent ?? 0}',
+    );
+    final typeController = TextEditingController(text: build?.buildType ?? '');
+    final nextActionController = TextEditingController(
+      text: build?.nextAction ?? '',
+    );
+    final artifactController = TextEditingController(
+      text: build?.artifactPath ?? '',
+    );
+    final builtAtController = TextEditingController(
+      text: _dateText(build?.lastBuiltAt),
+    );
+    final tagsController = TextEditingController(
+      text: build?.tags.join(', ') ?? '',
+    );
+
+    try {
+      final draft = await showDialog<FirmwareBuild>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(
+              build == null ? 'Add firmware build' : 'Edit firmware build',
+            ),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 560,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: projectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Project ID',
+                      ),
+                    ),
+                    TextField(
+                      controller: targetController,
+                      decoration: const InputDecoration(
+                        labelText: 'Target device',
+                      ),
+                    ),
+                    TextField(
+                      controller: versionController,
+                      decoration: const InputDecoration(labelText: 'Version'),
+                    ),
+                    TextField(
+                      controller: statusController,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                    ),
+                    TextField(
+                      controller: progressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Progress percent',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    TextField(
+                      controller: typeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Build type',
+                      ),
+                    ),
+                    TextField(
+                      controller: nextActionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Next action',
+                      ),
+                    ),
+                    TextField(
+                      controller: artifactController,
+                      decoration: const InputDecoration(
+                        labelText: 'Artifact path',
+                      ),
+                    ),
+                    TextField(
+                      controller: builtAtController,
+                      decoration: const InputDecoration(
+                        labelText: 'Last built date (YYYY-MM-DD)',
+                      ),
+                    ),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags, comma separated',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (targetController.text.trim().isEmpty ||
+                      versionController.text.trim().isEmpty) {
+                    return;
+                  }
+                  Navigator.of(dialogContext).pop(
+                    FirmwareBuild(
+                      id:
+                          build?.id ??
+                          'firmware_${DateTime.now().microsecondsSinceEpoch}',
+                      projectId: projectController.text.trim(),
+                      targetDevice: targetController.text.trim(),
+                      version: versionController.text.trim(),
+                      status: statusController.text.trim(),
+                      progressPercent:
+                          int.tryParse(progressController.text.trim()) ?? 0,
+                      buildType: typeController.text.trim(),
+                      nextAction: nextActionController.text.trim(),
+                      artifactPath: artifactController.text.trim(),
+                      lastBuiltAt:
+                          _tryParseDate(builtAtController.text) ??
+                          DateTime.now().toUtc(),
+                      tags: _tagsFromText(tagsController.text),
+                    ),
+                  );
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+      if (draft == null) {
+        return;
+      }
+      await _repository.upsertFirmwareBuild(draft);
+      await _refreshSnapshot();
+      _showSnackBar(
+        build == null
+            ? 'Firmware build added locally.'
+            : 'Firmware build updated locally.',
+      );
+    } finally {
+      projectController.dispose();
+      targetController.dispose();
+      versionController.dispose();
+      statusController.dispose();
+      progressController.dispose();
+      typeController.dispose();
+      nextActionController.dispose();
+      artifactController.dispose();
+      builtAtController.dispose();
+      tagsController.dispose();
+    }
+  }
+
+  Future<void> _editDeviceNode([DeviceNode? device]) async {
+    final projectController = TextEditingController(
+      text: device?.projectId ?? '',
+    );
+    final nameController = TextEditingController(text: device?.name ?? '');
+    final modelController = TextEditingController(text: device?.model ?? '');
+    final statusController = TextEditingController(
+      text: device?.status ?? 'Offline',
+    );
+    final healthController = TextEditingController(
+      text: device?.health ?? 'Unknown',
+    );
+    final firmwareController = TextEditingController(
+      text: device?.firmwareVersion ?? '',
+    );
+    final locationController = TextEditingController(
+      text: device?.location ?? '',
+    );
+    final nextActionController = TextEditingController(
+      text: device?.nextAction ?? '',
+    );
+    final notesController = TextEditingController(text: device?.notes ?? '');
+    final tagsController = TextEditingController(
+      text: device?.tags.join(', ') ?? '',
+    );
+
+    try {
+      final draft = await showDialog<DeviceNode>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(
+              device == null ? 'Add device node' : 'Edit device node',
+            ),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 560,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: projectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Project ID',
+                      ),
+                    ),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                    ),
+                    TextField(
+                      controller: modelController,
+                      decoration: const InputDecoration(labelText: 'Model'),
+                    ),
+                    TextField(
+                      controller: statusController,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                    ),
+                    TextField(
+                      controller: healthController,
+                      decoration: const InputDecoration(labelText: 'Health'),
+                    ),
+                    TextField(
+                      controller: firmwareController,
+                      decoration: const InputDecoration(
+                        labelText: 'Firmware version',
+                      ),
+                    ),
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(labelText: 'Location'),
+                    ),
+                    TextField(
+                      controller: nextActionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Next action',
+                      ),
+                    ),
+                    TextField(
+                      controller: notesController,
+                      decoration: const InputDecoration(labelText: 'Notes'),
+                      maxLines: 2,
+                    ),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags, comma separated',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (nameController.text.trim().isEmpty) {
+                    return;
+                  }
+                  Navigator.of(dialogContext).pop(
+                    DeviceNode(
+                      id:
+                          device?.id ??
+                          'device_${DateTime.now().microsecondsSinceEpoch}',
+                      projectId: projectController.text.trim(),
+                      name: nameController.text.trim(),
+                      model: modelController.text.trim(),
+                      status: statusController.text.trim(),
+                      health: healthController.text.trim(),
+                      firmwareVersion: firmwareController.text.trim(),
+                      lastSeenAt: device?.lastSeenAt ?? DateTime.now().toUtc(),
+                      location: locationController.text.trim(),
+                      nextAction: nextActionController.text.trim(),
+                      tags: _tagsFromText(tagsController.text),
+                      notes: notesController.text.trim(),
+                    ),
+                  );
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+      if (draft == null) {
+        return;
+      }
+      await _repository.upsertDeviceNode(draft);
+      await _refreshSnapshot();
+      _showSnackBar(
+        device == null ? 'Device added locally.' : 'Device updated locally.',
+      );
+    } finally {
+      projectController.dispose();
+      nameController.dispose();
+      modelController.dispose();
+      statusController.dispose();
+      healthController.dispose();
+      firmwareController.dispose();
+      locationController.dispose();
+      nextActionController.dispose();
+      notesController.dispose();
+      tagsController.dispose();
+    }
+  }
+
+  Future<void> _editDocument([EngineeringDocument? document]) async {
+    final projectController = TextEditingController(
+      text: document?.projectId ?? '',
+    );
+    final titleController = TextEditingController(text: document?.title ?? '');
+    final typeController = TextEditingController(
+      text: document?.documentType ?? '',
+    );
+    final statusController = TextEditingController(
+      text: document?.status ?? 'Draft',
+    );
+    final summaryController = TextEditingController(
+      text: document?.summary ?? '',
+    );
+    final fileController = TextEditingController(
+      text: document?.filePath ?? '',
+    );
+    final tagsController = TextEditingController(
+      text: document?.tags.join(', ') ?? '',
+    );
+    final updatedAtController = TextEditingController(
+      text: _dateText(document?.updatedAt),
+    );
+
+    try {
+      final draft = await showDialog<EngineeringDocument>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(document == null ? 'Add document' : 'Edit document'),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 560,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: projectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Project ID',
+                      ),
+                    ),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Title'),
+                    ),
+                    TextField(
+                      controller: typeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Document type',
+                      ),
+                    ),
+                    TextField(
+                      controller: statusController,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                    ),
+                    TextField(
+                      controller: summaryController,
+                      decoration: const InputDecoration(labelText: 'Summary'),
+                      maxLines: 2,
+                    ),
+                    TextField(
+                      controller: fileController,
+                      decoration: const InputDecoration(labelText: 'File path'),
+                    ),
+                    TextField(
+                      controller: updatedAtController,
+                      decoration: const InputDecoration(
+                        labelText: 'Updated at (YYYY-MM-DD)',
+                      ),
+                    ),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags, comma separated',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (titleController.text.trim().isEmpty) {
+                    return;
+                  }
+                  Navigator.of(dialogContext).pop(
+                    EngineeringDocument(
+                      id:
+                          document?.id ??
+                          'document_${DateTime.now().microsecondsSinceEpoch}',
+                      projectId: projectController.text.trim(),
+                      title: titleController.text.trim(),
+                      documentType: typeController.text.trim(),
+                      status: statusController.text.trim(),
+                      updatedAt:
+                          _tryParseDate(updatedAtController.text) ??
+                          DateTime.now().toUtc(),
+                      summary: summaryController.text.trim(),
+                      filePath: fileController.text.trim(),
+                      tags: _tagsFromText(tagsController.text),
+                    ),
+                  );
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+      if (draft == null) {
+        return;
+      }
+      await _repository.upsertDocument(draft);
+      await _refreshSnapshot();
+      _showSnackBar(
+        document == null
+            ? 'Document added locally.'
+            : 'Document updated locally.',
+      );
+    } finally {
+      projectController.dispose();
+      titleController.dispose();
+      typeController.dispose();
+      statusController.dispose();
+      summaryController.dispose();
+      fileController.dispose();
+      tagsController.dispose();
+      updatedAtController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -155,77 +1167,94 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         title: Text('Omega Engineering Studio · ${_section.label}'),
         leading: BackButton(onPressed: () => context.go(RouteNames.more)),
         actions: [
+          IconButton(
+            onPressed: _openCommandPalette,
+            tooltip: 'Command palette',
+            icon: const Icon(Icons.search_rounded),
+          ),
           TextButton.icon(
-            onPressed: () => context.push(RouteNames.omegaKnowledgeEngine),
+            onPressed: () => _knowledgeEngineAdapter.open(context),
             icon: const Icon(Icons.travel_explore_outlined),
             label: const Text('Knowledge Engine'),
           ),
           const SizedBox(width: 8),
           TextButton.icon(
-            onPressed: () => context.push(RouteNames.voiceAssistant),
+            onPressed: () => _gaiaAssistantAdapter.open(context),
             icon: const Icon(Icons.auto_awesome_outlined),
             label: const Text('GAIA'),
           ),
           const SizedBox(width: 12),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _HeroPanel(
-            snapshot: snapshot,
-            searchController: _searchController,
-            searchQuery: _searchQuery,
-            statusFilter: _statusFilter,
-            onSearchChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            onStatusFilterChanged: (value) {
-              setState(() {
-                _statusFilter = value;
-              });
-            },
-            onClearSearch: _clearSearch,
-            onOpenKnowledgeEngine: () =>
-                context.push(RouteNames.omegaKnowledgeEngine),
-            onOpenGaiaAssistant: () => context.push(RouteNames.voiceAssistant),
-          ),
-          const SizedBox(height: 14),
-          _SectionSelector(currentSection: _section, onSelected: _setSection),
-          const SizedBox(height: 16),
-          if (_searchQuery.trim().isNotEmpty)
-            EngineeringSectionShell(
-              title: 'Search results',
-              subtitle:
-                  'A quiet local scan across projects, circuits, boards, devices, and docs.',
-              child: searchHits.isEmpty
-                  ? EngineeringEmptyState(
-                      title: 'No matches yet',
-                      subtitle:
-                          'Try a project title, board name, device name, or document keyword.',
-                      actionLabel: 'Clear search',
-                      onAction: _clearSearch,
-                    )
-                  : _SearchHitsView(
-                      hits: searchHits,
-                      onOpenSection: _setSection,
-                    ),
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.keyK &&
+              HardwareKeyboard.instance.isControlPressed) {
+            unawaited(_openCommandPalette());
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            _HeroPanel(
+              snapshot: snapshot,
+              searchController: _searchController,
+              searchQuery: _searchQuery,
+              statusFilter: _statusFilter,
+              onSearchChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              onStatusFilterChanged: (value) {
+                setState(() {
+                  _statusFilter = value;
+                });
+              },
+              onClearSearch: _clearSearch,
+              onOpenKnowledgeEngine: () =>
+                  _knowledgeEngineAdapter.open(context),
+              onOpenGaiaAssistant: () => _gaiaAssistantAdapter.open(context),
             ),
-          _buildSection(
-            snapshot: snapshot,
-            projectService: projectService,
-            circuitService: circuitService,
-            pcbService: pcbService,
-            firmwareService: firmwareService,
-            deviceService: deviceService,
-            componentService: componentService,
-            experimentService: experimentService,
-            validationService: validationService,
-            manufacturingService: manufacturingService,
-          ),
-        ],
+            const SizedBox(height: 14),
+            _SectionSelector(currentSection: _section, onSelected: _setSection),
+            const SizedBox(height: 16),
+            if (_searchQuery.trim().isNotEmpty)
+              EngineeringSectionShell(
+                title: 'Search results',
+                subtitle:
+                    'A quiet local scan across projects, circuits, boards, devices, and docs.',
+                child: searchHits.isEmpty
+                    ? EngineeringEmptyState(
+                        title: 'No matches yet',
+                        subtitle:
+                            'Try a project title, board name, device name, or document keyword.',
+                        actionLabel: 'Clear search',
+                        onAction: _clearSearch,
+                      )
+                    : _SearchHitsView(
+                        hits: searchHits,
+                        onOpenSection: _setSection,
+                      ),
+              ),
+            _buildSection(
+              snapshot: snapshot,
+              projectService: projectService,
+              circuitService: circuitService,
+              pcbService: pcbService,
+              firmwareService: firmwareService,
+              deviceService: deviceService,
+              componentService: componentService,
+              experimentService: experimentService,
+              validationService: validationService,
+              manufacturingService: manufacturingService,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -333,6 +1362,35 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                               '${snapshot.averageProjectProgress.toStringAsFixed(0)}%',
                           subtitle: 'Across the active engineering portfolio',
                           icon: Icons.monitor_heart_outlined,
+                        ),
+                      ),
+                      SizedBox(
+                        width: _cardWidth(constraints.maxWidth, columns),
+                        child: EngineeringMetricCard(
+                          label: 'Validation pass rate',
+                          value:
+                              '${(snapshot.validationPassRate * 100).toStringAsFixed(0)}%',
+                          subtitle:
+                              '${snapshot.validationAttentionCount} need attention',
+                          icon: Icons.verified_outlined,
+                        ),
+                      ),
+                      SizedBox(
+                        width: _cardWidth(constraints.maxWidth, columns),
+                        child: EngineeringMetricCard(
+                          label: 'Manufacturing blockers',
+                          value: '${snapshot.manufacturingBlockedCount}',
+                          subtitle: 'Steps parked for review',
+                          icon: Icons.precision_manufacturing_outlined,
+                        ),
+                      ),
+                      SizedBox(
+                        width: _cardWidth(constraints.maxWidth, columns),
+                        child: EngineeringMetricCard(
+                          label: 'Attachments',
+                          value: '${snapshot.attachmentCount}',
+                          subtitle: 'Schematics, board files, evidence',
+                          icon: Icons.attach_file_outlined,
                         ),
                       ),
                     ],
@@ -485,6 +1543,11 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       title: 'Projects',
       subtitle:
           'MicroGrow, BioCalm, New Earth Living, Omega Dashboard, and future engineering workspaces.',
+      trailing: FilledButton.icon(
+        onPressed: () => _editProject(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add project'),
+      ),
       child: projects.isEmpty
           ? EngineeringEmptyState(
               title: 'No project matches',
@@ -497,7 +1560,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                   .map(
                     (project) => _ProjectCard(
                       project: project,
-                      onOpen: () => _setSection(EngineeringSection.projects),
+                      onEdit: () => _editProject(project),
                     ),
                   )
                   .toList(growable: false),
@@ -535,6 +1598,11 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       title: 'PCB Manager',
       subtitle:
           'Track revision state, fabrication readiness, and board-level progress.',
+      trailing: FilledButton.icon(
+        onPressed: () => _editPcbRevision(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add PCB'),
+      ),
       child: pcbRevisions.isEmpty
           ? EngineeringEmptyState(
               title: 'No PCB revisions match',
@@ -544,7 +1612,10 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
             )
           : _responsiveCards(
               pcbRevisions
-                  .map((pcb) => _PcbCard(pcb: pcb))
+                  .map(
+                    (pcb) =>
+                        _PcbCard(pcb: pcb, onEdit: () => _editPcbRevision(pcb)),
+                  )
                   .toList(growable: false),
             ),
     );
@@ -555,6 +1626,11 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     return EngineeringSectionShell(
       title: 'Firmware Centre',
       subtitle: 'Builds, versions, artifacts, and the next release action.',
+      trailing: FilledButton.icon(
+        onPressed: () => _editFirmwareBuild(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add build'),
+      ),
       child: builds.isEmpty
           ? EngineeringEmptyState(
               title: 'No firmware builds match',
@@ -563,7 +1639,14 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
               onAction: _clearSearch,
             )
           : _responsiveCards(
-              builds.map((build) => _FirmwareCard(buildModel: build)).toList(),
+              builds
+                  .map(
+                    (build) => _FirmwareCard(
+                      buildModel: build,
+                      onEdit: () => _editFirmwareBuild(build),
+                    ),
+                  )
+                  .toList(),
             ),
     );
   }
@@ -574,6 +1657,11 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       title: 'Device Fleet',
       subtitle:
           'Field nodes, bench boards, health labels, and last-seen status.',
+      trailing: FilledButton.icon(
+        onPressed: () => _editDeviceNode(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add device'),
+      ),
       child: devices.isEmpty
           ? EngineeringEmptyState(
               title: 'No device nodes match',
@@ -582,7 +1670,14 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
               onAction: _clearSearch,
             )
           : _responsiveCards(
-              devices.map((device) => _DeviceCard(device: device)).toList(),
+              devices
+                  .map(
+                    (device) => _DeviceCard(
+                      device: device,
+                      onEdit: () => _editDeviceNode(device),
+                    ),
+                  )
+                  .toList(),
             ),
     );
   }
@@ -647,6 +1742,32 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _responsiveCards([
+                _InfoTileCard(
+                  title: 'Pass rate',
+                  value:
+                      '${(_snapshotOrThrow.validationPassRate * 100).toStringAsFixed(0)}%',
+                  subtitle:
+                      '${_snapshotOrThrow.validationDefectCount} defect signals',
+                  icon: Icons.verified_outlined,
+                ),
+                _InfoTileCard(
+                  title: 'Coverage',
+                  value:
+                      '${(_snapshotOrThrow.validationCoverageRate * 100).toStringAsFixed(0)}%',
+                  subtitle:
+                      '${_snapshotOrThrow.validationCoveredProcedureCount} procedures covered',
+                  icon: Icons.fact_check_outlined,
+                ),
+                _InfoTileCard(
+                  title: 'Attention rate',
+                  value:
+                      '${(_snapshotOrThrow.validationAttentionRate * 100).toStringAsFixed(0)}%',
+                  subtitle: 'Items parked for review.',
+                  icon: Icons.report_outlined,
+                ),
+              ]),
+              const SizedBox(height: 16),
               _responsiveCards(
                 procedures
                     .map((procedure) => _ProcedureCard(procedure: procedure))
@@ -677,8 +1798,30 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
               actionLabel: 'Clear search',
               onAction: _clearSearch,
             )
-          : _responsiveCards(
-              steps.map((step) => _ManufacturingCard(step: step)).toList(),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _responsiveCards([
+                  _InfoTileCard(
+                    title: 'Ready rate',
+                    value:
+                        '${(_snapshotOrThrow.manufacturingReadyRate * 100).toStringAsFixed(0)}%',
+                    subtitle:
+                        '${_snapshotOrThrow.manufacturingReadyCount} steps ready to move',
+                    icon: Icons.precision_manufacturing_outlined,
+                  ),
+                  _InfoTileCard(
+                    title: 'Blocked steps',
+                    value: '${_snapshotOrThrow.manufacturingBlockedCount}',
+                    subtitle: 'Parked for review.',
+                    icon: Icons.pause_circle_outline,
+                  ),
+                ]),
+                const SizedBox(height: 16),
+                _responsiveCards(
+                  steps.map((step) => _ManufacturingCard(step: step)).toList(),
+                ),
+              ],
             ),
     );
   }
@@ -693,6 +1836,18 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
             document.summary,
             document.filePath,
             document.tags,
+          ),
+        )
+        .toList(growable: false);
+    final attachments = snapshot.attachments
+        .where(
+          (attachment) => _matchesLocalQuery(
+            attachment.title,
+            attachment.ownerType,
+            attachment.ownerId,
+            attachment.kind,
+            attachment.filePath,
+            attachment.tags,
           ),
         )
         .toList(growable: false);
@@ -715,11 +1870,31 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           title: 'Documentation',
           subtitle:
               'Architecture notes, guides, checklists, decision logs, and release packs.',
+          trailing: FilledButton.icon(
+            onPressed: () => _editDocument(),
+            icon: const Icon(Icons.add),
+            label: const Text('Add doc'),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _responsiveCards(
-                docs.map((doc) => _DocumentCard(document: doc)).toList(),
+                docs
+                    .map(
+                      (doc) => _DocumentCard(
+                        document: doc,
+                        onEdit: () => _editDocument(doc),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              _responsiveCards(
+                attachments
+                    .map(
+                      (attachment) => _AttachmentCard(attachment: attachment),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 16),
               _responsiveCards(
@@ -742,6 +1917,21 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           title: 'Engineering settings',
           subtitle:
               'Local storage, integration hooks, and the production hardening note.',
+          trailing: Wrap(
+            spacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _importSnapshot,
+                icon: const Icon(Icons.upload_file_outlined),
+                label: const Text('Import'),
+              ),
+              FilledButton.icon(
+                onPressed: _exportSnapshot,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Export'),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -769,6 +1959,36 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                   value: settings.gaiaAssistantRoute,
                   subtitle: 'Assistant route placeholder for future wiring.',
                   icon: Icons.auto_awesome_outlined,
+                ),
+                _InfoTileCard(
+                  title: 'Access role',
+                  value: _accessPolicy.label,
+                  subtitle:
+                      'Edit: ${_accessPolicy.canEdit ? 'yes' : 'no'} · Export: ${_accessPolicy.canExport ? 'yes' : 'no'} · Import: ${_accessPolicy.canImport ? 'yes' : 'no'}',
+                  icon: Icons.admin_panel_settings_outlined,
+                ),
+              ]),
+              const SizedBox(height: 16),
+              _responsiveCards([
+                _InfoTileCard(
+                  title: 'Validation pass rate',
+                  value:
+                      '${(snapshot.validationPassRate * 100).toStringAsFixed(0)}%',
+                  subtitle:
+                      '${snapshot.validationAttentionCount} items need review.',
+                  icon: Icons.verified_outlined,
+                ),
+                _InfoTileCard(
+                  title: 'Manufacturing blockers',
+                  value: '${snapshot.manufacturingBlockedCount}',
+                  subtitle: 'Queued steps waiting for resolution.',
+                  icon: Icons.report_gmailerrorred_outlined,
+                ),
+                _InfoTileCard(
+                  title: 'Attachments',
+                  value: '${snapshot.attachmentCount}',
+                  subtitle: 'Linked assets across the module.',
+                  icon: Icons.attach_file_outlined,
                 ),
               ]),
               const SizedBox(height: 16),
@@ -1103,11 +2323,169 @@ class _SearchHitsView extends StatelessWidget {
   }
 }
 
+class _EngineeringPaletteAction {
+  const _EngineeringPaletteAction({
+    required this.id,
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.onSelected,
+  });
+
+  final String id;
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final FutureOr<void> Function() onSelected;
+}
+
+class _EngineeringCommandPaletteDialog extends StatefulWidget {
+  const _EngineeringCommandPaletteDialog({
+    required this.snapshot,
+    required this.currentSection,
+    required this.actions,
+  });
+
+  final EngineeringSnapshot snapshot;
+  final EngineeringSection currentSection;
+  final List<_EngineeringPaletteAction> actions;
+
+  @override
+  State<_EngineeringCommandPaletteDialog> createState() =>
+      _EngineeringCommandPaletteDialogState();
+}
+
+class _EngineeringCommandPaletteDialogState
+    extends State<_EngineeringCommandPaletteDialog> {
+  late final TextEditingController _queryController;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _queryController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _query.trim().toLowerCase();
+    final filtered = widget.actions
+        .where((action) {
+          if (query.isEmpty) {
+            return true;
+          }
+          return action.label.toLowerCase().contains(query) ||
+              action.subtitle.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
+
+    return AlertDialog(
+      title: const Text('Command Palette'),
+      content: SizedBox(
+        width: 640,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const Key('engineeringCommandPaletteSearchField'),
+              controller: _queryController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Search engineering actions',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 360,
+              child: filtered.isEmpty
+                  ? const EngineeringEmptyState(
+                      title: 'No actions found',
+                      subtitle:
+                          'Try a section name, create action, or integration hook.',
+                    )
+                  : ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final action = filtered[index];
+                        final isCurrentSection = action.label
+                            .toLowerCase()
+                            .contains(
+                              widget.currentSection.label.toLowerCase(),
+                            );
+                        return InkWell(
+                          onTap: () async {
+                            await action.onSelected();
+                          },
+                          borderRadius: BorderRadius.circular(18),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant
+                                    .withValues(
+                                      alpha: isCurrentSection ? 0.9 : 0.55,
+                                    ),
+                              ),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(
+                                    alpha: isCurrentSection ? 0.44 : 0.24,
+                                  ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(action.icon),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(action.label),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        action.subtitle,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.project, this.onOpen});
+  const _ProjectCard({required this.project, this.onEdit});
 
   final EngineeringProject project;
-  final VoidCallback? onOpen;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -1156,12 +2534,12 @@ class _ProjectCard extends StatelessWidget {
                 'Target: ${project.targetDate!.toLocal().toIso8601String().split('T').first}',
               ),
             ],
-            if (onOpen != null) ...[
+            if (onEdit != null) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: onOpen,
-                icon: const Icon(Icons.open_in_new_outlined),
-                label: const Text('Open'),
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
               ),
             ],
           ],
@@ -1223,9 +2601,10 @@ class _CircuitCard extends StatelessWidget {
 }
 
 class _PcbCard extends StatelessWidget {
-  const _PcbCard({required this.pcb});
+  const _PcbCard({required this.pcb, this.onEdit});
 
   final PCBRevision pcb;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -1268,6 +2647,14 @@ class _PcbCard extends StatelessWidget {
                   EngineeringStatusChip(label: tag),
               ],
             ),
+            if (onEdit != null) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
+              ),
+            ],
           ],
         ),
       ),
@@ -1276,9 +2663,10 @@ class _PcbCard extends StatelessWidget {
 }
 
 class _FirmwareCard extends StatelessWidget {
-  const _FirmwareCard({required this.buildModel});
+  const _FirmwareCard({required this.buildModel, this.onEdit});
 
   final FirmwareBuild buildModel;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -1312,6 +2700,14 @@ class _FirmwareCard extends StatelessWidget {
               'Artifact: ${buildModel.artifactPath}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (onEdit != null) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
+              ),
+            ],
           ],
         ),
       ),
@@ -1320,9 +2716,10 @@ class _FirmwareCard extends StatelessWidget {
 }
 
 class _DeviceCard extends StatelessWidget {
-  const _DeviceCard({required this.device});
+  const _DeviceCard({required this.device, this.onEdit});
 
   final DeviceNode device;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -1360,6 +2757,14 @@ class _DeviceCard extends StatelessWidget {
                   EngineeringStatusChip(label: tag),
               ],
             ),
+            if (onEdit != null) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
+              ),
+            ],
           ],
         ),
       ),
@@ -1585,9 +2990,10 @@ class _ManufacturingCard extends StatelessWidget {
 }
 
 class _DocumentCard extends StatelessWidget {
-  const _DocumentCard({required this.document});
+  const _DocumentCard({required this.document, this.onEdit});
 
   final EngineeringDocument document;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -1616,6 +3022,65 @@ class _DocumentCard extends StatelessWidget {
             Text(
               document.filePath,
               style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (onEdit != null) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AttachmentCard extends StatelessWidget {
+  const _AttachmentCard({required this.attachment});
+
+  final EngineeringAttachment attachment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    attachment.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                EngineeringStatusChip(label: attachment.status),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(attachment.kind),
+            const SizedBox(height: 4),
+            Text(
+              attachment.filePath,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 4),
+            Text(attachment.notes),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EngineeringStatusChip(label: attachment.ownerType),
+                EngineeringStatusChip(label: attachment.ownerId),
+                for (final tag in attachment.tags.take(2))
+                  EngineeringStatusChip(label: tag),
+              ],
             ),
           ],
         ),

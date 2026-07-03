@@ -343,6 +343,7 @@ class EngineeringSearchService {
       ..._validationHits(needle),
       ..._manufacturingHits(needle),
       ..._documentHits(needle),
+      ..._attachmentHits(needle),
       ..._decisionHits(needle),
     ];
 
@@ -649,6 +650,35 @@ class EngineeringSearchService {
             kind: 'Document',
             section: EngineeringSection.documentation,
             status: document.status,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  List<EngineeringSearchHit> _attachmentHits(String query) {
+    return snapshot.attachments
+        .where(
+          (attachment) => _matchesQuery(
+            query: query,
+            values: [
+              attachment.title,
+              attachment.ownerType,
+              attachment.ownerId,
+              attachment.kind,
+              attachment.filePath,
+              attachment.status,
+              attachment.notes,
+              ...attachment.tags,
+            ],
+          ),
+        )
+        .map(
+          (attachment) => EngineeringSearchHit(
+            title: attachment.title,
+            subtitle: attachment.filePath,
+            kind: attachment.kind,
+            section: EngineeringSection.documentation,
+            status: attachment.status,
           ),
         )
         .toList(growable: false);

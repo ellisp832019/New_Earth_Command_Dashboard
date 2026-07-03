@@ -790,6 +790,62 @@ class EngineeringDocument {
   }
 }
 
+class EngineeringAttachment {
+  const EngineeringAttachment({
+    required this.id,
+    required this.ownerType,
+    required this.ownerId,
+    required this.title,
+    required this.kind,
+    required this.filePath,
+    required this.status,
+    required this.updatedAt,
+    required this.notes,
+    required this.tags,
+  });
+
+  final String id;
+  final String ownerType;
+  final String ownerId;
+  final String title;
+  final String kind;
+  final String filePath;
+  final String status;
+  final DateTime updatedAt;
+  final String notes;
+  final List<String> tags;
+
+  factory EngineeringAttachment.fromJson(Map<String, dynamic> json) {
+    return EngineeringAttachment(
+      id: json['id']?.toString() ?? '',
+      ownerType: json['ownerType']?.toString() ?? '',
+      ownerId: json['ownerId']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      kind: json['kind']?.toString() ?? 'Attachment',
+      filePath: json['filePath']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'Linked',
+      updatedAt: _dateTime(json['updatedAt']),
+      notes: json['notes']?.toString() ?? '',
+      tags: _stringList(json['tags']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'ownerType': ownerType,
+      'ownerId': ownerId,
+      'title': title,
+      'kind': kind,
+      'filePath': filePath,
+      'status': status,
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
+      'notes': notes,
+      'tags': tags,
+    };
+  }
+}
+
 class EngineeringDecision {
   const EngineeringDecision({
     required this.id,
@@ -861,6 +917,7 @@ class EngineeringSnapshot {
     required this.validationResults,
     required this.manufacturingSteps,
     required this.documents,
+    required this.attachments,
     required this.decisions,
   });
 
@@ -876,6 +933,7 @@ class EngineeringSnapshot {
   final List<ValidationResult> validationResults;
   final List<ManufacturingStep> manufacturingSteps;
   final List<EngineeringDocument> documents;
+  final List<EngineeringAttachment> attachments;
   final List<EngineeringDecision> decisions;
 
   EngineeringSnapshot copyWith({
@@ -891,6 +949,7 @@ class EngineeringSnapshot {
     List<ValidationResult>? validationResults,
     List<ManufacturingStep>? manufacturingSteps,
     List<EngineeringDocument>? documents,
+    List<EngineeringAttachment>? attachments,
     List<EngineeringDecision>? decisions,
   }) {
     return EngineeringSnapshot(
@@ -906,6 +965,7 @@ class EngineeringSnapshot {
       validationResults: validationResults ?? this.validationResults,
       manufacturingSteps: manufacturingSteps ?? this.manufacturingSteps,
       documents: documents ?? this.documents,
+      attachments: attachments ?? this.attachments,
       decisions: decisions ?? this.decisions,
     );
   }
@@ -927,8 +987,76 @@ class EngineeringSnapshot {
   int get validationPassCount => validationResults
       .where((result) => result.status.toLowerCase().contains('pass'))
       .length;
+  double get validationPassRate {
+    if (validationResults.isEmpty) {
+      return 0;
+    }
+    return validationPassCount / validationResults.length;
+  }
+
+  int get validationAttentionCount => validationResults
+      .where(
+        (result) =>
+            result.status.toLowerCase().contains('attention') ||
+            result.status.toLowerCase().contains('blocked'),
+      )
+      .length;
+  int get validationDefectCount => validationResults
+      .where(
+        (result) =>
+            result.status.toLowerCase().contains('fail') ||
+            result.status.toLowerCase().contains('defect') ||
+            result.status.toLowerCase().contains('issue') ||
+            result.verdict.toLowerCase().contains('fail') ||
+            result.verdict.toLowerCase().contains('defect') ||
+            result.verdict.toLowerCase().contains('issue'),
+      )
+      .length;
+  int get validationCoveredProcedureCount => testProcedures
+      .where(
+        (procedure) => validationResults.any(
+          (result) => result.testProcedureId == procedure.id,
+        ),
+      )
+      .length;
+  double get validationCoverageRate {
+    if (testProcedures.isEmpty) {
+      return 0;
+    }
+    return validationCoveredProcedureCount / testProcedures.length;
+  }
+
+  double get validationAttentionRate {
+    if (validationResults.isEmpty) {
+      return 0;
+    }
+    return validationAttentionCount / validationResults.length;
+  }
+
   int get manufacturingReadyCount =>
       manufacturingSteps.where((step) => _isReadyStatus(step.status)).length;
+  int get manufacturingBlockedCount =>
+      manufacturingSteps.where((step) => _isBlockedStatus(step.status)).length;
+  double get manufacturingReadyRate {
+    if (manufacturingSteps.isEmpty) {
+      return 0;
+    }
+    return manufacturingReadyCount / manufacturingSteps.length;
+  }
+
+  int get attachmentCount => attachments.length;
+  int get schematicAttachmentCount => attachments
+      .where((item) => item.kind.toLowerCase().contains('schematic'))
+      .length;
+  int get boardFileAttachmentCount => attachments
+      .where((item) => item.kind.toLowerCase().contains('board'))
+      .length;
+  int get firmwareAttachmentCount => attachments
+      .where((item) => item.kind.toLowerCase().contains('firmware'))
+      .length;
+  int get evidenceAttachmentCount => attachments
+      .where((item) => item.kind.toLowerCase().contains('evidence'))
+      .length;
 
   double get averageProjectProgress {
     if (projects.isEmpty) {
