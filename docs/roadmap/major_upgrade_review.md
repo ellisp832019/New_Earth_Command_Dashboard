@@ -40,6 +40,7 @@ the project is now in this state:
 - Material 3 structure is live
 - local persistence foundation exists
 - seeded data and module routing are working
+- the Omega Knowledge Engine now has explicit output previews, local settings, and discovery paths from More and Module Hub
 
 ### Daily loop
 
@@ -179,6 +180,7 @@ Focus:
 - Repo research and exported memory
 
 This lane is already useful, but it should keep growing in a safe, read-only, template-first way.
+The current Knowledge Engine work is still in this lane, and the next upgrades should stay read-only unless a backup-first write workflow is explicitly approved.
 
 ### Lane 5. AI and integration layering
 

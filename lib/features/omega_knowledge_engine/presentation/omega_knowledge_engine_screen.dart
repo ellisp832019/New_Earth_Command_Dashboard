@@ -1518,6 +1518,54 @@ class _SettingsTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         _PanelCard(
+          title: 'Current config snapshot',
+          subtitle: 'A quick read on what the engine will use next time you scan.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _StatusChip(
+                    label: snapshot.settings.safetyMode.replaceAll('_', ' '),
+                    tone: _ChipTone.neutral,
+                  ),
+                  _StatusChip(
+                    label: '${repoProfiles.length} repo target(s)',
+                    tone: _ChipTone.info,
+                  ),
+                  _StatusChip(
+                    label: 'Read only',
+                    tone: _ChipTone.success,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _KeyValueRow(
+                label: 'Dashboard repo root',
+                value: snapshot.settings.repoRootPath,
+              ),
+              const SizedBox(height: 8),
+              _KeyValueRow(
+                label: 'Output directory',
+                value: snapshot.settings.outputDir,
+              ),
+              const SizedBox(height: 8),
+              _KeyValueRow(
+                label: 'Obsidian export',
+                value: snapshot.settings.obsidianExportDir,
+              ),
+              const SizedBox(height: 8),
+              _KeyValueRow(
+                label: 'Omega OS root',
+                value: snapshot.settings.omegaOsRootWindows,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _PanelCard(
           title: 'Safety posture',
           subtitle: 'This screen only edits local path settings.',
           child: Column(

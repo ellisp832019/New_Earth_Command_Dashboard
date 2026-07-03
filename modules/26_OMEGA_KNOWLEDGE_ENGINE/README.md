@@ -20,7 +20,7 @@ It is designed to be safe by default:
 - Open the Dashboard
 - Go to `More`
 - Choose `Omega Knowledge Engine`
-- Or open the `Module Hub` and use the Omega card or module route
+- Or open the `Module Hub` and use the featured Omega card or module route
 
 ## What the screen shows
 
@@ -32,6 +32,7 @@ It is designed to be safe by default:
 - Project memory
 - Obsidian export staging
 - Local settings and source paths
+- Module discovery from `More` and the `Module Hub`
 
 ## Core Capabilities
 
