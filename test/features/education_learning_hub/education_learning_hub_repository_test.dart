@@ -20,6 +20,10 @@ void main() {
       snapshot.contentSources.where((source) => source.category.isNotEmpty),
       isNotEmpty,
     );
+    expect(
+      snapshot.progressForProject('project_microgrow_sensor_calibration'),
+      isNotEmpty,
+    );
 
     final searchHits = SearchService(snapshot).search('MicroGrow');
     expect(searchHits, isNotEmpty);

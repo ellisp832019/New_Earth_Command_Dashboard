@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -124,6 +124,42 @@ class _EducationLearningHubScreenState
     );
   }
 
+  Future<void> _saveProjectProgress({
+    required StudentProfile student,
+    required PracticalProject project,
+  }) async {
+    final snapshot = _snapshotOrThrow;
+    final record = await _repository.saveProgressRecord(
+      studentId: student.id,
+      entityId: project.id,
+      entityType: 'project',
+      progressPercent: 75,
+      status: 'in progress',
+      note: 'Logged a project evidence checkpoint for ${project.title}.',
+    );
+    if (!mounted) {
+      return;
+    }
+
+    final updatedRecords = snapshot.progressRecords.toList(growable: true);
+    final index = updatedRecords.indexWhere(
+      (value) => value.studentId == record.studentId && value.entityId == record.entityId,
+    );
+    if (index >= 0) {
+      updatedRecords[index] = record;
+    } else {
+      updatedRecords.add(record);
+    }
+
+    setState(() {
+      _snapshot = snapshot.copyWith(progressRecords: updatedRecords);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${project.title} evidence saved locally for ${student.name}.')),
+    );
+  }
+
   void _openLessonDetails(Lesson lesson) {
     final snapshot = _snapshotOrThrow;
     final pathway = snapshot.pathways.firstWhere(
@@ -146,6 +182,32 @@ class _EducationLearningHubScreenState
             orElse: () => _snapshotOrThrow.students.first,
           ),
           lesson: lesson,
+        ),
+      ),
+    );
+  }
+
+  void _openProjectWorkspace(PracticalProject project) {
+    final snapshot = _snapshotOrThrow;
+    final selectedStudent = snapshot.students.firstWhere(
+      (student) => student.id == _selectedStudentId,
+      orElse: () => snapshot.students.first,
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => _ProjectWorkspaceSheet(
+        project: project,
+        selectedStudent: selectedStudent,
+        roleView: _roleView,
+        resources: snapshot.resources
+            .where((resource) => project.resourceIds.contains(resource.id))
+            .toList(growable: false),
+        evidenceRecords: snapshot.progressForProject(project.id),
+        onSaveCheckpoint: () => _saveProjectProgress(
+          student: selectedStudent,
+          project: project,
         ),
       ),
     );
@@ -462,6 +524,11 @@ class _EducationLearningHubScreenState
                   _ProjectsTab(
                     snapshot: snapshot,
                     projects: _filteredProjects(snapshot),
+                    selectedStudent: currentStudent,
+                    roleView: _roleView,
+                    onOpenProjectWorkspace: _openProjectWorkspace,
+                    onSaveProjectProgress: (project) =>
+                        _saveProjectProgress(student: currentStudent, project: project),
                   ),
                   _ProgressTab(
                     snapshot: snapshot,
@@ -1106,13 +1173,29 @@ class _LessonLibraryTab extends StatelessWidget {
 }
 
 class _ProjectsTab extends StatelessWidget {
-  const _ProjectsTab({required this.snapshot, required this.projects});
+  const _ProjectsTab({
+    required this.snapshot,
+    required this.projects,
+    required this.selectedStudent,
+    required this.roleView,
+    required this.onOpenProjectWorkspace,
+    required this.onSaveProjectProgress,
+  });
 
   final EducationHubSnapshot snapshot;
   final List<PracticalProject> projects;
+  final StudentProfile selectedStudent;
+  final EducationRoleView roleView;
+  final ValueChanged<PracticalProject> onOpenProjectWorkspace;
+  final ValueChanged<PracticalProject> onSaveProjectProgress;
 
   @override
   Widget build(BuildContext context) {
+    final studentProgress = snapshot.progressForStudent(selectedStudent.id);
+    final projectProgress = <String, ProgressRecord>{
+      for (final record in studentProgress)
+        if (record.entityType == 'project') record.entityId: record,
+    };
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1120,8 +1203,49 @@ class _ProjectsTab extends StatelessWidget {
           title: 'Practical Projects',
           subtitle: 'Small project workspaces with materials, steps, and evidence.',
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final project in projects) _ProjectCard(project: project),
+              _InfoTile(
+                label: 'Active learner',
+                value: selectedStudent.name,
+                detail: '${selectedStudent.role} - ${selectedStudent.stage}',
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Role view',
+                value: roleView.label,
+                detail: roleView.summary,
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Project evidence',
+                value: '${projectProgress.length} logged checkpoint(s)',
+                detail: 'Project progress records stay local and visible.',
+              ),
+              const SizedBox(height: 12),
+              if (projects.isEmpty)
+                const _EmptyInline(
+                  title: 'No projects match the current view',
+                  subtitle: 'Try adjusting the search or audience filters.',
+                )
+              else
+                Column(
+                  children: [
+                    for (final project in projects)
+                      Column(
+                        children: [
+                          _ProjectCard(project: project),
+                          const SizedBox(height: 8),
+                          _ProjectWorkspaceSummary(
+                            project: project,
+                            evidenceRecord: projectProgress[project.id],
+                            onOpenWorkspace: () => onOpenProjectWorkspace(project),
+                            onSaveCheckpoint: () => onSaveProjectProgress(project),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -1160,7 +1284,7 @@ class _ProgressTab extends StatelessWidget {
               _InfoTile(
                 label: 'Active learner',
                 value: selectedStudent.name,
-                detail: '${selectedStudent.role} • ${selectedStudent.stage}',
+                detail: '${selectedStudent.role} - ${selectedStudent.stage}',
               ),
               const SizedBox(height: 12),
               _InfoTile(
@@ -1992,7 +2116,72 @@ class _ProjectCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Materials: ${project.materials.join(', ')}'),
             const SizedBox(height: 4),
-            Text('Steps: ${project.steps.join(' • ')}'),
+            Text('Steps: ${project.steps.join(' - ')}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectWorkspaceSummary extends StatelessWidget {
+  const _ProjectWorkspaceSummary({
+    required this.project,
+    required this.evidenceRecord,
+    required this.onOpenWorkspace,
+    required this.onSaveCheckpoint,
+  });
+
+  final PracticalProject project;
+  final ProgressRecord? evidenceRecord;
+  final VoidCallback onOpenWorkspace;
+  final VoidCallback onSaveCheckpoint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Evidence workspace',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              evidenceRecord == null
+                  ? 'No checkpoint logged for ${project.title} yet.'
+                  : 'Latest checkpoint: ${evidenceRecord!.progressPercent}% complete and ${evidenceRecord!.status}.',
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MiniBadge(label: '${project.resourceIds.length} linked source(s)'),
+                _MiniBadge(label: project.domain),
+                if (evidenceRecord != null) _MiniBadge(label: evidenceRecord!.status),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: onOpenWorkspace,
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: const Text('Open workspace'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onSaveCheckpoint,
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Save checkpoint'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -2017,7 +2206,7 @@ class _ProgressRecordCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${record.entityType.toUpperCase()} • ${record.entityId}',
+                    '${record.entityType.toUpperCase()} - ${record.entityId}',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
@@ -2119,7 +2308,7 @@ class _LessonDetailSheet extends StatelessWidget {
                     for (final step in lesson.steps)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
-                        child: Text('• $step'),
+                        child: Text('- $step'),
                       ),
                   ],
                 ),
@@ -2157,6 +2346,128 @@ class _LessonDetailSheet extends StatelessWidget {
                     onPressed: onSaveProgress,
                     icon: const Icon(Icons.check_circle_outline),
                     label: const Text('Mark complete'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Close'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectWorkspaceSheet extends StatelessWidget {
+  const _ProjectWorkspaceSheet({
+    required this.project,
+    required this.selectedStudent,
+    required this.roleView,
+    required this.resources,
+    required this.evidenceRecords,
+    required this.onSaveCheckpoint,
+  });
+
+  final PracticalProject project;
+  final StudentProfile selectedStudent;
+  final EducationRoleView roleView;
+  final List<ResourceItem> resources;
+  final List<ProgressRecord> evidenceRecords;
+  final VoidCallback onSaveCheckpoint;
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height * 0.9;
+    return SizedBox(
+      height: height,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(project.title, style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 4),
+              Text(project.summary),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(label: project.domain),
+                  _MiniBadge(label: roleView.label),
+                  _MiniBadge(label: selectedStudent.name),
+                  _MiniBadge(label: '${project.estimatedHours} h'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Project workspace',
+                value: 'Evidence-led and local',
+                detail: 'Use this panel to keep the project notes, checkpoints, and links calm.',
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Project steps',
+                subtitle: 'Work through one small action at a time.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final step in project.steps)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text('- $step'),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Linked resources',
+                subtitle: 'Source-linked notes and templates for this project.',
+                child: resources.isEmpty
+                    ? const _EmptyInline(
+                        title: 'No linked resources yet',
+                        subtitle: 'Add project resources as the module grows.',
+                      )
+                    : Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          for (final resource in resources)
+                            _MiniBadge(label: resource.title),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Evidence log',
+                subtitle: 'Local checkpoints that show progress on the project.',
+                child: evidenceRecords.isEmpty
+                    ? const _EmptyInline(
+                        title: 'No checkpoint history yet',
+                        subtitle: 'Save a checkpoint to create the first local evidence entry.',
+                      )
+                    : Column(
+                        children: [
+                          for (final record in evidenceRecords)
+                            _ProgressRecordCard(record: record),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.icon(
+                    onPressed: onSaveCheckpoint,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Save checkpoint'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
@@ -2301,7 +2612,7 @@ class _AssessmentCard extends StatelessWidget {
             Text(assessment.summary),
             const SizedBox(height: 4),
             Text(
-              'Score: ${assessment.score}/${assessment.maxScore} • ${assessment.kind}',
+              'Score: ${assessment.score}/${assessment.maxScore} - ${assessment.kind}',
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -2573,10 +2884,11 @@ class _TodoLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('•  '),
+          const Text('-  '),
           Expanded(child: Text(text)),
         ],
       ),
     );
   }
 }
+

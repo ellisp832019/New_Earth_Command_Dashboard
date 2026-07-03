@@ -798,6 +798,14 @@ class EducationHubSnapshot {
         .toList(growable: false);
   }
 
+  List<ProgressRecord> progressForProject(String projectId) {
+    return progressRecords
+        .where(
+          (record) => record.entityType == 'project' && record.entityId == projectId,
+        )
+        .toList(growable: false);
+  }
+
   List<Assessment> completedAssessmentsForStudent(String studentId) {
     return assessmentsForStudent(studentId)
         .where((assessment) => assessment.completedAt != null)

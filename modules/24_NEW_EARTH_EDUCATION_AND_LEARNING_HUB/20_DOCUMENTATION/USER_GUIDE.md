@@ -15,10 +15,11 @@
 3. Search across learners, lessons, projects, certificates, reflections, and source notes.
 4. Open the Learning Pathways tab and choose a pathway.
 5. Move to the Lesson Library and open a lesson card.
-6. Use Practical Projects to see the evidence flow.
-7. Review Student Progress for the local snapshot and badge readiness.
-8. Try the AI Tutor placeholder for a safe suggestion-only flow.
-9. Open Certificates & Badges to see the local learning passport.
+6. Use Practical Projects to open the project workspace and save a local checkpoint.
+7. Review the evidence log inside the project workspace to see project progress history.
+8. Review Student Progress for the local snapshot and badge readiness.
+9. Try the AI Tutor placeholder for a safe suggestion-only flow.
+10. Open Certificates & Badges to see the local learning passport.
 
 ## For mentors
 1. Open Mentor View.
@@ -47,5 +48,6 @@
 1. Open Settings.
 2. Review the module root and offline-first flags.
 3. Review the local search and tutor placeholder hooks.
-4. Use the Omega Knowledge Engine hook for future repository analysis.
-5. Keep content local until production hardening is added.
+4. Use the project workspace evidence log to capture learning progress.
+5. Use the Omega Knowledge Engine hook for future repository analysis.
+6. Keep content local until production hardening is added.

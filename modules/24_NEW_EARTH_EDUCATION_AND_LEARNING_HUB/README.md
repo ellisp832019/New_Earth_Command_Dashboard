@@ -44,6 +44,7 @@ Current placeholders include:
 - local search across lessons, pathways, projects, learners, certificates, and source notes
 - role-aware tutor prompts for student, mentor, parent/guardian, and admin views
 - badge and certificate readiness summaries based on local progress data
+- project workspaces with local evidence checkpoints and linked source items
 
 ## Future content areas
 - Electronics
