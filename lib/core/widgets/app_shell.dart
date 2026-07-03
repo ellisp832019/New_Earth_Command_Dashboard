@@ -26,8 +26,8 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    _desktopMessageSubscription =
-        DesktopPresenceController.instance.messages.listen(_showDesktopToast);
+    _desktopMessageSubscription = DesktopPresenceController.instance.messages
+        .listen(_showDesktopToast);
   }
 
   @override
@@ -324,6 +324,11 @@ class _Sidebar extends StatelessWidget {
                   icon: Icons.science_outlined,
                   route: RouteNames.experimentWorkspace,
                 ),
+                _SidebarLink(
+                  label: 'Engineering',
+                  icon: Icons.precision_manufacturing_outlined,
+                  route: RouteNames.omegaEngineeringStudio,
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -352,10 +357,7 @@ class _Sidebar extends StatelessWidget {
 }
 
 class _SidebarSection extends StatelessWidget {
-  const _SidebarSection({
-    required this.title,
-    required this.children,
-  });
+  const _SidebarSection({required this.title, required this.children});
 
   final String title;
   final List<Widget> children;
@@ -514,8 +516,7 @@ class _SidebarLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentPath = GoRouterState.of(context).uri.path;
-    final isActive =
-        currentPath == route || currentPath.startsWith('$route/');
+    final isActive = currentPath == route || currentPath.startsWith('$route/');
     final color = isActive
         ? AppColours.darkText
         : AppColours.darkMutedText.withValues(alpha: 0.96);
@@ -554,8 +555,9 @@ class _SidebarLink extends StatelessWidget {
                         fontSize: 11,
                         height: 1.15,
                         color: color,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
                   ),
@@ -570,10 +572,7 @@ class _SidebarLink extends StatelessWidget {
 }
 
 class _DesktopWindowBar extends ConsumerStatefulWidget {
-  const _DesktopWindowBar({
-    required this.title,
-    required this.subtitle,
-  });
+  const _DesktopWindowBar({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;

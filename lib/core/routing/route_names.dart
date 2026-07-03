@@ -180,6 +180,7 @@ abstract final class RouteNames {
   static const companyCommandCentre = '/modules/company-command-centre';
   static const educationLearningHub = '/modules/education-learning-hub';
   static const omegaKnowledgeEngine = '/modules/omega-knowledge-engine';
+  static const omegaEngineeringStudio = '/modules/omega-engineering-studio';
   static const securityLock = '/security-lock';
   static String securityLockWithResume(String route) {
     final trimmedRoute = route.trim();
@@ -216,6 +217,14 @@ abstract final class RouteNames {
 
   static String voiceHome() => voiceHomeRoute;
   static const calmUiDemo = '/dashboard/calm-ui-demo';
+
+  static String omegaEngineeringStudioSection(String section) {
+    final trimmed = section.trim();
+    if (trimmed.isEmpty) {
+      return omegaEngineeringStudio;
+    }
+    return '$omegaEngineeringStudio/$trimmed';
+  }
 
   static String launchpadCampaign(String campaignId) {
     return '/launchpad/campaigns/$campaignId';

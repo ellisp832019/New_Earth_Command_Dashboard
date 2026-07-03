@@ -39,6 +39,14 @@ class MoreScreen extends StatelessWidget {
       badge: 'Scan',
     ),
     _MoreItem(
+      title: 'Omega Engineering Studio',
+      description:
+          'Track projects, circuits, boards, firmware, devices, validation, and manufacturing readiness.',
+      icon: Icons.precision_manufacturing_outlined,
+      route: RouteNames.omegaEngineeringStudio,
+      badge: 'Build',
+    ),
+    _MoreItem(
       title: 'Company Command Centre',
       description:
           'Open company records, LinkedIn planning, and the main company workspace.',

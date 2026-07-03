@@ -71,6 +71,8 @@ import '../../features/modules/module_permissions_screen.dart';
 import '../../features/modules/module_settings_screen.dart';
 import '../../features/modules/modules_screen.dart';
 import '../../features/omega_knowledge_engine/presentation/omega_knowledge_engine_screen.dart';
+import '../../features/omega_engineering_studio/domain/engineering_models.dart';
+import '../../features/omega_engineering_studio/presentation/engineering_studio_screen.dart';
 import '../../features/users_devices_control/presentation/users_devices_control_screen.dart';
 import '../../features/users_devices_control/presentation/users_devices_pins_screen.dart';
 import '../../features/planner/presentation/planner_screen.dart';
@@ -1039,6 +1041,81 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: RouteNames.omegaKnowledgeEngine,
       builder: (context, state) => const OmegaKnowledgeEngineScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RouteNames.omegaEngineeringStudio,
+      builder: (context, state) => const EngineeringStudioScreen(
+        initialSection: EngineeringSection.dashboard,
+      ),
+      routes: [
+        GoRoute(
+          path: 'projects',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.projects,
+          ),
+        ),
+        GoRoute(
+          path: 'circuit-library',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.circuitLibrary,
+          ),
+        ),
+        GoRoute(
+          path: 'pcb-manager',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.pcbManager,
+          ),
+        ),
+        GoRoute(
+          path: 'firmware-centre',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.firmwareCentre,
+          ),
+        ),
+        GoRoute(
+          path: 'device-fleet',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.deviceFleet,
+          ),
+        ),
+        GoRoute(
+          path: 'component-inventory',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.componentInventory,
+          ),
+        ),
+        GoRoute(
+          path: 'experiment-lab',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.experimentLab,
+          ),
+        ),
+        GoRoute(
+          path: 'test-validation',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.testValidation,
+          ),
+        ),
+        GoRoute(
+          path: 'manufacturing',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.manufacturing,
+          ),
+        ),
+        GoRoute(
+          path: 'documentation',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.documentation,
+          ),
+        ),
+        GoRoute(
+          path: 'settings',
+          builder: (context, state) => const EngineeringStudioScreen(
+            initialSection: EngineeringSection.settings,
+          ),
+        ),
+      ],
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

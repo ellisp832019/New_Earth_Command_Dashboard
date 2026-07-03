@@ -1,0 +1,44 @@
+{
+  "id": "01_OMEGA_ENGINEERING_STUDIO_MODULE",
+  "name": "Omega Engineering Studio",
+  "version": "0.1.0",
+  "status": "installed",
+  "category": "Voice & Hardware",
+  "description": "Local-first engineering workspace for projects, circuits, PCB revisions, firmware, devices, validation, manufacturing, and documentation.",
+  "enabled": true,
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "iconKey": "precision_manufacturing_outlined",
+  "routes": [
+    "/modules/omega-engineering-studio",
+    "/modules/omega-engineering-studio/projects",
+    "/modules/omega-engineering-studio/circuit-library",
+    "/modules/omega-engineering-studio/pcb-manager",
+    "/modules/omega-engineering-studio/firmware-centre",
+    "/modules/omega-engineering-studio/device-fleet",
+    "/modules/omega-engineering-studio/component-inventory",
+    "/modules/omega-engineering-studio/experiment-lab",
+    "/modules/omega-engineering-studio/test-validation",
+    "/modules/omega-engineering-studio/manufacturing",
+    "/modules/omega-engineering-studio/documentation",
+    "/modules/omega-engineering-studio/settings"
+  ],
+  "permissions": [
+    "file_read",
+    "file_write",
+    "omega_os_access"
+  ],
+  "installPath": "modules/01_OMEGA_ENGINEERING_STUDIO_MODULE",
+  "omegaOsPath": "OMEGA_OS/MODULES/OMEGA_ENGINEERING_STUDIO",
+  "storagePath": "modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/data",
+  "tags": [
+    "engineering",
+    "microgrow",
+    "biocalm",
+    "esp32",
+    "pcb",
+    "firmware",
+    "manufacturing"
+  ],
+  "notes": "Mock-first shell with local storage hooks and integration-ready routes for Omega Knowledge Engine and GAIA."
+}
