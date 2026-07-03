@@ -704,9 +704,7 @@ void main() {
     );
     expect(find.text('Inbox first'), findsOneWidget);
     expect(
-      find.text(
-        'Capture is a relief valve, not the main work surface.',
-      ),
+      find.text('Capture is a relief valve, not the main work surface.'),
       findsOneWidget,
     );
     expect(
@@ -719,61 +717,80 @@ void main() {
     );
   });
 
-  testWidgets('dashboard quick capture handoff actions open inbox tasks and planner', (
+  testWidgets('dashboard focus card actions stay readable in the wide layout', (
     WidgetTester tester,
   ) async {
+    tester.view.physicalSize = const Size(1440, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(buildTestApp());
     await pumpUntilIdle(tester);
 
-    final openInboxButton = find.byKey(
-      const Key('dashboardQuickCaptureOpenInboxButton'),
-    );
-    await tester.scrollUntilVisible(
-      openInboxButton,
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.ensureVisible(openInboxButton);
-    await tester.pumpAndSettle();
-    await tester.tap(openInboxButton);
-    await pumpUntilIdle(tester);
-    expect(find.text('Inbox'), findsWidgets);
-
-    appRouter.go(RouteNames.dashboard);
-    await pumpUntilIdle(tester);
-
-    final openTasksButton = find.byKey(
-      const Key('dashboardQuickCaptureOpenTasksButton'),
-    );
-    await tester.scrollUntilVisible(
-      openTasksButton,
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.ensureVisible(openTasksButton);
-    await tester.pumpAndSettle();
-    await tester.tap(openTasksButton);
-    await pumpUntilIdle(tester);
-    expect(find.text('Tasks'), findsWidgets);
-
-    appRouter.go(RouteNames.dashboard);
-    await pumpUntilIdle(tester);
-
-    final openPlannerButton = find.byKey(
-      const Key('dashboardQuickCaptureOpenPlannerButton'),
-    );
-    await tester.scrollUntilVisible(
-      openPlannerButton,
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.ensureVisible(openPlannerButton);
-    await tester.pumpAndSettle();
-    final plannerButtonWidget = tester.widget<TextButton>(openPlannerButton);
-    plannerButtonWidget.onPressed!.call();
-    await pumpUntilIdle(tester);
-    expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
+    expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const Key('dashboardFocusEditButton')), findsOneWidget);
+    expect(find.byKey(const Key('dashboardFocusClearButton')), findsOneWidget);
+    expect(find.byKey(const Key('dashboardFocusBridgeCard')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'dashboard quick capture handoff actions open inbox tasks and planner',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestApp());
+      await pumpUntilIdle(tester);
+
+      final openInboxButton = find.byKey(
+        const Key('dashboardQuickCaptureOpenInboxButton'),
+      );
+      await tester.scrollUntilVisible(
+        openInboxButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(openInboxButton);
+      await tester.pumpAndSettle();
+      await tester.tap(openInboxButton);
+      await pumpUntilIdle(tester);
+      expect(find.text('Inbox'), findsWidgets);
+
+      appRouter.go(RouteNames.dashboard);
+      await pumpUntilIdle(tester);
+
+      final openTasksButton = find.byKey(
+        const Key('dashboardQuickCaptureOpenTasksButton'),
+      );
+      await tester.scrollUntilVisible(
+        openTasksButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(openTasksButton);
+      await tester.pumpAndSettle();
+      await tester.tap(openTasksButton);
+      await pumpUntilIdle(tester);
+      expect(find.text('Tasks'), findsWidgets);
+
+      appRouter.go(RouteNames.dashboard);
+      await pumpUntilIdle(tester);
+
+      final openPlannerButton = find.byKey(
+        const Key('dashboardQuickCaptureOpenPlannerButton'),
+      );
+      await tester.scrollUntilVisible(
+        openPlannerButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(openPlannerButton);
+      await tester.pumpAndSettle();
+      final plannerButtonWidget = tester.widget<TextButton>(openPlannerButton);
+      plannerButtonWidget.onPressed!.call();
+      await pumpUntilIdle(tester);
+      expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
+    },
+  );
 
   testWidgets('dashboard quick capture shows last saved inbox handoff', (
     WidgetTester tester,
@@ -855,44 +872,45 @@ void main() {
     expect(find.text('Planner'), findsWidgets);
   });
 
-  testWidgets('dashboard surfaces carry-forward and tomorrow preview near Top 3', (
-    WidgetTester tester,
-  ) async {
-    final database = AppDatabase(NativeDatabase.memory());
-    addTearDown(database.close);
-    await DailyPlanService(database).ensureTodayPlan();
+  testWidgets(
+    'dashboard surfaces carry-forward and tomorrow preview near Top 3',
+    (WidgetTester tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      await DailyPlanService(database).ensureTodayPlan();
 
-    await DailyPlanRepository(database).updateCarryForwardNotes(
-      'Resume the calm documentation pass tomorrow morning.',
-    );
-    await DailyPlanRepository(
-      database,
-    ).updateTomorrowFocus('Open the planner and close the next useful loop.');
+      await DailyPlanRepository(database).updateCarryForwardNotes(
+        'Resume the calm documentation pass tomorrow morning.',
+      );
+      await DailyPlanRepository(
+        database,
+      ).updateTomorrowFocus('Open the planner and close the next useful loop.');
 
-    await tester.pumpWidget(
-      buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
-    );
-    await pumpUntilIdle(tester);
+      await tester.pumpWidget(
+        buildDatabaseBackedTestApp(database, useLiveDashboardSnapshot: true),
+      );
+      await pumpUntilIdle(tester);
 
-    appRouter.go(RouteNames.dashboard);
-    await pumpUntilIdle(tester);
+      appRouter.go(RouteNames.dashboard);
+      await pumpUntilIdle(tester);
 
-    expect(
-      find.byKey(const Key('dashboardTopTaskHandoffPreview')),
-      findsOneWidget,
-    );
-    expect(find.text('Later is already held safely'), findsOneWidget);
-    expect(find.text('Tomorrow focus preview'), findsOneWidget);
-    expect(find.text('Carry-forward preview'), findsOneWidget);
-    expect(
-      find.text('Open the planner and close the next useful loop.'),
-      findsAtLeastNWidgets(1),
-    );
-    expect(
-      find.text('Resume the calm documentation pass tomorrow morning.'),
-      findsAtLeastNWidgets(1),
-    );
-  });
+      expect(
+        find.byKey(const Key('dashboardTopTaskHandoffPreview')),
+        findsOneWidget,
+      );
+      expect(find.text('Later is already held safely'), findsOneWidget);
+      expect(find.text('Tomorrow focus preview'), findsOneWidget);
+      expect(find.text('Carry-forward preview'), findsOneWidget);
+      expect(
+        find.text('Open the planner and close the next useful loop.'),
+        findsAtLeastNWidgets(1),
+      );
+      expect(
+        find.text('Resume the calm documentation pass tomorrow morning.'),
+        findsAtLeastNWidgets(1),
+      );
+    },
+  );
 
   testWidgets(
     'supporting screens show a back button when opened from the app',
