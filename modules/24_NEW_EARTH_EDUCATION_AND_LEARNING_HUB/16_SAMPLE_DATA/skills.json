@@ -1,0 +1,7 @@
+[
+  {"id":"safe_low_voltage","name":"Safe Low-Voltage Working","category":"Safety"},
+  {"id":"sensor_observation","name":"Sensor Observation","category":"Engineering"},
+  {"id":"reflection","name":"Reflective Learning","category":"Personal Development"},
+  {"id":"systems_thinking","name":"Systems Thinking","category":"Design"},
+  {"id":"responsible_ai","name":"Responsible AI Use","category":"AI"}
+]

@@ -1,73 +1,55 @@
-# TASK - Users & Devices Failed Unlock and Lockout Confidence
+# TASK - 24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB
 
 ## Status
 
 Ready to start.
 
-The route protection sweep is complete.
-The next useful slice is to make repeated bad PIN attempts and lockout cooldowns read more clearly in the Users & Devices flow.
-
 ## Goal
 
-Make the failed-unlock and lockout flow easier to understand so operators can see:
-
-- when a wrong PIN is just a normal mismatch
-- when a cooldown is active
-- when a lockout has just been triggered
-- what the next safe action is
+Build the Education & Learning Hub as a calm, local-first Omega-standard module with mock data, a feature-first architecture, and a complete UI shell for the core learning workspaces.
 
 ## Source of Truth
 
 Read these files first:
 
 - `docs/fsd/00_master_index.md`
-- `docs/fsd/13_upgrade_execution_plan.md`
-- `docs/roadmap/users_devices_upgrade_roadmap.md`
-- `modules/01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md`
-
-Pay special attention to:
-
-- which slices are complete
-- which slice comes next in the active stream
-- how the review docs describe the current maturity level
+- `docs/fsd/04_screen_specification.md`
+- `modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB/README.md`
+- `modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB/02_UI_UX/SCREEN_LIST.md`
+- `modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB/15_CODEX/CODEX_INCREMENTAL_BUILD_STEPS.md`
+- `modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB/19_DEPLOYMENT/ADD_TO_DASHBOARD.md`
+- `modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB/20_DOCUMENTATION/USER_GUIDE.md`
 
 ## Requirements
 
-1. Keep the wording calm, concise, and practical.
-2. Keep the slice small, reviewable, and testable.
-3. Make the lockout state easy to distinguish from a plain failed PIN attempt.
-4. Keep the audit and recovery guidance readable.
-5. Verify analyzer, tests, and Windows build honestly.
+1. Keep the build local-first and offline-first.
+2. Use mock data first.
+3. Preserve the calm New Earth visual language.
+4. Create clear placeholder flows for AI tutor and external integrations.
+5. Keep the feature architecture clean and reusable.
+6. Add route registration, module manifest, navigation entry, tests, and docs.
+7. Verify analyzer and Windows build honestly.
 
-## Slice Scope
+## Current Slice
 
-This slice should focus on the most useful minimum:
+This slice should complete the first useful module shell:
 
-1. make the lockout and cooldown wording clearer in the PIN registry service
-2. keep the PIN registry screen copy aligned with the real flow
-3. update the focused lockout tests to match the clearer behavior
+1. module manifest and route registration
+2. domain models, repository, and services
+3. Education Dashboard and the core tabs
+4. mock data loading and placeholder integration hooks
+5. basic tests and documentation updates
 
 ## Out of Scope
 
-Do not add these in this slice unless they are already trivial while updating the docs:
-
-- new security features
-- broad roadmap rewriting
-- visual redesign
-
-## Expected Result
-
-After this slice:
-
-1. failed unlock and lockout states are easier to distinguish
-2. the next safe admin step is obvious from the screen copy
-3. the focused tests cover the clearer behavior
+Do not add cloud sync, authentication, or live integrations yet.
 
 ## Definition of Done
 
-This slice is only done when:
+This task is done when:
 
-1. the lockout copy reads cleanly
-2. the focused tests pass
-3. `flutter analyze` passes
-4. `flutter build windows` passes
+1. the module opens from the dashboard or module hub
+2. the core learning tabs render with mock data
+3. the search, filters, and progress placeholders work locally
+4. `flutter analyze` passes
+5. `flutter build windows` passes
