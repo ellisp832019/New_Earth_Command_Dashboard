@@ -589,6 +589,50 @@ class ResourceItem {
   }
 }
 
+class ContentSourceEntry {
+  const ContentSourceEntry({
+    required this.id,
+    required this.title,
+    required this.category,
+    required this.kind,
+    required this.path,
+    required this.description,
+    required this.exists,
+  });
+
+  final String id;
+  final String title;
+  final String category;
+  final String kind;
+  final String path;
+  final String description;
+  final bool exists;
+
+  factory ContentSourceEntry.fromJson(Map<String, dynamic> json) {
+    return ContentSourceEntry(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      category: json['category']?.toString() ?? '',
+      kind: json['kind']?.toString() ?? '',
+      path: json['path']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      exists: json['exists'] == true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'category': category,
+      'kind': kind,
+      'path': path,
+      'description': description,
+      'exists': exists,
+    };
+  }
+}
+
 class EducationHubSettings {
   const EducationHubSettings({
     required this.moduleRootPath,
@@ -643,6 +687,7 @@ class EducationHubSnapshot {
     required this.mentorNotes,
     required this.certificates,
     required this.resources,
+    required this.contentSources,
     required this.skillLibrary,
   });
 
@@ -657,6 +702,7 @@ class EducationHubSnapshot {
   final List<MentorNote> mentorNotes;
   final List<Certificate> certificates;
   final List<ResourceItem> resources;
+  final List<ContentSourceEntry> contentSources;
   final List<String> skillLibrary;
 
   EducationHubSnapshot copyWith({
@@ -671,6 +717,7 @@ class EducationHubSnapshot {
     List<MentorNote>? mentorNotes,
     List<Certificate>? certificates,
     List<ResourceItem>? resources,
+    List<ContentSourceEntry>? contentSources,
     List<String>? skillLibrary,
   }) {
     return EducationHubSnapshot(
@@ -685,6 +732,7 @@ class EducationHubSnapshot {
       mentorNotes: mentorNotes ?? this.mentorNotes,
       certificates: certificates ?? this.certificates,
       resources: resources ?? this.resources,
+      contentSources: contentSources ?? this.contentSources,
       skillLibrary: skillLibrary ?? this.skillLibrary,
     );
   }

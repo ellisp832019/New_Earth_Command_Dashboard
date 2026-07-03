@@ -13,6 +13,11 @@ void main() {
     expect(snapshot.projectCount, greaterThanOrEqualTo(3));
     expect(snapshot.learnerCount, greaterThanOrEqualTo(2));
     expect(snapshot.skillLibrary, isNotEmpty);
+    expect(snapshot.contentSources, isNotEmpty);
+    expect(
+      snapshot.contentSources.where((source) => source.category.isNotEmpty),
+      isNotEmpty,
+    );
 
     final searchHits = SearchService(snapshot).search('MicroGrow');
     expect(searchHits, isNotEmpty);

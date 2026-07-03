@@ -316,6 +316,7 @@ class _EducationLearningHubScreenState
                     reflectionService: reflectionService,
                     certificateService: certificateService,
                     tutorService: tutorService,
+                    contentSources: snapshot.contentSources,
                     onOpenPathways: () => _tabController.animateTo(1),
                     onOpenLessons: () => _tabController.animateTo(2),
                     onOpenProjects: () => _tabController.animateTo(3),
@@ -398,12 +399,13 @@ class _EducationLearningHubScreenState
                       _audienceFilter,
                     ),
                   ),
-                  _SettingsTab(
-                    snapshot: snapshot,
-                    onOpenKnowledgeEngine: () =>
-                        context.push(RouteNames.omegaKnowledgeEngine),
-                    onOpenGaiaPlaceholder: () =>
-                        context.push(RouteNames.voiceAssistant),
+                _SettingsTab(
+                  snapshot: snapshot,
+                  contentSources: snapshot.contentSources,
+                  onOpenKnowledgeEngine: () =>
+                      context.push(RouteNames.omegaKnowledgeEngine),
+                  onOpenGaiaPlaceholder: () =>
+                      context.push(RouteNames.voiceAssistant),
                     onOpenMore: () => context.go(RouteNames.more),
                     onExportRoute: () => _copyText(
                       snapshot.settings.gaiaAssistantRoute,
@@ -567,6 +569,7 @@ class _DashboardTab extends StatelessWidget {
     required this.reflectionService,
     required this.certificateService,
     required this.tutorService,
+    required this.contentSources,
     required this.onOpenPathways,
     required this.onOpenLessons,
     required this.onOpenProjects,
@@ -582,6 +585,7 @@ class _DashboardTab extends StatelessWidget {
   final ReflectionService reflectionService;
   final CertificateService certificateService;
   final TutorService tutorService;
+  final List<ContentSourceEntry> contentSources;
   final VoidCallback onOpenPathways;
   final VoidCallback onOpenLessons;
   final VoidCallback onOpenProjects;
@@ -710,6 +714,46 @@ class _DashboardTab extends StatelessWidget {
                         _CertificateChip(certificate: certificate),
                     ],
                   ),
+        ),
+        const SizedBox(height: 12),
+        _Panel(
+          title: 'Content pipeline',
+          subtitle: 'Source-linked module docs and sample packs ready for import.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(label: '${contentSources.length} source files'),
+                  _MiniBadge(
+                    label:
+                        '${contentSources.where((source) => source.exists).length} available locally',
+                  ),
+                  _MiniBadge(
+                    label:
+                        '${contentSources.where((source) => source.kind == 'Sample data').length} sample packs',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (contentSources.isEmpty)
+                const _EmptyInline(
+                  title: 'No content sources found',
+                  subtitle: 'The module will fall back to embedded seeds when needed.',
+                )
+              else
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final source in contentSources.take(6))
+                      _ContentSourceCard(source: source),
+                  ],
+                ),
+            ],
+          ),
         ),
         if (searchHits.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -1142,6 +1186,7 @@ class _CertificatesTab extends StatelessWidget {
 class _SettingsTab extends StatelessWidget {
   const _SettingsTab({
     required this.snapshot,
+    required this.contentSources,
     required this.onOpenKnowledgeEngine,
     required this.onOpenGaiaPlaceholder,
     required this.onOpenMore,
@@ -1149,6 +1194,7 @@ class _SettingsTab extends StatelessWidget {
   });
 
   final EducationHubSnapshot snapshot;
+  final List<ContentSourceEntry> contentSources;
   final VoidCallback onOpenKnowledgeEngine;
   final VoidCallback onOpenGaiaPlaceholder;
   final VoidCallback onOpenMore;
@@ -1175,6 +1221,12 @@ class _SettingsTab extends StatelessWidget {
                 label: 'Offline-first',
                 value: snapshot.settings.offlineOnly ? 'Enabled' : 'Disabled',
                 detail: 'Learning content stays local by default.',
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Content pipeline',
+                value: '${contentSources.length} indexed files',
+                detail: 'Markdown docs and sample data are visible as source-linked content.',
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -1204,6 +1256,14 @@ class _SettingsTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
+              if (contentSources.isNotEmpty) ...[
+                Text('Latest content sources', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                for (final source in contentSources.take(5)) ...[
+                  _ContentSourceCard(source: source),
+                  const SizedBox(height: 10),
+                ],
+              ],
               const _TodoList(),
             ],
           ),
@@ -1852,6 +1912,59 @@ class _SearchHitCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContentSourceCard extends StatelessWidget {
+  const _ContentSourceCard({required this.source});
+
+  final ContentSourceEntry source;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 300,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      source.title,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                  ),
+                  _MiniBadge(label: source.exists ? 'Local' : 'Fallback'),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(source.description),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(label: source.category),
+                  _MiniBadge(label: source.kind),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                source.path,
+                style: theme.textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

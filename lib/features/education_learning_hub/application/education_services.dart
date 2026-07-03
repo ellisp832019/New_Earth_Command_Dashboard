@@ -211,6 +211,19 @@ class SearchService {
       }
     }
 
+    for (final source in snapshot.contentSources) {
+      if (_contains(needle, [source.title, source.description, source.path])) {
+        hits.add(
+          EducationSearchHit(
+            title: source.title,
+            subtitle: source.description,
+            kind: 'Source',
+            needle: source.category,
+          ),
+        );
+      }
+    }
+
     return hits.toList(growable: false);
   }
 

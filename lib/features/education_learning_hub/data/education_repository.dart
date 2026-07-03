@@ -41,6 +41,7 @@ class LocalEducationRepository implements EducationRepository {
       mentorNotes: _buildMentorNotes(),
       certificates: _buildCertificates(),
       resources: _buildResources(),
+      contentSources: _buildContentSources(),
       skillLibrary: _loadSkillLibrary(),
     );
     _cachedSnapshot = snapshot;
@@ -130,6 +131,60 @@ class LocalEducationRepository implements EducationRepository {
     return _resourceSeeds()
         .map((entry) => ResourceItem.fromJson(entry))
         .toList(growable: false);
+  }
+
+  List<ContentSourceEntry> _buildContentSources() {
+    final rootDirectory = Directory(moduleRootPath);
+    if (!rootDirectory.existsSync()) {
+      return _contentSourceFallback();
+    }
+
+    final entries = <ContentSourceEntry>[];
+    for (final entity in rootDirectory.listSync(recursive: true, followLinks: false)) {
+      if (entity is! File) {
+        continue;
+      }
+
+      final normalizedPath = path.normalize(entity.path);
+      final extension = path.extension(normalizedPath).toLowerCase();
+      if (extension != '.md' && extension != '.json') {
+        continue;
+      }
+
+      if (path.basename(normalizedPath).toLowerCase() == 'module_manifest.json') {
+        continue;
+      }
+
+      final relativePath = path.relative(normalizedPath, from: moduleRootPath);
+      final pathParts = path.split(relativePath);
+      final category = pathParts.length > 1
+          ? _friendlyLabel(pathParts.first)
+          : 'Module';
+      final kind = extension == '.json' ? 'Sample data' : 'Documentation';
+      final title = _friendlyLabel(path.basenameWithoutExtension(normalizedPath));
+      entries.add(
+        ContentSourceEntry(
+          id: relativePath.replaceAll('\\', '/'),
+          title: title,
+          category: category,
+          kind: kind,
+          path: normalizedPath,
+          description: _contentDescriptionFor(relativePath),
+          exists: entity.existsSync(),
+        ),
+      );
+    }
+
+    if (entries.isEmpty) {
+      return _contentSourceFallback();
+    }
+
+    entries.sort(
+      (a, b) => a.category.compareTo(b.category) != 0
+          ? a.category.compareTo(b.category)
+          : a.title.compareTo(b.title),
+    );
+    return entries.toList(growable: false);
   }
 
   List<String> _loadSkillLibrary() {
@@ -1396,5 +1451,110 @@ class LocalEducationRepository implements EducationRepository {
       'path': path,
       'description': description,
     };
+  }
+
+  List<ContentSourceEntry> _contentSourceFallback() {
+    return [
+      ContentSourceEntry(
+        id: '04_LEARNING_PATHWAYS/EMBEDDED_SYSTEMS.md',
+        title: 'Embedded Systems',
+        category: 'Learning pathways',
+        kind: 'Documentation',
+        path: path.join(moduleRootPath, '04_LEARNING_PATHWAYS', 'EMBEDDED_SYSTEMS.md'),
+        description: 'Fallback content index for the embedded systems pathway.',
+        exists: false,
+      ),
+      ContentSourceEntry(
+        id: '05_CONTENT_LIBRARY/LESSON_TEMPLATE.md',
+        title: 'Lesson Template',
+        category: 'Content library',
+        kind: 'Documentation',
+        path: path.join(moduleRootPath, '05_CONTENT_LIBRARY', 'LESSON_TEMPLATE.md'),
+        description: 'Fallback content index for lesson structure and reuse.',
+        exists: false,
+      ),
+      ContentSourceEntry(
+        id: '16_SAMPLE_DATA/pathways.json',
+        title: 'Pathways Sample Data',
+        category: 'Sample data',
+        kind: 'Sample data',
+        path: path.join(moduleRootPath, '16_SAMPLE_DATA', 'pathways.json'),
+        description: 'Fallback content index for local pathway samples.',
+        exists: false,
+      ),
+    ];
+  }
+
+  String _friendlyLabel(String raw) {
+    final value = raw
+        .replaceAll(RegExp(r'[_\-]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (value.isEmpty) {
+      return 'Module';
+    }
+    return value
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) {
+          final lower = part.toLowerCase();
+          return lower[0].toUpperCase() + lower.substring(1);
+        })
+        .join(' ');
+  }
+
+  String _contentDescriptionFor(String relativePath) {
+    if (relativePath.startsWith('04_LEARNING_PATHWAYS')) {
+      return 'Pathway guidance and curriculum notes.';
+    }
+    if (relativePath.startsWith('05_CONTENT_LIBRARY')) {
+      return 'Reusable lesson and content structure.';
+    }
+    if (relativePath.startsWith('06_AI_TUTOR')) {
+      return 'Tutor prompts and safety guidance.';
+    }
+    if (relativePath.startsWith('07_ASSESSMENTS')) {
+      return 'Assessment and review material.';
+    }
+    if (relativePath.startsWith('08_PROJECT_BASED_LEARNING')) {
+      return 'Project workspace and evidence notes.';
+    }
+    if (relativePath.startsWith('09_ADMIN_AND_GUARDIANS')) {
+      return 'Role guidance for mentors and guardians.';
+    }
+    if (relativePath.startsWith('10_LOCAL_FIRST_DATA')) {
+      return 'Offline content pack notes and storage rules.';
+    }
+    if (relativePath.startsWith('11_INTEGRATIONS')) {
+      return 'Future integration hooks and boundaries.';
+    }
+    if (relativePath.startsWith('12_TESTING_AND_QA')) {
+      return 'Testing and quality assurance guidance.';
+    }
+    if (relativePath.startsWith('13_SECURITY_AND_SAFETY')) {
+      return 'Safety and learner protection rules.';
+    }
+    if (relativePath.startsWith('14_ROADMAP')) {
+      return 'Roadmap and future build sequencing.';
+    }
+    if (relativePath.startsWith('15_CODEX')) {
+      return 'Codex build instructions and prompts.';
+    }
+    if (relativePath.startsWith('16_SAMPLE_DATA')) {
+      return 'Local mock content used by the first build.';
+    }
+    if (relativePath.startsWith('17_SRC_SCAFFOLD')) {
+      return 'Source scaffold notes for future code generation.';
+    }
+    if (relativePath.startsWith('18_TEMPLATES')) {
+      return 'Reusable module templates for new content.';
+    }
+    if (relativePath.startsWith('19_DEPLOYMENT')) {
+      return 'Route and deployment guidance.';
+    }
+    if (relativePath.startsWith('20_DOCUMENTATION')) {
+      return 'User-facing and developer-facing docs.';
+    }
+    return 'Local module content source.';
   }
 }
