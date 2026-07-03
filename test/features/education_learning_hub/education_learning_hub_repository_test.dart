@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
 
 import 'package:new_earth_command_dashboard/features/education_learning_hub/application/education_services.dart';
 import 'package:new_earth_command_dashboard/features/education_learning_hub/data/education_repository.dart';
@@ -26,5 +28,35 @@ void main() {
     final tutorResponse = TutorService(snapshot).respond('How do I start?');
     expect(tutorResponse.summary, isNotEmpty);
     expect(tutorResponse.practiceQuestions, isNotEmpty);
+  });
+
+  test('education repository persists progress records locally', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('education-progress-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final stateFile = path.join(tempRoot.path, 'learning_state.json');
+    final repository = LocalEducationRepository(stateFilePath: stateFile);
+
+    final saved = await repository.saveProgressRecord(
+      studentId: 'student_hayley',
+      entityId: 'lesson_led_calm_build',
+      entityType: 'lesson',
+      progressPercent: 100,
+      status: 'complete',
+      note: 'Completed the calm LED build.',
+    );
+
+    expect(saved.progressPercent, 100);
+    expect(File(stateFile).existsSync(), isTrue);
+
+    final reloaded = await repository.loadSnapshot();
+    final progress = reloaded.progressFor('student_hayley', 'lesson_led_calm_build');
+    expect(progress, isNotNull);
+    expect(progress?.status, 'complete');
+    expect(progress?.note, contains('calm LED build'));
   });
 }

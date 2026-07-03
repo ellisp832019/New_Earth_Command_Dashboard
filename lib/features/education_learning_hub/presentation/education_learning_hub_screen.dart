@@ -61,6 +61,42 @@ class _EducationLearningHubScreenState
     unawaited(_loadSnapshot());
   }
 
+  Future<void> _saveLessonProgress({
+    required StudentProfile student,
+    required Lesson lesson,
+  }) async {
+    final snapshot = _snapshotOrThrow;
+    final record = await _repository.saveProgressRecord(
+      studentId: student.id,
+      entityId: lesson.id,
+      entityType: 'lesson',
+      progressPercent: 100,
+      status: 'complete',
+      note: 'Completed ${lesson.title} locally.',
+    );
+    if (!mounted) {
+      return;
+    }
+
+    final updatedRecords = snapshot.progressRecords.toList(growable: true);
+    final index = updatedRecords.indexWhere(
+      (value) => value.studentId == record.studentId && value.entityId == record.entityId,
+    );
+    if (index >= 0) {
+      updatedRecords[index] = record;
+    } else {
+      updatedRecords.add(record);
+    }
+
+    setState(() {
+      _snapshot = snapshot.copyWith(progressRecords: updatedRecords);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${lesson.title} saved as complete for ${student.name}.')),
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -318,6 +354,8 @@ class _EducationLearningHubScreenState
                     certificateService: certificateService,
                     tutorService: tutorService,
                     contentSources: snapshot.contentSources,
+                    onSaveLessonProgress: (lesson) =>
+                        _saveLessonProgress(student: currentStudent, lesson: lesson),
                     onOpenPathways: () => _tabController.animateTo(1),
                     onOpenLessons: () => _tabController.animateTo(2),
                     onOpenProjects: () => _tabController.animateTo(3),
@@ -337,11 +375,14 @@ class _EducationLearningHubScreenState
                     snapshot: snapshot,
                     filteredLessons: _filteredLessons(snapshot),
                     selectedAudience: _audienceFilter,
+                    selectedStudent: currentStudent,
                     onAudienceChanged: (value) {
                       setState(() {
                         _audienceFilter = value;
                       });
                     },
+                    onSaveLessonProgress: (lesson) =>
+                        _saveLessonProgress(student: currentStudent, lesson: lesson),
                   ),
                   _ProjectsTab(
                     snapshot: snapshot,
@@ -571,6 +612,7 @@ class _DashboardTab extends StatelessWidget {
     required this.certificateService,
     required this.tutorService,
     required this.contentSources,
+    required this.onSaveLessonProgress,
     required this.onOpenPathways,
     required this.onOpenLessons,
     required this.onOpenProjects,
@@ -587,6 +629,7 @@ class _DashboardTab extends StatelessWidget {
   final CertificateService certificateService;
   final TutorService tutorService;
   final List<ContentSourceEntry> contentSources;
+  final ValueChanged<Lesson> onSaveLessonProgress;
   final VoidCallback onOpenPathways;
   final VoidCallback onOpenLessons;
   final VoidCallback onOpenProjects;
@@ -673,7 +716,7 @@ class _DashboardTab extends StatelessWidget {
               (lesson) => lesson.pathwayId == selectedPathway.id,
               orElse: () => snapshot.lessons.first,
             ),
-            showActions: false,
+            onSaveProgress: onSaveLessonProgress,
           ),
         ),
         const SizedBox(height: 12),
@@ -820,13 +863,17 @@ class _LessonLibraryTab extends StatelessWidget {
     required this.snapshot,
     required this.filteredLessons,
     required this.selectedAudience,
+    required this.selectedStudent,
     required this.onAudienceChanged,
+    required this.onSaveLessonProgress,
   });
 
   final EducationHubSnapshot snapshot;
   final List<Lesson> filteredLessons;
   final EducationAudience selectedAudience;
+  final StudentProfile selectedStudent;
   final ValueChanged<EducationAudience> onAudienceChanged;
+  final ValueChanged<Lesson> onSaveLessonProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -860,7 +907,12 @@ class _LessonLibraryTab extends StatelessWidget {
               else
                 Column(
                   children: [
-                    for (final lesson in filteredLessons) _LessonCard(lesson: lesson),
+                    for (final lesson in filteredLessons)
+                      _LessonCard(
+                        lesson: lesson,
+                        onSaveProgress: onSaveLessonProgress,
+                        saveButtonLabel: 'Save for ${selectedStudent.name}',
+                      ),
                   ],
                 ),
             ],
@@ -1530,10 +1582,15 @@ class _PathwayCard extends StatelessWidget {
 }
 
 class _LessonCard extends StatelessWidget {
-  const _LessonCard({required this.lesson, this.showActions = true});
+  const _LessonCard({
+    required this.lesson,
+    this.onSaveProgress,
+    this.saveButtonLabel = 'Save progress',
+  });
 
   final Lesson lesson;
-  final bool showActions;
+  final ValueChanged<Lesson>? onSaveProgress;
+  final String saveButtonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -1576,21 +1633,25 @@ class _LessonCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
-            if (showActions) ...[
+            if (onSaveProgress != null) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: onSaveProgress == null
+                        ? null
+                        : () => onSaveProgress!(lesson),
                     icon: const Icon(Icons.play_arrow_outlined),
                     label: const Text('Open lesson'),
                   ),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: onSaveProgress == null
+                        ? null
+                        : () => onSaveProgress!(lesson),
                     icon: const Icon(Icons.checklist_outlined),
-                    label: const Text('Save progress'),
+                    label: Text(saveButtonLabel),
                   ),
                 ],
               ),

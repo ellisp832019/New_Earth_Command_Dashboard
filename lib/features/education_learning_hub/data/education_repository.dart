@@ -9,14 +9,25 @@ abstract class EducationRepository {
   Future<EducationHubSnapshot> loadSnapshot();
 
   Future<void> saveSnapshot(EducationHubSnapshot snapshot);
+
+  Future<ProgressRecord> saveProgressRecord({
+    required String studentId,
+    required String entityId,
+    required String entityType,
+    required int progressPercent,
+    required String status,
+    String note = '',
+  });
 }
 
 class LocalEducationRepository implements EducationRepository {
   LocalEducationRepository({
     this.moduleRootPath = 'modules/24_NEW_EARTH_EDUCATION_AND_LEARNING_HUB',
+    this.stateFilePath,
   });
 
   final String moduleRootPath;
+  final String? stateFilePath;
   EducationHubSnapshot? _cachedSnapshot;
 
   @override
@@ -29,7 +40,7 @@ class LocalEducationRepository implements EducationRepository {
     final settings = EducationHubSettings.defaults(
       moduleRootPath: moduleRootPath,
     );
-    final snapshot = EducationHubSnapshot(
+    final baseSnapshot = EducationHubSnapshot(
       settings: settings,
       pathways: _buildPathways(),
       lessons: _buildLessons(),
@@ -44,6 +55,7 @@ class LocalEducationRepository implements EducationRepository {
       contentSources: _buildContentSources(),
       skillLibrary: _loadSkillLibrary(),
     );
+    final snapshot = _mergePersistedState(baseSnapshot);
     _cachedSnapshot = snapshot;
     return snapshot;
   }
@@ -51,6 +63,123 @@ class LocalEducationRepository implements EducationRepository {
   @override
   Future<void> saveSnapshot(EducationHubSnapshot snapshot) async {
     _cachedSnapshot = snapshot;
+    await _writeState(snapshot);
+  }
+
+  @override
+  Future<ProgressRecord> saveProgressRecord({
+    required String studentId,
+    required String entityId,
+    required String entityType,
+    required int progressPercent,
+    required String status,
+    String note = '',
+  }) async {
+    final snapshot = await loadSnapshot();
+    final records = snapshot.progressRecords.toList(growable: true);
+    final now = DateTime.now().toUtc();
+    final existingIndex = records.indexWhere(
+      (record) => record.studentId == studentId && record.entityId == entityId,
+    );
+    final record = ProgressRecord(
+      id: existingIndex >= 0 ? records[existingIndex].id : _buildProgressId(),
+      studentId: studentId,
+      entityId: entityId,
+      entityType: entityType,
+      status: status,
+      progressPercent: progressPercent.clamp(0, 100),
+      updatedAt: now,
+      note: note.trim(),
+    );
+
+    if (existingIndex >= 0) {
+      records[existingIndex] = record;
+    } else {
+      records.add(record);
+    }
+
+    final updated = snapshot.copyWith(progressRecords: records);
+    await saveSnapshot(updated);
+    return record;
+  }
+
+  Future<ProgressRecord?> latestProgressFor(String studentId, String entityId) async {
+    final snapshot = await loadSnapshot();
+    return snapshot.progressFor(studentId, entityId);
+  }
+
+  Future<void> clearPersistedState() async {
+    final file = _stateFile();
+    if (file.existsSync()) {
+      await file.delete();
+    }
+    _cachedSnapshot = null;
+  }
+
+  EducationHubSnapshot _mergePersistedState(EducationHubSnapshot snapshot) {
+    final file = _stateFile();
+    if (!file.existsSync()) {
+      return snapshot;
+    }
+
+    try {
+      final decoded = jsonDecode(file.readAsStringSync());
+      if (decoded is Map<String, dynamic>) {
+        return snapshot.copyWith(
+          progressRecords: _recordsFromJson(decoded['progressRecords']) ??
+              snapshot.progressRecords,
+        );
+      }
+      if (decoded is Map) {
+        final map = decoded.map((key, value) => MapEntry(key.toString(), value));
+        return snapshot.copyWith(
+          progressRecords: _recordsFromJson(map['progressRecords']) ??
+              snapshot.progressRecords,
+        );
+      }
+    } catch (_) {
+      // Use the seed snapshot if the persisted state cannot be read.
+    }
+
+    return snapshot;
+  }
+
+  Future<void> _writeState(EducationHubSnapshot snapshot) async {
+    final file = _stateFile();
+    await file.parent.create(recursive: true);
+    final payload = <String, dynamic>{
+      'updatedAt': DateTime.now().toUtc().toIso8601String(),
+      'progressRecords': snapshot.progressRecords
+          .map((record) => record.toJson())
+          .toList(growable: false),
+    };
+    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(payload));
+  }
+
+  File _stateFile() {
+    final resolved = stateFilePath ??
+        path.join(
+          moduleRootPath,
+          '10_LOCAL_FIRST_DATA',
+          'learning_state.json',
+        );
+    return File(resolved);
+  }
+
+  List<ProgressRecord>? _recordsFromJson(dynamic raw) {
+    if (raw is! List) {
+      return null;
+    }
+    final records = raw
+        .whereType<Map>()
+        .map((entry) => entry.map((key, value) => MapEntry(key.toString(), value)))
+        .map(ProgressRecord.fromJson)
+        .toList(growable: false);
+    return records;
+  }
+
+  String _buildProgressId() {
+    return 'progress_${DateTime.now().microsecondsSinceEpoch}';
   }
 
   List<LearningPathway> _buildPathways() {
