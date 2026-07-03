@@ -160,6 +160,47 @@ class _EducationLearningHubScreenState
     );
   }
 
+  Future<void> _exportEducationSnapshot() async {
+    try {
+      final exported = await _repository.exportSnapshotBundle();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Education snapshot exported to ${exported.path}.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export failed: $error')),
+      );
+    }
+  }
+
+  Future<void> _importEducationSnapshot() async {
+    try {
+      final imported = await _repository.importSnapshotBundle();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _snapshot = imported;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Education snapshot imported locally.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Import failed: $error')),
+      );
+    }
+  }
+
   void _openLessonDetails(Lesson lesson) {
     final snapshot = _snapshotOrThrow;
     final pathway = snapshot.pathways.firstWhere(
@@ -594,13 +635,15 @@ class _EducationLearningHubScreenState
                     roleView: _roleView,
                     onOpenKnowledgeEngine: () =>
                         context.push(RouteNames.omegaKnowledgeEngine),
-                  onOpenGaiaPlaceholder: () =>
-                      context.push(RouteNames.voiceAssistant),
+                    onOpenGaiaPlaceholder: () =>
+                        context.push(RouteNames.voiceAssistant),
                     onOpenMore: () => context.go(RouteNames.more),
                     onExportRoute: () => _copyText(
                       snapshot.settings.gaiaAssistantRoute,
                       'GAIA route placeholder',
                     ),
+                    onExportContentPack: _exportEducationSnapshot,
+                    onImportContentPack: _importEducationSnapshot,
                   ),
                 ],
               ),
@@ -1577,6 +1620,24 @@ class _AssessmentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sortedAssessments = assessments.toList()
+      ..sort((left, right) {
+        final leftCompleted = left.completedAt != null;
+        final rightCompleted = right.completedAt != null;
+        if (leftCompleted != rightCompleted) {
+          return leftCompleted ? 1 : -1;
+        }
+        return left.title.compareTo(right.title);
+      });
+    final completedCount = sortedAssessments.where((assessment) => assessment.completedAt != null).length;
+    final pendingCount = sortedAssessments.length - completedCount;
+    final averageScore = sortedAssessments.isEmpty
+        ? 0.0
+        : sortedAssessments.fold<double>(
+              0.0,
+              (sum, assessment) => sum + assessment.score / assessment.maxScore,
+            ) /
+            sortedAssessments.length;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1585,7 +1646,35 @@ class _AssessmentsTab extends StatelessWidget {
           subtitle: 'Practical checklists, simple scores, and mentor feedback.',
           child: Column(
             children: [
-              for (final assessment in assessments)
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _InfoTile(
+                    label: 'Completed',
+                    value: '$completedCount',
+                    detail: 'Signed off checks ready for review',
+                  ),
+                  _InfoTile(
+                    label: 'Pending',
+                    value: '$pendingCount',
+                    detail: 'Still waiting on practical completion',
+                  ),
+                  _InfoTile(
+                    label: 'Average score',
+                    value: '${(averageScore * 100).round()}%',
+                    detail: 'Simple local assessment snapshot',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (sortedAssessments.isEmpty)
+                const _EmptyInline(
+                  title: 'No assessments yet',
+                  subtitle: 'Assessment cards will appear as the content set grows.',
+                )
+              else
+                for (final assessment in sortedAssessments)
                 _AssessmentCard(assessment: assessment),
             ],
           ),
@@ -1610,24 +1699,80 @@ class _ReflectionTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final studentReflections = reflections
         .where((reflection) => reflection.studentId == selectedStudent.id)
-        .toList(growable: false);
+        .toList(growable: false)
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final reflectionSummary = StringBuffer()
+      ..writeln('Learner: ${selectedStudent.name}')
+      ..writeln('Reflection count: ${studentReflections.length}')
+      ..writeln(
+        studentReflections.isEmpty
+            ? 'Latest reflection: none yet'
+            : 'Latest reflection: ${studentReflections.first.title} - ${studentReflections.first.body}',
+      );
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
         _Panel(
           title: 'Reflection Journal',
           subtitle: 'A quiet place for learning memory and practical insight.',
-          child: studentReflections.isEmpty
-              ? const _EmptyInline(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _InfoTile(
+                    label: 'Reflections',
+                    value: '${studentReflections.length}',
+                    detail: 'Local notes saved for this learner',
+                  ),
+                  _InfoTile(
+                    label: 'Latest mood',
+                    value: studentReflections.isEmpty ? 'None' : studentReflections.first.mood,
+                    detail: studentReflections.isEmpty
+                        ? 'Waiting for the first reflection'
+                        : 'Most recent journal entry',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: reflectionSummary.toString().trim()),
+                      );
+                      if (!context.mounted) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Reflection summary copied locally.')),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_all_outlined),
+                    label: const Text('Copy summary'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (studentReflections.isEmpty)
+                const _EmptyInline(
                   title: 'No reflections yet',
                   subtitle: 'Add a reflection after the next learning step.',
                 )
-              : Column(
+              else
+                Column(
                   children: [
                     for (final reflection in studentReflections)
                       _ReflectionCard(reflection: reflection),
                   ],
                 ),
+            ],
+          ),
         ),
       ],
     );
@@ -1722,6 +1867,8 @@ class _SettingsTab extends StatelessWidget {
     required this.onOpenGaiaPlaceholder,
     required this.onOpenMore,
     required this.onExportRoute,
+    required this.onExportContentPack,
+    required this.onImportContentPack,
   });
 
   final EducationHubSnapshot snapshot;
@@ -1731,6 +1878,8 @@ class _SettingsTab extends StatelessWidget {
   final VoidCallback onOpenGaiaPlaceholder;
   final VoidCallback onOpenMore;
   final VoidCallback onExportRoute;
+  final VoidCallback onExportContentPack;
+  final VoidCallback onImportContentPack;
 
   @override
   Widget build(BuildContext context) {
@@ -1785,6 +1934,16 @@ class _SettingsTab extends StatelessWidget {
                     onPressed: onExportRoute,
                     icon: const Icon(Icons.copy_outlined),
                     label: const Text('Copy GAIA route'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onExportContentPack,
+                    icon: const Icon(Icons.upload_file_outlined),
+                    label: const Text('Export content pack'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onImportContentPack,
+                    icon: const Icon(Icons.download_outlined),
+                    label: const Text('Import content pack'),
                   ),
                   TextButton.icon(
                     onPressed: onOpenMore,

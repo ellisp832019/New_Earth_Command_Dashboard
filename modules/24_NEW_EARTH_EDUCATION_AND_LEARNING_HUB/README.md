@@ -45,6 +45,7 @@ Current placeholders include:
 - role-aware tutor prompts for student, mentor, parent/guardian, and admin views
 - badge and certificate readiness summaries based on local progress data
 - project workspaces with local evidence checkpoints and linked source items
+- offline snapshot export/import for content packs and local restore
 
 ## Future content areas
 - Electronics

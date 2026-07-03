@@ -673,6 +673,17 @@ class EducationHubSettings {
     );
   }
 
+  factory EducationHubSettings.fromJson(Map<String, dynamic> json) {
+    return EducationHubSettings(
+      moduleRootPath: json['moduleRootPath']?.toString() ?? '',
+      contentRootPath: json['contentRootPath']?.toString() ?? '',
+      offlineOnly: json['offlineOnly'] == true,
+      knowledgeEngineRoute: json['knowledgeEngineRoute']?.toString() ?? '',
+      gaiaAssistantRoute: json['gaiaAssistantRoute']?.toString() ?? '',
+      lastRefreshedLabel: json['lastRefreshedLabel']?.toString() ?? '',
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'moduleRootPath': moduleRootPath,
@@ -758,6 +769,42 @@ class EducationHubSnapshot {
   int get reflectionCount => reflections.length;
   int get certificateCount => certificates.length;
   int get resourceCount => resources.length;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'settings': settings.toJson(),
+      'pathways': pathways.map((value) => value.toJson()).toList(growable: false),
+      'lessons': lessons.map((value) => value.toJson()).toList(growable: false),
+      'projects': projects.map((value) => value.toJson()).toList(growable: false),
+      'students': students.map((value) => value.toJson()).toList(growable: false),
+      'progressRecords': progressRecords.map((value) => value.toJson()).toList(growable: false),
+      'assessments': assessments.map((value) => value.toJson()).toList(growable: false),
+      'reflections': reflections.map((value) => value.toJson()).toList(growable: false),
+      'mentorNotes': mentorNotes.map((value) => value.toJson()).toList(growable: false),
+      'certificates': certificates.map((value) => value.toJson()).toList(growable: false),
+      'resources': resources.map((value) => value.toJson()).toList(growable: false),
+      'contentSources': contentSources.map((value) => value.toJson()).toList(growable: false),
+      'skillLibrary': skillLibrary,
+    };
+  }
+
+  factory EducationHubSnapshot.fromJson(Map<String, dynamic> json) {
+    return EducationHubSnapshot(
+      settings: EducationHubSettings.fromJson(_jsonMap(json['settings'])),
+      pathways: _pathwayList(json['pathways']),
+      lessons: _lessonList(json['lessons']),
+      projects: _projectList(json['projects']),
+      students: _studentList(json['students']),
+      progressRecords: _progressRecordList(json['progressRecords']),
+      assessments: _assessmentList(json['assessments']),
+      reflections: _reflectionList(json['reflections']),
+      mentorNotes: _mentorNoteList(json['mentorNotes']),
+      certificates: _certificateList(json['certificates']),
+      resources: _resourceList(json['resources']),
+      contentSources: _contentSourceList(json['contentSources']),
+      skillLibrary: _stringList(json['skillLibrary']),
+    );
+  }
 
   ProgressRecord? progressFor(String studentId, String entityId) {
     for (final record in progressRecords) {
@@ -862,6 +909,137 @@ List<String> _stringList(dynamic raw) {
       .whereType<Object?>()
       .map((value) => value.toString().trim())
       .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+}
+
+Map<String, dynamic> _jsonMap(dynamic raw) {
+  if (raw is Map<String, dynamic>) {
+    return raw;
+  }
+  if (raw is Map) {
+    return raw.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return <String, dynamic>{};
+}
+
+List<LearningPathway> _pathwayList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(LearningPathway.fromJson)
+      .toList(growable: false);
+}
+
+List<Lesson> _lessonList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(Lesson.fromJson)
+      .toList(growable: false);
+}
+
+List<PracticalProject> _projectList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(PracticalProject.fromJson)
+      .toList(growable: false);
+}
+
+List<StudentProfile> _studentList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(StudentProfile.fromJson)
+      .toList(growable: false);
+}
+
+List<ProgressRecord> _progressRecordList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(ProgressRecord.fromJson)
+      .toList(growable: false);
+}
+
+List<Assessment> _assessmentList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(Assessment.fromJson)
+      .toList(growable: false);
+}
+
+List<ReflectionEntry> _reflectionList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(ReflectionEntry.fromJson)
+      .toList(growable: false);
+}
+
+List<MentorNote> _mentorNoteList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(MentorNote.fromJson)
+      .toList(growable: false);
+}
+
+List<Certificate> _certificateList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(Certificate.fromJson)
+      .toList(growable: false);
+}
+
+List<ResourceItem> _resourceList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(ResourceItem.fromJson)
+      .toList(growable: false);
+}
+
+List<ContentSourceEntry> _contentSourceList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(ContentSourceEntry.fromJson)
       .toList(growable: false);
 }
 

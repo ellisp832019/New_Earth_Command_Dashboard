@@ -77,4 +77,30 @@ void main() {
     expect(progress?.status, 'complete');
     expect(progress?.note, contains('calm LED build'));
   });
+
+  test('education repository exports and imports a local snapshot bundle', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('education-bundle-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final exportPath = path.join(tempRoot.path, 'education_snapshot_bundle.json');
+    final repository = LocalEducationRepository(
+      moduleRootPath: tempRoot.path,
+      stateFilePath: path.join(tempRoot.path, 'learning_state.json'),
+    );
+
+    final snapshot = await repository.loadSnapshot();
+    expect(snapshot.pathwayCount, greaterThan(0));
+
+    final exported = await repository.exportSnapshotBundle(exportPath: exportPath);
+    expect(exported.existsSync(), isTrue);
+
+    final imported = await repository.importSnapshotBundle(importPath: exportPath);
+    expect(imported.pathwayCount, snapshot.pathwayCount);
+    expect(imported.lessonCount, snapshot.lessonCount);
+    expect(imported.projectCount, snapshot.projectCount);
+  });
 }

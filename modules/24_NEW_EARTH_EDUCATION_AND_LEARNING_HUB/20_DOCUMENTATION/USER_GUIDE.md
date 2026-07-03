@@ -51,4 +51,6 @@
 3. Review the local search and tutor placeholder hooks.
 4. Use the project workspace evidence log to capture learning progress.
 5. Use the Omega Knowledge Engine hook for future repository analysis.
-6. Keep content local until production hardening is added.
+6. Use Export content pack to write a full local snapshot bundle.
+7. Use Import content pack to restore that bundle back into the module.
+8. Keep content local until production hardening is added.

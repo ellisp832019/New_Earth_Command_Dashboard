@@ -18,6 +18,10 @@ abstract class EducationRepository {
     required String status,
     String note = '',
   });
+
+  Future<File> exportSnapshotBundle({String? exportPath});
+
+  Future<EducationHubSnapshot> importSnapshotBundle({String? importPath});
 }
 
 class LocalEducationRepository implements EducationRepository {
@@ -116,6 +120,58 @@ class LocalEducationRepository implements EducationRepository {
     _cachedSnapshot = null;
   }
 
+  @override
+  Future<File> exportSnapshotBundle({String? exportPath}) async {
+    final snapshot = await loadSnapshot();
+    final file = File(exportPath ?? _exportFilePath());
+    await file.parent.create(recursive: true);
+    final payload = <String, dynamic>{
+      'exportedAt': DateTime.now().toUtc().toIso8601String(),
+      'snapshot': snapshot.toJson(),
+    };
+    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(payload));
+    return file;
+  }
+
+  @override
+  Future<EducationHubSnapshot> importSnapshotBundle({String? importPath}) async {
+    final file = File(importPath ?? _exportFilePath());
+    if (!file.existsSync()) {
+      throw FileSystemException('Import bundle not found', file.path);
+    }
+
+    final decoded = jsonDecode(await file.readAsString());
+    Map<String, dynamic>? snapshotJson;
+    if (decoded is Map<String, dynamic>) {
+      final nested = decoded['snapshot'];
+      if (nested is Map<String, dynamic>) {
+        snapshotJson = nested;
+      } else if (nested is Map) {
+        snapshotJson = nested.map((key, value) => MapEntry(key.toString(), value));
+      } else {
+        snapshotJson = decoded;
+      }
+    } else if (decoded is Map) {
+      final map = decoded.map((key, value) => MapEntry(key.toString(), value));
+      final nested = map['snapshot'];
+      if (nested is Map<String, dynamic>) {
+        snapshotJson = nested;
+      } else if (nested is Map) {
+        snapshotJson = nested.map((key, value) => MapEntry(key.toString(), value));
+      } else {
+        snapshotJson = map;
+      }
+    }
+
+    if (snapshotJson == null) {
+      throw const FormatException('Snapshot bundle was not valid JSON data.');
+    }
+
+    final imported = EducationHubSnapshot.fromJson(snapshotJson);
+    await saveSnapshot(imported);
+    return imported;
+  }
+
   EducationHubSnapshot _mergePersistedState(EducationHubSnapshot snapshot) {
     final file = _stateFile();
     if (!file.existsSync()) {
@@ -125,6 +181,18 @@ class LocalEducationRepository implements EducationRepository {
     try {
       final decoded = jsonDecode(file.readAsStringSync());
       if (decoded is Map<String, dynamic>) {
+        if (decoded['snapshot'] is Map<String, dynamic>) {
+          return EducationHubSnapshot.fromJson(
+            decoded['snapshot'] as Map<String, dynamic>,
+          );
+        }
+        if (decoded['snapshot'] is Map) {
+          return EducationHubSnapshot.fromJson(
+            (decoded['snapshot'] as Map).map(
+              (key, value) => MapEntry(key.toString(), value),
+            ),
+          );
+        }
         return snapshot.copyWith(
           progressRecords: _recordsFromJson(decoded['progressRecords']) ??
               snapshot.progressRecords,
@@ -132,6 +200,18 @@ class LocalEducationRepository implements EducationRepository {
       }
       if (decoded is Map) {
         final map = decoded.map((key, value) => MapEntry(key.toString(), value));
+        if (map['snapshot'] is Map<String, dynamic>) {
+          return EducationHubSnapshot.fromJson(
+            map['snapshot'] as Map<String, dynamic>,
+          );
+        }
+        if (map['snapshot'] is Map) {
+          return EducationHubSnapshot.fromJson(
+            (map['snapshot'] as Map).map(
+              (key, value) => MapEntry(key.toString(), value),
+            ),
+          );
+        }
         return snapshot.copyWith(
           progressRecords: _recordsFromJson(map['progressRecords']) ??
               snapshot.progressRecords,
@@ -149,21 +229,28 @@ class LocalEducationRepository implements EducationRepository {
     await file.parent.create(recursive: true);
     final payload = <String, dynamic>{
       'updatedAt': DateTime.now().toUtc().toIso8601String(),
-      'progressRecords': snapshot.progressRecords
-          .map((record) => record.toJson())
-          .toList(growable: false),
+      'snapshot': snapshot.toJson(),
     };
     await file.writeAsString(const JsonEncoder.withIndent('  ').convert(payload));
   }
 
   File _stateFile() {
-    final resolved = stateFilePath ??
+    final resolved = stateFilePath ?? 
         path.join(
           moduleRootPath,
           '10_LOCAL_FIRST_DATA',
           'learning_state.json',
         );
     return File(resolved);
+  }
+
+  String _exportFilePath() {
+    return path.join(
+      moduleRootPath,
+      '10_LOCAL_FIRST_DATA',
+      'exports',
+      'education_snapshot_bundle.json',
+    );
   }
 
   List<ProgressRecord>? _recordsFromJson(dynamic raw) {
