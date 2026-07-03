@@ -1693,6 +1693,13 @@ Purpose:
 
 Important items detected:
 
+## 01_USERS_AND_DEVICES_CONTROL/docs/UPGRADE_PLAN_NEXT_SLICE.md
+
+Purpose:
+- To be reviewed and explained.
+
+Important items detected:
+
 ## 01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md
 
 Purpose:

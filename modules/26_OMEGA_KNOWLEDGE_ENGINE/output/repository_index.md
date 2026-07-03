@@ -1,8 +1,8 @@
 # Repository Index
 
-Generated: 2026-06-25T05:00:35
+Generated: 2026-07-03T15:28:54
 
-Files scanned: 762
+Files scanned: 763
 
 ## 00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/AGENTS.md
 - Type: `.md`
@@ -12,7 +12,7 @@ Files scanned: 762
 
 ## 00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/README.md
 - Type: `.md`
-- Lines: 46
+- Lines: 58
 - Classes: None detected
 - Functions/signatures detected: 0
 
@@ -1444,9 +1444,15 @@ Files scanned: 762
 - Classes: None detected
 - Functions/signatures detected: 0
 
+## 01_USERS_AND_DEVICES_CONTROL/docs/UPGRADE_PLAN_NEXT_SLICE.md
+- Type: `.md`
+- Lines: 70
+- Classes: None detected
+- Functions/signatures detected: 0
+
 ## 01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md
 - Type: `.md`
-- Lines: 566
+- Lines: 952
 - Classes: None detected
 - Functions/signatures detected: 0
 
@@ -1872,7 +1878,7 @@ Files scanned: 762
 
 ## 26_OMEGA_KNOWLEDGE_ENGINE/README.md
 - Type: `.md`
-- Lines: 99
+- Lines: 100
 - Classes: None detected
 - Functions/signatures detected: 0
 
@@ -4434,7 +4440,7 @@ Files scanned: 762
 
 ## system_backup/runtime/backup_history.json
 - Type: `.json`
-- Lines: 1011
+- Lines: 1220
 - Classes: None detected
 - Functions/signatures detected: 0
 

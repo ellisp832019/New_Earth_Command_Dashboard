@@ -1,9 +1,9 @@
 # Project Memory
 
-Generated: 2026-06-25T05:00:35
+Generated: 2026-07-03T15:28:54
 
 ## Current Snapshot
-- Files scanned: 762
+- Files scanned: 763
 
 ## Decisions
 - Add important repo decisions here.

@@ -5,7 +5,7 @@ First-pass architecture view grouped by top-level folder.
 - `00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE`: 39 scanned files
 - `00_NEW_EARTH_OMEGA_MODULE_HUB_UI`: 115 scanned files
 - `00_OMEGA_EXPERIMENT_VALIDATION_ENGINE`: 49 scanned files
-- `01_USERS_AND_DEVICES_CONTROL`: 90 scanned files
+- `01_USERS_AND_DEVICES_CONTROL`: 91 scanned files
 - `26_OMEGA_KNOWLEDGE_ENGINE`: 35 scanned files
 - `NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE`: 27 scanned files
 - `NE_OBSIDIAN_SYNC_MODULE`: 21 scanned files

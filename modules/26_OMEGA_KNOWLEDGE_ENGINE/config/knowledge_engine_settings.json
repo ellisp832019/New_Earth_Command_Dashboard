@@ -15,13 +15,13 @@
     {
       "key": "microgrow",
       "name": "MicroGrow repo",
-      "pathWindows": "D:\\Dev\\Projects\\MicroGrow",
+      "pathWindows": "D:\\Dev\\Projects\\MicroGrow V1",
       "type": "firmware_flutter"
     },
     {
       "key": "biocalm",
       "name": "BioCalm repo",
-      "pathWindows": "D:\\Dev\\Projects\\BioCalm",
+      "pathWindows": "D:\\Dev\\Projects\\New Earth - BioCalm",
       "type": "wearable_firmware"
     },
     {

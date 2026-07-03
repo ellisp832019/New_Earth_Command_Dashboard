@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T05:00:35",
+  "generated_at": "2026-07-03T15:28:54",
   "files": [
     {
       "path": "00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/AGENTS.md",
@@ -19,8 +19,8 @@
     {
       "path": "00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/README.md",
       "extension": ".md",
-      "size_bytes": 1305,
-      "line_count": 46,
+      "size_bytes": 1733,
+      "line_count": 58,
       "functions_or_signatures": [],
       "classes": [],
       "first_lines": [
@@ -325,7 +325,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 7,"
@@ -355,7 +355,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 55,"
@@ -370,7 +370,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 0,"
@@ -385,7 +385,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 34,"
@@ -400,7 +400,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 17,"
@@ -415,7 +415,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 33,"
@@ -430,7 +430,7 @@
       "classes": [],
       "first_lines": [
         "{",
-        "  \"generated_at\": \"2026-06-25T03:59:54.897759Z\",",
+        "  \"generated_at\": \"2026-07-03T14:27:23.928890Z\",",
         "  \"source_path\": \"D:\\\\NEW_EARTH_OMEGA_OS_PACK\\\\00_COMPANY\",",
         "  \"source_exists\": true,",
         "  \"record_count\": 21,"
@@ -3607,10 +3607,25 @@
       ]
     },
     {
+      "path": "01_USERS_AND_DEVICES_CONTROL/docs/UPGRADE_PLAN_NEXT_SLICE.md",
+      "extension": ".md",
+      "size_bytes": 2698,
+      "line_count": 70,
+      "functions_or_signatures": [],
+      "classes": [],
+      "first_lines": [
+        "# Users & Devices Control - Next Slice Upgrade Plan",
+        "",
+        "This is the next practical upgrade plan for the module after the onboarding report and printable packs.",
+        "",
+        "## Goal"
+      ]
+    },
+    {
       "path": "01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md",
       "extension": ".md",
-      "size_bytes": 22726,
-      "line_count": 566,
+      "size_bytes": 40801,
+      "line_count": 952,
       "functions_or_signatures": [],
       "classes": [],
       "first_lines": [
@@ -4667,8 +4682,8 @@
     {
       "path": "26_OMEGA_KNOWLEDGE_ENGINE/README.md",
       "extension": ".md",
-      "size_bytes": 2261,
-      "line_count": 99,
+      "size_bytes": 2322,
+      "line_count": 100,
       "functions_or_signatures": [],
       "classes": [],
       "first_lines": [
@@ -4697,7 +4712,7 @@
     {
       "path": "26_OMEGA_KNOWLEDGE_ENGINE/config/knowledge_engine_settings.json",
       "extension": ".json",
-      "size_bytes": 1231,
+      "size_bytes": 1245,
       "line_count": 40,
       "functions_or_signatures": [],
       "classes": [],
@@ -12657,16 +12672,16 @@
     {
       "path": "system_backup/runtime/backup_history.json",
       "extension": ".json",
-      "size_bytes": 60761,
-      "line_count": 1011,
+      "size_bytes": 73895,
+      "line_count": 1220,
       "functions_or_signatures": [],
       "classes": [],
       "first_lines": [
         "{",
         "    \"events\":  [",
         "                   {",
-        "                       \"action\":  \"Verify Latest\",",
-        "                       \"mode\":  \"VerifyLatest\","
+        "                       \"action\":  \"Scheduled Daily Backup\",",
+        "                       \"mode\":  \"DailyBackup\","
       ]
     },
     {

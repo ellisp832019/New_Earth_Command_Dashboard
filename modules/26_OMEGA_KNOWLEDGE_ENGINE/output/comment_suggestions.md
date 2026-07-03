@@ -1204,6 +1204,11 @@ Suggested review:
 - Check if public functions/classes have clear docstrings/comments.
 - Add learning comments around complex logic, hardware pins, API routes, state management, and safety logic.
 
+## 01_USERS_AND_DEVICES_CONTROL/docs/UPGRADE_PLAN_NEXT_SLICE.md
+Suggested review:
+- Check if public functions/classes have clear docstrings/comments.
+- Add learning comments around complex logic, hardware pins, API routes, state management, and safety logic.
+
 ## 01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md
 Suggested review:
 - Check if public functions/classes have clear docstrings/comments.
