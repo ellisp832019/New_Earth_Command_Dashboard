@@ -30,9 +30,19 @@ void main() {
     expect(find.text('Settings'), findsWidgets);
     expect(find.text('Knowledge Engine'), findsWidgets);
     expect(find.text('GAIA placeholder'), findsWidgets);
+    expect(find.text('Role view'), findsWidgets);
 
     await tester.tap(find.text('Learning Pathways').last);
     await tester.pumpAndSettle();
     expect(find.text('Learning Pathways'), findsWidgets);
+
+    await tester.tap(find.text('Lesson Library').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Open lesson').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open lesson').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Lesson steps'), findsWidgets);
+    expect(find.text('Reflection prompt'), findsWidgets);
   });
 }

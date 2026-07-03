@@ -11,6 +11,32 @@ import '../application/education_services.dart';
 import '../data/education_repository.dart';
 import '../domain/education_models.dart';
 
+enum EducationRoleView { student, mentor, parentGuardian, admin }
+
+extension EducationRoleViewLabel on EducationRoleView {
+  String get label {
+    return switch (this) {
+      EducationRoleView.student => 'Student',
+      EducationRoleView.mentor => 'Mentor',
+      EducationRoleView.parentGuardian => 'Parent / Guardian',
+      EducationRoleView.admin => 'Admin',
+    };
+  }
+
+  String get summary {
+    return switch (this) {
+      EducationRoleView.student =>
+        'Focus on the next useful lesson, project, and reflection.',
+      EducationRoleView.mentor =>
+        'Review learner support, notes, and sign-off cues.',
+      EducationRoleView.parentGuardian =>
+        'Check progress, wellbeing, and simple at-home support.',
+      EducationRoleView.admin =>
+        'Review content, pathways, settings, and learning safety.',
+    };
+  }
+}
+
 class EducationLearningHubScreen extends StatefulWidget {
   const EducationLearningHubScreen({super.key, this.repository});
 
@@ -49,6 +75,7 @@ class _EducationLearningHubScreenState
   bool _resolvedInitialTabIndex = false;
   String _searchQuery = '';
   EducationAudience _audienceFilter = EducationAudience.all;
+  EducationRoleView _roleView = EducationRoleView.student;
   String? _selectedStudentId;
   String? _selectedPathwayId;
   String? _tutorPrompt;
@@ -97,6 +124,33 @@ class _EducationLearningHubScreenState
     );
   }
 
+  void _openLessonDetails(Lesson lesson) {
+    final snapshot = _snapshotOrThrow;
+    final pathway = snapshot.pathways.firstWhere(
+      (value) => value.id == lesson.pathwayId,
+      orElse: () => snapshot.pathways.first,
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => _LessonDetailSheet(
+        lesson: lesson,
+        pathway: pathway,
+        resources: snapshot.resources
+            .where((resource) => lesson.resourceIds.contains(resource.id))
+            .toList(growable: false),
+        onSaveProgress: () => _saveLessonProgress(
+          student: _snapshotOrThrow.students.firstWhere(
+            (student) => student.id == _selectedStudentId,
+            orElse: () => _snapshotOrThrow.students.first,
+          ),
+          lesson: lesson,
+        ),
+      ),
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -134,6 +188,9 @@ class _EducationLearningHubScreenState
         _selectedPathwayId = snapshot.pathways.isEmpty
             ? null
             : snapshot.pathways.first.id;
+        _roleView = snapshot.students.isEmpty
+            ? EducationRoleView.student
+            : _roleViewForStudent(snapshot.students.first.role);
       });
     } catch (error) {
       if (!mounted) {
@@ -160,6 +217,15 @@ class _EducationLearningHubScreenState
       'certificates' => 9,
       'settings' => 10,
       _ => 0,
+    };
+  }
+
+  EducationRoleView _roleViewForStudent(String role) {
+    return switch (role.toLowerCase()) {
+      'mentor' => EducationRoleView.mentor,
+      'parentguardian' => EducationRoleView.parentGuardian,
+      'admin' => EducationRoleView.admin,
+      _ => EducationRoleView.student,
     };
   }
 
@@ -315,8 +381,13 @@ class _EducationLearningHubScreenState
                   });
                 },
                 onPickStudent: (studentId) {
+                  final selected = snapshot.students.firstWhere(
+                    (student) => student.id == studentId,
+                    orElse: () => snapshot.students.first,
+                  );
                   setState(() {
                     _selectedStudentId = studentId;
+                    _roleView = _roleViewForStudent(selected.role);
                   });
                 },
                 onClearSearch: () {
@@ -349,6 +420,7 @@ class _EducationLearningHubScreenState
                     selectedPathway: selectedPathway,
                     searchHits: searchHits,
                     searchQuery: _searchQuery,
+                    roleView: _roleView,
                     progressService: progressService,
                     reflectionService: reflectionService,
                     certificateService: certificateService,
@@ -356,6 +428,7 @@ class _EducationLearningHubScreenState
                     contentSources: snapshot.contentSources,
                     onSaveLessonProgress: (lesson) =>
                         _saveLessonProgress(student: currentStudent, lesson: lesson),
+                    onOpenLessonDetails: _openLessonDetails,
                     onOpenPathways: () => _tabController.animateTo(1),
                     onOpenLessons: () => _tabController.animateTo(2),
                     onOpenProjects: () => _tabController.animateTo(3),
@@ -376,11 +449,13 @@ class _EducationLearningHubScreenState
                     filteredLessons: _filteredLessons(snapshot),
                     selectedAudience: _audienceFilter,
                     selectedStudent: currentStudent,
+                    roleView: _roleView,
                     onAudienceChanged: (value) {
                       setState(() {
                         _audienceFilter = value;
                       });
                     },
+                    onOpenLessonDetails: _openLessonDetails,
                     onSaveLessonProgress: (lesson) =>
                         _saveLessonProgress(student: currentStudent, lesson: lesson),
                   ),
@@ -391,6 +466,7 @@ class _EducationLearningHubScreenState
                   _ProgressTab(
                     snapshot: snapshot,
                     selectedStudent: currentStudent,
+                    roleView: _roleView,
                     progressService: progressService,
                   ),
                   _TutorTab(
@@ -414,6 +490,7 @@ class _EducationLearningHubScreenState
                   _MentorTab(
                     snapshot: snapshot,
                     selectedStudent: currentStudent,
+                    roleView: _roleView,
                     onSelectStudent: (studentId) {
                       setState(() {
                         _selectedStudentId = studentId;
@@ -441,11 +518,12 @@ class _EducationLearningHubScreenState
                       _audienceFilter,
                     ),
                   ),
-                _SettingsTab(
-                  snapshot: snapshot,
-                  contentSources: snapshot.contentSources,
-                  onOpenKnowledgeEngine: () =>
-                      context.push(RouteNames.omegaKnowledgeEngine),
+                  _SettingsTab(
+                    snapshot: snapshot,
+                    contentSources: snapshot.contentSources,
+                    roleView: _roleView,
+                    onOpenKnowledgeEngine: () =>
+                        context.push(RouteNames.omegaKnowledgeEngine),
                   onOpenGaiaPlaceholder: () =>
                       context.push(RouteNames.voiceAssistant),
                     onOpenMore: () => context.go(RouteNames.more),
@@ -607,12 +685,14 @@ class _DashboardTab extends StatelessWidget {
     required this.selectedPathway,
     required this.searchHits,
     required this.searchQuery,
+    required this.roleView,
     required this.progressService,
     required this.reflectionService,
     required this.certificateService,
     required this.tutorService,
     required this.contentSources,
     required this.onSaveLessonProgress,
+    required this.onOpenLessonDetails,
     required this.onOpenPathways,
     required this.onOpenLessons,
     required this.onOpenProjects,
@@ -624,12 +704,14 @@ class _DashboardTab extends StatelessWidget {
   final LearningPathway selectedPathway;
   final List<EducationSearchHit> searchHits;
   final String searchQuery;
+  final EducationRoleView roleView;
   final ProgressService progressService;
   final ReflectionService reflectionService;
   final CertificateService certificateService;
   final TutorService tutorService;
   final List<ContentSourceEntry> contentSources;
   final ValueChanged<Lesson> onSaveLessonProgress;
+  final ValueChanged<Lesson> onOpenLessonDetails;
   final VoidCallback onOpenPathways;
   final VoidCallback onOpenLessons;
   final VoidCallback onOpenProjects;
@@ -672,6 +754,11 @@ class _DashboardTab extends StatelessWidget {
                 label: 'Completion',
                 value: '${(progress * 100).round()}%',
                 detail: 'Across recent progress records',
+              ),
+              _InfoTile(
+                label: 'Role view',
+                value: roleView.label,
+                detail: roleView.summary,
               ),
             ],
           ),
@@ -717,6 +804,7 @@ class _DashboardTab extends StatelessWidget {
               orElse: () => snapshot.lessons.first,
             ),
             onSaveProgress: onSaveLessonProgress,
+            onOpenLessonDetails: onOpenLessonDetails,
           ),
         ),
         const SizedBox(height: 12),
@@ -864,7 +952,9 @@ class _LessonLibraryTab extends StatelessWidget {
     required this.filteredLessons,
     required this.selectedAudience,
     required this.selectedStudent,
+    required this.roleView,
     required this.onAudienceChanged,
+    required this.onOpenLessonDetails,
     required this.onSaveLessonProgress,
   });
 
@@ -872,7 +962,9 @@ class _LessonLibraryTab extends StatelessWidget {
   final List<Lesson> filteredLessons;
   final EducationAudience selectedAudience;
   final StudentProfile selectedStudent;
+  final EducationRoleView roleView;
   final ValueChanged<EducationAudience> onAudienceChanged;
+  final ValueChanged<Lesson> onOpenLessonDetails;
   final ValueChanged<Lesson> onSaveLessonProgress;
 
   @override
@@ -899,6 +991,12 @@ class _LessonLibraryTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Active role view',
+                value: roleView.label,
+                detail: roleView.summary,
+              ),
+              const SizedBox(height: 12),
               if (filteredLessons.isEmpty)
                 const _EmptyInline(
                   title: 'No lessons match the current view',
@@ -910,6 +1008,7 @@ class _LessonLibraryTab extends StatelessWidget {
                     for (final lesson in filteredLessons)
                       _LessonCard(
                         lesson: lesson,
+                        onOpenLessonDetails: onOpenLessonDetails,
                         onSaveProgress: onSaveLessonProgress,
                         saveButtonLabel: 'Save for ${selectedStudent.name}',
                       ),
@@ -952,11 +1051,13 @@ class _ProgressTab extends StatelessWidget {
   const _ProgressTab({
     required this.snapshot,
     required this.selectedStudent,
+    required this.roleView,
     required this.progressService,
   });
 
   final EducationHubSnapshot snapshot;
   final StudentProfile selectedStudent;
+  final EducationRoleView roleView;
   final ProgressService progressService;
 
   @override
@@ -979,6 +1080,12 @@ class _ProgressTab extends StatelessWidget {
                 detail: '${selectedStudent.role} • ${selectedStudent.stage}',
               ),
               const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Role view',
+                value: roleView.label,
+                detail: roleView.summary,
+              ),
+              const SizedBox(height: 12),
               LinearProgressIndicator(value: completion),
               const SizedBox(height: 8),
               Text('${(completion * 100).round()}% overall learning progress'),
@@ -989,11 +1096,7 @@ class _ProgressTab extends StatelessWidget {
                   subtitle: 'Progress will appear as lessons and projects are completed.',
                 )
               else
-                Column(
-                  children: [
-                    for (final record in studentProgress) _ProgressRecordCard(record: record),
-                  ],
-                ),
+                _ProgressTimeline(records: studentProgress),
             ],
           ),
         ),
@@ -1068,11 +1171,13 @@ class _MentorTab extends StatelessWidget {
   const _MentorTab({
     required this.snapshot,
     required this.selectedStudent,
+    required this.roleView,
     required this.onSelectStudent,
   });
 
   final EducationHubSnapshot snapshot;
   final StudentProfile selectedStudent;
+  final EducationRoleView roleView;
   final ValueChanged<String> onSelectStudent;
 
   @override
@@ -1098,6 +1203,12 @@ class _MentorTab extends StatelessWidget {
                       onSelected: (_) => onSelectStudent(student.id),
                     ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Role view',
+                value: roleView.label,
+                detail: roleView.summary,
               ),
               const SizedBox(height: 12),
               _InfoTile(
@@ -1240,6 +1351,7 @@ class _SettingsTab extends StatelessWidget {
   const _SettingsTab({
     required this.snapshot,
     required this.contentSources,
+    required this.roleView,
     required this.onOpenKnowledgeEngine,
     required this.onOpenGaiaPlaceholder,
     required this.onOpenMore,
@@ -1248,6 +1360,7 @@ class _SettingsTab extends StatelessWidget {
 
   final EducationHubSnapshot snapshot;
   final List<ContentSourceEntry> contentSources;
+  final EducationRoleView roleView;
   final VoidCallback onOpenKnowledgeEngine;
   final VoidCallback onOpenGaiaPlaceholder;
   final VoidCallback onOpenMore;
@@ -1280,6 +1393,12 @@ class _SettingsTab extends StatelessWidget {
                 label: 'Content pipeline',
                 value: '${contentSources.length} indexed files',
                 detail: 'Markdown docs and sample data are visible as source-linked content.',
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Role view',
+                value: roleView.label,
+                detail: roleView.summary,
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -1584,11 +1703,13 @@ class _PathwayCard extends StatelessWidget {
 class _LessonCard extends StatelessWidget {
   const _LessonCard({
     required this.lesson,
+    this.onOpenLessonDetails,
     this.onSaveProgress,
     this.saveButtonLabel = 'Save progress',
   });
 
   final Lesson lesson;
+  final ValueChanged<Lesson>? onOpenLessonDetails;
   final ValueChanged<Lesson>? onSaveProgress;
   final String saveButtonLabel;
 
@@ -1640,9 +1761,9 @@ class _LessonCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   TextButton.icon(
-                    onPressed: onSaveProgress == null
+                    onPressed: onOpenLessonDetails == null
                         ? null
-                        : () => onSaveProgress!(lesson),
+                        : () => onOpenLessonDetails!(lesson),
                     icon: const Icon(Icons.play_arrow_outlined),
                     label: const Text('Open lesson'),
                   ),
@@ -1735,6 +1856,138 @@ class _ProgressRecordCard extends StatelessWidget {
               Text(record.note),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressTimeline extends StatelessWidget {
+  const _ProgressTimeline({required this.records});
+
+  final List<ProgressRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = records.toList()
+      ..sort((left, right) => right.updatedAt.compareTo(left.updatedAt));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Learning timeline', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        for (final record in sorted) ...[
+          _ProgressRecordCard(record: record),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _LessonDetailSheet extends StatelessWidget {
+  const _LessonDetailSheet({
+    required this.lesson,
+    required this.pathway,
+    required this.resources,
+    required this.onSaveProgress,
+  });
+
+  final Lesson lesson;
+  final LearningPathway pathway;
+  final List<ResourceItem> resources;
+  final VoidCallback onSaveProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height * 0.88;
+    return SizedBox(
+      height: height,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(lesson.title, style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 4),
+              Text(lesson.summary),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(label: pathway.title),
+                  _MiniBadge(label: lesson.difficulty),
+                  _MiniBadge(label: '${lesson.estimatedMinutes} min'),
+                  if (lesson.sourceKind.isNotEmpty) _MiniBadge(label: lesson.sourceKind),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _InfoTile(
+                label: 'Learning objective',
+                value: lesson.objective,
+                detail: 'Pathway: ${pathway.title}',
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Lesson steps',
+                subtitle: 'Work through these one at a time.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final step in lesson.steps)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text('• $step'),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Source-linked resources',
+                subtitle: 'Open these later as the module matures.',
+                child: resources.isEmpty
+                    ? const _EmptyInline(
+                        title: 'No linked resources',
+                        subtitle: 'This lesson will gain source links as content packs grow.',
+                      )
+                    : Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          for (final resource in resources)
+                            _MiniBadge(label: resource.title),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Reflection prompt',
+                subtitle: 'A gentle note to capture after the lesson.',
+                child: Text(lesson.reflectionPrompt),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.icon(
+                    onPressed: onSaveProgress,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Mark complete'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Close'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
