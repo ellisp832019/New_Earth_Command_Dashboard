@@ -1,26 +1,26 @@
-# TASK - Users & Devices Release Verification Pass
+# TASK - Dashboard Daily Flow Tools
 
 ## Status
 
 Ready to start.
 
-The persistence and migration hardening slice has completed.
+The calm session layer is in a healthier place now.
 
-The next active slice should finish the release-confidence pass for the local trust layer so the module is easier to verify, explain, and hand over.
+The next active slice should make the main daily flow feel tighter so the dashboard answers the next useful step more clearly.
 
 ## Goal
 
-Make Users & Devices Control feel release-ready from an operator point of view by tightening the final verification path around:
+Strengthen the dashboard's daily operating loop around:
 
-- route trust confidence
-- restart and relock predictability
-- guide and checklist alignment
-- focused test and manual proof discipline
+- Today Focus
+- Top 3 Tasks
+- Active Projects
+- Quick Capture
 
 This slice sits inside:
 
-- `Users & Devices Trust Completion`
-- `Foundation Hardening`
+- `Dashboard Calm Session Layer`
+- `Core Daily Loop Completion`
 - `Repo Upgrade Program`
 
 ## Source of Truth
@@ -30,21 +30,19 @@ Read these files first:
 - `docs/fsd/00_master_index.md`
 - `docs/fsd/04_screen_specification.md`
 - `docs/fsd/10_testing_release.md`
+- `docs/fsd/12_major_upgrade_plan.md`
 - `docs/fsd/13_upgrade_execution_plan.md`
-- `docs/fsd/14_repo_upgrade_program.md`
-- `docs/roadmap/repo_upgrade_20_task_execution_queue.md`
-- `docs/roadmap/users_devices_upgrade_roadmap.md`
-- `docs/roadmap/users_devices_manual_test_checklist.md`
-- `modules/01_USERS_AND_DEVICES_CONTROL/docs/UPGRADE_PLAN_NEXT_SLICE.md`
+- `docs/roadmap/major_upgrade_review.md`
+- `docs/roadmap/dashboard_future_roadmap.md`
+- `docs/roadmap/dashboard_daily_flow_tools_next_slice.md`
 
 Pay special attention to:
 
-- locked-route behaviour
-- resume-after-unlock behaviour
-- PIN recovery and lockout proof
-- restart and relock confidence
-- access review drill-down accuracy
-- guide wording that should match the real screens exactly
+- Today to Top 3 handoff
+- Active Projects as support context
+- Quick Capture as a safe side lane
+- carry-forward and tomorrow-focus cues
+- keeping the dashboard calm and readable
 
 ## Requirements
 
@@ -59,44 +57,37 @@ Pay special attention to:
 
 This slice should focus on the most useful minimum:
 
-1. verify the Users & Devices route-protection and relock flow still behaves exactly as intended
-2. tighten any final release-confidence gaps found in the active trust flow
-3. align the user guide and manual checklist with the real runtime flow
-4. strengthen focused proof where practical without widening the module into new feature work
-
-Recommended first focus:
-
-- manual verification alignment
-- route and session confidence
-- operator handoff clarity
+1. make the Today panel hand off into Top 3 more explicitly
+2. keep Active Projects clearly subordinate to the daily focus
+3. keep Quick Capture visibly secondary to committed work
+4. make carry-forward and tomorrow-focus cues easier to read
 
 ## Out of Scope
 
-Do not add these in this slice unless they are already trivial once the verification work is done:
+Do not add these in this slice unless they are already trivial once the flow work is done:
 
-- cloud or account-linked workflow
-- external authentication
-- new major admin surfaces
-- unrelated dashboard redesign
-- broader integration work
-- speculative security expansion beyond the current local model
+- new dashboard modules
+- heavy analytics
+- unrelated security changes
+- voice integration changes
+- broader module redesign
 
 ## Expected Result
 
 After this slice:
 
-1. the module’s locked, unlocked, relock, and restart flow is easier to verify
-2. the guide and checklist match the real app more closely
-3. remaining trust-flow ambiguity is reduced without adding unnecessary new UI
-4. Users & Devices feels more ready for a broader release-confidence review
+1. the dashboard answers the next useful move more clearly
+2. Top 3 feels like the real continuation of Today Focus
+3. Quick Capture feels like a safe side lane, not the main work surface
+4. the daily flow stays calm and easy to trust
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. the relevant Users & Devices route, PIN, and screen tests still pass
-2. any touched runtime flow is manually checked against `users_devices_manual_test_checklist.md`
-3. guide wording and checklist wording match the real route flow where updated
+1. the relevant dashboard widget tests still pass
+2. any touched runtime flow is checked against the dashboard flow docs
+3. guide wording and dashboard wording still match the real flow where updated
 4. `flutter analyze` passes
 5. focused `flutter test` passes
 6. `flutter build windows` passes if runtime code changed

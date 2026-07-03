@@ -682,20 +682,22 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.byKey(const Key('dashboardFocusBridgeCard')), findsOneWidget);
-    expect(find.text('Top 3 not set yet'), findsOneWidget);
+    expect(find.text('Today -> Top 3'), findsOneWidget);
     expect(
-      find.text('Next step: choose up to 3 tasks that make this focus real.'),
+      find.text('Choose up to 3 tasks that turn today into action.'),
       findsOneWidget,
     );
     expect(
-      find.text('Use projects as support context for the committed work above.'),
+      find.text(
+        'Use projects as support context for the committed work above, not as a competing priority.',
+      ),
       findsOneWidget,
     );
     expect(
       find.byKey(const Key('dashboardQuickCaptureGuidanceCard')),
       findsOneWidget,
     );
-    expect(find.text('Safe place to park it'), findsOneWidget);
+    expect(find.text('Secondary lane'), findsOneWidget);
     expect(
       find.byKey(const Key('dashboardQuickCaptureHandoffCard')),
       findsOneWidget,
@@ -703,7 +705,7 @@ void main() {
     expect(find.text('Inbox first'), findsOneWidget);
     expect(
       find.text(
-        'Capture a thought quickly, then return to the strongest next move.',
+        'Capture is a relief valve, not the main work surface.',
       ),
       findsOneWidget,
     );

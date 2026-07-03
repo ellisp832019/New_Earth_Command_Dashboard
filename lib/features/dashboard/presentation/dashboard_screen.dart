@@ -3451,16 +3451,16 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
     final hasIntention = widget.snapshot.morningIntention?.isNotEmpty == true;
     final topTaskCount = widget.snapshot.topTasks.length;
     final focusBridgeLabel = switch (topTaskCount) {
-      0 => 'Top 3 not set yet',
-      1 => '1 of 3 tasks committed',
-      2 => '2 of 3 tasks committed',
-      _ => 'Top 3 in motion',
+      0 => 'Today -> Top 3',
+      1 => 'Top 3 taking shape',
+      2 => 'Top 3 nearly full',
+      _ => 'Today flowing into Top 3',
     };
     final focusBridgeCopy = switch (topTaskCount) {
-      0 => 'Next step: choose up to 3 tasks that make this focus real.',
-      1 => 'Next step: add a little support around the first committed task.',
-      2 => 'Next step: keep the final slot open unless it truly helps today.',
-      _ => 'Next step: let the Top 3 carry this focus before opening anything else.',
+      0 => 'Choose up to 3 tasks that turn today into action.',
+      1 => 'The first task is set. Add the next most useful support task.',
+      2 => 'Only keep the final slot open if it truly helps today.',
+      _ => 'Let the Top 3 carry this focus before opening anything else.',
     };
 
     return Container(
@@ -3701,7 +3701,7 @@ class _ActiveProjectsPanel extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Use projects as support context for the committed work above.',
+            'Use projects as support context for the committed work above, not as a competing priority.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
@@ -3958,15 +3958,15 @@ class _DashboardQuickCaptureCardState
         : hasCarryForward
         ? 'Carry-forward already noted'
         : hasFocus
-        ? 'Protect the current focus'
-        : 'Safe place to park it';
+        ? 'Secondary lane'
+        : 'Secondary lane';
     final guidanceCopy = hasTomorrowFocus
         ? 'Capture only what should wait for later, not work that already belongs to tomorrow.'
         : hasCarryForward
         ? 'Use capture for fresh thoughts, not for work that is already being carried forward.'
         : hasFocus
         ? 'Use this only for thoughts that should not interrupt the current Top 3.'
-        : 'Capture a thought quickly, then return to the strongest next move.';
+        : 'Capture is a relief valve, not the main work surface.';
     final captureHandoffLabel = _lastSavedCaptureLabel == null
         ? 'Inbox first'
         : 'Last saved to Inbox';
