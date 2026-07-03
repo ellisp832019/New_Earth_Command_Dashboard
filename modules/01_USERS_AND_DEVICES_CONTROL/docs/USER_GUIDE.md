@@ -23,7 +23,7 @@ The main app now opens on `Security Lock` first. That screen uses the New Earth 
 
 A small opaque security session box now sits on the right side of the desktop shell. It shows whether the session is active, the active user, whether that user is online, the timeout window, and a live countdown to expiry. You can tap it to return to `Security Lock` or jump to `Access Matrix`.
 
-The local PIN registry now lives inside the same security area. Use `PIN Registry` from `Users & Devices Control` or `Settings` when you need to set, revoke, or recover a local PIN. The lock screen no longer opens the registry directly.
+The local PIN registry now lives inside the same security area. Use `PIN Registry` from `Users & Devices Control` or `Settings` when you need to set, revoke, or recover a local PIN. When the registry is locked, its back path returns through `Security Lock` rather than opening the protected surface directly.
 
 The PIN registry now stores records in the local SQLite database first, with the seeded JSON files acting as the fallback demo source. That keeps per-user PIN changes, recovery codes, and audit flow local while the rest of the access store catches up.
 

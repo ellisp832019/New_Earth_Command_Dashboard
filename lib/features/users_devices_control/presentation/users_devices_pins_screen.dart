@@ -502,7 +502,11 @@ class _UsersDevicesPinsScreenState
         appBar: AppBar(
           title: const Text('PIN Registry'),
           leading: IconButton(
-            onPressed: () => context.go(RouteNames.usersDevices),
+            onPressed: () => context.go(
+              SecurityRoutePolicy.securityLockFrom(
+                GoRouterState.of(context).uri,
+              ),
+            ),
             icon: const Icon(Icons.arrow_back),
           ),
         ),
@@ -517,8 +521,6 @@ class _UsersDevicesPinsScreenState
                     'Open Security Lock and unlock the local session before managing user PINs.',
                 detail:
                     'This keeps per-user PIN changes, recovery actions, and lockout resets inside one deliberate local session.',
-                secondaryActionLabel: 'Back to Users & Devices',
-                onSecondaryAction: () => context.go(RouteNames.usersDevices),
               ),
             ),
           ),

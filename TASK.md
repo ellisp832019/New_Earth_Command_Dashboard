@@ -1,88 +1,80 @@
-# TASK - Omega Knowledge Engine Settings and Discovery
+# TASK - Users & Devices Route Protection Sweep
 
 ## Status
 
 Ready to start.
 
-The output-health slice is done.
-The next useful slice is to make the Knowledge Engine settings easier to trust and make the module discovery path clearer from the docs and module surfaces.
+The Knowledge Engine work is clean.
+The next active stream in the repo-wide execution plan is Users & Devices trust completion, starting with the route protection sweep.
 
 ## Goal
 
-Improve the Knowledge Engine by clarifying:
-
-- current settings and local paths
-- Module Hub / More discovery cues
-- the repo-wide upgrade position in the docs
-
-This slice sits inside:
-
-- `Omega Knowledge Engine`
-- `Module Discovery`
-- `Repo Upgrade Program`
-- `Major Upgrade Review`
+Make the Security Lock the only public entry point while the app is locked and remove direct bypasses into protected Users & Devices admin surfaces.
 
 ## Source of Truth
 
 Read these files first:
 
 - `docs/fsd/00_master_index.md`
-- `modules/26_OMEGA_KNOWLEDGE_ENGINE/docs/FSD_OMEGA_KNOWLEDGE_ENGINE.md`
-- `modules/26_OMEGA_KNOWLEDGE_ENGINE/README.md`
-- `docs/roadmap/major_upgrade_review.md`
-- `docs/roadmap/dashboard_future_roadmap.md`
+- `docs/fsd/03_user_roles_navigation.md`
+- `docs/fsd/04_screen_specification.md`
+- `docs/fsd/10_testing_release.md`
 - `docs/fsd/12_major_upgrade_plan.md`
 - `docs/fsd/13_upgrade_execution_plan.md`
+- `docs/roadmap/users_devices_upgrade_roadmap.md`
+- `modules/01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md`
 
 Pay special attention to:
 
-- safe read-only defaults
-- current local path settings
-- where the module is surfaced from
-- where the app is in the broader upgrade program
+- locked-state entry behaviour
+- protected routes and resume routing
+- helper buttons that must stay honest
+- restore/unlock flow after a valid local unlock
 
 ## Requirements
 
 1. Keep the app local-first and offline-first.
-2. Keep the engine read-only by default.
-3. Keep wording calm, practical, and low-pressure.
-4. Keep discovery simple and obvious.
+2. Keep the lock screen the only public entry point while locked.
+3. Keep unlock resume routing predictable.
+4. Keep wording calm and clear.
 5. Keep the slice small, reviewable, and testable.
-6. Update documentation only where the runtime flow or upgrade guidance truly changed.
+6. Update documentation only where route flow really changed.
 7. If runtime behaviour changes, verify analyzer, tests, and Windows build honestly.
 
 ## Slice Scope
 
 This slice should focus on the most useful minimum:
 
-1. make the settings tab explain the current local path posture more clearly
-2. make the module discovery path easier to trust from the docs
-3. refresh the major-upgrade review wording if needed
+1. make locked-state route protection central and consistent
+2. prevent direct navigation into protected Users & Devices surfaces while locked
+3. keep the intended destination available after a valid unlock
+4. keep lock-screen helper buttons honest about what is blocked
 
 ## Out of Scope
 
-Do not add these in this slice unless they are already trivial once the discovery work is done:
+Do not add these in this slice unless they are already trivial once the route sweep is done:
 
-- automatic source rewriting
-- live repo scanning daemon
-- AI automation
-- broad module redesign
-- live cloud integration
+- failed unlock lockout redesign
+- recovery and admin reset workflows
+- onboarding tightening
+- device quarantine improvements
+- broader security redesign
 
 ## Expected Result
 
 After this slice:
 
-1. the user can see what paths the engine will use before scanning
-2. the module is easier to discover from the dashboard surfaces and docs
-3. the repo-wide upgrade position is clearer without adding noise
+1. locked users stay on Security Lock until they unlock locally
+2. protected admin routes do not open through a bypass
+3. resumed routes still feel smooth after unlock
+4. the trust spine feels more consistent
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. the relevant Knowledge Engine tests still pass
-2. any touched runtime flow is checked against the module FSD
+1. the relevant Users & Devices tests still pass
+2. any touched runtime flow is checked against the module docs
 3. wording and runtime flow still match where updated
 4. `flutter analyze` passes
 5. focused `flutter test` passes
