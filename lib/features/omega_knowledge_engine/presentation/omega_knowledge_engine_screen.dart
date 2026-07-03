@@ -894,8 +894,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     required List<_PathHealth> outputHealth,
   }) {
     final warnings = <String>[];
-    final missingRepos = repoHealth.where((item) => !item.exists).length;
-    final missingOutputs = outputHealth.where((item) => !item.exists).length;
+    final missingRepos = repoHealth.where((item) => !item.exists).toList();
+    final missingOutputs = outputHealth.where((item) => !item.exists).toList();
 
     if (snapshot.settings.safetyMode != 'scan_report_only') {
       warnings.add(
@@ -903,15 +903,15 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       );
     }
 
-    if (missingRepos > 0) {
+    if (missingRepos.isNotEmpty) {
       warnings.add(
-        '$missingRepos repo target(s) are currently missing on disk.',
+        'Missing repo target(s): ${missingRepos.map((item) => item.label).join(', ')}.',
       );
     }
 
-    if (missingOutputs > 0) {
+    if (missingOutputs.isNotEmpty) {
       warnings.add(
-        '$missingOutputs expected output file(s) have not been generated yet.',
+        'Missing output file(s): ${missingOutputs.map((item) => item.label).join(', ')}.',
       );
     }
 
@@ -1009,7 +1009,7 @@ class _OverviewTab extends StatelessWidget {
     final readyOutputCount = outputHealth.where((item) => item.exists).length;
     final missingOutputCount = outputHealth.length - readyOutputCount;
     final scanReadiness = missingRepoCount == 0 && missingOutputCount == 0
-        ? 'Ready'
+        ? 'Ready to scan'
         : missingRepoCount < repoHealth.length && missingOutputCount < outputHealth.length
             ? 'Partially ready'
             : 'Needs attention';
@@ -1091,7 +1091,7 @@ class _OverviewTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _PanelCard(
-          title: 'Scan status',
+          title: 'Repository validation',
           subtitle:
               'A calm readout of repository targets, generated outputs, and scan readiness.',
           child: Column(
