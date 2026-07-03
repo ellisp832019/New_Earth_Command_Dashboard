@@ -1448,6 +1448,23 @@ class _MentorTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notes = snapshot.notesForStudent(selectedStudent.id);
+    final reflections = snapshot.reflectionsForStudent(selectedStudent.id);
+    final assessments = snapshot.assessmentsForStudent(selectedStudent.id);
+    final completedAssessments = assessments
+        .where((assessment) => assessment.completedAt != null)
+        .length;
+    final badgeCount = snapshot.earnedBadgeCountForStudent(selectedStudent.id);
+    final progressLabel = snapshot.progressLabelForStudent(selectedStudent.id);
+    final mentorSummary = StringBuffer()
+      ..writeln('Learner: ${selectedStudent.name}')
+      ..writeln('Role view: ${roleView.label}')
+      ..writeln('Mentor: ${selectedStudent.mentorName}')
+      ..writeln('Guardian: ${selectedStudent.guardianName}')
+      ..writeln('Progress: $progressLabel')
+      ..writeln('Assessments: $completedAssessments of ${assessments.length} complete')
+      ..writeln('Reflections: ${reflections.length}')
+      ..writeln('Badges: $badgeCount')
+      ..writeln('Latest support note count: ${notes.length}');
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1480,6 +1497,52 @@ class _MentorTab extends StatelessWidget {
                 label: 'Mentor',
                 value: selectedStudent.mentorName,
                 detail: 'Guardian: ${selectedStudent.guardianName}',
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Local mentor summary',
+                subtitle: 'A calm clipboard-friendly snapshot for review or handoff.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: progressLabel),
+                        _MiniBadge(label: '$completedAssessments/${assessments.length} assessments'),
+                        _MiniBadge(label: '${reflections.length} reflections'),
+                        _MiniBadge(label: '$badgeCount badges'),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(mentorSummary.toString().trim()),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: mentorSummary.toString().trim()),
+                            );
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Mentor summary copied locally.'),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.copy_all_outlined),
+                          label: const Text('Copy summary'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               if (notes.isEmpty)

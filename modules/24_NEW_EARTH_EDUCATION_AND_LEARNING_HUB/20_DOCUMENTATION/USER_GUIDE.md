@@ -33,10 +33,11 @@
 1. Open Mentor Workspace.
 2. Select the learner card at the top.
 3. Review the latest notes and reflections.
-4. Check the assessment cards and progress records.
-5. Check the certificate readiness summary before sign-off.
-6. Use the placeholder tutor only as guidance.
-7. Keep any important decisions human-reviewed.
+4. Use the local mentor summary to copy a handoff snapshot if needed.
+5. Check the assessment cards and progress records.
+6. Check the certificate readiness summary before sign-off.
+7. Use the placeholder tutor only as guidance.
+8. Keep any important decisions human-reviewed.
 
 ## For admins
 1. Import content packs.
