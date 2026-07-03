@@ -7,13 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/theme/app_colours.dart';
 import '../data/omega_knowledge_engine_service.dart';
 
 class OmegaKnowledgeEngineScreen extends StatefulWidget {
-  const OmegaKnowledgeEngineScreen({
-    super.key,
-    this.service,
-  });
+  const OmegaKnowledgeEngineScreen({super.key, this.service});
 
   final OmegaKnowledgeEngineService? service;
 
@@ -27,6 +25,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   late final OmegaKnowledgeEngineService _service;
   final Map<String, TextEditingController> _repoControllers = {};
   final Map<String, FocusNode> _repoFocusNodes = {};
+  final GlobalKey<_OmegaKnowledgeEngineTerminalDockState> _terminalDockKey =
+      GlobalKey<_OmegaKnowledgeEngineTerminalDockState>();
   TabController? _tabController;
   late final TextEditingController _repoRootController;
   late final TextEditingController _outputDirController;
@@ -149,7 +149,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
           OmegaKnowledgeEngineRepoProfile(
             key: profile.key,
             name: profile.name,
-            pathWindows: _repoControllers[profile.key]?.text.trim() ?? profile.pathWindows,
+            pathWindows:
+                _repoControllers[profile.key]?.text.trim() ??
+                profile.pathWindows,
             type: profile.type,
           ),
       ],
@@ -236,59 +238,73 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Scan command copied.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Scan command copied.')));
   }
 
   Future<void> _runScan() async {
-    if (_runningScan) {
+    if (_runningScan || _snapshot == null) {
       return;
     }
 
-    setState(() {
-      _runningScan = true;
-    });
-
     try {
-      final result = await _service.runScan();
-      final reloaded = await _service.loadSnapshot();
-
-      if (!mounted) {
+      final dockState = _terminalDockKey.currentState;
+      if (dockState == null) {
         return;
       }
 
       setState(() {
-        _snapshot = reloaded;
-        _loadError = null;
-        _seedControllers(reloaded.settings);
-        _runningScan = false;
+        _runningScan = true;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.succeeded
-                ? 'Omega scan completed and outputs refreshed.'
-                : 'Omega scan did not complete: ${result.summary}',
-          ),
-        ),
-      );
-
-      if (result.succeeded) {
-        _openScanResults();
-      }
+      await dockState.runScan();
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      setState(() {
-        _runningScan = false;
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Omega scan failed to start: $error')),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _runningScan = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openTerminal() async {
+    _openTab(0);
+  }
+
+  Future<void> _handleTerminalScanFinished(
+    OmegaKnowledgeEngineRunResult result,
+  ) async {
+    final reloaded = await _service.loadSnapshot();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _snapshot = reloaded;
+      _loadError = null;
+      _seedControllers(reloaded.settings);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.succeeded
+              ? 'Omega scan completed and outputs refreshed.'
+              : 'Omega scan did not complete: ${result.summary}',
+        ),
+      ),
+    );
+
+    if (result.succeeded) {
+      _openScanResults();
     }
   }
 
@@ -484,7 +500,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
 
   void _removeRepoProfile(String key) {
     setState(() {
-      _repoProfilesDraft = _repoProfilesDraft.where((profile) => profile.key != key).toList(growable: true);
+      _repoProfilesDraft = _repoProfilesDraft
+          .where((profile) => profile.key != key)
+          .toList(growable: true);
       final controller = _repoControllers.remove(key);
       controller?.dispose();
       final focusNode = _repoFocusNodes.remove(key);
@@ -494,7 +512,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
 
   void _syncRepoControllers(List<OmegaKnowledgeEngineRepoProfile> profiles) {
     final activeKeys = profiles.map((profile) => profile.key).toSet();
-    final staleKeys = _repoControllers.keys.where((key) => !activeKeys.contains(key)).toList();
+    final staleKeys = _repoControllers.keys
+        .where((key) => !activeKeys.contains(key))
+        .toList();
     for (final key in staleKeys) {
       _repoControllers.remove(key)?.dispose();
       _repoFocusNodes.remove(key)?.dispose();
@@ -532,7 +552,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     if (_loading) {
       return Scaffold(
         appBar: AppBar(
-          leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
+          leading: BackButton(
+            onPressed: () => context.go(RouteNames.moduleHub),
+          ),
           title: const Text('Omega Knowledge Engine'),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -542,7 +564,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     if (_loadError != null && _snapshot == null) {
       return Scaffold(
         appBar: AppBar(
-          leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
+          leading: BackButton(
+            onPressed: () => context.go(RouteNames.moduleHub),
+          ),
           title: const Text('Omega Knowledge Engine'),
         ),
         body: Center(
@@ -628,6 +652,12 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
         title: const Text('Omega Knowledge Engine'),
         actions: [
           TextButton.icon(
+            onPressed: _openTerminal,
+            icon: const Icon(Icons.terminal_outlined),
+            label: const Text('Terminal'),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
             onPressed: _openScanResults,
             icon: const Icon(Icons.table_view_outlined),
             label: const Text('Scan outputs'),
@@ -664,6 +694,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
           _OverviewTab(
             snapshot: snapshot,
             theme: theme,
+            terminalDockKey: _terminalDockKey,
+            service: _service,
             repoHealth: repoHealth,
             outputHealth: outputHealth,
             outputPreviews: outputPreviews,
@@ -676,10 +708,12 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             onOpenObsidianExport: () => _openTab(7),
             onOpenSettings: _openSettings,
             healthWarnings: healthWarnings,
-            onOpenOutputFolder: () => _openLocalPath(snapshot.settings.outputDir),
+            onOpenOutputFolder: () =>
+                _openLocalPath(snapshot.settings.outputDir),
             onOpenObsidianExportFolder: () =>
                 _openLocalPath(snapshot.settings.obsidianExportDir),
             onCopyOutputPath: () => _copyText(snapshot.settings.outputDir),
+            onScanFinished: _handleTerminalScanFinished,
           ),
           _RepositoriesTab(
             snapshot: snapshot,
@@ -692,16 +726,18 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             documents: [
               _DocumentSource(
                 label: 'repository_index.json',
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json',
                 content: snapshot.repositoryIndexText.isEmpty
                     ? 'No repository index found yet.'
-                    : const JsonEncoder.withIndent('  ').convert(
-                        snapshot.repositoryIndexJson,
-                      ),
+                    : const JsonEncoder.withIndent(
+                        '  ',
+                      ).convert(snapshot.repositoryIndexJson),
               ),
               _DocumentSource(
                 label: 'repository_index.md',
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md',
                 content: snapshot.repositoryIndexText,
               ),
             ],
@@ -712,7 +748,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             documents: [
               _DocumentSource(
                 label: 'code_learning_notes.md',
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md',
                 content: snapshot.learningNotesText,
               ),
             ],
@@ -723,21 +760,21 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             documents: [
               _DocumentSource(
                 label: 'architecture_map.md',
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md',
                 content: snapshot.architectureMapText,
               ),
             ],
           ),
-          _CommentSuggestionsTab(
-            text: snapshot.commentSuggestionsText,
-          ),
+          _CommentSuggestionsTab(text: snapshot.commentSuggestionsText),
           _DocumentTab(
             title: 'Project Memory',
             subtitle: 'Decisions, lessons, and next steps.',
             documents: [
               _DocumentSource(
                 label: 'project_memory.md',
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md',
                 content: snapshot.projectMemoryText,
               ),
             ],
@@ -747,7 +784,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
             theme: theme,
             onOpenExportFolder: () =>
                 _openLocalPath(snapshot.settings.obsidianExportDir),
-            onCopyExportPath: () => _copyText(snapshot.settings.obsidianExportDir),
+            onCopyExportPath: () =>
+                _copyText(snapshot.settings.obsidianExportDir),
           ),
           _SettingsTab(
             snapshot: snapshot,
@@ -787,49 +825,65 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       _PathHealth(
         label: 'repository_index.json',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json',
+        ),
         kind: 'scan result',
       ),
       _PathHealth(
         label: 'repository_index.md',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md',
+        ),
         kind: 'scan result',
       ),
       _PathHealth(
         label: 'code_learning_notes.md',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md',
+        ),
         kind: 'learning notes',
       ),
       _PathHealth(
         label: 'architecture_map.md',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md',
+        ),
         kind: 'architecture',
       ),
       _PathHealth(
         label: 'comment_suggestions.md',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/comment_suggestions.md',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/comment_suggestions.md'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/comment_suggestions.md',
+        ),
         kind: 'suggestions',
       ),
       _PathHealth(
         label: 'project_memory.md',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md',
+        ),
         kind: 'memory',
       ),
       _PathHealth(
         label: 'obsidian_export/',
         path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/obsidian_export',
-        exists: _entityExists('modules/26_OMEGA_KNOWLEDGE_ENGINE/output/obsidian_export'),
+        exists: _entityExists(
+          'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/obsidian_export',
+        ),
         kind: 'vault export',
       ),
     ];
   }
 
-  List<_OutputPreview> _buildOutputPreviews(OmegaKnowledgeEngineSnapshot snapshot) {
+  List<_OutputPreview> _buildOutputPreviews(
+    OmegaKnowledgeEngineSnapshot snapshot,
+  ) {
     return [
       _OutputPreview(
         label: 'Scan results',
@@ -931,7 +985,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   }
 
   bool _entityExists(String relativePath) {
-    return FileSystemEntity.typeSync(relativePath) != FileSystemEntityType.notFound;
+    return FileSystemEntity.typeSync(relativePath) !=
+        FileSystemEntityType.notFound;
   }
 
   Future<void> _copyText(String text) async {
@@ -939,9 +994,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Path copied to clipboard.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Path copied to clipboard.')));
   }
 
   Future<void> _openLocalPath(String localPath) async {
@@ -962,9 +1017,9 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open path: $trimmed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open path: $trimmed')));
     }
   }
 }
@@ -973,6 +1028,8 @@ class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
     required this.snapshot,
     required this.theme,
+    required this.service,
+    required this.terminalDockKey,
     required this.repoHealth,
     required this.outputHealth,
     required this.outputPreviews,
@@ -988,10 +1045,13 @@ class _OverviewTab extends StatelessWidget {
     required this.onOpenOutputFolder,
     required this.onOpenObsidianExportFolder,
     required this.onCopyOutputPath,
+    required this.onScanFinished,
   });
 
   final OmegaKnowledgeEngineSnapshot snapshot;
   final ThemeData theme;
+  final OmegaKnowledgeEngineService service;
+  final GlobalKey<_OmegaKnowledgeEngineTerminalDockState> terminalDockKey;
   final List<_PathHealth> repoHealth;
   final List<_PathHealth> outputHealth;
   final List<_OutputPreview> outputPreviews;
@@ -1007,6 +1067,8 @@ class _OverviewTab extends StatelessWidget {
   final VoidCallback onOpenOutputFolder;
   final VoidCallback onOpenObsidianExportFolder;
   final VoidCallback onCopyOutputPath;
+  final Future<void> Function(OmegaKnowledgeEngineRunResult result)
+  onScanFinished;
 
   @override
   Widget build(BuildContext context) {
@@ -1016,13 +1078,21 @@ class _OverviewTab extends StatelessWidget {
     final missingOutputCount = outputHealth.length - readyOutputCount;
     final scanReadiness = missingRepoCount == 0 && missingOutputCount == 0
         ? 'Ready to scan'
-        : missingRepoCount < repoHealth.length && missingOutputCount < outputHealth.length
-            ? 'Partially ready'
-            : 'Needs attention';
+        : missingRepoCount < repoHealth.length &&
+              missingOutputCount < outputHealth.length
+        ? 'Partially ready'
+        : 'Needs attention';
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _OmegaKnowledgeEngineTerminalDock(
+          key: terminalDockKey,
+          snapshot: snapshot,
+          service: service,
+          onScanFinished: onScanFinished,
+        ),
+        const SizedBox(height: 16),
         _BannerCard(
           title: 'Scan first. Report first. Learn first.',
           subtitle:
@@ -1089,9 +1159,18 @@ class _OverviewTab extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _StatCard(label: 'Repositories', value: '${snapshot.repositoryCount}'),
-            _StatCard(label: 'Files scanned', value: '${snapshot.filesScanned}'),
-            _StatCard(label: 'Obsidian files', value: '${snapshot.obsidianExportFiles.length}'),
+            _StatCard(
+              label: 'Repositories',
+              value: '${snapshot.repositoryCount}',
+            ),
+            _StatCard(
+              label: 'Files scanned',
+              value: '${snapshot.filesScanned}',
+            ),
+            _StatCard(
+              label: 'Obsidian files',
+              value: '${snapshot.obsidianExportFiles.length}',
+            ),
             _StatCard(label: 'Generated at', value: snapshot.generatedAt),
           ],
         ),
@@ -1116,7 +1195,10 @@ class _OverviewTab extends StatelessWidget {
                     label: 'Outputs ready',
                     value: '$readyOutputCount/${outputHealth.length}',
                   ),
-                  _StatCard(label: 'Last generated', value: snapshot.generatedAt),
+                  _StatCard(
+                    label: 'Last generated',
+                    value: snapshot.generatedAt,
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -1129,12 +1211,11 @@ class _OverviewTab extends StatelessWidget {
                     tone: scanReadiness == 'Ready to scan'
                         ? _ChipTone.success
                         : scanReadiness == 'Partially ready'
-                            ? _ChipTone.info
-                            : _ChipTone.danger,
+                        ? _ChipTone.info
+                        : _ChipTone.danger,
                   ),
                   _StatusChip(
-                    label:
-                        '$readyRepoCount/${repoHealth.length} repos present',
+                    label: '$readyRepoCount/${repoHealth.length} repos present',
                     tone: _ChipTone.info,
                   ),
                   _StatusChip(
@@ -1169,7 +1250,8 @@ class _OverviewTab extends StatelessWidget {
           const SizedBox(height: 16),
           _PanelCard(
             title: 'Health notes',
-            subtitle: 'These are the items worth checking before the next scan.',
+            subtitle:
+                'These are the items worth checking before the next scan.',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1259,8 +1341,12 @@ class _OverviewTab extends StatelessWidget {
         const SizedBox(height: 16),
         _PanelCard(
           title: 'Scan command',
-          subtitle: 'Manual local command kept visible for later safe execution.',
-          child: SelectableText(snapshot.scanCommand, style: theme.textTheme.bodyMedium),
+          subtitle:
+              'Manual local command kept visible for later safe execution.',
+          child: SelectableText(
+            snapshot.scanCommand,
+            style: theme.textTheme.bodyMedium,
+          ),
         ),
         const SizedBox(height: 16),
         _PanelCard(
@@ -1270,8 +1356,14 @@ class _OverviewTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               _BulletLine(text: 'Scan the local repositories and index files.'),
-              _BulletLine(text: 'Generate notes, architecture maps, and comment suggestions.'),
-              _BulletLine(text: 'Review outputs before any future source modification path is enabled.'),
+              _BulletLine(
+                text:
+                    'Generate notes, architecture maps, and comment suggestions.',
+              ),
+              _BulletLine(
+                text:
+                    'Review outputs before any future source modification path is enabled.',
+              ),
             ],
           ),
         ),
@@ -1312,7 +1404,8 @@ class _RepositoriesTab extends StatelessWidget {
         const SizedBox(height: 16),
         _PanelCard(
           title: 'Backed-up intent',
-          subtitle: 'The repository list can grow safely as more New Earth repos arrive.',
+          subtitle:
+              'The repository list can grow safely as more New Earth repos arrive.',
           child: Text(
             'Dashboard repo, MicroGrow, BioCalm, New Earth Living, and future repos are all preloaded as scan targets. The live draft currently tracks ${repoProfiles.length} target(s).',
             style: theme.textTheme.bodyMedium,
@@ -1373,14 +1466,17 @@ class _CommentSuggestionsTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _BulletLine(
-                text: 'Suggestions are for learning and review, not auto-editing.',
+                text:
+                    'Suggestions are for learning and review, not auto-editing.',
               ),
               const _BulletLine(
-                text: 'Any future patch flow must include backup-first approval.',
+                text:
+                    'Any future patch flow must include backup-first approval.',
               ),
               const SizedBox(height: 12),
               _SourceTextBlock(
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/comment_suggestions.md',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/comment_suggestions.md',
                 content: text,
               ),
             ],
@@ -1424,8 +1520,8 @@ class _ObsidianExportTab extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                    for (final file in snapshot.obsidianExportFiles)
-                      Chip(label: Text(file)),
+                  for (final file in snapshot.obsidianExportFiles)
+                    Chip(label: Text(file)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1447,7 +1543,8 @@ class _ObsidianExportTab extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _SourceTextBlock(
-                path: 'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/obsidian_export/README.md',
+                path:
+                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/obsidian_export/README.md',
                 content: snapshot.obsidianExportFiles.isEmpty
                     ? 'No export files are present yet.'
                     : _obsidianExportNote(),
@@ -1519,7 +1616,8 @@ class _SettingsTab extends StatelessWidget {
       children: [
         _PanelCard(
           title: 'Current config snapshot',
-          subtitle: 'A quick read on what the engine will use next time you scan.',
+          subtitle:
+              'A quick read on what the engine will use next time you scan.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1535,10 +1633,7 @@ class _SettingsTab extends StatelessWidget {
                     label: '${repoProfiles.length} repo target(s)',
                     tone: _ChipTone.info,
                   ),
-                  _StatusChip(
-                    label: 'Read only',
-                    tone: _ChipTone.success,
-                  ),
+                  _StatusChip(label: 'Read only', tone: _ChipTone.success),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1573,19 +1668,24 @@ class _SettingsTab extends StatelessWidget {
             children: const [
               _BulletLine(text: 'Scan/report mode stays the default.'),
               _BulletLine(text: 'No automatic code edits or comment writes.'),
-              _BulletLine(text: 'Repo paths can be reviewed before the scanner is ever run.'),
+              _BulletLine(
+                text:
+                    'Repo paths can be reviewed before the scanner is ever run.',
+              ),
             ],
           ),
         ),
         const SizedBox(height: 16),
         _PanelCard(
           title: 'Settings',
-          subtitle: 'Local repo paths and export settings only. No source edits.',
+          subtitle:
+              'Local repo paths and export settings only. No source edits.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _BulletLine(
-                text: 'Repo paths are stored locally in knowledge_engine_settings.json.',
+                text:
+                    'Repo paths are stored locally in knowledge_engine_settings.json.',
               ),
               const _BulletLine(
                 text: 'The scanner is manual and preview-first for now.',
@@ -1636,20 +1736,17 @@ class _SettingsTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Repository scan targets', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Repository scan targets',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  _StatCard(
-                    label: 'Targets',
-                    value: '${repoProfiles.length}',
-                  ),
-                  const _StatCard(
-                    label: 'Mode',
-                    value: 'Add/remove local',
-                  ),
+                  _StatCard(label: 'Targets', value: '${repoProfiles.length}'),
+                  const _StatCard(label: 'Mode', value: 'Add/remove local'),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1730,7 +1827,9 @@ class _RepoTargetEditorRow extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.16),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.16,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.42),
@@ -1742,10 +1841,11 @@ class _RepoTargetEditorRow extends StatelessWidget {
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: effectiveController,
             builder: (context, value, _) {
-              final exists = Directory(value.text.trim().isEmpty
-                      ? profile.pathWindows
-                      : value.text.trim())
-                  .existsSync();
+              final exists = Directory(
+                value.text.trim().isEmpty
+                    ? profile.pathWindows
+                    : value.text.trim(),
+              ).existsSync();
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1816,17 +1916,21 @@ class _SourceTextBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.22),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Theme.of(
+            context,
+          ).colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: SelectableText(
         content,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
       ),
     );
   }
@@ -1877,16 +1981,463 @@ class _RepoProfileCard extends StatelessWidget {
   }
 }
 
+class _OmegaKnowledgeEngineTerminalDock extends StatefulWidget {
+  const _OmegaKnowledgeEngineTerminalDock({
+    super.key,
+    required this.snapshot,
+    required this.service,
+    required this.onScanFinished,
+  });
+
+  final OmegaKnowledgeEngineSnapshot snapshot;
+  final OmegaKnowledgeEngineService service;
+  final Future<void> Function(OmegaKnowledgeEngineRunResult result)
+  onScanFinished;
+
+  @override
+  State<_OmegaKnowledgeEngineTerminalDock> createState() =>
+      _OmegaKnowledgeEngineTerminalDockState();
+}
+
+class _OmegaKnowledgeEngineTerminalDockState
+    extends State<_OmegaKnowledgeEngineTerminalDock> {
+  final ScrollController _scrollController = ScrollController();
+  final List<String> _lines = [];
+  String _latestLine = '';
+  OmegaKnowledgeEngineRunResult? _result;
+  Object? _error;
+  bool _running = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _seedIdleState();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _seedIdleState() {
+    _latestLine = 'Idle and stable.';
+    _lines
+      ..clear()
+      ..add('Idle and stable.')
+      ..add('Ready for the next scan.')
+      ..add('Generated at: ${widget.snapshot.generatedAt}')
+      ..add('Repositories: ${widget.snapshot.repositoryCount}')
+      ..add('Files scanned: ${widget.snapshot.filesScanned}')
+      ..add('Output root: ${widget.snapshot.settings.outputDir}');
+  }
+
+  Future<OmegaKnowledgeEngineRunResult?> runScan() async {
+    if (_running) {
+      return null;
+    }
+
+    setState(() {
+      _running = true;
+      _error = null;
+      _result = null;
+      _latestLine = 'Scan starting...';
+      _lines
+        ..clear()
+        ..add('Scan starting...');
+    });
+    _scrollToEnd();
+
+    try {
+      final result = await widget.service.runScan(onOutputLine: _appendLine);
+      if (!mounted) {
+        return result;
+      }
+
+      setState(() {
+        _result = result;
+        _running = false;
+        _latestLine = result.succeeded
+            ? 'Idle and stable.'
+            : 'Idle, but review the summary before the next scan.';
+        _lines.add(
+          result.succeeded ? 'Scan complete.' : 'Scan finished with warnings.',
+        );
+        _lines.add(
+          result.succeeded
+              ? 'Idle and stable.'
+              : 'Idle, but review the summary before the next scan.',
+        );
+      });
+      _scrollToEnd();
+      await widget.onScanFinished(result);
+      return result;
+    } catch (error) {
+      if (!mounted) {
+        return null;
+      }
+
+      setState(() {
+        _error = error;
+        _running = false;
+        _latestLine = 'Idle and stable.';
+        _lines.add('Scan failed to start: $error');
+        _lines.add('Idle and stable.');
+      });
+      _scrollToEnd();
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _running = false;
+        });
+      }
+    }
+  }
+
+  void _appendLine(String line) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _lines.add(line);
+      _latestLine = line.replaceFirst('[stderr] ', '');
+    });
+    _scrollToEnd();
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    });
+  }
+
+  String _statusLabel() {
+    if (_running) {
+      return 'Scanning';
+    }
+    if (_error != null) {
+      return 'Idle with error';
+    }
+    return 'Idle and stable';
+  }
+
+  String _statusCopy() {
+    if (_running) {
+      return 'The scan is running. Live terminal lines appear below while the dashboard stays readable.';
+    }
+    if (_error != null) {
+      return 'The terminal is idle again, but the scan start failed. Review the summary and retry when ready.';
+    }
+    return 'The terminal is idle and stable. Run a scan when you want fresh outputs.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _PanelCard(
+      title: 'Terminal',
+      subtitle:
+          'A calm inline console that stays visible while scans are running or idle.',
+      trailing: _StatusChip(
+        label: _statusLabel(),
+        tone: _running
+            ? _ChipTone.info
+            : _error != null
+            ? _ChipTone.danger
+            : _ChipTone.success,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _statusCopy(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColours.darkSurfaceAlt.withValues(alpha: 0.86),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColours.darkOutline.withValues(alpha: 0.75),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Latest line',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _latestLine,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkText,
+                      fontFamily: 'monospace',
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            height: 260,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColours.darkBackground.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: AppColours.darkSecondary.withValues(alpha: 0.24),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Terminal output',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColours.darkSecondary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Read-only, local, and calm.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkMutedText,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _lines.length,
+                      itemBuilder: (context, index) {
+                        final line = _lines[index];
+                        final isErrorLine = line.startsWith('[stderr]');
+                        final displayLine = isErrorLine
+                            ? line.replaceFirst('[stderr] ', '')
+                            : line;
+                        final colour = isErrorLine
+                            ? AppColours.darkAmber
+                            : AppColours.darkText;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: SelectableText(
+                            displayLine,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: colour,
+                                  fontFamily: 'monospace',
+                                  height: 1.35,
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          _TerminalSummary(
+            snapshot: widget.snapshot,
+            result: _result,
+            error: _error,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonalIcon(
+                key: const Key('omegaTerminalRunScanButton'),
+                onPressed: _running ? null : runScan,
+                icon: const Icon(Icons.play_arrow_outlined),
+                label: Text(_result == null ? 'Run scan' : 'Run again'),
+              ),
+              TextButton.icon(
+                key: const Key('omegaTerminalCopyOutputButton'),
+                onPressed: () async {
+                  await Clipboard.setData(
+                    ClipboardData(text: _lines.join('\n')),
+                  );
+                },
+                icon: const Icon(Icons.copy_outlined),
+                label: const Text('Copy terminal output'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TerminalSummary extends StatelessWidget {
+  const _TerminalSummary({
+    required this.snapshot,
+    required this.result,
+    required this.error,
+  });
+
+  final OmegaKnowledgeEngineSnapshot snapshot;
+  final OmegaKnowledgeEngineRunResult? result;
+  final Object? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cards = [
+      _TerminalSummaryCard(
+        label: 'Generated',
+        value: snapshot.generatedAt,
+        accent: AppColours.darkSecondary,
+      ),
+      _TerminalSummaryCard(
+        label: 'Repositories',
+        value: snapshot.repositoryCount.toString(),
+        accent: AppColours.darkSuccess,
+      ),
+      _TerminalSummaryCard(
+        label: 'Files scanned',
+        value: snapshot.filesScanned.toString(),
+        accent: AppColours.darkPrimary,
+      ),
+      _TerminalSummaryCard(
+        label: 'Output dir',
+        value: snapshot.settings.outputDir,
+        accent: AppColours.darkAmber,
+      ),
+    ];
+
+    final summaryText = error != null
+        ? 'Scan start failed: $error'
+        : result == null
+        ? 'Idle and stable. The terminal is ready for the next scan.'
+        : result!.succeeded
+        ? 'The last scan completed cleanly and the dashboard can keep working from the refreshed outputs.'
+        : 'The last scan completed with warnings. Review the output before scanning again.';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          summaryText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: AppColours.darkMutedText,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final useTwoColumns = constraints.maxWidth >= 640;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final card in cards)
+                  SizedBox(
+                    width: useTwoColumns
+                        ? (constraints.maxWidth - 12) / 2
+                        : constraints.maxWidth,
+                    child: card,
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _TerminalSummaryCard extends StatelessWidget {
+  const _TerminalSummaryCard({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.7,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkText,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PanelCard extends StatelessWidget {
   const _PanelCard({
     required this.title,
     required this.subtitle,
     required this.child,
+    this.trailing,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -1899,9 +2450,22 @@ class _PanelCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(subtitle, style: theme.textTheme.bodyMedium),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: theme.textTheme.titleLarge),
+                      const SizedBox(height: 4),
+                      Text(subtitle, style: theme.textTheme.bodyMedium),
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+              ],
+            ),
             const SizedBox(height: 14),
             child,
           ],
@@ -2109,14 +2673,8 @@ class _OutputPreviewCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _StatusChip(
-                label: preview.tabLabel,
-                tone: _ChipTone.neutral,
-              ),
-              _StatusChip(
-                label: preview.sourceLabel,
-                tone: _ChipTone.info,
-              ),
+              _StatusChip(label: preview.tabLabel, tone: _ChipTone.neutral),
+              _StatusChip(label: preview.sourceLabel, tone: _ChipTone.info),
               TextButton.icon(
                 onPressed: preview.open,
                 icon: const Icon(Icons.open_in_new_outlined),
@@ -2160,9 +2718,9 @@ class _StatusChip extends StatelessWidget {
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       label: Text(label),
       labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w700,
-          ),
+        color: color,
+        fontWeight: FontWeight.w700,
+      ),
       backgroundColor: color.withValues(alpha: 0.08),
       side: BorderSide(color: color.withValues(alpha: 0.2)),
     );
@@ -2300,7 +2858,10 @@ List<_RepoProfilePreset> _repoProfilePresets() {
 }
 
 String _repoProfileKeyFromName(String name) {
-  final normalized = name.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+  final normalized = name.trim().toLowerCase().replaceAll(
+    RegExp(r'[^a-z0-9]+'),
+    '_',
+  );
   final trimmed = normalized.replaceAll(RegExp(r'^_+|_+$'), '');
   return 'repo_${trimmed.isEmpty ? 'target' : trimmed}';
 }

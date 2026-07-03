@@ -90,7 +90,8 @@ class _DashboardContent extends StatelessWidget {
                     const SizedBox(height: 22),
                     _DashboardSectionHeader(
                       title: 'Primary work',
-                      subtitle: 'Keep the next useful move, focus, and projects close together.',
+                      subtitle:
+                          'Keep the next useful move, focus, and projects close together.',
                     ),
                     const SizedBox(height: 14),
                     _TopTaskShowcase(snapshot: snapshot),
@@ -99,7 +100,8 @@ class _DashboardContent extends StatelessWidget {
                     const SizedBox(height: 22),
                     _DashboardSectionHeader(
                       title: 'Support stack',
-                      subtitle: 'Open these only when they help the day move more clearly.',
+                      subtitle:
+                          'Open these only when they help the day move more clearly.',
                     ),
                     const SizedBox(height: 14),
                     _SupportModuleGrid(snapshot: snapshot),
@@ -255,11 +257,7 @@ class _DashboardHero extends ConsumerWidget {
 
           final actions = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              coreActions,
-              const SizedBox(height: 10),
-              moduleActions,
-            ],
+            children: [coreActions, const SizedBox(height: 10), moduleActions],
           );
 
           if (!useWideLayout) {
@@ -527,9 +525,7 @@ class _DashboardFlowHandoffPreview extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkPurple.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColours.darkPurple.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppColours.darkPurple.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3517,13 +3513,26 @@ class _DashboardFocusCardState extends ConsumerState<_DashboardFocusCard> {
 
               return Row(
                 children: [
-                  const _PanelTitle(
-                    title: 'Today\'s Focus',
-                    icon: Icons.flag_outlined,
-                    accent: AppColours.darkPrimary,
+                  const Flexible(
+                    fit: FlexFit.loose,
+                    child: _PanelTitle(
+                      title: 'Today\'s Focus',
+                      icon: Icons.flag_outlined,
+                      accent: AppColours.darkPrimary,
+                    ),
                   ),
-                  const Spacer(),
-                  Wrap(spacing: 8, runSpacing: 8, children: actions),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.end,
+                        children: actions,
+                      ),
+                    ),
+                  ),
                 ],
               );
             },
@@ -3687,15 +3696,23 @@ class _ActiveProjectsPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              const _PanelTitle(
-                title: 'Active Projects',
-                icon: Icons.folder_copy_outlined,
-                accent: AppColours.darkSecondary,
+              const Flexible(
+                fit: FlexFit.loose,
+                child: _PanelTitle(
+                  title: 'Active Projects',
+                  icon: Icons.folder_copy_outlined,
+                  accent: AppColours.darkSecondary,
+                ),
               ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => context.go(RouteNames.projectsWorkspace),
-                child: const Text('Open Projects'),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.go(RouteNames.projectsWorkspace),
+                    child: const Text('Open Projects'),
+                  ),
+                ),
               ),
             ],
           ),
@@ -3717,7 +3734,9 @@ class _ActiveProjectsPanel extends StatelessWidget {
                 foreground: AppColours.darkSecondary,
               ),
               _InlineTag(
-                label: snapshot.topTasks.isEmpty ? 'Context first' : 'Supports Top 3',
+                label: snapshot.topTasks.isEmpty
+                    ? 'Context first'
+                    : 'Supports Top 3',
                 accent: AppColours.darkPrimary,
                 foreground: AppColours.darkPrimary,
               ),
@@ -3987,16 +4006,24 @@ class _DashboardQuickCaptureCardState
         children: [
           Row(
             children: [
-              const _PanelTitle(
-                title: 'Quick Capture',
-                icon: Icons.add_circle_outline,
-                accent: AppColours.darkSuccess,
+              const Flexible(
+                fit: FlexFit.loose,
+                child: _PanelTitle(
+                  title: 'Quick Capture',
+                  icon: Icons.add_circle_outline,
+                  accent: AppColours.darkSuccess,
+                ),
               ),
-              const Spacer(),
-              _InlineTag(
-                label: 'Fast lane',
-                accent: AppColours.darkSecondary,
-                foreground: AppColours.darkSecondary,
+              const SizedBox(width: 12),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _InlineTag(
+                    label: 'Fast lane',
+                    accent: AppColours.darkSecondary,
+                    foreground: AppColours.darkSecondary,
+                  ),
+                ),
               ),
             ],
           ),
@@ -4704,13 +4731,15 @@ class _PanelTitle extends StatelessWidget {
           rounded: 12,
         ),
         const SizedBox(width: 10),
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(
-            color: AppColours.darkText,
-            fontWeight: FontWeight.w700,
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],

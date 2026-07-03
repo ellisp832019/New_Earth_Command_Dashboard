@@ -26,12 +26,7 @@ class OmegaKnowledgeEngineRepoProfile {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'key': key,
-      'name': name,
-      'pathWindows': pathWindows,
-      'type': type,
-    };
+    return {'key': key, 'name': name, 'pathWindows': pathWindows, 'type': type};
   }
 }
 
@@ -54,11 +49,14 @@ class OmegaKnowledgeEngineSettings {
   final String obsidianVaultWindows;
   final List<OmegaKnowledgeEngineRepoProfile> repoProfiles;
 
-  factory OmegaKnowledgeEngineSettings.defaults({
-    String? moduleRootPath,
-  }) {
-    final root = moduleRootPath ??
-        path.join(Directory.current.path, 'modules', '26_OMEGA_KNOWLEDGE_ENGINE');
+  factory OmegaKnowledgeEngineSettings.defaults({String? moduleRootPath}) {
+    final root =
+        moduleRootPath ??
+        path.join(
+          Directory.current.path,
+          'modules',
+          '26_OMEGA_KNOWLEDGE_ENGINE',
+        );
     return OmegaKnowledgeEngineSettings(
       safetyMode: 'scan_report_only',
       repoRootPath: path.join(Directory.current.path),
@@ -128,7 +126,8 @@ class OmegaKnowledgeEngineSettings {
           json['obsidianExportDir']?.toString() ?? defaults.obsidianExportDir,
       omegaOsRootWindows:
           json['omegaOsRootWindows']?.toString() ?? defaults.omegaOsRootWindows,
-      obsidianVaultWindows: json['obsidianVaultWindows']?.toString() ??
+      obsidianVaultWindows:
+          json['obsidianVaultWindows']?.toString() ??
           defaults.obsidianVaultWindows,
       repoProfiles: repoProfiles.isEmpty ? defaults.repoProfiles : repoProfiles,
     );
@@ -225,14 +224,21 @@ class OmegaKnowledgeEngineRunResult {
     if (trimmedStderr.isNotEmpty) {
       return trimmedStderr;
     }
-    return succeeded ? 'Omega Knowledge Engine scan completed.' : 'Omega Knowledge Engine scan failed.';
+    return succeeded
+        ? 'Omega Knowledge Engine scan completed.'
+        : 'Omega Knowledge Engine scan failed.';
   }
 }
 
 class OmegaKnowledgeEngineService {
   OmegaKnowledgeEngineService({String? moduleRootPath})
-      : moduleRootPath = moduleRootPath ??
-            path.join(Directory.current.path, 'modules', '26_OMEGA_KNOWLEDGE_ENGINE');
+    : moduleRootPath =
+          moduleRootPath ??
+          path.join(
+            Directory.current.path,
+            'modules',
+            '26_OMEGA_KNOWLEDGE_ENGINE',
+          );
 
   final String moduleRootPath;
   static const Duration _scanTimeout = Duration(minutes: 3);
@@ -247,7 +253,9 @@ class OmegaKnowledgeEngineService {
   Future<OmegaKnowledgeEngineSettings> loadSettings() async {
     final file = File(_configPath);
     if (!file.existsSync()) {
-      return OmegaKnowledgeEngineSettings.defaults(moduleRootPath: moduleRootPath);
+      return OmegaKnowledgeEngineSettings.defaults(
+        moduleRootPath: moduleRootPath,
+      );
     }
 
     try {
@@ -257,7 +265,9 @@ class OmegaKnowledgeEngineService {
         moduleRootPath: moduleRootPath,
       );
     } catch (_) {
-      return OmegaKnowledgeEngineSettings.defaults(moduleRootPath: moduleRootPath);
+      return OmegaKnowledgeEngineSettings.defaults(
+        moduleRootPath: moduleRootPath,
+      );
     }
   }
 
@@ -300,8 +310,8 @@ class OmegaKnowledgeEngineService {
       architectureMapText: architectureMapText,
       projectMemoryText: projectMemoryText,
       obsidianExportFiles: obsidianExportFiles,
-      generatedAt: repositoryIndexJson['generated_at']?.toString() ??
-          'Not run yet',
+      generatedAt:
+          repositoryIndexJson['generated_at']?.toString() ?? 'Not run yet',
       repositoryCount: repositoryIndexJson['repository_count'] is int
           ? repositoryIndexJson['repository_count'] as int
           : settings.repoProfiles.length,
@@ -318,6 +328,7 @@ class OmegaKnowledgeEngineService {
 
   Future<OmegaKnowledgeEngineRunResult> runScan({
     OmegaKnowledgeEngineSettings? settings,
+    void Function(String line)? onOutputLine,
   }) async {
     final startedAt = DateTime.now();
     final scriptPath = path.join(moduleRootPath, 'scripts', 'omega_scan.py');
@@ -334,6 +345,9 @@ class OmegaKnowledgeEngineService {
     }
 
     try {
+      onOutputLine?.call('> ${buildScanCommand()}');
+      onOutputLine?.call('Working directory: $moduleRootPath');
+
       final process = await Process.start(
         'python',
         <String>[scriptPath, '--config', 'config/engine_config.yaml'],
@@ -346,11 +360,19 @@ class OmegaKnowledgeEngineService {
       var timedOut = false;
       final stdoutDone = process.stdout
           .transform(utf8.decoder)
-          .listen(stdoutBuffer.write)
+          .transform(const LineSplitter())
+          .listen((line) {
+            stdoutBuffer.writeln(line);
+            onOutputLine?.call(line);
+          })
           .asFuture<void>();
       final stderrDone = process.stderr
           .transform(utf8.decoder)
-          .listen(stderrBuffer.write)
+          .transform(const LineSplitter())
+          .listen((line) {
+            stderrBuffer.writeln(line);
+            onOutputLine?.call('[stderr] $line');
+          })
           .asFuture<void>();
       final exitCode = await process.exitCode.timeout(
         _scanTimeout,
@@ -363,8 +385,11 @@ class OmegaKnowledgeEngineService {
       await Future.wait([stdoutDone, stderrDone]);
 
       if (timedOut && stderrBuffer.isEmpty) {
-        stderrBuffer.write(
+        stderrBuffer.writeln(
           'Omega Knowledge Engine scan timed out after ${_scanTimeout.inMinutes} minutes.',
+        );
+        onOutputLine?.call(
+          '[stderr] Omega Knowledge Engine scan timed out after ${_scanTimeout.inMinutes} minutes.',
         );
       }
 
@@ -377,6 +402,7 @@ class OmegaKnowledgeEngineService {
         finishedAt: DateTime.now(),
       );
     } on ProcessException catch (error) {
+      onOutputLine?.call('[stderr] ${error.message}');
       return OmegaKnowledgeEngineRunResult(
         exitCode: 1,
         command: buildScanCommand(),
