@@ -30,6 +30,8 @@ What still needs hardening before broad expansion:
 - report/export consistency
 - cross-module health visibility
 
+The route protection sweep is now complete, so the next Users & Devices trust slice is failed unlock and timed lockout confidence.
+
 ## Active Upgrade Order
 
 This is the recommended execution order from the repo's current state.
@@ -44,8 +46,8 @@ Reason:
 
 Immediate slices:
 
-1. route protection sweep
-2. failed unlock and timed lockout review
+1. route protection sweep - complete
+2. failed unlock and timed lockout review - next
 3. recovery and admin reset workflow polish
 4. onboarding workspace tightening
 5. device trust evidence and quarantine flow
@@ -120,6 +122,10 @@ Done looks like:
 - Users & Devices admin routes are blocked while locked
 - lock-screen actions only enable deeper admin routes after unlock
 - tests prove both blocked and resumed paths
+
+Status:
+
+- complete
 
 ### Slice 2 - Failed unlock and lockout confidence
 

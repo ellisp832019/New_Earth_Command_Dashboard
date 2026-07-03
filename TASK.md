@@ -1,81 +1,76 @@
-# TASK - Users & Devices Route Protection Sweep
+# TASK - Major Upgrade Review Alignment
 
 ## Status
 
 Ready to start.
 
-The Knowledge Engine work is clean.
-The next active stream in the repo-wide execution plan is Users & Devices trust completion, starting with the route protection sweep.
+The route protection sweep is complete.
+The next useful slice is to align the repo-wide major-upgrade docs with that progress so the execution plan and review notes stay honest about what is already done and what comes next.
 
 ## Goal
 
-Make the Security Lock the only public entry point while the app is locked and remove direct bypasses into protected Users & Devices admin surfaces.
+Update the major-upgrade docs so they clearly reflect:
+
+- the completed Users & Devices route protection sweep
+- the next Users & Devices hardening slice
+- the current repo-wide upgrade position
 
 ## Source of Truth
 
 Read these files first:
 
 - `docs/fsd/00_master_index.md`
-- `docs/fsd/03_user_roles_navigation.md`
-- `docs/fsd/04_screen_specification.md`
-- `docs/fsd/10_testing_release.md`
 - `docs/fsd/12_major_upgrade_plan.md`
 - `docs/fsd/13_upgrade_execution_plan.md`
+- `docs/roadmap/major_upgrade_review.md`
 - `docs/roadmap/users_devices_upgrade_roadmap.md`
 - `modules/01_USERS_AND_DEVICES_CONTROL/docs/USER_GUIDE.md`
 
 Pay special attention to:
 
-- locked-state entry behaviour
-- protected routes and resume routing
-- helper buttons that must stay honest
-- restore/unlock flow after a valid local unlock
+- which slices are complete
+- which slice comes next in the active stream
+- how the review docs describe the current maturity level
 
 ## Requirements
 
-1. Keep the app local-first and offline-first.
-2. Keep the lock screen the only public entry point while locked.
-3. Keep unlock resume routing predictable.
-4. Keep wording calm and clear.
-5. Keep the slice small, reviewable, and testable.
-6. Update documentation only where route flow really changed.
-7. If runtime behaviour changes, verify analyzer, tests, and Windows build honestly.
+1. Keep the repo docs truthful and current.
+2. Keep wording calm, concise, and practical.
+3. Keep the slice small, reviewable, and testable.
+4. Update only the documentation that actually needs the maturity or sequencing update.
+5. If any runtime code changes happen as part of the doc alignment, verify analyzer, tests, and Windows build honestly.
 
 ## Slice Scope
 
 This slice should focus on the most useful minimum:
 
-1. make locked-state route protection central and consistent
-2. prevent direct navigation into protected Users & Devices surfaces while locked
-3. keep the intended destination available after a valid unlock
-4. keep lock-screen helper buttons honest about what is blocked
+1. mark the route protection sweep as completed in the execution plan
+2. make the next Users & Devices hardening slice explicit
+3. keep the major-upgrade review aligned with the current repo position
 
 ## Out of Scope
 
-Do not add these in this slice unless they are already trivial once the route sweep is done:
+Do not add these in this slice unless they are already trivial while updating the docs:
 
-- failed unlock lockout redesign
-- recovery and admin reset workflows
-- onboarding tightening
-- device quarantine improvements
-- broader security redesign
+- runtime feature changes
+- new module work
+- broad roadmap rewriting
+- visual redesign
 
 ## Expected Result
 
 After this slice:
 
-1. locked users stay on Security Lock until they unlock locally
-2. protected admin routes do not open through a bypass
-3. resumed routes still feel smooth after unlock
-4. the trust spine feels more consistent
+1. the major-upgrade docs match the work that has already landed
+2. the next trust-hardening step is easier to see
+3. the repo-wide maturity read stays current
 
 ## Definition of Done
 
 This slice is only done when:
 
-1. the relevant Users & Devices tests still pass
-2. any touched runtime flow is checked against the module docs
-3. wording and runtime flow still match where updated
-4. `flutter analyze` passes
-5. focused `flutter test` passes
-6. `flutter build windows` passes if runtime code changed
+1. the docs read cleanly after the update
+2. the sequence of active work is still easy to follow
+3. `flutter analyze` passes if runtime files changed
+4. focused tests pass if runtime files changed
+5. `flutter build windows` passes if runtime files changed

@@ -115,6 +115,8 @@ Still needed:
 - keep startup lock and session behavior predictable
 - finish access-control polish before broader security growth
 
+The route protection sweep has landed, so the next trust-hardening focus is failed unlock and timed lockout confidence rather than another route bypass pass.
+
 Why this matters:
 
 - this layer is becoming the trust spine for the app
