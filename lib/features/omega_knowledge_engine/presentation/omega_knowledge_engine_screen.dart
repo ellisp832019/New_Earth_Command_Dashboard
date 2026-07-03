@@ -10,7 +10,12 @@ import '../../../core/routing/route_names.dart';
 import '../data/omega_knowledge_engine_service.dart';
 
 class OmegaKnowledgeEngineScreen extends StatefulWidget {
-  const OmegaKnowledgeEngineScreen({super.key});
+  const OmegaKnowledgeEngineScreen({
+    super.key,
+    this.service,
+  });
+
+  final OmegaKnowledgeEngineService? service;
 
   @override
   State<OmegaKnowledgeEngineScreen> createState() =>
@@ -19,7 +24,7 @@ class OmegaKnowledgeEngineScreen extends StatefulWidget {
 
 class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
     with SingleTickerProviderStateMixin {
-  final OmegaKnowledgeEngineService _service = OmegaKnowledgeEngineService();
+  late final OmegaKnowledgeEngineService _service;
   final Map<String, TextEditingController> _repoControllers = {};
   final Map<String, FocusNode> _repoFocusNodes = {};
   TabController? _tabController;
@@ -40,6 +45,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? OmegaKnowledgeEngineService();
     _repoRootController = TextEditingController();
     _outputDirController = TextEditingController();
     _obsidianExportController = TextEditingController();
@@ -1120,7 +1126,7 @@ class _OverviewTab extends StatelessWidget {
                 children: [
                   _StatusChip(
                     label: scanReadiness,
-                    tone: scanReadiness == 'Ready'
+                    tone: scanReadiness == 'Ready to scan'
                         ? _ChipTone.success
                         : scanReadiness == 'Partially ready'
                             ? _ChipTone.info

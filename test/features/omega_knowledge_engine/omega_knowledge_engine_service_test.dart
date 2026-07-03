@@ -70,6 +70,23 @@ void main() {
     expect(snapshot.obsidianExportFiles, contains('alpha.md'));
   });
 
+  test('omega knowledge engine sample outputs support the preview and health sections', () async {
+    final moduleRootPath = path.join(
+      Directory.current.path,
+      'modules',
+      '26_OMEGA_KNOWLEDGE_ENGINE',
+    );
+    final service = OmegaKnowledgeEngineService(moduleRootPath: moduleRootPath);
+    final snapshot = await service.loadSnapshot();
+
+    expect(snapshot.repositoryIndexText, contains('Repository Index'));
+    expect(snapshot.learningNotesText.trim(), isNotEmpty);
+    expect(snapshot.commentSuggestionsText.trim(), isNotEmpty);
+    expect(snapshot.architectureMapText.trim(), isNotEmpty);
+    expect(snapshot.projectMemoryText.trim(), isNotEmpty);
+    expect(snapshot.obsidianExportFiles, isNotEmpty);
+  });
+
   test('omega knowledge engine saves and reloads local settings', () async {
     final tempRoot = Directory.systemTemp.createTempSync('omega-knowledge-engine-settings-');
     addTearDown(() {
