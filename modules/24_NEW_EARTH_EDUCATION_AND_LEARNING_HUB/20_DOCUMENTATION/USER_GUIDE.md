@@ -12,11 +12,13 @@
 ## For learners in the first build
 1. Open the Education & Learning Hub from More.
 2. Use the search bar or audience chips to narrow the view.
-3. Open the Learning Pathways tab and choose a pathway.
-4. Move to the Lesson Library and open a lesson card.
-5. Use Practical Projects to see the evidence flow.
-6. Review Student Progress for the local snapshot.
-7. Try the AI Tutor placeholder for a safe suggestion-only flow.
+3. Search across learners, lessons, projects, certificates, reflections, and source notes.
+4. Open the Learning Pathways tab and choose a pathway.
+5. Move to the Lesson Library and open a lesson card.
+6. Use Practical Projects to see the evidence flow.
+7. Review Student Progress for the local snapshot and badge readiness.
+8. Try the AI Tutor placeholder for a safe suggestion-only flow.
+9. Open Certificates & Badges to see the local learning passport.
 
 ## For mentors
 1. Open Mentor View.
@@ -31,8 +33,9 @@
 2. Select the learner card at the top.
 3. Review the latest notes and reflections.
 4. Check the assessment cards and progress records.
-5. Use the placeholder tutor only as guidance.
-6. Keep any important decisions human-reviewed.
+5. Check the certificate readiness summary before sign-off.
+6. Use the placeholder tutor only as guidance.
+7. Keep any important decisions human-reviewed.
 
 ## For admins
 1. Import content packs.
@@ -43,5 +46,6 @@
 ## For admins in the first build
 1. Open Settings.
 2. Review the module root and offline-first flags.
-3. Use the Omega Knowledge Engine hook for future repository analysis.
-4. Keep content local until production hardening is added.
+3. Review the local search and tutor placeholder hooks.
+4. Use the Omega Knowledge Engine hook for future repository analysis.
+5. Keep content local until production hardening is added.

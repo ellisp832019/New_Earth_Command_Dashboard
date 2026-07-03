@@ -25,9 +25,23 @@ void main() {
     expect(searchHits, isNotEmpty);
     expect(searchHits.first.kind, isNotEmpty);
 
-    final tutorResponse = TutorService(snapshot).respond('How do I start?');
+    final learnerHits = SearchService(snapshot).search('Hayley');
+    expect(learnerHits.any((hit) => hit.kind == 'Learner'), isTrue);
+
+    final certificateHits = SearchService(snapshot).search('badge');
+    expect(certificateHits.any((hit) => hit.kind == 'Certificate'), isTrue);
+
+    final tutorResponse = TutorService(snapshot).respond(
+      'progress',
+      learnerName: 'Hayley Arthur',
+      pathwayTitle: 'MicroGrow',
+      roleLabel: 'Student',
+      completionLabel: '50% complete',
+    );
     expect(tutorResponse.summary, isNotEmpty);
     expect(tutorResponse.practiceQuestions, isNotEmpty);
+    expect(tutorResponse.summary, contains('Hayley Arthur'));
+    expect(tutorResponse.nextStep, contains('50% complete'));
   });
 
   test('education repository persists progress records locally', () async {

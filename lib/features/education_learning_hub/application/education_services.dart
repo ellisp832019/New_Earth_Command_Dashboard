@@ -224,6 +224,99 @@ class SearchService {
       }
     }
 
+    for (final student in snapshot.students) {
+      if (_contains(
+        needle,
+        [
+          student.name,
+          student.role,
+          student.stage,
+          student.mentorName,
+          student.guardianName,
+          student.activePathwayId,
+          ...student.badgeIds,
+        ],
+      )) {
+        hits.add(
+          EducationSearchHit(
+            title: student.name,
+            subtitle: '${student.role} • ${student.stage}',
+            kind: 'Learner',
+            needle: student.activePathwayId,
+          ),
+        );
+      }
+    }
+
+    for (final assessment in snapshot.assessments) {
+      if (_contains(
+        needle,
+        [
+          assessment.title,
+          assessment.summary,
+          assessment.kind,
+          assessment.mentorFeedback,
+          ...assessment.criteria,
+        ],
+      )) {
+        hits.add(
+          EducationSearchHit(
+            title: assessment.title,
+            subtitle: assessment.summary,
+            kind: 'Assessment',
+            needle: assessment.kind,
+          ),
+        );
+      }
+    }
+
+    for (final reflection in snapshot.reflections) {
+      if (_contains(needle, [reflection.title, reflection.body, reflection.mood])) {
+        hits.add(
+          EducationSearchHit(
+            title: reflection.title,
+            subtitle: reflection.body,
+            kind: 'Reflection',
+            needle: reflection.mood,
+          ),
+        );
+      }
+    }
+
+    for (final certificate in snapshot.certificates) {
+      if (_contains(
+        needle,
+        [
+          certificate.title,
+          certificate.summary,
+          certificate.badgeLevel,
+          certificate.issuedBy,
+        ],
+      )) {
+        hits.add(
+          EducationSearchHit(
+            title: certificate.title,
+            subtitle: certificate.summary,
+            kind: 'Certificate',
+            needle: certificate.badgeLevel,
+          ),
+        );
+      }
+    }
+
+    for (final note in snapshot.mentorNotes) {
+      if (_contains(needle, [note.author, note.content, note.priority])) {
+        hits.add(
+          EducationSearchHit(
+            title: note.author,
+            subtitle: note.content,
+            kind: 'Mentor note',
+            needle: note.priority,
+          ),
+        );
+      }
+    }
+
     return hits.toList(growable: false);
   }
 
@@ -249,14 +342,33 @@ class TutorService {
 
   final EducationHubSnapshot snapshot;
 
-  EducationTutorResponse respond(String prompt) {
+  EducationTutorResponse respond(
+    String prompt, {
+    String learnerName = '',
+    String pathwayTitle = '',
+    String roleLabel = '',
+    String completionLabel = '',
+  }) {
     final normalized = prompt.trim().toLowerCase();
+    final contextLabel = [
+      if (learnerName.trim().isNotEmpty) learnerName.trim(),
+      if (roleLabel.trim().isNotEmpty) roleLabel.trim(),
+      if (pathwayTitle.trim().isNotEmpty) pathwayTitle.trim(),
+    ].join(' • ');
+
     if (normalized.isEmpty) {
-      return const EducationTutorResponse(
-        summary: 'Ask a practical learning question and the tutor will suggest a calm next step.',
-        nextStep: 'Try asking about a lesson, a project, or a build obstacle.',
+      return EducationTutorResponse(
+        summary: contextLabel.isEmpty
+            ? 'Ask a practical learning question and the tutor will suggest a calm next step.'
+            : 'Ask a practical learning question for $contextLabel and the tutor will suggest a calm next step.',
+        nextStep: completionLabel.isEmpty
+            ? 'Try asking about a lesson, a project, or a build obstacle.'
+            : 'Try asking about a lesson, a project, or the current ${completionLabel.toLowerCase()}.',
         safetyNote: 'The tutor stays in suggestion mode only and keeps a human in the loop.',
-        practiceQuestions: ['What do you want to understand?', 'What have you already tried?'],
+        practiceQuestions: [
+          'What do you want to understand?',
+          'What have you already tried?',
+        ],
       );
     }
 
@@ -271,9 +383,12 @@ class TutorService {
 
     if (match != null) {
       return EducationTutorResponse(
-        summary:
-            'Here is a calm way to approach "${match.title}": ${match.summary}',
-        nextStep: 'Work through one step, then write one short reflection.',
+        summary: contextLabel.isEmpty
+            ? 'Here is a calm way to approach "${match.title}": ${match.summary}'
+            : 'Here is a calm way for $contextLabel to approach "${match.title}": ${match.summary}',
+        nextStep: completionLabel.isEmpty
+            ? 'Work through one step, then write one short reflection.'
+            : 'Keep the next step short, then capture how it changes $completionLabel.',
         safetyNote:
             'This is a teaching prompt only. Check anything important with a mentor or guardian.',
         practiceQuestions: [
@@ -284,11 +399,63 @@ class TutorService {
       );
     }
 
+    if (normalized.contains('pathway') || normalized.contains('route')) {
+      return EducationTutorResponse(
+        summary: contextLabel.isEmpty
+            ? 'Use the pathway view to choose one route and move only one step forward.'
+            : 'Use the pathway view for $contextLabel to choose one route and move only one step forward.',
+        nextStep: 'Open the matching pathway, review the unit list, and select the next lesson.',
+        safetyNote:
+            'The tutor keeps recommendations local and avoids making decisions for the learner.',
+        practiceQuestions: [
+          'Which pathway fits the current goal?',
+          'What is the next unit to open?',
+          'What evidence should be saved after the step?',
+        ],
+      );
+    }
+
+    if (normalized.contains('progress') || normalized.contains('badge') || normalized.contains('certificate')) {
+      return EducationTutorResponse(
+        summary: contextLabel.isEmpty
+            ? 'Progress is tracked locally, so the next useful action is to complete one visible step.'
+            : 'Progress for $contextLabel is tracked locally, so the next useful action is to complete one visible step.',
+        nextStep: completionLabel.isEmpty
+            ? 'Mark one lesson or project complete, then review the passport tab.'
+            : 'Use the current ${completionLabel.toLowerCase()} snapshot to choose a small completion step.',
+        safetyNote:
+            'Badges stay human-reviewed until a mentor, guardian, or admin signs off.',
+        practiceQuestions: [
+          'What is already complete?',
+          'What still needs mentor sign-off?',
+          'Which badge feels closest to ready?',
+        ],
+      );
+    }
+
+    if (normalized.contains('mentor') || normalized.contains('guardian') || normalized.contains('support')) {
+      return EducationTutorResponse(
+        summary: contextLabel.isEmpty
+            ? 'Mentor support should stay calm, specific, and tied to one practical outcome.'
+            : 'For $contextLabel, mentor support should stay calm, specific, and tied to one practical outcome.',
+        nextStep: 'Review one note, one assessment, and one support action before changing the plan.',
+        safetyNote:
+            'Keep any important learner support decisions human-reviewed and documented locally.',
+        practiceQuestions: [
+          'What support would help most right now?',
+          'What should be left alone for now?',
+          'What would a helpful mentor note say?',
+        ],
+      );
+    }
+
     return EducationTutorResponse(
-      summary:
-          'I could not match that directly, but I can still help you plan a simple next step.',
-      nextStep:
-          'Break the task into one observation, one action, and one reflection.',
+      summary: contextLabel.isEmpty
+          ? 'I could not match that directly, but I can still help you plan a simple next step.'
+          : 'I could not match that directly for $contextLabel, but I can still help you plan a simple next step.',
+      nextStep: completionLabel.isEmpty
+          ? 'Break the task into one observation, one action, and one reflection.'
+          : 'Use the current ${completionLabel.toLowerCase()} state to choose one observation, one action, and one reflection.',
       safetyNote:
           'The AI tutor stays advisory and does not replace a mentor or adult supervisor.',
       practiceQuestions: [

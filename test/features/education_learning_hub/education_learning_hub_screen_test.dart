@@ -31,6 +31,7 @@ void main() {
     expect(find.text('Knowledge Engine'), findsWidgets);
     expect(find.text('GAIA placeholder'), findsWidgets);
     expect(find.text('Role view'), findsWidgets);
+    expect(find.text('Badge readiness'), findsWidgets);
 
     await tester.tap(find.text('Learning Pathways').last);
     await tester.pumpAndSettle();

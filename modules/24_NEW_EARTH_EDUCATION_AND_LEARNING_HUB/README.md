@@ -11,6 +11,7 @@ This module turns the dashboard into a guided learning operating system:
 - Learn electronics, coding, embedded systems, MicroGrow, BioCalm, AI, food resilience, sustainability, project leadership, and practical workshop skills.
 - Build real projects instead of only reading theory.
 - Track learner progress locally.
+- Surface learner search, role views, and badge readiness in a calm local passport.
 - Support young people safely.
 - Provide AI tutor support without replacing human guidance.
 - Connect lessons to real New Earth modules, hardware, experiments, and products.
@@ -38,6 +39,11 @@ This module turns the dashboard into a guided learning operating system:
 ## First Omega build
 The first implementation is read-only and mock-data driven.
 It is designed to prove the navigation, the calm UI shell, and the content structure before any live integrations are added.
+Current placeholders include:
+
+- local search across lessons, pathways, projects, learners, certificates, and source notes
+- role-aware tutor prompts for student, mentor, parent/guardian, and admin views
+- badge and certificate readiness summaries based on local progress data
 
 ## Future content areas
 - Electronics

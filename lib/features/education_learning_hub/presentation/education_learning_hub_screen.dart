@@ -473,6 +473,9 @@ class _EducationLearningHubScreenState
                     snapshot: snapshot,
                     tutorService: tutorService,
                     prompt: _tutorPrompt,
+                    selectedStudent: currentStudent,
+                    selectedPathway: selectedPathway,
+                    roleView: _roleView,
                     onPromptChanged: (value) {
                       setState(() {
                         _tutorPrompt = value;
@@ -720,6 +723,7 @@ class _DashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = progressService.completionForStudent(selectedStudent.id);
+    final completionLabel = '${(progress * 100).round()}% complete';
     final reflections = reflectionService.reflectionsForAudience(
       EducationAudience.all,
     );
@@ -728,7 +732,13 @@ class _DashboardTab extends StatelessWidget {
     );
     final tutorResponse = tutorService.respond(
       searchQuery.isEmpty ? selectedPathway.title : searchQuery,
+      learnerName: selectedStudent.name,
+      pathwayTitle: selectedPathway.title,
+      roleLabel: roleView.label,
+      completionLabel: completionLabel,
     );
+    final studentAssessments = snapshot.assessmentsForStudent(selectedStudent.id);
+    final badgeReadiness = snapshot.badgeReadinessForStudent(selectedStudent.id);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -759,6 +769,11 @@ class _DashboardTab extends StatelessWidget {
                 label: 'Role view',
                 value: roleView.label,
                 detail: roleView.summary,
+              ),
+              _InfoTile(
+                label: 'Badge readiness',
+                value: '${(badgeReadiness * 100).round()}%',
+                detail: '${snapshot.earnedBadgeCountForStudent(selectedStudent.id)} earned badge(s)',
               ),
             ],
           ),
@@ -815,6 +830,27 @@ class _DashboardTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _Panel(
+          title: 'Learner checkpoint',
+          subtitle: 'What the tutor and the local progress snapshot can see right now.',
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _InfoTile(
+                label: 'Assessments complete',
+                value: '${studentAssessments.where((assessment) => assessment.completedAt != null).length}/${studentAssessments.length}',
+                detail: 'Used to shape badge readiness',
+              ),
+              _InfoTile(
+                label: 'Progress note',
+                value: snapshot.progressLabelForStudent(selectedStudent.id),
+                detail: 'The tutor stays advisory only',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _Panel(
           title: 'Recent reflections',
           subtitle: 'Short entries that support learning and memory.',
           child: reflections.isEmpty
@@ -832,20 +868,65 @@ class _DashboardTab extends StatelessWidget {
         const SizedBox(height: 12),
         _Panel(
           title: 'Certificates and badges',
-          subtitle: 'Placeholder badge system for future export.',
+          subtitle: 'Placeholder badge system for future export and mentor sign-off.',
           child: certificates.isEmpty
               ? const _EmptyInline(
                   title: 'No certificates yet',
                   subtitle: 'Certificates will appear after assessment sign-off.',
                 )
-                : Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      for (final certificate in certificates.take(4))
-                        _CertificateChip(certificate: certificate),
-                    ],
-                  ),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _InfoTile(
+                          label: 'Learner badges',
+                          value: '${snapshot.earnedBadgeCountForStudent(selectedStudent.id)}',
+                          detail: 'Local badge ids already issued',
+                        ),
+                        _InfoTile(
+                          label: 'Assessments complete',
+                          value: '${snapshot.completedAssessmentsForStudent(selectedStudent.id).length}',
+                          detail: 'Ready for review and sign-off',
+                        ),
+                        _InfoTile(
+                          label: 'Badge readiness',
+                          value: '${(snapshot.badgeReadinessForStudent(selectedStudent.id) * 100).round()}%',
+                          detail: 'Based on progress and assessments',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final certificate in certificates.take(4))
+                          _CertificateChip(certificate: certificate),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Completed assessments',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    if (studentAssessments.where((assessment) => assessment.completedAt != null).isEmpty)
+                      const _EmptyInline(
+                        title: 'No completed assessments yet',
+                        subtitle: 'Finish a lesson or project checkpoint to unlock the first badge flow.',
+                      )
+                    else
+                      Column(
+                        children: [
+                          for (final assessment in studentAssessments.where((assessment) => assessment.completedAt != null))
+                            _AssessmentCard(assessment: assessment),
+                        ],
+                      ),
+                  ],
+                ),
         ),
         const SizedBox(height: 12),
         _Panel(
@@ -894,6 +975,8 @@ class _DashboardTab extends StatelessWidget {
             subtitle: 'Local search across the learning hub content.',
             child: Column(
               children: [
+                _SearchSummaryCard(searchHits: searchHits),
+                const SizedBox(height: 12),
                 for (final hit in searchHits.take(6)) _SearchHitCard(hit: hit),
               ],
             ),
@@ -1110,6 +1193,9 @@ class _TutorTab extends StatelessWidget {
     required this.snapshot,
     required this.tutorService,
     required this.prompt,
+    required this.selectedStudent,
+    required this.selectedPathway,
+    required this.roleView,
     required this.onPromptChanged,
     required this.onUseSuggestion,
   });
@@ -1117,12 +1203,22 @@ class _TutorTab extends StatelessWidget {
   final EducationHubSnapshot snapshot;
   final TutorService tutorService;
   final String? prompt;
+  final StudentProfile selectedStudent;
+  final LearningPathway selectedPathway;
+  final EducationRoleView roleView;
   final ValueChanged<String> onPromptChanged;
   final ValueChanged<String> onUseSuggestion;
 
   @override
   Widget build(BuildContext context) {
-    final response = tutorService.respond(prompt ?? '');
+    final progressLabel = snapshot.progressLabelForStudent(selectedStudent.id);
+    final response = tutorService.respond(
+      prompt ?? '',
+      learnerName: selectedStudent.name,
+      pathwayTitle: selectedPathway.title,
+      roleLabel: roleView.label,
+      completionLabel: progressLabel,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -1133,12 +1229,57 @@ class _TutorTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _InfoTile(
+                    label: 'Learner',
+                    value: selectedStudent.name,
+                    detail: selectedStudent.stage,
+                  ),
+                  _InfoTile(
+                    label: 'Pathway',
+                    value: selectedPathway.title,
+                    detail: selectedPathway.domain,
+                  ),
+                  _InfoTile(
+                    label: 'Role view',
+                    value: roleView.label,
+                    detail: roleView.summary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               TextField(
                 onChanged: onPromptChanged,
                 decoration: const InputDecoration(
                   labelText: 'Ask a question',
                   border: OutlineInputBorder(),
                 ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ActionChip(
+                    label: const Text('Explain the next step'),
+                    onPressed: () => onUseSuggestion('Explain the next step'),
+                  ),
+                  ActionChip(
+                    label: Text('Plan ${selectedPathway.title}'),
+                    onPressed: () => onUseSuggestion('Plan ${selectedPathway.title}'),
+                  ),
+                  ActionChip(
+                    label: Text('Help ${selectedStudent.name}'),
+                    onPressed: () => onUseSuggestion('Help ${selectedStudent.name}'),
+                  ),
+                  ActionChip(
+                    label: const Text('Make it safer'),
+                    onPressed: () => onUseSuggestion('Make it safer'),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               _TutorPreviewCard(response: response),
@@ -1322,18 +1463,54 @@ class _CertificatesTab extends StatelessWidget {
     final studentCertificates = certificates
         .where((certificate) => certificate.studentId == selectedStudent.id)
         .toList(growable: false);
+    final completedAssessments = snapshot.completedAssessmentsForStudent(
+      selectedStudent.id,
+    );
+    final readiness = snapshot.badgeReadinessForStudent(selectedStudent.id);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
         _Panel(
           title: 'Certificates & Badges',
           subtitle: 'Placeholder badge system ready for later export flows.',
-          child: studentCertificates.isEmpty
-              ? const _EmptyInline(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _InfoTile(
+                    label: 'Issued badges',
+                    value: '${selectedStudent.badgeIds.length}',
+                    detail: 'Local badge ids on the learner profile',
+                  ),
+                  _InfoTile(
+                    label: 'Awarded certificates',
+                    value: '${studentCertificates.length}',
+                    detail: 'Ready for future export flows',
+                  ),
+                  _InfoTile(
+                    label: 'Assessment readiness',
+                    value: '${(readiness * 100).round()}%',
+                    detail: 'Based on progress and completed checks',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LinearProgressIndicator(value: readiness),
+              const SizedBox(height: 8),
+              Text(
+                '${completedAssessments.length} assessment(s) complete for ${selectedStudent.name}',
+              ),
+              const SizedBox(height: 12),
+              if (studentCertificates.isEmpty)
+                const _EmptyInline(
                   title: 'No badges issued yet',
                   subtitle: 'Badges will appear when assessments are signed off.',
                 )
-              : Wrap(
+              else
+                Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
@@ -1341,6 +1518,8 @@ class _CertificatesTab extends StatelessWidget {
                       _CertificateCard(certificate: certificate),
                   ],
                 ),
+            ],
+          ),
         ),
       ],
     );
@@ -2237,6 +2416,48 @@ class _SearchHitCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SearchSummaryCard extends StatelessWidget {
+  const _SearchSummaryCard({required this.searchHits});
+
+  final List<EducationSearchHit> searchHits;
+
+  @override
+  Widget build(BuildContext context) {
+    final grouped = <String, int>{};
+    for (final hit in searchHits) {
+      grouped[hit.kind] = (grouped[hit.kind] ?? 0) + 1;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${searchHits.length} local match${searchHits.length == 1 ? '' : 'es'} found',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final entry in grouped.entries)
+                _MiniBadge(label: '${entry.key}: ${entry.value}'),
+            ],
+          ),
+        ],
       ),
     );
   }

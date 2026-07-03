@@ -797,6 +797,53 @@ class EducationHubSnapshot {
         .where((certificate) => certificate.studentId == studentId)
         .toList(growable: false);
   }
+
+  List<Assessment> completedAssessmentsForStudent(String studentId) {
+    return assessmentsForStudent(studentId)
+        .where((assessment) => assessment.completedAt != null)
+        .toList(growable: false);
+  }
+
+  double assessmentCompletionForStudent(String studentId) {
+    final studentAssessments = assessmentsForStudent(studentId);
+    if (studentAssessments.isEmpty) {
+      return 0;
+    }
+    final completed = studentAssessments
+        .where((assessment) => assessment.completedAt != null)
+        .length;
+    return completed / studentAssessments.length;
+  }
+
+  int earnedBadgeCountForStudent(String studentId) {
+    for (final student in students) {
+      if (student.id == studentId) {
+        return student.badgeIds.length;
+      }
+    }
+    return 0;
+  }
+
+  double badgeReadinessForStudent(String studentId) {
+    final assessmentCompletion = assessmentCompletionForStudent(studentId);
+    final progressItems = progressForStudent(studentId);
+    final progressCompletion = progressItems.isEmpty
+        ? 0.0
+        : progressItems
+                .where((record) => record.progressPercent >= 80)
+                .length /
+            progressItems.length;
+    return ((assessmentCompletion + progressCompletion) / 2).clamp(0.0, 1.0);
+  }
+
+  String progressLabelForStudent(String studentId) {
+    final progress = progressForStudent(studentId);
+    if (progress.isEmpty) {
+      return 'No progress yet';
+    }
+    final completed = progress.where((record) => record.progressPercent >= 100).length;
+    return '$completed of ${progress.length} milestones complete';
+  }
 }
 
 List<String> _stringList(dynamic raw) {
