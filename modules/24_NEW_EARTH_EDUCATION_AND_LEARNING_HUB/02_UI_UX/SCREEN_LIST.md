@@ -84,3 +84,11 @@
 - Add project activity
 - Add reflection
 - Package for offline use
+
+## 11. Settings
+- Module root
+- Offline-first flag
+- Content pipeline
+- Export / import bundle
+- Knowledge Engine hook
+- GAIA placeholder hook

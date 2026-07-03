@@ -61,6 +61,7 @@ class _EducationLearningHubScreenState
     'Assessments',
     'Reflection Journal',
     'Certificates & Badges',
+    'Content Builder',
     'Settings',
   ];
 
@@ -628,6 +629,13 @@ class _EducationLearningHubScreenState
                     certificates: certificateService.certificatesForAudience(
                       _audienceFilter,
                     ),
+                  ),
+                  _ContentBuilderTab(
+                    snapshot: snapshot,
+                    selectedStudent: currentStudent,
+                    roleView: _roleView,
+                    onExportBundle: _exportEducationSnapshot,
+                    onImportBundle: _importEducationSnapshot,
                   ),
                   _SettingsTab(
                     snapshot: snapshot,
@@ -1799,6 +1807,14 @@ class _CertificatesTab extends StatelessWidget {
       selectedStudent.id,
     );
     final readiness = snapshot.badgeReadinessForStudent(selectedStudent.id);
+    final passportSummary = StringBuffer()
+      ..writeln('Learner: ${selectedStudent.name}')
+      ..writeln('Role: ${selectedStudent.role}')
+      ..writeln('Pathway: ${selectedStudent.activePathwayId}')
+      ..writeln('Badges: ${selectedStudent.badgeIds.join(', ')}')
+      ..writeln('Certificates: ${studentCertificates.length}')
+      ..writeln('Assessment readiness: ${(readiness * 100).round()}%')
+      ..writeln('Completed assessments: ${completedAssessments.length}');
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1836,6 +1852,39 @@ class _CertificatesTab extends StatelessWidget {
                 '${completedAssessments.length} assessment(s) complete for ${selectedStudent.name}',
               ),
               const SizedBox(height: 12),
+              _Panel(
+                title: 'Passport summary',
+                subtitle: 'Clipboard-friendly badge and certificate snapshot.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(passportSummary.toString().trim()),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: passportSummary.toString().trim()),
+                            );
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Passport summary copied locally.')),
+                            );
+                          },
+                          icon: const Icon(Icons.copy_all_outlined),
+                          label: const Text('Copy passport'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               if (studentCertificates.isEmpty)
                 const _EmptyInline(
                   title: 'No badges issued yet',
@@ -1850,6 +1899,216 @@ class _CertificatesTab extends StatelessWidget {
                       _CertificateCard(certificate: certificate),
                   ],
                 ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ContentBuilderTab extends StatefulWidget {
+  const _ContentBuilderTab({
+    required this.snapshot,
+    required this.selectedStudent,
+    required this.roleView,
+    required this.onExportBundle,
+    required this.onImportBundle,
+  });
+
+  final EducationHubSnapshot snapshot;
+  final StudentProfile selectedStudent;
+  final EducationRoleView roleView;
+  final VoidCallback onExportBundle;
+  final VoidCallback onImportBundle;
+
+  @override
+  State<_ContentBuilderTab> createState() => _ContentBuilderTabState();
+}
+
+class _ContentBuilderTabState extends State<_ContentBuilderTab> {
+  late final TextEditingController _packNameController;
+  late final TextEditingController _packSummaryController;
+  late final TextEditingController _packAudienceController;
+
+  @override
+  void initState() {
+    super.initState();
+    _packNameController = TextEditingController(
+      text: 'Education Content Pack',
+    );
+    _packSummaryController = TextEditingController(
+      text: 'Local-first pack for lessons, projects, reflections, and badges.',
+    );
+    _packAudienceController = TextEditingController(text: widget.roleView.label);
+  }
+
+  @override
+  void dispose() {
+    _packNameController.dispose();
+    _packSummaryController.dispose();
+    _packAudienceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = widget.snapshot;
+    final contentSources = snapshot.contentSources;
+    final docsCount = contentSources.where((source) => source.kind == 'Documentation').length;
+    final sampleCount = contentSources.where((source) => source.kind == 'Sample data').length;
+    final resourceCount = snapshot.resources.length;
+    final packSummary = StringBuffer()
+      ..writeln('Pack: ${_packNameController.text.trim()}')
+      ..writeln('Audience: ${_packAudienceController.text.trim()}')
+      ..writeln('Owner learner: ${widget.selectedStudent.name}')
+      ..writeln('Summary: ${_packSummaryController.text.trim()}')
+      ..writeln('Documentation sources: $docsCount')
+      ..writeln('Sample packs: $sampleCount')
+      ..writeln('Resources: $resourceCount');
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      children: [
+        _Panel(
+          title: 'Content Builder',
+          subtitle: 'Draft offline learning packs, review source coverage, and keep the pack local.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _InfoTile(
+                    label: 'Pack title',
+                    value: _packNameController.text.trim(),
+                    detail: 'Local-only draft name for the pack',
+                  ),
+                  _InfoTile(
+                    label: 'Audience',
+                    value: _packAudienceController.text.trim(),
+                    detail: 'Set the starting role view for the pack',
+                  ),
+                  _InfoTile(
+                    label: 'Coverage',
+                    value: '${contentSources.length} sources',
+                    detail: '$docsCount docs, $sampleCount sample packs, $resourceCount resources',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _packNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Pack name',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _packSummaryController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Pack summary',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _packAudienceController,
+                decoration: const InputDecoration(
+                  labelText: 'Primary audience',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Build checklist',
+                subtitle: 'A calm list for the next offline pack draft.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final line in const [
+                      'Choose the lesson set.',
+                      'Check the linked sources.',
+                      'Add one project activity.',
+                      'Review assessments and reflections.',
+                      'Export the bundle locally.',
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text('- $line'),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Pack summary',
+                subtitle: 'Clipboard-ready snapshot for future pack creation work.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(packSummary.toString().trim()),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: '${snapshot.pathwayCount} pathways'),
+                        _MiniBadge(label: '${snapshot.lessonCount} lessons'),
+                        _MiniBadge(label: '${snapshot.projectCount} projects'),
+                        _MiniBadge(label: '${snapshot.certificateCount} certificates'),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: packSummary.toString().trim()),
+                            );
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Pack summary copied locally.')),
+                            );
+                          },
+                          icon: const Icon(Icons.copy_all_outlined),
+                          label: const Text('Copy summary'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: widget.onExportBundle,
+                          icon: const Icon(Icons.upload_file_outlined),
+                          label: const Text('Export bundle'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: widget.onImportBundle,
+                          icon: const Icon(Icons.download_outlined),
+                          label: const Text('Import bundle'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (contentSources.isNotEmpty) ...[
+                Text('Source library preview', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                for (final source in contentSources.take(4)) ...[
+                  _ContentSourceCard(source: source),
+                  const SizedBox(height: 10),
+                ],
+              ],
             ],
           ),
         ),

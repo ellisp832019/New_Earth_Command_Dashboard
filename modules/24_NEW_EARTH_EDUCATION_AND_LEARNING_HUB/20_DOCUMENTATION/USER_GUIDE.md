@@ -20,6 +20,7 @@
 8. Review Student Progress for the local snapshot and badge readiness.
 9. Try the AI Tutor placeholder for a safe suggestion-only flow.
 10. Open Certificates & Badges to see the local learning passport.
+11. Use Content Builder to draft or review an offline learning pack.
 
 ## For mentors
 1. Open Mentor View.
@@ -53,4 +54,5 @@
 5. Use the Omega Knowledge Engine hook for future repository analysis.
 6. Use Export content pack to write a full local snapshot bundle.
 7. Use Import content pack to restore that bundle back into the module.
-8. Keep content local until production hardening is added.
+8. Use the passport summary copy action when you need a quick badge handoff note.
+9. Keep content local until production hardening is added.

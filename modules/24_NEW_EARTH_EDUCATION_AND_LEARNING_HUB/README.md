@@ -46,6 +46,8 @@ Current placeholders include:
 - badge and certificate readiness summaries based on local progress data
 - project workspaces with local evidence checkpoints and linked source items
 - offline snapshot export/import for content packs and local restore
+- content builder workspace for drafting offline learning packs
+- passport summary copy flow for certificates and badges
 
 ## Future content areas
 - Electronics
