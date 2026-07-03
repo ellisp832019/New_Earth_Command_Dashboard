@@ -349,9 +349,9 @@ class UsersDevicesPinRegistryService {
       return UsersDevicesPinAccessDecision(
         allowed: false,
         reason:
-            'Too many failed PIN attempts. Unlock is paused for ${_formatDuration(lockoutState.lockedUntil!.difference(now))}.',
+            'Too many failed PIN attempts. The user is in a cooldown window for ${_formatDuration(lockoutState.lockedUntil!.difference(now))}.',
         nextStep:
-            'Wait for the timer to finish, or issue a fresh PIN from PIN Registry if the user needs help.',
+            'Wait for the cooldown to end, or issue a recovery PIN from PIN Registry if the user needs help now.',
         issueCode: 'locked_out_active',
         failedAttempts: lockoutState.failedAttempts,
         remainingAttempts: 0,
@@ -399,9 +399,9 @@ class UsersDevicesPinRegistryService {
       return UsersDevicesPinAccessDecision(
         allowed: false,
         reason:
-            'Too many failed PIN attempts. Unlock is paused for ${_formatDuration(lockoutDuration)}.',
+            'Too many failed PIN attempts. Lockout just triggered and the cooldown is ${_formatDuration(lockoutDuration)}.',
         nextStep:
-            'Wait for the timer to finish, or issue a recovery PIN from PIN Registry if the user is locked out.',
+            'Confirm identity, then either wait for the cooldown to finish or issue a recovery PIN from PIN Registry.',
         issueCode: 'locked_out_triggered',
         failedAttempts: failedState.failedAttempts,
         remainingAttempts: 0,

@@ -311,6 +311,6 @@ void main() {
     expect(find.text('Security session locked'), findsOneWidget);
     expect(find.text('Protected actions paused'), findsOneWidget);
     expect(find.text('Open Security Lock'), findsOneWidget);
-    expect(find.text('Back to Users & Devices'), findsOneWidget);
+    expect(find.text('Back to Users & Devices'), findsNothing);
   });
 }

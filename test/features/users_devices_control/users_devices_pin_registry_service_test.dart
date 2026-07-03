@@ -159,6 +159,8 @@ void main() {
       );
       expect(thirdFailure.allowed, isFalse);
       expect(thirdFailure.issueCode, 'locked_out_triggered');
+      expect(thirdFailure.reason, contains('cooldown'));
+      expect(thirdFailure.nextStep, contains('recovery PIN'));
       expect(thirdFailure.failedAttempts, 3);
       expect(thirdFailure.remainingAttempts, 0);
       expect(thirdFailure.lockedUntil, isA<DateTime>());
@@ -169,6 +171,8 @@ void main() {
       );
       expect(blockedValidPin.allowed, isFalse);
       expect(blockedValidPin.issueCode, 'locked_out_active');
+      expect(blockedValidPin.reason, contains('cooldown window'));
+      expect(blockedValidPin.nextStep, contains('Wait for the cooldown'));
 
       now = now.add(const Duration(minutes: 6));
       final postCooldownSuccess = await service.validatePinForUser(
