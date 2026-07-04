@@ -636,7 +636,7 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
     final selectedModule = moduleForPath(modules, currentPath);
 
     return SizedBox(
-      height: 70,
+      height: 104,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColours.darkBackground.withValues(alpha: 0.78),
@@ -674,7 +674,7 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Row(
                               children: [
                                 Expanded(
