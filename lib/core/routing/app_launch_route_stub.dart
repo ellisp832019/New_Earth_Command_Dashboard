@@ -1,7 +1,7 @@
 import 'route_names.dart';
 
 abstract final class AppLaunchRoute {
-  static String get initialLocation => RouteNames.startup;
+  static String get initialLocation => RouteNames.dashboard;
 
   static String? parse(List<String> arguments) {
     final route = arguments
