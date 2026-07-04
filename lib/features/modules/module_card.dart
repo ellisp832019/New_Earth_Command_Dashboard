@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/modules/module_category.dart';
 import '../../core/modules/module_health.dart';
 import '../../core/modules/module_manifest.dart';
+import '../../core/modules/module_navigation.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/windowing/module_window_service.dart';
 
 class ModuleCard extends StatelessWidget {
   const ModuleCard({
@@ -24,6 +28,8 @@ class ModuleCard extends StatelessWidget {
     final borderColor = statusColor.withValues(alpha: 0.42);
     final isSensitiveModule = _isSensitiveModule(module.id);
     final isKnowledgeEngineModule = _isKnowledgeEngineModule(module.id);
+
+    final canOpenDedicatedWindow = moduleHomeRoute(module) != null;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -182,6 +188,20 @@ class ModuleCard extends StatelessWidget {
                           context.push(RouteNames.moduleHubModule(module.id)),
                       child: const Text('Inspect'),
                     ),
+                    if (canOpenDedicatedWindow) ...[
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          unawaited(
+                            const ModuleWindowService().openModuleWindow(
+                              module,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Open window'),
+                      ),
+                    ],
                   ],
                 ),
                 if (isKnowledgeEngineModule) ...[
@@ -194,9 +214,8 @@ class ModuleCard extends StatelessWidget {
                       alignment: WrapAlignment.end,
                       children: [
                         TextButton.icon(
-                          onPressed: () => context.push(
-                            RouteNames.omegaKnowledgeEngine,
-                          ),
+                          onPressed: () =>
+                              context.push(RouteNames.omegaKnowledgeEngine),
                           icon: const Icon(Icons.open_in_new),
                           label: const Text('Open overview'),
                         ),

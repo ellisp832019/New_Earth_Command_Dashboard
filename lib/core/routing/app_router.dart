@@ -102,6 +102,7 @@ import '../widgets/app_shell.dart';
 import 'security_route_policy.dart';
 import 'router_keys.dart';
 import 'route_names.dart';
+import 'app_launch_route.dart';
 import '../modules/module_loader.dart';
 
 final _rootNavigatorKey = rootNavigatorKey;
@@ -115,7 +116,7 @@ final _shellNavigatorMoreKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: RouteNames.startup,
+  initialLocation: AppLaunchRoute.initialLocation,
   refreshListenable: SecuritySessionRouterBridge.refresh,
   redirect: (context, state) {
     final session = SecuritySessionRouterBridge.current;

@@ -14,6 +14,7 @@
 - Replace the placeholder routes with richer handoffs later, but keep the same buttons and hook labels.
 - The global module switcher in the app title bar should use the module registry and each module's first registered route as the home launch target.
 - When a module grows into multiple section screens, keep the module home route stable and add children underneath it.
+- Dedicated-window modules can be launched as separate desktop processes with `--launch-route=<path>` so each window opens on a chosen monitor.
 
 ## Local storage
 
@@ -34,3 +35,4 @@
 - Add new integration hooks as buttons or cards first, then wire the backend later.
 - Keep engineering wording neutral and calm. Use `Parked`, `Ready`, `Needs attention`, and `Carry forward` instead of failure language.
 - If the title-bar dropdown needs another module, add its manifest routes first, then let the module registry pick it up automatically.
+- For desktop-only floating windows, keep the route stable and launch a new process instead of trying to embed another top-level Flutter view in the same shell.
