@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/routing/security_route_policy.dart';
 import '../../../core/windowing/desktop_presence_controller.dart';
@@ -336,7 +337,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         if (!mounted) {
           return;
         }
-        context.go(
+        appRouter.go(
           _routeAfterUnlock(
             context: context,
             voiceStartupGateEnabled: voiceStartupGateEnabled,
@@ -511,7 +512,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                     : 'Open dashboard',
                                 onContinue: _canContinue
                                     ? () {
-                                        context.go(
+                                        appRouter.go(
                                           _routeAfterUnlock(
                                             context: context,
                                             voiceStartupGateEnabled:
