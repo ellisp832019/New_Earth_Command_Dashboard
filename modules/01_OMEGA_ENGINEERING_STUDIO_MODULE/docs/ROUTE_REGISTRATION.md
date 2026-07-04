@@ -25,10 +25,12 @@
 3. `lib/features/more/presentation/more_screen.dart`
 4. `lib/core/widgets/app_shell.dart`
 5. `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/module_manifest.json`
+6. Global module switcher in the desktop title bar
 
 ## Notes
 
 - The module is local-first and mock-data-first.
 - The section routes all land on the same engineering workspace shell.
+- The title-bar module dropdown should open `/modules/omega-engineering-studio` for the module home and any registered section route for deeper workspace views.
 - Future hardening can split these routes into dedicated screens without changing the public paths.
 - Omega Knowledge Engine and GAIA are exposed as integration-ready hooks, not live cloud dependencies.

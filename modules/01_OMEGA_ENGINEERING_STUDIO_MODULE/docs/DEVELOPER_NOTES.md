@@ -12,6 +12,8 @@
 - Omega Knowledge Engine opens through the existing local route at `RouteNames.omegaKnowledgeEngine`.
 - GAIA assistant opens through the existing local route at `RouteNames.voiceAssistant`.
 - Replace the placeholder routes with richer handoffs later, but keep the same buttons and hook labels.
+- The global module switcher in the app title bar should use the module registry and each module's first registered route as the home launch target.
+- When a module grows into multiple section screens, keep the module home route stable and add children underneath it.
 
 ## Local storage
 
@@ -31,3 +33,4 @@
 - Split a screen into its own route only when the shell starts to feel crowded.
 - Add new integration hooks as buttons or cards first, then wire the backend later.
 - Keep engineering wording neutral and calm. Use `Parked`, `Ready`, `Needs attention`, and `Carry forward` instead of failure language.
+- If the title-bar dropdown needs another module, add its manifest routes first, then let the module registry pick it up automatically.

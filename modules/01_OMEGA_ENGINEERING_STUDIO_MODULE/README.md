@@ -31,6 +31,7 @@ Central engineering workspace for the New Earth Omega Dashboard.
 - Route notes: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/ROUTE_REGISTRATION.md`
 - Developer notes: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/DEVELOPER_NOTES.md`
 - TODO list: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/TODO.md`
+- The app title bar now includes a module switcher that uses the local module registry.
 
 ## Rendered assets
 

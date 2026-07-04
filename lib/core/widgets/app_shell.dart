@@ -7,9 +7,12 @@ import 'package:go_router/go_router.dart';
 import '../routing/route_names.dart';
 import '../routing/security_route_policy.dart';
 import '../theme/app_colours.dart';
+import '../modules/module_navigation.dart';
 import '../../features/security/application/security_session_controller.dart';
+import '../../features/modules/application/module_hub_controller.dart';
 import '../windowing/desktop_presence_controller.dart';
 import '../windowing/desktop_window_api.dart';
+import 'module_switcher_dropdown.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({required this.navigationShell, super.key});
@@ -628,9 +631,12 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final modules = ref.watch(moduleHubModulesProvider);
+    final currentPath = GoRouterState.of(context).uri.path;
+    final selectedModule = moduleForPath(modules, currentPath);
 
     return SizedBox(
-      height: 56,
+      height: 70,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColours.darkBackground.withValues(alpha: 0.78),
@@ -654,24 +660,54 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                     children: [
                       const _BrandMark(size: 28),
                       const SizedBox(width: 14),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: AppColours.darkText,
-                              fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: AppColours.darkText,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Text(
-                            widget.subtitle,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: AppColours.darkMutedText,
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 4,
+                                  child: ModuleSwitcherDropdown(
+                                    modules: modules,
+                                    selectedModule: selectedModule,
+                                    onSelected: (module) {
+                                      final route = moduleHomeRoute(module);
+                                      if (route == null) {
+                                        return;
+                                      }
+                                      context.go(route);
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    selectedModule?.description ??
+                                        widget.subtitle,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: AppColours.darkMutedText,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
