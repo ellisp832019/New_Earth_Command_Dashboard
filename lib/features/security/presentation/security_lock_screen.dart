@@ -44,17 +44,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     return SecurityRoutePolicy.resumeRouteFrom(GoRouterState.of(context).uri);
   }
 
-  String _routeAfterUnlock({
-    required BuildContext context,
-    required bool voiceStartupGateEnabled,
-  }) {
+  String _routeAfterUnlock({required BuildContext context}) {
     final postUnlockRoute = _postUnlockRoute(context);
     if (postUnlockRoute != null && postUnlockRoute != RouteNames.dashboard) {
       return postUnlockRoute;
-    }
-
-    if (voiceStartupGateEnabled) {
-      return RouteNames.voiceStartupGate;
     }
 
     return RouteNames.dashboard;
@@ -337,12 +330,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         if (!mounted) {
           return;
         }
-        appRouter.go(
-          _routeAfterUnlock(
-            context: context,
-            voiceStartupGateEnabled: voiceStartupGateEnabled,
-          ),
-        );
+        appRouter.go(_routeAfterUnlock(context: context));
       });
       return;
     }
@@ -507,17 +495,11 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                       })
                                     : null,
                                 canContinue: _canContinue,
-                                continueLabel: voiceStartupGateEnabled
-                                    ? 'Continue to voice gate'
-                                    : 'Open dashboard',
+                                continueLabel: 'Open dashboard',
                                 onContinue: _canContinue
                                     ? () {
                                         appRouter.go(
-                                          _routeAfterUnlock(
-                                            context: context,
-                                            voiceStartupGateEnabled:
-                                                voiceStartupGateEnabled,
-                                          ),
+                                          _routeAfterUnlock(context: context),
                                         );
                                       }
                                     : null,
