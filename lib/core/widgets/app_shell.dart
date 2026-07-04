@@ -330,7 +330,9 @@ class _Sidebar extends StatelessWidget {
                 _SidebarLink(
                   label: 'Engineering',
                   icon: Icons.precision_manufacturing_outlined,
-                  route: RouteNames.omegaEngineeringStudio,
+                  route: RouteNames.modulePackage(
+                    '01_OMEGA_ENGINEERING_STUDIO_MODULE',
+                  ),
                 ),
               ],
             ),
@@ -635,8 +637,8 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
     final currentPath = GoRouterState.of(context).uri.path;
     final selectedModule = moduleForPath(modules, currentPath);
 
-    return SizedBox(
-      height: 104,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 104),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColours.darkBackground.withValues(alpha: 0.78),
@@ -651,65 +653,119 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: DesktopDragToMoveArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: Row(
-                    children: [
-                      const _BrandMark(size: 28),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: AppColours.darkText,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 4,
-                                  child: ModuleSwitcherDropdown(
-                                    modules: modules,
-                                    selectedModule: selectedModule,
-                                    onSelected: (module) {
-                                      final route = moduleHomeRoute(module);
-                                      if (route == null) {
-                                        return;
-                                      }
-                                      context.go(route);
-                                    },
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isCompact = constraints.maxWidth < 760;
+
+                      return Row(
+                        crossAxisAlignment: isCompact
+                            ? CrossAxisAlignment.start
+                            : CrossAxisAlignment.center,
+                        children: [
+                          const _BrandMark(size: 28),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: isCompact
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
+                                              color: AppColours.darkText,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ModuleSwitcherDropdown(
+                                        modules: modules,
+                                        selectedModule: selectedModule,
+                                        onSelected: (module) {
+                                          context.go(
+                                            modulePackageRoute(module),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        selectedModule?.description ??
+                                            widget.subtitle,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                              color: AppColours.darkMutedText,
+                                            ),
+                                      ),
+                                    ],
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
+                                              color: AppColours.darkText,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 4,
+                                            child: ModuleSwitcherDropdown(
+                                              modules: modules,
+                                              selectedModule: selectedModule,
+                                              onSelected: (module) {
+                                                context.go(
+                                                  modulePackageRoute(module),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            flex: 3,
+                                            child: Text(
+                                              selectedModule?.description ??
+                                                  widget.subtitle,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    color: AppColours
+                                                        .darkMutedText,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 3,
-                                  child: Text(
-                                    selectedModule?.description ??
-                                        widget.subtitle,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: AppColours.darkMutedText,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),

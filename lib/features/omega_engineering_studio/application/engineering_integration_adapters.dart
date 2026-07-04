@@ -45,7 +45,7 @@ class LocalEngineeringKnowledgeEngineAdapter
 
   @override
   Future<void> open(BuildContext context) async {
-    context.push(RouteNames.omegaKnowledgeEngine);
+    context.push(RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE'));
   }
 }
 

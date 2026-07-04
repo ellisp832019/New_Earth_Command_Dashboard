@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_manifest.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_navigation.dart';
 import 'package:new_earth_command_dashboard/core/modules/module_category.dart';
@@ -46,6 +47,7 @@ void main() {
     );
 
     expect(moduleHomeRoute(module), '/modules/alpha');
+    expect(modulePackageRoute(module), RouteNames.modulePackage('alpha'));
   });
 
   test('module path matching recognizes nested module routes', () {
@@ -60,6 +62,10 @@ void main() {
 
     expect(moduleForPath(modules, '/modules/beta/settings'), modules[1]);
     expect(moduleForPath(modules, '/modules/alpha/projects'), modules[0]);
+    expect(
+      moduleForPath(modules, RouteNames.modulePackage('beta')),
+      modules[1],
+    );
     expect(moduleForPath(modules, '/dashboard'), isNull);
   });
 }

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,8 +47,7 @@ class EducationLearningHubScreen extends StatefulWidget {
       _EducationLearningHubScreenState();
 }
 
-class _EducationLearningHubScreenState
-    extends State<EducationLearningHubScreen>
+class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
     with SingleTickerProviderStateMixin {
   static const List<String> _tabLabels = [
     'Dashboard',
@@ -108,7 +107,9 @@ class _EducationLearningHubScreenState
 
     final updatedRecords = snapshot.progressRecords.toList(growable: true);
     final index = updatedRecords.indexWhere(
-      (value) => value.studentId == record.studentId && value.entityId == record.entityId,
+      (value) =>
+          value.studentId == record.studentId &&
+          value.entityId == record.entityId,
     );
     if (index >= 0) {
       updatedRecords[index] = record;
@@ -121,7 +122,9 @@ class _EducationLearningHubScreenState
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${lesson.title} saved as complete for ${student.name}.')),
+      SnackBar(
+        content: Text('${lesson.title} saved as complete for ${student.name}.'),
+      ),
     );
   }
 
@@ -144,7 +147,9 @@ class _EducationLearningHubScreenState
 
     final updatedRecords = snapshot.progressRecords.toList(growable: true);
     final index = updatedRecords.indexWhere(
-      (value) => value.studentId == record.studentId && value.entityId == record.entityId,
+      (value) =>
+          value.studentId == record.studentId &&
+          value.entityId == record.entityId,
     );
     if (index >= 0) {
       updatedRecords[index] = record;
@@ -157,7 +162,11 @@ class _EducationLearningHubScreenState
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${project.title} evidence saved locally for ${student.name}.')),
+      SnackBar(
+        content: Text(
+          '${project.title} evidence saved locally for ${student.name}.',
+        ),
+      ),
     );
   }
 
@@ -168,15 +177,17 @@ class _EducationLearningHubScreenState
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Education snapshot exported to ${exported.path}.')),
+        SnackBar(
+          content: Text('Education snapshot exported to ${exported.path}.'),
+        ),
       );
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Export failed: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Export failed: $error')));
     }
   }
 
@@ -196,9 +207,9 @@ class _EducationLearningHubScreenState
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import failed: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Import failed: $error')));
     }
   }
 
@@ -247,10 +258,8 @@ class _EducationLearningHubScreenState
             .where((resource) => project.resourceIds.contains(resource.id))
             .toList(growable: false),
         evidenceRecords: snapshot.progressForProject(project.id),
-        onSaveCheckpoint: () => _saveProjectProgress(
-          student: selectedStudent,
-          project: project,
-        ),
+        onSaveCheckpoint: () =>
+            _saveProjectProgress(student: selectedStudent, project: project),
       ),
     );
   }
@@ -343,67 +352,71 @@ class _EducationLearningHubScreenState
 
   List<LearningPathway> _filteredPathways(EducationHubSnapshot snapshot) {
     final query = _searchQuery.trim().toLowerCase();
-    return snapshot.pathways.where((pathway) {
-      if (_audienceFilter != EducationAudience.all &&
-          !pathway.audiences.contains(_audienceFilter.name)) {
-        return false;
-      }
-      if (query.isEmpty) {
-        return true;
-      }
-      return pathway.title.toLowerCase().contains(query) ||
-          pathway.summary.toLowerCase().contains(query) ||
-          pathway.domain.toLowerCase().contains(query) ||
-          pathway.skillTags.any((tag) => tag.toLowerCase().contains(query));
-    }).toList(growable: false);
+    return snapshot.pathways
+        .where((pathway) {
+          if (_audienceFilter != EducationAudience.all &&
+              !pathway.audiences.contains(_audienceFilter.name)) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+          return pathway.title.toLowerCase().contains(query) ||
+              pathway.summary.toLowerCase().contains(query) ||
+              pathway.domain.toLowerCase().contains(query) ||
+              pathway.skillTags.any((tag) => tag.toLowerCase().contains(query));
+        })
+        .toList(growable: false);
   }
 
   List<Lesson> _filteredLessons(EducationHubSnapshot snapshot) {
     final query = _searchQuery.trim().toLowerCase();
-    return snapshot.lessons.where((lesson) {
-      if (_audienceFilter != EducationAudience.all &&
-          !lesson.audiences.contains(_audienceFilter.name)) {
-        return false;
-      }
-      if (query.isEmpty) {
-        return true;
-      }
-      return lesson.title.toLowerCase().contains(query) ||
-          lesson.summary.toLowerCase().contains(query) ||
-          lesson.objective.toLowerCase().contains(query) ||
-          lesson.tags.any((tag) => tag.toLowerCase().contains(query));
-    }).toList(growable: false);
+    return snapshot.lessons
+        .where((lesson) {
+          if (_audienceFilter != EducationAudience.all &&
+              !lesson.audiences.contains(_audienceFilter.name)) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+          return lesson.title.toLowerCase().contains(query) ||
+              lesson.summary.toLowerCase().contains(query) ||
+              lesson.objective.toLowerCase().contains(query) ||
+              lesson.tags.any((tag) => tag.toLowerCase().contains(query));
+        })
+        .toList(growable: false);
   }
 
   List<PracticalProject> _filteredProjects(EducationHubSnapshot snapshot) {
     final query = _searchQuery.trim().toLowerCase();
-    return snapshot.projects.where((project) {
-      if (_audienceFilter != EducationAudience.all &&
-          !project.audiences.contains(_audienceFilter.name)) {
-        return false;
-      }
-      if (query.isEmpty) {
-        return true;
-      }
-      return project.title.toLowerCase().contains(query) ||
-          project.summary.toLowerCase().contains(query) ||
-          project.domain.toLowerCase().contains(query);
-    }).toList(growable: false);
+    return snapshot.projects
+        .where((project) {
+          if (_audienceFilter != EducationAudience.all &&
+              !project.audiences.contains(_audienceFilter.name)) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+          return project.title.toLowerCase().contains(query) ||
+              project.summary.toLowerCase().contains(query) ||
+              project.domain.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
   }
 
   void _copyText(String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label copied locally.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$label copied locally.')));
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null && _snapshot == null) {
@@ -437,7 +450,8 @@ class _EducationLearningHubScreenState
       (student) => student.id == _selectedStudentId,
       orElse: () => snapshot.students.first,
     );
-    final selectedPathway = pathwayService.pathwayById(_selectedPathwayId ?? '') ??
+    final selectedPathway =
+        pathwayService.pathwayById(_selectedPathwayId ?? '') ??
         snapshot.pathways.first;
     final searchHits = searchService.search(
       _searchQuery,
@@ -450,7 +464,9 @@ class _EducationLearningHubScreenState
         title: const Text('Education & Learning Hub'),
         actions: [
           TextButton.icon(
-            onPressed: () => context.push(RouteNames.omegaKnowledgeEngine),
+            onPressed: () => context.push(
+              RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE'),
+            ),
             icon: const Icon(Icons.travel_explore_outlined),
             label: const Text('Knowledge Engine'),
           ),
@@ -509,9 +525,7 @@ class _EducationLearningHubScreenState
             TabBar(
               controller: _tabController,
               isScrollable: true,
-              tabs: [
-                for (final label in _tabLabels) Tab(text: label),
-              ],
+              tabs: [for (final label in _tabLabels) Tab(text: label)],
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -530,8 +544,10 @@ class _EducationLearningHubScreenState
                     certificateService: certificateService,
                     tutorService: tutorService,
                     contentSources: snapshot.contentSources,
-                    onSaveLessonProgress: (lesson) =>
-                        _saveLessonProgress(student: currentStudent, lesson: lesson),
+                    onSaveLessonProgress: (lesson) => _saveLessonProgress(
+                      student: currentStudent,
+                      lesson: lesson,
+                    ),
                     onOpenLessonDetails: _openLessonDetails,
                     onOpenPathways: () => _tabController.animateTo(1),
                     onOpenLessons: () => _tabController.animateTo(2),
@@ -560,8 +576,10 @@ class _EducationLearningHubScreenState
                       });
                     },
                     onOpenLessonDetails: _openLessonDetails,
-                    onSaveLessonProgress: (lesson) =>
-                        _saveLessonProgress(student: currentStudent, lesson: lesson),
+                    onSaveLessonProgress: (lesson) => _saveLessonProgress(
+                      student: currentStudent,
+                      lesson: lesson,
+                    ),
                   ),
                   _ProjectsTab(
                     snapshot: snapshot,
@@ -569,8 +587,10 @@ class _EducationLearningHubScreenState
                     selectedStudent: currentStudent,
                     roleView: _roleView,
                     onOpenProjectWorkspace: _openProjectWorkspace,
-                    onSaveProjectProgress: (project) =>
-                        _saveProjectProgress(student: currentStudent, project: project),
+                    onSaveProjectProgress: (project) => _saveProjectProgress(
+                      student: currentStudent,
+                      project: project,
+                    ),
                   ),
                   _ProgressTab(
                     snapshot: snapshot,
@@ -641,8 +661,9 @@ class _EducationLearningHubScreenState
                     snapshot: snapshot,
                     contentSources: snapshot.contentSources,
                     roleView: _roleView,
-                    onOpenKnowledgeEngine: () =>
-                        context.push(RouteNames.omegaKnowledgeEngine),
+                    onOpenKnowledgeEngine: () => context.push(
+                      RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE'),
+                    ),
                     onOpenGaiaPlaceholder: () =>
                         context.push(RouteNames.voiceAssistant),
                     onOpenMore: () => context.go(RouteNames.more),
@@ -749,7 +770,8 @@ class _HeroCard extends StatelessWidget {
                   controller: searchController,
                   onChanged: onQueryChanged,
                   decoration: InputDecoration(
-                    labelText: 'Search pathways, lessons, projects, and resources',
+                    labelText:
+                        'Search pathways, lessons, projects, and resources',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: searchQuery.isEmpty
                         ? null
@@ -855,8 +877,12 @@ class _DashboardTab extends StatelessWidget {
       roleLabel: roleView.label,
       completionLabel: completionLabel,
     );
-    final studentAssessments = snapshot.assessmentsForStudent(selectedStudent.id);
-    final badgeReadiness = snapshot.badgeReadinessForStudent(selectedStudent.id);
+    final studentAssessments = snapshot.assessmentsForStudent(
+      selectedStudent.id,
+    );
+    final badgeReadiness = snapshot.badgeReadinessForStudent(
+      selectedStudent.id,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -891,7 +917,8 @@ class _DashboardTab extends StatelessWidget {
               _InfoTile(
                 label: 'Badge readiness',
                 value: '${(badgeReadiness * 100).round()}%',
-                detail: '${snapshot.earnedBadgeCountForStudent(selectedStudent.id)} earned badge(s)',
+                detail:
+                    '${snapshot.earnedBadgeCountForStudent(selectedStudent.id)} earned badge(s)',
               ),
             ],
           ),
@@ -915,13 +942,15 @@ class _DashboardTab extends StatelessWidget {
             ),
             _ActionCard(
               title: 'Practical Projects',
-              subtitle: 'Use project workspaces to turn learning into evidence.',
+              subtitle:
+                  'Use project workspaces to turn learning into evidence.',
               buttonText: 'Open projects',
               onPressed: onOpenProjects,
             ),
             _ActionCard(
               title: 'AI Tutor',
-              subtitle: 'Suggestion-only tutor with safety-aware placeholder flow.',
+              subtitle:
+                  'Suggestion-only tutor with safety-aware placeholder flow.',
               buttonText: 'Open tutor',
               onPressed: onOpenTutor,
             ),
@@ -949,14 +978,16 @@ class _DashboardTab extends StatelessWidget {
         const SizedBox(height: 12),
         _Panel(
           title: 'Learner checkpoint',
-          subtitle: 'What the tutor and the local progress snapshot can see right now.',
+          subtitle:
+              'What the tutor and the local progress snapshot can see right now.',
           child: Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
               _InfoTile(
                 label: 'Assessments complete',
-                value: '${studentAssessments.where((assessment) => assessment.completedAt != null).length}/${studentAssessments.length}',
+                value:
+                    '${studentAssessments.where((assessment) => assessment.completedAt != null).length}/${studentAssessments.length}',
                 detail: 'Used to shape badge readiness',
               ),
               _InfoTile(
@@ -986,11 +1017,13 @@ class _DashboardTab extends StatelessWidget {
         const SizedBox(height: 12),
         _Panel(
           title: 'Certificates and badges',
-          subtitle: 'Placeholder badge system for future export and mentor sign-off.',
+          subtitle:
+              'Placeholder badge system for future export and mentor sign-off.',
           child: certificates.isEmpty
               ? const _EmptyInline(
                   title: 'No certificates yet',
-                  subtitle: 'Certificates will appear after assessment sign-off.',
+                  subtitle:
+                      'Certificates will appear after assessment sign-off.',
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1001,17 +1034,20 @@ class _DashboardTab extends StatelessWidget {
                       children: [
                         _InfoTile(
                           label: 'Learner badges',
-                          value: '${snapshot.earnedBadgeCountForStudent(selectedStudent.id)}',
+                          value:
+                              '${snapshot.earnedBadgeCountForStudent(selectedStudent.id)}',
                           detail: 'Local badge ids already issued',
                         ),
                         _InfoTile(
                           label: 'Assessments complete',
-                          value: '${snapshot.completedAssessmentsForStudent(selectedStudent.id).length}',
+                          value:
+                              '${snapshot.completedAssessmentsForStudent(selectedStudent.id).length}',
                           detail: 'Ready for review and sign-off',
                         ),
                         _InfoTile(
                           label: 'Badge readiness',
-                          value: '${(snapshot.badgeReadinessForStudent(selectedStudent.id) * 100).round()}%',
+                          value:
+                              '${(snapshot.badgeReadinessForStudent(selectedStudent.id) * 100).round()}%',
                           detail: 'Based on progress and assessments',
                         ),
                       ],
@@ -1031,15 +1067,20 @@ class _DashboardTab extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    if (studentAssessments.where((assessment) => assessment.completedAt != null).isEmpty)
+                    if (studentAssessments
+                        .where((assessment) => assessment.completedAt != null)
+                        .isEmpty)
                       const _EmptyInline(
                         title: 'No completed assessments yet',
-                        subtitle: 'Finish a lesson or project checkpoint to unlock the first badge flow.',
+                        subtitle:
+                            'Finish a lesson or project checkpoint to unlock the first badge flow.',
                       )
                     else
                       Column(
                         children: [
-                          for (final assessment in studentAssessments.where((assessment) => assessment.completedAt != null))
+                          for (final assessment in studentAssessments.where(
+                            (assessment) => assessment.completedAt != null,
+                          ))
                             _AssessmentCard(assessment: assessment),
                         ],
                       ),
@@ -1049,7 +1090,8 @@ class _DashboardTab extends StatelessWidget {
         const SizedBox(height: 12),
         _Panel(
           title: 'Content pipeline',
-          subtitle: 'Source-linked module docs and sample packs ready for import.',
+          subtitle:
+              'Source-linked module docs and sample packs ready for import.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1072,7 +1114,8 @@ class _DashboardTab extends StatelessWidget {
               if (contentSources.isEmpty)
                 const _EmptyInline(
                   title: 'No content sources found',
-                  subtitle: 'The module will fall back to embedded seeds when needed.',
+                  subtitle:
+                      'The module will fall back to embedded seeds when needed.',
                 )
               else
                 Wrap(
@@ -1252,7 +1295,8 @@ class _ProjectsTab extends StatelessWidget {
       children: [
         _Panel(
           title: 'Practical Projects',
-          subtitle: 'Small project workspaces with materials, steps, and evidence.',
+          subtitle:
+              'Small project workspaces with materials, steps, and evidence.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1290,8 +1334,10 @@ class _ProjectsTab extends StatelessWidget {
                           _ProjectWorkspaceSummary(
                             project: project,
                             evidenceRecord: projectProgress[project.id],
-                            onOpenWorkspace: () => onOpenProjectWorkspace(project),
-                            onSaveCheckpoint: () => onSaveProjectProgress(project),
+                            onOpenWorkspace: () =>
+                                onOpenProjectWorkspace(project),
+                            onSaveCheckpoint: () =>
+                                onSaveProjectProgress(project),
                           ),
                         ],
                       ),
@@ -1328,7 +1374,8 @@ class _ProgressTab extends StatelessWidget {
       children: [
         _Panel(
           title: 'Student Progress',
-          subtitle: 'A local view of pathways, lessons, projects, and completion.',
+          subtitle:
+              'A local view of pathways, lessons, projects, and completion.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1351,7 +1398,8 @@ class _ProgressTab extends StatelessWidget {
               if (studentProgress.isEmpty)
                 const _EmptyInline(
                   title: 'No progress records yet',
-                  subtitle: 'Progress will appear as lessons and projects are completed.',
+                  subtitle:
+                      'Progress will appear as lessons and projects are completed.',
                 )
               else
                 _ProgressTimeline(records: studentProgress),
@@ -1444,11 +1492,13 @@ class _TutorTab extends StatelessWidget {
                   ),
                   ActionChip(
                     label: Text('Plan ${selectedPathway.title}'),
-                    onPressed: () => onUseSuggestion('Plan ${selectedPathway.title}'),
+                    onPressed: () =>
+                        onUseSuggestion('Plan ${selectedPathway.title}'),
                   ),
                   ActionChip(
                     label: Text('Help ${selectedStudent.name}'),
-                    onPressed: () => onUseSuggestion('Help ${selectedStudent.name}'),
+                    onPressed: () =>
+                        onUseSuggestion('Help ${selectedStudent.name}'),
                   ),
                   ActionChip(
                     label: const Text('Make it safer'),
@@ -1512,7 +1562,9 @@ class _MentorTab extends StatelessWidget {
       ..writeln('Mentor: ${selectedStudent.mentorName}')
       ..writeln('Guardian: ${selectedStudent.guardianName}')
       ..writeln('Progress: $progressLabel')
-      ..writeln('Assessments: $completedAssessments of ${assessments.length} complete')
+      ..writeln(
+        'Assessments: $completedAssessments of ${assessments.length} complete',
+      )
       ..writeln('Reflections: ${reflections.length}')
       ..writeln('Badges: $badgeCount')
       ..writeln('Latest support note count: ${notes.length}');
@@ -1521,7 +1573,8 @@ class _MentorTab extends StatelessWidget {
       children: [
         _Panel(
           title: 'Mentor Workspace',
-          subtitle: 'Track learner notes, support actions, and gentle sign-off.',
+          subtitle:
+              'Track learner notes, support actions, and gentle sign-off.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1552,7 +1605,8 @@ class _MentorTab extends StatelessWidget {
               const SizedBox(height: 12),
               _Panel(
                 title: 'Local mentor summary',
-                subtitle: 'A calm clipboard-friendly snapshot for review or handoff.',
+                subtitle:
+                    'A calm clipboard-friendly snapshot for review or handoff.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1561,7 +1615,10 @@ class _MentorTab extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _MiniBadge(label: progressLabel),
-                        _MiniBadge(label: '$completedAssessments/${assessments.length} assessments'),
+                        _MiniBadge(
+                          label:
+                              '$completedAssessments/${assessments.length} assessments',
+                        ),
                         _MiniBadge(label: '${reflections.length} reflections'),
                         _MiniBadge(label: '$badgeCount badges'),
                       ],
@@ -1576,7 +1633,9 @@ class _MentorTab extends StatelessWidget {
                         FilledButton.tonalIcon(
                           onPressed: () async {
                             await Clipboard.setData(
-                              ClipboardData(text: mentorSummary.toString().trim()),
+                              ClipboardData(
+                                text: mentorSummary.toString().trim(),
+                              ),
                             );
                             if (!context.mounted) {
                               return;
@@ -1599,7 +1658,8 @@ class _MentorTab extends StatelessWidget {
               if (notes.isEmpty)
                 const _EmptyInline(
                   title: 'No mentor notes yet',
-                  subtitle: 'Mentor notes will appear as work sessions progress.',
+                  subtitle:
+                      'Mentor notes will appear as work sessions progress.',
                 )
               else
                 Column(
@@ -1637,15 +1697,18 @@ class _AssessmentsTab extends StatelessWidget {
         }
         return left.title.compareTo(right.title);
       });
-    final completedCount = sortedAssessments.where((assessment) => assessment.completedAt != null).length;
+    final completedCount = sortedAssessments
+        .where((assessment) => assessment.completedAt != null)
+        .length;
     final pendingCount = sortedAssessments.length - completedCount;
     final averageScore = sortedAssessments.isEmpty
         ? 0.0
         : sortedAssessments.fold<double>(
-              0.0,
-              (sum, assessment) => sum + assessment.score / assessment.maxScore,
-            ) /
-            sortedAssessments.length;
+                0.0,
+                (sum, assessment) =>
+                    sum + assessment.score / assessment.maxScore,
+              ) /
+              sortedAssessments.length;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1679,11 +1742,12 @@ class _AssessmentsTab extends StatelessWidget {
               if (sortedAssessments.isEmpty)
                 const _EmptyInline(
                   title: 'No assessments yet',
-                  subtitle: 'Assessment cards will appear as the content set grows.',
+                  subtitle:
+                      'Assessment cards will appear as the content set grows.',
                 )
               else
                 for (final assessment in sortedAssessments)
-                _AssessmentCard(assessment: assessment),
+                  _AssessmentCard(assessment: assessment),
             ],
           ),
         ),
@@ -1705,10 +1769,11 @@ class _ReflectionTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final studentReflections = reflections
-        .where((reflection) => reflection.studentId == selectedStudent.id)
-        .toList(growable: false)
-      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final studentReflections =
+        reflections
+            .where((reflection) => reflection.studentId == selectedStudent.id)
+            .toList(growable: false)
+          ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
     final reflectionSummary = StringBuffer()
       ..writeln('Learner: ${selectedStudent.name}')
       ..writeln('Reflection count: ${studentReflections.length}')
@@ -1737,7 +1802,9 @@ class _ReflectionTab extends StatelessWidget {
                   ),
                   _InfoTile(
                     label: 'Latest mood',
-                    value: studentReflections.isEmpty ? 'None' : studentReflections.first.mood,
+                    value: studentReflections.isEmpty
+                        ? 'None'
+                        : studentReflections.first.mood,
                     detail: studentReflections.isEmpty
                         ? 'Waiting for the first reflection'
                         : 'Most recent journal entry',
@@ -1752,13 +1819,17 @@ class _ReflectionTab extends StatelessWidget {
                   FilledButton.tonalIcon(
                     onPressed: () async {
                       await Clipboard.setData(
-                        ClipboardData(text: reflectionSummary.toString().trim()),
+                        ClipboardData(
+                          text: reflectionSummary.toString().trim(),
+                        ),
                       );
                       if (!context.mounted) {
                         return;
                       }
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Reflection summary copied locally.')),
+                        const SnackBar(
+                          content: Text('Reflection summary copied locally.'),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.copy_all_outlined),
@@ -1867,13 +1938,19 @@ class _CertificatesTab extends StatelessWidget {
                         FilledButton.tonalIcon(
                           onPressed: () async {
                             await Clipboard.setData(
-                              ClipboardData(text: passportSummary.toString().trim()),
+                              ClipboardData(
+                                text: passportSummary.toString().trim(),
+                              ),
                             );
                             if (!context.mounted) {
                               return;
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Passport summary copied locally.')),
+                              const SnackBar(
+                                content: Text(
+                                  'Passport summary copied locally.',
+                                ),
+                              ),
                             );
                           },
                           icon: const Icon(Icons.copy_all_outlined),
@@ -1888,7 +1965,8 @@ class _CertificatesTab extends StatelessWidget {
               if (studentCertificates.isEmpty)
                 const _EmptyInline(
                   title: 'No badges issued yet',
-                  subtitle: 'Badges will appear when assessments are signed off.',
+                  subtitle:
+                      'Badges will appear when assessments are signed off.',
                 )
               else
                 Wrap(
@@ -1934,13 +2012,13 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
   @override
   void initState() {
     super.initState();
-    _packNameController = TextEditingController(
-      text: 'Education Content Pack',
-    );
+    _packNameController = TextEditingController(text: 'Education Content Pack');
     _packSummaryController = TextEditingController(
       text: 'Local-first pack for lessons, projects, reflections, and badges.',
     );
-    _packAudienceController = TextEditingController(text: widget.roleView.label);
+    _packAudienceController = TextEditingController(
+      text: widget.roleView.label,
+    );
   }
 
   @override
@@ -1955,8 +2033,12 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
   Widget build(BuildContext context) {
     final snapshot = widget.snapshot;
     final contentSources = snapshot.contentSources;
-    final docsCount = contentSources.where((source) => source.kind == 'Documentation').length;
-    final sampleCount = contentSources.where((source) => source.kind == 'Sample data').length;
+    final docsCount = contentSources
+        .where((source) => source.kind == 'Documentation')
+        .length;
+    final sampleCount = contentSources
+        .where((source) => source.kind == 'Sample data')
+        .length;
     final resourceCount = snapshot.resources.length;
     final packSummary = StringBuffer()
       ..writeln('Pack: ${_packNameController.text.trim()}')
@@ -1972,7 +2054,8 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
       children: [
         _Panel(
           title: 'Content Builder',
-          subtitle: 'Draft offline learning packs, review source coverage, and keep the pack local.',
+          subtitle:
+              'Draft offline learning packs, review source coverage, and keep the pack local.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1993,7 +2076,8 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
                   _InfoTile(
                     label: 'Coverage',
                     value: '${contentSources.length} sources',
-                    detail: '$docsCount docs, $sampleCount sample packs, $resourceCount resources',
+                    detail:
+                        '$docsCount docs, $sampleCount sample packs, $resourceCount resources',
                   ),
                 ],
               ),
@@ -2049,7 +2133,8 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
               const SizedBox(height: 12),
               _Panel(
                 title: 'Pack summary',
-                subtitle: 'Clipboard-ready snapshot for future pack creation work.',
+                subtitle:
+                    'Clipboard-ready snapshot for future pack creation work.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2062,7 +2147,9 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
                         _MiniBadge(label: '${snapshot.pathwayCount} pathways'),
                         _MiniBadge(label: '${snapshot.lessonCount} lessons'),
                         _MiniBadge(label: '${snapshot.projectCount} projects'),
-                        _MiniBadge(label: '${snapshot.certificateCount} certificates'),
+                        _MiniBadge(
+                          label: '${snapshot.certificateCount} certificates',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -2073,13 +2160,17 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
                         FilledButton.tonalIcon(
                           onPressed: () async {
                             await Clipboard.setData(
-                              ClipboardData(text: packSummary.toString().trim()),
+                              ClipboardData(
+                                text: packSummary.toString().trim(),
+                              ),
                             );
                             if (!context.mounted) {
                               return;
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Pack summary copied locally.')),
+                              const SnackBar(
+                                content: Text('Pack summary copied locally.'),
+                              ),
                             );
                           },
                           icon: const Icon(Icons.copy_all_outlined),
@@ -2102,7 +2193,10 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
               ),
               const SizedBox(height: 12),
               if (contentSources.isNotEmpty) ...[
-                Text('Source library preview', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Source library preview',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 for (final source in contentSources.take(4)) ...[
                   _ContentSourceCard(source: source),
@@ -2166,7 +2260,8 @@ class _SettingsTab extends StatelessWidget {
               _InfoTile(
                 label: 'Content pipeline',
                 value: '${contentSources.length} indexed files',
-                detail: 'Markdown docs and sample data are visible as source-linked content.',
+                detail:
+                    'Markdown docs and sample data are visible as source-linked content.',
               ),
               const SizedBox(height: 12),
               _InfoTile(
@@ -2213,7 +2308,10 @@ class _SettingsTab extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               if (contentSources.isNotEmpty) ...[
-                Text('Latest content sources', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Latest content sources',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 for (final source in contentSources.take(5)) ...[
                   _ContentSourceCard(source: source),
@@ -2315,10 +2413,7 @@ class _ActionCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(subtitle),
               const SizedBox(height: 12),
-              FilledButton.tonal(
-                onPressed: onPressed,
-                child: Text(buttonText),
-              ),
+              FilledButton.tonal(onPressed: onPressed, child: Text(buttonText)),
             ],
           ),
         ),
@@ -2363,10 +2458,7 @@ class _InfoTile extends StatelessWidget {
 }
 
 class _EmptyInline extends StatelessWidget {
-  const _EmptyInline({
-    required this.title,
-    required this.subtitle,
-  });
+  const _EmptyInline({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -2441,7 +2533,9 @@ class _PathwayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       color: selected
-          ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.24)
+          ? Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.24)
           : null,
       child: InkWell(
         onTap: onTap,
@@ -2473,7 +2567,8 @@ class _PathwayCard extends StatelessWidget {
                 children: [
                   _MiniBadge(label: pathway.domain),
                   _MiniBadge(label: '${pathway.estimatedHours} h'),
-                  for (final tag in pathway.skillTags.take(3)) _MiniBadge(label: tag),
+                  for (final tag in pathway.skillTags.take(3))
+                    _MiniBadge(label: tag),
                 ],
               ),
             ],
@@ -2591,7 +2686,8 @@ class _ProjectCard extends StatelessWidget {
               children: [
                 _MiniBadge(label: project.domain),
                 _MiniBadge(label: '${project.estimatedHours} h'),
-                for (final skill in project.skillTags.take(3)) _MiniBadge(label: skill),
+                for (final skill in project.skillTags.take(3))
+                  _MiniBadge(label: skill),
               ],
             ),
             const SizedBox(height: 8),
@@ -2641,9 +2737,12 @@ class _ProjectWorkspaceSummary extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _MiniBadge(label: '${project.resourceIds.length} linked source(s)'),
+                _MiniBadge(
+                  label: '${project.resourceIds.length} linked source(s)',
+                ),
                 _MiniBadge(label: project.domain),
-                if (evidenceRecord != null) _MiniBadge(label: evidenceRecord!.status),
+                if (evidenceRecord != null)
+                  _MiniBadge(label: evidenceRecord!.status),
               ],
             ),
             const SizedBox(height: 8),
@@ -2724,7 +2823,10 @@ class _ProgressTimeline extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Learning timeline', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Learning timeline',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         for (final record in sorted) ...[
           _ProgressRecordCard(record: record),
@@ -2759,7 +2861,10 @@ class _LessonDetailSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(lesson.title, style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                lesson.title,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               const SizedBox(height: 4),
               Text(lesson.summary),
               const SizedBox(height: 12),
@@ -2770,7 +2875,8 @@ class _LessonDetailSheet extends StatelessWidget {
                   _MiniBadge(label: pathway.title),
                   _MiniBadge(label: lesson.difficulty),
                   _MiniBadge(label: '${lesson.estimatedMinutes} min'),
-                  if (lesson.sourceKind.isNotEmpty) _MiniBadge(label: lesson.sourceKind),
+                  if (lesson.sourceKind.isNotEmpty)
+                    _MiniBadge(label: lesson.sourceKind),
                 ],
               ),
               const SizedBox(height: 12),
@@ -2801,7 +2907,8 @@ class _LessonDetailSheet extends StatelessWidget {
                 child: resources.isEmpty
                     ? const _EmptyInline(
                         title: 'No linked resources',
-                        subtitle: 'This lesson will gain source links as content packs grow.',
+                        subtitle:
+                            'This lesson will gain source links as content packs grow.',
                       )
                     : Wrap(
                         spacing: 10,
@@ -2871,7 +2978,10 @@ class _ProjectWorkspaceSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(project.title, style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                project.title,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               const SizedBox(height: 4),
               Text(project.summary),
               const SizedBox(height: 12),
@@ -2889,7 +2999,8 @@ class _ProjectWorkspaceSheet extends StatelessWidget {
               _InfoTile(
                 label: 'Project workspace',
                 value: 'Evidence-led and local',
-                detail: 'Use this panel to keep the project notes, checkpoints, and links calm.',
+                detail:
+                    'Use this panel to keep the project notes, checkpoints, and links calm.',
               ),
               const SizedBox(height: 12),
               _Panel(
@@ -2927,11 +3038,13 @@ class _ProjectWorkspaceSheet extends StatelessWidget {
               const SizedBox(height: 12),
               _Panel(
                 title: 'Evidence log',
-                subtitle: 'Local checkpoints that show progress on the project.',
+                subtitle:
+                    'Local checkpoints that show progress on the project.',
                 child: evidenceRecords.isEmpty
                     ? const _EmptyInline(
                         title: 'No checkpoint history yet',
-                        subtitle: 'Save a checkpoint to create the first local evidence entry.',
+                        subtitle:
+                            'Save a checkpoint to create the first local evidence entry.',
                       )
                     : Column(
                         children: [
@@ -3133,7 +3246,10 @@ class _CertificateCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(certificate.title, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            certificate.title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 4),
           Text(certificate.summary),
           const SizedBox(height: 8),
@@ -3166,7 +3282,10 @@ class _CertificateChip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(certificate.title, style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            certificate.title,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           const SizedBox(height: 4),
           Text(certificate.badgeLevel),
         ],
@@ -3191,7 +3310,10 @@ class _SearchHitCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(hit.title, style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    hit.title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   const SizedBox(height: 4),
                   Text(hit.subtitle),
                 ],
@@ -3326,9 +3448,9 @@ class _MiniBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -3347,7 +3469,9 @@ class _TodoList extends StatelessWidget {
         const _TodoLine('Add richer lesson player interactions later.'),
         const _TodoLine('Wire content pack import/export for offline packs.'),
         const _TodoLine('Connect tutor prompts to a future approval gate.'),
-        const _TodoLine('Replace the placeholder Open GAIA route with the real assistant flow when ready.'),
+        const _TodoLine(
+          'Replace the placeholder Open GAIA route with the real assistant flow when ready.',
+        ),
       ],
     );
   }
@@ -3372,4 +3496,3 @@ class _TodoLine extends StatelessWidget {
     );
   }
 }
-

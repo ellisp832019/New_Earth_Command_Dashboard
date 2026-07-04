@@ -114,6 +114,12 @@ void main() {
       );
       expect(
         SecurityRoutePolicy.resumeRouteFrom(
+          Uri.parse(RouteNames.securityLockWithResume(RouteNames.startup)),
+        ),
+        isNull,
+      );
+      expect(
+        SecurityRoutePolicy.resumeRouteFrom(
           Uri.parse(RouteNames.securityLockWithResume(RouteNames.securityLock)),
         ),
         isNull,

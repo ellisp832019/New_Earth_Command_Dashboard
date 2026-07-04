@@ -41,7 +41,8 @@ abstract final class SecurityRoutePolicy {
       return null;
     }
 
-    if (parsedResume.path == RouteNames.securityLock) {
+    if (parsedResume.path == RouteNames.securityLock ||
+        parsedResume.path == RouteNames.startup) {
       return null;
     }
 

@@ -766,9 +766,8 @@ class _PinnedStartHereCard extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       FilledButton.tonalIcon(
-                        onPressed: () => context.push(
-                          RouteNames.moduleHubModule(module!.id),
-                        ),
+                        onPressed: () =>
+                            context.push(RouteNames.modulePackage(module!.id)),
                         icon: const Icon(Icons.open_in_new),
                         label: const Text('Open module home'),
                       ),
@@ -870,7 +869,10 @@ class _PinnedKnowledgeEngineCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _SummaryChip(label: 'Health', value: module!.health.state.label),
+                      _SummaryChip(
+                        label: 'Health',
+                        value: module!.health.state.label,
+                      ),
                       _SummaryChip(
                         label: 'Last checked',
                         value: module!.health.lastCheckedLabel,
@@ -899,7 +901,7 @@ class _PinnedKnowledgeEngineCard extends StatelessWidget {
                     children: [
                       FilledButton.tonalIcon(
                         onPressed: () => context.push(
-                          RouteNames.omegaKnowledgeEngine,
+                          RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE'),
                         ),
                         icon: const Icon(Icons.open_in_new),
                         label: const Text('Open module home'),
@@ -941,10 +943,14 @@ class _SummaryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.44),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.44),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.42),
+          color: Theme.of(
+            context,
+          ).colorScheme.outlineVariant.withValues(alpha: 0.42),
         ),
       ),
       child: Text(

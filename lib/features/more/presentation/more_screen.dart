@@ -7,7 +7,7 @@ import '../../../core/theme/app_colours.dart';
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
-  static const _items = [
+  static final _items = [
     _MoreItem(
       title: 'About & Help',
       description:
@@ -35,7 +35,7 @@ class MoreScreen extends StatelessWidget {
       description:
           'Scan repos, build learning notes, and review architecture maps locally.',
       icon: Icons.travel_explore_outlined,
-      route: RouteNames.omegaKnowledgeEngine,
+      route: RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE'),
       badge: 'Scan',
     ),
     _MoreItem(
@@ -43,7 +43,7 @@ class MoreScreen extends StatelessWidget {
       description:
           'Track projects, circuits, boards, firmware, devices, validation, and manufacturing readiness.',
       icon: Icons.precision_manufacturing_outlined,
-      route: RouteNames.omegaEngineeringStudio,
+      route: RouteNames.modulePackage('01_OMEGA_ENGINEERING_STUDIO_MODULE'),
       badge: 'Build',
     ),
     _MoreItem(
@@ -278,7 +278,8 @@ class MoreScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = _items[index];
                   final isOmegaKnowledgeEngine =
-                      item.route == RouteNames.omegaKnowledgeEngine;
+                      item.route ==
+                      RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE');
                   return InkWell(
                     borderRadius: BorderRadius.circular(24),
                     onTap: () => context.push(item.route),
@@ -446,7 +447,8 @@ class _OmegaKnowledgeEngineBanner extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(24),
-      onTap: () => context.push(RouteNames.omegaKnowledgeEngine),
+      onTap: () =>
+          context.push(RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE')),
       child: Ink(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -513,8 +515,9 @@ class _OmegaKnowledgeEngineBanner extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       FilledButton.tonalIcon(
-                        onPressed: () =>
-                            context.push(RouteNames.omegaKnowledgeEngine),
+                        onPressed: () => context.push(
+                          RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE'),
+                        ),
                         icon: const Icon(Icons.open_in_new),
                         label: const Text('Open module home'),
                       ),

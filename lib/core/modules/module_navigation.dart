@@ -1,4 +1,9 @@
 import 'module_manifest.dart';
+import '../routing/route_names.dart';
+
+String modulePackageRoute(ModuleManifest module) {
+  return RouteNames.modulePackage(module.id);
+}
 
 String? moduleHomeRoute(ModuleManifest module) {
   if (module.routes.isEmpty) {
@@ -24,6 +29,11 @@ bool moduleMatchesPath(ModuleManifest module, String path) {
         currentPath.startsWith('$normalizedRoute/')) {
       return true;
     }
+  }
+
+  final packageRoute = modulePackageRoute(module);
+  if (currentPath == packageRoute || currentPath.startsWith('$packageRoute/')) {
+    return true;
   }
 
   return false;
