@@ -15,6 +15,8 @@
 - The global module switcher in the app title bar should use the module registry and each module's first registered route as the home launch target.
 - When a module grows into multiple section screens, keep the module home route stable and add children underneath it.
 - Dedicated-window modules can be launched as separate desktop processes with `--launch-route=<path>` so each window opens on a chosen monitor.
+- The standardized package shell lives at `RouteNames.modulePackage(moduleId)` and should become the first stop for module windows.
+- Treat the package shell as the shared frame for all modules, then layer module-specific pages underneath it.
 
 ## Local storage
 
@@ -36,3 +38,4 @@
 - Keep engineering wording neutral and calm. Use `Parked`, `Ready`, `Needs attention`, and `Carry forward` instead of failure language.
 - If the title-bar dropdown needs another module, add its manifest routes first, then let the module registry pick it up automatically.
 - For desktop-only floating windows, keep the route stable and launch a new process instead of trying to embed another top-level Flutter view in the same shell.
+- When converting another module, start by wiring its manifest into the package shell before moving any deeper screens.

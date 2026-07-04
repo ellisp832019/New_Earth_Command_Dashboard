@@ -22,15 +22,17 @@
 
 1. `lib/core/routing/route_names.dart`
 2. `lib/core/routing/app_router.dart`
-3. `lib/features/more/presentation/more_screen.dart`
+3. `lib/core/routing/app_launch_route.dart`
 4. `lib/core/widgets/app_shell.dart`
-5. `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/module_manifest.json`
-6. Global module switcher in the desktop title bar
+5. `lib/features/modules/module_package_screen.dart`
+6. `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/module_manifest.json`
+7. Global module switcher in the desktop title bar
 
 ## Notes
 
 - The module is local-first and mock-data-first.
-- The section routes all land on the same engineering workspace shell.
-- The title-bar module dropdown should open `/modules/omega-engineering-studio` for the module home and any registered section route for deeper workspace views.
-- Future hardening can split these routes into dedicated screens without changing the public paths.
+- The dedicated package shell now opens at `/module-packages/01_OMEGA_ENGINEERING_STUDIO_MODULE`.
+- The section routes still land on the engineering workspace shell for deep work.
+- The title-bar module dropdown should open the package shell first, then expose the module home and section routes from there.
+- Future hardening can split the package shell into deeper module-specific panels without changing the public package route.
 - Omega Knowledge Engine and GAIA are exposed as integration-ready hooks, not live cloud dependencies.

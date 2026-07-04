@@ -68,6 +68,7 @@ import '../../features/modules/module_docking_screen.dart';
 import '../../features/modules/module_governance_screen.dart';
 import '../../features/modules/module_operations_screen.dart';
 import '../../features/modules/module_permissions_screen.dart';
+import '../../features/modules/module_package_screen.dart';
 import '../../features/modules/module_settings_screen.dart';
 import '../../features/modules/modules_screen.dart';
 import '../../features/omega_knowledge_engine/presentation/omega_knowledge_engine_screen.dart';
@@ -1117,6 +1118,12 @@ final appRouter = GoRouter(
           ),
         ),
       ],
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '${RouteNames.modulePackages}/:moduleId',
+      builder: (context, state) =>
+          ModulePackageScreen(moduleId: state.pathParameters['moduleId']!),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

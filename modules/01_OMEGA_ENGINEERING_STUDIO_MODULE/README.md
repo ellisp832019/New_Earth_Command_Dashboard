@@ -24,6 +24,7 @@ Central engineering workspace for the New Earth Omega Dashboard.
 - No cloud sync yet
 - No auth gate added in this slice
 - Integration-ready hooks for Omega Knowledge Engine and GAIA
+- The module now has a standardized package shell route for dedicated windows.
 
 ## Source files
 
@@ -32,6 +33,7 @@ Central engineering workspace for the New Earth Omega Dashboard.
 - Developer notes: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/DEVELOPER_NOTES.md`
 - TODO list: `modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/docs/TODO.md`
 - The app title bar now includes a module switcher that uses the local module registry.
+- Dedicated windows launch through the shared package route at `/module-packages/01_OMEGA_ENGINEERING_STUDIO_MODULE`.
 
 ## Rendered assets
 

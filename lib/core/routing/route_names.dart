@@ -181,6 +181,8 @@ abstract final class RouteNames {
   static const educationLearningHub = '/modules/education-learning-hub';
   static const omegaKnowledgeEngine = '/modules/omega-knowledge-engine';
   static const omegaEngineeringStudio = '/modules/omega-engineering-studio';
+  static const modulePackages = '/module-packages';
+  static String modulePackage(String moduleId) => '$modulePackages/$moduleId';
   static const securityLock = '/security-lock';
   static String securityLockWithResume(String route) {
     final trimmedRoute = route.trim();

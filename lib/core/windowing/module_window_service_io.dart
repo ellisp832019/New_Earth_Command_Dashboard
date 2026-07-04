@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import '../modules/module_manifest.dart';
-import '../modules/module_navigation.dart';
+import '../routing/route_names.dart';
 
 class ModuleWindowService {
   const ModuleWindowService();
@@ -15,7 +15,11 @@ class ModuleWindowService {
   }
 
   String? launchRouteForModule(ModuleManifest module) {
-    return moduleHomeRoute(module);
+    if (module.id.trim().isEmpty) {
+      return null;
+    }
+
+    return RouteNames.modulePackage(module.id);
   }
 
   Future<void> openModuleWindow(ModuleManifest module) async {
