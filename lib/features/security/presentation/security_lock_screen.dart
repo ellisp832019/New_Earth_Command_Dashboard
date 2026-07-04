@@ -43,6 +43,22 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     return SecurityRoutePolicy.resumeRouteFrom(GoRouterState.of(context).uri);
   }
 
+  String _routeAfterUnlock({
+    required BuildContext context,
+    required bool voiceStartupGateEnabled,
+  }) {
+    final postUnlockRoute = _postUnlockRoute(context);
+    if (postUnlockRoute != null && postUnlockRoute != RouteNames.dashboard) {
+      return postUnlockRoute;
+    }
+
+    if (voiceStartupGateEnabled) {
+      return RouteNames.voiceStartupGate;
+    }
+
+    return RouteNames.dashboard;
+  }
+
   Future<void> _sleepApp() async {
     await DesktopPresenceController.instance.sleep();
   }
@@ -316,12 +332,17 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                   : 'The access check passed and was recorded locally.')
             : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
       });
-      if (!voiceStartupGateEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
         }
-        context.go(_postUnlockRoute(context) ?? RouteNames.dashboard);
-      }
+        context.go(
+          _routeAfterUnlock(
+            context: context,
+            voiceStartupGateEnabled: voiceStartupGateEnabled,
+          ),
+        );
+      });
       return;
     }
 
@@ -490,20 +511,13 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                                     : 'Open dashboard',
                                 onContinue: _canContinue
                                     ? () {
-                                        final postUnlockRoute =
-                                            _postUnlockRoute(context);
-                                        if (!voiceStartupGateEnabled ||
-                                            (postUnlockRoute != null &&
-                                                postUnlockRoute !=
-                                                    RouteNames.dashboard)) {
-                                          context.go(
-                                            postUnlockRoute ??
-                                                RouteNames.dashboard,
-                                          );
-                                          return;
-                                        }
-
-                                        context.go(RouteNames.voiceStartupGate);
+                                        context.go(
+                                          _routeAfterUnlock(
+                                            context: context,
+                                            voiceStartupGateEnabled:
+                                                voiceStartupGateEnabled,
+                                          ),
+                                        );
                                       }
                                     : null,
                                 onSleep: () {
