@@ -50,7 +50,17 @@ class _SecuritySessionActivityTrackerState
       onPointerDown: (_) => _markActivity(),
       onPointerMove: (_) => _markActivity(),
       onPointerSignal: (_) => _markActivity(),
-      child: widget.child,
+      onPointerUp: (_) => _markActivity(),
+      onPointerCancel: (_) => _markActivity(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTapDown: (_) => _markActivity(),
+        onTapUp: (_) => _markActivity(),
+        onTapCancel: _markActivity,
+        onPanDown: (_) => _markActivity(),
+        onPanStart: (_) => _markActivity(),
+        child: widget.child,
+      ),
     );
   }
 }
