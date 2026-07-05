@@ -27,22 +27,22 @@ class ModuleSwitcherDropdown extends StatelessWidget {
     );
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 160, maxWidth: 220),
+      constraints: const BoxConstraints(minWidth: 146, maxWidth: 198),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ModuleManifest>(
           key: const Key('module-switcher-dropdown'),
           value: selectedModule,
           isExpanded: true,
-          itemHeight: 72,
+          itemHeight: 64,
           borderRadius: BorderRadius.circular(20),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16),
-          menuMaxHeight: 330,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 15),
+          menuMaxHeight: 300,
           dropdownColor: theme.colorScheme.surface,
           hint: Text(
             'Select module',
@@ -96,7 +96,7 @@ class _SelectedModuleLabel extends StatelessWidget {
       children: [
         Icon(
           moduleIconFor(module.iconKey, category: module.category),
-          size: 14,
+          size: 13,
           color: theme.colorScheme.primary,
         ),
         const SizedBox(width: 4),
@@ -107,7 +107,7 @@ class _SelectedModuleLabel extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 11.5,
+              fontSize: 11,
             ),
           ),
         ),
@@ -142,7 +142,7 @@ class _ModuleMenuItem extends StatelessWidget {
             alignment: Alignment.center,
             child: Icon(
               moduleIconFor(module.iconKey, category: module.category),
-              size: 14,
+              size: 13,
             ),
           ),
           const SizedBox(width: 5),
@@ -160,7 +160,7 @@ class _ModuleMenuItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                          fontSize: 11.5,
                         ),
                       ),
                     ),

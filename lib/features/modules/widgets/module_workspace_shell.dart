@@ -93,7 +93,7 @@ class _ModuleWorkspaceHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectorWidth = modules.length > 1 ? 240.0 : 210.0;
+    final selectorWidth = modules.length > 1 ? 206.0 : 184.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -135,7 +135,7 @@ class _ModuleWorkspaceHeader extends StatelessWidget {
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: AppColours.darkText,
                         fontWeight: FontWeight.w800,
-                        fontSize: 21,
+                        fontSize: 24,
                       ),
                     ),
                   ),

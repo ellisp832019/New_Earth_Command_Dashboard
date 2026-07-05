@@ -44,7 +44,7 @@ class ModulePackageScreen extends ConsumerWidget {
     return ModuleWorkspaceShell(
       module: module,
       modules: modules,
-      title: '${module.name} Package',
+      title: module.name,
       subtitle: module.description,
       trailingActions: [
         FilledButton.tonalIcon(
