@@ -93,5 +93,6 @@
 - Content pipeline
 - Export / import bundle
 - Draft certificate issuance
+- Local mentor and certificate output index
 - Knowledge Engine hook
 - GAIA placeholder hook

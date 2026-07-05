@@ -46,6 +46,7 @@ Current placeholders include:
 - badge and certificate readiness summaries based on local progress data
 - mentor report export for learner handoff and classroom review
 - draft certificate issuance from completed assessment evidence
+- latest local mentor/certificate outputs surfaced in Settings
 - project workspaces with local evidence checkpoints and linked source items
 - offline snapshot export/import for content packs and local restore
 - content builder workspace for drafting offline learning packs

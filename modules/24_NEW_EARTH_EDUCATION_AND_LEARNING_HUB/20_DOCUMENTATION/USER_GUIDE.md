@@ -40,8 +40,9 @@
 7. Check the assessment cards and progress records.
 8. Check the certificate readiness summary before sign-off.
 9. Use the draft certificate action when local assessment evidence is ready.
-10. Use the placeholder tutor only as guidance.
-11. Keep any important decisions human-reviewed.
+10. Open Settings if you need to copy the latest local report or certificate path.
+11. Use the placeholder tutor only as guidance.
+12. Keep any important decisions human-reviewed.
 
 ## For admins
 1. Import content packs.
