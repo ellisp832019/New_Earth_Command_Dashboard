@@ -297,6 +297,28 @@ class StudentProfile {
       'badgeIds': badgeIds,
     };
   }
+
+  StudentProfile copyWith({
+    String? id,
+    String? name,
+    String? role,
+    String? stage,
+    String? mentorName,
+    String? guardianName,
+    String? activePathwayId,
+    List<String>? badgeIds,
+  }) {
+    return StudentProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      stage: stage ?? this.stage,
+      mentorName: mentorName ?? this.mentorName,
+      guardianName: guardianName ?? this.guardianName,
+      activePathwayId: activePathwayId ?? this.activePathwayId,
+      badgeIds: badgeIds ?? this.badgeIds,
+    );
+  }
 }
 
 class ProgressRecord {

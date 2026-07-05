@@ -22,6 +22,16 @@ abstract class EducationRepository {
   Future<File> exportSnapshotBundle({String? exportPath});
 
   Future<EducationHubSnapshot> importSnapshotBundle({String? importPath});
+
+  Future<File> exportMentorReport({
+    required String studentId,
+    String? exportPath,
+  });
+
+  Future<Certificate> issueCertificateFromAssessments({
+    required String studentId,
+    String? exportPath,
+  });
 }
 
 class LocalEducationRepository implements EducationRepository {
@@ -172,6 +182,85 @@ class LocalEducationRepository implements EducationRepository {
     return imported;
   }
 
+  @override
+  Future<File> exportMentorReport({
+    required String studentId,
+    String? exportPath,
+  }) async {
+    final snapshot = await loadSnapshot();
+    final student = _studentById(snapshot, studentId);
+    if (student == null) {
+      throw ArgumentError.value(studentId, 'studentId', 'Student not found.');
+    }
+
+    final reportFile = File(exportPath ?? _mentorReportFilePath(studentId));
+    await reportFile.parent.create(recursive: true);
+    await reportFile.writeAsString(_mentorReportText(snapshot, student));
+    return reportFile;
+  }
+
+  @override
+  Future<Certificate> issueCertificateFromAssessments({
+    required String studentId,
+    String? exportPath,
+  }) async {
+    final snapshot = await loadSnapshot();
+    final student = _studentById(snapshot, studentId);
+    if (student == null) {
+      throw ArgumentError.value(studentId, 'studentId', 'Student not found.');
+    }
+
+    final completedAssessments = snapshot.completedAssessmentsForStudent(studentId);
+    final readiness = snapshot.badgeReadinessForStudent(studentId);
+    final badgeLevel = readiness >= 0.8
+        ? 'Gold'
+        : readiness >= 0.6
+            ? 'Silver'
+            : readiness >= 0.4
+                ? 'Bronze'
+                : 'Draft';
+    final completedCount = completedAssessments.length;
+    final assessmentSummary = completedAssessments.isEmpty
+        ? 'Draft certificate generated from local progress only.'
+        : 'Completed assessments: ${completedAssessments.map((assessment) => assessment.title).join(', ')}.';
+    final certificate = Certificate(
+      id: 'cert_${studentId}_${DateTime.now().microsecondsSinceEpoch}',
+      studentId: studentId,
+      title: '${student.name} Learning Passport',
+      summary:
+          '$assessmentSummary Progress readiness ${(readiness * 100).round()}% with $completedCount completed assessment(s).',
+      badgeLevel: badgeLevel,
+      issuedBy: 'New Earth Learning Hub',
+      awardedAt: DateTime.now().toUtc(),
+    );
+
+    final certificates = snapshot.certificates.toList(growable: true)
+      ..add(certificate);
+    final updatedStudents = snapshot.students.map((profile) {
+      if (profile.id != studentId) {
+        return profile;
+      }
+      final badgeIds = profile.badgeIds.toList(growable: true);
+      if (!badgeIds.contains(certificate.id)) {
+        badgeIds.add(certificate.id);
+      }
+      return profile.copyWith(badgeIds: badgeIds);
+    }).toList(growable: false);
+
+    final updated = snapshot.copyWith(
+      certificates: certificates,
+      students: updatedStudents,
+    );
+    await saveSnapshot(updated);
+
+    final certificateFile = File(
+      exportPath ?? _certificateDraftFilePath(studentId, certificate.id),
+    );
+    await certificateFile.parent.create(recursive: true);
+    await certificateFile.writeAsString(_certificateDraftText(updated, student, certificate));
+    return certificate;
+  }
+
   EducationHubSnapshot _mergePersistedState(EducationHubSnapshot snapshot) {
     final file = _stateFile();
     if (!file.existsSync()) {
@@ -253,6 +342,26 @@ class LocalEducationRepository implements EducationRepository {
     );
   }
 
+  String _mentorReportFilePath(String studentId) {
+    return path.join(
+      moduleRootPath,
+      '10_LOCAL_FIRST_DATA',
+      'exports',
+      'mentor_reports',
+      '${studentId}_mentor_report.md',
+    );
+  }
+
+  String _certificateDraftFilePath(String studentId, String certificateId) {
+    return path.join(
+      moduleRootPath,
+      '10_LOCAL_FIRST_DATA',
+      'exports',
+      'certificates',
+      '${studentId}_$certificateId.md',
+    );
+  }
+
   List<ProgressRecord>? _recordsFromJson(dynamic raw) {
     if (raw is! List) {
       return null;
@@ -263,6 +372,122 @@ class LocalEducationRepository implements EducationRepository {
         .map(ProgressRecord.fromJson)
         .toList(growable: false);
     return records;
+  }
+
+  StudentProfile? _studentById(EducationHubSnapshot snapshot, String studentId) {
+    for (final student in snapshot.students) {
+      if (student.id == studentId) {
+        return student;
+      }
+    }
+    return null;
+  }
+
+  String _mentorReportText(EducationHubSnapshot snapshot, StudentProfile student) {
+    final progress = snapshot.progressForStudent(student.id);
+    final notes = snapshot.notesForStudent(student.id);
+    final reflections = snapshot.reflectionsForStudent(student.id);
+    final assessments = snapshot.assessmentsForStudent(student.id);
+    final completedAssessments = assessments
+        .where((assessment) => assessment.completedAt != null)
+        .toList(growable: false);
+    final certificates = snapshot.certificatesForStudent(student.id);
+    final progressLabel = snapshot.progressLabelForStudent(student.id);
+    final readiness = snapshot.badgeReadinessForStudent(student.id);
+    final buffer = StringBuffer()
+      ..writeln('# Mentor report: ${student.name}')
+      ..writeln()
+      ..writeln('- Generated: ${DateTime.now().toUtc().toIso8601String()}')
+      ..writeln('- Mentor: ${student.mentorName}')
+      ..writeln('- Guardian: ${student.guardianName}')
+      ..writeln('- Role: ${student.role}')
+      ..writeln('- Active pathway: ${student.activePathwayId}')
+      ..writeln('- Progress: $progressLabel')
+      ..writeln('- Badge readiness: ${(readiness * 100).round()}%')
+      ..writeln('- Completed assessments: ${completedAssessments.length}/${assessments.length}')
+      ..writeln('- Reflections: ${reflections.length}')
+      ..writeln('- Mentor notes: ${notes.length}')
+      ..writeln('- Certificates: ${certificates.length}')
+      ..writeln();
+
+    if (notes.isNotEmpty) {
+      buffer.writeln('## Support notes');
+      for (final note in notes.take(5)) {
+        buffer.writeln(
+          '- ${note.priority.isEmpty ? 'Note' : note.priority}: ${note.content}',
+        );
+      }
+      buffer.writeln();
+    }
+
+    if (completedAssessments.isNotEmpty) {
+      buffer.writeln('## Completed assessments');
+      for (final assessment in completedAssessments.take(5)) {
+        buffer.writeln(
+          '- ${assessment.title} (${assessment.score}/${assessment.maxScore})',
+        );
+      }
+      buffer.writeln();
+    }
+
+    if (progress.isNotEmpty) {
+      buffer.writeln('## Progress checkpoints');
+      for (final record in progress.take(5)) {
+        buffer.writeln(
+          '- ${record.entityType} ${record.entityId}: ${record.status} (${record.progressPercent}%)',
+        );
+      }
+      buffer.writeln();
+    }
+
+    if (reflections.isNotEmpty) {
+      buffer.writeln('## Reflections');
+      for (final reflection in reflections.take(3)) {
+        buffer.writeln('- ${reflection.title}: ${reflection.mood}');
+      }
+      buffer.writeln();
+    }
+
+    buffer
+      ..writeln('## Mentor view')
+      ..writeln(
+        '- Classroom/guardian view: ${student.role == 'parentGuardian' ? 'Guardian check-in focus' : 'Mentor review focus'}',
+      )
+      ..writeln('- Suggested next step: Review one note, one assessment, and one support action.')
+      ..writeln('- Keep all decisions local until sign-off is needed.');
+
+    return buffer.toString().trim();
+  }
+
+  String _certificateDraftText(
+    EducationHubSnapshot snapshot,
+    StudentProfile student,
+    Certificate certificate,
+  ) {
+    final completedAssessments = snapshot.completedAssessmentsForStudent(student.id);
+    final progressLabel = snapshot.progressLabelForStudent(student.id);
+    final readiness = snapshot.badgeReadinessForStudent(student.id);
+    final buffer = StringBuffer()
+      ..writeln('# Certificate draft: ${certificate.title}')
+      ..writeln()
+      ..writeln('- Student: ${student.name}')
+      ..writeln('- Badge level: ${certificate.badgeLevel}')
+      ..writeln('- Issued by: ${certificate.issuedBy}')
+      ..writeln('- Awarded at: ${certificate.awardedAt.toIso8601String()}')
+      ..writeln('- Progress: $progressLabel')
+      ..writeln('- Readiness: ${(readiness * 100).round()}%')
+      ..writeln('- Completed assessments: ${completedAssessments.length}')
+      ..writeln()
+      ..writeln('## Summary')
+      ..writeln(certificate.summary);
+    if (completedAssessments.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('## Completed assessments');
+      for (final assessment in completedAssessments.take(5)) {
+        buffer.writeln('- ${assessment.title} (${assessment.score}/${assessment.maxScore})');
+      }
+    }
+    return buffer.toString().trim();
   }
 
   String _buildProgressId() {

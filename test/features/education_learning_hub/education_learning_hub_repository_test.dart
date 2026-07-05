@@ -103,4 +103,64 @@ void main() {
     expect(imported.lessonCount, snapshot.lessonCount);
     expect(imported.projectCount, snapshot.projectCount);
   });
+
+  test('education repository exports mentor reports locally', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('education-mentor-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final repository = LocalEducationRepository(
+      moduleRootPath: tempRoot.path,
+      stateFilePath: path.join(tempRoot.path, 'learning_state.json'),
+    );
+
+    final snapshot = await repository.loadSnapshot();
+    final student = snapshot.students.first;
+    final report = await repository.exportMentorReport(studentId: student.id);
+
+    expect(report.existsSync(), isTrue);
+    final text = await report.readAsString();
+    expect(text, contains(student.name));
+    expect(text, contains('Mentor report'));
+    expect(text, contains('Badge readiness'));
+    expect(text, contains('Suggested next step'));
+  });
+
+  test('education repository issues a draft certificate from assessments', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('education-certificate-');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final repository = LocalEducationRepository(
+      moduleRootPath: tempRoot.path,
+      stateFilePath: path.join(tempRoot.path, 'learning_state.json'),
+    );
+
+    final snapshot = await repository.loadSnapshot();
+    final student = snapshot.students.firstWhere(
+      (profile) => snapshot.completedAssessmentsForStudent(profile.id).isNotEmpty,
+      orElse: () => snapshot.students.first,
+    );
+    final before = snapshot.certificatesForStudent(student.id).length;
+
+    final certificate = await repository.issueCertificateFromAssessments(
+      studentId: student.id,
+    );
+
+    expect(certificate.studentId, student.id);
+    expect(certificate.title, contains(student.name));
+    expect(certificate.badgeLevel, isNotEmpty);
+
+    final reloaded = await repository.loadSnapshot();
+    final after = reloaded.certificatesForStudent(student.id).length;
+    expect(after, before + 1);
+    expect(reloaded.students.firstWhere((profile) => profile.id == student.id).badgeIds,
+        contains(certificate.id));
+  });
 }

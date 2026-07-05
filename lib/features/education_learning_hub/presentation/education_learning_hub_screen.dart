@@ -213,6 +213,80 @@ class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
     }
   }
 
+  Future<void> _exportMentorReportForCurrentStudent() async {
+    final snapshot = _snapshotOrThrow;
+    final student = snapshot.students.firstWhere(
+      (profile) => profile.id == _selectedStudentId,
+      orElse: () => snapshot.students.first,
+    );
+    try {
+      final report = await _repository.exportMentorReport(
+        studentId: student.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Mentor report exported to ${report.path}')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Mentor export failed: $error')));
+    }
+  }
+
+  Future<void> _issueDraftCertificateForCurrentStudent() async {
+    final snapshot = _snapshotOrThrow;
+    final student = snapshot.students.firstWhere(
+      (profile) => profile.id == _selectedStudentId,
+      orElse: () => snapshot.students.first,
+    );
+    try {
+      final certificate = await _repository.issueCertificateFromAssessments(
+        studentId: student.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      final updatedCertificates = snapshot.certificates.toList(growable: true)
+        ..add(certificate);
+      final updatedStudents = snapshot.students.map((profile) {
+        if (profile.id != student.id) {
+          return profile;
+        }
+        final badgeIds = profile.badgeIds.toList(growable: true);
+        if (!badgeIds.contains(certificate.id)) {
+          badgeIds.add(certificate.id);
+        }
+        return profile.copyWith(badgeIds: badgeIds);
+      }).toList(growable: false);
+      setState(() {
+        _snapshot = snapshot.copyWith(
+          certificates: updatedCertificates,
+          students: updatedStudents,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Draft certificate issued for ${student.name}: ${certificate.badgeLevel}.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Certificate issue failed: $error')));
+    }
+  }
+
   void _openLessonDetails(Lesson lesson) {
     final snapshot = _snapshotOrThrow;
     final pathway = snapshot.pathways.firstWhere(
@@ -628,6 +702,7 @@ class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
                         _selectedStudentId = studentId;
                       });
                     },
+                    onExportReport: _exportMentorReportForCurrentStudent,
                   ),
                   _AssessmentsTab(
                     snapshot: snapshot,
@@ -649,6 +724,8 @@ class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
                     certificates: certificateService.certificatesForAudience(
                       _audienceFilter,
                     ),
+                    onIssueDraftCertificate:
+                        _issueDraftCertificateForCurrentStudent,
                   ),
                   _ContentBuilderTab(
                     snapshot: snapshot,
@@ -1539,12 +1616,14 @@ class _MentorTab extends StatelessWidget {
     required this.selectedStudent,
     required this.roleView,
     required this.onSelectStudent,
+    required this.onExportReport,
   });
 
   final EducationHubSnapshot snapshot;
   final StudentProfile selectedStudent;
   final EducationRoleView roleView;
   final ValueChanged<String> onSelectStudent;
+  final VoidCallback onExportReport;
 
   @override
   Widget build(BuildContext context) {
@@ -1556,6 +1635,16 @@ class _MentorTab extends StatelessWidget {
         .length;
     final badgeCount = snapshot.earnedBadgeCountForStudent(selectedStudent.id);
     final progressLabel = snapshot.progressLabelForStudent(selectedStudent.id);
+    final roleGuidance = switch (roleView) {
+      EducationRoleView.student =>
+        'Student view keeps the next lesson, project, and reflection in front of the learner.',
+      EducationRoleView.mentor =>
+        'Mentor view keeps the next support note, assessment, and handoff in view.',
+      EducationRoleView.parentGuardian =>
+        'Guardian view keeps progress, wellbeing, and simple home support calm and visible.',
+      EducationRoleView.admin =>
+        'Admin view keeps readiness, sign-off, and learning safety easy to review.',
+    };
     final mentorSummary = StringBuffer()
       ..writeln('Learner: ${selectedStudent.name}')
       ..writeln('Role view: ${roleView.label}')
@@ -1604,6 +1693,32 @@ class _MentorTab extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _Panel(
+                title: 'Classroom / guardian lens',
+                subtitle:
+                    'A calm role-aware snapshot for the people supporting the learner.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(roleGuidance),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: 'Mentor: ${selectedStudent.mentorName}'),
+                        _MiniBadge(label: 'Guardian: ${selectedStudent.guardianName}'),
+                        _MiniBadge(label: 'Progress: $progressLabel'),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Use this view for home check-ins, classroom handoff, or quiet support planning.',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
                 title: 'Local mentor summary',
                 subtitle:
                     'A calm clipboard-friendly snapshot for review or handoff.',
@@ -1648,6 +1763,11 @@ class _MentorTab extends StatelessWidget {
                           },
                           icon: const Icon(Icons.copy_all_outlined),
                           label: const Text('Copy summary'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: onExportReport,
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: const Text('Export report'),
                         ),
                       ],
                     ),
@@ -1863,11 +1983,13 @@ class _CertificatesTab extends StatelessWidget {
     required this.snapshot,
     required this.selectedStudent,
     required this.certificates,
+    required this.onIssueDraftCertificate,
   });
 
   final EducationHubSnapshot snapshot;
   final StudentProfile selectedStudent;
   final List<Certificate> certificates;
+  final VoidCallback onIssueDraftCertificate;
 
   @override
   Widget build(BuildContext context) {
@@ -1956,7 +2078,20 @@ class _CertificatesTab extends StatelessWidget {
                           icon: const Icon(Icons.copy_all_outlined),
                           label: const Text('Copy passport'),
                         ),
+                        FilledButton.icon(
+                          onPressed: completedAssessments.isEmpty
+                              ? null
+                              : onIssueDraftCertificate,
+                          icon: const Icon(Icons.workspace_premium_outlined),
+                          label: const Text('Issue draft certificate'),
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      completedAssessments.isEmpty
+                          ? 'Complete at least one assessment to automate a draft certificate.'
+                          : 'Draft certificates use the completed assessment set and readiness summary.',
                     ),
                   ],
                 ),
