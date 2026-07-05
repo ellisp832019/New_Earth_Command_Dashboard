@@ -6,6 +6,8 @@ The goal is to keep visuals useful, consistent, and easy to expand as the system
 
 For the visual inventory and the current missing-visual plan, see [Visual Master Index](../visual_master_index.md).
 
+For the repo-wide rendering rule that replaces golden snapshots, see [Visual Render Policy](visual_render_policy.md).
+
 ## What We Already Have
 
 - Core architecture overview diagrams in `docs/assets/diagrams/`
@@ -17,6 +19,12 @@ For the visual inventory and the current missing-visual plan, see [Visual Master
 ## Current Status
 
 The visual library is past the early planning stage and now has a stable core.
+
+### Visual Testing Rule
+
+Golden snapshot tests are retired for this repo.
+Visual work now uses rendered PNG assets committed into documentation or roadmap asset folders.
+Do not add new `matchesGoldenFile` tests or `--update-goldens` flows.
 
 ### Already Stable
 

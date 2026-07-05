@@ -37,13 +37,10 @@ Central engineering workspace for the New Earth Omega Dashboard.
 
 ## Rendered assets
 
-Rendered UI baselines for the module live under:
+Rendered UI assets for the module live under:
 
-- `test/features/omega_engineering_studio/goldens/`
-- `test/features/omega_engineering_studio/goldens/sections/`
+- `docs/roadmap/images/omega_engineering_studio/`
+- `docs/roadmap/images/omega_engineering_studio/sections/`
 
-Regenerate them with:
-
-```bash
-flutter test test/features/omega_engineering_studio --update-goldens
-```
+These are documentation assets only.
+The repo no longer uses golden snapshot tests for visual verification.

@@ -2703,7 +2703,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                 'Persist edit flows for projects, boards, and devices.',
               ),
               const _BulletLine(
-                'Add screenshot and golden tests for the finished UI.',
+                'Keep rendered PNG visuals in docs instead of golden tests.',
               ),
               const _BulletLine(
                 'Keep the integration hooks stable while the backend grows.',
