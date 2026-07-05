@@ -160,6 +160,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Add project',
         subtitle: 'Create a local engineering project draft.',
         icon: Icons.create_new_folder_outlined,
+        category: _EngineeringPaletteCategory.create,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _editProject();
@@ -170,6 +171,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Add PCB revision',
         subtitle: 'Create a board record for fabrication.',
         icon: Icons.view_in_ar_outlined,
+        category: _EngineeringPaletteCategory.create,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _editPcbRevision();
@@ -180,6 +182,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Add firmware build',
         subtitle: 'Track a release candidate locally.',
         icon: Icons.memory_outlined,
+        category: _EngineeringPaletteCategory.create,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _editFirmwareBuild();
@@ -190,6 +193,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Add device node',
         subtitle: 'Record a new ESP32 or field node.',
         icon: Icons.devices_other_outlined,
+        category: _EngineeringPaletteCategory.create,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _editDeviceNode();
@@ -200,6 +204,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Add document',
         subtitle: 'Capture a note, brief, or release pack.',
         icon: Icons.description_outlined,
+        category: _EngineeringPaletteCategory.create,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _editDocument();
@@ -210,6 +215,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Export snapshot',
         subtitle: 'Write the local module state to JSON.',
         icon: Icons.download_outlined,
+        category: _EngineeringPaletteCategory.utilities,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _exportSnapshot();
@@ -220,6 +226,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Import snapshot',
         subtitle: 'Restore local engineering state from JSON.',
         icon: Icons.upload_file_outlined,
+        category: _EngineeringPaletteCategory.utilities,
         onSelected: () async {
           Navigator.of(dialogContext).pop();
           await _importSnapshot();
@@ -230,6 +237,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Open Knowledge Engine',
         subtitle: 'Jump to the Omega Knowledge Engine hook.',
         icon: Icons.travel_explore_outlined,
+        category: _EngineeringPaletteCategory.integration,
         onSelected: () {
           Navigator.of(dialogContext).pop();
           unawaited(_knowledgeEngineAdapter.open(context));
@@ -240,6 +248,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         label: 'Open GAIA',
         subtitle: 'Jump to the GAIA assistant hook.',
         icon: Icons.auto_awesome_outlined,
+        category: _EngineeringPaletteCategory.integration,
         onSelected: () {
           Navigator.of(dialogContext).pop();
           unawaited(_gaiaAssistantAdapter.open(context));
@@ -251,6 +260,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           label: 'Review attachments',
           subtitle: 'See schematics, board files, firmware, and evidence.',
           icon: Icons.attach_file_outlined,
+          category: _EngineeringPaletteCategory.attachments,
           onSelected: () {
             Navigator.of(dialogContext).pop();
             _setSection(EngineeringSection.documentation);
@@ -1291,6 +1301,30 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     }
   }
 
+  Future<void> _editAttachmentForWorkspace({
+    required String ownerType,
+    required String ownerId,
+    String? title,
+    String? kind,
+    String? notes,
+    List<String>? tags,
+  }) async {
+    await _editAttachment(
+      EngineeringAttachment(
+        id: 'attachment_${DateTime.now().microsecondsSinceEpoch}',
+        ownerType: ownerType,
+        ownerId: ownerId,
+        title: title ?? '$ownerType attachment',
+        kind: kind ?? 'Attachment',
+        filePath: '',
+        status: 'Draft',
+        updatedAt: DateTime.now().toUtc(),
+        notes: notes ?? 'Added from workspace shortcut.',
+        tags: tags ?? const ['workspace', 'local'],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -1670,6 +1704,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     final searchService = EngineeringSearchService(snapshot);
     final hooks = snapshot.settings;
     final searchHits = searchService.search(_searchQuery, limit: 6);
+    final recentActivity = _recentActivity(snapshot);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1858,6 +1893,27 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 16),
+              EngineeringSectionShell(
+                title: 'Recent activity',
+                subtitle:
+                    'Local updates from projects, firmware, validation, docs, and attachments.',
+                child: recentActivity.isEmpty
+                    ? EngineeringEmptyState(
+                        title: 'No recent activity yet',
+                        subtitle:
+                            'As you edit local records, the latest changes will appear here.',
+                      )
+                    : Column(
+                        children: [
+                          for (final item in recentActivity)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _ActivityCard(item: item),
+                            ),
+                        ],
+                      ),
+              ),
               if (searchHits.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 EngineeringSectionShell(
@@ -1942,10 +1998,25 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       title: 'Projects',
       subtitle:
           'MicroGrow, BioCalm, New Earth Living, Omega Dashboard, and future engineering workspaces.',
-      trailing: FilledButton.icon(
-        onPressed: () => _editProject(),
-        icon: const Icon(Icons.add),
-        label: const Text('Add project'),
+      trailing: Wrap(
+        spacing: 8,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => _editAttachmentForWorkspace(
+              ownerType: 'Project',
+              ownerId: projects.isEmpty ? 'project-draft' : projects.first.id,
+              title: 'Project attachment',
+              kind: 'Project attachment',
+            ),
+            icon: const Icon(Icons.attach_file_outlined),
+            label: const Text('Add attachment'),
+          ),
+          FilledButton.icon(
+            onPressed: () => _editProject(),
+            icon: const Icon(Icons.add),
+            label: const Text('Add project'),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2156,10 +2227,26 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       title: 'PCB Manager',
       subtitle:
           'Track revision state, fabrication readiness, and board-level progress.',
-      trailing: FilledButton.icon(
-        onPressed: () => _editPcbRevision(),
-        icon: const Icon(Icons.add),
-        label: const Text('Add PCB'),
+      trailing: Wrap(
+        spacing: 8,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => _editAttachmentForWorkspace(
+              ownerType: 'PCB',
+              ownerId:
+                  pcbRevisions.isEmpty ? 'pcb-draft' : pcbRevisions.first.id,
+              title: 'PCB attachment',
+              kind: 'Board file',
+            ),
+            icon: const Icon(Icons.attach_file_outlined),
+            label: const Text('Add attachment'),
+          ),
+          FilledButton.icon(
+            onPressed: () => _editPcbRevision(),
+            icon: const Icon(Icons.add),
+            label: const Text('Add PCB'),
+          ),
+        ],
       ),
       child: pcbRevisions.isEmpty
           ? EngineeringEmptyState(
@@ -2184,10 +2271,26 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     return EngineeringSectionShell(
       title: 'Firmware Centre',
       subtitle: 'Builds, versions, artifacts, and the next release action.',
-      trailing: FilledButton.icon(
-        onPressed: () => _editFirmwareBuild(),
-        icon: const Icon(Icons.add),
-        label: const Text('Add build'),
+      trailing: Wrap(
+        spacing: 8,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => _editAttachmentForWorkspace(
+              ownerType: 'Firmware',
+              ownerId:
+                  builds.isEmpty ? 'firmware-draft' : builds.first.id,
+              title: 'Firmware attachment',
+              kind: 'Firmware artifact',
+            ),
+            icon: const Icon(Icons.attach_file_outlined),
+            label: const Text('Add attachment'),
+          ),
+          FilledButton.icon(
+            onPressed: () => _editFirmwareBuild(),
+            icon: const Icon(Icons.add),
+            label: const Text('Add build'),
+          ),
+        ],
       ),
       child: builds.isEmpty
           ? EngineeringEmptyState(
@@ -2701,6 +2804,69 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         valueLabel: '${averageProgress.toStringAsFixed(0)}%',
       ),
     ];
+  }
+
+  List<_EngineeringActivityItem> _recentActivity(
+    EngineeringSnapshot snapshot,
+  ) {
+    final items = <_EngineeringActivityItem>[
+      ...snapshot.projects.map(
+        (project) => _EngineeringActivityItem(
+          label: project.title,
+          detail: 'Project updated · ${project.nextAction}',
+          section: EngineeringSection.projects,
+          timestamp: project.updatedAt,
+          icon: Icons.folder_outlined,
+        ),
+      ),
+      ...snapshot.firmwareBuilds.map(
+        (build) => _EngineeringActivityItem(
+          label: '${build.targetDevice} ${build.version}',
+          detail: 'Firmware ${build.status} · ${build.nextAction}',
+          section: EngineeringSection.firmwareCentre,
+          timestamp: build.lastBuiltAt,
+          icon: Icons.memory_outlined,
+        ),
+      ),
+      ...snapshot.deviceNodes.map(
+        (device) => _EngineeringActivityItem(
+          label: device.name,
+          detail: 'Device ${device.health} · ${device.nextAction}',
+          section: EngineeringSection.deviceFleet,
+          timestamp: device.lastSeenAt,
+          icon: Icons.devices_other_outlined,
+        ),
+      ),
+      ...snapshot.validationResults.map(
+        (result) => _EngineeringActivityItem(
+          label: result.title,
+          detail: 'Validation ${result.status} · ${result.nextAction}',
+          section: EngineeringSection.testValidation,
+          timestamp: result.checkedAt,
+          icon: Icons.verified_outlined,
+        ),
+      ),
+      ...snapshot.documents.map(
+        (document) => _EngineeringActivityItem(
+          label: document.title,
+          detail: 'Document ${document.status} · ${document.documentType}',
+          section: EngineeringSection.documentation,
+          timestamp: document.updatedAt,
+          icon: Icons.description_outlined,
+        ),
+      ),
+      ...snapshot.attachments.map(
+        (attachment) => _EngineeringActivityItem(
+          label: attachment.title,
+          detail: 'Attachment ${attachment.status} · ${attachment.kind}',
+          section: EngineeringSection.documentation,
+          timestamp: attachment.updatedAt,
+          icon: Icons.attach_file_outlined,
+        ),
+      ),
+    ];
+    items.sort((left, right) => right.timestamp.compareTo(left.timestamp));
+    return items.take(5).toList(growable: false);
   }
 
   int _priorityRank(String priority) {
@@ -3427,6 +3593,8 @@ class _WorkspaceInsightsRail extends StatelessWidget {
   }
 }
 
+enum _EngineeringPaletteCategory { navigation, create, utilities, integration, attachments }
+
 class _EngineeringPaletteAction {
   const _EngineeringPaletteAction({
     required this.id,
@@ -3434,6 +3602,7 @@ class _EngineeringPaletteAction {
     required this.subtitle,
     required this.icon,
     required this.onSelected,
+    this.category = _EngineeringPaletteCategory.navigation,
   });
 
   final String id;
@@ -3441,6 +3610,7 @@ class _EngineeringPaletteAction {
   final String subtitle;
   final IconData icon;
   final FutureOr<void> Function() onSelected;
+  final _EngineeringPaletteCategory category;
 }
 
 class _EngineeringCommandPaletteDialog extends StatefulWidget {
@@ -3463,6 +3633,8 @@ class _EngineeringCommandPaletteDialogState
     extends State<_EngineeringCommandPaletteDialog> {
   late final TextEditingController _queryController;
   String _query = '';
+  _EngineeringPaletteCategoryFilter _categoryFilter =
+      _EngineeringPaletteCategoryFilter.all;
 
   @override
   void initState() {
@@ -3481,6 +3653,9 @@ class _EngineeringCommandPaletteDialogState
     final query = _query.trim().toLowerCase();
     final filtered = widget.actions
         .where((action) {
+          if (!_categoryFilter.matches(action.category)) {
+            return false;
+          }
           if (query.isEmpty) {
             return true;
           }
@@ -3491,98 +3666,175 @@ class _EngineeringCommandPaletteDialogState
 
     return AlertDialog(
       title: const Text('Command Palette'),
-      content: SizedBox(
-        width: 640,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              key: const Key('engineeringCommandPaletteSearchField'),
-              controller: _queryController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Search engineering actions',
-                prefixIcon: Icon(Icons.search),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: 640,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                key: const Key('engineeringCommandPaletteSearchField'),
+                controller: _queryController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Search engineering actions',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) => setState(() => _query = value),
               ),
-              onChanged: (value) => setState(() => _query = value),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 360,
-              child: filtered.isEmpty
-                  ? const EngineeringEmptyState(
-                      title: 'No actions found',
-                      subtitle:
-                          'Try a section name, create action, or integration hook.',
-                    )
-                  : ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final action = filtered[index];
-                        final isCurrentSection = action.label
-                            .toLowerCase()
-                            .contains(
-                              widget.currentSection.label.toLowerCase(),
-                            );
-                        return InkWell(
-                          onTap: () async {
-                            await action.onSelected();
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outlineVariant
-                                    .withValues(
-                                      alpha: isCurrentSection ? 0.9 : 0.55,
-                                    ),
-                              ),
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(
-                                    alpha: isCurrentSection ? 0.44 : 0.24,
-                                  ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(action.icon),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(action.label),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        action.subtitle,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in _EngineeringPaletteCategoryFilter.values)
+                    ChoiceChip(
+                      label: Text(option.label),
+                      selected: _categoryFilter == option,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _categoryFilter = option);
+                        }
                       },
                     ),
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 360,
+                child: filtered.isEmpty
+                    ? const EngineeringEmptyState(
+                        title: 'No actions found',
+                        subtitle:
+                            'Try a section name, create action, or integration hook.',
+                      )
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final action = filtered[index];
+                          final isCurrentSection = action.label
+                              .toLowerCase()
+                              .contains(
+                                widget.currentSection.label.toLowerCase(),
+                              );
+                          final categoryLabel = _categoryLabel(
+                            action.category,
+                          );
+                          return InkWell(
+                            onTap: () async {
+                              await action.onSelected();
+                            },
+                            borderRadius: BorderRadius.circular(18),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant
+                                      .withValues(
+                                        alpha:
+                                            isCurrentSection ? 0.9 : 0.55,
+                                      ),
+                                ),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(
+                                      alpha: isCurrentSection ? 0.44 : 0.24,
+                                    ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(action.icon),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(child: Text(action.label)),
+                                            const SizedBox(width: 8),
+                                            EngineeringStatusChip(
+                                              label: categoryLabel,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          action.subtitle,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+enum _EngineeringPaletteCategoryFilter {
+  all,
+  navigation,
+  create,
+  utilities,
+  integration,
+  attachments;
+
+  String get label {
+    return switch (this) {
+      _EngineeringPaletteCategoryFilter.all => 'All',
+      _EngineeringPaletteCategoryFilter.navigation => 'Sections',
+      _EngineeringPaletteCategoryFilter.create => 'Create',
+      _EngineeringPaletteCategoryFilter.utilities => 'Utilities',
+      _EngineeringPaletteCategoryFilter.integration => 'Integration',
+      _EngineeringPaletteCategoryFilter.attachments => 'Attachments',
+    };
+  }
+
+  bool matches(_EngineeringPaletteCategory category) {
+    return switch (this) {
+      _EngineeringPaletteCategoryFilter.all => true,
+      _EngineeringPaletteCategoryFilter.navigation =>
+        category == _EngineeringPaletteCategory.navigation,
+      _EngineeringPaletteCategoryFilter.create =>
+        category == _EngineeringPaletteCategory.create,
+      _EngineeringPaletteCategoryFilter.utilities =>
+        category == _EngineeringPaletteCategory.utilities,
+      _EngineeringPaletteCategoryFilter.integration =>
+        category == _EngineeringPaletteCategory.integration,
+      _EngineeringPaletteCategoryFilter.attachments =>
+        category == _EngineeringPaletteCategory.attachments,
+    };
+  }
+}
+
+String _categoryLabel(_EngineeringPaletteCategory category) {
+  return switch (category) {
+    _EngineeringPaletteCategory.navigation => 'Section',
+    _EngineeringPaletteCategory.create => 'Create',
+    _EngineeringPaletteCategory.utilities => 'Utility',
+    _EngineeringPaletteCategory.integration => 'Hook',
+    _EngineeringPaletteCategory.attachments => 'Files',
+  };
 }
 
 class _ProjectCard extends StatelessWidget {
@@ -4293,6 +4545,56 @@ class _DecisionCard extends StatelessWidget {
   }
 }
 
+class _ActivityCard extends StatelessWidget {
+  const _ActivityCard({required this.item});
+
+  final _EngineeringActivityItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(item.icon, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.label, style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  Text(item.detail),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                EngineeringStatusChip(label: item.section.label),
+                const SizedBox(height: 4),
+                Text(_timeLabel(context, item.timestamp)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _timeLabel(BuildContext context, DateTime timestamp) {
+    final local = timestamp.toLocal();
+    final date = MaterialLocalizations.of(context).formatShortDate(local);
+    final time = MaterialLocalizations.of(context).formatTimeOfDay(
+      TimeOfDay.fromDateTime(local),
+    );
+    return '$date $time';
+  }
+}
+
 class _HookActionCard extends StatelessWidget {
   const _HookActionCard({
     required this.title,
@@ -4346,6 +4648,22 @@ class _HookActionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _EngineeringActivityItem {
+  const _EngineeringActivityItem({
+    required this.label,
+    required this.detail,
+    required this.section,
+    required this.timestamp,
+    required this.icon,
+  });
+
+  final String label;
+  final String detail;
+  final EngineeringSection section;
+  final DateTime timestamp;
+  final IconData icon;
 }
 
 class _InfoTileCard extends StatelessWidget {
