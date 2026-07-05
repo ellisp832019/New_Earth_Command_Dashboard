@@ -48,6 +48,9 @@ Current placeholders include:
 - draft certificate issuance from completed assessment evidence
 - latest local mentor/certificate outputs surfaced in Settings
 - learner progress review summary with next-step guidance
+- filter reset controls for pathways and lessons
+- reflection journal prompts and mentor note starter flow
+- assessment review guide with clearer status labels
 - project workspaces with local evidence checkpoints and linked source items
 - offline snapshot export/import for content packs and local restore
 - content builder workspace for drafting offline learning packs

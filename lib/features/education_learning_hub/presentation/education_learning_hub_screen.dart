@@ -460,6 +460,14 @@ class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
         .toList(growable: false);
   }
 
+  void _resetLearningFilters() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _audienceFilter = EducationAudience.all;
+    });
+  }
+
   List<Lesson> _filteredLessons(EducationHubSnapshot snapshot) {
     final query = _searchQuery.trim().toLowerCase();
     return snapshot.lessons
@@ -649,6 +657,9 @@ class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
                     snapshot: snapshot,
                     filteredPathways: _filteredPathways(snapshot),
                     selectedPathwayId: _selectedPathwayId,
+                    searchQuery: _searchQuery,
+                    activeAudience: _audienceFilter,
+                    onResetFilters: _resetLearningFilters,
                     onSelectPathway: (pathwayId) {
                       setState(() {
                         _selectedPathwayId = pathwayId;
@@ -661,6 +672,8 @@ class _EducationLearningHubScreenState extends State<EducationLearningHubScreen>
                     selectedAudience: _audienceFilter,
                     selectedStudent: currentStudent,
                     roleView: _roleView,
+                    searchQuery: _searchQuery,
+                    onResetFilters: _resetLearningFilters,
                     onAudienceChanged: (value) {
                       setState(() {
                         _audienceFilter = value;
@@ -1249,12 +1262,18 @@ class _PathwaysTab extends StatelessWidget {
     required this.snapshot,
     required this.filteredPathways,
     required this.selectedPathwayId,
+    required this.searchQuery,
+    required this.activeAudience,
+    required this.onResetFilters,
     required this.onSelectPathway,
   });
 
   final EducationHubSnapshot snapshot;
   final List<LearningPathway> filteredPathways;
   final String? selectedPathwayId;
+  final String searchQuery;
+  final EducationAudience activeAudience;
+  final VoidCallback onResetFilters;
   final ValueChanged<String> onSelectPathway;
 
   @override
@@ -1265,21 +1284,43 @@ class _PathwaysTab extends StatelessWidget {
         _Panel(
           title: 'Learning Pathways',
           subtitle: 'Browse the supported learning routes for New Earth.',
-          child: filteredPathways.isEmpty
-              ? const _EmptyInline(
-                  title: 'No pathways match the filter',
-                  subtitle: 'Try a broader search or switch audience view.',
-                )
-              : Column(
-                  children: [
-                    for (final pathway in filteredPathways)
-                      _PathwayCard(
-                        pathway: pathway,
-                        selected: pathway.id == selectedPathwayId,
-                        onTap: () => onSelectPathway(pathway.id),
-                      ),
-                  ],
-                ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(label: '${filteredPathways.length} pathways'),
+                  if (searchQuery.trim().isNotEmpty)
+                    _MiniBadge(label: 'Search: ${searchQuery.trim()}'),
+                  if (activeAudience != EducationAudience.all)
+                    _MiniBadge(label: 'Audience: ${activeAudience.label}'),
+                  TextButton.icon(
+                    onPressed: onResetFilters,
+                    icon: const Icon(Icons.restart_alt_outlined),
+                    label: const Text('Reset filters'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              filteredPathways.isEmpty
+                  ? const _EmptyInline(
+                      title: 'No pathways match the filter',
+                      subtitle: 'Try a broader search or switch audience view.',
+                    )
+                  : Column(
+                      children: [
+                        for (final pathway in filteredPathways)
+                          _PathwayCard(
+                            pathway: pathway,
+                            selected: pathway.id == selectedPathwayId,
+                            onTap: () => onSelectPathway(pathway.id),
+                          ),
+                      ],
+                    ),
+            ],
+          ),
         ),
       ],
     );
@@ -1293,6 +1334,8 @@ class _LessonLibraryTab extends StatelessWidget {
     required this.selectedAudience,
     required this.selectedStudent,
     required this.roleView,
+    required this.searchQuery,
+    required this.onResetFilters,
     required this.onAudienceChanged,
     required this.onOpenLessonDetails,
     required this.onSaveLessonProgress,
@@ -1303,6 +1346,8 @@ class _LessonLibraryTab extends StatelessWidget {
   final EducationAudience selectedAudience;
   final StudentProfile selectedStudent;
   final EducationRoleView roleView;
+  final String searchQuery;
+  final VoidCallback onResetFilters;
   final ValueChanged<EducationAudience> onAudienceChanged;
   final ValueChanged<Lesson> onOpenLessonDetails;
   final ValueChanged<Lesson> onSaveLessonProgress;
@@ -1335,6 +1380,23 @@ class _LessonLibraryTab extends StatelessWidget {
                 label: 'Active role view',
                 value: roleView.label,
                 detail: roleView.summary,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(label: '${filteredLessons.length} lessons'),
+                  if (searchQuery.trim().isNotEmpty)
+                    _MiniBadge(label: 'Search: ${searchQuery.trim()}'),
+                  if (selectedAudience != EducationAudience.all)
+                    _MiniBadge(label: 'Audience: ${selectedAudience.label}'),
+                  TextButton.icon(
+                    onPressed: onResetFilters,
+                    icon: const Icon(Icons.restart_alt_outlined),
+                    label: const Text('Reset filters'),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               if (filteredLessons.isEmpty)
@@ -1743,6 +1805,11 @@ class _MentorTab extends StatelessWidget {
       ..writeln('Reflections: ${reflections.length}')
       ..writeln('Badges: $badgeCount')
       ..writeln('Latest support note count: ${notes.length}');
+    final mentorNoteStarter = StringBuffer()
+      ..writeln('Support note starter for ${selectedStudent.name}')
+      ..writeln('1. What is already working well?')
+      ..writeln('2. What is the next calm action?')
+      ..writeln('3. What support should stay local and human-reviewed?');
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1861,6 +1928,45 @@ class _MentorTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              _Panel(
+                title: 'Mentor note flow',
+                subtitle: 'A short starter for support handoffs and reviews.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(mentorNoteStarter.toString().trim()),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: '${notes.length} notes'),
+                        _MiniBadge(label: '${reflections.length} reflections'),
+                        _MiniBadge(label: '$completedAssessments assessments'),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton.tonalIcon(
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: mentorNoteStarter.toString().trim()),
+                        );
+                        if (!context.mounted) {
+                          return;
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Mentor note starter copied locally.'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_all_outlined),
+                      label: const Text('Copy note starter'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               if (notes.isEmpty)
                 const _EmptyInline(
                   title: 'No mentor notes yet',
@@ -1915,6 +2021,9 @@ class _AssessmentsTab extends StatelessWidget {
                     sum + assessment.score / assessment.maxScore,
               ) /
               sortedAssessments.length;
+    final reviewGuide = pendingCount == 0
+        ? 'All assessments are complete. Review the best evidence and sign off when ready.'
+        : 'Focus on the next pending assessment and keep the feedback short and specific.';
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
@@ -1943,6 +2052,27 @@ class _AssessmentsTab extends StatelessWidget {
                     detail: 'Simple local assessment snapshot',
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Review guide',
+                subtitle: 'A short reading cue for mentors and guardians.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(reviewGuide),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: '$completedCount complete'),
+                        _MiniBadge(label: '$pendingCount pending'),
+                        _MiniBadge(label: selectedStudent.name),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               if (sortedAssessments.isEmpty)
@@ -1980,6 +2110,12 @@ class _ReflectionTab extends StatelessWidget {
             .where((reflection) => reflection.studentId == selectedStudent.id)
             .toList(growable: false)
           ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final latestReflection = studentReflections.isEmpty
+        ? null
+        : studentReflections.first;
+    final reflectionPrompt = latestReflection == null
+        ? 'What felt steady or useful in the last learning step?'
+        : 'What changed since "${latestReflection.title}" and what would you keep?';
     final reflectionSummary = StringBuffer()
       ..writeln('Learner: ${selectedStudent.name}')
       ..writeln('Reflection count: ${studentReflections.length}')
@@ -2008,14 +2144,38 @@ class _ReflectionTab extends StatelessWidget {
                   ),
                   _InfoTile(
                     label: 'Latest mood',
-                    value: studentReflections.isEmpty
-                        ? 'None'
-                        : studentReflections.first.mood,
+                    value: latestReflection == null ? 'None' : latestReflection.mood,
                     detail: studentReflections.isEmpty
                         ? 'Waiting for the first reflection'
                         : 'Most recent journal entry',
                   ),
+                  _InfoTile(
+                    label: 'Latest title',
+                    value: latestReflection == null ? 'None yet' : latestReflection.title,
+                    detail: 'Latest memory from the learner journal',
+                  ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Reflection prompt',
+                subtitle: 'A calm prompt to guide the next journal entry.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(reflectionPrompt),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: '${studentReflections.length} entries'),
+                        if (latestReflection != null)
+                          _MiniBadge(label: latestReflection.mood),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -3573,6 +3733,11 @@ class _AssessmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completed = assessment.completedAt != null;
+    final statusLine = completed
+        ? 'Ready for sign-off'
+        : assessment.score > 0
+            ? 'Partly complete'
+            : 'Awaiting first evidence';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -3596,6 +3761,8 @@ class _AssessmentCard extends StatelessWidget {
             Text(
               'Score: ${assessment.score}/${assessment.maxScore} - ${assessment.kind}',
             ),
+            const SizedBox(height: 4),
+            Text('Status: $statusLine'),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

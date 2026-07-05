@@ -13,15 +13,16 @@
 1. Open the Education & Learning Hub from More.
 2. Use the search bar or audience chips to narrow the view.
 3. Search across learners, lessons, projects, certificates, reflections, and source notes.
-4. Open the Learning Pathways tab and choose a pathway.
-5. Move to the Lesson Library and open a lesson card.
-6. Use Practical Projects to open the project workspace and save a local checkpoint.
-7. Review the evidence log inside the project workspace to see project progress history.
-8. Review Student Progress for the local snapshot and badge readiness.
-9. Use the suggested next step inside Student Progress to choose the calmest useful action.
-10. Try the AI Tutor placeholder for a safe suggestion-only flow.
-11. Open Certificates & Badges to see the local learning passport.
-12. Use Content Builder to draft or review an offline learning pack.
+4. Use Reset filters in Pathways or Lesson Library if you want to return to the calm default view.
+5. Open the Learning Pathways tab and choose a pathway.
+6. Move to the Lesson Library and open a lesson card.
+7. Use Practical Projects to open the project workspace and save a local checkpoint.
+8. Review the evidence log inside the project workspace to see project progress history.
+9. Review Student Progress for the local snapshot and badge readiness.
+10. Use the suggested next step inside Student Progress to choose the calmest useful action.
+11. Try the AI Tutor placeholder for a safe suggestion-only flow.
+12. Open Certificates & Badges to see the local learning passport.
+13. Use Content Builder to draft or review an offline learning pack.
 
 ## For mentors
 1. Open Mentor View.
@@ -39,11 +40,12 @@
 5. Use the classroom / guardian lens to review the support tone.
 6. Export a mentor report when you need a fuller handoff note.
 7. Check the assessment cards and progress records.
-8. Check the certificate readiness summary before sign-off.
-9. Use the draft certificate action when local assessment evidence is ready.
-10. Open Settings if you need to copy the latest local report or certificate path.
-11. Use the placeholder tutor only as guidance.
-12. Keep any important decisions human-reviewed.
+8. Use the mentor note starter to capture a short handoff note.
+9. Check the certificate readiness summary before sign-off.
+10. Use the draft certificate action when local assessment evidence is ready.
+11. Open Settings if you need to copy the latest local report or certificate path.
+12. Use the placeholder tutor only as guidance.
+13. Keep any important decisions human-reviewed.
 
 ## For admins
 1. Import content packs.
