@@ -688,11 +688,11 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                         widget.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
+                                              style: theme.textTheme.titleMedium
+                                                  ?.copyWith(
                                               color: AppColours.darkText,
                                               fontWeight: FontWeight.w800,
-                                              fontSize: 24,
+                                              fontSize: 22,
                                             ),
                                       ),
                                       const SizedBox(height: 6),
@@ -737,11 +737,11 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                         widget.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
+                                              style: theme.textTheme.titleMedium
+                                                  ?.copyWith(
                                               color: AppColours.darkText,
                                               fontWeight: FontWeight.w800,
-                                              fontSize: 24,
+                                              fontSize: 22,
                                             ),
                                       ),
                                       const SizedBox(height: 4),

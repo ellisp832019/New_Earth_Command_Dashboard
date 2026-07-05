@@ -27,22 +27,22 @@ class ModuleSwitcherDropdown extends StatelessWidget {
     );
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 180, maxWidth: 260),
+      constraints: const BoxConstraints(minWidth: 160, maxWidth: 220),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ModuleManifest>(
           key: const Key('module-switcher-dropdown'),
           value: selectedModule,
           isExpanded: true,
-          itemHeight: 68,
+          itemHeight: 72,
           borderRadius: BorderRadius.circular(20),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-          menuMaxHeight: 360,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16),
+          menuMaxHeight: 330,
           dropdownColor: theme.colorScheme.surface,
           hint: Text(
             'Select module',
@@ -96,10 +96,10 @@ class _SelectedModuleLabel extends StatelessWidget {
       children: [
         Icon(
           moduleIconFor(module.iconKey, category: module.category),
-          size: 15,
+          size: 14,
           color: theme.colorScheme.primary,
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Expanded(
           child: Text(
             module.name,
@@ -107,6 +107,7 @@ class _SelectedModuleLabel extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w700,
+              fontSize: 11.5,
             ),
           ),
         ),
@@ -132,19 +133,19 @@ class _ModuleMenuItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(9),
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Icon(
               moduleIconFor(module.iconKey, category: module.category),
-              size: 15,
+              size: 14,
             ),
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 5),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,10 +160,11 @@ class _ModuleMenuItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w700,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 3),
                     _ModuleStatusPill(
                       label: isEnabled ? 'Enabled' : 'Disabled',
                       accentColor: isEnabled
@@ -171,18 +173,19 @@ class _ModuleMenuItem extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+                const SizedBox(height: 1),
+                Row(
                   children: [
-                    Text(
-                      module.category.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall,
+                    Expanded(
+                      child: Text(
+                        module.category.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall,
+                      ),
                     ),
+                    if (launchTarget != null)
+                      const SizedBox(width: 5),
                     if (launchTarget != null)
                       _ModuleStatusPill(
                         label: launchTarget!.label,
@@ -190,7 +193,7 @@ class _ModuleMenuItem extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   module.routes.isEmpty
                       ? 'No route registered'
@@ -201,6 +204,7 @@ class _ModuleMenuItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 10,
                   ),
                 ),
               ],
@@ -221,7 +225,7 @@ class _ModuleStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
@@ -232,6 +236,7 @@ class _ModuleStatusPill extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: accentColor,
           fontWeight: FontWeight.w700,
+          fontSize: 10,
         ),
       ),
     );

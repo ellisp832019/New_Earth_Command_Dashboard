@@ -1125,6 +1125,172 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     }
   }
 
+  Future<void> _editAttachment([EngineeringAttachment? attachment]) async {
+    final ownerTypeController = TextEditingController(
+      text: attachment?.ownerType ?? 'Project',
+    );
+    final ownerIdController = TextEditingController(
+      text: attachment?.ownerId ?? '',
+    );
+    final titleController = TextEditingController(
+      text: attachment?.title ?? '',
+    );
+    final kindController = TextEditingController(
+      text: attachment?.kind ?? 'Attachment',
+    );
+    final filePathController = TextEditingController(
+      text: attachment?.filePath ?? '',
+    );
+    final statusController = TextEditingController(
+      text: attachment?.status ?? 'Linked',
+    );
+    final notesController = TextEditingController(
+      text: attachment?.notes ?? '',
+    );
+    final tagsController = TextEditingController(
+      text: attachment?.tags.join(', ') ?? '',
+    );
+    final updatedAtController = TextEditingController(
+      text: _dateText(attachment?.updatedAt),
+    );
+
+    try {
+      final draft = await showDialog<EngineeringAttachment>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(
+              attachment == null ? 'Add attachment' : 'Edit attachment',
+            ),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 560,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: ownerTypeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Owner type',
+                      ),
+                    ),
+                    TextField(
+                      controller: ownerIdController,
+                      decoration: const InputDecoration(
+                        labelText: 'Owner ID',
+                      ),
+                    ),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Title'),
+                    ),
+                    TextField(
+                      controller: kindController,
+                      decoration: const InputDecoration(labelText: 'Kind'),
+                    ),
+                    TextField(
+                      controller: filePathController,
+                      decoration: InputDecoration(
+                        labelText: 'File path',
+                        suffixIcon: IconButton(
+                          tooltip: 'Pick local file',
+                          icon: const Icon(Icons.folder_open_outlined),
+                          onPressed: () async {
+                            final picked = await FilePicker.pickFiles(
+                              allowMultiple: false,
+                            );
+                            final path = picked?.files.single.path;
+                            if (path != null) {
+                              filePathController.text = path;
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    TextField(
+                      controller: statusController,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                    ),
+                    TextField(
+                      controller: updatedAtController,
+                      decoration: const InputDecoration(
+                        labelText: 'Updated at (YYYY-MM-DD)',
+                      ),
+                    ),
+                    TextField(
+                      controller: notesController,
+                      decoration: const InputDecoration(labelText: 'Notes'),
+                      maxLines: 2,
+                    ),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags, comma separated',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (titleController.text.trim().isEmpty ||
+                      filePathController.text.trim().isEmpty) {
+                    return;
+                  }
+                  Navigator.of(dialogContext).pop(
+                    EngineeringAttachment(
+                      id:
+                          attachment?.id ??
+                          'attachment_${DateTime.now().microsecondsSinceEpoch}',
+                      ownerType: ownerTypeController.text.trim(),
+                      ownerId: ownerIdController.text.trim(),
+                      title: titleController.text.trim(),
+                      kind: kindController.text.trim(),
+                      filePath: filePathController.text.trim(),
+                      status: statusController.text.trim(),
+                      updatedAt:
+                          _tryParseDate(updatedAtController.text) ??
+                          DateTime.now().toUtc(),
+                      notes: notesController.text.trim(),
+                      tags: _tagsFromText(tagsController.text),
+                    ),
+                  );
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+      if (draft == null) {
+        return;
+      }
+      await _repository.upsertAttachment(draft);
+      await _refreshSnapshot();
+      _showSnackBar(
+        attachment == null
+            ? 'Attachment added locally.'
+            : 'Attachment updated locally.',
+      );
+    } finally {
+      ownerTypeController.dispose();
+      ownerIdController.dispose();
+      titleController.dispose();
+      kindController.dispose();
+      filePathController.dispose();
+      statusController.dispose();
+      notesController.dispose();
+      tagsController.dispose();
+      updatedAtController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -2231,14 +2397,50 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           title: 'Documentation',
           subtitle:
               'Architecture notes, guides, checklists, decision logs, and release packs.',
-          trailing: FilledButton.icon(
-            onPressed: () => _editDocument(),
-            icon: const Icon(Icons.add),
-            label: const Text('Add doc'),
+          trailing: Wrap(
+            spacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _editAttachment(),
+                icon: const Icon(Icons.attach_file_outlined),
+                label: const Text('Add attachment'),
+              ),
+              FilledButton.icon(
+                onPressed: () => _editDocument(),
+                icon: const Icon(Icons.add),
+                label: const Text('Add doc'),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _AttachmentDropZone(
+                onPickFile: () async {
+                  final picked = await FilePicker.pickFiles(
+                    allowMultiple: false,
+                  );
+                  final path = picked?.files.single.path;
+                  if (path == null) {
+                    return;
+                  }
+                  await _editAttachment(
+                    EngineeringAttachment(
+                      id: 'attachment_${DateTime.now().microsecondsSinceEpoch}',
+                      ownerType: 'Project',
+                      ownerId: '',
+                      title: path.split('\\').last,
+                      kind: 'Attachment',
+                      filePath: path,
+                      status: 'Linked',
+                      updatedAt: DateTime.now().toUtc(),
+                      notes: 'Added from local picker.',
+                      tags: const ['local', 'attachment'],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
               _responsiveCards(
                 docs
                     .map(
@@ -2253,7 +2455,10 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
               _responsiveCards(
                 attachments
                     .map(
-                      (attachment) => _AttachmentCard(attachment: attachment),
+                      (attachment) => _AttachmentCard(
+                        attachment: attachment,
+                        onTap: () => _editAttachment(attachment),
+                      ),
                     )
                     .toList(),
               ),
@@ -3828,17 +4033,77 @@ class _DocumentCard extends StatelessWidget {
   }
 }
 
+class _AttachmentDropZone extends StatelessWidget {
+  const _AttachmentDropZone({required this.onPickFile});
+
+  final VoidCallback onPickFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onPickFile,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.22,
+          ),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.28),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.upload_file_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Drop or pick a local attachment',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Keep schematics, board files, firmware artifacts, and validation evidence local first.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton.tonalIcon(
+              onPressed: onPickFile,
+              icon: const Icon(Icons.folder_open_outlined),
+              label: const Text('Pick file'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _AttachmentCard extends StatelessWidget {
-  const _AttachmentCard({required this.attachment});
+  const _AttachmentCard({required this.attachment, this.onTap});
 
   final EngineeringAttachment attachment;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -3873,6 +4138,7 @@ class _AttachmentCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

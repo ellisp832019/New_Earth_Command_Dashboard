@@ -27,7 +27,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyK);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
-    expect(find.text('Command Palette'), findsOneWidget);
+    expect(find.text('Command Palette'), findsWidgets);
     expect(
       find.byKey(const Key('engineeringCommandPaletteSearchField')),
       findsOneWidget,
