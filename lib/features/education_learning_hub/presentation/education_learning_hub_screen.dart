@@ -2008,6 +2008,7 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
   late final TextEditingController _packNameController;
   late final TextEditingController _packSummaryController;
   late final TextEditingController _packAudienceController;
+  String _selectedTemplate = 'lesson_first';
 
   @override
   void initState() {
@@ -2040,8 +2041,27 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
         .where((source) => source.kind == 'Sample data')
         .length;
     final resourceCount = snapshot.resources.length;
+    final selectedCount = [
+      snapshot.pathways.take(3).length,
+      snapshot.lessons.take(5).length,
+      snapshot.projects.take(2).length,
+    ].fold<int>(0, (sum, value) => sum + value);
+    final templateLabel = switch (_selectedTemplate) {
+      'project_first' => 'Project first',
+      'mentor_pack' => 'Mentor pack',
+      'passport_pack' => 'Passport pack',
+      _ => 'Lesson first',
+    };
+    final packBlueprint = <String>[
+      'Template: $templateLabel',
+      'Audience: ${_packAudienceController.text.trim()}',
+      'Lessons: ${snapshot.lessons.take(5).map((lesson) => lesson.title).join(', ')}',
+      'Projects: ${snapshot.projects.take(2).map((project) => project.title).join(', ')}',
+      'Sources: ${contentSources.take(4).map((source) => source.title).join(', ')}',
+    ];
     final packSummary = StringBuffer()
       ..writeln('Pack: ${_packNameController.text.trim()}')
+      ..writeln('Template: $templateLabel')
       ..writeln('Audience: ${_packAudienceController.text.trim()}')
       ..writeln('Owner learner: ${widget.selectedStudent.name}')
       ..writeln('Summary: ${_packSummaryController.text.trim()}')
@@ -2082,6 +2102,61 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
                 ],
               ),
               const SizedBox(height: 12),
+              _Panel(
+                title: 'Template presets',
+                subtitle: 'Start from a calm pack shape and adjust the details.',
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Lesson first'),
+                      selected: _selectedTemplate == 'lesson_first',
+                      onSelected: (_) => setState(() {
+                        _selectedTemplate = 'lesson_first';
+                        _packNameController.text = 'Lesson Pack';
+                        _packSummaryController.text =
+                            'A calm lesson-first pack for local learning.';
+                        _packAudienceController.text = widget.roleView.label;
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Project first'),
+                      selected: _selectedTemplate == 'project_first',
+                      onSelected: (_) => setState(() {
+                        _selectedTemplate = 'project_first';
+                        _packNameController.text = 'Project Pack';
+                        _packSummaryController.text =
+                            'A practical project-first pack with evidence and steps.';
+                        _packAudienceController.text = widget.roleView.label;
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Mentor pack'),
+                      selected: _selectedTemplate == 'mentor_pack',
+                      onSelected: (_) => setState(() {
+                        _selectedTemplate = 'mentor_pack';
+                        _packNameController.text = 'Mentor Support Pack';
+                        _packSummaryController.text =
+                            'A support pack for mentor review, handoff, and guidance.';
+                        _packAudienceController.text = 'Mentor';
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Passport pack'),
+                      selected: _selectedTemplate == 'passport_pack',
+                      onSelected: (_) => setState(() {
+                        _selectedTemplate = 'passport_pack';
+                        _packNameController.text = 'Passport Pack';
+                        _packSummaryController.text =
+                            'A certificate and badge pack for local export and review.';
+                        _packAudienceController.text = 'Admin';
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _packNameController,
                 decoration: const InputDecoration(
@@ -2108,6 +2183,32 @@ class _ContentBuilderTabState extends State<_ContentBuilderTab> {
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Pack blueprint',
+                subtitle: 'A quick draft of what this pack currently contains.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: '$selectedCount draft items'),
+                        _MiniBadge(label: '$docsCount docs'),
+                        _MiniBadge(label: '$sampleCount sample packs'),
+                        _MiniBadge(label: '$resourceCount resources'),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    for (final line in packBlueprint)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text('- $line'),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               _Panel(
