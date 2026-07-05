@@ -112,6 +112,102 @@ class EngineeringMetricCard extends StatelessWidget {
   }
 }
 
+class EngineeringTrendChart extends StatelessWidget {
+  const EngineeringTrendChart({
+    required this.title,
+    required this.subtitle,
+    required this.series,
+    super.key,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<EngineeringTrendPoint> series;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final maxValue = series.isEmpty
+        ? 1.0
+        : series
+              .map((point) => point.value)
+              .reduce((a, b) => a > b ? a : b)
+              .clamp(1, double.infinity);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: theme.colorScheme.surface.withValues(alpha: 0.96),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.65),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(subtitle, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 16),
+          for (final point in series) ...[
+            Row(
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: Text(
+                    point.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: point.value / maxValue,
+                      minHeight: 12,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 54,
+                  child: Text(
+                    point.valueLabel,
+                    textAlign: TextAlign.end,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (point != series.last) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class EngineeringTrendPoint {
+  const EngineeringTrendPoint({
+    required this.label,
+    required this.value,
+    required this.valueLabel,
+  });
+
+  final String label;
+  final double value;
+  final String valueLabel;
+}
+
 class EngineeringStatusChip extends StatelessWidget {
   const EngineeringStatusChip({required this.label, super.key});
 

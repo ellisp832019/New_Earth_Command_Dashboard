@@ -1827,6 +1827,37 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 1100 ? 2 : 1;
+                  final width = _cardWidth(constraints.maxWidth, columns);
+                  return Wrap(
+                    spacing: 14,
+                    runSpacing: 14,
+                    children: [
+                      SizedBox(
+                        width: width,
+                        child: EngineeringTrendChart(
+                          title: 'Validation trend pulse',
+                          subtitle:
+                              'A calm read on pass rate, attention, defect load, and coverage.',
+                          series: _validationTrendSeries(snapshot),
+                        ),
+                      ),
+                      SizedBox(
+                        width: width,
+                        child: EngineeringTrendChart(
+                          title: 'Manufacturing trend pulse',
+                          subtitle:
+                              'A calm read on ready, active, parked, and average completion.',
+                          series: _manufacturingTrendSeries(snapshot),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
               if (searchHits.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 EngineeringSectionShell(
@@ -2592,6 +2623,84 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       return right.progressPercent.compareTo(left.progressPercent);
     });
     return projects.take(3).toList(growable: false);
+  }
+
+  List<EngineeringTrendPoint> _validationTrendSeries(
+    EngineeringSnapshot snapshot,
+  ) {
+    final total = snapshot.validationResults.length;
+    final percent = total == 0 ? 0.0 : 100 / total;
+    return [
+      EngineeringTrendPoint(
+        label: 'Pass',
+        value: snapshot.validationPassCount * percent,
+        valueLabel: '${snapshot.validationPassCount}',
+      ),
+      EngineeringTrendPoint(
+        label: 'Attention',
+        value: snapshot.validationAttentionCount * percent,
+        valueLabel: '${snapshot.validationAttentionCount}',
+      ),
+      EngineeringTrendPoint(
+        label: 'Defect',
+        value: snapshot.validationDefectCount * percent,
+        valueLabel: '${snapshot.validationDefectCount}',
+      ),
+      EngineeringTrendPoint(
+        label: 'Coverage',
+        value: snapshot.validationCoverageRate * 100,
+        valueLabel:
+            '${(snapshot.validationCoverageRate * 100).toStringAsFixed(0)}%',
+      ),
+    ];
+  }
+
+  List<EngineeringTrendPoint> _manufacturingTrendSeries(
+    EngineeringSnapshot snapshot,
+  ) {
+    final total = snapshot.manufacturingSteps.length;
+    final percent = total == 0 ? 0.0 : 100 / total;
+    final readyCount = snapshot.manufacturingReadyCount;
+    final blockedCount = snapshot.manufacturingBlockedCount;
+    final activeCount = snapshot.manufacturingSteps.where(
+      (step) {
+        final status = step.status.toLowerCase();
+        return status.contains('active') ||
+            status.contains('progress') ||
+            status.contains('building') ||
+            status.contains('working');
+      },
+    ).length;
+    final averageProgress = snapshot.manufacturingSteps.isEmpty
+        ? 0.0
+        : snapshot.manufacturingSteps.fold<int>(
+              0,
+              (sum, step) => sum + step.progressPercent,
+            ) /
+            snapshot.manufacturingSteps.length;
+
+    return [
+      EngineeringTrendPoint(
+        label: 'Ready',
+        value: readyCount * percent,
+        valueLabel: '$readyCount',
+      ),
+      EngineeringTrendPoint(
+        label: 'Active',
+        value: activeCount * percent,
+        valueLabel: '$activeCount',
+      ),
+      EngineeringTrendPoint(
+        label: 'Parked',
+        value: blockedCount * percent,
+        valueLabel: '$blockedCount',
+      ),
+      EngineeringTrendPoint(
+        label: 'Avg progress',
+        value: averageProgress,
+        valueLabel: '${averageProgress.toStringAsFixed(0)}%',
+      ),
+    ];
   }
 
   int _priorityRank(String priority) {
