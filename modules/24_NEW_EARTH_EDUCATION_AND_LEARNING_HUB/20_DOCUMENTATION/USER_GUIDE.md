@@ -18,9 +18,10 @@
 6. Use Practical Projects to open the project workspace and save a local checkpoint.
 7. Review the evidence log inside the project workspace to see project progress history.
 8. Review Student Progress for the local snapshot and badge readiness.
-9. Try the AI Tutor placeholder for a safe suggestion-only flow.
-10. Open Certificates & Badges to see the local learning passport.
-11. Use Content Builder to draft or review an offline learning pack.
+9. Use the suggested next step inside Student Progress to choose the calmest useful action.
+10. Try the AI Tutor placeholder for a safe suggestion-only flow.
+11. Open Certificates & Badges to see the local learning passport.
+12. Use Content Builder to draft or review an offline learning pack.
 
 ## For mentors
 1. Open Mentor View.

@@ -1464,6 +1464,23 @@ class _ProgressTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final studentProgress = snapshot.progressForStudent(selectedStudent.id);
     final completion = progressService.completionForStudent(selectedStudent.id);
+    final completedLessons = studentProgress
+        .where((record) => record.entityType == 'lesson' && record.progressPercent >= 100)
+        .length;
+    final completedProjects = studentProgress
+        .where((record) => record.entityType == 'project' && record.progressPercent >= 100)
+        .length;
+    final inProgressItems = studentProgress
+        .where((record) => record.progressPercent > 0 && record.progressPercent < 100)
+        .length;
+    final readiness = snapshot.badgeReadinessForStudent(selectedStudent.id);
+    final nextStep = studentProgress.isEmpty
+        ? 'Start with one lesson and one reflection.'
+        : completedLessons < 3
+            ? 'Finish one more lesson and note what felt useful.'
+            : inProgressItems > 0
+                ? 'Move one in-progress item toward completion.'
+                : 'Review a project checkpoint and prepare the next evidence note.';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -1487,9 +1504,59 @@ class _ProgressTab extends StatelessWidget {
                 detail: roleView.summary,
               ),
               const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _InfoTile(
+                    label: 'Overall progress',
+                    value: '${(completion * 100).round()}%',
+                    detail: 'Across local lesson and project checkpoints',
+                  ),
+                  _InfoTile(
+                    label: 'Badge readiness',
+                    value: '${(readiness * 100).round()}%',
+                    detail: 'Based on completion and recent evidence',
+                  ),
+                  _InfoTile(
+                    label: 'Completed items',
+                    value: '${completedLessons + completedProjects}',
+                    detail:
+                        '$completedLessons lessons and $completedProjects projects complete',
+                  ),
+                  _InfoTile(
+                    label: 'Active items',
+                    value: '$inProgressItems',
+                    detail: 'Items with visible local progress',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               LinearProgressIndicator(value: completion),
               const SizedBox(height: 8),
               Text('${(completion * 100).round()}% overall learning progress'),
+              const SizedBox(height: 12),
+              _Panel(
+                title: 'Suggested next step',
+                subtitle: 'Keep the next move small and easy to finish.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(nextStep),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(label: '${studentProgress.length} checkpoints'),
+                        _MiniBadge(label: '$completedLessons lessons'),
+                        _MiniBadge(label: '$completedProjects projects'),
+                        _MiniBadge(label: '${(readiness * 100).round()}% readiness'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               if (studentProgress.isEmpty)
                 const _EmptyInline(
