@@ -50,6 +50,36 @@ void main() {
     expect(modulePackageRoute(module), RouteNames.modulePackage('alpha'));
   });
 
+  test('module launch route respects the selected target', () {
+    final module = _module(
+      id: 'alpha',
+      name: 'Alpha',
+      routes: ['/modules/alpha', '/modules/alpha/settings'],
+    );
+
+    expect(
+      moduleLaunchRoute(module, ModuleLaunchTarget.home),
+      '/modules/alpha',
+    );
+    expect(
+      moduleLaunchRoute(module, ModuleLaunchTarget.package),
+      RouteNames.modulePackage('alpha'),
+    );
+  });
+
+  test('module launch route falls back to package when no home route exists', () {
+    final module = _module(
+      id: 'beta',
+      name: 'Beta',
+      routes: const [],
+    );
+
+    expect(
+      moduleLaunchRoute(module, ModuleLaunchTarget.home),
+      RouteNames.modulePackage('beta'),
+    );
+  });
+
   test('module path matching recognizes nested module routes', () {
     final modules = [
       _module(id: 'alpha', name: 'Alpha', routes: ['/modules/alpha']),

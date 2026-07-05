@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../data/repo_research_engine_service.dart';
 
 class RepoResearchEngineScreen extends StatefulWidget {
@@ -294,19 +295,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 1100;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: _buildAppBarTitle(context),
-        actions: [
-          TextButton.icon(
-            onPressed: _isRunning ? null : () => context.go(RouteNames.more),
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('More'),
-          ),
-        ],
-      ),
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Repo Research Engine',
+      subtitle: _buildAppBarSubtitle(),
+      onBack: _isRunning ? null : () => context.go(RouteNames.more),
+      trailingActions: [
+        TextButton.icon(
+          onPressed: _isRunning ? null : () => context.go(RouteNames.more),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('More'),
+        ),
+      ],
+      child: SafeArea(
         child: ListView(
           controller: _scrollController,
           padding: EdgeInsets.all(isWide ? 24 : 16),
@@ -316,7 +316,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _buildAppBarTitle(BuildContext context) {
+  String _buildAppBarSubtitle() {
     final sectionLabel = switch (_activeSection) {
       'scanner' => 'Repository Scanner',
       'reports' => 'Research Reports',
@@ -327,19 +327,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       _ => 'Home',
     };
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Repo Research Engine'),
-        Text(
-          sectionLabel,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColours.darkMutedText,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
+    return sectionLabel;
   }
 
   List<Widget> _buildSectionContent(BuildContext context, bool isWide) {

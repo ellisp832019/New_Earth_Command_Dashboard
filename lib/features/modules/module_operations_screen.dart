@@ -6,6 +6,7 @@ import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
 import 'application/module_hub_controller.dart';
+import 'widgets/module_workspace_shell.dart';
 
 class ModuleOperationsScreen extends ConsumerWidget {
   const ModuleOperationsScreen({super.key, required this.module});
@@ -15,13 +16,14 @@ class ModuleOperationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final modules = ref.watch(moduleHubModulesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
-        title: Text('${module.name} Operations'),
-      ),
-      body: ListView(
+    return ModuleWorkspaceShell(
+      module: module,
+      modules: modules,
+      title: '${module.name} Operations',
+      subtitle: module.description,
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
 import '../application/journal_controller.dart';
@@ -108,12 +109,17 @@ class _AddEditJournalEntryScreenState
               _loadInitialValues(item);
               return _buildScaffold(context, projectItems, taskItems);
             },
-            loading: () => const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+            loading: () => WorkspaceShell(
+              title: 'Edit Journal Entry',
+              subtitle: 'Local journal form',
+              onBack: () => context.go(RouteNames.journal),
+              child: const Center(child: CircularProgressIndicator()),
             ),
-            error: (error, stackTrace) => Scaffold(
-              appBar: AppBar(title: const Text('Edit Journal Entry')),
-              body: Center(
+            error: (error, stackTrace) => WorkspaceShell(
+              title: 'Edit Journal Entry',
+              subtitle: 'Local journal form',
+              onBack: () => context.go(RouteNames.journal),
+              child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
@@ -126,15 +132,17 @@ class _AddEditJournalEntryScreenState
             ),
           );
         },
-        loading: () =>
-            const Scaffold(body: Center(child: CircularProgressIndicator())),
-        error: (error, stackTrace) => Scaffold(
-          appBar: AppBar(
-            title: Text(
-              widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
-            ),
-          ),
-          body: Center(
+        loading: () => WorkspaceShell(
+          title: widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+          subtitle: 'Local journal form',
+          onBack: () => context.go(RouteNames.journal),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, stackTrace) => WorkspaceShell(
+          title: widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+          subtitle: 'Local journal form',
+          onBack: () => context.go(RouteNames.journal),
+          child: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
@@ -146,15 +154,17 @@ class _AddEditJournalEntryScreenState
           ),
         ),
       ),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
-          ),
-        ),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+        subtitle: 'Local journal form',
+        onBack: () => context.go(RouteNames.journal),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+        subtitle: 'Local journal form',
+        onBack: () => context.go(RouteNames.journal),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -168,7 +178,7 @@ class _AddEditJournalEntryScreenState
     );
   }
 
-  Scaffold _buildScaffold(
+  Widget _buildScaffold(
     BuildContext context,
     List<Project> projects,
     List<Task> tasks,
@@ -182,13 +192,11 @@ class _AddEditJournalEntryScreenState
       _taskId = null;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
-        ),
-      ),
-      body: Form(
+    return WorkspaceShell(
+      title: widget.isEditing ? 'Edit Journal Entry' : 'New Journal Entry',
+      subtitle: 'Local journal form',
+      onBack: () => context.go(RouteNames.journal),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

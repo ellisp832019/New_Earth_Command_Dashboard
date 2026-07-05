@@ -1,16 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/modules/module_category.dart';
 import '../../core/modules/module_health.dart';
 import '../../core/modules/module_manifest.dart';
+import '../../core/modules/module_navigation.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
+import 'application/module_hub_controller.dart';
 import '../../core/windowing/module_window_service.dart';
 
-class ModuleCard extends StatelessWidget {
+class ModuleCard extends ConsumerWidget {
   const ModuleCard({
     super.key,
     required this.module,
@@ -21,12 +24,16 @@ class ModuleCard extends StatelessWidget {
   final ValueChanged<bool> onEnabledChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final statusColor = _statusColor(theme, module.status);
     final borderColor = statusColor.withValues(alpha: 0.42);
     final isSensitiveModule = _isSensitiveModule(module.id);
     final isKnowledgeEngineModule = _isKnowledgeEngineModule(module.id);
+    final preferredRoute = moduleLaunchRoute(
+      module,
+      ref.read(moduleHubStateRepositoryProvider).loadLaunchTarget(module.id),
+    );
 
     final canOpenDedicatedWindow = true;
 
@@ -237,7 +244,7 @@ class ModuleCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      onPressed: () => context.go(module.routes.first),
+                      onPressed: () => context.go(preferredRoute),
                       icon: const Icon(Icons.lock_open_outlined),
                       label: const Text('Open gate'),
                     ),

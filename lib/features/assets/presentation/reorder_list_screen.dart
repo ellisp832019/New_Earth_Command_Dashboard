@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class ReorderListScreen extends ConsumerStatefulWidget {
@@ -21,44 +22,51 @@ class _ReorderListScreenState extends ConsumerState<ReorderListScreen> {
     final reorderList = ref.watch(assetReorderListProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stackTrace) => _RegisterError(
+      loading: () => WorkspaceShell(
         title: 'Reorder List',
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+        subtitle: 'Asset reorder workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Reorder List',
+        subtitle: 'Asset reorder workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: _RegisterError(
+          title: 'Reorder List',
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspaceData) {
         return reorderList.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, stackTrace) => _RegisterError(
+          loading: () => WorkspaceShell(
             title: 'Reorder List',
-            onReload: () => ref.invalidate(assetReorderListProvider),
+            subtitle: 'Asset reorder workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Reorder List',
+            subtitle: 'Asset reorder workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: _RegisterError(
+              title: 'Reorder List',
+              onReload: () => ref.invalidate(assetReorderListProvider),
+            ),
           ),
           data: (table) {
             final urgentCount = _countUrgent(table.rows);
             final linkedSuppliers = _countLinkedSuppliers(table.rows);
 
-            return Scaffold(
-              backgroundColor: Colors.transparent,
-              floatingActionButton: FloatingActionButton.extended(
-                onPressed: _isSaving || workspaceData.assetsRootPath == null
-                    ? null
-                    : () => _addRecord(workspaceData.assetsRootPath!),
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(_isSaving ? 'Saving' : 'Add Reorder'),
-              ),
-              body: SafeArea(
-                child: CustomScrollView(
-                  slivers: [
+            return WorkspaceShell(
+              title: 'Reorder List',
+              subtitle: 'Asset reorder workspace',
+              onBack: () => Navigator.of(context).maybePop(),
+              child: Stack(
+                children: [
+                  SafeArea(
+                    child: CustomScrollView(
+                      slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.all(20),
                       sliver: SliverToBoxAdapter(
@@ -124,8 +132,27 @@ class _ReorderListScreenState extends ConsumerState<ReorderListScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 20,
+                    bottom: 20,
+                    child: FloatingActionButton.extended(
+                      onPressed: _isSaving || workspaceData.assetsRootPath == null
+                          ? null
+                          : () => _addRecord(workspaceData.assetsRootPath!),
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.add),
+                      label: Text(_isSaving ? 'Saving' : 'Add Reorder'),
+                    ),
+                  ),
+                ],
               ),
             );
           },

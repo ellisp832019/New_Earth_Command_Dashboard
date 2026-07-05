@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/business_controller.dart';
 
@@ -153,11 +154,17 @@ class _AddBusinessOpportunityScreenState
             _loadInitialValues(businessItem);
             return _buildScaffold(context, projectItems);
           },
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => Scaffold(
-            appBar: AppBar(title: const Text('Edit Opportunity')),
-            body: Center(
+          loading: () => WorkspaceShell(
+            title: 'Edit Opportunity',
+            subtitle: 'Local business form',
+            onBack: () => context.go(RouteNames.business),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Edit Opportunity',
+            subtitle: 'Local business form',
+            onBack: () => context.go(RouteNames.business),
+            child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
@@ -170,13 +177,17 @@ class _AddBusinessOpportunityScreenState
           ),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(
-          title: Text(isEditing ? 'Edit Opportunity' : 'Add Opportunity'),
-        ),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: isEditing ? 'Edit Opportunity' : 'Add Opportunity',
+        subtitle: 'Local business form',
+        onBack: () => context.go(RouteNames.business),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: isEditing ? 'Edit Opportunity' : 'Add Opportunity',
+        subtitle: 'Local business form',
+        onBack: () => context.go(RouteNames.business),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -190,12 +201,12 @@ class _AddBusinessOpportunityScreenState
     );
   }
 
-  Scaffold _buildScaffold(BuildContext context, List<Project> projectItems) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Opportunity' : 'Add Opportunity'),
-      ),
-      body: Form(
+  Widget _buildScaffold(BuildContext context, List<Project> projectItems) {
+    return WorkspaceShell(
+      title: isEditing ? 'Edit Opportunity' : 'Add Opportunity',
+      subtitle: 'Local business form',
+      onBack: () => context.go(RouteNames.business),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

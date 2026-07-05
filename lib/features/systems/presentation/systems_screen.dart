@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../system_backup/application/backup_guardian_controller.dart';
 import '../../system_backup/data/backup_guardian_service.dart';
 
@@ -15,9 +16,11 @@ class SystemsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final snapshotAsync = ref.watch(backupGuardianSnapshotProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Systems',
+      subtitle: 'Local protection and recovery workspace',
+      onBack: () => context.go(RouteNames.more),
+      child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [

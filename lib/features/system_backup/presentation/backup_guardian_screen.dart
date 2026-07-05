@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/backup_guardian_controller.dart';
 import '../../modules/application/module_hub_controller.dart';
 import '../data/backup_guardian_service.dart';
@@ -30,17 +31,28 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
     final snapshotAsync = ref.watch(backupGuardianSnapshotProvider);
 
     return snapshotAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _ErrorState(
-        message: 'Backup Guardian could not load right now.',
+      loading: () => WorkspaceShell(
+        title: 'Backup Guardian',
+        subtitle: 'Backup and restore workspace',
         onBack: () => context.go(RouteNames.systems),
-        onRetry: () => ref.invalidate(backupGuardianSnapshotProvider),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Backup Guardian',
+        subtitle: 'Backup and restore workspace',
+        onBack: () => context.go(RouteNames.systems),
+        child: _ErrorState(
+          message: 'Backup Guardian could not load right now.',
+          onBack: () => context.go(RouteNames.systems),
+          onRetry: () => ref.invalidate(backupGuardianSnapshotProvider),
+        ),
       ),
       data: (snapshot) {
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(
+        return WorkspaceShell(
+          title: 'Backup Guardian',
+          subtitle: 'Backup and restore workspace',
+          onBack: () => context.go(RouteNames.systems),
+          child: SafeArea(
             child: CustomScrollView(
               slivers: [
                 SliverPadding(

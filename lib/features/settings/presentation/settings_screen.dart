@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/routing/security_route_policy.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../security/application/security_session_controller.dart';
 import '../../security/presentation/security_locked_notice_card.dart';
 import '../application/settings_controller.dart';
@@ -75,9 +76,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isSessionLocked =
         !securitySession.isUnlocked || securitySession.isExpired;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: settings.when(
+    return WorkspaceShell(
+      title: 'Settings',
+      subtitle: 'Calm, local controls for the dashboard and assistant.',
+      onBack: () => context.go(RouteNames.dashboard),
+      child: settings.when(
         data: (snapshot) {
           final appSettings = snapshot.settings;
           final selectedVoice = voices.maybeWhen(

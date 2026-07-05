@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/voice_module_providers.dart';
 import '../application/voice_session_controller.dart';
 import '../application/voice_thread_controller.dart';
@@ -67,36 +68,29 @@ class VoiceModuleScreen extends ConsumerWidget {
     final session = ref.watch(voiceSessionControllerProvider);
     final legacyVoiceSession = ref.watch(legacy_session.voiceSessionProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-              return;
-            }
+    return WorkspaceShell(
+      title: section.title,
+      subtitle: 'Voice module workspace',
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+          return;
+        }
 
-            context.go(
-              section == VoiceModuleSection.home
-                  ? RouteNames.dashboard
-                  : RouteNames.voiceHome(),
-            );
-          },
+        context.go(
+          section == VoiceModuleSection.home
+              ? RouteNames.dashboard
+              : RouteNames.voiceHome(),
+        );
+      },
+      trailingActions: [
+        TextButton.icon(
+          onPressed: () => context.go(RouteNames.voiceConversation),
+          icon: const Icon(Icons.forum_outlined),
+          label: const Text('Conversation'),
         ),
-        title: Text(section.title),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.go(RouteNames.voiceConversation),
-            icon: const Icon(Icons.forum_outlined),
-            label: const Text('Conversation'),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
+      ],
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(

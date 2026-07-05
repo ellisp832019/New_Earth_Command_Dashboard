@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../data/command_deck_service.dart';
 
 class CommandDeckScreen extends StatefulWidget {
@@ -148,9 +149,18 @@ class _CommandDeckScreenState extends State<CommandDeckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Command Deck',
+      subtitle: 'Local commands, paths, and safe shortcuts.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: _reloadWorkspace,
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
+      child: SafeArea(
         child: FutureBuilder<CommandDeckWorkspace>(
           future: _workspaceFuture,
           builder: (context, snapshot) {

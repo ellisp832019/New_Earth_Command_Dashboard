@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/spacing.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../../widgets/calm_button.dart';
 import '../../../widgets/calm_card.dart';
 import '../../../widgets/top3_view.dart';
@@ -11,17 +13,15 @@ class CalmUiDemoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calm UI Components Demo'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
+    return WorkspaceShell(
+      title: 'Calm UI Components Demo',
+      subtitle: 'Reference screen for calm component behavior',
+      onBack: () => Navigator.of(context).maybePop(),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Demo: CalmCard with text
             Text(
               'CalmCard Examples',
               style: Theme.of(context).textTheme.titleLarge,
@@ -31,7 +31,10 @@ class CalmUiDemoScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Simple Task', style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Simple Task',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'This is how a calm card looks with minimal visual clutter.',
@@ -49,7 +52,10 @@ class CalmUiDemoScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Custom Padding', style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Custom Padding',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Cards can have custom padding for different content layouts.',
@@ -59,8 +65,6 @@ class CalmUiDemoScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-
-            // Demo: CalmButton
             Text(
               'CalmButton Examples',
               style: Theme.of(context).textTheme.titleLarge,
@@ -80,8 +84,6 @@ class CalmUiDemoScreen extends StatelessWidget {
               child: const Text('Secondary Action'),
             ),
             const SizedBox(height: AppSpacing.lg),
-
-            // Demo: Top3View
             Text(
               'Top3View Example',
               style: Theme.of(context).textTheme.titleLarge,
@@ -92,7 +94,10 @@ class CalmUiDemoScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Focus #1', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Focus #1',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Your first priority for today',
@@ -103,7 +108,10 @@ class CalmUiDemoScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Focus #2', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Focus #2',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Your second priority for today',
@@ -114,7 +122,10 @@ class CalmUiDemoScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Focus #3', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Focus #3',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Your third priority for today',

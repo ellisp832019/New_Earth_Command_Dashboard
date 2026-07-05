@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/projects_controller.dart';
 
 class AddEditProjectScreen extends ConsumerStatefulWidget {
@@ -80,11 +81,17 @@ class _AddEditProjectScreenState extends ConsumerState<AddEditProjectScreen> {
         _loadInitialValues(item);
         return _buildScaffold(context);
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(title: const Text('Edit Project')),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: _isEditing ? 'Edit Project' : 'New Project',
+        subtitle: 'Loading project details',
+        onBack: () => context.go(RouteNames.projects),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: _isEditing ? 'Edit Project' : 'New Project',
+        subtitle: 'Project data unavailable',
+        onBack: () => context.go(RouteNames.projects),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -98,12 +105,14 @@ class _AddEditProjectScreenState extends ConsumerState<AddEditProjectScreen> {
     );
   }
 
-  Scaffold _buildScaffold(BuildContext context) {
+  Widget _buildScaffold(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Project' : 'New Project')),
-      body: Form(
+    return WorkspaceShell(
+      title: _isEditing ? 'Edit Project' : 'New Project',
+      subtitle: 'Local project form',
+      onBack: () => context.go(RouteNames.projects),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

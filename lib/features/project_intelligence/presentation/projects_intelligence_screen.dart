@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/project_intelligence_controller.dart';
 import '../data/project_repo_bridge_models.dart';
@@ -33,24 +34,18 @@ class _ProjectsIntelligenceScreenState
       orElse: () => true,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back to Dashboard',
-          onPressed: () => context.go(RouteNames.dashboard),
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Projects Hub',
+      subtitle: 'Read-only project intelligence workspace',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => ref.invalidate(projectIntelligenceBundleProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        title: const Text('Projects Hub'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(projectIntelligenceBundleProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: bundleSnapshot.when(
+      ],
+      child: bundleSnapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _ProjectsIntelligenceError(
           error: error,

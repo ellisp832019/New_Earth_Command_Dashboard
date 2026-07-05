@@ -190,21 +190,11 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                 top: 16,
                 right: 16,
                 child: SafeArea(
-                  child: SizedBox(
-                    width: math.min(312, MediaQuery.sizeOf(context).width - 32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if ((appSettings?.showDockOverlays ?? false) &&
-                            (appSettings?.showVoicePresenceChip ?? false))
-                          const IgnorePointer(child: VoicePresenceChip()),
-                        if ((appSettings?.showDockOverlays ?? false) &&
-                            (appSettings?.showVoicePresenceChip ?? false))
-                          const SizedBox(height: 12),
-                        _SecuritySessionPill(session: securitySession),
-                      ],
-                    ),
+                  child: _TopRightStatusCluster(
+                    session: securitySession,
+                    showVoicePresence:
+                        (appSettings?.showDockOverlays ?? false) &&
+                        (appSettings?.showVoicePresenceChip ?? false),
                   ),
                 ),
               ),
@@ -525,6 +515,161 @@ class _SecuritySessionPillState extends State<_SecuritySessionPill> {
           ),
         );
       },
+    );
+  }
+}
+
+class _TopRightStatusCluster extends StatefulWidget {
+  const _TopRightStatusCluster({
+    required this.session,
+    required this.showVoicePresence,
+  });
+
+  final SecuritySessionState session;
+  final bool showVoicePresence;
+
+  @override
+  State<_TopRightStatusCluster> createState() => _TopRightStatusClusterState();
+}
+
+class _TopRightStatusClusterState extends State<_TopRightStatusCluster> {
+  bool _expanded = false;
+
+  void _setExpanded(bool value) {
+    if (_expanded == value) {
+      return;
+    }
+
+    setState(() {
+      _expanded = value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = math.min<double>(240, MediaQuery.sizeOf(context).width - 32);
+
+    return MouseRegion(
+      onEnter: (_) => _setExpanded(true),
+      onExit: (_) => _setExpanded(false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _setExpanded(!_expanded),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          alignment: Alignment.topRight,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: width),
+            child: _expanded ? _ExpandedTopRightStatus(session: widget.session, showVoicePresence: widget.showVoicePresence) : _CollapsedTopRightStatus(session: widget.session),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsedTopRightStatus extends StatelessWidget {
+  const _CollapsedTopRightStatus({required this.session});
+
+  final SecuritySessionState session;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUnlocked = session.isUnlocked && !session.isExpired;
+    final accent = isUnlocked
+        ? const Color(0xFF7ACB9A)
+        : const Color(0xFF6B7780);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1418).withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isUnlocked ? Icons.lock_open : Icons.lock,
+              size: 14,
+              color: accent,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isUnlocked ? 'Session active' : 'Session locked',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 10),
+            _MiniStatusDot(color: accent),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpandedTopRightStatus extends StatelessWidget {
+  const _ExpandedTopRightStatus({
+    required this.session,
+    required this.showVoicePresence,
+  });
+
+  final SecuritySessionState session;
+  final bool showVoicePresence;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 240),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (showVoicePresence) ...[
+            const IgnorePointer(child: VoicePresenceChip(compact: true)),
+            const SizedBox(height: 8),
+          ],
+          _SecuritySessionPill(session: session),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStatusDot extends StatelessWidget {
+  const _MiniStatusDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 6,
+            offset: const Offset(0, 0),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
 import 'meeting_system_widgets.dart';
@@ -38,21 +39,15 @@ class _MeetingDashboardScreenState
     final snapshot = ref.watch(meetingDashboardSnapshotProvider);
     final statusSummarySnapshot = ref.watch(meetingStatusSummaryProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Meeting Dashboard'),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-      ),
-      body: snapshot.when(
+    return WorkspaceShell(
+      title: 'Meeting Dashboard',
+      subtitle: 'Local meeting workspace',
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        }
+      },
+      child: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _MeetingDashboardError(
           error: error,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/tasks_controller.dart';
 
@@ -108,11 +109,17 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
             _loadInitialValues(item);
             return _buildScaffold(context, projectItems);
           },
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => Scaffold(
-            appBar: AppBar(title: const Text('Edit Task')),
-            body: Center(
+          loading: () => WorkspaceShell(
+            title: _isEditing ? 'Edit Task' : 'New Task',
+            subtitle: 'Loading task details',
+            onBack: () => context.go(RouteNames.tasks),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: _isEditing ? 'Edit Task' : 'New Task',
+            subtitle: 'Task data unavailable',
+            onBack: () => context.go(RouteNames.tasks),
+            child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
@@ -125,11 +132,17 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
           ),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(title: const Text('Task')),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: _isEditing ? 'Edit Task' : 'New Task',
+        subtitle: 'Loading project options',
+        onBack: () => context.go(RouteNames.tasks),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: _isEditing ? 'Edit Task' : 'New Task',
+        subtitle: 'Task form unavailable',
+        onBack: () => context.go(RouteNames.tasks),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -143,10 +156,12 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
     );
   }
 
-  Scaffold _buildScaffold(BuildContext context, List<Project> projects) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Task' : 'New Task')),
-      body: Form(
+  Widget _buildScaffold(BuildContext context, List<Project> projects) {
+    return WorkspaceShell(
+      title: _isEditing ? 'Edit Task' : 'New Task',
+      subtitle: 'Local task form',
+      onBack: () => context.go(RouteNames.tasks),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

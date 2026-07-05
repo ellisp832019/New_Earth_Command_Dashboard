@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class ScanLookupScreen extends ConsumerStatefulWidget {
@@ -30,9 +31,11 @@ class _ScanLookupScreenState extends ConsumerState<ScanLookupScreen> {
     final partsAsync = ref.watch(assetPartsRegisterProvider);
     final labelsAsync = ref.watch(assetQrLabelTemplateRegisterProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Scan Lookup',
+      subtitle: 'Asset scan workspace',
+      onBack: () => context.go(RouteNames.assets),
+      child: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverPadding(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/journal_controller.dart';
 import '../data/journal_repository.dart';
 
@@ -15,19 +16,19 @@ class JournalScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final entries = ref.watch(journalEntriesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Journal'),
-        actions: [
-          IconButton(
-            key: const Key('addJournalEntryButton'),
-            onPressed: () => context.push(RouteNames.newJournal),
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Entry',
-          ),
-        ],
-      ),
-      body: entries.when(
+    return WorkspaceShell(
+      title: 'Journal',
+      subtitle: 'Capture what moved, what was learned, and what continues next.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          key: const Key('addJournalEntryButton'),
+          onPressed: () => context.push(RouteNames.newJournal),
+          icon: const Icon(Icons.add),
+          tooltip: 'Add Entry',
+        ),
+      ],
+      child: entries.when(
         data: (items) {
           if (items.isEmpty) {
             return Center(

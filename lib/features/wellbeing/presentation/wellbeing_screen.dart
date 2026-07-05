@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/wellbeing_controller.dart';
 
 class WellbeingScreen extends ConsumerWidget {
@@ -15,19 +16,19 @@ class WellbeingScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final checkins = ref.watch(wellbeingCheckinsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Wellbeing'),
-        actions: [
-          IconButton(
-            key: const Key('addWellbeingCheckinButton'),
-            onPressed: () => context.push(RouteNames.newWellbeing),
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Check-In',
-          ),
-        ],
-      ),
-      body: checkins.when(
+    return WorkspaceShell(
+      title: 'Wellbeing',
+      subtitle: 'Keep a calm read on energy, mood, and pace.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          key: const Key('addWellbeingCheckinButton'),
+          onPressed: () => context.push(RouteNames.newWellbeing),
+          icon: const Icon(Icons.add),
+          tooltip: 'Add Check-In',
+        ),
+      ],
+      child: checkins.when(
         data: (items) {
           if (items.isEmpty) {
             return Center(

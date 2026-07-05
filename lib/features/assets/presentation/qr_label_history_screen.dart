@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 import '../data/qr_label_printing_service.dart';
 
@@ -24,32 +25,58 @@ class QrLabelHistoryScreen extends ConsumerWidget {
     final queueAsync = ref.watch(assetQrPrintQueueProvider);
 
     return workspaceAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _HistoryError(
-        message: 'The asset workspace is not ready for label history yet.',
+      loading: () => WorkspaceShell(
+        title: 'QR Label History',
+        subtitle: 'Asset label history workspace',
         onBack: () => context.go(RouteNames.assets),
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'QR Label History',
+        subtitle: 'Asset label history workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: _HistoryError(
+          message: 'The asset workspace is not ready for label history yet.',
+          onBack: () => context.go(RouteNames.assets),
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspace) {
         return labelsAsync.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _HistoryError(
-            message: 'The label register could not load right now.',
-            onBack: () => context.go(RouteNames.assetQrLabelRegister),
-            onReload: () =>
-                ref.invalidate(assetQrLabelTemplateRegisterProvider),
+          loading: () => WorkspaceShell(
+            title: 'QR Label History',
+            subtitle: 'Asset label history workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'QR Label History',
+            subtitle: 'Asset label history workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: _HistoryError(
+              message: 'The label register could not load right now.',
+              onBack: () => context.go(RouteNames.assetQrLabelRegister),
+              onReload: () =>
+                  ref.invalidate(assetQrLabelTemplateRegisterProvider),
+            ),
           ),
           data: (labelTable) {
             return queueAsync.when(
-              loading: () => const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+              loading: () => WorkspaceShell(
+                title: 'QR Label History',
+                subtitle: 'Asset label history workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: const Center(child: CircularProgressIndicator()),
               ),
-              error: (error, stackTrace) => _HistoryError(
-                message: 'The print queue could not load right now.',
-                onBack: () => context.go(RouteNames.assetQrLabelStudio),
-                onReload: () => ref.invalidate(assetQrPrintQueueProvider),
+              error: (error, stackTrace) => WorkspaceShell(
+                title: 'QR Label History',
+                subtitle: 'Asset label history workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: _HistoryError(
+                  message: 'The print queue could not load right now.',
+                  onBack: () => context.go(RouteNames.assetQrLabelStudio),
+                  onReload: () => ref.invalidate(assetQrPrintQueueProvider),
+                ),
               ),
               data: (queueTable) {
                 final labels = _sortedLabelRows(labelTable.rows);
@@ -60,9 +87,11 @@ class QrLabelHistoryScreen extends ConsumerWidget {
                 final appliedRows = _rowsByStatus(queueTable.rows, {'applied'});
                 final recentCount = math.min(labels.length, 12);
 
-                return Scaffold(
-                  backgroundColor: Colors.transparent,
-                  body: SafeArea(
+                return WorkspaceShell(
+                  title: 'QR Label History',
+                  subtitle: 'Asset label history workspace',
+                  onBack: () => context.go(RouteNames.assets),
+                  child: SafeArea(
                     child: CustomScrollView(
                       slivers: [
                         SliverPadding(

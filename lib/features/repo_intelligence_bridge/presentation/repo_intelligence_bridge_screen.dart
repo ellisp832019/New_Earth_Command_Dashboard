@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/repo_intelligence_bridge_controller.dart';
 import '../data/repo_intelligence_bridge_models.dart';
 import 'sync_run_terminal_dialog.dart';
@@ -16,30 +17,26 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final workspaceAsync = ref.watch(repoIntelligenceBridgeWorkspaceProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back to Projects Hub',
-          onPressed: () => context.go(RouteNames.projectsIntelligence),
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Repo Intelligence Bridge',
+      subtitle: 'Local repo intelligence workspace',
+      onBack: () => context.go(RouteNames.projectsIntelligence),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () =>
+              ref.invalidate(repoIntelligenceBridgeWorkspaceProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        title: const Text('Repo Intelligence Bridge'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () =>
-                ref.invalidate(repoIntelligenceBridgeWorkspaceProvider),
-            icon: const Icon(Icons.refresh),
+        IconButton(
+          tooltip: 'Bridge settings',
+          onPressed: () => context.push(
+            RouteNames.repoIntelligenceBridgeSettings,
           ),
-          IconButton(
-            tooltip: 'Bridge settings',
-            onPressed: () => context.push(RouteNames.repoIntelligenceBridgeSettings),
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
-      ),
-      body: workspaceAsync.when(
+          icon: const Icon(Icons.settings_outlined),
+        ),
+      ],
+      child: workspaceAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _BridgeError(
           error: error,

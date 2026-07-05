@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -57,6 +58,9 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode) {
+      debugPrint('AppShell build: branch=${widget.navigationShell.currentIndex}');
+    }
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 1100;
 
@@ -111,7 +115,7 @@ class _DesktopShell extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _DesktopWindowBar(
-                  title: 'New Earth Command Dashboard',
+                  title: 'New Earth Command Centre',
                   subtitle: 'Local-first command center',
                 ),
                 Expanded(
@@ -637,8 +641,8 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
     final currentPath = GoRouterState.of(context).uri.path;
     final selectedModule = moduleForPath(modules, currentPath);
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 104),
+    return SizedBox(
+      height: 148,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColours.darkBackground.withValues(alpha: 0.78),
@@ -659,8 +663,8 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
               child: DesktopDragToMoveArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
+                    horizontal: 16,
+                    vertical: 10,
                   ),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -684,25 +688,36 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                         widget.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleSmall
+                                        style: theme.textTheme.titleMedium
                                             ?.copyWith(
                                               color: AppColours.darkText,
-                                              fontWeight: FontWeight.w700,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 24,
                                             ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 6),
                                       ModuleSwitcherDropdown(
                                         modules: modules,
                                         selectedModule: selectedModule,
+                                        launchTargetResolver: (module) => ref
+                                            .read(
+                                              moduleHubStateRepositoryProvider,
+                                            )
+                                            .loadLaunchTarget(module.id),
                                         onSelected: (module) {
+                                          final target = ref
+                                              .read(
+                                                moduleHubStateRepositoryProvider,
+                                              )
+                                              .loadLaunchTarget(module.id);
                                           context.go(
-                                            modulePackageRoute(module),
+                                            moduleLaunchRoute(module, target),
                                           );
                                         },
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 6),
                                       Text(
-                                        selectedModule?.description ??
+                                        selectedModule?.description ?? 
                                             widget.subtitle,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -722,13 +737,14 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                         widget.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleSmall
+                                        style: theme.textTheme.titleMedium
                                             ?.copyWith(
                                               color: AppColours.darkText,
-                                              fontWeight: FontWeight.w700,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 24,
                                             ),
                                       ),
-                                      const SizedBox(height: 6),
+                                      const SizedBox(height: 4),
                                       Row(
                                         children: [
                                           Expanded(
@@ -736,9 +752,27 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                             child: ModuleSwitcherDropdown(
                                               modules: modules,
                                               selectedModule: selectedModule,
+                                              launchTargetResolver: (module) =>
+                                                  ref
+                                                      .read(
+                                                        moduleHubStateRepositoryProvider,
+                                                      )
+                                                      .loadLaunchTarget(
+                                                        module.id,
+                                                      ),
                                               onSelected: (module) {
+                                                final target = ref
+                                                    .read(
+                                                      moduleHubStateRepositoryProvider,
+                                                    )
+                                                    .loadLaunchTarget(
+                                                      module.id,
+                                                    );
                                                 context.go(
-                                                  modulePackageRoute(module),
+                                                  moduleLaunchRoute(
+                                                    module,
+                                                    target,
+                                                  ),
                                                 );
                                               },
                                             ),

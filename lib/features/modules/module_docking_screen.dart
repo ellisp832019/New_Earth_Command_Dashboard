@@ -11,6 +11,7 @@ import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
 import 'application/module_hub_controller.dart';
 import 'module_dock_preview.dart';
+import 'widgets/module_workspace_shell.dart';
 
 class ModuleDockingScreen extends ConsumerStatefulWidget {
   const ModuleDockingScreen({super.key, required this.module});
@@ -54,13 +55,14 @@ class _ModuleDockingScreenState extends ConsumerState<ModuleDockingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final modules = ref.watch(moduleHubModulesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
-        title: Text('${widget.module.name} Docking'),
-      ),
-      body: ListView(
+    return ModuleWorkspaceShell(
+      module: widget.module,
+      modules: modules,
+      title: '${widget.module.name} Docking',
+      subtitle: 'Layout and docking',
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
 import 'meeting_system_widgets.dart';
@@ -39,28 +40,22 @@ class _MeetingFollowUpsScreenState
   Widget build(BuildContext context) {
     final snapshot = ref.watch(meetingFollowUpsProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Follow-up Tracker'),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Follow-up Tracker',
+      subtitle: 'Meeting follow-up workspace',
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        }
+      },
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => ref.invalidate(meetingFollowUpsProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(meetingFollowUpsProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: snapshot.when(
+      ],
+      child: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _MeetingTrackerError(
           title: 'Follow-up Tracker',

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../data/omega_knowledge_engine_service.dart';
 import 'omega_knowledge_engine_terminal_dock.dart';
 
@@ -550,26 +551,20 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: BackButton(
-            onPressed: () => context.go(RouteNames.moduleHub),
-          ),
-          title: const Text('Omega Knowledge Engine'),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
+      return WorkspaceShell(
+        title: 'Omega Knowledge Engine',
+        subtitle: 'Knowledge engine workspace',
+        onBack: () => context.go(RouteNames.moduleHub),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_loadError != null && _snapshot == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: BackButton(
-            onPressed: () => context.go(RouteNames.moduleHub),
-          ),
-          title: const Text('Omega Knowledge Engine'),
-        ),
-        body: Center(
+      return WorkspaceShell(
+        title: 'Omega Knowledge Engine',
+        subtitle: 'Knowledge engine workspace',
+        onBack: () => context.go(RouteNames.moduleHub),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
@@ -646,164 +641,172 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       Tab(text: 'Settings'),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
-        title: const Text('Omega Knowledge Engine'),
-        actions: [
-          TextButton.icon(
-            onPressed: _openTerminal,
-            icon: const Icon(Icons.terminal_outlined),
-            label: const Text('Terminal'),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: _openScanResults,
-            icon: const Icon(Icons.table_view_outlined),
-            label: const Text('Scan outputs'),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: _runningScan ? null : _runScan,
-            icon: _runningScan
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.play_arrow_outlined),
-            label: Text(_runningScan ? 'Scanning' : 'Run scan'),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: _copyScanCommand,
-            icon: const Icon(Icons.copy_outlined),
-            label: const Text('Copy command'),
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: tabs,
+    return WorkspaceShell(
+      title: 'Omega Knowledge Engine',
+      subtitle: 'Knowledge engine workspace',
+      onBack: () => context.go(RouteNames.moduleHub),
+      trailingActions: [
+        TextButton.icon(
+          onPressed: _openTerminal,
+          icon: const Icon(Icons.terminal_outlined),
+          label: const Text('Terminal'),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _OverviewTab(
-            snapshot: snapshot,
-            theme: theme,
-            terminalDockKey: _terminalDockKey,
-            service: _service,
-            repoHealth: repoHealth,
-            outputHealth: outputHealth,
-            outputPreviews: outputPreviews,
-            onRunScan: _runScan,
-            onOpenScanResults: _openScanResults,
-            onOpenLearningNotes: () => _openTab(3),
-            onOpenArchitectureMap: () => _openTab(4),
-            onOpenCommentSuggestions: () => _openTab(5),
-            onOpenProjectMemory: () => _openTab(6),
-            onOpenObsidianExport: () => _openTab(7),
-            onOpenSettings: _openSettings,
-            healthWarnings: healthWarnings,
-            onOpenOutputFolder: () =>
-                _openLocalPath(snapshot.settings.outputDir),
-            onOpenObsidianExportFolder: () =>
-                _openLocalPath(snapshot.settings.obsidianExportDir),
-            onCopyOutputPath: () => _copyText(snapshot.settings.outputDir),
-            onScanFinished: _handleTerminalScanFinished,
-          ),
-          _RepositoriesTab(
-            snapshot: snapshot,
-            theme: theme,
-            repoProfiles: _repoProfilesDraft,
-          ),
-          _DocumentTab(
-            title: 'Scan Results',
-            subtitle: 'Repository index and generated scan snapshot.',
-            documents: [
-              _DocumentSource(
-                label: 'repository_index.json',
-                path:
-                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json',
-                content: snapshot.repositoryIndexText.isEmpty
-                    ? 'No repository index found yet.'
-                    : const JsonEncoder.withIndent(
-                        '  ',
-                      ).convert(snapshot.repositoryIndexJson),
+        TextButton.icon(
+          onPressed: _openScanResults,
+          icon: const Icon(Icons.table_view_outlined),
+          label: const Text('Scan outputs'),
+        ),
+        TextButton.icon(
+          onPressed: _runningScan ? null : _runScan,
+          icon: _runningScan
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.play_arrow_outlined),
+          label: Text(_runningScan ? 'Scanning' : 'Run scan'),
+        ),
+        TextButton.icon(
+          onPressed: _copyScanCommand,
+          icon: const Icon(Icons.copy_outlined),
+          label: const Text('Copy command'),
+        ),
+        TextButton.icon(
+          onPressed: _openSettings,
+          icon: const Icon(Icons.settings_outlined),
+          label: const Text('Settings'),
+        ),
+      ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabs: tabs,
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _OverviewTab(
+                    snapshot: snapshot,
+                    theme: theme,
+                    terminalDockKey: _terminalDockKey,
+                    service: _service,
+                    repoHealth: repoHealth,
+                    outputHealth: outputHealth,
+                    outputPreviews: outputPreviews,
+                    onRunScan: _runScan,
+                    onOpenScanResults: _openScanResults,
+                    onOpenLearningNotes: () => _openTab(3),
+                    onOpenArchitectureMap: () => _openTab(4),
+                    onOpenCommentSuggestions: () => _openTab(5),
+                    onOpenProjectMemory: () => _openTab(6),
+                    onOpenObsidianExport: () => _openTab(7),
+                    onOpenSettings: _openSettings,
+                    healthWarnings: healthWarnings,
+                    onOpenOutputFolder: () =>
+                        _openLocalPath(snapshot.settings.outputDir),
+                    onOpenObsidianExportFolder: () =>
+                        _openLocalPath(snapshot.settings.obsidianExportDir),
+                    onCopyOutputPath: () => _copyText(snapshot.settings.outputDir),
+                    onScanFinished: _handleTerminalScanFinished,
+                  ),
+                  _RepositoriesTab(
+                    snapshot: snapshot,
+                    theme: theme,
+                    repoProfiles: _repoProfilesDraft,
+                  ),
+                  _DocumentTab(
+                    title: 'Scan Results',
+                    subtitle: 'Repository index and generated scan snapshot.',
+                    documents: [
+                      _DocumentSource(
+                        label: 'repository_index.json',
+                        path:
+                            'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.json',
+                        content: snapshot.repositoryIndexText.isEmpty
+                            ? 'No repository index found yet.'
+                            : const JsonEncoder.withIndent(
+                                '  ',
+                              ).convert(snapshot.repositoryIndexJson),
+                      ),
+                      _DocumentSource(
+                        label: 'repository_index.md',
+                        path:
+                            'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md',
+                        content: snapshot.repositoryIndexText,
+                      ),
+                    ],
+                  ),
+                  _DocumentTab(
+                    title: 'Learning Notes',
+                    subtitle: 'First-pass explanations for the codebase.',
+                    documents: [
+                      _DocumentSource(
+                        label: 'code_learning_notes.md',
+                        path:
+                            'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md',
+                        content: snapshot.learningNotesText,
+                      ),
+                    ],
+                  ),
+                  _DocumentTab(
+                    title: 'Architecture Map',
+                    subtitle: 'Folder-level structure and safety boundaries.',
+                    documents: [
+                      _DocumentSource(
+                        label: 'architecture_map.md',
+                        path:
+                            'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md',
+                        content: snapshot.architectureMapText,
+                      ),
+                    ],
+                  ),
+                  _CommentSuggestionsTab(text: snapshot.commentSuggestionsText),
+                  _DocumentTab(
+                    title: 'Project Memory',
+                    subtitle: 'Decisions, lessons, and next steps.',
+                    documents: [
+                      _DocumentSource(
+                        label: 'project_memory.md',
+                        path:
+                            'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md',
+                        content: snapshot.projectMemoryText,
+                      ),
+                    ],
+                  ),
+                  _ObsidianExportTab(
+                    snapshot: snapshot,
+                    theme: theme,
+                    onOpenExportFolder: () =>
+                        _openLocalPath(snapshot.settings.obsidianExportDir),
+                    onCopyExportPath: () =>
+                        _copyText(snapshot.settings.obsidianExportDir),
+                  ),
+                  _SettingsTab(
+                    snapshot: snapshot,
+                    repoProfiles: _repoProfilesDraft,
+                    repoRootController: _repoRootController,
+                    outputDirController: _outputDirController,
+                    obsidianExportController: _obsidianExportController,
+                    omegaOsRootController: _omegaOsRootController,
+                    obsidianVaultController: _obsidianVaultController,
+                    repoControllers: _repoControllers,
+                    repoFocusNodes: _repoFocusNodes,
+                    onAddRepo: _addRepoProfile,
+                    onRemoveRepo: _removeRepoProfile,
+                    onSave: _saveSettings,
+                    onReset: _resetSettings,
+                    saving: _saving,
+                  ),
+                ],
               ),
-              _DocumentSource(
-                label: 'repository_index.md',
-                path:
-                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/repository_index.md',
-                content: snapshot.repositoryIndexText,
-              ),
-            ],
-          ),
-          _DocumentTab(
-            title: 'Learning Notes',
-            subtitle: 'First-pass explanations for the codebase.',
-            documents: [
-              _DocumentSource(
-                label: 'code_learning_notes.md',
-                path:
-                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/code_learning_notes.md',
-                content: snapshot.learningNotesText,
-              ),
-            ],
-          ),
-          _DocumentTab(
-            title: 'Architecture Map',
-            subtitle: 'Folder-level structure and safety boundaries.',
-            documents: [
-              _DocumentSource(
-                label: 'architecture_map.md',
-                path:
-                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/architecture_map.md',
-                content: snapshot.architectureMapText,
-              ),
-            ],
-          ),
-          _CommentSuggestionsTab(text: snapshot.commentSuggestionsText),
-          _DocumentTab(
-            title: 'Project Memory',
-            subtitle: 'Decisions, lessons, and next steps.',
-            documents: [
-              _DocumentSource(
-                label: 'project_memory.md',
-                path:
-                    'modules/26_OMEGA_KNOWLEDGE_ENGINE/output/project_memory.md',
-                content: snapshot.projectMemoryText,
-              ),
-            ],
-          ),
-          _ObsidianExportTab(
-            snapshot: snapshot,
-            theme: theme,
-            onOpenExportFolder: () =>
-                _openLocalPath(snapshot.settings.obsidianExportDir),
-            onCopyExportPath: () =>
-                _copyText(snapshot.settings.obsidianExportDir),
-          ),
-          _SettingsTab(
-            snapshot: snapshot,
-            repoProfiles: _repoProfilesDraft,
-            repoRootController: _repoRootController,
-            outputDirController: _outputDirController,
-            obsidianExportController: _obsidianExportController,
-            omegaOsRootController: _omegaOsRootController,
-            obsidianVaultController: _obsidianVaultController,
-            repoControllers: _repoControllers,
-            repoFocusNodes: _repoFocusNodes,
-            onAddRepo: _addRepoProfile,
-            onRemoveRepo: _removeRepoProfile,
-            onSave: _saveSettings,
-            onReset: _resetSettings,
-            saving: _saving,
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

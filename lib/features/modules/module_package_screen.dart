@@ -9,8 +9,9 @@ import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_navigation.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
-import '../../core/widgets/module_switcher_dropdown.dart';
+import '../../core/widgets/workspace_shell.dart';
 import 'application/module_hub_controller.dart';
+import 'widgets/module_workspace_shell.dart';
 
 class ModulePackageScreen extends ConsumerWidget {
   const ModulePackageScreen({super.key, required this.moduleId});
@@ -20,15 +21,14 @@ class ModulePackageScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final modules = ref.watch(moduleHubModulesProvider);
-    final module = modules
-        .where((item) => item.id == moduleId)
-        .cast<ModuleManifest?>()
-        .firstOrNull;
+    final module = modules.where((item) => item.id == moduleId).firstOrNull;
 
     if (module == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Module package')),
-        body: Center(
+      return WorkspaceShell(
+        title: 'Module package',
+        subtitle: 'Local registry lookup failed',
+        onBack: () => context.go(RouteNames.moduleHub),
+        child: Center(
           child: Text(
             'Module "$moduleId" was not found in the local registry.',
           ),
@@ -41,150 +41,90 @@ class ModulePackageScreen extends ConsumerWidget {
       GoRouterState.of(context).uri.path,
     );
 
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 1200;
+    return ModuleWorkspaceShell(
+      module: module,
+      modules: modules,
+      title: '${module.name} Package',
+      subtitle: module.description,
+      trailingActions: [
+        FilledButton.tonalIcon(
+          onPressed: () {
+            final route = moduleHomeRoute(module);
+            if (route != null) {
+              context.go(route);
+            }
+          },
+          icon: const Icon(Icons.open_in_new),
+          label: const Text('Open module home'),
+        ),
+      ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 1200;
 
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                  color: Theme.of(context).colorScheme.surface,
-                  border: Border.all(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.outlineVariant.withValues(alpha: 0.6),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PackageHeader(module: module, modules: modules),
-                    Expanded(
-                      child: isWide
-                          ? Row(
-                              children: [
-                                _PackageRail(
-                                  module: module,
-                                  selectedSection: selectedSection,
-                                  onSectionSelected: (route) {
-                                    context.go(route);
-                                  },
-                                ),
-                                const VerticalDivider(width: 1),
-                                Expanded(
-                                  child: _PackageBody(
-                                    module: module,
-                                    selectedSection: selectedSection,
-                                    onSectionSelected: (route) {
-                                      context.go(route);
-                                    },
-                                  ),
-                                ),
-                                const VerticalDivider(width: 1),
-                                SizedBox(
-                                  width: 360,
-                                  child: _PackageInsights(module: module),
-                                ),
-                              ],
-                            )
-                          : ListView(
-                              padding: const EdgeInsets.all(16),
-                              children: [
-                                _PackageBody(
-                                  module: module,
-                                  selectedSection: selectedSection,
-                                  onSectionSelected: (route) {
-                                    context.go(route);
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                _PackageInsights(module: module),
-                              ],
-                            ),
-                    ),
-                  ],
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                color: Theme.of(context).colorScheme.surface,
+                border: Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withValues(alpha: 0.6),
                 ),
               ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _PackageHeader extends StatelessWidget {
-  const _PackageHeader({required this.module, required this.modules});
-
-  final ModuleManifest module;
-  final List<ModuleManifest> modules;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.32,
-        ),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: isWide
+                        ? Row(
+                            children: [
+                              _PackageRail(
+                                module: module,
+                                selectedSection: selectedSection,
+                                onSectionSelected: (route) {
+                                  context.go(route);
+                                },
+                              ),
+                              const VerticalDivider(width: 1),
+                              Expanded(
+                                child: _PackageBody(
+                                  module: module,
+                                  selectedSection: selectedSection,
+                                  onSectionSelected: (route) {
+                                    context.go(route);
+                                  },
+                                ),
+                              ),
+                              const VerticalDivider(width: 1),
+                              SizedBox(
+                                width: 360,
+                                child: _PackageInsights(module: module),
+                              ),
+                            ],
+                          )
+                        : ListView(
+                            padding: const EdgeInsets.all(16),
+                            children: [
+                              _PackageBody(
+                                module: module,
+                                selectedSection: selectedSection,
+                                onSectionSelected: (route) {
+                                  context.go(route);
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _PackageInsights(module: module),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
             ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.folder_open_outlined),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  module.name,
-                  style: theme.textTheme.titleLarge,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  module.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 320,
-            child: ModuleSwitcherDropdown(
-              modules: modules,
-              selectedModule: module,
-              onSelected: (selectedModule) {
-                final route = RouteNames.modulePackage(selectedModule.id);
-                if (route.isNotEmpty) {
-                  context.go(route);
-                }
-              },
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -213,15 +153,24 @@ class _PackageRail extends StatelessWidget {
         children: [
           Text('Sections', style: theme.textTheme.titleMedium),
           const SizedBox(height: 12),
-          for (final route in routes)
+          if (routes.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _SectionTile(
-                label: _sectionLabel(route),
-                selected: route == selectedSection,
-                onTap: () => onSectionSelected(route),
+              child: Text(
+                'No package sections registered. This module opens directly from its home route.',
+                style: theme.textTheme.bodySmall,
               ),
-            ),
+            )
+          else
+            for (final route in routes)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _SectionTile(
+                  label: _sectionLabel(route),
+                  selected: route == selectedSection,
+                  onTap: () => onSectionSelected(route),
+                ),
+              ),
           const SizedBox(height: 12),
           FilledButton.tonalIcon(
             onPressed: () {
@@ -314,6 +263,13 @@ class _PackageBody extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (routes.isEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'This module does not expose separate package sections yet, so the home page is the whole workspace.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -336,7 +292,9 @@ class _PackageBody extends StatelessWidget {
                         }
                       },
                       icon: const Icon(Icons.dashboard_outlined),
-                      label: const Text('Open overview'),
+                      label: Text(
+                        routes.isEmpty ? 'No overview sections' : 'Open overview',
+                      ),
                     ),
                   ],
                 ),
@@ -353,17 +311,23 @@ class _PackageBody extends StatelessWidget {
               children: [
                 Text('Section launcher', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final route in routes)
-                      ActionChip(
-                        label: Text(_sectionLabel(route)),
-                        onPressed: () => onSectionSelected(route),
-                      ),
-                  ],
-                ),
+                if (routes.isEmpty)
+                  Text(
+                    'No section routes are available for this module.',
+                    style: theme.textTheme.bodySmall,
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final route in routes)
+                        ActionChip(
+                          label: Text(_sectionLabel(route)),
+                          onPressed: () => onSectionSelected(route),
+                        ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -513,10 +477,6 @@ List<String> _packageRoutes(dynamic module) {
     if (trimmed.isEmpty) {
       continue;
     }
-    if (trimmed == module.routes.first) {
-      routes.add(trimmed);
-      continue;
-    }
     routes.add(trimmed);
   }
   return routes;
@@ -529,7 +489,7 @@ String _selectedSectionFor(ModuleManifest module, String currentPath) {
       return route;
     }
   }
-  return packageRoutes.isEmpty ? module.routes.first : packageRoutes.first;
+  return packageRoutes.isEmpty ? '' : packageRoutes.first;
 }
 
 extension _FirstOrNullExtension<T> on Iterable<T> {

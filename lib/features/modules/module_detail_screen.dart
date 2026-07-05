@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/dock/dock_position.dart';
@@ -6,32 +7,40 @@ import '../../core/modules/module_category.dart';
 import '../../core/modules/module_health.dart';
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_permissions.dart';
+import '../../core/modules/module_navigation.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/routing/route_names.dart';
+import 'application/module_hub_controller.dart';
 import 'module_dock_preview.dart';
 import 'module_health_panel.dart';
 import 'module_logs_panel.dart';
+import 'widgets/module_workspace_shell.dart';
 
-class ModuleDetailScreen extends StatelessWidget {
+class ModuleDetailScreen extends ConsumerWidget {
   const ModuleDetailScreen({super.key, required this.module});
 
   final ModuleManifest module;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final modules = ref.watch(moduleHubModulesProvider);
     final showGateShortcuts = _isSensitiveModule(module.id);
+    final preferredRoute = moduleLaunchRoute(
+      module,
+      ref.read(moduleHubStateRepositoryProvider).loadLaunchTarget(module.id),
+    );
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
-        title: Text(module.name),
-      ),
-      body: ListView(
+    return ModuleWorkspaceShell(
+      module: module,
+      modules: modules,
+      title: module.name,
+      subtitle: module.description,
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _DetailPanel(
-            title: 'Module dossier',
+            title: 'Overview',
             subtitle: module.description,
             icon: moduleIconFor(
               module.iconKey,
@@ -87,13 +96,12 @@ class ModuleDetailScreen extends StatelessWidget {
                 },
                 child: const Text('Review governance'),
               ),
-              if (module.routes.isNotEmpty)
-                FilledButton(
-                  onPressed: () {
-                    context.go(module.routes.first);
-                  },
-                  child: const Text('Open module'),
-                ),
+              FilledButton(
+                onPressed: () {
+                  context.go(preferredRoute);
+                },
+                child: const Text('Open module'),
+              ),
             ],
             child: const SizedBox.shrink(),
           ),
@@ -117,7 +125,7 @@ class ModuleDetailScreen extends StatelessWidget {
                       ? null
                       : () => context.go(
                           Uri(
-                            path: module.routes.first,
+                            path: preferredRoute,
                             queryParameters: {'tab': 'scan-results'},
                           ).toString(),
                         ),
@@ -128,7 +136,7 @@ class ModuleDetailScreen extends StatelessWidget {
                       ? null
                       : () => context.go(
                           Uri(
-                            path: module.routes.first,
+                            path: preferredRoute,
                             queryParameters: {'tab': 'settings'},
                           ).toString(),
                         ),
@@ -148,9 +156,7 @@ class ModuleDetailScreen extends StatelessWidget {
               chips: _gatePostureChips(module.id),
               actions: [
                 FilledButton(
-                  onPressed: module.routes.isEmpty
-                      ? null
-                      : () => context.go(module.routes.first),
+                  onPressed: () => context.go(preferredRoute),
                   child: const Text('Open module route'),
                 ),
               ],
@@ -170,9 +176,7 @@ class ModuleDetailScreen extends StatelessWidget {
               ],
               actions: [
                 FilledButton(
-                  onPressed: module.routes.isEmpty
-                      ? null
-                      : () => context.go(module.routes.first),
+                  onPressed: () => context.go(preferredRoute),
                   child: const Text('Open module route'),
                 ),
                 if (module.id == '01_USERS_AND_DEVICES_CONTROL') ...[

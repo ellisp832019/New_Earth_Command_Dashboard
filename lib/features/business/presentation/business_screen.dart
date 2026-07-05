@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/business_controller.dart';
 import '../data/business_repository.dart';
 
@@ -15,24 +16,19 @@ class BusinessScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final items = ref.watch(businessItemsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Business'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(RouteNames.dashboard),
-          tooltip: 'Back',
+    return WorkspaceShell(
+      title: 'Business',
+      subtitle: 'Keep leads, follow-ups, and next steps easy to return to.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          key: const Key('addBusinessItemButton'),
+          onPressed: () => context.push(RouteNames.newBusiness),
+          icon: const Icon(Icons.add),
+          tooltip: 'Add Opportunity',
         ),
-        actions: [
-          IconButton(
-            key: const Key('addBusinessItemButton'),
-            onPressed: () => context.push(RouteNames.newBusiness),
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Opportunity',
-          ),
-        ],
-      ),
-      body: items.when(
+      ],
+      child: items.when(
         data: (businessItems) {
           if (businessItems.isEmpty) {
             return ListView(

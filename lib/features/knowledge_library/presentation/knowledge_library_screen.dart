@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../data/knowledge_library_repository.dart';
 import 'knowledge_engine_launcher_io.dart';
 
@@ -129,9 +130,11 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
         _categoryFilter != null ||
         _sourceSectionFilter != null;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Knowledge Library',
+      subtitle: 'Local knowledge catalogue workspace',
+      onBack: () => context.go(RouteNames.more),
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(

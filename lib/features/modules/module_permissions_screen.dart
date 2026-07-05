@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'application/module_hub_controller.dart';
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_permissions.dart';
-import '../../core/routing/route_names.dart';
+import 'widgets/module_workspace_shell.dart';
 
-class ModulePermissionsScreen extends StatefulWidget {
+class ModulePermissionsScreen extends ConsumerStatefulWidget {
   const ModulePermissionsScreen({super.key, required this.module});
 
   final ModuleManifest module;
 
   @override
-  State<ModulePermissionsScreen> createState() =>
+  ConsumerState<ModulePermissionsScreen> createState() =>
       _ModulePermissionsScreenState();
 }
 
-class _ModulePermissionsScreenState extends State<ModulePermissionsScreen> {
+class _ModulePermissionsScreenState
+    extends ConsumerState<ModulePermissionsScreen> {
   late final Map<ModulePermissionType, ModulePermissionState> _states;
 
   @override
@@ -30,6 +32,7 @@ class _ModulePermissionsScreenState extends State<ModulePermissionsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final modules = ref.watch(moduleHubModulesProvider);
     final enabledCount = _states.values
         .where((state) => state == ModulePermissionState.allowed)
         .length;
@@ -40,12 +43,12 @@ class _ModulePermissionsScreenState extends State<ModulePermissionsScreen> {
         .where((state) => state == ModulePermissionState.disabled)
         .length;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
-        title: Text('${widget.module.name} Permissions'),
-      ),
-      body: ListView(
+    return ModuleWorkspaceShell(
+      module: widget.module,
+      modules: modules,
+      title: '${widget.module.name} Permissions',
+      subtitle: 'Local controls and permission review',
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

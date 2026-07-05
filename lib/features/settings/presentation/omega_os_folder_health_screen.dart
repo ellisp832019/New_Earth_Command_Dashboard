@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/omega_os_folder_registry.dart';
 import '../../../core/services/omega_os_folder_health_service.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/omega_os_folder_health_controller.dart';
 
 class OmegaOsFolderHealthScreen extends ConsumerStatefulWidget {
@@ -25,14 +26,17 @@ class _OmegaOsFolderHealthScreenState
     final snapshot = ref.watch(omegaOsFolderHealthSnapshotProvider);
 
     return snapshot.when(
-      loading: () => const Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => WorkspaceShell(
+        title: 'Omega OS Folder Health',
+        subtitle: 'Checking local folder health.',
+        onBack: () => context.pop(),
+        child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, stackTrace) => Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text('Omega OS Folder Health')),
-        body: Center(
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Omega OS Folder Health',
+        subtitle: 'Local folder health unavailable',
+        onBack: () => context.pop(),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -56,21 +60,15 @@ class _OmegaOsFolderHealthScreenState
         ),
       ),
       data: (data) {
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: const Text('Omega OS Folder Health'),
-            leading: IconButton(
-              tooltip: 'Back',
-              onPressed: () {
-                if (context.canPop()) {
-                  context.pop();
-                }
-              },
-              icon: const Icon(Icons.arrow_back),
-            ),
-          ),
-          body: SafeArea(
+        return WorkspaceShell(
+          title: 'Omega OS Folder Health',
+          subtitle: 'Checking reserved and active Omega OS folders.',
+          onBack: () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
+          child: SafeArea(
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [

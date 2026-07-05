@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../modules/module_navigation.dart';
 import '../modules/module_category.dart';
 import '../modules/module_manifest.dart';
 
@@ -9,11 +10,14 @@ class ModuleSwitcherDropdown extends StatelessWidget {
     required this.selectedModule,
     required this.onSelected,
     super.key,
+    this.launchTargetResolver,
   });
 
   final List<ModuleManifest> modules;
   final ModuleManifest? selectedModule;
   final ValueChanged<ModuleManifest> onSelected;
+  final ModuleLaunchTarget? Function(ModuleManifest module)?
+  launchTargetResolver;
 
   @override
   Widget build(BuildContext context) {
@@ -23,22 +27,22 @@ class ModuleSwitcherDropdown extends StatelessWidget {
     );
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 260, maxWidth: 420),
+      constraints: const BoxConstraints(minWidth: 180, maxWidth: 260),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ModuleManifest>(
           key: const Key('module-switcher-dropdown'),
           value: selectedModule,
           isExpanded: true,
-          itemHeight: 72,
+          itemHeight: 68,
           borderRadius: BorderRadius.circular(20),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded),
-          menuMaxHeight: 420,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          menuMaxHeight: 360,
           dropdownColor: theme.colorScheme.surface,
           hint: Text(
             'Select module',
@@ -60,7 +64,10 @@ class ModuleSwitcherDropdown extends StatelessWidget {
               .map(
                 (module) => DropdownMenuItem<ModuleManifest>(
                   value: module,
-                  child: _ModuleMenuItem(module: module),
+                  child: _ModuleMenuItem(
+                    module: module,
+                    launchTarget: launchTargetResolver?.call(module),
+                  ),
                 ),
               )
               .toList(growable: false),
@@ -89,16 +96,16 @@ class _SelectedModuleLabel extends StatelessWidget {
       children: [
         Icon(
           moduleIconFor(module.iconKey, category: module.category),
-          size: 18,
+          size: 15,
           color: theme.colorScheme.primary,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 5),
         Expanded(
           child: Text(
             module.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelLarge?.copyWith(
+            style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -109,9 +116,10 @@ class _SelectedModuleLabel extends StatelessWidget {
 }
 
 class _ModuleMenuItem extends StatelessWidget {
-  const _ModuleMenuItem({required this.module});
+  const _ModuleMenuItem({required this.module, this.launchTarget});
 
   final ModuleManifest module;
+  final ModuleLaunchTarget? launchTarget;
 
   @override
   Widget build(BuildContext context) {
@@ -119,24 +127,24 @@ class _ModuleMenuItem extends StatelessWidget {
     final isEnabled = module.enabled;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(9),
             ),
             alignment: Alignment.center,
             child: Icon(
               moduleIconFor(module.iconKey, category: module.category),
-              size: 18,
+              size: 15,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 7),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,12 +157,12 @@ class _ModuleMenuItem extends StatelessWidget {
                         module.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     _ModuleStatusPill(
                       label: isEnabled ? 'Enabled' : 'Disabled',
                       accentColor: isEnabled
@@ -164,20 +172,34 @@ class _ModuleMenuItem extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  module.category.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      module.category.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall,
+                    ),
+                    if (launchTarget != null)
+                      _ModuleStatusPill(
+                        label: launchTarget!.label,
+                        accentColor: theme.colorScheme.tertiary,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   module.routes.isEmpty
                       ? 'No route registered'
-                      : module.routes.first,
+                      : launchTarget == ModuleLaunchTarget.home
+                          ? module.routes.first
+                          : 'Package shell',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -199,7 +221,7 @@ class _ModuleStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),

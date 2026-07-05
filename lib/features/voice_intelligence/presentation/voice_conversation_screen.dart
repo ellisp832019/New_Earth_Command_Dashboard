@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/voice_module_providers.dart';
 import '../application/voice_session_controller.dart';
 import '../application/voice_thread_controller.dart';
@@ -64,25 +65,18 @@ class _VoiceConversationScreenState
         ? _defaultPrompts()
         : thread.prompts;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+    return WorkspaceShell(
+      title: 'Voice Conversation',
+      subtitle: 'Local voice conversation workspace',
+      onBack: () => context.go(RouteNames.voiceHome()),
+      trailingActions: [
+        TextButton.icon(
           onPressed: () => context.go(RouteNames.voiceHome()),
+          icon: const Icon(Icons.home_outlined),
+          label: const Text('Home'),
         ),
-        title: const Text('Voice Conversation'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.go(RouteNames.voiceHome()),
-            icon: const Icon(Icons.home_outlined),
-            label: const Text('Home'),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
+      ],
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: LayoutBuilder(

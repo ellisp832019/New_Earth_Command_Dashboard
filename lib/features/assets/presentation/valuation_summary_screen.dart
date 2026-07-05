@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class ValuationSummaryScreen extends ConsumerWidget {
@@ -18,34 +19,68 @@ class ValuationSummaryScreen extends ConsumerWidget {
     final overview = ref.watch(assetValuationOverviewProvider);
 
     return workspace.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _ValuationError(
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+      loading: () => WorkspaceShell(
+        title: 'Valuation Summary',
+        subtitle: 'Asset valuation workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Valuation Summary',
+        subtitle: 'Asset valuation workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: _ValuationError(
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _ValuationError(
-            onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+          loading: () => WorkspaceShell(
+            title: 'Valuation Summary',
+            subtitle: 'Asset valuation workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Valuation Summary',
+            subtitle: 'Asset valuation workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: _ValuationError(
+              onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            ),
           ),
           data: (equipmentTable) {
             return valuation.when(
-              loading: () => const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+              loading: () => WorkspaceShell(
+                title: 'Valuation Summary',
+                subtitle: 'Asset valuation workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: const Center(child: CircularProgressIndicator()),
               ),
-              error: (error, stackTrace) => _ValuationError(
-                onReload: () => ref.invalidate(assetValuationSummaryProvider),
+              error: (error, stackTrace) => WorkspaceShell(
+                title: 'Valuation Summary',
+                subtitle: 'Asset valuation workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: _ValuationError(
+                  onReload: () => ref.invalidate(assetValuationSummaryProvider),
+                ),
               ),
               data: (valuationTable) {
                 return overview.when(
-                  loading: () => const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
+                  loading: () => WorkspaceShell(
+                    title: 'Valuation Summary',
+                    subtitle: 'Asset valuation workspace',
+                    onBack: () => context.go(RouteNames.assets),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
-                  error: (error, stackTrace) => _ValuationError(
-                    onReload: () =>
-                        ref.invalidate(assetValuationOverviewProvider),
+                  error: (error, stackTrace) => WorkspaceShell(
+                    title: 'Valuation Summary',
+                    subtitle: 'Asset valuation workspace',
+                    onBack: () => context.go(RouteNames.assets),
+                    child: _ValuationError(
+                      onReload: () =>
+                          ref.invalidate(assetValuationOverviewProvider),
+                    ),
                   ),
                   data: (overviewData) {
                     final moneyFormatter = NumberFormat.currency(
@@ -53,9 +88,11 @@ class ValuationSummaryScreen extends ConsumerWidget {
                       decimalDigits: 2,
                     );
 
-                    return Scaffold(
-                      backgroundColor: Colors.transparent,
-                      body: SafeArea(
+                    return WorkspaceShell(
+                      title: 'Valuation Summary',
+                      subtitle: 'Asset valuation workspace',
+                      onBack: () => context.go(RouteNames.assets),
+                      child: SafeArea(
                         child: CustomScrollView(
                           slivers: [
                             SliverPadding(

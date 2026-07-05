@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../../widgets/calm_guidance_card.dart';
 import '../application/planner_controller.dart';
 import '../../tasks/application/tasks_controller.dart';
@@ -21,24 +22,23 @@ class PlannerScreen extends ConsumerWidget {
     final todayPlan = ref.watch(todayPlanProvider);
     final taskOptions = ref.watch(plannerTaskOptionsProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Daily Planner'),
-        actions: [
-          IconButton(
-            tooltip: 'Open Tasks',
-            onPressed: () => context.push(RouteNames.tasks),
-            icon: const Icon(Icons.task_alt_outlined),
-          ),
-          IconButton(
-            tooltip: 'Back to Dashboard',
-            onPressed: () => context.push(RouteNames.dashboard),
-            icon: const Icon(Icons.dashboard_outlined),
-          ),
-        ],
-      ),
-      body: todayPlan.when(
+    return WorkspaceShell(
+      title: 'Daily Planner',
+      subtitle: 'A calm place to set the day, choose the Top 3, and review it gently.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Open Tasks',
+          onPressed: () => context.push(RouteNames.tasks),
+          icon: const Icon(Icons.task_alt_outlined),
+        ),
+        IconButton(
+          tooltip: 'Back to Dashboard',
+          onPressed: () => context.push(RouteNames.dashboard),
+          icon: const Icon(Icons.dashboard_outlined),
+        ),
+      ],
+      child: todayPlan.when(
         data: (plan) => taskOptions.when(
           data: (tasks) => _PlannerView(
             key: ValueKey(plan.updatedAt),

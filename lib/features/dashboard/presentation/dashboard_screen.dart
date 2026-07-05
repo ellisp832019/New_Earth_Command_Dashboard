@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,11 +43,24 @@ class DashboardScreen extends ConsumerWidget {
     final snapshot = ref.watch(dashboardSnapshotProvider);
 
     return snapshot.when(
-      data: (data) => _DashboardContent(snapshot: data),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) =>
-          Scaffold(body: _DashboardError(error: error)),
+      data: (data) {
+        if (kDebugMode) {
+          debugPrint('DashboardScreen state: data');
+        }
+        return _DashboardContent(snapshot: data);
+      },
+      loading: () {
+        if (kDebugMode) {
+          debugPrint('DashboardScreen state: loading');
+        }
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
+      error: (error, stackTrace) {
+        if (kDebugMode) {
+          debugPrint('DashboardScreen state: error -> $error');
+        }
+        return Scaffold(body: _DashboardError(error: error));
+      },
     );
   }
 }

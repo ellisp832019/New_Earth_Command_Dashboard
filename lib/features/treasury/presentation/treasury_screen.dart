@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/widgets/local_pdf_screen.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/treasury_monthly_summary_controller.dart';
 import '../../../core/widgets/folder_bootstrap_wizard.dart';
 import '../application/treasury_controller.dart';
@@ -39,9 +40,11 @@ class TreasuryScreen extends ConsumerWidget {
     final snapshot = ref.watch(treasuryWorkspaceProvider);
 
     return snapshot.when(
-      loading: () => const Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => WorkspaceShell(
+        title: 'Treasury',
+        subtitle: 'Waiting for the local finance pack to load.',
+        onBack: () => context.go(RouteNames.more),
+        child: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, stackTrace) => _TreasurySetupScreen(
         title: 'Treasury needs a calm setup',
@@ -92,9 +95,18 @@ class _TreasuryHomeScreen extends StatelessWidget {
     final isWide = width >= 1060;
     final dateLabel = DateFormat('EEEE, d MMMM y').format(DateTime.now());
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Treasury',
+      subtitle: 'Hayley\'s Finance Centre',
+      onBack: () => context.go(RouteNames.more),
+      trailingActions: [
+        TextButton.icon(
+          onPressed: onReload,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Reload'),
+        ),
+      ],
+      child: SafeArea(
         child: ListView(
           padding: EdgeInsets.fromLTRB(
             isWide ? 28 : 18,
@@ -237,9 +249,18 @@ class _TreasurySetupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Treasury',
+      subtitle: 'Setup needed',
+      onBack: onBack,
+      trailingActions: [
+        TextButton.icon(
+          onPressed: onReload,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Reload'),
+        ),
+      ],
+      child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/project_filters.dart';
 import '../application/projects_controller.dart';
 import '../data/project_repository.dart';
@@ -37,9 +38,25 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final theme = Theme.of(context);
     final projectItems = ref.watch(projectListItemsProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: projectItems.when(
+    return WorkspaceShell(
+      title: 'Projects',
+      subtitle: 'New Earth Projects',
+      onBack: () => context.go(RouteNames.projectsIntelligence),
+      trailingActions: [
+        TextButton.icon(
+          key: const Key('backToProjectHubButton'),
+          onPressed: () => context.go(RouteNames.projectsIntelligence),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Back to hub'),
+        ),
+        FilledButton.icon(
+          key: const Key('addProjectButton'),
+          onPressed: () => context.push(RouteNames.newProject),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Project'),
+        ),
+      ],
+      child: projectItems.when(
         data: (items) {
           final projects = items.map((item) => item.project).toList();
           final filteredProjects = filterProjects(
@@ -103,8 +120,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             ),
           ),
         ),
-      ),
-    );
+    ),
+  );
   }
 
   Widget _pageHeader(ThemeData theme, int totalProjects) {
@@ -119,21 +136,6 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Projects',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    color: AppColours.darkText,
-                    fontSize: 28,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'New Earth Projects',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: AppColours.darkText,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
                   'There are $totalProjects active project${totalProjects == 1 ? '' : 's'} ready for a calm review.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColours.darkMutedText,
@@ -141,27 +143,6 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              TextButton.icon(
-                key: const Key('backToProjectHubButton'),
-                onPressed: () => context.go(RouteNames.projectsIntelligence),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Back to hub'),
-              ),
-              FilledButton.icon(
-                key: const Key('addProjectButton'),
-                onPressed: () => context.push(RouteNames.newProject),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Project'),
-              ),
-            ],
           ),
         ],
       ),

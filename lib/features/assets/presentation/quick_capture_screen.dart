@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 enum _QuickCaptureKind { equipment, part }
@@ -67,12 +68,17 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
     final workspace = ref.watch(assetWorkspaceProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => WorkspaceShell(
+        title: 'Quick Capture',
+        subtitle: 'Asset intake workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, stackTrace) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Quick Capture',
+        subtitle: 'Asset intake workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -99,137 +105,148 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
         final selectedStatus =
             statusOptions.contains(_status) ? _status : statusOptions.first;
 
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed:
-                _isSaving || workspaceData.assetsRootPath == null
-                    ? null
-                    : _save,
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_outlined),
-            label: Text(_isSaving ? 'Saving' : 'Save'),
-          ),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _QuickCaptureHeader(
-                    assetsRootPath: workspaceData.assetsRootPath,
-                    kind: _kind,
-                    statusLabel: selectedStatus,
-                    onBack: () => Navigator.of(context).maybePop(),
-                    onSwitchKind: _setKind,
-                  ),
-                  const SizedBox(height: 20),
-                  if (workspaceData.assetsRootPath == null) ...[
-                    _UnavailableNotice(
-                      onReload: () => ref.invalidate(assetWorkspaceProvider),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: _panelDecoration(context),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _PanelTitle(
-                            title: 'One-minute capture',
-                            icon: Icons.flash_on_outlined,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Capture the essentials now. You can refine the record later in the register.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppColours.darkMutedText,
-                                  height: 1.4,
-                                ),
-                          ),
-                          const SizedBox(height: 18),
-                          const _SectionLabel(
-                            label: 'Capture mode',
-                            hint:
-                                'Use the header buttons to switch between equipment and parts. The form stays the same either way.',
-                          ),
-                          const SizedBox(height: 18),
-                          _Field(
-                            controller: _nameController,
-                            label: 'Item name',
-                            hintText: 'Cordless drill or M3 screws',
-                            validator: (value) {
-                              if ((value ?? '').trim().isEmpty) {
-                                return 'Enter an item name.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _Field(
-                            controller: _typeController,
-                            label: 'Type / category',
-                            hintText: _kind == _QuickCaptureKind.equipment
-                                ? 'Tool, device, sensor...'
-                                : 'Fastener, cable, label...',
-                          ),
-                          const SizedBox(height: 12),
-                          _Field(
-                            controller: _projectController,
-                            label: 'Project',
-                            hintText: 'MicroGrow',
-                          ),
-                          const SizedBox(height: 12),
-                          _Field(
-                            controller: _locationController,
-                            label: 'Location',
-                            hintText: 'Workbench A',
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            key: ValueKey<String>('status-${_kind.name}'),
-                            initialValue: selectedStatus,
-                            decoration: const InputDecoration(labelText: 'Status'),
-                            items: statusOptions
-                                .map(
-                                  (value) => DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value.replaceAll('_', ' ')),
-                                  ),
-                                )
-                                .toList(growable: false),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _status = value);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _notesController,
-                            decoration: const InputDecoration(
-                              labelText: 'Notes',
-                              hintText: 'Optional context',
-                            ),
-                            minLines: 3,
-                            maxLines: 5,
-                          ),
-                        ],
+        return WorkspaceShell(
+          title: 'Quick Capture',
+          subtitle: 'Asset intake workspace',
+          onBack: () => Navigator.of(context).maybePop(),
+          child: Stack(
+            children: [
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _QuickCaptureHeader(
+                        assetsRootPath: workspaceData.assetsRootPath,
+                        kind: _kind,
+                        statusLabel: selectedStatus,
+                        onBack: () => Navigator.of(context).maybePop(),
+                        onSwitchKind: _setKind,
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      if (workspaceData.assetsRootPath == null) ...[
+                        _UnavailableNotice(
+                          onReload: () => ref.invalidate(assetWorkspaceProvider),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: _panelDecoration(context),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _PanelTitle(
+                                title: 'One-minute capture',
+                                icon: Icons.flash_on_outlined,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Capture the essentials now. You can refine the record later in the register.',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppColours.darkMutedText,
+                                      height: 1.4,
+                                    ),
+                              ),
+                              const SizedBox(height: 18),
+                              const _SectionLabel(
+                                label: 'Capture mode',
+                                hint:
+                                    'Use the header buttons to switch between equipment and parts. The form stays the same either way.',
+                              ),
+                              const SizedBox(height: 18),
+                              _Field(
+                                controller: _nameController,
+                                label: 'Item name',
+                                hintText: 'Cordless drill or M3 screws',
+                                validator: (value) {
+                                  if ((value ?? '').trim().isEmpty) {
+                                    return 'Enter an item name.';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              _Field(
+                                controller: _typeController,
+                                label: 'Type / category',
+                                hintText: _kind == _QuickCaptureKind.equipment
+                                    ? 'Tool, device, sensor...'
+                                    : 'Fastener, cable, label...',
+                              ),
+                              const SizedBox(height: 12),
+                              _Field(
+                                controller: _projectController,
+                                label: 'Project',
+                                hintText: 'MicroGrow',
+                              ),
+                              const SizedBox(height: 12),
+                              _Field(
+                                controller: _locationController,
+                                label: 'Location',
+                                hintText: 'Workbench A',
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                key: ValueKey<String>('status-${_kind.name}'),
+                                initialValue: selectedStatus,
+                                decoration: const InputDecoration(labelText: 'Status'),
+                                items: statusOptions
+                                    .map(
+                                      (value) => DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value.replaceAll('_', ' ')),
+                                      ),
+                                    )
+                                    .toList(growable: false),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() => _status = value);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _notesController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Notes',
+                                  hintText: 'Optional context',
+                                ),
+                                minLines: 3,
+                                maxLines: 5,
+                              ),
+                              const SizedBox(height: 96),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              Positioned(
+                right: 20,
+                bottom: 20,
+                child: FloatingActionButton.extended(
+                  onPressed:
+                      _isSaving || workspaceData.assetsRootPath == null
+                          ? null
+                          : _save,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_isSaving ? 'Saving' : 'Save'),
+                ),
+              ),
+            ],
           ),
         );
       },

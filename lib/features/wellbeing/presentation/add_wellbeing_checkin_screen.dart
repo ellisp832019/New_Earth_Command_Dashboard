@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/wellbeing_controller.dart';
 
 class AddWellbeingCheckinScreen extends ConsumerStatefulWidget {
@@ -55,9 +56,11 @@ class _AddWellbeingCheckinScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Check-In')),
-      body: Form(
+    return WorkspaceShell(
+      title: 'Add Check-In',
+      subtitle: 'Local wellbeing check-in form',
+      onBack: () => context.go(RouteNames.wellbeing),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

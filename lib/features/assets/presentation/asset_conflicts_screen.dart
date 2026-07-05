@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 import '../data/asset_change_journal.dart';
 
@@ -15,24 +16,42 @@ class AssetConflictsScreen extends ConsumerWidget {
     final conflicts = ref.watch(assetChangeConflictsProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => WorkspaceShell(
+        title: 'Asset Conflicts',
+        subtitle: 'Asset journal conflict workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, stackTrace) => _AssetConflictsError(
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Asset Conflicts',
+        subtitle: 'Asset journal conflict workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: _AssetConflictsError(
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspaceData) {
         return conflicts.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          loading: () => WorkspaceShell(
+            title: 'Asset Conflicts',
+            subtitle: 'Asset journal conflict workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: const Center(child: CircularProgressIndicator()),
           ),
-          error: (error, stackTrace) => _AssetConflictsError(
-            onReload: () => ref.invalidate(assetChangeConflictsProvider),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Asset Conflicts',
+            subtitle: 'Asset journal conflict workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: _AssetConflictsError(
+              onReload: () => ref.invalidate(assetChangeConflictsProvider),
+            ),
           ),
           data: (conflictRows) {
-            return Scaffold(
-              backgroundColor: Colors.transparent,
-              body: SafeArea(
+            return WorkspaceShell(
+              title: 'Asset Conflicts',
+              subtitle: 'Asset journal conflict workspace',
+              onBack: () => Navigator.of(context).maybePop(),
+              child: SafeArea(
                 child: CustomScrollView(
                   slivers: [
                     SliverPadding(

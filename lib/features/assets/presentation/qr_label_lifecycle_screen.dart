@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class QrLabelLifecycleScreen extends ConsumerWidget {
@@ -18,43 +19,85 @@ class QrLabelLifecycleScreen extends ConsumerWidget {
     final templatesAsync = ref.watch(assetQrBulkTemplatesProvider);
 
     return workspaceAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _LifecycleError(
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+      loading: () => WorkspaceShell(
+        title: 'QR Label Lifecycle',
+        subtitle: 'Asset label lifecycle workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'QR Label Lifecycle',
+        subtitle: 'Asset label lifecycle workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: _LifecycleError(
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspace) {
         return registerAsync.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _LifecycleError(
-            onReload: () => ref.invalidate(assetQrLabelRegisterProvider),
+          loading: () => WorkspaceShell(
+            title: 'QR Label Lifecycle',
+            subtitle: 'Asset label lifecycle workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'QR Label Lifecycle',
+            subtitle: 'Asset label lifecycle workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: _LifecycleError(
+              onReload: () => ref.invalidate(assetQrLabelRegisterProvider),
+            ),
           ),
           data: (registerTable) {
             return historyAsync.when(
-              loading: () => const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+              loading: () => WorkspaceShell(
+                title: 'QR Label Lifecycle',
+                subtitle: 'Asset label lifecycle workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: const Center(child: CircularProgressIndicator()),
               ),
-              error: (error, stackTrace) => _LifecycleError(
-                onReload: () =>
-                    ref.invalidate(assetQrLabelTemplateRegisterProvider),
+              error: (error, stackTrace) => WorkspaceShell(
+                title: 'QR Label Lifecycle',
+                subtitle: 'Asset label lifecycle workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: _LifecycleError(
+                  onReload: () =>
+                      ref.invalidate(assetQrLabelTemplateRegisterProvider),
+                ),
               ),
               data: (historyTable) {
                 return queueAsync.when(
-                  loading: () => const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
+                  loading: () => WorkspaceShell(
+                    title: 'QR Label Lifecycle',
+                    subtitle: 'Asset label lifecycle workspace',
+                    onBack: () => context.go(RouteNames.assets),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
-                  error: (error, stackTrace) => _LifecycleError(
-                    onReload: () => ref.invalidate(assetQrPrintQueueProvider),
+                  error: (error, stackTrace) => WorkspaceShell(
+                    title: 'QR Label Lifecycle',
+                    subtitle: 'Asset label lifecycle workspace',
+                    onBack: () => context.go(RouteNames.assets),
+                    child: _LifecycleError(
+                      onReload: () => ref.invalidate(assetQrPrintQueueProvider),
+                    ),
                   ),
                   data: (queueTable) {
                     return templatesAsync.when(
-                      loading: () => const Scaffold(
-                        body: Center(child: CircularProgressIndicator()),
+                      loading: () => WorkspaceShell(
+                        title: 'QR Label Lifecycle',
+                        subtitle: 'Asset label lifecycle workspace',
+                        onBack: () => context.go(RouteNames.assets),
+                        child: const Center(child: CircularProgressIndicator()),
                       ),
-                      error: (error, stackTrace) => _LifecycleError(
-                        onReload: () =>
-                            ref.invalidate(assetQrBulkTemplatesProvider),
+                      error: (error, stackTrace) => WorkspaceShell(
+                        title: 'QR Label Lifecycle',
+                        subtitle: 'Asset label lifecycle workspace',
+                        onBack: () => context.go(RouteNames.assets),
+                        child: _LifecycleError(
+                          onReload: () =>
+                              ref.invalidate(assetQrBulkTemplatesProvider),
+                        ),
                       ),
                       data: (templatesTable) {
                         final readyRows = _rowsByStatus(queueTable.rows, {
@@ -71,9 +114,11 @@ class QrLabelLifecycleScreen extends ConsumerWidget {
                           'applied',
                         });
 
-                        return Scaffold(
-                          backgroundColor: Colors.transparent,
-                          body: SafeArea(
+                        return WorkspaceShell(
+                          title: 'QR Label Lifecycle',
+                          subtitle: 'Asset label lifecycle workspace',
+                          onBack: () => context.go(RouteNames.assets),
+                          child: SafeArea(
                             child: CustomScrollView(
                               slivers: [
                                 SliverPadding(

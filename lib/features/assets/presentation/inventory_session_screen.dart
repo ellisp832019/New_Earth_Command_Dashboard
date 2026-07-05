@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 import '../data/asset_inventory_session_service.dart';
 
@@ -57,79 +58,121 @@ class _InventorySessionScreenState
     final sessionLogAsync = ref.watch(assetInventorySessionLogProvider);
 
     return workspaceAsync.when(
-      loading: () => const Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stackTrace) => _InventoryError(
-        title: 'Inventory session',
-        message: 'The asset workspace is not ready yet.',
+      loading: () => WorkspaceShell(
+        title: 'Inventory Session',
+        subtitle: 'Inventory session workspace',
         onBack: () => context.go(RouteNames.assets),
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Inventory Session',
+        subtitle: 'Inventory session workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: _InventoryError(
+          title: 'Inventory session',
+          message: 'The asset workspace is not ready yet.',
+          onBack: () => context.go(RouteNames.assets),
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspace) {
         return equipmentAsync.when(
-          loading: () => const Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, stackTrace) => _InventoryError(
-            title: 'Inventory session',
-            message: 'Equipment register could not load right now.',
+          loading: () => WorkspaceShell(
+            title: 'Inventory Session',
+            subtitle: 'Inventory session workspace',
             onBack: () => context.go(RouteNames.assets),
-            onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Inventory Session',
+            subtitle: 'Inventory session workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: _InventoryError(
+              title: 'Inventory session',
+              message: 'Equipment register could not load right now.',
+              onBack: () => context.go(RouteNames.assets),
+              onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            ),
           ),
           data: (equipmentTable) {
             return partsAsync.when(
-              loading: () => const Scaffold(
-                backgroundColor: Colors.transparent,
-                body: Center(child: CircularProgressIndicator()),
-              ),
-              error: (error, stackTrace) => _InventoryError(
-                title: 'Inventory session',
-                message: 'Parts inventory could not load right now.',
+              loading: () => WorkspaceShell(
+                title: 'Inventory Session',
+                subtitle: 'Inventory session workspace',
                 onBack: () => context.go(RouteNames.assets),
-                onReload: () => ref.invalidate(assetPartsRegisterProvider),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, stackTrace) => WorkspaceShell(
+                title: 'Inventory Session',
+                subtitle: 'Inventory session workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: _InventoryError(
+                  title: 'Inventory session',
+                  message: 'Parts inventory could not load right now.',
+                  onBack: () => context.go(RouteNames.assets),
+                  onReload: () => ref.invalidate(assetPartsRegisterProvider),
+                ),
               ),
               data: (partsTable) {
                 return labelsAsync.when(
-                  loading: () => const Scaffold(
-                    backgroundColor: Colors.transparent,
-                    body: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (error, stackTrace) => _InventoryError(
-                    title: 'Inventory session',
-                    message: 'QR labels could not load right now.',
+                  loading: () => WorkspaceShell(
+                    title: 'Inventory Session',
+                    subtitle: 'Inventory session workspace',
                     onBack: () => context.go(RouteNames.assets),
-                    onReload: () =>
-                        ref.invalidate(assetQrLabelRegisterProvider),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, stackTrace) => WorkspaceShell(
+                    title: 'Inventory Session',
+                    subtitle: 'Inventory session workspace',
+                    onBack: () => context.go(RouteNames.assets),
+                    child: _InventoryError(
+                      title: 'Inventory session',
+                      message: 'QR labels could not load right now.',
+                      onBack: () => context.go(RouteNames.assets),
+                      onReload: () =>
+                          ref.invalidate(assetQrLabelRegisterProvider),
+                    ),
                   ),
                   data: (labelsTable) {
                     return lowStockAsync.when(
-                      loading: () => const Scaffold(
-                        backgroundColor: Colors.transparent,
-                        body: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (error, stackTrace) => _InventoryError(
-                        title: 'Inventory session',
-                        message: 'Low stock data could not load right now.',
+                      loading: () => WorkspaceShell(
+                        title: 'Inventory Session',
+                        subtitle: 'Inventory session workspace',
                         onBack: () => context.go(RouteNames.assets),
-                        onReload: () =>
-                            ref.invalidate(assetLowStockPartsProvider),
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (error, stackTrace) => WorkspaceShell(
+                        title: 'Inventory Session',
+                        subtitle: 'Inventory session workspace',
+                        onBack: () => context.go(RouteNames.assets),
+                        child: _InventoryError(
+                          title: 'Inventory session',
+                          message: 'Low stock data could not load right now.',
+                          onBack: () => context.go(RouteNames.assets),
+                          onReload: () =>
+                              ref.invalidate(assetLowStockPartsProvider),
+                        ),
                       ),
                       data: (lowStockRows) {
                         return sessionLogAsync.when(
-                          loading: () => const Scaffold(
-                            backgroundColor: Colors.transparent,
-                            body: Center(child: CircularProgressIndicator()),
-                          ),
-                          error: (error, stackTrace) => _InventoryError(
-                            title: 'Inventory session',
-                            message:
-                                'The inventory session log could not load right now.',
+                          loading: () => WorkspaceShell(
+                            title: 'Inventory Session',
+                            subtitle: 'Inventory session workspace',
                             onBack: () => context.go(RouteNames.assets),
-                            onReload: () => ref.invalidate(
-                              assetInventorySessionLogProvider,
+                            child: const Center(child: CircularProgressIndicator()),
+                          ),
+                          error: (error, stackTrace) => WorkspaceShell(
+                            title: 'Inventory Session',
+                            subtitle: 'Inventory session workspace',
+                            onBack: () => context.go(RouteNames.assets),
+                            child: _InventoryError(
+                              title: 'Inventory session',
+                              message:
+                                  'The inventory session log could not load right now.',
+                              onBack: () => context.go(RouteNames.assets),
+                              onReload: () => ref.invalidate(
+                                assetInventorySessionLogProvider,
+                              ),
                             ),
                           ),
                           data: (sessionLogTable) {
@@ -168,11 +211,15 @@ class _InventorySessionScreenState
                                   countedBy: _countedByController.text,
                                 );
 
-                            return Scaffold(
-                              backgroundColor: Colors.transparent,
-                              body: SafeArea(
-                                child: CustomScrollView(
-                                  slivers: [
+                            return WorkspaceShell(
+                              title: 'Inventory Session',
+                              subtitle: 'Inventory session workspace',
+                              onBack: () => context.go(RouteNames.assets),
+                              child: SafeArea(
+                                child: Stack(
+                                  children: [
+                                    CustomScrollView(
+                                      slivers: [
                                     SliverPadding(
                                       padding: const EdgeInsets.all(20),
                                       sliver: SliverToBoxAdapter(
@@ -401,6 +448,35 @@ class _InventorySessionScreenState
                                             ),
                                           ],
                                         ),
+                                      ),
+                                    ),
+                                      ],
+                                    ),
+                                    Positioned(
+                                      right: 20,
+                                      bottom: 20,
+                                      child: FloatingActionButton.extended(
+                                        onPressed: _isBuilding ||
+                                                workspace.assetsRootPath == null
+                                            ? null
+                                            : () => _buildPack(
+                                                workspace.assetsRootPath!,
+                                                equipmentTable.rows,
+                                                partsTable.rows,
+                                                qrLabelsByAssetId,
+                                                lowStockCount,
+                                              ),
+                                        icon: _isBuilding
+                                            ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              )
+                                            : const Icon(Icons.playlist_add),
+                                        label:
+                                            Text(_isBuilding ? 'Building' : 'Build Pack'),
                                       ),
                                     ),
                                   ],

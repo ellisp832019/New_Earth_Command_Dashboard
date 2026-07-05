@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../command_deck/data/command_deck_service.dart';
 import '../application/dashboard_controller.dart';
 import '../../projects/application/projects_controller.dart';
@@ -110,21 +111,18 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
     );
     final groupedEntries = _groupEntries(entries);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Command Palette'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.close),
-            label: const Text('Close'),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
+    return WorkspaceShell(
+      title: 'Command Palette',
+      subtitle: 'Search pages, projects, tasks, and actions',
+      onBack: () => context.pop(),
+      trailingActions: [
+        TextButton.icon(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.close),
+          label: const Text('Close'),
+        ),
+      ],
+      child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             Container(
@@ -200,7 +198,6 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
               }),
           ],
         ),
-      ),
     );
   }
 

@@ -12,6 +12,7 @@ import '../../core/modules/module_permissions.dart';
 import '../../core/modules/module_status.dart';
 import '../../core/modules/module_types.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/widgets/workspace_shell.dart';
 import 'application/module_hub_controller.dart';
 import 'module_card.dart';
 import 'module_hub_filtering.dart';
@@ -93,12 +94,18 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
     final inferredCount = filteredModules.length - manifestCount;
     final recentEvents = ref.watch(moduleRecentEventsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => _goBack(context)),
-        title: const Text('Module Hub'),
-      ),
-      body: ListView(
+    return WorkspaceShell(
+      title: 'Module Hub',
+      subtitle: 'Live local module registry',
+      onBack: () => _goBack(context),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Clear filters',
+          onPressed: _clearFilters,
+          icon: const Icon(Icons.filter_alt_off_outlined),
+        ),
+      ],
+      child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _HeaderCard(

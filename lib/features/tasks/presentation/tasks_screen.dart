@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../planner/application/planner_controller.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/tasks_controller.dart';
@@ -34,9 +35,24 @@ class TasksScreen extends ConsumerWidget {
     final projectFilter = ref.watch(selectedTaskProjectFilterProvider);
     final searchQuery = ref.watch(taskSearchQueryProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: tasks.when(
+    return WorkspaceShell(
+      title: 'Tasks',
+      subtitle: 'Current Tasks',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        FilledButton.icon(
+          key: const Key('addTaskButton'),
+          onPressed: () => context.push(RouteNames.newTask),
+          icon: const Icon(Icons.add_task_outlined),
+          label: const Text('Add Task'),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: () => context.push(RouteNames.planner),
+          icon: const Icon(Icons.event_note_outlined),
+          label: const Text('Open Planner'),
+        ),
+      ],
+      child: tasks.when(
         data: (taskItems) => projects.when(
           data: (projectItems) => todayPlan.when(
             data: (plan) => _TaskListView(
@@ -189,28 +205,11 @@ class _TaskListView extends ConsumerWidget {
                 ],
               );
 
-              final addButton = FilledButton.icon(
-                key: const Key('addTaskButton'),
-                onPressed: () => context.push(RouteNames.newTask),
-                icon: const Icon(Icons.add_task_outlined),
-                label: const Text('Add Task'),
-              );
-
               if (compactHeader) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [titleBlock, const SizedBox(height: 16), addButton],
-                );
+                return titleBlock;
               }
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: titleBlock),
-                  const SizedBox(width: 16),
-                  addButton,
-                ],
-              );
+              return titleBlock;
             },
           ),
           const SizedBox(height: 14),
@@ -310,16 +309,6 @@ class _TaskListView extends ConsumerWidget {
                   icon: const Icon(Icons.inventory_2_outlined),
                   label: const Text('Review Parked'),
                 ),
-              FilledButton.tonalIcon(
-                onPressed: () => context.push(RouteNames.planner),
-                icon: const Icon(Icons.event_note_outlined),
-                label: const Text('Open Planner'),
-              ),
-              TextButton.icon(
-                onPressed: () => context.push(RouteNames.dashboard),
-                icon: const Icon(Icons.dashboard_outlined),
-                label: const Text('Back to Dashboard'),
-              ),
             ],
           ),
         ],

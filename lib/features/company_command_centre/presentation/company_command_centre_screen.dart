@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/widgets/local_pdf_screen.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../assets/application/assets_controller.dart';
 import '../../assets/data/assets_folder_service.dart';
 import '../data/company_command_centre_config.dart';
@@ -53,16 +54,17 @@ class _CompanyCommandCentreScreenState
     final snapshotAsync = ref.watch(companyCommandCentreSnapshotProvider);
 
     return snapshotAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Company Command Centre'),
-          leading: BackButton(
-            onPressed: () => context.go(RouteNames.moduleHub),
-          ),
-        ),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: 'Company Command Centre',
+        subtitle: 'Loading local company data',
+        onBack: () => context.go(RouteNames.moduleHub),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Company Command Centre',
+        subtitle: 'Local company registry unavailable',
+        onBack: () => context.go(RouteNames.moduleHub),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -74,24 +76,25 @@ class _CompanyCommandCentreScreenState
         ),
       ),
       data: (snapshot) {
-        return DefaultTabController(
-          length: _tabs.length,
-          child: Scaffold(
-            appBar: AppBar(
-              leading: BackButton(
-                onPressed: () => context.go(RouteNames.moduleHub),
-              ),
-              title: const Text('Company Command Centre'),
-              bottom: TabBar(
-                isScrollable: true,
-                tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-              ),
-            ),
-            body: Column(
+        return WorkspaceShell(
+          title: 'Company Command Centre',
+          subtitle: 'Local-first company operations',
+          onBack: () => context.go(RouteNames.moduleHub),
+          child: DefaultTabController(
+            length: _tabs.length,
+            child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: _HeaderSummaryCard(snapshot: snapshot),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TabBar(
+                    isScrollable: true,
+                    tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(

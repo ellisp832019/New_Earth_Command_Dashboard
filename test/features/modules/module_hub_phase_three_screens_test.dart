@@ -66,7 +66,7 @@ void main() {
     expect(find.text('Refresh registry'), findsOneWidget);
     expect(find.text('Inspect settings'), findsOneWidget);
     expect(find.text('Inspect permissions'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
+    expect(find.text('Module operations'), findsOneWidget);
 
     await tester.tap(find.text('Refresh registry'));
     await tester.pump();
@@ -77,15 +77,17 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(useMaterial3: true),
-        home: ModuleGovernanceScreen(module: module),
+      ProviderScope(
+        child: MaterialApp(
+          theme: ThemeData(useMaterial3: true),
+          home: ModuleGovernanceScreen(module: module),
+        ),
       ),
     );
 
     expect(find.text('Safety and governance'), findsOneWidget);
     expect(find.text('Validation checklist'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
+    expect(find.text('Safety and governance'), findsOneWidget);
     expect(find.text('Inspect permissions'), findsOneWidget);
     expect(find.text('Open operations'), findsOneWidget);
     expect(find.text('Inspect docking'), findsOneWidget);

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/content_controller.dart';
 import '../data/content_repository.dart';
 
@@ -15,19 +16,19 @@ class ContentScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final items = ref.watch(contentItemsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Content'),
-        actions: [
-          IconButton(
-            key: const Key('addContentItemButton'),
-            onPressed: () => context.push(RouteNames.newContent),
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Content Idea',
-          ),
-        ],
-      ),
-      body: items.when(
+    return WorkspaceShell(
+      title: 'Content',
+      subtitle: 'Turn build updates into calm content ideas.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          key: const Key('addContentItemButton'),
+          onPressed: () => context.push(RouteNames.newContent),
+          icon: const Icon(Icons.add),
+          tooltip: 'Add Content Idea',
+        ),
+      ],
+      child: items.when(
         data: (contentItems) {
           if (contentItems.isEmpty) {
             return Center(

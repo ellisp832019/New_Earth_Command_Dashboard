@@ -1,28 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'application/module_hub_controller.dart';
 import '../../core/modules/module_health.dart';
 import '../../core/modules/module_manifest.dart';
 import '../../core/modules/module_permissions.dart';
 import '../../core/routing/route_names.dart';
+import 'widgets/module_workspace_shell.dart';
 
-class ModuleGovernanceScreen extends StatelessWidget {
+class ModuleGovernanceScreen extends ConsumerWidget {
   const ModuleGovernanceScreen({super.key, required this.module});
 
   final ModuleManifest module;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final modules = ref.watch(moduleHubModulesProvider);
     final riskyPermissions = _riskyPermissions(module.permissions);
     final checks = _buildChecks(riskyPermissions);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go(RouteNames.moduleHub)),
-        title: Text('${module.name} Governance'),
-      ),
-      body: ListView(
+    return ModuleWorkspaceShell(
+      module: module,
+      modules: modules,
+      title: '${module.name} Governance',
+      subtitle: 'Safety and governance checks',
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

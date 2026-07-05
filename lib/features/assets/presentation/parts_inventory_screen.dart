@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class PartsInventoryScreen extends ConsumerStatefulWidget {
@@ -44,40 +45,49 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
     final parts = ref.watch(assetPartsRegisterProvider);
 
     return workspace.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _RegisterError(
+      loading: () => WorkspaceShell(
         title: 'Parts Inventory',
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+        subtitle: 'Asset parts workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Parts Inventory',
+        subtitle: 'Asset parts workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: _RegisterError(
+          title: 'Parts Inventory',
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspaceData) {
         return parts.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _RegisterError(
+          loading: () => WorkspaceShell(
             title: 'Parts Inventory',
-            onReload: () => ref.invalidate(assetPartsRegisterProvider),
+            subtitle: 'Asset parts workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Parts Inventory',
+            subtitle: 'Asset parts workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: _RegisterError(
+              title: 'Parts Inventory',
+              onReload: () => ref.invalidate(assetPartsRegisterProvider),
+            ),
           ),
           data: (table) {
             final filteredRows = _filterRows(table.rows);
-            return Scaffold(
-              backgroundColor: Colors.transparent,
-              floatingActionButton: FloatingActionButton.extended(
-                onPressed: _isSaving || workspaceData.assetsRootPath == null
-                    ? null
-                    : () => _addRecord(workspaceData.assetsRootPath!),
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(_isSaving ? 'Saving' : 'Add Part'),
-              ),
-              body: SafeArea(
-                child: CustomScrollView(
-                  slivers: [
+            return WorkspaceShell(
+              title: 'Parts Inventory',
+              subtitle: 'Asset parts workspace',
+              onBack: () => Navigator.of(context).maybePop(),
+              child: Stack(
+                children: [
+                  SafeArea(
+                    child: CustomScrollView(
+                      slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.all(20),
                       sliver: SliverToBoxAdapter(
@@ -192,8 +202,27 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 20,
+                    bottom: 20,
+                    child: FloatingActionButton.extended(
+                      onPressed: _isSaving || workspaceData.assetsRootPath == null
+                          ? null
+                          : () => _addRecord(workspaceData.assetsRootPath!),
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.add),
+                      label: Text(_isSaving ? 'Saving' : 'Add Part'),
+                    ),
+                  ),
+                ],
               ),
             );
           },

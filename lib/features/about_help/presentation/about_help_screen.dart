@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../data/about_help_repository.dart';
 
 class AboutHelpScreen extends StatefulWidget {
@@ -133,24 +134,18 @@ class _AboutHelpScreenState extends State<AboutHelpScreen> {
     final filtered = _filteredSections;
     final hasQuery = _query.trim().isNotEmpty;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () => _goBack(context),
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'About & Help',
+      subtitle: 'Guide centre and local reference library.',
+      onBack: () => _goBack(context),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Reload current document',
+          onPressed: () => _selectSection(_selectedSection),
+          icon: const Icon(Icons.refresh),
         ),
-        title: const Text('About & Help'),
-        actions: [
-          IconButton(
-            tooltip: 'Reload current document',
-            onPressed: () => _selectSection(_selectedSection),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: ListView(
+      ],
+      child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _HeroCard(

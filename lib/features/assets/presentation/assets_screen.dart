@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 import '../application/asset_treasury_links_controller.dart';
 import '../data/asset_summary_report.dart';
@@ -33,10 +34,17 @@ class _AssetsScreenState extends ConsumerState<AssetsScreen> {
         onCreateStructure: _handleCreateStructure,
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        body: _AssetsError(
+      loading: () => WorkspaceShell(
+        title: 'Assets',
+        subtitle: 'Asset workspace',
+        onBack: () => context.go(RouteNames.more),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Assets',
+        subtitle: 'Asset workspace',
+        onBack: () => context.go(RouteNames.more),
+        child: _AssetsError(
           onReload: () => ref.invalidate(assetWorkspaceProvider),
         ),
       ),
@@ -98,9 +106,11 @@ class _AssetsContent extends StatelessWidget {
     final isWide = width >= 1100;
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
+    return WorkspaceShell(
+      title: 'Assets',
+      subtitle: 'Asset workspace',
+      onBack: () => context.go(RouteNames.more),
+      child: SafeArea(
         child: CustomScrollView(
           cacheExtent: 2400,
           slivers: [

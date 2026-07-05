@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -206,9 +207,11 @@ class MoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: ListView(
+    return WorkspaceShell(
+      title: 'More',
+      subtitle: 'Supporting modules, reference tools, and adjacent workflows.',
+      onBack: () => context.go(RouteNames.dashboard),
+      child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Container(
@@ -225,7 +228,7 @@ class MoreScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'More',
+                            'Supporting modules',
                             style: theme.textTheme.displaySmall?.copyWith(
                               color: AppColours.darkText,
                               fontSize: 28,
@@ -249,11 +252,6 @@ class MoreScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    TextButton.icon(
-                      onPressed: () => context.go(RouteNames.dashboard),
-                      icon: const Icon(Icons.dashboard_outlined, size: 18),
-                      label: const Text('Back to Dashboard'),
-                    ),
                   ],
                 ),
               ],

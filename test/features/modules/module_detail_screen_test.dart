@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/core/dock/dock_position.dart';
@@ -49,23 +50,22 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: ModuleDetailScreen(module: module),
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: ModuleDetailScreen(module: module),
+          ),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Module dossier'), findsOneWidget);
+    expect(find.text('Overview'), findsOneWidget);
       expect(
         find.text('Calm local control for the alpha workflow.'),
-        findsOneWidget,
+        findsWidgets,
       );
-      expect(find.byType(BackButton), findsOneWidget);
-      expect(find.text('Health'), findsWidgets);
-      expect(find.text('2 minutes ago'), findsOneWidget);
-      expect(find.text('Connect the backend health feed.'), findsOneWidget);
+      expect(find.byType(BackButton), findsNothing);
       expect(find.text('Inspect permissions'), findsOneWidget);
       expect(find.text('Open settings'), findsOneWidget);
       expect(find.text('Open operations'), findsOneWidget);

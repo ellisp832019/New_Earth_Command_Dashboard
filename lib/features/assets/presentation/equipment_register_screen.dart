@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class EquipmentRegisterScreen extends ConsumerStatefulWidget {
@@ -50,19 +51,37 @@ class _EquipmentRegisterScreenState
     final equipment = ref.watch(assetEquipmentRegisterProvider);
 
     return workspace.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _RegisterError(
+      loading: () => WorkspaceShell(
         title: 'Equipment Register',
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+        subtitle: 'Asset equipment workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Equipment Register',
+        subtitle: 'Asset equipment workspace',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: _RegisterError(
+          title: 'Equipment Register',
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _RegisterError(
+          loading: () => WorkspaceShell(
             title: 'Equipment Register',
-            onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            subtitle: 'Asset equipment workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Equipment Register',
+            subtitle: 'Asset equipment workspace',
+            onBack: () => Navigator.of(context).maybePop(),
+            child: _RegisterError(
+              title: 'Equipment Register',
+              onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            ),
           ),
           data: (table) {
             final filteredRows = _filterRows(table.rows);
@@ -71,24 +90,15 @@ class _EquipmentRegisterScreenState
               workspaceData.assetsRootPath,
               table.rows,
             );
-            return Scaffold(
-              backgroundColor: Colors.transparent,
-              floatingActionButton: FloatingActionButton.extended(
-                onPressed: _isSaving || workspaceData.assetsRootPath == null
-                    ? null
-                    : () => _addRecord(workspaceData.assetsRootPath!),
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(_isSaving ? 'Saving' : 'Add Equipment'),
-              ),
-              body: SafeArea(
-                child: CustomScrollView(
-                  slivers: [
+            return WorkspaceShell(
+              title: 'Equipment Register',
+              subtitle: 'Asset equipment workspace',
+              onBack: () => Navigator.of(context).maybePop(),
+              child: Stack(
+                children: [
+                  SafeArea(
+                    child: CustomScrollView(
+                      slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.all(20),
                       sliver: SliverToBoxAdapter(
@@ -208,8 +218,27 @@ class _EquipmentRegisterScreenState
                         ),
                       ),
                     ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 20,
+                    bottom: 20,
+                    child: FloatingActionButton.extended(
+                      onPressed: _isSaving || workspaceData.assetsRootPath == null
+                          ? null
+                          : () => _addRecord(workspaceData.assetsRootPath!),
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.add),
+                      label: Text(_isSaving ? 'Saving' : 'Add Equipment'),
+                    ),
+                  ),
+                ],
               ),
             );
           },

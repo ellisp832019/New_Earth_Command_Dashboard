@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/inbox_controller.dart';
 
@@ -55,9 +56,11 @@ class _AddInboxItemScreenState extends ConsumerState<AddInboxItemScreen> {
     final theme = Theme.of(context);
 
     return projects.when(
-      data: (projectItems) => Scaffold(
-        appBar: AppBar(title: const Text('Add Inbox Item')),
-        body: Form(
+      data: (projectItems) => WorkspaceShell(
+        title: 'Add Inbox Item',
+        subtitle: 'Local inbox intake form',
+        onBack: () => context.go(RouteNames.inbox),
+        child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -174,11 +177,17 @@ class _AddInboxItemScreenState extends ConsumerState<AddInboxItemScreen> {
           ),
         ),
       ),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(title: const Text('Add Inbox Item')),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: 'Add Inbox Item',
+        subtitle: 'Local inbox intake form',
+        onBack: () => context.go(RouteNames.inbox),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Add Inbox Item',
+        subtitle: 'Local inbox intake form',
+        onBack: () => context.go(RouteNames.inbox),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(

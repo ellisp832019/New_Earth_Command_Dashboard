@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/content_controller.dart';
 
@@ -110,11 +111,17 @@ class _AddContentItemScreenState extends ConsumerState<AddContentItemScreen> {
             _loadInitialValues(contentItem);
             return _buildScaffold(context, projectItems);
           },
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => Scaffold(
-            appBar: AppBar(title: const Text('Edit Content Idea')),
-            body: Center(
+          loading: () => WorkspaceShell(
+            title: 'Edit Content Idea',
+            subtitle: 'Local content form',
+            onBack: () => context.go(RouteNames.content),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Edit Content Idea',
+            subtitle: 'Local content form',
+            onBack: () => context.go(RouteNames.content),
+            child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
@@ -127,15 +134,17 @@ class _AddContentItemScreenState extends ConsumerState<AddContentItemScreen> {
           ),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.isEditing ? 'Edit Content Idea' : 'Add Content Idea',
-          ),
-        ),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: widget.isEditing ? 'Edit Content Idea' : 'Add Content Idea',
+        subtitle: 'Local content form',
+        onBack: () => context.go(RouteNames.content),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: widget.isEditing ? 'Edit Content Idea' : 'Add Content Idea',
+        subtitle: 'Local content form',
+        onBack: () => context.go(RouteNames.content),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -149,14 +158,12 @@ class _AddContentItemScreenState extends ConsumerState<AddContentItemScreen> {
     );
   }
 
-  Scaffold _buildScaffold(BuildContext context, List<Project> projectItems) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEditing ? 'Edit Content Idea' : 'Add Content Idea',
-        ),
-      ),
-      body: Form(
+  Widget _buildScaffold(BuildContext context, List<Project> projectItems) {
+    return WorkspaceShell(
+      title: widget.isEditing ? 'Edit Content Idea' : 'Add Content Idea',
+      subtitle: 'Local content form',
+      onBack: () => context.go(RouteNames.content),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

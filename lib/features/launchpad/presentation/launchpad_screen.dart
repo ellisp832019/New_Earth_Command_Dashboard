@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/launchpad_controller.dart';
 import '../data/launchpad_calculator.dart';
 import '../data/launchpad_phase2_models.dart';
@@ -18,24 +19,18 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(launchpadWorkspaceProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back to Dashboard',
-          onPressed: () => context.go(RouteNames.dashboard),
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Launchpad',
+      subtitle: 'Mission launch control for crowdfunding, grants, investors, and delivery planning.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => ref.invalidate(launchpadWorkspaceProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        title: const Text('Launchpad'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(launchpadWorkspaceProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: snapshot.when(
+      ],
+      child: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _LaunchpadError(
           message: error.toString(),
@@ -163,24 +158,18 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
     final workspaceSnapshot = ref.watch(launchpadWorkspaceProvider);
     final sectionLabel = launchpadCampaignSectionLabel(widget.section);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back to Launchpad',
-          onPressed: () => context.go(RouteNames.launchpad),
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: sectionLabel,
+      subtitle: 'Campaign workspace for ${widget.campaignId}.',
+      onBack: () => context.go(RouteNames.launchpad),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => ref.invalidate(launchpadWorkspaceProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        title: Text(sectionLabel),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(launchpadWorkspaceProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: workspaceSnapshot.when(
+      ],
+      child: workspaceSnapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _LaunchpadError(
           message: error.toString(),

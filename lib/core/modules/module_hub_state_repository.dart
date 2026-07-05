@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 
 import '../dock/dock_layout_state.dart';
 import '../dock/dock_position.dart';
+import 'module_navigation.dart';
 
 class ModuleHubStateRepository {
   ModuleHubStateRepository({String? stateFilePath})
@@ -47,6 +48,58 @@ class ModuleHubStateRepository {
   Future<void> saveEnabledStates(Map<String, bool> states) async {
     final payload = _readPayload();
     payload['enabledById'] = states;
+    payload['updatedAt'] = DateTime.now().toIso8601String();
+
+    final file = File(stateFilePath);
+    await file.parent.create(recursive: true);
+    await file.writeAsString(JsonEncoder.withIndent('  ').convert(payload));
+  }
+
+  Map<String, ModuleLaunchTarget> loadLaunchTargets() {
+    final payload = _readPayload();
+    final launchTargets = payload['launchTargetById'];
+    if (launchTargets is Map<String, dynamic>) {
+      return launchTargets.map(
+        (key, value) => MapEntry(
+          key.toString(),
+          moduleLaunchTargetFromStorage(value?.toString()),
+        ),
+      );
+    }
+    if (launchTargets is Map) {
+      return launchTargets.map(
+        (key, value) => MapEntry(
+          key.toString(),
+          moduleLaunchTargetFromStorage(value?.toString()),
+        ),
+      );
+    }
+    return const <String, ModuleLaunchTarget>{};
+  }
+
+  ModuleLaunchTarget loadLaunchTarget(
+    String moduleId, {
+    ModuleLaunchTarget fallback = ModuleLaunchTarget.package,
+  }) {
+    return loadLaunchTargets()[moduleId] ?? fallback;
+  }
+
+  Future<void> saveLaunchTarget(
+    String moduleId,
+    ModuleLaunchTarget target,
+  ) async {
+    final states = Map<String, ModuleLaunchTarget>.from(loadLaunchTargets());
+    states[moduleId] = target;
+    await saveLaunchTargets(states);
+  }
+
+  Future<void> saveLaunchTargets(
+    Map<String, ModuleLaunchTarget> states,
+  ) async {
+    final payload = _readPayload();
+    payload['launchTargetById'] = states.map(
+      (key, value) => MapEntry(key, moduleLaunchTargetToStorage(value)),
+    );
     payload['updatedAt'] = DateTime.now().toIso8601String();
 
     final file = File(stateFilePath);

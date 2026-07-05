@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class RepairSummaryScreen extends ConsumerWidget {
@@ -17,26 +18,52 @@ class RepairSummaryScreen extends ConsumerWidget {
     final repairItems = ref.watch(assetBrokenRepairEquipmentProvider);
 
     return workspace.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _RepairSummaryError(
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+      loading: () => WorkspaceShell(
+        title: 'Repair Summary',
+        subtitle: 'Asset repair workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'Repair Summary',
+        subtitle: 'Asset repair workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: _RepairSummaryError(
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _RepairSummaryError(
-            onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+          loading: () => WorkspaceShell(
+            title: 'Repair Summary',
+            subtitle: 'Asset repair workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Repair Summary',
+            subtitle: 'Asset repair workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: _RepairSummaryError(
+              onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            ),
           ),
           data: (equipmentTable) {
             return repairItems.when(
-              loading: () => const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+              loading: () => WorkspaceShell(
+                title: 'Repair Summary',
+                subtitle: 'Asset repair workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: const Center(child: CircularProgressIndicator()),
               ),
-              error: (error, stackTrace) => _RepairSummaryError(
-                onReload: () =>
-                    ref.invalidate(assetBrokenRepairEquipmentProvider),
+              error: (error, stackTrace) => WorkspaceShell(
+                title: 'Repair Summary',
+                subtitle: 'Asset repair workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: _RepairSummaryError(
+                  onReload: () =>
+                      ref.invalidate(assetBrokenRepairEquipmentProvider),
+                ),
               ),
               data: (rows) {
                 final brokenCount = rows.where((row) {
@@ -49,9 +76,11 @@ class RepairSummaryScreen extends ConsumerWidget {
                 final repairingCount = rows.length - brokenCount;
                 final projectCount = _distinctProjects(rows).length;
 
-                return Scaffold(
-                  backgroundColor: Colors.transparent,
-                  body: SafeArea(
+                return WorkspaceShell(
+                  title: 'Repair Summary',
+                  subtitle: 'Asset repair workspace',
+                  onBack: () => context.go(RouteNames.assets),
+                  child: SafeArea(
                     child: CustomScrollView(
                       slivers: [
                         SliverPadding(

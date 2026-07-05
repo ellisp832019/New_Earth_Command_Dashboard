@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/repo_intelligence_bridge_controller.dart';
 import '../data/repo_intelligence_bridge_models.dart';
 import 'sync_run_terminal_dialog.dart';
@@ -69,25 +70,19 @@ class _RepoIntelligenceBridgeSettingsScreenState
   Widget build(BuildContext context) {
     final workspaceAsync = ref.watch(repoIntelligenceBridgeWorkspaceProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back to bridge',
-          onPressed: () => context.go(RouteNames.repoIntelligenceBridge),
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Repo Intelligence Bridge Settings',
+      subtitle: 'Local bridge configuration',
+      onBack: () => context.go(RouteNames.repoIntelligenceBridge),
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () =>
+              ref.invalidate(repoIntelligenceBridgeWorkspaceProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        title: const Text('Repo Intelligence Bridge Settings'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () =>
-                ref.invalidate(repoIntelligenceBridgeWorkspaceProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: workspaceAsync.when(
+      ],
+      child: workspaceAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Padding(

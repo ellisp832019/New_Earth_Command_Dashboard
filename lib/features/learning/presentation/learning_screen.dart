@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/learning_controller.dart';
 import '../data/learning_repository.dart';
 
@@ -14,19 +15,19 @@ class LearningScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final items = ref.watch(learningItemsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Learning'),
-        actions: [
-          IconButton(
-            key: const Key('addLearningItemButton'),
-            onPressed: () => context.push(RouteNames.newLearning),
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Learning Topic',
-          ),
-        ],
-      ),
-      body: items.when(
+    return WorkspaceShell(
+      title: 'Learning',
+      subtitle: 'Keep the next useful skill close at hand.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          key: const Key('addLearningItemButton'),
+          onPressed: () => context.push(RouteNames.newLearning),
+          icon: const Icon(Icons.add),
+          tooltip: 'Add Learning Topic',
+        ),
+      ],
+      child: items.when(
         data: (learningItems) {
           if (learningItems.isEmpty) {
             return Center(

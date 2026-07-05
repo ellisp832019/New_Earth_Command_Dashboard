@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
 import '../application/engineering_services.dart';
 import '../application/engineering_integration_adapters.dart';
@@ -1197,61 +1198,89 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           }
           return KeyEventResult.ignored;
         },
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _HeroPanel(
-              snapshot: snapshot,
-              searchController: _searchController,
-              searchQuery: _searchQuery,
-              statusFilter: _statusFilter,
-              onSearchChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              onStatusFilterChanged: (value) {
-                setState(() {
-                  _statusFilter = value;
-                });
-              },
-              onClearSearch: _clearSearch,
-              onOpenKnowledgeEngine: () =>
-                  _knowledgeEngineAdapter.open(context),
-              onOpenGaiaAssistant: () => _gaiaAssistantAdapter.open(context),
-            ),
-            const SizedBox(height: 14),
-            _SectionSelector(currentSection: _section, onSelected: _setSection),
-            const SizedBox(height: 16),
-            if (_searchQuery.trim().isNotEmpty)
-              EngineeringSectionShell(
-                title: 'Search results',
-                subtitle:
-                    'A quiet local scan across projects, circuits, boards, devices, and docs.',
-                child: searchHits.isEmpty
-                    ? EngineeringEmptyState(
-                        title: 'No matches yet',
-                        subtitle:
-                            'Try a project title, board name, device name, or document keyword.',
-                        actionLabel: 'Clear search',
-                        onAction: _clearSearch,
-                      )
-                    : _SearchHitsView(
-                        hits: searchHits,
-                        onOpenSection: _setSection,
-                      ),
+        child: CustomScrollView(
+          key: const Key('engineeringStudioScrollView'),
+          cacheExtent: 3000,
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: _HeroPanel(
+                  snapshot: snapshot,
+                  searchController: _searchController,
+                  searchQuery: _searchQuery,
+                  statusFilter: _statusFilter,
+                  onSearchChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  onStatusFilterChanged: (value) {
+                    setState(() {
+                      _statusFilter = value;
+                    });
+                  },
+                  onClearSearch: _clearSearch,
+                  onOpenKnowledgeEngine: () =>
+                      _knowledgeEngineAdapter.open(context),
+                  onOpenGaiaAssistant: () =>
+                      _gaiaAssistantAdapter.open(context),
+                ),
               ),
-            _buildSection(
-              snapshot: snapshot,
-              projectService: projectService,
-              circuitService: circuitService,
-              pcbService: pcbService,
-              firmwareService: firmwareService,
-              deviceService: deviceService,
-              componentService: componentService,
-              experimentService: experimentService,
-              validationService: validationService,
-              manufacturingService: manufacturingService,
+            ),
+            if (_searchQuery.trim().isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                sliver: SliverToBoxAdapter(
+                  child: EngineeringSectionShell(
+                    title: 'Search results',
+                    subtitle:
+                        'A quiet local scan across projects, circuits, boards, devices, and docs.',
+                    child: searchHits.isEmpty
+                        ? EngineeringEmptyState(
+                            title: 'No matches yet',
+                            subtitle:
+                                'Try a project title, board name, device name, or document keyword.',
+                            actionLabel: 'Clear search',
+                            onAction: _clearSearch,
+                          )
+                        : _SearchHitsView(
+                            hits: searchHits,
+                            onOpenSection: _setSection,
+                          ),
+                  ),
+                ),
+              ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              sliver: SliverToBoxAdapter(
+                child: _EngineeringWorkspaceFrame(
+                  snapshot: snapshot,
+                  currentSection: _section,
+                  searchQuery: _searchQuery,
+                  statusFilter: _statusFilter,
+                  onSectionSelected: _setSection,
+                  onClearSearch: _clearSearch,
+                  onOpenKnowledgeEngine: () =>
+                      _knowledgeEngineAdapter.open(context),
+                  onOpenGaiaAssistant: () =>
+                      _gaiaAssistantAdapter.open(context),
+                  onOpenPalette: _openCommandPalette,
+                  overview: _buildWorkspaceOverview(snapshot, _section),
+                  child: _buildSection(
+                    snapshot: snapshot,
+                    projectService: projectService,
+                    circuitService: circuitService,
+                    pcbService: pcbService,
+                    firmwareService: firmwareService,
+                    deviceService: deviceService,
+                    componentService: componentService,
+                    experimentService: experimentService,
+                    validationService: validationService,
+                    manufacturingService: manufacturingService,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -1296,6 +1325,177 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
       ),
       EngineeringSection.documentation => _buildDocumentationSection(snapshot),
       EngineeringSection.settings => _buildSettingsSection(snapshot),
+    };
+  }
+
+  Widget _buildWorkspaceOverview(
+    EngineeringSnapshot snapshot,
+    EngineeringSection section,
+  ) {
+    return switch (section) {
+      EngineeringSection.dashboard => Column(
+          children: [
+            _InfoTileCard(
+              title: 'Projects',
+              value: '${snapshot.projectCount}',
+              subtitle:
+                  '${snapshot.activeProjectCount} active, ${snapshot.blockedProjectCount} parked',
+              icon: Icons.folder_outlined,
+            ),
+            const SizedBox(height: 12),
+            _InfoTileCard(
+              title: 'Readiness',
+              value: '${snapshot.validationPassCount}',
+              subtitle: 'Validation checks passing',
+              icon: Icons.verified_outlined,
+            ),
+          ],
+        ),
+      EngineeringSection.projects => Column(
+          children: [
+            _SummaryLine(
+              label: 'Active',
+              value: '${snapshot.activeProjectCount}',
+            ),
+            _SummaryLine(
+              label: 'Ready',
+              value: '${snapshot.readyProjectCount}',
+            ),
+            _SummaryLine(
+              label: 'Parked',
+              value: '${snapshot.blockedProjectCount}',
+            ),
+            _SummaryLine(
+              label: 'Open tasks',
+              value:
+                  '${snapshot.projects.fold<int>(0, (sum, project) => sum + project.openTaskCount)}',
+            ),
+          ],
+        ),
+      EngineeringSection.circuitLibrary => Column(
+          children: [
+            _SummaryLine(label: 'Blocks', value: '${snapshot.circuitBlocks.length}'),
+            _SummaryLine(
+              label: 'Search hits',
+              value: '${CircuitLibraryService(snapshot).blocks(query: _searchQuery, status: _statusFilter).length}',
+            ),
+          ],
+        ),
+      EngineeringSection.pcbManager => Column(
+          children: [
+            _SummaryLine(
+              label: 'Ready',
+              value: '${snapshot.fabReadyPcbCount}',
+            ),
+            _SummaryLine(
+              label: 'Board files',
+              value: '${snapshot.boardFileAttachmentCount}',
+            ),
+            _SummaryLine(
+              label: 'Attachments',
+              value: '${snapshot.attachmentCount}',
+            ),
+          ],
+        ),
+      EngineeringSection.firmwareCentre => Column(
+          children: [
+            _SummaryLine(
+              label: 'Ready builds',
+              value: '${snapshot.firmwareReadyCount}',
+            ),
+            _SummaryLine(
+              label: 'Artifacts',
+              value: '${snapshot.firmwareAttachmentCount}',
+            ),
+          ],
+        ),
+      EngineeringSection.deviceFleet => Column(
+          children: [
+            _SummaryLine(label: 'Online', value: '${snapshot.liveDeviceCount}'),
+            _SummaryLine(
+              label: 'Last seen',
+              value: snapshot.deviceNodes.isEmpty
+                  ? 'None'
+                  : snapshot.deviceNodes.first.lastSeenAt.toLocal().toIso8601String().split('T').first,
+            ),
+          ],
+        ),
+      EngineeringSection.componentInventory => Column(
+          children: [
+            _SummaryLine(
+              label: 'Low stock',
+              value: '${snapshot.lowStockCount}',
+            ),
+            _SummaryLine(
+              label: 'Items',
+              value: '${snapshot.componentItems.length}',
+            ),
+          ],
+        ),
+      EngineeringSection.experimentLab => Column(
+          children: [
+            _SummaryLine(
+              label: 'Experiments',
+              value: '${snapshot.experiments.length}',
+            ),
+            _SummaryLine(
+              label: 'Open evidence',
+              value: '${snapshot.evidenceAttachmentCount}',
+            ),
+          ],
+        ),
+      EngineeringSection.testValidation => Column(
+          children: [
+            _SummaryLine(
+              label: 'Pass rate',
+              value: '${(snapshot.validationPassRate * 100).toStringAsFixed(0)}%',
+            ),
+            _SummaryLine(
+              label: 'Attention',
+              value: '${snapshot.validationAttentionCount}',
+            ),
+            _SummaryLine(
+              label: 'Coverage',
+              value: '${(snapshot.validationCoverageRate * 100).toStringAsFixed(0)}%',
+            ),
+          ],
+        ),
+      EngineeringSection.manufacturing => Column(
+          children: [
+            _SummaryLine(
+              label: 'Ready',
+              value: '${snapshot.manufacturingReadyCount}',
+            ),
+            _SummaryLine(
+              label: 'Blocked',
+              value: '${snapshot.manufacturingBlockedCount}',
+            ),
+          ],
+        ),
+      EngineeringSection.documentation => Column(
+          children: [
+            _SummaryLine(
+              label: 'Docs',
+              value: '${snapshot.documents.length}',
+            ),
+            _SummaryLine(
+              label: 'Evidence',
+              value: '${snapshot.evidenceAttachmentCount}',
+            ),
+          ],
+        ),
+      EngineeringSection.settings => Column(
+          children: [
+            _SummaryLine(
+              label: 'Offline',
+              value: snapshot.settings.offlineOnly ? 'Yes' : 'No',
+            ),
+            _SummaryLine(
+              label: 'Modules',
+              value: '${EngineeringSection.values.length}',
+            ),
+          ],
+        ),
     };
   }
 
@@ -1535,10 +1735,12 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
   }
 
   Widget _buildProjectsSection(ProjectService service) {
+    final snapshot = _snapshotOrThrow;
     final projects = service.projects(
       query: _searchQuery,
       status: _statusFilter,
     );
+    final topProjects = _topProjects(snapshot);
     return EngineeringSectionShell(
       title: 'Projects',
       subtitle:
@@ -1548,23 +1750,182 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Add project'),
       ),
-      child: projects.isEmpty
-          ? EngineeringEmptyState(
-              title: 'No project matches',
-              subtitle: 'Try a different search or clear the current filter.',
-              actionLabel: 'Clear search',
-              onAction: _clearSearch,
-            )
-          : _responsiveCards(
-              projects
-                  .map(
-                    (project) => _ProjectCard(
-                      project: project,
-                      onEdit: () => _editProject(project),
-                    ),
-                  )
-                  .toList(growable: false),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _responsiveCards([
+            _InfoTileCard(
+              title: 'Total projects',
+              value: '${_snapshotOrThrow.projectCount}',
+              subtitle: '${_snapshotOrThrow.activeProjectCount} active',
+              icon: Icons.folder_outlined,
             ),
+            _InfoTileCard(
+              title: 'Average progress',
+              value:
+                  '${_snapshotOrThrow.averageProjectProgress.toStringAsFixed(0)}%',
+              subtitle: 'Across the engineering portfolio',
+              icon: Icons.monitor_heart_outlined,
+            ),
+            _InfoTileCard(
+              title: 'Parked work',
+              value: '${_snapshotOrThrow.blockedProjectCount}',
+              subtitle: 'Projects needing review',
+              icon: Icons.pause_circle_outline,
+            ),
+            _InfoTileCard(
+              title: 'Open tasks',
+              value:
+                  '${_snapshotOrThrow.projects.fold<int>(0, (sum, project) => sum + project.openTaskCount)}',
+              subtitle: 'Tracked locally in draft state',
+              icon: Icons.checklist_outlined,
+            ),
+          ]),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1100;
+              final cardWidth = isWide
+                  ? _cardWidth(constraints.maxWidth, 2)
+                  : constraints.maxWidth;
+
+              final priorityPanel = EngineeringSectionShell(
+                title: 'Top 3 build priorities',
+                subtitle: 'Keep the mission narrow and visible.',
+                child: topProjects.isEmpty
+                    ? EngineeringEmptyState(
+                        title: 'No project priorities yet',
+                        subtitle:
+                            'Add a project to start surfacing the calm next move.',
+                        actionLabel: 'Add project',
+                        onAction: _editProject,
+                      )
+                    : Column(
+                        children: [
+                          for (final project in topProjects)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _ProjectCard(project: project),
+                            ),
+                        ],
+                      ),
+              );
+
+              final insightsPanel = EngineeringSectionShell(
+                title: 'Project insights',
+                subtitle: 'A quick read on the portfolio state and next move.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SummaryLine(
+                      label: 'Active',
+                      value: '${_snapshotOrThrow.activeProjectCount}',
+                    ),
+                    _SummaryLine(
+                      label: 'Ready',
+                      value: '${_snapshotOrThrow.readyProjectCount}',
+                    ),
+                    _SummaryLine(
+                      label: 'Parked',
+                      value: '${_snapshotOrThrow.blockedProjectCount}',
+                    ),
+                    _SummaryLine(
+                      label: 'Average progress',
+                      value:
+                          '${_snapshotOrThrow.averageProjectProgress.toStringAsFixed(0)}%',
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Current focus',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      projects.isEmpty
+                          ? 'No projects match the current search or filter.'
+                          : 'Showing ${projects.length} project${projects.length == 1 ? '' : 's'} for the current view.',
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        EngineeringStatusChip(label: _statusFilter),
+                        EngineeringStatusChip(label: 'Search ready'),
+                        EngineeringStatusChip(label: 'Offline-first'),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _HookActionCard(
+                      title: 'Open Knowledge Engine',
+                      subtitle:
+                          'Scan local project context, architecture notes, and linked workspaces.',
+                      icon: Icons.travel_explore_outlined,
+                      onOpen: () => context.push(
+                        _snapshotOrThrow.settings.knowledgeEngineRoute,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _HookActionCard(
+                      title: 'Open GAIA',
+                      subtitle:
+                          'Keep assistant support local when you want a quick follow-up.',
+                      icon: Icons.auto_awesome_outlined,
+                      onOpen: () => context.push(
+                        _snapshotOrThrow.settings.gaiaAssistantRoute,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (isWide) {
+                return Wrap(
+                  spacing: 14,
+                  runSpacing: 14,
+                  children: [
+                    SizedBox(width: cardWidth, child: priorityPanel),
+                    SizedBox(width: cardWidth, child: insightsPanel),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  priorityPanel,
+                  insightsPanel,
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          EngineeringSectionShell(
+            title: 'All projects',
+            subtitle:
+                projects.isEmpty
+                    ? 'No project matches the current search or filter.'
+                    : 'A calm grid of every engineering project in the local workspace.',
+            child: projects.isEmpty
+                ? EngineeringEmptyState(
+                    title: 'No project matches',
+                    subtitle:
+                        'Try a different search or clear the current filter.',
+                    actionLabel: 'Clear search',
+                    onAction: _clearSearch,
+                  )
+                : _responsiveCards(
+                    projects
+                        .map(
+                          (project) => _ProjectCard(
+                            project: project,
+                            onEdit: () => _editProject(project),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2236,32 +2597,6 @@ class _HeroPanel extends StatelessWidget {
   }
 }
 
-class _SectionSelector extends StatelessWidget {
-  const _SectionSelector({
-    required this.currentSection,
-    required this.onSelected,
-  });
-
-  final EngineeringSection currentSection;
-  final ValueChanged<EngineeringSection> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        for (final section in EngineeringSection.values)
-          FilterChip(
-            label: Text(section.label),
-            selected: section == currentSection,
-            onSelected: (_) => onSelected(section),
-          ),
-      ],
-    );
-  }
-}
-
 class _SearchHitsView extends StatelessWidget {
   const _SearchHitsView({required this.hits, required this.onOpenSection});
 
@@ -2318,6 +2653,461 @@ class _SearchHitsView extends StatelessWidget {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+class _EngineeringWorkspaceFrame extends StatelessWidget {
+  const _EngineeringWorkspaceFrame({
+    required this.snapshot,
+    required this.currentSection,
+    required this.searchQuery,
+    required this.statusFilter,
+    required this.onSectionSelected,
+    required this.onClearSearch,
+    required this.onOpenKnowledgeEngine,
+    required this.onOpenGaiaAssistant,
+    required this.onOpenPalette,
+    required this.overview,
+    required this.child,
+  });
+
+  final EngineeringSnapshot snapshot;
+  final EngineeringSection currentSection;
+  final String searchQuery;
+  final String statusFilter;
+  final ValueChanged<EngineeringSection> onSectionSelected;
+  final VoidCallback onClearSearch;
+  final VoidCallback onOpenKnowledgeEngine;
+  final VoidCallback onOpenGaiaAssistant;
+  final VoidCallback onOpenPalette;
+  final Widget overview;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: AppColours.darkBackground.withValues(alpha: 0.52),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.82),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 1240;
+          final leftRailWidth = 210.0;
+          final rightRailWidth = 320.0;
+          final centerWidth = wide
+              ? constraints.maxWidth - leftRailWidth - rightRailWidth - 36
+              : constraints.maxWidth;
+
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _WorkspaceHeaderCard(
+                snapshot: snapshot,
+                currentSection: currentSection,
+                searchQuery: searchQuery,
+                statusFilter: statusFilter,
+                onClearSearch: onClearSearch,
+                onOpenKnowledgeEngine: onOpenKnowledgeEngine,
+                onOpenGaiaAssistant: onOpenGaiaAssistant,
+                onOpenPalette: onOpenPalette,
+              ),
+              const SizedBox(height: 16),
+              if (wide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: leftRailWidth,
+                      child: _WorkspaceRail(
+                        currentSection: currentSection,
+                        onSectionSelected: onSectionSelected,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    SizedBox(width: centerWidth, child: child),
+                    const SizedBox(width: 14),
+                    SizedBox(
+                      width: rightRailWidth,
+                      child: _WorkspaceInsightsRail(
+                        currentSection: currentSection,
+                        overview: overview,
+                        snapshot: snapshot,
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _WorkspaceRail(
+                      currentSection: currentSection,
+                      onSectionSelected: onSectionSelected,
+                    ),
+                    const SizedBox(height: 14),
+                    child,
+                    const SizedBox(height: 14),
+                    _WorkspaceInsightsRail(
+                      currentSection: currentSection,
+                      overview: overview,
+                      snapshot: snapshot,
+                    ),
+                  ],
+                ),
+            ],
+          );
+
+          return content;
+        },
+      ),
+    );
+  }
+}
+
+class _WorkspaceHeaderCard extends StatelessWidget {
+  const _WorkspaceHeaderCard({
+    required this.snapshot,
+    required this.currentSection,
+    required this.searchQuery,
+    required this.statusFilter,
+    required this.onClearSearch,
+    required this.onOpenKnowledgeEngine,
+    required this.onOpenGaiaAssistant,
+    required this.onOpenPalette,
+  });
+
+  final EngineeringSnapshot snapshot;
+  final EngineeringSection currentSection;
+  final String searchQuery;
+  final String statusFilter;
+  final VoidCallback onClearSearch;
+  final VoidCallback onOpenKnowledgeEngine;
+  final VoidCallback onOpenGaiaAssistant;
+  final VoidCallback onOpenPalette;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final today = MaterialLocalizations.of(context)
+        .formatFullDate(DateTime.now());
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: AppColours.darkSurface.withValues(alpha: 0.94),
+        border: Border.all(
+          color: AppColours.darkSecondary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 980;
+          final hero = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Omega Engineering Studio',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: AppColours.darkText,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                currentSection.label,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                today,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Build the next useful thing, keep the system calm, and surface only the work that matters most today.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          final actionRow = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onOpenPalette,
+                icon: const Icon(Icons.search),
+                label: const Text('Command Palette'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onOpenKnowledgeEngine,
+                icon: const Icon(Icons.travel_explore_outlined),
+                label: const Text('Knowledge Engine'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onOpenGaiaAssistant,
+                icon: const Icon(Icons.auto_awesome_outlined),
+                label: const Text('GAIA'),
+              ),
+              TextButton.icon(
+                onPressed: onClearSearch,
+                icon: const Icon(Icons.clear),
+                label: const Text('Clear Search'),
+              ),
+            ],
+          );
+
+          final metrics = Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _HeaderMetricChip(
+                label: 'Projects',
+                value: '${snapshot.projectCount}',
+              ),
+              _HeaderMetricChip(
+                label: 'Search',
+                value: searchQuery.trim().isEmpty ? 'Idle' : 'Filtered',
+              ),
+              _HeaderMetricChip(label: 'Status', value: statusFilter),
+              _HeaderMetricChip(
+                label: 'Energy',
+                value: snapshot.settings.lastRefreshedLabel,
+              ),
+            ],
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                hero,
+                const SizedBox(height: 14),
+                actionRow,
+                const SizedBox(height: 14),
+                metrics,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: hero),
+              const SizedBox(width: 20),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    metrics,
+                    const SizedBox(height: 14),
+                    actionRow,
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HeaderMetricChip extends StatelessWidget {
+  const _HeaderMetricChip({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 118),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColours.darkOutline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkspaceRail extends StatelessWidget {
+  const _WorkspaceRail({
+    required this.currentSection,
+    required this.onSectionSelected,
+  });
+
+  final EngineeringSection currentSection;
+  final ValueChanged<EngineeringSection> onSectionSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: AppColours.darkSurface.withValues(alpha: 0.92),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.82),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sections',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final section in EngineeringSection.values) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _WorkspaceRailButton(
+                label: section.label,
+                selected: section == currentSection,
+                onPressed: () => onSectionSelected(section),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkspaceRailButton extends StatelessWidget {
+  const _WorkspaceRailButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.tonal(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.16)
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.24,
+                ),
+          foregroundColor: selected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        child: Text(label),
+      ),
+    );
+  }
+}
+
+class _WorkspaceInsightsRail extends StatelessWidget {
+  const _WorkspaceInsightsRail({
+    required this.currentSection,
+    required this.snapshot,
+    required this.overview,
+  });
+
+  final EngineeringSection currentSection;
+  final EngineeringSnapshot snapshot;
+  final Widget overview;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        EngineeringSectionShell(
+          title: 'Workspace insight',
+          subtitle: 'A calm read on the selected tab.',
+          child: overview,
+        ),
+        const SizedBox(height: 14),
+        EngineeringSectionShell(
+          title: 'Workspace status',
+          subtitle: 'Local-only module state and cross-cutting signals.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SummaryLine(label: 'Section', value: currentSection.label),
+              _SummaryLine(
+                label: 'Projects',
+                value: '${snapshot.projectCount}',
+              ),
+              _SummaryLine(
+                label: 'Ready',
+                value: '${snapshot.readyProjectCount}',
+              ),
+              _SummaryLine(
+                label: 'Blocked',
+                value: '${snapshot.blockedProjectCount}',
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

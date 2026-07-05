@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/inbox_controller.dart';
 import '../data/inbox_repository.dart';
 
@@ -22,19 +23,19 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     final items = ref.watch(inboxItemsProvider);
     final recentProcessed = ref.watch(inboxRecentlyProcessedProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inbox'),
-        actions: [
-          IconButton(
-            key: const Key('addInboxItemButton'),
-            onPressed: () => context.push(RouteNames.newInbox),
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Inbox Item',
-          ),
-        ],
-      ),
-      body: items.when(
+    return WorkspaceShell(
+      title: 'Inbox',
+      subtitle: 'Capture, triage, and carry forward with calm.',
+      onBack: () => context.go(RouteNames.dashboard),
+      trailingActions: [
+        IconButton(
+          key: const Key('addInboxItemButton'),
+          onPressed: () => context.push(RouteNames.newInbox),
+          icon: const Icon(Icons.add),
+          tooltip: 'Add Inbox Item',
+        ),
+      ],
+      child: items.when(
         data: (inboxItems) {
           final filteredItems = _applyFilter(inboxItems);
           final recentHistory = recentProcessed.asData?.value ?? const <InboxListItem>[];

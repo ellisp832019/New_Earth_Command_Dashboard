@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/learning_controller.dart';
 
@@ -100,11 +101,17 @@ class _AddLearningItemScreenState extends ConsumerState<AddLearningItemScreen> {
             _loadInitialValues(learningItem);
             return _buildScaffold(context, projectItems);
           },
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => Scaffold(
-            appBar: AppBar(title: const Text('Edit Learning Topic')),
-            body: Center(
+          loading: () => WorkspaceShell(
+            title: 'Edit Learning Topic',
+            subtitle: 'Local learning form',
+            onBack: () => context.go(RouteNames.learning),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'Edit Learning Topic',
+            subtitle: 'Local learning form',
+            onBack: () => context.go(RouteNames.learning),
+            child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
@@ -117,15 +124,17 @@ class _AddLearningItemScreenState extends ConsumerState<AddLearningItemScreen> {
           ),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.isEditing ? 'Edit Learning Topic' : 'Add Learning Topic',
-          ),
-        ),
-        body: Center(
+      loading: () => WorkspaceShell(
+        title: widget.isEditing ? 'Edit Learning Topic' : 'Add Learning Topic',
+        subtitle: 'Local learning form',
+        onBack: () => context.go(RouteNames.learning),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: widget.isEditing ? 'Edit Learning Topic' : 'Add Learning Topic',
+        subtitle: 'Local learning form',
+        onBack: () => context.go(RouteNames.learning),
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
@@ -139,14 +148,12 @@ class _AddLearningItemScreenState extends ConsumerState<AddLearningItemScreen> {
     );
   }
 
-  Scaffold _buildScaffold(BuildContext context, List<Project> projectItems) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEditing ? 'Edit Learning Topic' : 'Add Learning Topic',
-        ),
-      ),
-      body: Form(
+  Widget _buildScaffold(BuildContext context, List<Project> projectItems) {
+    return WorkspaceShell(
+      title: widget.isEditing ? 'Edit Learning Topic' : 'Add Learning Topic',
+      subtitle: 'Local learning form',
+      onBack: () => context.go(RouteNames.learning),
+      child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),

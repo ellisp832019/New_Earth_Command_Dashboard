@@ -11,6 +11,7 @@ import 'package:pdfrx/pdfrx.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../projects/application/projects_controller.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
@@ -39,29 +40,23 @@ class _MeetingDetailScreenState extends ConsumerState<MeetingDetailScreen> {
   Widget build(BuildContext context) {
     final snapshot = ref.watch(meetingDetailProvider(widget.meetingId));
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Meeting Detail'),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Meeting Detail',
+      subtitle: 'Meeting record workspace',
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        }
+      },
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () =>
+              ref.invalidate(meetingDetailProvider(widget.meetingId)),
+          icon: const Icon(Icons.refresh),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () =>
-                ref.invalidate(meetingDetailProvider(widget.meetingId)),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: snapshot.when(
+      ],
+      child: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _MeetingDetailError(
           error: error,

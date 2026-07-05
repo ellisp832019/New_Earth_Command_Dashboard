@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/local_pdf_screen.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../../../core/routing/route_names.dart';
 import '../application/users_devices_control_controller.dart';
 import '../application/users_devices_pin_registry_controller.dart';
@@ -6972,21 +6973,11 @@ class _UsersDevicesPageScaffold extends ConsumerWidget {
     if (onBuilt != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => onBuilt?.call());
     }
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        leading: BackButton(onPressed: onBack),
-        title: _HeaderTitle(
-          label: 'Users & Devices',
-          title: title,
-          subtitle: subtitle,
-        ),
-        toolbarHeight: 72,
-      ),
-      body: ListView(
+    return WorkspaceShell(
+      title: title,
+      subtitle: subtitle,
+      onBack: onBack,
+      child: ListView(
         controller: scrollController,
         padding: const EdgeInsets.all(16),
         children: [
@@ -7132,46 +7123,6 @@ class _SectionScaffold extends StatelessWidget {
   }
 }
 
-class _HeaderTitle extends StatelessWidget {
-  const _HeaderTitle({
-    required this.label,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final String label;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            letterSpacing: 1.2,
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(title, style: theme.textTheme.titleLarge),
-        const SizedBox(height: 1),
-        Text(
-          subtitle,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _UsersDevicesOperatorSafetyBanner extends ConsumerWidget {
   const _UsersDevicesOperatorSafetyBanner();
 
@@ -7258,20 +7209,11 @@ class _LoadingScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        title: _HeaderTitle(
-          label: 'Users & Devices',
-          title: title,
-          subtitle: 'Loading local data',
-        ),
-        toolbarHeight: 72,
-      ),
-      body: const Center(child: CircularProgressIndicator()),
+    return WorkspaceShell(
+      title: title,
+      subtitle: 'Loading local data',
+      onBack: () => context.go(RouteNames.usersDevices),
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 }
@@ -7289,20 +7231,11 @@ class _ErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        title: _HeaderTitle(
-          label: 'Users & Devices',
-          title: title,
-          subtitle: 'Try again in a moment',
-        ),
-        toolbarHeight: 72,
-      ),
-      body: Center(
+    return WorkspaceShell(
+      title: title,
+      subtitle: 'Try again in a moment',
+      onBack: () => context.go(RouteNames.usersDevices),
+      child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(

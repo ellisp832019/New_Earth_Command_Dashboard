@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
 import 'meeting_system_widgets.dart';
@@ -16,28 +17,22 @@ class MeetingTemplatesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(meetingTemplatesProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Meeting Templates'),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Meeting Templates',
+      subtitle: 'Template library workspace',
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        }
+      },
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => ref.invalidate(meetingTemplatesProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(meetingTemplatesProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: snapshot.when(
+      ],
+      child: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _MeetingTemplatesError(
           error: error,

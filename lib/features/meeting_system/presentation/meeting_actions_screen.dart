@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/meeting_system_controller.dart';
 import '../data/meeting_folder_service.dart';
 import 'meeting_system_widgets.dart';
@@ -41,28 +42,22 @@ class _MeetingActionsScreenState extends ConsumerState<MeetingActionsScreen> {
   Widget build(BuildContext context) {
     final snapshot = ref.watch(meetingActionsProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Action Tracker'),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
+    return WorkspaceShell(
+      title: 'Action Tracker',
+      subtitle: 'Meeting actions workspace',
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        }
+      },
+      trailingActions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => ref.invalidate(meetingActionsProvider),
+          icon: const Icon(Icons.refresh),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(meetingActionsProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: snapshot.when(
+      ],
+      child: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _MeetingTrackerError(
           title: 'Action Tracker',

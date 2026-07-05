@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 import '../data/qr_label_printing_service.dart';
 
@@ -72,42 +73,76 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
     final printingInfoAsync = ref.watch(assetPrintingInfoProvider);
 
     return workspaceAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => _StudioError(
-        message: 'Knowledge of the asset folder is not ready yet.',
+      loading: () => WorkspaceShell(
+        title: 'QR Label Studio',
+        subtitle: 'Asset label studio workspace',
         onBack: () => context.go(RouteNames.assets),
-        onReload: () => ref.invalidate(assetWorkspaceProvider),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => WorkspaceShell(
+        title: 'QR Label Studio',
+        subtitle: 'Asset label studio workspace',
+        onBack: () => context.go(RouteNames.assets),
+        child: _StudioError(
+          message: 'Knowledge of the asset folder is not ready yet.',
+          onBack: () => context.go(RouteNames.assets),
+          onReload: () => ref.invalidate(assetWorkspaceProvider),
+        ),
       ),
       data: (workspace) {
         return equipmentAsync.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (error, stackTrace) => _StudioError(
-            message: 'Equipment register could not load right now.',
+          loading: () => WorkspaceShell(
+            title: 'QR Label Studio',
+            subtitle: 'Asset label studio workspace',
             onBack: () => context.go(RouteNames.assets),
-            onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => WorkspaceShell(
+            title: 'QR Label Studio',
+            subtitle: 'Asset label studio workspace',
+            onBack: () => context.go(RouteNames.assets),
+            child: _StudioError(
+              message: 'Equipment register could not load right now.',
+              onBack: () => context.go(RouteNames.assets),
+              onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
+            ),
           ),
           data: (equipmentTable) {
             return queueAsync.when(
-              loading: () => const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              ),
-              error: (error, stackTrace) => _StudioError(
-                message: 'Print queue could not load right now.',
+              loading: () => WorkspaceShell(
+                title: 'QR Label Studio',
+                subtitle: 'Asset label studio workspace',
                 onBack: () => context.go(RouteNames.assets),
-                onReload: () => ref.invalidate(assetQrPrintQueueProvider),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, stackTrace) => WorkspaceShell(
+                title: 'QR Label Studio',
+                subtitle: 'Asset label studio workspace',
+                onBack: () => context.go(RouteNames.assets),
+                child: _StudioError(
+                  message: 'Print queue could not load right now.',
+                  onBack: () => context.go(RouteNames.assets),
+                  onReload: () => ref.invalidate(assetQrPrintQueueProvider),
+                ),
               ),
               data: (queueTable) {
                 return profilesAsync.when(
-                  loading: () => const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (error, stackTrace) => _StudioError(
-                    message: 'Printer profiles could not load right now.',
+                  loading: () => WorkspaceShell(
+                    title: 'QR Label Studio',
+                    subtitle: 'Asset label studio workspace',
                     onBack: () => context.go(RouteNames.assets),
-                    onReload: () =>
-                        ref.invalidate(assetQrPrinterProfilesProvider),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, stackTrace) => WorkspaceShell(
+                    title: 'QR Label Studio',
+                    subtitle: 'Asset label studio workspace',
+                    onBack: () => context.go(RouteNames.assets),
+                    child: _StudioError(
+                      message: 'Printer profiles could not load right now.',
+                      onBack: () => context.go(RouteNames.assets),
+                      onReload: () =>
+                          ref.invalidate(assetQrPrinterProfilesProvider),
+                    ),
                   ),
                   data: (profilesTable) {
                     final filteredAssets = _filteredAssets(
@@ -177,9 +212,11 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                       'applied',
                     });
 
-                    return Scaffold(
-                      backgroundColor: Colors.transparent,
-                      body: SafeArea(
+                    return WorkspaceShell(
+                      title: 'QR Label Studio',
+                      subtitle: 'Asset label studio workspace',
+                      onBack: () => context.go(RouteNames.assets),
+                      child: SafeArea(
                         child: CustomScrollView(
                           slivers: [
                             SliverPadding(
