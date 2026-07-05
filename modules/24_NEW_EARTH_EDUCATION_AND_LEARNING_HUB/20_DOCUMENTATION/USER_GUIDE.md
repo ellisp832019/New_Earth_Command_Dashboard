@@ -35,10 +35,13 @@
 2. Select the learner card at the top.
 3. Review the latest notes and reflections.
 4. Use the local mentor summary to copy a handoff snapshot if needed.
-5. Check the assessment cards and progress records.
-6. Check the certificate readiness summary before sign-off.
-7. Use the placeholder tutor only as guidance.
-8. Keep any important decisions human-reviewed.
+5. Use the classroom / guardian lens to review the support tone.
+6. Export a mentor report when you need a fuller handoff note.
+7. Check the assessment cards and progress records.
+8. Check the certificate readiness summary before sign-off.
+9. Use the draft certificate action when local assessment evidence is ready.
+10. Use the placeholder tutor only as guidance.
+11. Keep any important decisions human-reviewed.
 
 ## For admins
 1. Import content packs.
@@ -55,4 +58,5 @@
 6. Use Export content pack to write a full local snapshot bundle.
 7. Use Import content pack to restore that bundle back into the module.
 8. Use the passport summary copy action when you need a quick badge handoff note.
-9. Keep content local until production hardening is added.
+9. Use Draft certificate issuance to create a local certificate preview from completed assessments.
+10. Keep content local until production hardening is added.

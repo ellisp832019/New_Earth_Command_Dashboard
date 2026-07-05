@@ -44,6 +44,8 @@ Current placeholders include:
 - local search across lessons, pathways, projects, learners, certificates, and source notes
 - role-aware tutor prompts for student, mentor, parent/guardian, and admin views
 - badge and certificate readiness summaries based on local progress data
+- mentor report export for learner handoff and classroom review
+- draft certificate issuance from completed assessment evidence
 - project workspaces with local evidence checkpoints and linked source items
 - offline snapshot export/import for content packs and local restore
 - content builder workspace for drafting offline learning packs

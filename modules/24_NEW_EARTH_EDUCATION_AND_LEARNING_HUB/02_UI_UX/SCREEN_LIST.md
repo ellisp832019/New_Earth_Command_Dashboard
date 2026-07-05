@@ -75,6 +75,8 @@
 - Notes
 - Safety flags
 - Suggested support
+- Exportable mentor report
+- Classroom / guardian summary
 
 ## 10. Content Builder
 - Create pathway
@@ -90,5 +92,6 @@
 - Offline-first flag
 - Content pipeline
 - Export / import bundle
+- Draft certificate issuance
 - Knowledge Engine hook
 - GAIA placeholder hook
