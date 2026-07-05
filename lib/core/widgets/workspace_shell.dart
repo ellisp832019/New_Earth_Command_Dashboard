@@ -66,7 +66,7 @@ class WorkspaceShell extends StatelessWidget {
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: AppColours.darkText,
                           fontWeight: FontWeight.w800,
-                          fontSize: 21,
+                          fontSize: 24,
                         ),
                       ),
                     ),
