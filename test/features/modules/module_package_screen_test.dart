@@ -22,7 +22,7 @@ void main() {
             ),
             routes: [
               GoRoute(
-                path: RouteNames.modulePackages + '/:moduleId',
+                path: '${RouteNames.modulePackages}/:moduleId',
                 builder: (context, state) => const ModulePackageScreen(
                   moduleId: '01_OMEGA_ENGINEERING_STUDIO_MODULE',
                 ),
