@@ -537,6 +537,52 @@ class MentorNote {
   }
 }
 
+class MentorReviewRecord {
+  const MentorReviewRecord({
+    required this.id,
+    required this.studentId,
+    required this.reviewer,
+    required this.status,
+    required this.handoffStatus,
+    required this.notes,
+    required this.reviewedAt,
+  });
+
+  final String id;
+  final String studentId;
+  final String reviewer;
+  final String status;
+  final String handoffStatus;
+  final String notes;
+  final DateTime reviewedAt;
+
+  factory MentorReviewRecord.fromJson(Map<String, dynamic> json) {
+    return MentorReviewRecord(
+      id: json['id']?.toString() ?? '',
+      studentId: json['studentId']?.toString() ?? '',
+      reviewer: json['reviewer']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      handoffStatus: json['handoffStatus']?.toString() ?? '',
+      notes: json['notes']?.toString() ?? '',
+      reviewedAt:
+          DateTime.tryParse(json['reviewedAt']?.toString() ?? '') ??
+          DateTime.now().toUtc(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'studentId': studentId,
+      'reviewer': reviewer,
+      'status': status,
+      'handoffStatus': handoffStatus,
+      'notes': notes,
+      'reviewedAt': reviewedAt.toUtc().toIso8601String(),
+    };
+  }
+}
+
 class Certificate {
   const Certificate({
     required this.id,
@@ -581,6 +627,45 @@ class Certificate {
       'awardedAt': awardedAt.toUtc().toIso8601String(),
     };
   }
+}
+
+@immutable
+class LearnerProgressScore {
+  const LearnerProgressScore({
+    required this.overall,
+    required this.lessonCompletion,
+    required this.projectCompletion,
+    required this.assessmentCompletion,
+    required this.reflectionEngagement,
+    required this.mentorReviewCoverage,
+    required this.badgeCoverage,
+    required this.completedLessons,
+    required this.totalLessons,
+    required this.completedProjects,
+    required this.totalProjects,
+    required this.completedAssessments,
+    required this.totalAssessments,
+    required this.reflectionCount,
+    required this.reviewCount,
+    required this.certificateCount,
+  });
+
+  final double overall;
+  final double lessonCompletion;
+  final double projectCompletion;
+  final double assessmentCompletion;
+  final double reflectionEngagement;
+  final double mentorReviewCoverage;
+  final double badgeCoverage;
+  final int completedLessons;
+  final int totalLessons;
+  final int completedProjects;
+  final int totalProjects;
+  final int completedAssessments;
+  final int totalAssessments;
+  final int reflectionCount;
+  final int reviewCount;
+  final int certificateCount;
 }
 
 class ResourceItem {
@@ -667,6 +752,113 @@ class ContentSourceEntry {
   }
 }
 
+@immutable
+class ContentPackDraft {
+  const ContentPackDraft({
+    required this.title,
+    required this.version,
+    required this.audience,
+    required this.summary,
+    required this.template,
+    required this.validationReady,
+    required this.validationNotes,
+    required this.updatedAt,
+    this.bundleId = '',
+    this.checksum = '',
+  });
+
+  final String title;
+  final String version;
+  final String audience;
+  final String summary;
+  final String template;
+  final bool validationReady;
+  final String validationNotes;
+  final DateTime updatedAt;
+  final String bundleId;
+  final String checksum;
+
+  bool get hasBundleMetadata =>
+      bundleId.trim().isNotEmpty && checksum.trim().isNotEmpty;
+
+  bool get hasSemverVersion =>
+      RegExp(r'^\d+\.\d+\.\d+$').hasMatch(version.trim());
+
+  factory ContentPackDraft.defaults() {
+    return ContentPackDraft(
+      title: 'Education Content Pack',
+      version: '0.1.0',
+      audience: 'Student',
+      summary:
+          'Local-first pack for lessons, projects, reflections, and badges.',
+      template: 'lesson_first',
+      validationReady: false,
+      validationNotes: 'Draft not saved yet.',
+      updatedAt: DateTime.now().toUtc(),
+      bundleId: '',
+      checksum: '',
+    );
+  }
+
+  factory ContentPackDraft.fromJson(Map<String, dynamic> json) {
+    return ContentPackDraft(
+      title: json['title']?.toString() ?? '',
+      version: json['version']?.toString() ?? '',
+      audience: json['audience']?.toString() ?? '',
+      summary: json['summary']?.toString() ?? '',
+      template: json['template']?.toString() ?? '',
+      validationReady: json['validationReady'] == true,
+      validationNotes: json['validationNotes']?.toString() ?? '',
+      updatedAt:
+          DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
+          DateTime.now().toUtc(),
+      bundleId: json['bundleId']?.toString() ?? '',
+      checksum: json['checksum']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'version': version,
+      'audience': audience,
+      'summary': summary,
+      'template': template,
+      'validationReady': validationReady,
+      'validationNotes': validationNotes,
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
+      'bundleId': bundleId,
+      'checksum': checksum,
+    };
+  }
+
+  ContentPackDraft copyWith({
+    String? title,
+    String? version,
+    String? audience,
+    String? summary,
+    String? template,
+    bool? validationReady,
+    String? validationNotes,
+    DateTime? updatedAt,
+    String? bundleId,
+    String? checksum,
+  }) {
+    return ContentPackDraft(
+      title: title ?? this.title,
+      version: version ?? this.version,
+      audience: audience ?? this.audience,
+      summary: summary ?? this.summary,
+      template: template ?? this.template,
+      validationReady: validationReady ?? this.validationReady,
+      validationNotes: validationNotes ?? this.validationNotes,
+      updatedAt: updatedAt ?? this.updatedAt,
+      bundleId: bundleId ?? this.bundleId,
+      checksum: checksum ?? this.checksum,
+    );
+  }
+}
+
 class EducationHubSettings {
   const EducationHubSettings({
     required this.moduleRootPath,
@@ -730,10 +922,12 @@ class EducationHubSnapshot {
     required this.assessments,
     required this.reflections,
     required this.mentorNotes,
+    required this.mentorReviews,
     required this.certificates,
     required this.resources,
     required this.contentSources,
     required this.skillLibrary,
+    required this.contentPackDraft,
   });
 
   final EducationHubSettings settings;
@@ -745,10 +939,12 @@ class EducationHubSnapshot {
   final List<Assessment> assessments;
   final List<ReflectionEntry> reflections;
   final List<MentorNote> mentorNotes;
+  final List<MentorReviewRecord> mentorReviews;
   final List<Certificate> certificates;
   final List<ResourceItem> resources;
   final List<ContentSourceEntry> contentSources;
   final List<String> skillLibrary;
+  final ContentPackDraft contentPackDraft;
 
   EducationHubSnapshot copyWith({
     EducationHubSettings? settings,
@@ -760,10 +956,12 @@ class EducationHubSnapshot {
     List<Assessment>? assessments,
     List<ReflectionEntry>? reflections,
     List<MentorNote>? mentorNotes,
+    List<MentorReviewRecord>? mentorReviews,
     List<Certificate>? certificates,
     List<ResourceItem>? resources,
     List<ContentSourceEntry>? contentSources,
     List<String>? skillLibrary,
+    ContentPackDraft? contentPackDraft,
   }) {
     return EducationHubSnapshot(
       settings: settings ?? this.settings,
@@ -775,10 +973,12 @@ class EducationHubSnapshot {
       assessments: assessments ?? this.assessments,
       reflections: reflections ?? this.reflections,
       mentorNotes: mentorNotes ?? this.mentorNotes,
+      mentorReviews: mentorReviews ?? this.mentorReviews,
       certificates: certificates ?? this.certificates,
       resources: resources ?? this.resources,
       contentSources: contentSources ?? this.contentSources,
       skillLibrary: skillLibrary ?? this.skillLibrary,
+      contentPackDraft: contentPackDraft ?? this.contentPackDraft,
     );
   }
 
@@ -795,18 +995,42 @@ class EducationHubSnapshot {
   Map<String, dynamic> toJson() {
     return {
       'settings': settings.toJson(),
-      'pathways': pathways.map((value) => value.toJson()).toList(growable: false),
+      'pathways': pathways
+          .map((value) => value.toJson())
+          .toList(growable: false),
       'lessons': lessons.map((value) => value.toJson()).toList(growable: false),
-      'projects': projects.map((value) => value.toJson()).toList(growable: false),
-      'students': students.map((value) => value.toJson()).toList(growable: false),
-      'progressRecords': progressRecords.map((value) => value.toJson()).toList(growable: false),
-      'assessments': assessments.map((value) => value.toJson()).toList(growable: false),
-      'reflections': reflections.map((value) => value.toJson()).toList(growable: false),
-      'mentorNotes': mentorNotes.map((value) => value.toJson()).toList(growable: false),
-      'certificates': certificates.map((value) => value.toJson()).toList(growable: false),
-      'resources': resources.map((value) => value.toJson()).toList(growable: false),
-      'contentSources': contentSources.map((value) => value.toJson()).toList(growable: false),
+      'projects': projects
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'students': students
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'progressRecords': progressRecords
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'assessments': assessments
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'reflections': reflections
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'mentorNotes': mentorNotes
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'mentorReviews': mentorReviews
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'certificates': certificates
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'resources': resources
+          .map((value) => value.toJson())
+          .toList(growable: false),
+      'contentSources': contentSources
+          .map((value) => value.toJson())
+          .toList(growable: false),
       'skillLibrary': skillLibrary,
+      'contentPackDraft': contentPackDraft.toJson(),
     };
   }
 
@@ -821,10 +1045,12 @@ class EducationHubSnapshot {
       assessments: _assessmentList(json['assessments']),
       reflections: _reflectionList(json['reflections']),
       mentorNotes: _mentorNoteList(json['mentorNotes']),
+      mentorReviews: _mentorReviewList(json['mentorReviews']),
       certificates: _certificateList(json['certificates']),
       resources: _resourceList(json['resources']),
       contentSources: _contentSourceList(json['contentSources']),
       skillLibrary: _stringList(json['skillLibrary']),
+      contentPackDraft: _contentPackDraft(json['contentPackDraft']),
     );
   }
 
@@ -855,6 +1081,12 @@ class EducationHubSnapshot {
         .toList(growable: false);
   }
 
+  List<MentorReviewRecord> reviewsForStudent(String studentId) {
+    return mentorReviews
+        .where((review) => review.studentId == studentId)
+        .toList(growable: false);
+  }
+
   List<Assessment> assessmentsForStudent(String studentId) {
     return assessments
         .where((assessment) => assessment.studentId == studentId)
@@ -870,7 +1102,8 @@ class EducationHubSnapshot {
   List<ProgressRecord> progressForProject(String projectId) {
     return progressRecords
         .where(
-          (record) => record.entityType == 'project' && record.entityId == projectId,
+          (record) =>
+              record.entityType == 'project' && record.entityId == projectId,
         )
         .toList(growable: false);
   }
@@ -892,6 +1125,68 @@ class EducationHubSnapshot {
     return completed / studentAssessments.length;
   }
 
+  LearnerProgressScore learnerProgressScoreForStudent(String studentId) {
+    final studentProgress = progressForStudent(studentId);
+    final lessonProgress = studentProgress
+        .where((record) => record.entityType == 'lesson')
+        .toList(growable: false);
+    final projectProgress = studentProgress
+        .where((record) => record.entityType == 'project')
+        .toList(growable: false);
+    final studentAssessments = assessmentsForStudent(studentId);
+    final completedAssessments = studentAssessments
+        .where((assessment) => assessment.completedAt != null)
+        .length;
+    final reflectionCount = reflectionsForStudent(studentId).length;
+    final reviewCount = reviewsForStudent(studentId).length;
+    final certificateCount = certificatesForStudent(studentId).length;
+    final completedLessons = lessonProgress
+        .where((record) => record.progressPercent >= 100)
+        .length;
+    final completedProjects = projectProgress
+        .where((record) => record.progressPercent >= 100)
+        .length;
+    final lessonCompletion = lessonProgress.isEmpty
+        ? 0.0
+        : completedLessons / lessonProgress.length;
+    final projectCompletion = projectProgress.isEmpty
+        ? 0.0
+        : completedProjects / projectProgress.length;
+    final assessmentCompletion = studentAssessments.isEmpty
+        ? 0.0
+        : completedAssessments / studentAssessments.length;
+    final reflectionEngagement =
+        (reflectionCount / 3).clamp(0.0, 1.0).toDouble();
+    final mentorReviewCoverage = (reviewCount / 2).clamp(0.0, 1.0).toDouble();
+    final badgeCoverage = (certificateCount / 2).clamp(0.0, 1.0).toDouble();
+    final overall = (
+      lessonCompletion * 0.25 +
+      projectCompletion * 0.15 +
+      assessmentCompletion * 0.3 +
+      reflectionEngagement * 0.15 +
+      mentorReviewCoverage * 0.1 +
+      badgeCoverage * 0.05
+    ).clamp(0.0, 1.0);
+    return LearnerProgressScore(
+      overall: overall,
+      lessonCompletion: lessonCompletion,
+      projectCompletion: projectCompletion,
+      assessmentCompletion: assessmentCompletion,
+      reflectionEngagement: reflectionEngagement,
+      mentorReviewCoverage: mentorReviewCoverage,
+      badgeCoverage: badgeCoverage,
+      completedLessons: completedLessons,
+      totalLessons: lessonProgress.length,
+      completedProjects: completedProjects,
+      totalProjects: projectProgress.length,
+      completedAssessments: completedAssessments,
+      totalAssessments: studentAssessments.length,
+      reflectionCount: reflectionCount,
+      reviewCount: reviewCount,
+      certificateCount: certificateCount,
+    );
+  }
+
   int earnedBadgeCountForStudent(String studentId) {
     for (final student in students) {
       if (student.id == studentId) {
@@ -902,24 +1197,25 @@ class EducationHubSnapshot {
   }
 
   double badgeReadinessForStudent(String studentId) {
-    final assessmentCompletion = assessmentCompletionForStudent(studentId);
-    final progressItems = progressForStudent(studentId);
-    final progressCompletion = progressItems.isEmpty
-        ? 0.0
-        : progressItems
-                .where((record) => record.progressPercent >= 80)
-                .length /
-            progressItems.length;
-    return ((assessmentCompletion + progressCompletion) / 2).clamp(0.0, 1.0);
+    return learnerProgressScoreForStudent(studentId).overall;
   }
 
   String progressLabelForStudent(String studentId) {
-    final progress = progressForStudent(studentId);
-    if (progress.isEmpty) {
+    final score = learnerProgressScoreForStudent(studentId);
+    if (score.overall == 0) {
       return 'No progress yet';
     }
-    final completed = progress.where((record) => record.progressPercent >= 100).length;
-    return '$completed of ${progress.length} milestones complete';
+    final completedMilestones =
+        score.completedLessons + score.completedProjects + score.completedAssessments;
+    final totalMilestones =
+        score.totalLessons + score.totalProjects + score.totalAssessments;
+    final label = switch (score.overall) {
+      >= 0.85 => 'Strong momentum',
+      >= 0.65 => 'Steady progress',
+      >= 0.35 => 'Building momentum',
+      _ => 'Starting out',
+    };
+    return '$label - $completedMilestones of $totalMilestones milestones complete';
   }
 }
 
@@ -950,7 +1246,9 @@ List<LearningPathway> _pathwayList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(LearningPathway.fromJson)
       .toList(growable: false);
 }
@@ -961,7 +1259,9 @@ List<Lesson> _lessonList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(Lesson.fromJson)
       .toList(growable: false);
 }
@@ -972,7 +1272,9 @@ List<PracticalProject> _projectList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(PracticalProject.fromJson)
       .toList(growable: false);
 }
@@ -983,7 +1285,9 @@ List<StudentProfile> _studentList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(StudentProfile.fromJson)
       .toList(growable: false);
 }
@@ -994,7 +1298,9 @@ List<ProgressRecord> _progressRecordList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(ProgressRecord.fromJson)
       .toList(growable: false);
 }
@@ -1005,7 +1311,9 @@ List<Assessment> _assessmentList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(Assessment.fromJson)
       .toList(growable: false);
 }
@@ -1016,7 +1324,9 @@ List<ReflectionEntry> _reflectionList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(ReflectionEntry.fromJson)
       .toList(growable: false);
 }
@@ -1027,8 +1337,23 @@ List<MentorNote> _mentorNoteList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(MentorNote.fromJson)
+      .toList(growable: false);
+}
+
+List<MentorReviewRecord> _mentorReviewList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
+      .map(MentorReviewRecord.fromJson)
       .toList(growable: false);
 }
 
@@ -1038,7 +1363,9 @@ List<Certificate> _certificateList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(Certificate.fromJson)
       .toList(growable: false);
 }
@@ -1049,7 +1376,9 @@ List<ResourceItem> _resourceList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(ResourceItem.fromJson)
       .toList(growable: false);
 }
@@ -1060,9 +1389,23 @@ List<ContentSourceEntry> _contentSourceList(dynamic raw) {
   }
   return raw
       .whereType<Map>()
-      .map((value) => value.map((key, child) => MapEntry(key.toString(), child)))
+      .map(
+        (value) => value.map((key, child) => MapEntry(key.toString(), child)),
+      )
       .map(ContentSourceEntry.fromJson)
       .toList(growable: false);
+}
+
+ContentPackDraft _contentPackDraft(dynamic raw) {
+  if (raw is Map<String, dynamic>) {
+    return ContentPackDraft.fromJson(raw);
+  }
+  if (raw is Map) {
+    return ContentPackDraft.fromJson(
+      raw.map((key, value) => MapEntry(key.toString(), value)),
+    );
+  }
+  return ContentPackDraft.defaults();
 }
 
 List<ModuleUnit> _moduleUnits(dynamic raw) {
