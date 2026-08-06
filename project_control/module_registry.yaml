@@ -18,7 +18,7 @@
     "permissions": ["read", "navigate"],
     "dependencies": ["tasks", "planner", "projects", "assets", "treasury", "meeting_system", "voice_intelligence"],
     "known_risks": ["Large shared screen with many navigation entry points"],
-    "last_verified_commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+    "last_verified_commit": "8d40700",
     "last_verified_date": "2026-08-06",
     "verification_status": "passed",
     "documentation_status": "partial",
