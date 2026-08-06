@@ -9,6 +9,9 @@ import 'package:new_earth_command_dashboard/features/users_devices_control/data/
 import 'package:path/path.dart' as path;
 
 void main() {
+  const demoPrimaryPin = '2468';
+  const replacementPrimaryPin = '135790';
+
   test('PIN registry seeds and persists through the local database', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -22,24 +25,30 @@ void main() {
     final selected = snapshot.records.first;
     final validation = await service.validatePinForUser(
       selected.userId,
-      selected.pinCode,
+      demoPrimaryPin,
     );
     expect(validation.allowed, isTrue);
     expect(validation.record?.pinId, selected.pinId);
+    expect(selected.pinCode, equals('****'));
+    expect(selected.pinSecretHash, isNotEmpty);
+    expect(selected.pinSecretSalt, isNotEmpty);
 
     await service.setPrimaryPin(
       userId: selected.userId,
-      pinCode: '135790',
+      pinCode: replacementPrimaryPin,
       label: 'Primary PIN',
     );
 
     final updatedSnapshot = await service.loadSnapshot();
     final updatedPins = updatedSnapshot.recordsForUser(selected.userId);
     expect(updatedPins.where((pin) => pin.status == 'active'), hasLength(1));
-    expect(updatedPins.any((pin) => pin.pinCode == '135790'), isTrue);
+    expect(updatedPins.any((pin) => pin.pinCode == '******'), isTrue);
+    expect(updatedPins.every((pin) => pin.pinSecretHash.isNotEmpty), isTrue);
 
     final recovery = await service.issueRecoveryPin(userId: selected.userId);
     expect(recovery.status, 'recovery');
+    expect(recovery.pinCode.length, 6);
+    expect(recovery.pinSecretHash, isNotEmpty);
 
     final recoveryValidation = await service.validatePinForUser(
       selected.userId,
@@ -95,7 +104,7 @@ void main() {
       );
 
       final snapshot = await service.loadSnapshot();
-      expect(snapshot.records.any((pin) => pin.pinCode == '4434'), isTrue);
+      expect(snapshot.records.any((pin) => pin.pinCode == '****'), isTrue);
 
       final validation = await service.validatePinForUser(
         'user_peter_owner',
@@ -105,12 +114,24 @@ void main() {
 
       final storedPins = await database
           .customSelect(
-            'SELECT pin_code FROM users_devices_control_pin_records WHERE user_id = ?',
+            'SELECT pin_code, pin_length, pin_secret_hash, pin_secret_salt FROM users_devices_control_pin_records WHERE user_id = ?',
             variables: [const Variable<String>('user_peter_owner')],
           )
           .get();
       expect(
-        storedPins.any((row) => row.read<String>('pin_code') == '4434'),
+        storedPins.any((row) => row.read<String>('pin_code') == '****'),
+        isTrue,
+      );
+      expect(
+        storedPins.every(
+          (row) => row.read<String>('pin_secret_hash').isNotEmpty,
+        ),
+        isTrue,
+      );
+      expect(
+        storedPins.every(
+          (row) => row.read<String>('pin_secret_salt').isNotEmpty,
+        ),
         isTrue,
       );
     },
@@ -167,7 +188,7 @@ void main() {
 
       final blockedValidPin = await service.validatePinForUser(
         selected.userId,
-        selected.pinCode,
+        demoPrimaryPin,
       );
       expect(blockedValidPin.allowed, isFalse);
       expect(blockedValidPin.issueCode, 'locked_out_active');
@@ -177,7 +198,7 @@ void main() {
       now = now.add(const Duration(minutes: 6));
       final postCooldownSuccess = await service.validatePinForUser(
         selected.userId,
-        selected.pinCode,
+        demoPrimaryPin,
       );
       expect(postCooldownSuccess.allowed, isTrue);
       expect(postCooldownSuccess.issueCode, 'primary_allowed');
@@ -216,7 +237,7 @@ void main() {
 
       final success = await service.validatePinForUser(
         selected.userId,
-        selected.pinCode,
+        demoPrimaryPin,
       );
       expect(success.allowed, isTrue);
 
@@ -314,14 +335,15 @@ void main() {
     final reloadedSnapshot = await reloaded.loadSnapshot();
     expect(
       reloadedSnapshot.primaryPinForUser(selected.userId)?.pinCode,
-      '4434',
+      '****',
     );
     expect(
       reloadedSnapshot
           .recoveryPinsForUser(selected.userId)
-          .any((pin) => pin.pinCode == recovery.pinCode),
+          .any((pin) => pin.pinId == recovery.pinId),
       isTrue,
     );
+    expect(recovery.pinSecretHash, isNotEmpty);
     expect(
       reloadedSnapshot.lockoutForUser(selected.userId)?.isLockedAt(now),
       isTrue,

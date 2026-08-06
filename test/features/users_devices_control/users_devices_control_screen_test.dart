@@ -22,7 +22,7 @@ class FakeUsersDevicesControlRepository extends UsersDevicesControlRepository {
   loadMigrationHealth() async {
     return const UsersDevicesControlMigrationHealthSnapshot(
       usingDatabase: true,
-      schemaVersion: 15,
+      schemaVersion: 16,
       databasePath: 'C:/Users/test/Documents/new_earth_command_dashboard.db',
       databaseFileExists: true,
       seedFiles: [
@@ -277,7 +277,7 @@ void main() {
           pinId: 'pin_peter_primary',
           userId: 'user_peter_owner',
           label: 'Primary PIN',
-          pinCode: '4434',
+          pinCode: '****',
           status: 'active',
           sourceLabel: 'Local admin',
           createdAt: DateTime(2026, 6, 26),
@@ -287,7 +287,7 @@ void main() {
           pinId: 'pin_hayley_recovery',
           userId: 'user_hayley_finance',
           label: 'Recovery PIN',
-          pinCode: '112233',
+          pinCode: '******',
           status: 'recovery',
           sourceLabel: 'Local admin',
           createdAt: DateTime(2026, 6, 26),
