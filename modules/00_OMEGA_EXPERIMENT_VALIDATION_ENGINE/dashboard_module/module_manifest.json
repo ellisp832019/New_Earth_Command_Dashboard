@@ -1,0 +1,32 @@
+{
+  "id": "00_OMEGA_EXPERIMENT_VALIDATION_ENGINE",
+  "name": "Omega Experiment Validation Engine",
+  "version": "0.1.0",
+  "status": "foundation",
+  "category": "knowledge & research",
+  "description": "Omega-level experiment, evidence, validation and lessons-learned engine for all New Earth projects.",
+  "routes": [
+    "/experiments",
+    "/experiments/new",
+    "/experiments/evidence",
+    "/experiments/results",
+    "/experiments/lessons",
+    "/experiments/reports",
+    "/experiments/settings",
+    "/experiments/integrations",
+    "/experiments/ai-review"
+  ],
+  "integrations": [
+    "VS Code",
+    "GitHub",
+    "Obsidian",
+    "Proteus",
+    "KiCad",
+    "Fusion 360",
+    "PlatformIO",
+    "CSV",
+    "Python",
+    "Ollama",
+    "Flutter dashboard"
+  ]
+}

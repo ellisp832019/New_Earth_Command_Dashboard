@@ -1,0 +1,47 @@
+{
+  "profile_name": "Generic",
+  "project_type": "Generic local-first repository",
+  "priority_keywords": [
+    "docs",
+    "README",
+    "src",
+    "lib"
+  ],
+  "ignore_keywords": [
+    "cloud-only",
+    "vendor lock-in"
+  ],
+  "risk_keywords": [
+    "secret",
+    "token",
+    "password",
+    "credential"
+  ],
+  "useful_file_patterns": [
+    "README*",
+    "docs/**/*.md"
+  ],
+  "output_focus": [
+    "core architecture",
+    "documentation",
+    "local-first design"
+  ],
+  "template_set": "Generic",
+  "template_set_description": "Balanced local-first research bundle for general repositories.",
+  "export_locations": [
+    "D:/NEW_EARTH_OMEGA_OS_PACK/22_KNOWLEDGE_AND_LEARNING/GIT_RESEARCH_LIBRARY/GENERAL"
+  ],
+  "report_templates": {
+    "main_report": "repo_research_report.md",
+    "summary": "repo_summary.md",
+    "security": "security_report.md",
+    "risk": "risk_report.md",
+    "knowledge": "knowledge_report.md",
+    "implementation_opportunities": "implementation_opportunities.md",
+    "learning_notes": "learning_notes.md",
+    "vault_note": "repo_research_note_template.md"
+  },
+  "export_targets": [
+    "Obsidian"
+  ]
+}

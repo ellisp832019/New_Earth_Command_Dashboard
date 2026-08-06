@@ -1,0 +1,87 @@
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:new_earth_command_dashboard/core/database/app_database.dart';
+import 'package:new_earth_command_dashboard/features/business/data/business_repository.dart';
+import 'package:new_earth_command_dashboard/features/projects/data/project_repository.dart';
+
+void main() {
+  test('business repository creates and loads linked opportunities', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final projectRepository = ProjectRepository(database);
+    final businessRepository = BusinessRepository(database);
+    final project = await projectRepository.createProject(
+      name: 'Business Project',
+      status: 'Active',
+      priority: 'High',
+      progressPercentage: 8,
+    );
+
+    final createdItem = await businessRepository.createItem(
+      name: 'AI Architect Role',
+      projectId: project.projectId,
+      type: 'Job',
+      status: 'Preparing',
+      companyOrContact: 'OpenAI',
+      deadline: DateTime(2026, 5, 10),
+      nextAction: 'Finalise CV',
+      followUpDate: DateTime(2026, 5, 12),
+      relatedDocumentLink: 'https://example.com/cv',
+      notes: 'Keep the application grounded and sharp.',
+    );
+    final items = await businessRepository.getItems();
+
+    expect(createdItem.name, 'AI Architect Role');
+    expect(items, hasLength(1));
+    expect(items.first.item.name, 'AI Architect Role');
+    expect(items.first.item.type, 'Job');
+    expect(items.first.item.status, 'Preparing');
+    expect(items.first.item.companyOrContact, 'OpenAI');
+    expect(items.first.item.deadline, DateTime(2026, 5, 10));
+    expect(items.first.item.followUpDate, DateTime(2026, 5, 12));
+    expect(items.first.projectName, 'Business Project');
+  });
+
+  test(
+    'business repository normalizes legacy opportunity values on load',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final projectRepository = ProjectRepository(database);
+      final businessRepository = BusinessRepository(database);
+      final project = await projectRepository.createProject(
+        name: 'Legacy Project',
+        status: 'Active',
+        priority: 'High',
+        progressPercentage: 8,
+      );
+
+      await database
+          .into(database.businessOpportunities)
+          .insert(
+            BusinessOpportunitiesCompanion.insert(
+              businessOpportunityId: 'business-legacy-1',
+              name: 'Legacy Opportunity',
+              projectId: Value(project.projectId),
+              type: const Value('Other'),
+              status: const Value('Won'),
+              companyOrContact: const Value('Legacy Contact'),
+              createdAt: DateTime(2026, 5, 1),
+              updatedAt: DateTime(2026, 5, 1),
+            ),
+          );
+
+      final item = await businessRepository.getById('business-legacy-1');
+
+      expect(item.type, 'Business Idea');
+      expect(item.status, 'Accepted');
+
+      final items = await businessRepository.getItems();
+      expect(items.single.item.type, 'Business Idea');
+      expect(items.single.item.status, 'Accepted');
+    },
+  );
+}

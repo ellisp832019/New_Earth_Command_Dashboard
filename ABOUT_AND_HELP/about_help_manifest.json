@@ -1,0 +1,82 @@
+{
+  "name": "New Earth Dashboard About & Help Centre",
+  "version": "0.1.0",
+  "root": "ABOUT_AND_HELP",
+  "sections": [
+    {
+      "id": "overview",
+      "title": "About the Dashboard",
+      "path": "ABOUT_AND_HELP/00_OVERVIEW.md"
+    },
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "path": "ABOUT_AND_HELP/01_GETTING_STARTED.md"
+    },
+    {
+      "id": "quick-start-paths",
+      "title": "Quick Start Paths",
+      "path": "ABOUT_AND_HELP/02_QUICK_START_PATHS.md"
+    },
+    {
+      "id": "user-guides",
+      "title": "User Guides",
+      "path": "ABOUT_AND_HELP/03_USER_GUIDES/00_USER_GUIDES_INDEX.md"
+    },
+    {
+      "id": "module-directory",
+      "title": "Module Directory",
+      "path": "ABOUT_AND_HELP/04_MODULE_DIRECTORY/00_MODULE_DIRECTORY_INDEX.md"
+    },
+    {
+      "id": "system-maps",
+      "title": "System Maps",
+      "path": "ABOUT_AND_HELP/05_SYSTEM_MAPS/00_SYSTEM_MAPS_INDEX.md"
+    },
+    {
+      "id": "security",
+      "title": "Security and Privacy",
+      "path": "ABOUT_AND_HELP/06_SECURITY_AND_PRIVACY/00_SECURITY_INDEX.md"
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "path": "ABOUT_AND_HELP/07_TROUBLESHOOTING/00_TROUBLESHOOTING_INDEX.md"
+    },
+    {
+      "id": "setup",
+      "title": "Setup and Installation",
+      "path": "ABOUT_AND_HELP/08_SETUP_AND_INSTALLATION/00_SETUP_INDEX.md"
+    },
+    {
+      "id": "changelog",
+      "title": "Changelog",
+      "path": "ABOUT_AND_HELP/09_CHANGELOG/CHANGELOG.md"
+    },
+    {
+      "id": "roadmap",
+      "title": "Roadmap",
+      "path": "ABOUT_AND_HELP/10_ROADMAP/ROADMAP.md"
+    },
+    {
+      "id": "glossary",
+      "title": "Glossary",
+      "path": "ABOUT_AND_HELP/11_GLOSSARY/GLOSSARY.md"
+    },
+    {
+      "id": "support",
+      "title": "Support & Feedback",
+      "path": "ABOUT_AND_HELP/12_SUPPORT_AND_FEEDBACK/00_SUPPORT_INDEX.md"
+    },
+    {
+      "id": "templates",
+      "title": "Templates",
+      "path": "ABOUT_AND_HELP/13_TEMPLATES/"
+    },
+    {
+      "id": "where-belongs",
+      "title": "Where Does This Belong?",
+      "path": "ABOUT_AND_HELP/99_INDEX/WHERE_DOES_THIS_BELONG.md"
+    }
+  ]
+}

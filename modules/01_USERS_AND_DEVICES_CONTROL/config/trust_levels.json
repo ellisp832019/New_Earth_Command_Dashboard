@@ -1,0 +1,8 @@
+[
+  { "level": 0, "name": "Unknown Device", "description": "Seen but not trusted." },
+  { "level": 1, "name": "Seen Device", "description": "Identified but not registered." },
+  { "level": 2, "name": "Registered Device", "description": "Named and owned with limited access." },
+  { "level": 3, "name": "Trusted Local Device", "description": "Approved for normal local operations." },
+  { "level": 4, "name": "Admin Device", "description": "Supports admin access with correct user." },
+  { "level": 5, "name": "Critical System Device", "description": "Core local infrastructure." }
+]

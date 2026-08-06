@@ -1,0 +1,21 @@
+{
+  "id": "newearth.project_command_centre",
+  "name": "Project Command Centre",
+  "version": "0.1.0",
+  "category": "Project Management",
+  "description": "Unified hub for active projects, build phases, task lists and decision logs.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "left",
+  "permissions": [
+    "file_read",
+    "file_write_project_only",
+    "dashboard_context"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/PROJECT_COMMAND_CENTRE",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}

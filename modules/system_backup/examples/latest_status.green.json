@@ -1,0 +1,21 @@
+{
+  "module": "system_backup",
+  "state": "green",
+  "health_state": "green",
+  "mode": "BackupNow",
+  "source_drive": "D:/",
+  "backup_target": "E:/NEW_EARTH_BACKUP",
+  "source": "D:/",
+  "target": "E:/NEW_EARTH_BACKUP/mirror",
+  "summary": "Backup completed successfully. Verification still recommended.",
+  "latest_backup_status": "Backup completed successfully. Verification still recommended.",
+  "last_backup_at": "2026-06-07T05:00:00Z",
+  "last_verification_at": "2026-06-07T05:30:00Z",
+  "restore_test_status": "Not run yet",
+  "backup_size_text": "Not tracked in V1",
+  "latest_report_path": "E:/NEW_EARTH_BACKUP/reports/backup_guardian_20260607_050000.log",
+  "warnings": [],
+  "errors": [],
+  "updated_at": "2026-06-07T05:00:00Z",
+  "log_path": "E:/NEW_EARTH_BACKUP/reports/backup_guardian_20260607_050000.log"
+}

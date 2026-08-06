@@ -1,0 +1,22 @@
+{
+  "id": "newearth.microgrow_control",
+  "name": "MicroGrow Control",
+  "version": "0.1.0",
+  "category": "MicroGrow",
+  "description": "Dashboard control and diagnostics shell for MicroGrow nodes, sensors, relays and firmware status.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "right",
+  "permissions": [
+    "local_network",
+    "device_control",
+    "firmware_status",
+    "audit_log"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/MICROGROW_CONTROL",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}

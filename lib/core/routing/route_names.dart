@@ -1,15 +1,415 @@
 abstract final class RouteNames {
+  static const startup = '/startup';
   static const dashboard = '/dashboard';
+  static const commandPalette = '/dashboard/search';
+  static const assets = '/assets';
+  static const assetEquipment = '/assets/equipment';
+  static const assetParts = '/assets/parts';
+  static const assetLowStock = '/assets/low-stock';
+  static const assetRepairSummary = '/assets/repair-summary';
+  static const assetProjectSummary = '/assets/project-summary';
+  static const assetLocationRegister = '/assets/locations';
+  static const assetBinMap = '/assets/bin-map';
+  static const assetQrLifecycle = '/assets/qr-lifecycle';
+  static const assetEvidenceLibrary = '/assets/evidence';
+  static const assetValuationSummary = '/assets/valuation';
+  static const assetQrLabelRegister = '/assets/qr-labels';
+  static const assetQrLabelStudio = '/assets/qr-studio';
+  static const assetQrPrintQueue = '/assets/qr-print-queue';
+  static const assetQrLabelHistory = '/assets/qr-history';
+  static const assetScanLookup = '/assets/scan-lookup';
+  static const assetInventorySession = '/assets/inventory-session';
+  static const assetConflictReview = '/assets/conflicts';
+  static const assetQuickCapture = '/assets/quick-capture';
+  static const assetSupplierRegister = '/assets/suppliers';
+  static const assetMaintenanceLog = '/assets/maintenance';
+  static const assetReorderList = '/assets/reorder-list';
+  static const assetOrdersTracker = '/assets/orders';
+  static const assetVisualCapture = '/assets/visual-capture';
+  static const visualCapture = '/visual-capture';
+  static const treasury = '/treasury';
+  static const treasuryWizard = '/treasury/wizard';
+  static const treasuryDecisions = '/treasury/decisions';
+  static const treasuryMonthlySummary = '/treasury/monthly-summary';
+  static const treasurySettings = '/treasury/settings';
+  static const treasuryBudgetPots = '/treasury/budget-pots';
+  static const fundingGrantsCommandCentre = '/more/funding-grants';
   static const projects = '/projects';
+  static const newProject = '/projects/new';
+  static const projectsWorkspace = '/projects-intelligence/workspace';
+  static const repoIntelligenceBridge = '/projects-intelligence/repo-bridge';
+  static const repoIntelligenceBridgeSettings =
+      '/projects-intelligence/repo-bridge/settings';
   static const tasks = '/tasks';
+  static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const gaiaEmployee = '/more/ai-employee';
+  static const aboutHelp = '/more/about-help';
+  static const usersDevices = '/users-devices';
+  static const usersDevicesUsers = '/users-devices/users';
+  static const usersDevicesDevices = '/users-devices/devices';
+  static const usersDevicesAccessMatrix = '/users-devices/access-matrix';
+  static const usersDevicesDeviceOnboarding = '/users-devices/onboarding';
+  static const usersDevicesOnboardingReport =
+      '/users-devices/onboarding-report';
+  static const usersDevicesApprovalQueue = '/users-devices/approvals';
+  static const usersDevicesAuditLog = '/users-devices/audit';
+  static const usersDevicesPins = '/users-devices/pins';
+  static const usersDevicesMigrationHealth = '/users-devices/migration-health';
+  static String usersDevicesOnboardingReportFor({
+    String? userId,
+    String? status,
+  }) {
+    final queryParameters = <String, String>{};
+    if (userId != null && userId.isNotEmpty) {
+      queryParameters['userId'] = userId;
+    }
+    if (status != null && status.isNotEmpty) {
+      queryParameters['status'] = status;
+    }
+    return Uri(
+      path: usersDevicesOnboardingReport,
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+    ).toString();
+  }
+
+  static String usersDevicesAuditLogFor(String eventId) {
+    return Uri(
+      path: usersDevicesAuditLog,
+      queryParameters: {'eventId': eventId},
+    ).toString();
+  }
+
+  static String aboutHelpSection(String sectionId, {String? documentPath}) {
+    final queryParameters = <String, String>{'section': sectionId};
+    if (documentPath != null && documentPath.isNotEmpty) {
+      queryParameters['doc'] = documentPath;
+    }
+    return Uri(path: aboutHelp, queryParameters: queryParameters).toString();
+  }
+
+  static const moduleHub = '/more/module-hub';
+  static const experimentModuleId = 'experiments';
+  static const experimentWorkspace = '/experiments';
+  static const experimentWorkspaceRegistry = experimentWorkspace;
+  static const experimentWorkspaceCreate = '/experiments/new';
+  static const experimentWorkspaceEvidence = '/experiments/evidence';
+  static const experimentWorkspaceResults = '/experiments/results';
+  static const experimentWorkspaceLessons = '/experiments/lessons';
+  static const experimentWorkspaceReports = '/experiments/reports';
+  static const experimentWorkspaceSettings = '/experiments/settings';
+  static const experimentWorkspaceIntegrations = '/experiments/integrations';
+  static const experimentWorkspaceAiReview = '/experiments/ai-review';
+  @Deprecated('Use experimentWorkspace')
+  static const experiments = experimentWorkspace;
+  @Deprecated('Use experimentWorkspaceRegistry')
+  static const experimentsRegistry = experimentWorkspaceRegistry;
+  @Deprecated('Use experimentWorkspaceCreate')
+  static const experimentsCreate = experimentWorkspaceCreate;
+  @Deprecated('Use experimentWorkspaceEvidence')
+  static const experimentsEvidence = experimentWorkspaceEvidence;
+  @Deprecated('Use experimentWorkspaceResults')
+  static const experimentsResults = experimentWorkspaceResults;
+  @Deprecated('Use experimentWorkspaceLessons')
+  static const experimentsLessons = experimentWorkspaceLessons;
+  @Deprecated('Use experimentWorkspaceReports')
+  static const experimentsReports = experimentWorkspaceReports;
+  @Deprecated('Use experimentWorkspaceSettings')
+  static const experimentsSettings = experimentWorkspaceSettings;
+  @Deprecated('Use experimentWorkspaceIntegrations')
+  static const experimentsIntegrations = experimentWorkspaceIntegrations;
+  @Deprecated('Use experimentWorkspaceAiReview')
+  static const experimentsAiReview = experimentWorkspaceAiReview;
+  static String moduleHubModule(String moduleId) => '$moduleHub/$moduleId';
+  static String moduleHubModuleOperations(String moduleId) =>
+      '$moduleHub/$moduleId/operations';
+  static String moduleHubModuleDocking(String moduleId) =>
+      '$moduleHub/$moduleId/docking';
+  static String moduleHubModuleGovernance(String moduleId) =>
+      '$moduleHub/$moduleId/governance';
+  static String moduleHubModuleSettings(String moduleId) =>
+      '$moduleHub/$moduleId/settings';
+  static String moduleHubModulePermissions(String moduleId) =>
+      '$moduleHub/$moduleId/permissions';
+  static String experimentWorkspaceDetail(String experimentId) =>
+      '$experimentWorkspace/$experimentId';
+  @Deprecated('Use experimentWorkspaceDetail')
+  static String experimentDetail(String experimentId) =>
+      experimentWorkspaceDetail(experimentId);
+  static const systems = '/more/systems';
+  static const backupGuardian = '/more/systems/backup-guardian';
+  static const repoResearchEngine = '/more/repo-research-engine';
+  static const repoResearchEngineScanner = '/more/repo-research-engine/scanner';
+  static const repoResearchEngineReports = '/more/repo-research-engine/reports';
+  static const repoResearchEngineProfiles =
+      '/more/repo-research-engine/profiles';
+  static const repoResearchEngineExports = '/more/repo-research-engine/exports';
+  static const repoResearchEnginePrompts = '/more/repo-research-engine/prompts';
+  static const repoResearchEngineSettings =
+      '/more/repo-research-engine/settings';
+  static const launchpad = '/launchpad';
+  static const launchpadCampaigns = '/launchpad/campaigns';
+  static const meetingDashboard = '/more/meetings';
+  static const meetingAll = '/more/meetings/all';
+  static const meetingNew = '/more/meetings/new';
+  static const meetingActions = '/more/meetings/actions';
+  static const meetingDecisions = '/more/meetings/decisions';
+  static const meetingFollowUps = '/more/meetings/follow-ups';
+  static const meetingTemplates = '/more/meetings/templates';
+  static const meetingSettings = '/more/meetings/settings';
+  static const alexaVoiceGateway = '/more/alexa-voice-gateway';
+  static const projectsIntelligence = '/projects-intelligence';
+  static const projectsIntelligenceLegacy = '/more/projects-intelligence';
+  static const knowledgeLibrary = '/more/knowledge-library';
+  static const commandDeck = '/more/command-deck';
+  static const omegaOsFolderHealth = '/more/omega-os-health';
   static const journal = '/journal';
+  static const newJournal = '/journal/new';
   static const learning = '/learning';
+  static const newLearning = '/learning/new';
   static const content = '/content';
+  static const newContent = '/content/new';
   static const business = '/business';
+  static const newBusiness = '/business/new';
+  static String editBusiness(String businessId) => '/business/$businessId/edit';
   static const wellbeing = '/wellbeing';
+  static const newWellbeing = '/wellbeing/new';
   static const inbox = '/inbox';
+  static const newInbox = '/inbox/new';
   static const settings = '/settings';
+  static const companyCommandCentre = '/modules/company-command-centre';
+  static const educationLearningHub = '/modules/education-learning-hub';
+  static const omegaKnowledgeEngine = '/modules/omega-knowledge-engine';
+  static const omegaEngineeringStudio = '/modules/omega-engineering-studio';
+  static const modulePackages = '/module-packages';
+  static String modulePackage(String moduleId) => '$modulePackages/$moduleId';
+  static const securityLock = '/security-lock';
+  static String securityLockWithResume(String route) {
+    final trimmedRoute = route.trim();
+    if (trimmedRoute.isEmpty) {
+      return securityLock;
+    }
+
+    final parsedRoute = Uri.tryParse(trimmedRoute);
+    if (parsedRoute == null || parsedRoute.path.isEmpty) {
+      return securityLock;
+    }
+
+    if (parsedRoute.path == securityLock) {
+      return securityLock;
+    }
+
+    return Uri(
+      path: securityLock,
+      queryParameters: {'resume': trimmedRoute},
+    ).toString();
+  }
+
+  static const voiceStartupGate = '/voice/startup-gate';
+  static const voice = '/voice';
+  static const voiceConversation = '/voice/conversation';
+  static const voiceNotes = '/voice/notes';
+  static const voiceMeetings = '/voice/meetings';
+  static const voiceDashboardAssistant = '/voice/assistant';
+  static const voiceMicrogrow = '/voice/microgrow';
+  static const voiceAudit = '/voice/audit';
+  static const voiceSettings = '/voice/settings';
   static const voiceAssistant = '/voice-assistant';
+  static const voiceHomeRoute = '/voice?view=home';
+
+  static String voiceHome() => voiceHomeRoute;
+  static const calmUiDemo = '/dashboard/calm-ui-demo';
+
+  static String omegaEngineeringStudioSection(String section) {
+    final trimmed = section.trim();
+    if (trimmed.isEmpty) {
+      return omegaEngineeringStudio;
+    }
+    return '$omegaEngineeringStudio/$trimmed';
+  }
+
+  static String launchpadCampaign(String campaignId) {
+    return '/launchpad/campaigns/$campaignId';
+  }
+
+  static String launchpadCampaignSection(String campaignId, String section) {
+    return '/launchpad/campaigns/$campaignId/$section';
+  }
+
+  static String projectDetail(String projectId) => '/projects/$projectId';
+
+  static String editProject(String projectId) => '/projects/$projectId/edit';
+
+  static String editTask(String taskId) => '/tasks/$taskId/edit';
+
+  static String editJournal(String journalEntryId) {
+    return '/journal/$journalEntryId/edit';
+  }
+
+  static String editLearning(String learningItemId) {
+    return '/learning/$learningItemId/edit';
+  }
+
+  static String editContent(String contentItemId) {
+    return '/content/$contentItemId/edit';
+  }
+
+  static String meetingDetail(String meetingId) {
+    return '/more/meetings/$meetingId';
+  }
+
+  static String newTaskForProject(String projectId) {
+    return Uri(
+      path: newTask,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newTaskWithContext({
+    String? projectId,
+    String? title,
+    String? description,
+    String? notes,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (title != null && title.isNotEmpty) {
+      queryParameters['title'] = title;
+    }
+    if (description != null && description.isNotEmpty) {
+      queryParameters['description'] = description;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      queryParameters['notes'] = notes;
+    }
+
+    return Uri(path: newTask, queryParameters: queryParameters).toString();
+  }
+
+  static String newJournalForProject(String projectId) {
+    return Uri(
+      path: newJournal,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newJournalWithContext({
+    String? projectId,
+    String? title,
+    String? whatIWorkedOn,
+    String? whatILearned,
+    String? nextActions,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (title != null && title.isNotEmpty) {
+      queryParameters['title'] = title;
+    }
+    if (whatIWorkedOn != null && whatIWorkedOn.isNotEmpty) {
+      queryParameters['whatIWorkedOn'] = whatIWorkedOn;
+    }
+    if (whatILearned != null && whatILearned.isNotEmpty) {
+      queryParameters['whatILearned'] = whatILearned;
+    }
+    if (nextActions != null && nextActions.isNotEmpty) {
+      queryParameters['nextActions'] = nextActions;
+    }
+
+    return Uri(path: newJournal, queryParameters: queryParameters).toString();
+  }
+
+  static String newLearningForProject(String projectId) {
+    return Uri(
+      path: newLearning,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newLearningWithContext({
+    String? projectId,
+    String? topic,
+    String? reason,
+    String? resourceLink,
+    String? notes,
+    String? nextStep,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (topic != null && topic.isNotEmpty) {
+      queryParameters['topic'] = topic;
+    }
+    if (reason != null && reason.isNotEmpty) {
+      queryParameters['reason'] = reason;
+    }
+    if (resourceLink != null && resourceLink.isNotEmpty) {
+      queryParameters['resourceLink'] = resourceLink;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      queryParameters['notes'] = notes;
+    }
+    if (nextStep != null && nextStep.isNotEmpty) {
+      queryParameters['nextStep'] = nextStep;
+    }
+
+    return Uri(path: newLearning, queryParameters: queryParameters).toString();
+  }
+
+  static String newContentForProject(String projectId) {
+    return Uri(
+      path: newContent,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String newContentWithContext({
+    String? projectId,
+    String? title,
+    String? draftText,
+    String? imagePrompt,
+    String? notes,
+  }) {
+    final queryParameters = <String, String>{};
+    if (projectId != null && projectId.isNotEmpty) {
+      queryParameters['projectId'] = projectId;
+    }
+    if (title != null && title.isNotEmpty) {
+      queryParameters['title'] = title;
+    }
+    if (draftText != null && draftText.isNotEmpty) {
+      queryParameters['draftText'] = draftText;
+    }
+    if (imagePrompt != null && imagePrompt.isNotEmpty) {
+      queryParameters['imagePrompt'] = imagePrompt;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      queryParameters['notes'] = notes;
+    }
+
+    return Uri(path: newContent, queryParameters: queryParameters).toString();
+  }
+
+  static String newBusinessForProject(String projectId) {
+    return Uri(
+      path: newBusiness,
+      queryParameters: {'projectId': projectId},
+    ).toString();
+  }
+
+  static String treasuryWizardFor(String flow, {int? step}) {
+    final queryParameters = <String, String>{'flow': flow};
+    if (step != null && step >= 0) {
+      queryParameters['step'] = step.toString();
+    }
+    return Uri(
+      path: treasuryWizard,
+      queryParameters: queryParameters,
+    ).toString();
+  }
 }

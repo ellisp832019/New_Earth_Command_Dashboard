@@ -1,0 +1,20 @@
+{
+  "mappings": [
+    {
+      "dashboard_project_id": "microgrow",
+      "repo_id": "microgrow"
+    },
+    {
+      "dashboard_project_id": "new_earth_dashboard",
+      "repo_id": "new_earth_dashboard"
+    },
+    {
+      "dashboard_project_id": "new_earth_living",
+      "repo_id": "new_earth_living"
+    },
+    {
+      "dashboard_project_id": "biocalm",
+      "repo_id": "biocalm"
+    }
+  ]
+}

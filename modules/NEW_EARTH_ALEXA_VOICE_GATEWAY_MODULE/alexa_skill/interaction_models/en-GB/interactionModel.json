@@ -1,0 +1,121 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "new earth dashboard",
+      "intents": [
+        {
+          "name": "GetTodaySummaryIntent",
+          "slots": [],
+          "samples": [
+            "what am I working on today",
+            "give me my summary",
+            "what is my dashboard summary",
+            "what is today's plan",
+            "tell me my focus for today"
+          ]
+        },
+        {
+          "name": "GetMicroGrowStatusIntent",
+          "slots": [],
+          "samples": [
+            "what is micro grow status",
+            "check micro grow",
+            "how is micro grow doing",
+            "read my grow status",
+            "tell me the grow room status"
+          ]
+        },
+        {
+          "name": "GetProjectStatusIntent",
+          "slots": [],
+          "samples": [
+            "what is project status",
+            "check project status",
+            "give me project status",
+            "read project progress",
+            "tell me project status"
+          ]
+        },
+        {
+          "name": "AddDashboardNoteIntent",
+          "slots": [
+            {
+              "name": "note",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "add a note {note}",
+            "save note {note}",
+            "log this note {note}",
+            "remember this dashboard note {note}"
+          ]
+        },
+        {
+          "name": "AddTaskIntent",
+          "slots": [
+            {
+              "name": "task",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "add task {task}",
+            "create task {task}",
+            "put {task} on my task list",
+            "add {task} to my dashboard tasks"
+          ]
+        },
+        {
+          "name": "StartFocusModeIntent",
+          "slots": [],
+          "samples": [
+            "start focus mode",
+            "begin focus mode",
+            "start a build session",
+            "start deep work",
+            "activate focus mode"
+          ]
+        },
+        {
+          "name": "ListNextTasksIntent",
+          "slots": [],
+          "samples": [
+            "what are my next tasks",
+            "list my next tasks",
+            "what should I do next",
+            "read my task list",
+            "what is next"
+          ]
+        },
+        {
+          "name": "GatewayHealthIntent",
+          "slots": [],
+          "samples": [
+            "check the gateway",
+            "is the voice gateway working",
+            "check voice system health",
+            "test the dashboard gateway"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}

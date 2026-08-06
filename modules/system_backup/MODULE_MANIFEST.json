@@ -1,0 +1,31 @@
+{
+  "module_id": "system_backup",
+  "module_name": "Backup Guardian",
+  "dashboard_section": "Systems",
+  "version": "1.1.0",
+  "status": "ready_for_build",
+  "source_default": "D:/",
+  "backup_target_default": "E:/NEW_EARTH_BACKUP",
+  "local_first": true,
+  "privacy": "no_cloud_required",
+  "runtime_status_file": "modules/system_backup/runtime/latest_status.json",
+  "primary_actions": [
+    "dry_run",
+    "backup_now",
+    "verify_latest",
+    "restore_dry_run",
+    "open_backup_folder",
+    "view_report"
+  ],
+  "current_build_phase": "V1",
+  "future_phases_included": [
+    "V2",
+    "V3"
+  ],
+  "phase_rule": "Build V1 first. Treat V2 and V3 as future work until V1 is stable.",
+  "roadmap_docs": [
+    "docs/roadmap/V1_V2_V3_ROADMAP.md",
+    "docs/roadmap/FUTURE_WORK_REGISTER.md",
+    "docs/roadmap/PHASE_GATES.md"
+  ]
+}

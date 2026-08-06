@@ -1,0 +1,22 @@
+{
+  "id": "newearth.obsidian_sync",
+  "name": "Obsidian Sync",
+  "version": "0.1.0",
+  "category": "Knowledge & Research",
+  "description": "Template module for local-first Obsidian vault mirroring and project memory workflows.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": [
+    "file_read",
+    "file_write_project_only",
+    "vault_access",
+    "scheduled_sync"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/OBSIDIAN_SYNC",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Omega Experiment",
+  "type": "object",
+  "required": [
+    "experiment_id",
+    "title",
+    "project",
+    "status",
+    "category",
+    "objective",
+    "hypothesis"
+  ],
+  "properties": {
+    "experiment_id": {
+      "type": "string",
+      "pattern": "^EXP-[0-9]{4}$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "IDEA",
+        "PLANNED",
+        "READY",
+        "RUNNING",
+        "BLOCKED",
+        "ANALYSING",
+        "COMPLETE",
+        "ARCHIVED"
+      ]
+    },
+    "category": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "created_date": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "hypothesis": {
+      "type": "string"
+    },
+    "software_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hardware_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "results_summary": {
+      "type": "string"
+    },
+    "conclusion": {
+      "type": "string"
+    },
+    "lessons_learned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flutter: quick analyze Omega + Modules",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "analyze",
+        "lib/features/omega_knowledge_engine/presentation/omega_knowledge_engine_screen.dart",
+        "lib/features/modules/module_card.dart"
+      ],
+      "problemMatcher": [
+        "$dart-analyzer"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: get + quick analyze",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Flutter: pub get",
+        "Flutter: quick analyze Omega + Modules"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: get + analyze + test",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Flutter: pub get",
+        "Flutter: quick analyze Omega + Modules",
+        "Flutter: test"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: analyze full workspace",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "analyze"
+      ],
+      "problemMatcher": [
+        "$dart-analyzer"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: format project",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "format",
+        "lib",
+        "test"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: pub get",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "pub",
+        "get"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: clean",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "clean"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: test",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "test"
+      ],
+      "problemMatcher": [
+        "$dart-analyzer"
+      ],
+      "group": "test"
+    },
+    {
+      "label": "Flutter: run Windows",
+      "type": "process",
+      "command": "flutter",
+      "args": [
+        "run",
+        "-d",
+        "windows"
+      ],
+      "group": "test"
+    },
+    {
+      "label": "Flutter: run Chrome",
+      "type": "process",
+      "command": "flutter",
+      "args": [
+        "run",
+        "-d",
+        "chrome"
+      ],
+      "group": "test"
+    },
+    {
+      "label": "Flutter: build Windows",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "build",
+        "windows"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: build Web",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/run_flutter_task.ps1",
+        "build",
+        "web"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: build all local",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Flutter: build Windows",
+        "Flutter: build Web"
+      ],
+      "group": "build"
+    }
+  ]
+}

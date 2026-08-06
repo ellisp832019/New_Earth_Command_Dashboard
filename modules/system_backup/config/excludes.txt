@@ -1,0 +1,16 @@
+.git
+node_modules
+build
+dist
+.cache
+.gradle
+.flutter_tool
+.dart_tool
+__pycache__
+.pytest_cache
+target
+tmp
+temp
+logs
+.local_backup_runtime
+backup_tmp

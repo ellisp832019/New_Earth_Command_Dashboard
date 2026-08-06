@@ -133,7 +133,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   go_router: ^14.6.2
   drift: ^2.22.1
-  sqlite3_flutter_libs: ^0.5.26
+  sqlite3: ^3.3.1
   path_provider: ^2.1.5
   path: ^1.9.0
   uuid: ^4.5.1
@@ -360,7 +360,7 @@ From the folder where you want the project:
 flutter create new_earth_command_dashboard
 cd new_earth_command_dashboard
 Then add packages:
-flutter pub add flutter_riverpod go_router drift sqlite3_flutter_libs path_provider path uuid intl
+flutter pub add flutter_riverpod go_router drift sqlite3 path_provider path uuid intl
 flutter pub add --dev drift_dev build_runner flutter_lints
 Then run:
 flutter pub get
@@ -391,7 +391,7 @@ Add:
 flutter_riverpod
 go_router
 drift
-sqlite3_flutter_libs
+sqlite3
 path_provider
 path
 uuid

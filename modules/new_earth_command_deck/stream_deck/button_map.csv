@@ -1,0 +1,14 @@
+Page,Button,Action,Target,Safety
+Main,Dashboard Home,Open URL,http://localhost:3000,Safe
+Main,Start Meeting,Run Script,scripts/create_meeting.py,Safe
+Main,Start Build Session,Run Script,scripts/create_build_session.py,Safe
+Main,Create Codex Handoff,Run Script,scripts/create_codex_handoff.py,Safe
+Main,MicroGrow,Open Dashboard Page,/microgrow,Safe
+Main,BioCalm,Open Dashboard Page,/biocalm,Safe
+Main,New Earth Living,Open Dashboard Page,/new-earth-living,Safe
+Main,Launchpad,Open Dashboard Page,/launchpad,Safe
+Main,OBS Start Recording,Hotkey,Ctrl+Alt+R,Confirm
+Main,OBS Stop Recording,Hotkey,Ctrl+Alt+S,Confirm
+MicroGrow,Firmware Build,Run Command,platformio run,Safe
+MicroGrow,Firmware Upload,Run Command,platformio run --target upload,Confirm
+MicroGrow,OTA Manager,Open Dashboard Page,/microgrow/ota,Confirm

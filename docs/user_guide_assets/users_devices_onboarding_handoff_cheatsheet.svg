@@ -1,0 +1,40 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1000" fill="#07131C"/>
+  <rect x="56" y="48" width="1488" height="904" rx="32" fill="#102332" stroke="#1E445B" stroke-width="2"/>
+  <text x="102" y="116" fill="#B7F171" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">PRINT / LAMINATE REFERENCE</text>
+  <text x="102" y="164" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="48" font-weight="700">Users &amp; Devices Handoff Cheat Sheet</text>
+  <text x="102" y="206" fill="#9BB0C0" font-family="Segoe UI, Arial, sans-serif" font-size="22">Use this after onboarding to confirm the local route is truly ready.</text>
+
+  <rect x="102" y="264" width="432" height="594" rx="28" fill="#0E1F2C" stroke="#58C3FF" stroke-width="2"/>
+  <text x="138" y="320" fill="#58C3FF" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">1. Before You Verify</text>
+  <text x="138" y="372" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Correct local user selected</text>
+  <text x="138" y="412" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Role and permissions assigned</text>
+  <text x="138" y="452" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Primary PIN created</text>
+  <text x="138" y="492" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Trusted device linked</text>
+  <text x="138" y="532" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Latest audit event visible</text>
+  <text x="138" y="588" fill="#9BB0C0" font-family="Segoe UI, Arial, sans-serif" font-size="20">If one of these is missing, stop and fix it before trying to unlock.</text>
+
+  <rect x="586" y="264" width="432" height="594" rx="28" fill="#0E1F2C" stroke="#63D0C2" stroke-width="2"/>
+  <text x="622" y="320" fill="#63D0C2" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">2. What Admins Should Watch</text>
+  <text x="622" y="372" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Ready users count</text>
+  <text x="622" y="412" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Missing role users</text>
+  <text x="622" y="452" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Missing primary PIN users</text>
+  <text x="622" y="492" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Missing trusted device users</text>
+  <text x="622" y="532" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Pending approvals</text>
+  <text x="622" y="572" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Trust confirmations in audit</text>
+  <text x="622" y="628" fill="#9BB0C0" font-family="Segoe UI, Arial, sans-serif" font-size="20">Use the Onboarding Report screen to filter the list and focus one user.</text>
+
+  <rect x="1070" y="264" width="430" height="594" rx="28" fill="#0E1F2C" stroke="#FFCC66" stroke-width="2"/>
+  <text x="1106" y="320" fill="#FFCC66" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">3. Final Handoff Sequence</text>
+  <text x="1106" y="372" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Open Onboarding Report</text>
+  <text x="1106" y="412" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Select the user</text>
+  <text x="1106" y="452" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Read the print-style handoff sheet</text>
+  <text x="1106" y="492" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Copy the summary if needed</text>
+  <text x="1106" y="532" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Open Security Lock</text>
+  <text x="1106" y="572" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Enter the real primary PIN</text>
+  <text x="1106" y="612" fill="#F4F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="22">• Confirm the route unlocks</text>
+  <text x="1106" y="668" fill="#9BB0C0" font-family="Segoe UI, Arial, sans-serif" font-size="20">If unlock fails, compare the result with the latest audit evidence first.</text>
+
+  <rect x="102" y="894" width="1398" height="34" rx="17" fill="#142E3F"/>
+  <text x="132" y="917" fill="#B7F171" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Screens to use: Users &amp; Devices → Onboarding → Operator Progress Board / Completion Summary / Onboarding Report → Security Lock</text>
+</svg>

@@ -1,0 +1,66 @@
+engine:
+  name: 26_OMEGA_KNOWLEDGE_ENGINE
+  version: 1.0.0
+  mode: scan_report_only
+  safety_default: true
+
+paths:
+  repo_root: ".."
+  output_dir: "output"
+  obsidian_export_dir: "output/obsidian_export"
+  omega_os_root_windows: "D:\\NEW_EARTH_OMEGA_OS_PACK"
+  obsidian_vault_windows: "D:\\NEW_EARTH_OMEGA_OS_PACK\\09_KNOWLEDGE_VAULT_OBSIDIAN"
+
+scan:
+  include_extensions:
+    - .py
+    - .dart
+    - .cpp
+    - .c
+    - .h
+    - .hpp
+    - .ino
+    - .js
+    - .ts
+    - .tsx
+    - .jsx
+    - .md
+    - .yaml
+    - .yml
+    - .json
+  ignore_dirs:
+    - .git
+    - .dart_tool
+    - build
+    - dist
+    - node_modules
+    - .venv
+    - venv
+    - vendor
+    - __pycache__
+    - .idea
+    - .vscode
+    - exports
+    - output
+  max_file_size_kb: 512
+
+commenting:
+  auto_apply: false
+  generate_suggestions_only: true
+  require_backup_before_apply: true
+  comment_the_why_not_only_the_what: true
+
+knowledge:
+  generate_learning_notes: true
+  generate_architecture_map: true
+  generate_project_memory: true
+  generate_comment_report: true
+  generate_obsidian_export: true
+
+projects:
+  known_new_earth_projects:
+    - MicroGrow
+    - BioCalm
+    - New Earth Living
+    - New Earth Dashboard
+    - Omega OS

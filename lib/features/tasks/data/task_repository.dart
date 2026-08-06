@@ -26,6 +26,7 @@ class TaskRepository {
   }) async {
     final timestamp = _now();
     final taskId = 'task-${_uuid.v4()}';
+    final isCompleted = status == 'Done';
 
     await _database
         .into(_database.tasks)
@@ -42,6 +43,7 @@ class TaskRepository {
             energyLevel: Value(energyLevel),
             estimatedMinutes: Value(estimatedMinutes),
             notes: Value(notes),
+            completedAt: Value(isCompleted ? timestamp : null),
             createdAt: timestamp,
             updatedAt: timestamp,
           ),
@@ -54,6 +56,50 @@ class TaskRepository {
     return (_database.select(
       _database.tasks,
     )..where((table) => table.taskId.equals(taskId))).getSingle();
+  }
+
+  Future<Task> updateTask({
+    required String taskId,
+    required String title,
+    String? projectId,
+    String? description,
+    String? category,
+    required String priority,
+    required String status,
+    String? energyLevel,
+    int? estimatedMinutes,
+    String? notes,
+  }) async {
+    final existing = await getById(taskId);
+    final timestamp = _now();
+    final isCompleted = status == 'Done';
+    final isParked = status == 'Parked';
+    final isBlocked = status == 'Blocked';
+
+    await (_database.update(
+      _database.tasks,
+    )..where((table) => table.taskId.equals(taskId))).write(
+      TasksCompanion(
+        projectId: Value(projectId),
+        title: Value(title),
+        description: Value(description),
+        category: Value(category),
+        priority: Value(priority),
+        status: Value(status),
+        energyLevel: Value(energyLevel),
+        estimatedMinutes: Value(estimatedMinutes),
+        notes: Value(notes),
+        completedAt: Value(
+          isCompleted ? (existing.completedAt ?? timestamp) : null,
+        ),
+        isTopThree: Value(
+          isCompleted || isParked || isBlocked ? false : existing.isTopThree,
+        ),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return getById(taskId);
   }
 
   Future<List<Task>> getActiveTasks() {
@@ -87,6 +133,15 @@ class TaskRepository {
     );
   }
 
+  Future<void> moveToToday(String taskId) async {
+    final timestamp = _now();
+    await (_database.update(
+      _database.tasks,
+    )..where((table) => table.taskId.equals(taskId))).write(
+      TasksCompanion(status: const Value('Today'), updatedAt: Value(timestamp)),
+    );
+  }
+
   Future<void> parkTask(String taskId) async {
     final timestamp = _now();
     await (_database.update(
@@ -96,6 +151,19 @@ class TaskRepository {
         status: const Value('Parked'),
         updatedAt: Value(timestamp),
         isTopThree: const Value(false),
+      ),
+    );
+  }
+
+  Future<void> archiveTask(String taskId) async {
+    final timestamp = _now();
+    await (_database.update(
+      _database.tasks,
+    )..where((table) => table.taskId.equals(taskId))).write(
+      TasksCompanion(
+        isArchived: const Value(true),
+        isTopThree: const Value(false),
+        updatedAt: Value(timestamp),
       ),
     );
   }

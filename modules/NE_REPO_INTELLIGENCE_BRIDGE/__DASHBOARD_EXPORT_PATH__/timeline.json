@@ -1,0 +1,21 @@
+﻿{
+    "generated_at":  "2026-06-15T14:30:27",
+    "timeline":  [
+                     {
+                         "stage":  "Setup",
+                         "status":  "complete"
+                     },
+                     {
+                         "stage":  "First sync",
+                         "status":  "current"
+                     },
+                     {
+                         "stage":  "Dashboard integration",
+                         "status":  "next"
+                     },
+                     {
+                         "stage":  "Safe AI voice layer context",
+                         "status":  "future"
+                     }
+                 ]
+}

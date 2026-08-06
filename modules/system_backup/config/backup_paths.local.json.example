@@ -1,0 +1,24 @@
+{
+  "source_drive": "D:/",
+  "backup_target": "E:/NEW_EARTH_BACKUP",
+  "mirror_folder": "E:/NEW_EARTH_BACKUP/mirror",
+  "reports_folder": "E:/NEW_EARTH_BACKUP/reports",
+  "manifests_folder": "E:/NEW_EARTH_BACKUP/manifests",
+  "restore_test_folder": "D:/_RESTORE_TEST_AREA",
+  "verify_after_backup": true,
+  "create_manifest": true,
+  "schedule": {
+    "enabled": true,
+    "daily_time": "02:00",
+    "weekly_day": "Sunday",
+    "monthly_day": 1,
+    "stale_after_days": 2
+  },
+  "mode": "mirror",
+  "retention": {
+    "quick_keep": 7,
+    "daily_keep": 7,
+    "weekly_keep": 4,
+    "monthly_keep": 12
+  }
+}

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Earth Command Dashboard - Test Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #111827;
+      --muted: #4b5563;
+      --line: #d1d5db;
+      --soft: #f9fafb;
+      --accent: #14532d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 28px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: white;
+      line-height: 1.45;
+    }
+
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    h2 {
+      margin: 24px 0 8px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 4px;
+    }
+
+    h3 {
+      margin: 18px 0 6px;
+      font-size: 15px;
+    }
+
+    p {
+      margin: 0 0 10px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    ol, ul {
+      margin: 8px 0 10px 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 4px 0;
+    }
+
+    .checklist {
+      list-style: none;
+      margin-left: 0;
+      padding-left: 0;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 7px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .cb {
+      width: 14px;
+      height: 14px;
+      border: 1.8px solid #111827;
+      flex: 0 0 14px;
+      margin-top: 3px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .commands {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 18px;
+      margin-top: 8px;
+    }
+
+    .commands code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #f3f4f6;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .page-break {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .note-line {
+      margin-top: 8px;
+      border-bottom: 1px solid var(--line);
+      height: 24px;
+    }
+
+    @media print {
+      body {
+        padding: 14mm;
+      }
+
+      .box {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>New Earth Command Dashboard - Test Plan</h1>
+    <div class="meta">
+      Print this sheet, then check off each item as you test the app by hand.
+    </div>
+
+    <section class="box">
+      <h2>Before You Start</h2>
+      <ol>
+        <li>Open the project in VS Code or your editor of choice.</li>
+        <li>Run <code>flutter pub get</code> if dependencies are missing.</li>
+        <li>Run the baseline checks: <code>flutter analyze</code> and <code>flutter test</code>.</li>
+        <li>Start the app with <code>flutter run -d windows</code>.</li>
+      </ol>
+    </section>
+
+    <section class="box">
+      <h2>Quick Smoke Pass</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>App launches without errors.</span></li>
+        <li><span class="cb"></span><span>Dashboard opens as the landing screen.</span></li>
+        <li><span class="cb"></span><span>Bottom navigation works.</span></li>
+        <li><span class="cb"></span><span>More screen opens and closes normally.</span></li>
+        <li><span class="cb"></span><span>Projects screen opens.</span></li>
+        <li><span class="cb"></span><span>Tasks screen opens.</span></li>
+        <li><span class="cb"></span><span>Planner screen opens.</span></li>
+        <li><span class="cb"></span><span>Each supporting screen under More loads cleanly.</span></li>
+        <li><span class="cb"></span><span>Back buttons return you to the previous screen.</span></li>
+      </ul>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section>
+      <h2>Dashboard</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Dashboard shows the current day, top focus, and summary cards.</span></li>
+        <li><span class="cb"></span><span>Top 3 tasks are visible when present.</span></li>
+        <li><span class="cb"></span><span>Quick capture buttons open the right flow.</span></li>
+        <li><span class="cb"></span><span>Voice Capture opens the Voice Assistant.</span></li>
+        <li><span class="cb"></span><span>Dashboard links to projects, tasks, planner, and More work.</span></li>
+        <li><span class="cb"></span><span>Remove or update a Top 3 task from the dashboard if the control is available.</span></li>
+        <li><span class="cb"></span><span>Dashboard layout stays calm and readable at normal window size.</span></li>
+        <li><span class="cb"></span><span>Dashboard still looks usable after resizing the window narrower.</span></li>
+      </ul>
+
+      <h2>Projects</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Projects list loads.</span></li>
+        <li><span class="cb"></span><span>A project card can be opened.</span></li>
+        <li><span class="cb"></span><span>Add project works if the screen exposes it.</span></li>
+        <li><span class="cb"></span><span>Edit project loads existing values.</span></li>
+        <li><span class="cb"></span><span>Project detail shows purpose, status, progress, next action, and notes.</span></li>
+        <li><span class="cb"></span><span>Project detail shows active and blocked tasks.</span></li>
+        <li><span class="cb"></span><span>Project detail surfaces recent linked Journal entries, Learning items, Content ideas, and Business opportunities.</span></li>
+        <li><span class="cb"></span><span>Project-aware create shortcuts open the correct create screen with the project preselected.</span></li>
+        <li><span class="cb"></span><span>Archive flow prompts for confirmation and behaves correctly.</span></li>
+        <li><span class="cb"></span><span>Returning to Projects after an edit or archive keeps the list in sync.</span></li>
+      </ul>
+
+      <h2>Tasks</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Tasks list loads local items.</span></li>
+        <li><span class="cb"></span><span>Add task creates a new task.</span></li>
+        <li><span class="cb"></span><span>Edit task loads the saved values.</span></li>
+        <li><span class="cb"></span><span>Save updates are reflected after returning to the list.</span></li>
+        <li><span class="cb"></span><span>Status changes persist.</span></li>
+        <li><span class="cb"></span><span>Project assignment persists.</span></li>
+        <li><span class="cb"></span><span>Top 3 task controls work.</span></li>
+        <li><span class="cb"></span><span>A fourth Top 3 task is blocked if that rule is enforced.</span></li>
+        <li><span class="cb"></span><span>Move to Today works.</span></li>
+        <li><span class="cb"></span><span>Parked and Done states work.</span></li>
+        <li><span class="cb"></span><span>Archive flow prompts for confirmation.</span></li>
+        <li><span class="cb"></span><span>Search works.</span></li>
+        <li><span class="cb"></span><span>Search combines correctly with filters.</span></li>
+        <li><span class="cb"></span><span>Status filter works.</span></li>
+        <li><span class="cb"></span><span>Project filter works.</span></li>
+      </ul>
+
+      <h2>Planner</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Planner loads the daily plan.</span></li>
+        <li><span class="cb"></span><span>Today's focus and planning fields display correctly.</span></li>
+        <li><span class="cb"></span><span>Top 3 tasks are shown in the planner where expected.</span></li>
+        <li><span class="cb"></span><span>Save actions update the dashboard.</span></li>
+        <li><span class="cb"></span><span>Evening review fields save correctly.</span></li>
+        <li><span class="cb"></span><span>Carry forward notes persist.</span></li>
+        <li><span class="cb"></span><span>Tomorrow focus persists.</span></li>
+      </ul>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section>
+      <h2>More Menu</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>More screen opens.</span></li>
+        <li><span class="cb"></span><span>Each supporting area is reachable.</span></li>
+        <li><span class="cb"></span><span>Each screen title is correct.</span></li>
+        <li><span class="cb"></span><span>Each screen has a sensible empty state if there is no data.</span></li>
+        <li><span class="cb"></span><span>Back navigation returns to More or the previous screen.</span></li>
+      </ul>
+
+      <h2>Journal</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Journal list opens.</span></li>
+        <li><span class="cb"></span><span>A new journal entry can be created.</span></li>
+        <li><span class="cb"></span><span>A linked journal entry can be created from Project Detail.</span></li>
+        <li><span class="cb"></span><span>Editing an existing journal entry loads the current values.</span></li>
+        <li><span class="cb"></span><span>Saving updates the list.</span></li>
+        <li><span class="cb"></span><span>Journal entries keep their project link after save.</span></li>
+      </ul>
+
+      <h2>Learning</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Learning list opens.</span></li>
+        <li><span class="cb"></span><span>A new learning item can be created.</span></li>
+        <li><span class="cb"></span><span>A linked learning item can be created from Project Detail.</span></li>
+        <li><span class="cb"></span><span>Editing an existing learning item works.</span></li>
+        <li><span class="cb"></span><span>Save updates the list.</span></li>
+        <li><span class="cb"></span><span>Project link persists.</span></li>
+      </ul>
+
+      <h2>Content</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Content list opens.</span></li>
+        <li><span class="cb"></span><span>A new content item can be created.</span></li>
+        <li><span class="cb"></span><span>A linked content item can be created from Project Detail.</span></li>
+        <li><span class="cb"></span><span>Editing an existing content item works.</span></li>
+        <li><span class="cb"></span><span>Save updates the list.</span></li>
+        <li><span class="cb"></span><span>Project link persists.</span></li>
+      </ul>
+
+      <h2>Business</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Business list opens.</span></li>
+        <li><span class="cb"></span><span>Add business opportunity works.</span></li>
+        <li><span class="cb"></span><span>Edit opportunity loads current values.</span></li>
+        <li><span class="cb"></span><span>The current business types and statuses match the app spec.</span></li>
+        <li><span class="cb"></span><span>Project link persists.</span></li>
+        <li><span class="cb"></span><span>Save updates are reflected in the list.</span></li>
+        <li><span class="cb"></span><span>Archive or blocked states behave as expected if available.</span></li>
+      </ul>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section>
+      <h2>Inbox</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Inbox opens.</span></li>
+        <li><span class="cb"></span><span>Only unprocessed items are shown.</span></li>
+        <li><span class="cb"></span><span>Parked items remain visible with parked status.</span></li>
+        <li><span class="cb"></span><span>Convert a task-like item into a Task.</span></li>
+        <li><span class="cb"></span><span>Convert a note into Journal, Content, Learning, or Business where appropriate.</span></li>
+        <li><span class="cb"></span><span>Converted items disappear from Inbox.</span></li>
+        <li><span class="cb"></span><span>Inbox records keep processed metadata.</span></li>
+      </ul>
+
+      <h2>Voice Assistant</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Voice Assistant opens from Dashboard or More.</span></li>
+        <li><span class="cb"></span><span>Windows voice typing opens without forcing the app out of fullscreen.</span></li>
+        <li><span class="cb"></span><span>Transcript preview can be edited with the keyboard.</span></li>
+        <li><span class="cb"></span><span>Backspace works normally inside the transcript field.</span></li>
+        <li><span class="cb"></span><span>Start, Stop, and Cancel behave sensibly.</span></li>
+        <li><span class="cb"></span><span>Mock transcript and paste transcript fallback work.</span></li>
+        <li><span class="cb"></span><span>The assistant suggests a type when the transcript clearly implies one.</span></li>
+        <li><span class="cb"></span><span>The assistant suggests a title when the transcript has a clear headline.</span></li>
+        <li><span class="cb"></span><span>The assistant suggests a project when the transcript names one.</span></li>
+        <li><span class="cb"></span><span>Structured fields can be edited before save.</span></li>
+        <li><span class="cb"></span><span>Saving as Task creates the correct local record.</span></li>
+        <li><span class="cb"></span><span>Saving as Journal creates the correct local record.</span></li>
+        <li><span class="cb"></span><span>Saving as Content creates the correct local record.</span></li>
+        <li><span class="cb"></span><span>Saving as Business creates the correct local record.</span></li>
+        <li><span class="cb"></span><span>Saving as Inbox Idea stores the item correctly.</span></li>
+        <li><span class="cb"></span><span>Codex Prompt remains a review-only action.</span></li>
+      </ul>
+
+      <h2>Settings</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>Settings screen opens.</span></li>
+        <li><span class="cb"></span><span>Any toggles or stored values load correctly.</span></li>
+        <li><span class="cb"></span><span>Settings changes persist after leaving and returning.</span></li>
+      </ul>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section class="box">
+      <h2>Deep Validation Pass</h2>
+      <ol>
+        <li>Create a project.</li>
+        <li>Add a task to that project.</li>
+        <li>Open Project Detail and confirm the task appears in the linked area.</li>
+        <li>Add a journal entry from Project Detail.</li>
+        <li>Add a learning item from Project Detail.</li>
+        <li>Add a content item from Project Detail.</li>
+        <li>Add a business opportunity from Project Detail.</li>
+        <li>Open Inbox and convert one item into a Task.</li>
+        <li>Use Voice Assistant to create one Task and one Journal entry.</li>
+        <li>Close the app.</li>
+        <li>Reopen the app.</li>
+        <li>Confirm the saved data is still there.</li>
+      </ol>
+    </section>
+
+    <section class="box">
+      <h2>Commands to Run</h2>
+      <div class="commands">
+        <div><code>flutter analyze</code></div>
+        <div><code>flutter test</code></div>
+        <div><code>flutter test test/widget_test.dart -r expanded</code></div>
+        <div><code>flutter build windows</code></div>
+        <div><code>flutter run -d windows</code></div>
+      </div>
+    </section>
+
+    <section class="box">
+      <h2>What to Record</h2>
+      <ul>
+        <li>Screen name</li>
+        <li>Exact action</li>
+        <li>Exact text if relevant</li>
+        <li>Whether it happened once or every time</li>
+        <li>Whether it was a UI issue, data issue, or route issue</li>
+        <li>Whether it still happens after restarting the app</li>
+      </ul>
+      <p class="small">Notes:</p>
+      <div class="note-line"></div>
+      <div class="note-line"></div>
+      <div class="note-line"></div>
+    </section>
+
+    <section class="box">
+      <h2>Acceptance Criteria</h2>
+      <ul class="checklist">
+        <li><span class="cb"></span><span>The app launches cleanly.</span></li>
+        <li><span class="cb"></span><span>Navigation feels stable.</span></li>
+        <li><span class="cb"></span><span>Create and edit flows save correctly.</span></li>
+        <li><span class="cb"></span><span>Project-linked items appear where expected.</span></li>
+        <li><span class="cb"></span><span>Inbox conversion works.</span></li>
+        <li><span class="cb"></span><span>Voice capture works on the supported path.</span></li>
+        <li><span class="cb"></span><span>The app survives close and reopen with data intact.</span></li>
+        <li><span class="cb"></span><span>Automated tests and analyzer checks pass.</span></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

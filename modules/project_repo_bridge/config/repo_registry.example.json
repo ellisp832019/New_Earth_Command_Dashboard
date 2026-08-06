@@ -1,0 +1,44 @@
+{
+  "repos": [
+    {
+      "id": "microgrow",
+      "name": "MicroGrow",
+      "repo_path": "D:/PROJECTS/microgrow",
+      "dashboard_project_id": "microgrow",
+      "omega_path": "D:/NEW_EARTH_OMEGA_OS_PACK/03_ACTIVE_PROJECTS/MicroGrow",
+      "status": "active",
+      "type": "hardware_software",
+      "current_phase": "PCB V0.1 preparation and diagnostics stabilization"
+    },
+    {
+      "id": "new_earth_dashboard",
+      "name": "New Earth Dashboard",
+      "repo_path": "D:/PROJECTS/new-earth-dashboard",
+      "dashboard_project_id": "new_earth_dashboard",
+      "omega_path": "D:/NEW_EARTH_OMEGA_OS_PACK/03_ACTIVE_PROJECTS/New_Earth_Dashboard",
+      "status": "active",
+      "type": "dashboard",
+      "current_phase": "Project intelligence and Omega OS integration"
+    },
+    {
+      "id": "new_earth_living",
+      "name": "New Earth Living",
+      "repo_path": "/home/peter/projects/new_earth_living",
+      "dashboard_project_id": "new_earth_living",
+      "omega_path": "/mnt/new-earth-omega/03_ACTIVE_PROJECTS/New_Earth_Living_App",
+      "status": "active",
+      "type": "flutter_app",
+      "current_phase": "Routines, progress and local-first app expansion"
+    },
+    {
+      "id": "biocalm",
+      "name": "BioCalm",
+      "repo_path": "D:/PROJECTS/biocalm",
+      "dashboard_project_id": "biocalm",
+      "omega_path": "D:/NEW_EARTH_OMEGA_OS_PACK/03_ACTIVE_PROJECTS/BioCalm",
+      "status": "active",
+      "type": "wearable_wellness",
+      "current_phase": "Dev board, development watch and New Earth Living integration"
+    }
+  ]
+}

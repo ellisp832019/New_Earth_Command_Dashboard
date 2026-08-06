@@ -1,5 +1,11 @@
 # Codex Task — Build New Earth Dashboard Voice Bridge v0.1
 
+## Status
+
+Complete. The Voice Bridge v0.1 work has been implemented, verified with `flutter analyze`, `flutter test`, and a Windows build, and kept review-first and local-first.
+
+Historical task record. This slice is complete and kept here for reference.
+
 ## Task Title
 
 Build the first safe version of the New Earth Dashboard Voice Bridge.
@@ -25,17 +31,32 @@ Do not build dangerous automation. Do not directly control MicroGrow hardware. D
 
 ---
 
-## Main Objective
+## Current Objective
 
-Create the first v0.1 scaffolding for the Voice Assistant feature.
+Make the Voice Assistant feel smarter and faster to start from by adding a voice wizard mode, a voice briefing layer, reusable voice starters, tap-to-reuse command history, and thread memory that keeps a conversation going across entries.
 
-This should include:
+The wake layer, dashboard dock, and full assistant should all share one voice session state machine so the app feels like a single assistant instead of separate voice surfaces.
 
-1. A Flutter feature folder for the Voice Assistant.
-2. A placeholder Voice Assistant screen.
-3. Simple models/services for voice command handling.
-4. A local Python bridge scaffold under `tools/voice_bridge`.
-5. Basic documentation updates if needed.
+This now includes:
+
+1. Dashboard access to Voice Capture.
+2. Reviewed transcript entry with live microphone, paste, and mock transcript support.
+3. Smart voice starter templates for common capture flows.
+4. Tap-to-reuse saved command history.
+5. A voice briefing card that explains the command and suggests the next sequence of actions.
+6. A wizard mode that asks one question at a time and assembles the draft from answers.
+7. A current thread card that keeps remembered voice context visible.
+8. A continue-thread action that resumes the current voice conversation in Wizard mode.
+9. Project linking.
+10. Local save actions for projects, tasks, journal entries, inbox ideas, content ideas, and business opportunities.
+11. Wake phrase detection and smart command macros for review, planning, and next-step prompts.
+12. Manual-review Codex prompt generation.
+13. Spoken assistant replies and briefings on Windows with selectable local voices.
+14. Windows startup gating that waits for a connected headset or headset microphone before the app fully opens.
+15. Focused tests for local persistence.
+16. Stronger Windows desktop speech capture that can use a local Whisper bridge before falling back to system dictation.
+17. A route-independent conversation dock that can surface the wake response on the dashboard when the assistant screen is still settling.
+18. Keep the wake layer, dashboard dock, and full assistant aligned through one shared voice session state machine so only one voice path owns listening or speaking at a time.
 
 ---
 
@@ -71,23 +92,29 @@ Create a `VoiceAssistantScreen` that includes:
 
 - Page title: `Voice Assistant`
 - Subtitle: `Speak, review, and turn your words into dashboard actions.`
-- A large placeholder microphone button.
+- A large local capture area.
+- Press-to-listen microphone controls: Start Listening, Stop, Cancel.
+- A paste transcript action.
 - A transcript preview text area.
+- Smart starter commands that can preload common voice workflows.
+- A voice briefing card that turns the current command into a numbered suggested sequence.
+- A wizard mode that steps through a conversation one answer at a time.
 - A command type selector with:
   - Task
   - Journal Entry
+  - Content Idea
+  - Business Opportunity
   - Codex Prompt
   - Idea
-- Action buttons:
-  - Save as Task
-  - Save as Journal Entry
-  - Send to Codex
-  - Save as Idea
+- One save/prepare action that follows the selected command type.
 - Command history section.
+- Command history items that can be tapped to restore a previous capture.
 
-The first version can use mock data and local in-memory state.
+Live microphone capture must be explicit and review-first. Do not add always-listening recording.
 
-Do not connect real microphone access yet unless the project already has a safe audio package installed.
+Do not connect cloud microphone transcription.
+
+If the project adds a local desktop speech bridge, it must still stay review-first and local-first.
 
 ---
 
@@ -110,6 +137,8 @@ Create an enum:
 enum VoiceCommandType {
   task,
   journalEntry,
+  contentIdea,
+  businessOpportunity,
   codexPrompt,
   idea,
 }
@@ -124,6 +153,7 @@ Create a simple service that can:
 - store commands in memory
 - return command history
 - create a Codex-safe prompt wrapper
+- save reviewed commands into existing local dashboard repositories/data
 
 The Codex-safe prompt wrapper should include:
 
@@ -156,6 +186,7 @@ For v0.1 this can be a placeholder command-line program that:
 5. Saves it to a local `logs/voice_commands.log` file.
 
 Do not require live microphone recording in v0.1.
+If the stronger desktop bridge is added, it should still degrade safely when dependencies are missing.
 
 ---
 
@@ -165,8 +196,8 @@ Create `tools/voice_bridge/README.md` explaining:
 
 - what the bridge is
 - how to run it
-- that v0.1 is text-input only
-- future plan for microphone transcription
+- that v0.1 was text-input only
+- that the bridge can now use local desktop speech capture when dependencies are installed
 - safety note that Codex prompts should be reviewed before execution
 
 ---
@@ -179,6 +210,7 @@ Create `tools/voice_bridge/README.md` explaining:
 - Do not add hardware control.
 - Do not add always-listening background audio.
 - Keep the feature local-first.
+- Review before saving or preparing prompts.
 
 ---
 
@@ -186,14 +218,23 @@ Create `tools/voice_bridge/README.md` explaining:
 
 This task is complete when:
 
-- `VoiceAssistantScreen` exists.
-- Voice command model exists.
-- Voice command service exists.
-- Widgets are split into reasonable small files.
-- Python bridge scaffold exists.
-- README exists.
-- The code compiles or is as close as possible based on the current repo structure.
-- Any required manual integration steps are listed at the end of the Codex response.
+- Voice Capture opens from Dashboard and More.
+- Voice Capture supports explicit live microphone transcription.
+- Voice Capture includes reusable smart starter commands.
+- Voice Capture includes a voice briefing card with a suggested sequence of actions.
+- Voice Capture includes a wizard mode that assembles the draft from guided answers.
+- Voice Capture includes remembered thread context and a continue-thread action.
+- A reviewed transcript can save as a Task.
+- A reviewed transcript can save as a Journal Entry.
+- A reviewed transcript can save as an Inbox Idea.
+- A reviewed transcript can save as a Content Idea.
+- A reviewed transcript can save as a Business Opportunity.
+- Codex prompts are generated for manual review only.
+- Saved voice history can be reused from the Voice Assistant screen.
+- The dashboard can surface a visible conversation dock when wake capture lands there before the full route opens, that dock can speak the captured reply through the configured voice output, it can offer quick follow-up chips that reopen the assistant with a preselected intent, and it can accept a short follow-up directly in the dock so the thread keeps moving without a full route hop.
+- `flutter analyze` passes.
+- `flutter test` passes.
+- Windows startup blocks until a headset or headset microphone is connected.
 
 ---
 

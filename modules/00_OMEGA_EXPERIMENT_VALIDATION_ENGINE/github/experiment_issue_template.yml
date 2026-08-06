@@ -1,0 +1,36 @@
+name: Omega Experiment
+description: Track an engineering experiment, validation test, simulation or evidence capture.
+title: "[EXP]: "
+labels: ["experiment", "omega", "validation"]
+body:
+  - type: input
+    id: experiment_id
+    attributes:
+      label: Experiment ID
+      placeholder: EXP-0001
+    validations:
+      required: true
+  - type: input
+    id: project
+    attributes:
+      label: Project
+      placeholder: MicroGrow
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Omega Completion Checklist
+      options:
+        - label: Test plan created
+        - label: Evidence captured
+        - label: Data imported
+        - label: Results analysed
+        - label: Lessons learned written
+        - label: Report generated

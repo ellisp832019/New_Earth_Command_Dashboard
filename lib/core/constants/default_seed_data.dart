@@ -20,6 +20,26 @@ class DefaultProjectSeed {
   final String nextAction;
 }
 
+class DefaultTaskSeed {
+  const DefaultTaskSeed({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.projectId,
+    required this.category,
+    required this.priority,
+    required this.status,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final String projectId;
+  final String category;
+  final String priority;
+  final String status;
+}
+
 abstract final class DefaultSeedData {
   static const settingsId = 'default-settings';
 
@@ -119,6 +139,209 @@ abstract final class DefaultSeedData {
       priority: 'Someday',
       currentMilestone: 'Keep future ideas parked and searchable.',
       nextAction: 'Capture ideas here instead of expanding scope today.',
+    ),
+  ];
+
+  static const futureTasks = [
+    DefaultTaskSeed(
+      id: 'future-task-inbox-triage-queue',
+      title: 'Inbox Triage Queue',
+      description:
+          'Add a faster Inbox workflow so unprocessed items can be converted into tasks, journal entries, content ideas, learning items, or business opportunities in one place.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-inbox-item-preview',
+      title: 'Inbox Item Preview',
+      description:
+          'Show a compact preview for Inbox items with the source text, suggested destination, and quick actions before processing.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-voice-shortcut-templates',
+      title: 'Voice Shortcut Templates',
+      description:
+          'Add natural voice templates like "task", "journal", "business", and "content" so captured speech turns into structured items more reliably.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-voice-capture-history',
+      title: 'Voice Capture History',
+      description:
+          'Keep a searchable list of recent voice captures so repeated ideas can be reused or turned into similar items later.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-smart-task-recommendations',
+      title: 'Smart Task Recommendations',
+      description:
+          'Improve the task suggestion strip so it can recommend the best next action based on status, Top 3, due date, and age.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'High',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-blocker-notes-for-tasks',
+      title: 'Blocker Notes for Tasks',
+      description:
+          'Let blocked tasks store a short blocker note so the reason for delay is visible when the task returns later.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-carry-forward-assistant',
+      title: 'Carry Forward Assistant',
+      description:
+          'Create a carry-forward flow that automatically suggests unfinished Top 3 and blocked tasks for the next day.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'High',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-task-due-date-support',
+      title: 'Task Due Date Support',
+      description:
+          'Add richer due date handling to task creation, editing, filtering, and dashboard surfacing.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-task-priority-review',
+      title: 'Task Priority Review',
+      description:
+          'Add a lightweight review surface for task priority changes so users can quickly keep the list honest.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-cross-module-search',
+      title: 'Cross-Module Search',
+      description:
+          'Add search across Tasks, Journal, Projects, Inbox, Content, Learning, and Business from one place.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-project-timeline-view',
+      title: 'Project Timeline View',
+      description:
+          'Build a timeline for each project that shows linked tasks, journal notes, learning items, content ideas, and business actions.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-project-health-summary',
+      title: 'Project Health Summary',
+      description:
+          'Show a compact project health summary with progress, recent activity, blockers, and next action.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-journal-tagging',
+      title: 'Journal Tagging',
+      description:
+          'Add tags and filters to Journal so build notes can be grouped by topic, module, or project phase.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-content-pipeline-states',
+      title: 'Content Pipeline States',
+      description:
+          'Make Content items easier to move through idea, draft, review, ready, and published states.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-business-follow-up-system',
+      title: 'Business Follow-Up System',
+      description:
+          'Add clearer follow-up tracking for business opportunities, including next contact date, status nudges, and next action prompts.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'High',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-learning-study-plan',
+      title: 'Learning Study Plan',
+      description:
+          'Give Learning items a simple study-plan flow with status, next step, and linked practice task.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-wellbeing-trend-view',
+      title: 'Wellbeing Trend View',
+      description:
+          'Add a simple wellbeing history view so energy, mood, and stress patterns are easier to notice over time.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-settings-export-and-backup',
+      title: 'Settings Export and Backup',
+      description:
+          'Add local export and backup tools so the database can be saved, inspected, or moved safely.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-dashboard-customization',
+      title: 'Dashboard Customization',
+      description:
+          'Allow dashboard cards to be reordered or hidden so the home screen can stay calm and personal.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'Medium',
+      status: 'Planned',
+    ),
+    DefaultTaskSeed(
+      id: 'future-task-desktop-voice-hardening',
+      title: 'Desktop Voice Hardening',
+      description:
+          'Strengthen the Windows voice path so microphone capture, focus handling, and fullscreen behavior stay smooth in daily use.',
+      projectId: 'project-future-ideas',
+      category: 'Planning',
+      priority: 'High',
+      status: 'Planned',
     ),
   ];
 }

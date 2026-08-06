@@ -1,0 +1,13 @@
+[
+  {
+    "request_id": "approval_example_001",
+    "timestamp": "2026-06-16T05:05:00Z",
+    "requested_by": "agent_ai_sandbox",
+    "device_id": "device_gaia_usb_assistant",
+    "target_module": "BACKUP_MODULE",
+    "action": "backup.run",
+    "status": "pending",
+    "risk_level": "medium",
+    "reason": "AI requested backup run."
+  }
+]

@@ -1,0 +1,7 @@
+.env
+config/command_deck.json
+logs/
+*.local.json
+__pycache__/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "SUPPORTER_10",
+    "name": "Supporter",
+    "price_gbp": 10,
+    "quantity_limit": null,
+    "estimated_cogs_gbp": 0,
+    "estimated_shipping_gbp": 0,
+    "notes": "Digital thank you and campaign updates."
+  },
+  {
+    "id": "FOUNDER_25",
+    "name": "Founding Supporter",
+    "price_gbp": 25,
+    "quantity_limit": 500,
+    "estimated_cogs_gbp": 2,
+    "estimated_shipping_gbp": 0,
+    "notes": "Name on founder wall / website."
+  },
+  {
+    "id": "COMMUNITY_50",
+    "name": "Early Community Access",
+    "price_gbp": 50,
+    "quantity_limit": 300,
+    "estimated_cogs_gbp": 5,
+    "estimated_shipping_gbp": 0,
+    "notes": "Private build updates, voting on grow profiles, early docs."
+  },
+  {
+    "id": "DEV_KIT_149",
+    "name": "MicroGrow Developer Kit",
+    "price_gbp": 149,
+    "quantity_limit": 100,
+    "estimated_cogs_gbp": 65,
+    "estimated_shipping_gbp": 8,
+    "notes": "ESP32 dev kit, sensor bundle, low-voltage relay board, docs."
+  },
+  {
+    "id": "STARTER_299",
+    "name": "MicroGrow Starter Kit",
+    "price_gbp": 299,
+    "quantity_limit": 75,
+    "estimated_cogs_gbp": 145,
+    "estimated_shipping_gbp": 15,
+    "notes": "Pre-assembled starter prototype kit subject to final scope."
+  },
+  {
+    "id": "PARTNER_499",
+    "name": "Founding Partner Edition",
+    "price_gbp": 499,
+    "quantity_limit": 25,
+    "estimated_cogs_gbp": 220,
+    "estimated_shipping_gbp": 20,
+    "notes": "Limited founding edition, deeper onboarding and recognition."
+  }
+]

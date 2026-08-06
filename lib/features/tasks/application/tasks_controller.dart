@@ -3,7 +3,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../dashboard/application/dashboard_controller.dart';
 import '../../planner/application/planner_controller.dart';
+import '../../projects/application/projects_controller.dart';
 import '../data/task_repository.dart';
+
+class TaskStatusFilterNotifier extends Notifier<String> {
+  @override
+  String build() => 'All';
+
+  void setFilter(String value) => state = value;
+}
+
+class TaskProjectFilterNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void setFilter(String? value) => state = value;
+}
+
+class TaskSearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void setQuery(String value) => state = value;
+
+  void clear() => state = '';
+}
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
@@ -15,8 +39,28 @@ final tasksProvider = FutureProvider<List<Task>>((ref) async {
   return ref.watch(taskRepositoryProvider).getActiveTasks();
 });
 
+final selectedTaskStatusFilterProvider =
+    NotifierProvider<TaskStatusFilterNotifier, String>(
+      TaskStatusFilterNotifier.new,
+    );
+
+final selectedTaskProjectFilterProvider =
+    NotifierProvider<TaskProjectFilterNotifier, String?>(
+      TaskProjectFilterNotifier.new,
+    );
+
+final taskSearchQueryProvider =
+    NotifierProvider<TaskSearchQueryNotifier, String>(
+      TaskSearchQueryNotifier.new,
+    );
+
 final tasksControllerProvider = Provider<TasksController>((ref) {
   return TasksController(ref);
+});
+
+final taskProvider = FutureProvider.family<Task, String>((ref, taskId) async {
+  await ref.watch(databaseReadyProvider.future);
+  return ref.watch(taskRepositoryProvider).getById(taskId);
 });
 
 class TasksController {
@@ -38,6 +82,89 @@ class TasksController {
     _refreshTaskViews();
   }
 
+  Future<void> moveTaskToInbox(String taskId) async {
+    await _updateTaskStatus(taskId, 'Inbox');
+  }
+
+  Future<void> moveTaskToPlanned(String taskId) async {
+    await _updateTaskStatus(taskId, 'Planned');
+  }
+
+  Future<void> moveTaskToToday(String taskId) async {
+    await _updateTaskStatus(taskId, 'Today');
+  }
+
+  Future<void> markTaskDone(String taskId) async {
+    await _updateTaskStatus(taskId, 'Done');
+  }
+
+  Future<void> markTaskBlocked(String taskId) async {
+    await _updateTaskStatus(taskId, 'Blocked');
+  }
+
+  Future<void> parkTask(String taskId) async {
+    await _updateTaskStatus(taskId, 'Parked');
+  }
+
+  Future<void> archiveTask(String taskId) async {
+    final task = await _ref.read(taskRepositoryProvider).getById(taskId);
+    final todayPlan = await _ref.read(todayPlanProvider.future);
+    final selectedTaskIds = _selectedTopTaskIds(todayPlan);
+    final isTopTask = selectedTaskIds.contains(taskId);
+
+    await _ref.read(taskRepositoryProvider).archiveTask(taskId);
+
+    if (isTopTask) {
+      await _ref
+          .read(dailyPlanRepositoryProvider)
+          .saveTopThreeTaskIds(
+            selectedTaskIds.where((id) => id != taskId).toList(),
+          );
+    }
+
+    _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
+    _ref.invalidate(taskProvider(taskId));
+  }
+
+  Future<void> _updateTaskStatus(String taskId, String status) async {
+    final task = await _ref.read(taskRepositoryProvider).getById(taskId);
+    List<String> selectedTaskIds = const [];
+    var isTopTask = false;
+
+    if (status == 'Done' || status == 'Parked' || status == 'Blocked') {
+      final todayPlan = await _ref.read(todayPlanProvider.future);
+      selectedTaskIds = _selectedTopTaskIds(todayPlan);
+      isTopTask = selectedTaskIds.contains(taskId);
+    }
+
+    await _ref
+        .read(taskRepositoryProvider)
+        .updateTask(
+          taskId: taskId,
+          title: task.title,
+          projectId: task.projectId,
+          description: task.description,
+          category: task.category,
+          priority: task.priority,
+          status: status,
+          energyLevel: task.energyLevel,
+          estimatedMinutes: task.estimatedMinutes,
+          notes: task.notes,
+        );
+
+    if ((status == 'Done' || status == 'Parked' || status == 'Blocked') &&
+        isTopTask) {
+      await _ref
+          .read(dailyPlanRepositoryProvider)
+          .saveTopThreeTaskIds(
+            selectedTaskIds.where((id) => id != taskId).toList(),
+          );
+    }
+
+    _refreshTaskViews(projectIds: {task.projectId}.whereType<String>().toSet());
+    _ref.invalidate(taskProvider(taskId));
+  }
+
   Future<void> removeFromTopThree(String taskId) async {
     final todayPlan = await _ref.read(todayPlanProvider.future);
     final selectedTaskIds = _selectedTopTaskIds(
@@ -50,14 +177,69 @@ class TasksController {
     _refreshTaskViews();
   }
 
-  Future<void> markTaskDone(String taskId) async {
+  Future<Task> createTask({
+    required String title,
+    String? projectId,
+    String? description,
+    String? category,
+    String priority = 'Medium',
+    String status = 'Inbox',
+    String? energyLevel,
+    int? estimatedMinutes,
+    String? notes,
+  }) async {
+    final task = await _ref
+        .read(taskRepositoryProvider)
+        .createTask(
+          title: title,
+          projectId: projectId,
+          description: description,
+          category: category,
+          priority: priority,
+          status: status,
+          energyLevel: energyLevel,
+          estimatedMinutes: estimatedMinutes,
+          notes: notes,
+        );
+
+    _refreshTaskViews(projectIds: {projectId}.whereType<String>().toSet());
+    _ref.invalidate(taskProvider(task.taskId));
+    return task;
+  }
+
+  Future<Task> updateTask({
+    required String taskId,
+    required String title,
+    String? projectId,
+    String? description,
+    String? category,
+    required String priority,
+    required String status,
+    String? energyLevel,
+    int? estimatedMinutes,
+    String? notes,
+  }) async {
+    final existing = await _ref.read(taskRepositoryProvider).getById(taskId);
     final todayPlan = await _ref.read(todayPlanProvider.future);
     final selectedTaskIds = _selectedTopTaskIds(todayPlan);
-    final isTopTask = selectedTaskIds.contains(taskId);
 
-    await _ref.read(taskRepositoryProvider).markDone(taskId);
+    final task = await _ref
+        .read(taskRepositoryProvider)
+        .updateTask(
+          taskId: taskId,
+          title: title,
+          projectId: projectId,
+          description: description,
+          category: category,
+          priority: priority,
+          status: status,
+          energyLevel: energyLevel,
+          estimatedMinutes: estimatedMinutes,
+          notes: notes,
+        );
 
-    if (isTopTask) {
+    if ((status == 'Done' || status == 'Parked') &&
+        selectedTaskIds.contains(taskId)) {
       await _ref
           .read(dailyPlanRepositoryProvider)
           .saveTopThreeTaskIds(
@@ -65,7 +247,11 @@ class TasksController {
           );
     }
 
-    _refreshTaskViews();
+    _refreshTaskViews(
+      projectIds: {existing.projectId, projectId}.whereType<String>().toSet(),
+    );
+    _ref.invalidate(taskProvider(taskId));
+    return task;
   }
 
   List<String> _selectedTopTaskIds(DailyPlan todayPlan) {
@@ -76,10 +262,14 @@ class TasksController {
     ].whereType<String>().toList();
   }
 
-  void _refreshTaskViews() {
+  void _refreshTaskViews({Set<String> projectIds = const {}}) {
     _ref.invalidate(todayPlanProvider);
     _ref.invalidate(tasksProvider);
     _ref.invalidate(plannerTaskOptionsProvider);
     _ref.invalidate(dashboardSnapshotProvider);
+    _ref.invalidate(projectsProvider);
+    for (final projectId in projectIds) {
+      _ref.invalidate(projectDetailProvider(projectId));
+    }
   }
 }

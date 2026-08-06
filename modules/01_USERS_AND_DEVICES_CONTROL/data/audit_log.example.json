@@ -1,0 +1,13 @@
+[
+  {
+    "event_id": "audit_example_001",
+    "timestamp": "2026-06-16T05:00:00Z",
+    "actor_id": "user_peter_owner",
+    "device_id": "device_new_earth_dev",
+    "event_type": "module_access_checked",
+    "target_module": "01_USERS_AND_DEVICES_CONTROL",
+    "action": "view",
+    "result": "allowed",
+    "reason": "Owner role and trust satisfied."
+  }
+]

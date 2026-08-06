@@ -1,0 +1,20 @@
+{
+  "module_id": "new_earth_command_deck",
+  "module_name": "New Earth Command Deck",
+  "version": "0.1.0",
+  "description": "Command surface for quick actions, dashboard shortcuts and future tactile controls.",
+  "category": "System Core",
+  "status": "enabled",
+  "enabled": true,
+  "dockable": true,
+  "defaultDockPosition": "left",
+  "permissions": ["app_launch", "file_read"],
+  "omegaOsPath": "OMEGA_OS/MODULES/NEW_EARTH_COMMAND_DECK",
+  "backend": {
+    "implemented": true,
+    "type": "dashboard_surface",
+    "notes": "Active dashboard shortcut surface."
+  },
+  "tags": ["command", "shortcuts", "control"],
+  "notes": "This surface is treated as active because it is already in the app shell."
+}

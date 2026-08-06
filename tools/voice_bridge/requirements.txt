@@ -1,6 +1,4 @@
-# v0.1 uses Python standard library only.
-# Future versions may add:
-# openai
-# sounddevice
-# scipy
-# pyttsx3
+numpy
+sounddevice
+faster-whisper
+openai[realtime]

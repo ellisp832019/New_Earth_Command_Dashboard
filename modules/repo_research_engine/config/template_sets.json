@@ -1,0 +1,103 @@
+{
+  "default_template_set": "Generic",
+  "template_sets": [
+    {
+      "name": "Generic",
+      "description": "Balanced local-first research bundle for general repositories.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "repo_research_note_template.md"
+      }
+    },
+    {
+      "name": "MicroGrow",
+      "description": "Focused on firmware, hardware safety, and local automation notes.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "microgrow_research_note_template.md"
+      }
+    },
+    {
+      "name": "New Earth Dashboard",
+      "description": "Optimised for dashboard structure, navigation, and calm UI review.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "new_earth_dashboard_research_note_template.md"
+      }
+    },
+    {
+      "name": "New Earth Living",
+      "description": "Tailored for living systems, routines, and wellbeing-focused projects.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "new_earth_living_research_note_template.md"
+      }
+    },
+    {
+      "name": "BioCalm",
+      "description": "Calm review template for wellbeing and low-friction analysis notes.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "biocalm_research_note_template.md"
+      }
+    },
+    {
+      "name": "New Earth Rehabilitation",
+      "description": "Structured for recovery work, repeatability, and careful safety checks.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "rehabilitation_research_note_template.md"
+      }
+    },
+    {
+      "name": "Omega OS",
+      "description": "General-purpose export template for broader Omega OS research work.",
+      "report_templates": {
+        "main_report": "repo_research_report.md",
+        "summary": "repo_summary.md",
+        "security": "security_report.md",
+        "risk": "risk_report.md",
+        "knowledge": "knowledge_report.md",
+        "implementation_opportunities": "implementation_opportunities.md",
+        "learning_notes": "learning_notes.md",
+        "vault_note": "omega_os_research_note_template.md"
+      }
+    }
+  ]
+}

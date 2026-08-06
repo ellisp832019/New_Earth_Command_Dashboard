@@ -1,0 +1,15 @@
+﻿{
+    "generated_at":  "2026-06-15T14:30:27",
+    "risks":  [
+                  {
+                      "title":  "Vault path moved or misconfigured",
+                      "mitigation":  "Run validate_config.ps1 and check Omega OS paths",
+                      "severity":  "medium"
+                  },
+                  {
+                      "title":  "AI overreach",
+                      "mitigation":  "Use ai_context blocked permissions and human approval gates",
+                      "severity":  "high"
+                  }
+              ]
+}

@@ -282,7 +282,7 @@ Goal
 Create local storage.
 Build Tasks
 TASK-017 Add Drift package
-TASK-018 Add sqlite3_flutter_libs
+TASK-018 Add sqlite3
 TASK-019 Add path_provider
 TASK-020 Add path package
 TASK-021 Create app_database.dart

@@ -1,0 +1,20 @@
+{
+  "module_id": "knowledge_engine",
+  "module_name": "Knowledge Engine",
+  "version": "0.1.0",
+  "description": "Searches local knowledge, maps research notes, and supports documentation workflows.",
+  "category": "Knowledge Research",
+  "status": "installed",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": ["file_read", "repo_access"],
+  "omegaOsPath": "OMEGA_OS/MODULES/KNOWLEDGE_ENGINE",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Local knowledge shell only."
+  },
+  "tags": ["knowledge", "research", "search"],
+  "notes": "Folder exists as a knowledge shell and will become active when the local manifest workflow is connected."
+}

@@ -57,6 +57,20 @@ Run on Windows desktop, if enabled:
 flutter run -d windows
 ```
 
+For a calmer release-readiness sweep, use:
+
+```powershell
+./scripts/run_release_readiness.ps1
+```
+
+This helper stops a running dashboard process by default, then runs:
+
+- `flutter analyze`
+- `flutter test`
+- `flutter build windows`
+
+Logs are saved in `tmp/release_readiness`.
+
 ## Current Build Scope
 
 The current build includes the first app shell and the local database foundation:

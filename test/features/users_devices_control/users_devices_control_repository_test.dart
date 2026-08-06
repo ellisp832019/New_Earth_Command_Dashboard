@@ -1,0 +1,633 @@
+import 'dart:io';
+
+import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:new_earth_command_dashboard/core/database/app_database.dart'
+    hide
+        UsersDevicesControlAccessRule,
+        UsersDevicesControlAuditEvent,
+        UsersDevicesControlApprovalRequest,
+        UsersDevicesControlDevice,
+        UsersDevicesControlUser;
+import 'package:new_earth_command_dashboard/features/users_devices_control/data/users_devices_control_repository.dart';
+import 'package:new_earth_command_dashboard/features/users_devices_control/data/users_devices_pin_registry_service.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('repository seeds the full local registry into Drift once', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    final snapshot = await repository.loadSnapshot();
+
+    expect(snapshot.users, hasLength(7));
+    expect(snapshot.devices, hasLength(9));
+    expect(snapshot.roles, hasLength(10));
+    expect(snapshot.permissions, hasLength(20));
+    expect(snapshot.trustLevels, hasLength(6));
+    expect(snapshot.approvalQueue, hasLength(1));
+    expect(snapshot.auditLog, hasLength(1));
+    expect(snapshot.accessRules, hasLength(6));
+
+    final users = await database
+        .select(database.usersDevicesControlUsers)
+        .get();
+    final devices = await database
+        .select(database.usersDevicesControlDevices)
+        .get();
+    final roles = await database
+        .select(database.usersDevicesControlRoles)
+        .get();
+    final permissions = await database
+        .select(database.usersDevicesControlPermissions)
+        .get();
+    final trustLevels = await database
+        .select(database.usersDevicesControlTrustLevels)
+        .get();
+    final approvals = await database
+        .select(database.usersDevicesControlApprovalRequests)
+        .get();
+    final auditEvents = await database
+        .select(database.usersDevicesControlAuditEvents)
+        .get();
+    final accessRules = await database
+        .select(database.usersDevicesControlAccessRules)
+        .get();
+
+    expect(users, hasLength(7));
+    expect(devices, hasLength(9));
+    expect(roles, hasLength(10));
+    expect(permissions, hasLength(20));
+    expect(trustLevels, hasLength(6));
+    expect(approvals, hasLength(1));
+    expect(auditEvents, hasLength(1));
+    expect(accessRules, hasLength(6));
+  });
+
+  test('access rules are read back from Drift after local edits', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    await database.customStatement('''
+      UPDATE users_devices_control_access_rules
+      SET view_permission = 'finance.view.override'
+      WHERE module_id = '17_FINANCE_AND_TREASURY'
+    ''');
+
+    final snapshot = await repository.loadSnapshot();
+    final treasuryRule = snapshot.accessRules.firstWhere(
+      (rule) => rule.moduleId == '17_FINANCE_AND_TREASURY',
+    );
+
+    expect(treasuryRule.viewPermission, 'finance.view.override');
+  });
+
+  test(
+    'register and approval actions persist through the local database',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      await repository.registerUser(
+        const UsersDevicesControlUser(
+          id: 'user_test_contributor',
+          displayName: 'Test Contributor',
+          role: 'Project Contributor',
+          status: 'active',
+          permissions: ['projects.view'],
+          linkedDevices: ['device_new_earth_dev'],
+          notes: 'Created during repository test.',
+        ),
+      );
+      await repository.registerDevice(
+        const UsersDevicesControlDevice(
+          id: 'device_test_tablet',
+          name: 'Test Tablet',
+          type: 'tablet',
+          trustLevel: 2,
+          status: 'registered',
+          ownerId: 'user_test_contributor',
+          allowedActions: ['dashboard.view'],
+          notes: 'Created during repository test.',
+        ),
+      );
+      final request = await repository.createApprovalRequest(
+        requestedBy: 'user_test_contributor',
+        deviceId: 'device_test_tablet',
+        targetModule: '01_USERS_AND_DEVICES_CONTROL',
+        action: 'register_device',
+        riskLevel: 'medium',
+        reason: 'Test approval request.',
+      );
+      await repository.approveRequest(
+        request.requestId,
+        reviewedBy: 'user_peter_owner',
+      );
+
+      final reloadedRepository = UsersDevicesControlRepository(
+        database: database,
+      );
+      final snapshot = await reloadedRepository.loadSnapshot();
+
+      expect(
+        snapshot.users.any((user) => user.id == 'user_test_contributor'),
+        isTrue,
+      );
+      expect(
+        snapshot.devices.any((device) => device.id == 'device_test_tablet'),
+        isTrue,
+      );
+      expect(
+        snapshot.approvalQueue.any(
+          (item) => item.requestId == request.requestId,
+        ),
+        isTrue,
+      );
+      final storedRequest = snapshot.approvalQueue.firstWhere(
+        (item) => item.requestId == request.requestId,
+      );
+      expect(storedRequest.status, 'approved');
+      expect(storedRequest.reviewedBy, 'user_peter_owner');
+
+      final auditReasons = snapshot.auditLog
+          .map((event) => event.reason)
+          .toList();
+      expect(auditReasons, contains('Test approval request.'));
+    },
+  );
+
+  test(
+    'role, permission, trust, and approval helpers behave locally',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      final updatedUser = await repository.assignRole(
+        'user_guest',
+        'Project Contributor',
+      );
+      expect(updatedUser.role, 'Project Contributor');
+
+      final permissionUser = await repository.assignPermission(
+        'user_guest',
+        'projects.view',
+      );
+      expect(permissionUser.permissions, contains('projects.view'));
+
+      expect(
+        await repository.checkPermission(
+          'user_guest',
+          'projects.view',
+          deviceId: 'device_phone_scanner',
+        ),
+        isTrue,
+      );
+      expect(
+        await repository.checkDeviceTrust('device_new_earth_dev', 4),
+        isTrue,
+      );
+      expect(
+        await repository.checkDeviceTrust('device_workshop_tablet', 4),
+        isFalse,
+      );
+
+      final auditEvent = await repository.createAuditEvent(
+        actorId: 'user_guest',
+        deviceId: 'device_phone_scanner',
+        eventType: 'test_audit',
+        targetModule: '01_USERS_AND_DEVICES_CONTROL',
+        action: 'test_action',
+        result: 'allowed',
+        reason: 'Repository test audit event.',
+      );
+      expect(auditEvent.eventId, startsWith('audit_'));
+
+      final approval = await repository.createApprovalRequest(
+        requestedBy: 'user_guest',
+        deviceId: 'device_phone_scanner',
+        targetModule: '01_USERS_AND_DEVICES_CONTROL',
+        action: 'assign_role',
+        riskLevel: 'high',
+        reason: 'Repository test approval.',
+      );
+      final denied = await repository.denyRequest(
+        approval.requestId,
+        reviewedBy: 'user_peter_owner',
+      );
+      expect(denied.status, 'denied');
+      expect(denied.reviewedBy, 'user_peter_owner');
+    },
+  );
+
+  test('resetToSeedData restores the seeded local registry', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    await repository.registerUser(
+      const UsersDevicesControlUser(
+        id: 'user_temp_reset',
+        displayName: 'Temp Reset',
+        role: 'Project Contributor',
+        status: 'active',
+        permissions: ['projects.view'],
+        linkedDevices: [],
+        notes: 'Temporary record for reset test.',
+      ),
+    );
+
+    var snapshot = await repository.loadSnapshot();
+    expect(snapshot.users.any((user) => user.id == 'user_temp_reset'), isTrue);
+
+    await repository.resetToSeedData();
+    snapshot = await repository.loadSnapshot();
+
+    expect(snapshot.users.any((user) => user.id == 'user_temp_reset'), isFalse);
+    expect(snapshot.users, hasLength(7));
+    expect(snapshot.devices, hasLength(9));
+  });
+
+  test(
+    'access checks still enforce trust and permission rules from stored policies',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      final allowed = await repository.canOpenModule(
+        'user_peter_owner',
+        'device_new_earth_dev',
+        '01_USERS_AND_DEVICES_CONTROL',
+      );
+
+      final denied = await repository.canPerformAction(
+        'user_guest',
+        'device_phone_scanner',
+        '01_USERS_AND_DEVICES_CONTROL',
+        'assign_role',
+      );
+
+      expect(allowed.allowed, isTrue);
+      expect(allowed.requiresApproval, isFalse);
+      expect(allowed.nextStep, isNotEmpty);
+      expect(denied.allowed, isFalse);
+      expect(denied.requiresApproval, isFalse);
+      expect(denied.nextStep, isNotEmpty);
+    },
+  );
+
+  test(
+    'access checks deny unknown users and low trust devices with clear reasons',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      final unknownUserDecision = await repository.canOpenModule(
+        'user_missing',
+        'device_new_earth_dev',
+        '01_USERS_AND_DEVICES_CONTROL',
+      );
+      final lowTrustDecision = await repository.canOpenModule(
+        'user_peter_owner',
+        'device_workshop_tablet',
+        '01_USERS_AND_DEVICES_CONTROL',
+      );
+
+      expect(unknownUserDecision.allowed, isFalse);
+      expect(unknownUserDecision.reason, contains('Unknown user'));
+      expect(unknownUserDecision.nextStep, isNotEmpty);
+      expect(lowTrustDecision.allowed, isFalse);
+      expect(
+        lowTrustDecision.reason,
+        contains('trust must be at least level 4'),
+      );
+      expect(lowTrustDecision.nextStep, isNotEmpty);
+    },
+  );
+
+  test('high risk actions require approval in the access workflow', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    final decision = await repository.canPerformAction(
+      'user_peter_owner',
+      'device_new_earth_dev',
+      '01_USERS_AND_DEVICES_CONTROL',
+      'assign_role',
+    );
+
+    expect(decision.allowed, isFalse);
+    expect(decision.requiresApproval, isTrue);
+    expect(decision.reason, contains('approval'));
+    expect(decision.nextStep, isNotEmpty);
+  });
+
+  test(
+    'quarantine device blocks trust checks and persists trust evidence',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      await repository.quarantineDevice(
+        'device_new_earth_dev',
+        reviewedBy: 'user_peter_owner',
+        reason: 'Repository quarantine test.',
+      );
+
+      expect(
+        await repository.checkDeviceTrust('device_new_earth_dev', 4),
+        isFalse,
+      );
+
+      final decision = await repository.canOpenModule(
+        'user_peter_owner',
+        'device_new_earth_dev',
+        '01_USERS_AND_DEVICES_CONTROL',
+      );
+      expect(decision.allowed, isFalse);
+      expect(decision.reason, contains('quarantined'));
+
+      final snapshot = await repository.loadSnapshot();
+      final device = snapshot.devices.firstWhere(
+        (item) => item.id == 'device_new_earth_dev',
+      );
+      expect(device.status, 'quarantined');
+      expect(device.trustReviewedBy, 'user_peter_owner');
+      expect(device.quarantineReason, 'Repository quarantine test.');
+      expect(device.quarantinedAt, isNotNull);
+    },
+  );
+
+  test(
+    'legacy approval statuses normalize on load and survive round trip',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      await database.delete(database.usersDevicesControlApprovalRequests).go();
+      await database
+          .into(database.usersDevicesControlApprovalRequests)
+          .insert(
+            UsersDevicesControlApprovalRequestsCompanion.insert(
+              requestId: 'approval_legacy_status',
+              payloadJson:
+                  '{"request_id":"approval_legacy_status","timestamp":"2026-06-20T00:00:00Z","requested_by":"user_guest","device_id":"device_phone_scanner","target_module":"01_USERS_AND_DEVICES_CONTROL","action":"assign_role","status":"allowed","risk_level":"medium","reason":"Legacy allowed status."}',
+              createdAt: DateTime.parse('2026-06-20T00:00:00Z').toUtc(),
+              updatedAt: DateTime.parse('2026-06-20T00:00:00Z').toUtc(),
+            ),
+          );
+
+      final snapshot = await repository.loadSnapshot();
+      final request = snapshot.approvalQueue.singleWhere(
+        (item) => item.requestId == 'approval_legacy_status',
+      );
+
+      expect(request.normalizedStatus, 'approved');
+      expect(request.isApproved, isTrue);
+
+      await repository.approveRequest(
+        request.requestId,
+        reviewedBy: 'user_peter_owner',
+      );
+
+      final reloaded = await repository.loadSnapshot();
+      final persisted = reloaded.approvalQueue.singleWhere(
+        (item) => item.requestId == 'approval_legacy_status',
+      );
+      expect(persisted.normalizedStatus, 'approved');
+    },
+  );
+
+  test('device trust evidence survives SQLite round trip', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = UsersDevicesControlRepository(database: database);
+    await repository.loadSnapshot();
+
+    await repository.registerDevice(
+      const UsersDevicesControlDevice(
+        id: 'device_trust_round_trip',
+        name: 'Trust Round Trip Device',
+        type: 'tablet',
+        trustLevel: 4,
+        status: 'trusted',
+        ownerId: 'user_peter_owner',
+        allowedActions: ['dashboard.view'],
+        notes: 'Round trip test device.',
+        trustSource: 'manual review',
+        trustReviewedBy: 'user_peter_owner',
+        trustReviewedAt: '2026-06-29T08:00:00Z',
+        lastSeenAt: '2026-06-29T08:30:00Z',
+        operatorNote: 'Evidence should persist.',
+      ),
+    );
+
+    final snapshot = await repository.loadSnapshot();
+    final device = snapshot.devices.singleWhere(
+      (item) => item.id == 'device_trust_round_trip',
+    );
+
+    expect(device.trustSource, 'manual review');
+    expect(device.trustReviewedBy, 'user_peter_owner');
+    expect(device.trustReviewedAt, '2026-06-29T08:00:00Z');
+    expect(device.lastSeenAt, '2026-06-29T08:30:00Z');
+    expect(device.operatorNote, 'Evidence should persist.');
+  });
+
+  test(
+    'repeated repository loads do not duplicate seeded local rows',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+
+      await repository.loadSnapshot();
+      await repository.loadSnapshot();
+      await repository.loadSnapshot();
+
+      final users = await database
+          .select(database.usersDevicesControlUsers)
+          .get();
+      final devices = await database
+          .select(database.usersDevicesControlDevices)
+          .get();
+      final approvals = await database
+          .select(database.usersDevicesControlApprovalRequests)
+          .get();
+      final audit = await database
+          .select(database.usersDevicesControlAuditEvents)
+          .get();
+
+      expect(users, hasLength(7));
+      expect(devices, hasLength(9));
+      expect(approvals, hasLength(1));
+      expect(audit, hasLength(1));
+    },
+  );
+
+  test(
+    'migration health reports sqlite table posture and row counts',
+    () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'users_devices_migration_health_',
+      );
+      addTearDown(() async {
+        if (await tempDir.exists()) {
+          await tempDir.delete(recursive: true);
+        }
+      });
+
+      const channel = MethodChannel('plugins.flutter.io/path_provider');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            if (call.method == 'getApplicationDocumentsDirectory') {
+              return tempDir.path;
+            }
+            return null;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
+      });
+
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final repository = UsersDevicesControlRepository(database: database);
+      await repository.loadSnapshot();
+
+      final health = await repository.loadMigrationHealth();
+
+      expect(health.usingDatabase, isTrue);
+      expect(health.schemaVersion, 15);
+      expect(
+        health.tables.any(
+          (table) => table.tableName == 'users_devices_control_users',
+        ),
+        isTrue,
+      );
+      expect(
+        health.tables
+            .firstWhere(
+              (table) => table.tableName == 'users_devices_control_users',
+            )
+            .rowCount,
+        7,
+      );
+      expect(
+        health.tables
+            .firstWhere(
+              (table) => table.tableName == 'users_devices_control_pin_records',
+            )
+            .exists,
+        isTrue,
+      );
+      expect(
+        health.seedFiles.any(
+          (file) => file.path.endsWith('users.example.json') && file.exists,
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test('migration health reflects live PIN and lockout table counts', () async {
+    final tempDir = await Directory.systemTemp.createTemp(
+      'users_devices_pin_health_',
+    );
+    addTearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    const channel = MethodChannel('plugins.flutter.io/path_provider');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'getApplicationDocumentsDirectory') {
+            return tempDir.path;
+          }
+          return null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    var now = DateTime.utc(2026, 7, 1, 9, 0, 0);
+    final repository = UsersDevicesControlRepository(database: database);
+    final pins = UsersDevicesPinRegistryService(
+      database: database,
+      maxFailedAttempts: 2,
+      lockoutDuration: const Duration(minutes: 5),
+      nowProvider: () => now,
+    );
+
+    await repository.loadSnapshot();
+    final seededPins = await pins.loadSnapshot();
+    final selected = seededPins.records.firstWhere(
+      (record) => record.status == 'active',
+    );
+
+    await pins.setPrimaryPin(
+      userId: selected.userId,
+      pinCode: '4434',
+      notes: 'Migration health test primary PIN.',
+    );
+    await pins.issueRecoveryPin(
+      userId: selected.userId,
+      notes: 'Migration health test recovery PIN.',
+    );
+    await pins.validatePinForUser(selected.userId, '0000');
+    await pins.validatePinForUser(selected.userId, '0000');
+
+    final health = await repository.loadMigrationHealth();
+    final pinRecordsTable = health.tables.firstWhere(
+      (table) => table.tableName == 'users_devices_control_pin_records',
+    );
+    final pinLockoutsTable = health.tables.firstWhere(
+      (table) => table.tableName == 'users_devices_control_pin_lockouts',
+    );
+
+    expect(pinRecordsTable.exists, isTrue);
+    expect(
+      pinRecordsTable.rowCount,
+      greaterThanOrEqualTo(seededPins.records.length),
+    );
+    expect(pinLockoutsTable.exists, isTrue);
+    expect(pinLockoutsTable.rowCount, 1);
+  });
+}

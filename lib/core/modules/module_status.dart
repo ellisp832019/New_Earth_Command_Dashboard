@@ -1,0 +1,33 @@
+enum ModuleStatus {
+  installed,
+  enabled,
+  disabled,
+  needsConfiguration,
+  error,
+  scaffold,
+  planned,
+  experimental,
+}
+
+extension ModuleStatusLabel on ModuleStatus {
+  String get label {
+    switch (this) {
+      case ModuleStatus.installed:
+        return 'Installed';
+      case ModuleStatus.enabled:
+        return 'Enabled';
+      case ModuleStatus.disabled:
+        return 'Disabled';
+      case ModuleStatus.needsConfiguration:
+        return 'Needs Configuration';
+      case ModuleStatus.error:
+        return 'Error';
+      case ModuleStatus.scaffold:
+        return 'Scaffold';
+      case ModuleStatus.planned:
+        return 'Roadmap';
+      case ModuleStatus.experimental:
+        return 'Experimental';
+    }
+  }
+}

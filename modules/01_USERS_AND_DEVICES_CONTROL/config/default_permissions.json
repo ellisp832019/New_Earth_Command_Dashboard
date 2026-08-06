@@ -1,0 +1,22 @@
+[
+  { "permission": "dashboard.view" },
+  { "permission": "file_read" },
+  { "permission": "repo_access" },
+  { "permission": "users.view" },
+  { "permission": "users.manage" },
+  { "permission": "devices.view" },
+  { "permission": "devices.manage" },
+  { "permission": "access.manage" },
+  { "permission": "audit.view" },
+  { "permission": "finance.view" },
+  { "permission": "finance.edit" },
+  { "permission": "finance.admin" },
+  { "permission": "finance.export" },
+  { "permission": "microgrow.view" },
+  { "permission": "microgrow.control" },
+  { "permission": "ai.request_action" },
+  { "permission": "ai.execute_system_action" },
+  { "permission": "backup.run" },
+  { "permission": "backup.restore" },
+  { "permission": "voice.request_action" }
+]

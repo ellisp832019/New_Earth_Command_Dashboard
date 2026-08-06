@@ -1,0 +1,17 @@
+repositories:
+  dashboard:
+    name: New Earth Dashboard
+    path_windows: "D:\\Dev\\Projects\\New Earth - Command Dashboard"
+    type: dashboard
+  microgrow:
+    name: MicroGrow
+    path_windows: "D:\\Dev\\Projects\\MicroGrow"
+    type: firmware_flutter
+  biocalm:
+    name: BioCalm
+    path_windows: "D:\\Dev\\Projects\\BioCalm"
+    type: wearable_firmware
+  new_earth_living:
+    name: New Earth Living
+    path_windows: "D:\\Dev\\Projects\\New Earth Living"
+    type: flutter_app

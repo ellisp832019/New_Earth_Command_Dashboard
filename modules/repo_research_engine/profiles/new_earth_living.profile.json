@@ -1,0 +1,68 @@
+{
+  "profile_name": "New Earth Living",
+  "project_type": "local-first wellbeing Flutter app",
+  "priority_keywords": [
+    "Flutter",
+    "Dart",
+    "Hive",
+    "Riverpod",
+    "go_router",
+    "journal",
+    "routine",
+    "wellbeing",
+    "privacy",
+    "offline",
+    "local-first",
+    "voice assistant",
+    "onboarding"
+  ],
+  "ignore_keywords": [
+    "dark pattern",
+    "ad tracking",
+    "surveillance",
+    "cloud-only"
+  ],
+  "risk_keywords": [
+    "analytics",
+    "tracking",
+    "token",
+    "secret",
+    "apiKey",
+    "remote logging"
+  ],
+  "useful_file_patterns": [
+    "pubspec.yaml",
+    "lib/**/*.dart",
+    "README*",
+    "docs/**/*.md",
+    "test/**/*.dart"
+  ],
+  "output_focus": [
+    "UX ideas",
+    "local data patterns",
+    "routine flows",
+    "privacy design",
+    "voice assistant integration",
+    "dashboard modules"
+  ],
+  "template_set": "New Earth Living",
+  "template_set_description": "Tailored for living systems, routines, and wellbeing-focused projects.",
+  "export_locations": [
+    "D:/NEW_EARTH_OMEGA_OS_PACK/22_KNOWLEDGE_AND_LEARNING/GIT_RESEARCH_LIBRARY/NEW_EARTH_LIVING"
+  ],
+  "report_templates": {
+    "main_report": "repo_research_report.md",
+    "summary": "repo_summary.md",
+    "security": "security_report.md",
+    "risk": "risk_report.md",
+    "knowledge": "knowledge_report.md",
+    "implementation_opportunities": "implementation_opportunities.md",
+    "learning_notes": "learning_notes.md",
+    "vault_note": "repo_research_note_template.md"
+  },
+  "export_targets": [
+    "Obsidian",
+    "New Earth Living docs",
+    "Dashboard tasks"
+  ]
+}

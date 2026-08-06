@@ -1,0 +1,64 @@
+version: 1
+mode: deny_by_default
+
+levels:
+  0: public
+  1: read_only_dashboard
+  2: low_risk_write
+  3: protected_action
+  4: blocked_from_alexa
+
+allowed_commands:
+  dashboard.summary.today:
+    level: 1
+    requires_confirmation: false
+    description: Read today's dashboard summary.
+  dashboard.project.status.read:
+    level: 1
+    requires_confirmation: false
+    description: Read project status without changing anything.
+  microgrow.status.read:
+    level: 1
+    requires_confirmation: false
+    description: Read MicroGrow sensor/node status only.
+  dashboard.note.add:
+    level: 2
+    requires_confirmation: false
+    description: Add a note to the dashboard inbox.
+  dashboard.task.add:
+    level: 2
+    requires_confirmation: false
+    description: Add a task to the dashboard inbox.
+  dashboard.focus.start:
+    level: 2
+    requires_confirmation: false
+    description: Start a focus session.
+  dashboard.tasks.next:
+    level: 1
+    requires_confirmation: false
+    description: Read next dashboard tasks.
+  gateway.health.read:
+    level: 1
+    requires_confirmation: false
+    description: Read voice gateway health.
+
+protected_commands:
+  microgrow.relay.control:
+    level: 3
+    requires_confirmation: true
+    max_duration_seconds: 300
+    default_state: blocked
+    description: Future temporary relay test only.
+
+blocked_commands:
+  - finance.private.read
+  - filesystem.delete
+  - filesystem.raw_read
+  - database.raw.read
+  - system.shell.exec
+  - ai.agent.run
+  - obsidian.raw_vault.read
+  - obsidian.private_notes.read
+  - microgrow.relay.permanent_control
+  - hardware.dangerous.control
+  - security.disable

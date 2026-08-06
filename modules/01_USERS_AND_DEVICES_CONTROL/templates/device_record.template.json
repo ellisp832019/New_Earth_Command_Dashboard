@@ -1,0 +1,10 @@
+{
+  "id": "device_slug",
+  "name": "Device Name",
+  "type": "unknown",
+  "trust_level": 0,
+  "status": "unknown",
+  "owner_id": "",
+  "allowed_actions": [],
+  "notes": ""
+}

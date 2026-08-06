@@ -1,0 +1,13 @@
+{
+  "id": "MICROGROW_KICKSTARTER_2026",
+  "name": "MicroGrow Kickstarter 2026",
+  "project": "MicroGrow",
+  "type": "kickstarter",
+  "status": "Prototype",
+  "funding_goal_gbp": 35000,
+  "launch_date": null,
+  "owner": "Peter Ellis",
+  "summary": "Local-first grow automation ecosystem using ESP32/ESP32-S3 nodes, sensors, relay control, hub architecture, and Flutter app.",
+  "created_at": "2026-06-04",
+  "source_of_truth": "New Earth Launchpad MVP seed"
+}

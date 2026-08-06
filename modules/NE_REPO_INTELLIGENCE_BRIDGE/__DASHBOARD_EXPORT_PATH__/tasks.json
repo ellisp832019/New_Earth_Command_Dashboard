@@ -1,0 +1,505 @@
+﻿{
+    "generated_at":  "2026-06-15T14:30:27",
+    "tasks":  [
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/obsidian_sync_config.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/obsidian_sync_config.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/README.md",
+                      "text":  "-\u003e live dashboard cards, risks, tasks, timeline",
+                      "line":  20
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/README.md",
+                      "text":  "next_actions.json",
+                      "line":  86
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/README.md",
+                      "text":  "risks.json",
+                      "line":  88
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/README.md",
+                      "text":  "decisions.json",
+                      "line":  89
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/dashboard_exports/decisions.json",
+                      "text":  "\"decisions\": []",
+                      "line":  2
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/dashboard_exports/next_actions.json",
+                      "text":  "\"next_actions\": [",
+                      "line":  2
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/dashboard_exports/risks.json",
+                      "text":  "\"risks\": []",
+                      "line":  2
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/docs/DASHBOARD_INTEGRATION.md",
+                      "text":  "2. `next_actions.json` for the next action panel.",
+                      "line":  14
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/docs/DASHBOARD_INTEGRATION.md",
+                      "text":  "4. `risks.json` for the risk panel.",
+                      "line":  16
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/docs/DASHBOARD_INTEGRATION.md",
+                      "text":  "Next 3 Actions",
+                      "line":  25
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/docs/DASHBOARD_INTEGRATION.md",
+                      "text":  "Risk Count",
+                      "line":  26
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/exports/DECISIONS.md",
+                      "text":  "# Decisions",
+                      "line":  1
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/exports/RISKS.md",
+                      "text":  "# Risks",
+                      "line":  1
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/biocalm.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/biocalm.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/microgrow.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/microgrow.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/new_earth_dashboard.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/new_earth_dashboard.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/new_earth_living.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/new_earth_living.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/omega_os.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/omega_os.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/template.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  30
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/profiles/template.json",
+                      "text":  "\"flag risks\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$todos = @()",
+                      "line":  12
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$lines = Select-String -Path $f.FullName -Pattern \"TODO|FIXME|NEXT|RISK|DECISION\" -SimpleMatch:$false -ErrorAction SilentlyContinue",
+                      "line":  15
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "if ($todos.Count -lt 100) { $todos += @{ file=(ConvertTo-ForwardSlashPath $f.FullName); line=$l.LineNumber; text=$l.Line.Trim() } }",
+                      "line":  17
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "if ($todos.Count -lt 20) { $healthScore += 10 } else { $checks += @{name=\"many TODO/FIXME markers\"; status=\"warn\"} }",
+                      "line":  25
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$nextActions = @{ generated_at=$generatedAt; next_actions=@(",
+                      "line":  33
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "@{title=\"Review risks and TODO markers\"; priority=\"medium\"; status=\"open\"}",
+                      "line":  36
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$tasks = @{ generated_at=$generatedAt; tasks=$todos }",
+                      "line":  38
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$risks = @{ generated_at=$generatedAt; risks=@(",
+                      "line":  39
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$decisions = @{ generated_at=$generatedAt; decisions=@(",
+                      "line":  43
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "@{decision=\"Use Omega OS as export destination\"; status=\"accepted\"},",
+                      "line":  44
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "@{decision=\"Use Obsidian for human-readable Markdown and Dashboard for JSON\"; status=\"accepted\"}",
+                      "line":  45
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "@{stage=\"Dashboard integration\"; status=\"next\"},",
+                      "line":  50
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$repoHealth = @{ generated_at=$generatedAt; score=$healthScore; health=$projectStatus.health; total_scanned_files=$files.Count; todo_markers=$todos.Count; checks=$checks }",
+                      "line":  53
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$manifest = @{ generated_at=$generatedAt; project=$config.project_name; exports=@(\"project_status.json\",\"next_actions.json\",\"tasks.json\",\"risks.json\",\"decisions.json\",\"timeline.json\",\"repo_health.json\",\"ai_context.json\") }",
+                      "line":  59
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/scripts/sync_to_dashboard.ps1",
+                      "text":  "$map = @{\"project_status.json\"=$projectStatus;\"next_actions.json\"=$nextActions;\"tasks.json\"=$tasks;\"risks.json\"=$risks;\"decisions.json\"=$decisions;\"timeline.json\"=$timeline;\"repo_health.json\"=$repoHealth;\"ai_context.json\"=$aiContext;\"sync_manifest.json\"=$manifest}",
+                      "line":  61
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/templates/DECISIONS.md",
+                      "text":  "# Decisions",
+                      "line":  1
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/templates/RISKS.md",
+                      "text":  "# Risks",
+                      "line":  1
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/ai_context.json",
+                      "text":  "\"suggest next actions\",",
+                      "line":  17
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/ai_context.json",
+                      "text":  "\"flag risks\",",
+                      "line":  18
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/decisions.json",
+                      "text":  "\"decisions\":  [",
+                      "line":  3
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/decisions.json",
+                      "text":  "\"decision\":  \"Use Omega OS as export destination\",",
+                      "line":  5
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/decisions.json",
+                      "text":  "\"decision\":  \"Use Obsidian for human-readable Markdown and Dashboard for JSON\",",
+                      "line":  9
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/next_actions.json",
+                      "text":  "\"next_actions\":  [",
+                      "line":  3
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/next_actions.json",
+                      "text":  "\"title\":  \"Review risks and TODO markers\",",
+                      "line":  16
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/repo_health.json",
+                      "text":  "\"name\":  \"many TODO/FIXME markers\",",
+                      "line":  12
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/repo_health.json",
+                      "text":  "\"todo_markers\":  46,",
+                      "line":  16
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/risks.json",
+                      "text":  "\"risks\":  [",
+                      "line":  3
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/sync_manifest.json",
+                      "text":  "\"next_actions.json\",",
+                      "line":  6
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/sync_manifest.json",
+                      "text":  "\"risks.json\",",
+                      "line":  8
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/sync_manifest.json",
+                      "text":  "\"decisions.json\",",
+                      "line":  9
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  6
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  11
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"-\\u003e live dashboard cards, risks, tasks, timeline\",",
+                      "line":  16
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"next_actions.json\",",
+                      "line":  21
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"risks.json\",",
+                      "line":  26
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"decisions.json\",",
+                      "line":  31
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"file\":  \"D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/dashboard_exports/decisions.json\",",
+                      "line":  35
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"decisions\\\": []\",",
+                      "line":  36
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"file\":  \"D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/dashboard_exports/next_actions.json\",",
+                      "line":  40
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"next_actions\\\": [\",",
+                      "line":  41
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"file\":  \"D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/dashboard_exports/risks.json\",",
+                      "line":  45
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"risks\\\": []\",",
+                      "line":  46
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"2. `next_actions.json` for the next action panel.\",",
+                      "line":  51
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"4. `risks.json` for the risk panel.\",",
+                      "line":  56
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"Next 3 Actions\",",
+                      "line":  61
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"Risk Count\",",
+                      "line":  66
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"file\":  \"D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/exports/DECISIONS.md\",",
+                      "line":  70
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"# Decisions\",",
+                      "line":  71
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"file\":  \"D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/exports/RISKS.md\",",
+                      "line":  75
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"# Risks\",",
+                      "line":  76
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  81
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  86
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  91
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  96
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  101
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  106
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  111
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  116
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  121
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  126
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"suggest next actions\\\",\",",
+                      "line":  131
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"\\\"flag risks\\\",\",",
+                      "line":  136
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"$todos = @()\",",
+                      "line":  141
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"$lines = Select-String -Path $f.FullName -Pattern \\\"TODO|FIXME|NEXT|RISK|DECISION\\\" -SimpleMatch:$false -ErrorAction SilentlyContinue\",",
+                      "line":  146
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"if ($todos.Count -lt 100) { $todos += @{ file=(ConvertTo-ForwardSlashPath $f.FullName); line=$l.LineNumber; text=$l.Line.Trim() } }\",",
+                      "line":  151
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"if ($todos.Count -lt 20) { $healthScore += 10 } else { $checks += @{name=\\\"many TODO/FIXME markers\\\"; status=\\\"warn\\\"} }\",",
+                      "line":  156
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"$nextActions = @{ generated_at=$generatedAt; next_actions=@(\",",
+                      "line":  161
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"@{title=\\\"Review risks and TODO markers\\\"; priority=\\\"medium\\\"; status=\\\"open\\\"}\",",
+                      "line":  166
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"$tasks = @{ generated_at=$generatedAt; tasks=$todos }\",",
+                      "line":  171
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"$risks = @{ generated_at=$generatedAt; risks=@(\",",
+                      "line":  176
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"$decisions = @{ generated_at=$generatedAt; decisions=@(\",",
+                      "line":  181
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"@{decision=\\\"Use Omega OS as export destination\\\"; status=\\\"accepted\\\"},\",",
+                      "line":  186
+                  },
+                  {
+                      "file":  "D:/Dev/Projects/New Earth - Command Dashboard/modules/NE_REPO_INTELLIGENCE_BRIDGE/__DASHBOARD_EXPORT_PATH__/tasks.json",
+                      "text":  "\"text\":  \"@{decision=\\\"Use Obsidian for human-readable Markdown and Dashboard for JSON\\\"; status=\\\"accepted\\\"}\",",
+                      "line":  191
+                  }
+              ]
+}

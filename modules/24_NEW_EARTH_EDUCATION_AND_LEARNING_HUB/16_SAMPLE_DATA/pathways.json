@@ -1,0 +1,7 @@
+[
+  {"id":"electronics_foundations","title":"Electronics Foundations","level":"Beginner","estimatedHours":12},
+  {"id":"embedded_systems","title":"Embedded Systems","level":"Beginner to Intermediate","estimatedHours":20},
+  {"id":"microgrow_operator","title":"MicroGrow Operator","level":"Beginner","estimatedHours":10},
+  {"id":"biocalm_foundations","title":"BioCalm Foundations","level":"Beginner","estimatedHours":8},
+  {"id":"ai_literacy","title":"AI Literacy","level":"Beginner","estimatedHours":6}
+]

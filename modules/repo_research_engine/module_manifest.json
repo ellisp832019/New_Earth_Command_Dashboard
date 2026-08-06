@@ -1,0 +1,20 @@
+{
+  "module_id": "repo_research_engine",
+  "module_name": "Repo Research Engine",
+  "version": "0.1.0",
+  "description": "Repo research and scan shell for change awareness, summaries, and future evidence packs.",
+  "category": "Knowledge Research",
+  "status": "installed",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": ["file_read", "repo_access"],
+  "omegaOsPath": "OMEGA_OS/MODULES/REPO_RESEARCH_ENGINE",
+  "backend": {
+    "implemented": true,
+    "type": "analysis_shell",
+    "notes": "Repository research shell available locally."
+  },
+  "tags": ["repo", "research", "analysis"],
+  "notes": "The root folder is now represented by a real manifest rather than an inferred placeholder."
+}

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-label="Role and permission matrix">
+  <defs>
+    <style>
+      .bg { fill: #081722; }
+      .panel { fill: #102634; stroke: #5bc6b8; stroke-width: 2; rx: 18; ry: 18; }
+      .card { fill: #163042; stroke: #31596b; stroke-width: 2; rx: 16; ry: 16; }
+      .good { fill: #17352f; stroke: #71d68a; stroke-width: 2; rx: 14; ry: 14; }
+      .bad { fill: #2c2531; stroke: #f0b35b; stroke-width: 2; rx: 14; ry: 14; }
+      .text { fill: #eaf6f4; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
+      .small { fill: #bed0cf; font-family: Arial, Helvetica, sans-serif; font-size: 17px; }
+      .cell { fill: #0e2030; stroke: #335466; stroke-width: 1.5; rx: 10; ry: 10; }
+      .cell-on { fill: #214635; stroke: #7ade94; stroke-width: 1.5; rx: 10; ry: 10; }
+      .cell-off { fill: #2f2735; stroke: #c58a45; stroke-width: 1.5; rx: 10; ry: 10; }
+      .head { fill: #d6f06e; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 700; }
+      .label { fill: #eaf6f4; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
+      .tiny { fill: #92a6ab; font-family: Arial, Helvetica, sans-serif; font-size: 14px; }
+    </style>
+  </defs>
+  <rect class="bg" width="1400" height="760" />
+  <text class="text" x="60" y="58">Roles and permission matrix</text>
+  <text class="small" x="60" y="88">A user can still be blocked when the device is trusted if the role does not carry the required permission.</text>
+
+  <rect class="panel" x="60" y="125" width="1280" height="545" />
+  <text class="text" x="92" y="168">Example: Treasury access</text>
+  <text class="small" x="92" y="196">Viewing Treasury needs the right local permission, the right role, the right trust floor, and a recorded audit decision.</text>
+
+  <rect class="card" x="92" y="235" width="220" height="360" />
+  <text class="label" x="122" y="272">Roles</text>
+  <rect class="cell" x="112" y="295" width="180" height="52" />
+  <text class="small" x="130" y="327">Owner</text>
+  <rect class="cell" x="112" y="362" width="180" height="52" />
+  <text class="small" x="130" y="394">Admin</text>
+  <rect class="cell" x="112" y="429" width="180" height="52" />
+  <text class="small" x="130" y="461">Co-founder</text>
+  <rect class="cell" x="112" y="496" width="180" height="52" />
+  <text class="small" x="130" y="528">Finance Manager</text>
+
+  <rect class="card" x="346" y="235" width="280" height="360" />
+  <text class="label" x="376" y="272">Permission</text>
+  <rect class="good" x="366" y="295" width="240" height="52" />
+  <text class="small" x="384" y="327">finance.view</text>
+  <rect class="cell" x="366" y="362" width="240" height="52" />
+  <text class="small" x="384" y="394">finance.edit</text>
+  <rect class="cell" x="366" y="429" width="240" height="52" />
+  <text class="small" x="384" y="461">finance.admin</text>
+  <rect class="cell" x="366" y="496" width="240" height="52" />
+  <text class="small" x="384" y="528">projects.view</text>
+
+  <rect class="card" x="660" y="235" width="290" height="360" />
+  <text class="label" x="690" y="272">Trust level</text>
+  <rect class="good" x="680" y="295" width="250" height="52" />
+  <text class="small" x="698" y="327">T4 or higher</text>
+  <rect class="bad" x="680" y="362" width="250" height="52" />
+  <text class="small" x="698" y="394">Below T4</text>
+  <rect class="cell" x="680" y="429" width="250" height="52" />
+  <text class="small" x="698" y="461">Trusted device</text>
+  <rect class="cell" x="680" y="496" width="250" height="52" />
+  <text class="small" x="698" y="528">Audit required</text>
+
+  <rect class="card" x="984" y="235" width="324" height="360" />
+  <text class="label" x="1014" y="272">Result</text>
+  <rect class="good" x="1004" y="295" width="284" height="52" />
+  <text class="small" x="1022" y="327">Allow access</text>
+  <rect class="bad" x="1004" y="362" width="284" height="52" />
+  <text class="small" x="1022" y="394">Explain why blocked</text>
+  <rect class="cell" x="1004" y="429" width="284" height="52" />
+  <text class="small" x="1022" y="461">Suggest next step</text>
+  <rect class="cell" x="1004" y="496" width="284" height="52" />
+  <text class="small" x="1022" y="528">Write audit trail</text>
+
+  <text class="tiny" x="92" y="635">The matrix is calm when it shows the minimum local rule set needed to move forward.</text>
+</svg>

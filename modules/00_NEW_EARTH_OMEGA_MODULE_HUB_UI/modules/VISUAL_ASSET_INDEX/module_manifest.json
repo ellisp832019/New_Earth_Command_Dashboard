@@ -1,0 +1,21 @@
+{
+  "id": "newearth.visual_asset_index",
+  "name": "Visual Asset Index",
+  "version": "0.1.0",
+  "category": "XR & Visual Systems",
+  "description": "Indexes images, prompts, diagrams, visual packs and dashboard design references.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": [
+    "file_read",
+    "asset_library",
+    "metadata_write"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/VISUAL_ASSET_INDEX",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}

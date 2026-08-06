@@ -1,0 +1,49 @@
+{
+  "experiment_id": "EXP-0004",
+  "title": "ESP-NOW Testing",
+  "project": "MicroGrow",
+  "project_link": "projects/microgrow",
+  "status": "PLANNED",
+  "category": "COMMUNICATION_TEST",
+  "owner": "Peter Ellis",
+  "created_date": "2026-06-16",
+  "objective": "Confirm ESP-NOW pairing, message stability, and retry behaviour between devices.",
+  "hypothesis": "ESP-NOW will be more reliable than the current fallback link for short-range local messaging.",
+  "test_plan": "Pair two nodes, send repeated payloads, track dropped packets, and note retry requirements.",
+  "setup_notes": "Use a quiet RF environment and a fixed message payload size.",
+  "evidence_files": [
+    "evidence/packet-log.csv",
+    "evidence/rf-notes.md"
+  ],
+  "measurements": [
+    "packet success rate",
+    "retry count",
+    "latency"
+  ],
+  "software_used": [
+    "PlatformIO",
+    "CSV",
+    "VS Code"
+  ],
+  "hardware_used": [
+    "ESP32 node A",
+    "ESP32 node B"
+  ],
+  "results": "Planned test bundle ready.",
+  "conclusion": "Awaiting runtime evidence.",
+  "lesson_learned": "Communication tests should start with the smallest stable payload.",
+  "next_actions": [
+    "Build the pair test sketch",
+    "Capture packet logs",
+    "Summarise retry behaviour"
+  ],
+  "related_repo_commits": [
+    "draft: esp-now test harness"
+  ],
+  "related_github_issues": [
+    "#104"
+  ],
+  "related_obsidian_notes": [
+    "ESP-NOW Testing"
+  ]
+}

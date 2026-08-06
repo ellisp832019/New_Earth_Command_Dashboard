@@ -1,0 +1,21 @@
+{
+  "id": "newearth.xr_workspace",
+  "name": "XR Workspace",
+  "version": "0.1.0",
+  "category": "XR & Visual Systems",
+  "description": "Visual workspace hub for VR development, Quest setup, asset packs and immersive dashboards.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "left",
+  "permissions": [
+    "file_read",
+    "asset_library",
+    "device_notes"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/XR_WORKSPACE",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}

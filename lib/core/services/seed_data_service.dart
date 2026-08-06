@@ -11,6 +11,7 @@ class SeedDataService {
   Future<void> ensureSeedData() async {
     await _database.transaction(() async {
       await _seedProjects();
+      await _seedTasks();
       await _seedSettings();
     });
   }
@@ -49,6 +50,37 @@ class SeedDataService {
     });
   }
 
+  Future<void> _seedTasks() async {
+    final existingTasks = await _database.select(_database.tasks).get();
+    final existingTaskIds = existingTasks.map((task) => task.taskId).toSet();
+    final missingTasks = DefaultSeedData.futureTasks
+        .where((task) => !existingTaskIds.contains(task.id))
+        .toList();
+    if (missingTasks.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now();
+    await _database.batch((batch) {
+      batch.insertAll(
+        _database.tasks,
+        missingTasks.map((task) {
+          return TasksCompanion.insert(
+            taskId: task.id,
+            projectId: Value(task.projectId),
+            title: task.title,
+            description: Value(task.description),
+            category: Value(task.category),
+            priority: Value(task.priority),
+            status: Value(task.status),
+            createdAt: now,
+            updatedAt: now,
+          );
+        }).toList(),
+      );
+    });
+  }
+
   Future<void> _seedSettings() async {
     final settings =
         await (_database.select(_database.appSettings)..where(
@@ -71,7 +103,21 @@ class SeedDataService {
             showBusinessCard: const Value(true),
             showLearningCard: const Value(true),
             showContentCard: const Value(true),
+            showProjectsWorkspaceSnapshot: const Value(true),
+            showDockOverlays: const Value(true),
+            showBackupGuardianDock: const Value(true),
+            showTreasuryDock: const Value(true),
+            showKnowledgeLibraryDock: const Value(true),
+            showVoiceConversationDock: const Value(true),
+            showVoicePresenceChip: const Value(true),
             dailyTopTaskLimit: const Value(3),
+            voiceRepliesEnabled: const Value(true),
+            preferredTtsVoiceName: const Value(null),
+            preferredTtsVoiceLocale: const Value(null),
+            preferredTtsVoiceGender: const Value(null),
+            preferredTtsVoiceIdentifier: const Value(null),
+            preferredTtsVoiceRate: const Value(0.5),
+            preferredTtsVoicePitch: const Value(1.0),
             createdAt: now,
             updatedAt: now,
           ),

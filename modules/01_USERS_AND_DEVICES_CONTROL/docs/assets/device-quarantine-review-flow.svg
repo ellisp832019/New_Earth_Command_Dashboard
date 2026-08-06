@@ -1,0 +1,64 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#071520"/>
+  <rect x="40" y="36" width="1520" height="828" rx="28" fill="#10232D" stroke="#1E4555" stroke-width="2"/>
+  <text x="84" y="110" fill="#E8F3F7" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">Device Trust Review And Quarantine Flow</text>
+  <text x="84" y="148" fill="#8FB1BD" font-family="Segoe UI, Arial, sans-serif" font-size="22">A calm operator path for review, quarantine, restore, and trust confirmation.</text>
+
+  <rect x="84" y="210" width="300" height="146" rx="24" fill="#15303A" stroke="#4DE3C1" stroke-width="2"/>
+  <text x="112" y="262" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">1. Device Appears</text>
+  <text x="112" y="304" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">Registered, blocked, or</text>
+  <text x="112" y="332" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">quarantined devices enter the</text>
+  <text x="112" y="360" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">trust review queue.</text>
+
+  <rect x="438" y="210" width="300" height="146" rx="24" fill="#15303A" stroke="#4DE3C1" stroke-width="2"/>
+  <text x="466" y="262" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">2. Read Evidence</text>
+  <text x="466" y="304" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">Check owner, trust source,</text>
+  <text x="466" y="332" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">reviewer, last seen signal, and</text>
+  <text x="466" y="360" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">any quarantine note.</text>
+
+  <rect x="792" y="210" width="300" height="146" rx="24" fill="#15303A" stroke="#4DE3C1" stroke-width="2"/>
+  <text x="820" y="262" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">3. Choose Posture</text>
+  <text x="820" y="304" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">Review device, keep it in</text>
+  <text x="820" y="332" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">quarantine, restore trust, or</text>
+  <text x="820" y="360" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">re-onboard it.</text>
+
+  <rect x="1146" y="210" width="300" height="146" rx="24" fill="#15303A" stroke="#4DE3C1" stroke-width="2"/>
+  <text x="1174" y="262" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">4. Record Outcome</text>
+  <text x="1174" y="304" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">Write the trust decision and</text>
+  <text x="1174" y="332" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">confirm the audit trail before</text>
+  <text x="1174" y="360" fill="#C4D8DE" font-family="Segoe UI, Arial, sans-serif" font-size="20">using gated routes again.</text>
+
+  <path d="M384 283H438" stroke="#4DE3C1" stroke-width="6" stroke-linecap="round"/>
+  <path d="M738 283H792" stroke="#4DE3C1" stroke-width="6" stroke-linecap="round"/>
+  <path d="M1092 283H1146" stroke="#4DE3C1" stroke-width="6" stroke-linecap="round"/>
+
+  <rect x="112" y="462" width="420" height="290" rx="26" fill="#122A33" stroke="#2A5666" stroke-width="2"/>
+  <text x="144" y="516" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Quarantine Path</text>
+  <text x="144" y="562" fill="#9CD8C8" font-family="Segoe UI, Arial, sans-serif" font-size="22">When the device is risky or uncertain</text>
+  <circle cx="154" cy="612" r="8" fill="#4DE3C1"/>
+  <text x="178" y="620" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Capture reviewer and quarantine reason.</text>
+  <circle cx="154" cy="656" r="8" fill="#4DE3C1"/>
+  <text x="178" y="664" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Pause the device from sensitive access.</text>
+  <circle cx="154" cy="700" r="8" fill="#4DE3C1"/>
+  <text x="178" y="708" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Review the fix before restoring trust.</text>
+
+  <rect x="590" y="462" width="420" height="290" rx="26" fill="#122A33" stroke="#2A5666" stroke-width="2"/>
+  <text x="622" y="516" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Restore Path</text>
+  <text x="622" y="562" fill="#9CD8C8" font-family="Segoe UI, Arial, sans-serif" font-size="22">When the endpoint is safe again</text>
+  <circle cx="632" cy="612" r="8" fill="#4DE3C1"/>
+  <text x="656" y="620" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Confirm the device and owner still match.</text>
+  <circle cx="632" cy="656" r="8" fill="#4DE3C1"/>
+  <text x="656" y="664" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Restore trust or re-onboard with evidence.</text>
+  <circle cx="632" cy="700" r="8" fill="#4DE3C1"/>
+  <text x="656" y="708" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Retest access through the protected route.</text>
+
+  <rect x="1068" y="462" width="420" height="290" rx="26" fill="#122A33" stroke="#2A5666" stroke-width="2"/>
+  <text x="1100" y="516" fill="#F2FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Calm Finish State</text>
+  <text x="1100" y="562" fill="#9CD8C8" font-family="Segoe UI, Arial, sans-serif" font-size="22">What “done” should look like</text>
+  <circle cx="1110" cy="612" r="8" fill="#4DE3C1"/>
+  <text x="1134" y="620" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Trust posture is readable.</text>
+  <circle cx="1110" cy="656" r="8" fill="#4DE3C1"/>
+  <text x="1134" y="664" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Quarantine history is explainable.</text>
+  <circle cx="1110" cy="700" r="8" fill="#4DE3C1"/>
+  <text x="1134" y="708" fill="#D5E6EB" font-family="Segoe UI, Arial, sans-serif" font-size="21">Audit evidence supports the decision.</text>
+</svg>

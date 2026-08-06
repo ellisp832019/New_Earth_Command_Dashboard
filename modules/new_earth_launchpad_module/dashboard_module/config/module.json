@@ -1,0 +1,8 @@
+{
+  "module_id": "new_earth_launchpad",
+  "name": "New Earth Launchpad",
+  "version": "0.1.0",
+  "route": "/launchpad",
+  "omega_os_path": "D:/NEW_EARTH_OMEGA_OS_PACK/24_NEW_EARTH_LAUNCHPAD",
+  "description": "Standalone crowdfunding, grants, investor, and venture launch module for the New Earth Dashboard."
+}

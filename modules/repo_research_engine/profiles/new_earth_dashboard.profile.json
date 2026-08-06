@@ -1,0 +1,70 @@
+{
+  "profile_name": "New Earth Dashboard",
+  "project_type": "local-first project operating system dashboard",
+  "priority_keywords": [
+    "dashboard",
+    "module",
+    "plugin",
+    "tasks",
+    "calendar",
+    "backup",
+    "vault",
+    "Obsidian",
+    "local paths",
+    "Flutter",
+    "React",
+    "Python",
+    "SQLite",
+    "API"
+  ],
+  "ignore_keywords": [
+    "cloud-only",
+    "vendor lock-in"
+  ],
+  "risk_keywords": [
+    "delete",
+    "wipe",
+    "backup overwrite",
+    "token",
+    "secret",
+    "credential"
+  ],
+  "useful_file_patterns": [
+    "README*",
+    "docs/**/*.md",
+    "src/**/*",
+    "lib/**/*",
+    "modules/**/*",
+    "package.json",
+    "pubspec.yaml",
+    "requirements.txt"
+  ],
+  "output_focus": [
+    "module ideas",
+    "architecture patterns",
+    "task system",
+    "vault integration",
+    "backup integration",
+    "UI patterns"
+  ],
+  "template_set": "New Earth Dashboard",
+  "template_set_description": "Optimised for dashboard structure, navigation, and calm UI review.",
+  "export_locations": [
+    "D:/NEW_EARTH_OMEGA_OS_PACK/22_KNOWLEDGE_AND_LEARNING/GIT_RESEARCH_LIBRARY/NEW_EARTH_DASHBOARD"
+  ],
+  "report_templates": {
+    "main_report": "repo_research_report.md",
+    "summary": "repo_summary.md",
+    "security": "security_report.md",
+    "risk": "risk_report.md",
+    "knowledge": "knowledge_report.md",
+    "implementation_opportunities": "implementation_opportunities.md",
+    "learning_notes": "learning_notes.md",
+    "vault_note": "repo_research_note_template.md"
+  },
+  "export_targets": [
+    "Dashboard docs",
+    "Omega OS",
+    "Obsidian"
+  ]
+}

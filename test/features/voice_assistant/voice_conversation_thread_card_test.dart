@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:new_earth_command_dashboard/features/voice_assistant/widgets/voice_conversation_thread_card.dart';
+import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_model.dart';
+
+void main() {
+  testWidgets('voice conversation thread card shows resume details', (
+    WidgetTester tester,
+  ) async {
+    var resumed = false;
+    var reusedLatest = false;
+    var startedFresh = false;
+    var openedSharedConversation = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: VoiceConversationThreadCard(
+            conversationContext: const VoiceConversationContext(
+              label: 'Project',
+              summary: 'Continuing the dashboard voice workflow thread.',
+              type: VoiceCommandType.project,
+              projectName: 'MicroGrow',
+              title: 'Dashboard voice workflow',
+              transcript:
+                  'Project: Create a project for the dashboard voice workflow',
+              entryCount: 2,
+            ),
+            onResumeThread: () {
+              resumed = true;
+            },
+            onReuseLatestCapture: () {
+              reusedLatest = true;
+            },
+            onStartFresh: () {
+              startedFresh = true;
+            },
+            onCopySummary: () {},
+            onOpenSharedConversation: () {
+              openedSharedConversation = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Pick up this thread'), findsOneWidget);
+    expect(find.text('Saved entries: 2'), findsOneWidget);
+    expect(find.text('Latest saved step'), findsOneWidget);
+    expect(find.textContaining('2 saved entries'), findsOneWidget);
+    expect(
+      find.textContaining('Latest capture: Dashboard voice workflow'),
+      findsOneWidget,
+    );
+    expect(find.text('Reuse latest capture'), findsOneWidget);
+    expect(find.text('Dashboard voice workflow'), findsOneWidget);
+    expect(
+      find.textContaining('Create a project for the dashboard voice workflow'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Thread: MicroGrow'), findsOneWidget);
+    expect(find.text('Type: Project'), findsOneWidget);
+    expect(find.text('Project: MicroGrow'), findsOneWidget);
+    expect(find.text('Continue thread'), findsOneWidget);
+    expect(find.text('Open shared conversation'), findsOneWidget);
+    expect(find.text('Copy summary'), findsOneWidget);
+    expect(find.text('Start fresh'), findsOneWidget);
+
+    await tester.tap(find.text('Reuse latest capture'));
+    await tester.pumpAndSettle();
+    expect(reusedLatest, isTrue);
+
+    await tester.tap(find.text('Continue thread'));
+    await tester.pumpAndSettle();
+    expect(resumed, isTrue);
+
+    await tester.tap(find.text('Start fresh'));
+    await tester.pumpAndSettle();
+    expect(startedFresh, isTrue);
+
+    await tester.tap(find.text('Open shared conversation'));
+    await tester.pumpAndSettle();
+    expect(openedSharedConversation, isTrue);
+  });
+}

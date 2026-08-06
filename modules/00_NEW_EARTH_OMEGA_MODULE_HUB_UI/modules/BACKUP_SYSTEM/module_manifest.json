@@ -1,0 +1,22 @@
+{
+  "id": "newearth.backup_system",
+  "name": "Backup System",
+  "version": "0.1.0",
+  "category": "Backup & Recovery",
+  "description": "Daily/weekly backup command centre with restore points, logs and target checks.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": [
+    "file_read",
+    "file_write_backup_target",
+    "scheduled_tasks",
+    "system_health"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/BACKUP_SYSTEM",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}

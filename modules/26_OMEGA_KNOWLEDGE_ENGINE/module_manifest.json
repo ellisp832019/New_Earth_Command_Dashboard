@@ -1,0 +1,34 @@
+{
+  "id": "26_OMEGA_KNOWLEDGE_ENGINE",
+  "name": "Omega Knowledge Engine",
+  "description": "Safe-by-default local repository intelligence for scanning, learning notes, architecture maps, and Obsidian exports.",
+  "category": "Knowledge & Research",
+  "version": "1.0.0",
+  "status": "installed",
+  "enabled": false,
+  "dockable": false,
+  "defaultDockPosition": "right",
+  "iconKey": "travel_explore_outlined",
+  "routes": ["/modules/omega-knowledge-engine"],
+  "permissions": [
+    {
+      "type": "file_read",
+      "state": "allowed",
+      "notes": "Read local repositories and generated markdown outputs."
+    },
+    {
+      "type": "repo_access",
+      "state": "allowed",
+      "notes": "Inspect source trees and build local repository indexes."
+    },
+    {
+      "type": "omega_os_access",
+      "state": "allowed",
+      "notes": "Bridge knowledge outputs into Omega OS exports."
+    }
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/26_OMEGA_KNOWLEDGE_ENGINE",
+  "storagePath": "modules/26_OMEGA_KNOWLEDGE_ENGINE/output",
+  "tags": ["knowledge", "scan", "learning", "obsidian"],
+  "notes": "Scan/report only by default. No automatic source rewriting."
+}

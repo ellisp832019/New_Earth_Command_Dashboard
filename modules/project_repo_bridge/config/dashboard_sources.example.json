@@ -1,0 +1,6 @@
+{
+  "mode": "json_files",
+  "projects_source": "src/data/projects.json",
+  "tasks_source": "src/data/tasks.json",
+  "notes": "Update these paths after Codex inspects your Dashboard repo. The migration script is safe if files do not exist; it will create empty records."
+}

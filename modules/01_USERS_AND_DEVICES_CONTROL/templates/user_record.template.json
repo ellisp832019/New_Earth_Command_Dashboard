@@ -1,0 +1,9 @@
+{
+  "id": "user_slug",
+  "display_name": "Name",
+  "role": "Role",
+  "status": "active",
+  "permissions": [],
+  "linked_devices": [],
+  "notes": ""
+}

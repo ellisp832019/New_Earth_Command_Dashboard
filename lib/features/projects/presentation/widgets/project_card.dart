@@ -1,71 +1,138 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/theme/app_colours.dart';
 
 class ProjectCard extends StatelessWidget {
-  const ProjectCard({super.key, required this.project});
+  const ProjectCard({
+    super.key,
+    required this.project,
+    this.openTaskCount,
+    this.onTap,
+  });
 
   final Project project;
+  final int? openTaskCount;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(project.name, style: theme.textTheme.titleMedium),
-                      if (project.shortDescription != null) ...[
-                        const SizedBox(height: 6),
+      color: AppColours.darkSurface.withValues(alpha: 0.92),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('projectCard-${project.projectId}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          project.shortDescription!,
-                          style: theme.textTheme.bodyMedium,
+                          project.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: AppColours.darkText,
+                            height: 1.15,
+                          ),
                         ),
+                        if (project.shortDescription != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            project.shortDescription!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColours.darkMutedText,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _ProjectBadge(label: project.status),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _ProjectBadge(label: 'Priority: ${project.priority}'),
+                  if (openTaskCount != null)
+                    _ProjectBadge(label: 'Open tasks: $openTaskCount'),
+                  _ProjectBadge(
+                    label: 'Progress: ${project.progressPercentage}%',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 7,
+                  value:
+                      project.progressPercentage.clamp(0, 100).toDouble() / 100,
+                  backgroundColor: AppColours.darkSurfaceRaised,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    project.progressPercentage >= 75
+                        ? AppColours.darkSuccess
+                        : AppColours.darkPrimary,
                   ),
                 ),
-                const SizedBox(width: 12),
-                _ProjectBadge(label: project.status),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _ProjectBadge(label: 'Priority: ${project.priority}'),
-                _ProjectBadge(
-                  label: 'Progress: ${project.progressPercentage}%',
+              ),
+              if (project.currentMilestone != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Current Milestone',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  project.currentMilestone!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkText,
+                    height: 1.35,
+                  ),
                 ),
               ],
-            ),
-            if (project.currentMilestone != null) ...[
-              const SizedBox(height: 14),
-              Text('Current Milestone', style: theme.textTheme.bodySmall),
-              const SizedBox(height: 4),
-              Text(
-                project.currentMilestone!,
-                style: theme.textTheme.bodyMedium,
-              ),
+              if (project.nextAction != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Next Action',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  project.nextAction!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
+                    height: 1.35,
+                  ),
+                ),
+              ],
             ],
-            if (project.nextAction != null) ...[
-              const SizedBox(height: 14),
-              Text('Next Action', style: theme.textTheme.bodySmall),
-              const SizedBox(height: 4),
-              Text(project.nextAction!, style: theme.textTheme.bodyMedium),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -83,13 +150,22 @@ class _ProjectBadge extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: AppColours.darkSurfaceRaised.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(label, style: theme.textTheme.bodySmall),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        child: Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
+        ),
       ),
     );
   }

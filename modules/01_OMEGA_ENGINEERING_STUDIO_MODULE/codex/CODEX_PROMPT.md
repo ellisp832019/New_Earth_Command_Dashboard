@@ -1,0 +1,1 @@
+Build an Omega-standard feature-first module with clean architecture, local-first storage, modular UI, reusable widgets, search, command palette, mock repositories, tests, and placeholder implementations for all listed engineering workspaces.

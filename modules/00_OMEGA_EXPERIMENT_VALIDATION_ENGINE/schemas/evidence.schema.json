@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Omega Evidence Record",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "experiment_id",
+    "type",
+    "path"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string"
+    },
+    "experiment_id": {
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "PHOTO",
+        "VIDEO",
+        "CSV",
+        "LOG",
+        "PROTEUS",
+        "KICAD",
+        "FUSION",
+        "LTSPICE",
+        "SCOPE",
+        "LOGIC_ANALYZER",
+        "THERMAL",
+        "SCREENSHOT",
+        "REPORT",
+        "OTHER"
+      ]
+    },
+    "path": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "created_date": {
+      "type": "string"
+    },
+    "software": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

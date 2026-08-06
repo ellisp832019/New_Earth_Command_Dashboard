@@ -1,0 +1,40 @@
+{
+  "safetyMode": "scan_report_only",
+  "repoRootPath": "D:\\Dev\\Projects\\New Earth - Command Dashboard",
+  "outputDir": "modules/26_OMEGA_KNOWLEDGE_ENGINE/output",
+  "obsidianExportDir": "modules/26_OMEGA_KNOWLEDGE_ENGINE/output/obsidian_export",
+  "omegaOsRootWindows": "D:\\NEW_EARTH_OMEGA_OS_PACK",
+  "obsidianVaultWindows": "D:\\NEW_EARTH_OMEGA_OS_PACK\\09_KNOWLEDGE_VAULT_OBSIDIAN",
+  "repoProfiles": [
+    {
+      "key": "dashboard",
+      "name": "Dashboard repo",
+      "pathWindows": "D:\\Dev\\Projects\\New Earth - Command Dashboard",
+      "type": "flutter_app"
+    },
+    {
+      "key": "microgrow",
+      "name": "MicroGrow repo",
+      "pathWindows": "D:\\Dev\\Projects\\MicroGrow V1",
+      "type": "firmware_flutter"
+    },
+    {
+      "key": "biocalm",
+      "name": "BioCalm repo",
+      "pathWindows": "D:\\Dev\\Projects\\New Earth - BioCalm",
+      "type": "wearable_firmware"
+    },
+    {
+      "key": "new_earth_living",
+      "name": "New Earth Living repo",
+      "pathWindows": "D:\\Dev\\Projects\\New Earth Living",
+      "type": "flutter_app"
+    },
+    {
+      "key": "future_repos",
+      "name": "Future repos",
+      "pathWindows": "D:\\Dev\\Projects\\Future New Earth Repos",
+      "type": "future"
+    }
+  ]
+}

@@ -37,11 +37,32 @@ dependencies:
   flutter_riverpod: ^3.3.1
   go_router: ^17.2.3
   intl: ^0.20.2
+  http: ^1.5.0
+  gaia_integration_client:
+    git:
+      url: https://github.com/ellisp832019/New-Earth-AI-Employee.git
+      path: packages/gaia_integration_client
+      ref: cd889be8e7f10a4c7105b6f72d52361aea33b31b
+  gaia_dashboard_module:
+    git:
+      url: https://github.com/ellisp832019/New-Earth-AI-Employee.git
+      path: packages/gaia_dashboard_module
+      ref: cd889be8e7f10a4c7105b6f72d52361aea33b31b
   uuid: ^4.5.3
   drift: ^2.32.1
-  sqlite3_flutter_libs: ^0.6.0+eol
   path_provider: ^2.1.5
   path: ^1.9.1
+  file_picker: ^11.0.2
+  speech_to_text: ^7.3.0
+  qr_flutter: ^4.1.0
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  pdfrx: ^2.4.1
+  archive: ^4.0.9
+  xml: ^6.6.1
+  window_manager: ^0.5.1
+  tray_manager: ^0.5.3
+  hotkey_manager: ^0.2.3
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +76,18 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   drift_dev: ^2.32.1
   build_runner: ^2.15.0
+  sqlite3: 3.3.1
+
+dependency_overrides:
+  speech_to_text_windows:
+    path: third_party/speech_to_text_windows
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: system
+      name_windows: winsqlite3
+      name: sqlite3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -66,6 +99,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/branding/new_earth_command_dashboard_13_desktop_startup_background.png
+    - assets/branding/new_earth_command_dashboard_07_app_icon_set.png
+    - assets/branding/new_earth_command_dashboard_tray_icon_v8.png
+    - windows/runner/resources/new_earth_command_dashboard_tray_icon_v8.ico
+    - windows/runner/resources/app_icon.ico
 
   # To add assets to your application, add an assets section, like this:
   # assets:

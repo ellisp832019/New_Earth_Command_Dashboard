@@ -1,0 +1,42 @@
+{
+  "project_name": "New Earth Dashboard",
+  "project_type": "dashboard",
+  "repo_root": "D:/Dev/Projects/New Earth - Command Dashboard",
+  "source_of_truth": "local repo + Obsidian exports + dashboard exports",
+  "obsidian_vault_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT",
+  "obsidian_project_folder": "01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD",
+  "dashboard_export_path": "D:/NEW_EARTH_OMEGA_OS_PACK/09_KNOWLEDGE_VAULT_OBSIDIAN/NEW_EARTH_OMEGA_KNOWLEDGE_VAULT/01_ACTIVE_PROJECTS/00_NEW_EARTH_DASHBOARD/exports",
+  "ignore": [
+    ".git",
+    ".dart_tool",
+    ".venv",
+    "node_modules",
+    "build",
+    "dist",
+    ".obsidian",
+    "logs"
+  ],
+  "locked_rules": [
+    "Local-first architecture",
+    "No file deletion by sync module",
+    "Never overwrite hand-written Obsidian sections",
+    "Human approval required for source-code edits",
+    "No secrets copied into Dashboard or AI context exports"
+  ],
+  "safe_ai_permissions": [
+    "read exported markdown",
+    "read dashboard JSON",
+    "summarise current project state",
+    "suggest next actions",
+    "flag risks",
+    "generate reports"
+  ],
+  "blocked_ai_permissions": [
+    "delete files",
+    "edit source code without approval",
+    "access secrets",
+    "push to GitHub",
+    "run destructive commands",
+    "change licences or payment logic without approval"
+  ]
+}

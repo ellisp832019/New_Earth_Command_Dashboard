@@ -1,0 +1,21 @@
+{
+  "module_id": "funding_grants_command_centre",
+  "module_name": "Funding & Grants Command Centre",
+  "version": "1.0.0",
+  "created": "2026-06-13",
+  "owner": "Peter Ellis",
+  "omega_os_source_path": "D:\\NEW_EARTH_OMEGA_OS_PACK\\17_FINANCE_AND_TREASURY\\09_GRANTS_DONATIONS_AND_FUNDING",
+  "primary_data_files": [
+    "00_GRANT_TRACKER_MASTER/grant_tracker.json",
+    "00_GRANT_TRACKER_MASTER/grant_tracker.csv"
+  ],
+  "projects_supported": [
+    "MicroGrow",
+    "New Earth Dashboard",
+    "BioCalm",
+    "Rehabilitation Initiative",
+    "Education Pilots",
+    "Community Growing Projects"
+  ],
+  "status": "scaffold_ready"
+}

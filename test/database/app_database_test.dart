@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,8 @@ import 'package:new_earth_command_dashboard/core/constants/default_seed_data.dar
 import 'package:new_earth_command_dashboard/core/database/app_database.dart';
 import 'package:new_earth_command_dashboard/core/services/daily_plan_service.dart';
 import 'package:new_earth_command_dashboard/core/services/seed_data_service.dart';
+import 'package:path/path.dart' as path;
+import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 void main() {
   test('database opens and creates MVP tables', () async {
@@ -31,7 +35,12 @@ void main() {
         'journal_entries',
         'learning_items',
         'projects',
+        'users_devices_control_pin_lockouts',
+        'users_devices_control_pin_records',
         'tasks',
+        'voice_audit_logs',
+        'voice_conversation_threads',
+        'voice_module_preferences',
         'wellbeing_checkins',
       ]),
     );
@@ -57,6 +66,30 @@ void main() {
     expect(settings, hasLength(1));
     expect(settings.single.settingsId, DefaultSeedData.settingsId);
     expect(settings.single.dailyTopTaskLimit, 3);
+  });
+
+  test('seed data creates future tasks once', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final seedDataService = SeedDataService(database);
+
+    await seedDataService.ensureSeedData();
+    await seedDataService.ensureSeedData();
+
+    final tasks = await database.select(database.tasks).get();
+
+    expect(tasks, hasLength(DefaultSeedData.futureTasks.length));
+    expect(
+      tasks.map((task) => task.title),
+      containsAll(DefaultSeedData.futureTasks.map((task) => task.title)),
+    );
+    expect(
+      tasks.every((task) => task.projectId == 'project-future-ideas'),
+      isTrue,
+    );
+    expect(tasks.every((task) => task.category == 'Planning'), isTrue);
+    expect(tasks.every((task) => task.status == 'Planned'), isTrue);
   });
 
   test('seed data keeps existing projects and adds missing defaults', () async {
@@ -126,5 +159,38 @@ void main() {
       'daily-plan-2026-05-02',
       'daily-plan-2026-05-03',
     ]);
+  });
+
+  test('database migration tolerates legacy user_version values', () async {
+    final tempDir = await Directory.systemTemp.createTemp(
+      'new_earth_dashboard_migration_',
+    );
+    addTearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final dbFile = File(path.join(tempDir.path, 'dashboard.db'));
+
+    final bootstrap = AppDatabase(NativeDatabase(dbFile));
+    await bootstrap.customSelect('SELECT 1').getSingle();
+    await bootstrap.close();
+
+    final rawDatabase = sqlite3.sqlite3.open(dbFile.path);
+    rawDatabase.execute('PRAGMA user_version = 7');
+    rawDatabase.close();
+
+    final migrated = AppDatabase(NativeDatabase(dbFile));
+    addTearDown(migrated.close);
+
+    await migrated.customSelect('SELECT 1').getSingle();
+
+    final userVersion = await migrated
+        .customSelect('PRAGMA user_version')
+        .map((row) => row.read<int>('user_version'))
+        .getSingle();
+
+    expect(userVersion, 15);
   });
 }

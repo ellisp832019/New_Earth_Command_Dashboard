@@ -1,4 +1,4 @@
-# New Earth Command Dashboard — FSD Master Index
+# New Earth Command Dashboard - FSD Master Index
 
 This folder contains the full Functional Specification Document for the New Earth Command Dashboard.
 
@@ -40,6 +40,24 @@ Codex must treat these files as the source of truth for the project.
 
 11. `11_build_instructions.md`
    - First coding tasks, Codex prompts, repo setup.
+
+12. `12_major_upgrade_plan.md`
+   - Repo-wide upgrade order, cross-module priorities, release gates, and parked work.
+
+13. `13_upgrade_execution_plan.md`
+   - Current major-upgrade execution order, active stream definitions, and the next hardening slices to build.
+
+14. `14_repo_upgrade_program.md`
+   - Repo-wide maturity read, major upgrade streams, sequencing rules, release gates, and the recommended next-wave program.
+
+## Roadmaps
+
+- [App Roadmap](../roadmap/app_roadmap.md)
+- [MVP Roadmap](../roadmap/mvp_roadmap.md)
+- [MVP Execution Plan](../roadmap/mvp_execution_plan.md)
+- [Voice Roadmap](../roadmap/voice_10_task_roadmap.md)
+- [AI Roadmap](../roadmap/ai_10_task_roadmap.md)
+- [Treasury Roadmap](../roadmap/treasury_20_task_roadmap.md)
 
 ## Build Rule
 

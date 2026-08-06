@@ -1,0 +1,20 @@
+{
+  "module_id": "NE_OBSIDIAN_SYNC_MODULE",
+  "module_name": "Obsidian Sync",
+  "version": "0.1.0",
+  "description": "Local-first knowledge fabric sync for Obsidian vault mirroring, project notes, and dashboard exports.",
+  "category": "Knowledge Research",
+  "status": "disabled",
+  "enabled": false,
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": ["file_read", "file_write"],
+  "omegaOsPath": "OMEGA_OS/MODULES/OBSIDIAN_SYNC",
+  "backend": {
+    "implemented": false,
+    "type": "bridge_stub",
+    "notes": "Sync is intentionally dormant for now."
+  },
+  "tags": ["notes", "sync", "obsidian"],
+  "notes": "Reusable local-first sync module for New Earth repos."
+}

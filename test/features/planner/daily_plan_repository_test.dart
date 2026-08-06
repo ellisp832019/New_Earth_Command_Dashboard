@@ -128,6 +128,53 @@ void main() {
     expect(plan.tomorrowFocus, 'Start the first evening review save flow.');
   });
 
+  test('daily plan repository saves evening review fields and summary', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final today = DateTime(2026, 5, 2, 9);
+    final repository = DailyPlanRepository(database, now: () => today);
+    await DailyPlanService(database, now: () => today).ensureTodayPlan();
+
+    await repository.updateEveningReview(
+      movedForward: 'The planner now saves tomorrow focus cleanly.',
+      completed: 'Finished the carry forward slice.',
+      learned: 'Keeping the daily loop narrow makes the app easier to trust.',
+      blockers: 'Project detail flow still needs its first pass.',
+    );
+
+    final plan = await repository.getTodayPlan();
+
+    expect(
+      plan.whatMovedForward,
+      'The planner now saves tomorrow focus cleanly.',
+    );
+    expect(plan.whatWasCompleted, 'Finished the carry forward slice.');
+    expect(
+      plan.whatWasLearned,
+      'Keeping the daily loop narrow makes the app easier to trust.',
+    );
+    expect(plan.blockers, 'Project detail flow still needs its first pass.');
+    expect(
+      plan.eveningReview,
+      contains('Moved forward: The planner now saves tomorrow focus cleanly.'),
+    );
+    expect(
+      plan.eveningReview,
+      contains('Completed: Finished the carry forward slice.'),
+    );
+    expect(
+      plan.eveningReview,
+      contains(
+        'Learned: Keeping the daily loop narrow makes the app easier to trust.',
+      ),
+    );
+    expect(
+      plan.eveningReview,
+      contains('Blocked by: Project detail flow still needs its first pass.'),
+    );
+  });
+
   test(
     'daily plan repository saves top 3 task ids and syncs task flags',
     () async {

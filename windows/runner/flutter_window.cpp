@@ -28,7 +28,7 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+    // The Dart-side window manager now controls when the frameless window is shown.
   });
 
   // Flutter can complete the first frame before the "show window" callback is

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-label="Access flow chart">
+  <defs>
+    <style>
+      .bg { fill: #081722; }
+      .panel { fill: #102634; stroke: #5bc6b8; stroke-width: 2; rx: 18; ry: 18; }
+      .start { fill: #1a3140; stroke: #a9d84c; stroke-width: 2; rx: 18; ry: 18; }
+      .warn { fill: #2c2531; stroke: #f0b35b; stroke-width: 2; rx: 18; ry: 18; }
+      .ok { fill: #17352f; stroke: #71d68a; stroke-width: 2; rx: 18; ry: 18; }
+      .text { fill: #eaf6f4; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
+      .small { fill: #bed0cf; font-family: Arial, Helvetica, sans-serif; font-size: 17px; }
+      .tiny { fill: #92a6ab; font-family: Arial, Helvetica, sans-serif; font-size: 15px; }
+      .arrow { stroke: #8fd3d4; stroke-width: 4; fill: none; marker-end: url(#arrowHead); }
+      .dashed { stroke: #9ab3b7; stroke-width: 3; stroke-dasharray: 10 8; fill: none; marker-end: url(#arrowHeadMuted); }
+      .label { fill: #d6f06e; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
+    </style>
+    <marker id="arrowHead" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#8fd3d4" />
+    </marker>
+    <marker id="arrowHeadMuted" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#9ab3b7" />
+    </marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1400" height="760" />
+  <text class="text" x="60" y="58">Users &amp; Devices access flow</text>
+  <text class="small" x="60" y="88">One local path from launch to unlock, with a loop back whenever identity, trust, or PIN checks fail.</text>
+
+  <rect class="start" x="60" y="130" width="250" height="95" />
+  <text class="text" x="86" y="170">App start</text>
+  <text class="small" x="86" y="198">Security Lock opens first</text>
+
+  <rect class="panel" x="370" y="126" width="260" height="103" />
+  <text class="text" x="398" y="164">Select identity</text>
+  <text class="small" x="398" y="193">Pick the user and trusted device</text>
+
+  <rect class="panel" x="700" y="126" width="250" height="103" />
+  <text class="text" x="730" y="164">Enter PIN</text>
+  <text class="small" x="730" y="193">Match the selected user</text>
+
+  <rect class="ok" x="1010" y="126" width="290" height="103" />
+  <text class="text" x="1040" y="164">Access check passes</text>
+  <text class="small" x="1040" y="193">Open dashboard or voice gate</text>
+
+  <path class="arrow" d="M310 178 L360 178" />
+  <path class="arrow" d="M630 178 L690 178" />
+  <path class="arrow" d="M950 178 L1000 178" />
+
+  <rect class="warn" x="370" y="314" width="260" height="105" />
+  <text class="text" x="398" y="352">Blocked</text>
+  <text class="small" x="398" y="381">Gate explains what is missing</text>
+
+  <rect class="panel" x="700" y="314" width="250" height="105" />
+  <text class="text" x="730" y="352">Fix the cause</text>
+  <text class="small" x="730" y="381">Open Users, Devices, PINs, or Matrix</text>
+
+  <rect class="ok" x="1010" y="314" width="290" height="105" />
+  <text class="text" x="1040" y="352">Retry unlock</text>
+  <text class="small" x="1040" y="381">Recorded locally in the audit trail</text>
+
+  <path class="dashed" d="M1110 229 C1110 270, 905 280, 625 324" />
+  <text class="label" x="1120" y="274">if blocked</text>
+  <path class="arrow" d="M630 366 L690 366" />
+  <path class="arrow" d="M950 366 L1000 366" />
+
+  <rect class="panel" x="60" y="520" width="1240" height="140" />
+  <text class="text" x="92" y="566">What the user sees</text>
+  <text class="small" x="92" y="598">Right-side security session box, selected user/device badges, masked PIN summaries, and a calm reason when access is blocked.</text>
+  <text class="small" x="92" y="628">The goal is to guide the operator to the right local fix instead of letting them guess.</text>
+</svg>

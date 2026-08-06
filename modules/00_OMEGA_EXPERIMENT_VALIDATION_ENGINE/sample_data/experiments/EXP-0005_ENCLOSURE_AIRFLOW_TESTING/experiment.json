@@ -1,0 +1,50 @@
+{
+  "experiment_id": "EXP-0005",
+  "title": "Enclosure Airflow Testing",
+  "project": "MicroGrow",
+  "project_link": "projects/microgrow",
+  "status": "IDEA",
+  "category": "ENCLOSURE_TEST",
+  "owner": "Peter Ellis",
+  "created_date": "2026-06-16",
+  "objective": "Check enclosure airflow, heat build-up, and vent placement for a safe enclosure revision.",
+  "hypothesis": "A small vent and fan path will reduce hotspots without increasing noise too much.",
+  "test_plan": "Measure temperature at several points, compare still-air vs vented runs, and record the observed delta.",
+  "setup_notes": "Initial enclosure CAD notes and thermal probe layout are ready for the first run.",
+  "evidence_files": [
+    "evidence/thermal-map.md",
+    "evidence/cad-notes.md"
+  ],
+  "measurements": [
+    "internal temperature",
+    "airflow path",
+    "noise perception"
+  ],
+  "software_used": [
+    "Fusion 360",
+    "Excel",
+    "Obsidian"
+  ],
+  "hardware_used": [
+    "Prototype enclosure",
+    "Thermal probe",
+    "Fan"
+  ],
+  "results": "Initial test only.",
+  "conclusion": "Pending thermal evidence.",
+  "lesson_learned": "Vent placement should be tested before final enclosure lock-in.",
+  "next_actions": [
+    "Prepare thermal probe map",
+    "Print first test shell",
+    "Capture airflow observations"
+  ],
+  "related_repo_commits": [
+    "draft: enclosure airflow testing"
+  ],
+  "related_github_issues": [
+    "#105"
+  ],
+  "related_obsidian_notes": [
+    "Enclosure Airflow Testing"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "newearth.repo_research_engine",
+  "name": "Repo Research Engine",
+  "version": "0.1.0",
+  "category": "Knowledge & Research",
+  "description": "Scans repositories, extracts context, indexes docs and creates research-ready knowledge packs.",
+  "status": "disabled",
+  "dockable": true,
+  "defaultDockPosition": "bottom",
+  "permissions": [
+    "file_read",
+    "repo_access",
+    "knowledge_export",
+    "local_index"
+  ],
+  "omegaOsPath": "OMEGA_OS/MODULES/REPO_RESEARCH_ENGINE",
+  "backend": {
+    "implemented": false,
+    "type": "placeholder",
+    "notes": "Deliberate shell for the Module Hub. Backend work can be added later."
+  }
+}
