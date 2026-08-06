@@ -100,7 +100,7 @@ void main() {
             pinId: 'pin_primary',
             userId: 'user_peter_owner',
             label: 'Primary PIN',
-            pinCode: '4434',
+            pinCode: '****',
             status: 'active',
             sourceLabel: 'Local admin',
             createdAt: fixedNow.subtract(const Duration(days: 5)),

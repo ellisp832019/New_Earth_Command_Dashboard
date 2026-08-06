@@ -312,7 +312,9 @@ class _UsersDevicesPinsScreenState
     ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Recovery PIN issued: ${record.pinCode}')),
+      const SnackBar(
+        content: Text('Recovery PIN issued and shown once to the operator.'),
+      ),
     );
   }
 

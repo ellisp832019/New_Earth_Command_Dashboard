@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:drift/drift.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../core/utils/local_pin_secret_codec.dart';
+
 import '../../../core/database/app_database.dart';
 
 class UsersDevicesPinRecord {
@@ -18,6 +20,10 @@ class UsersDevicesPinRecord {
     required this.createdAt,
     required this.updatedAt,
     this.notes = '',
+    this.pinLength = 0,
+    this.pinSecretAlgorithm = '',
+    this.pinSecretSalt = '',
+    this.pinSecretHash = '',
   });
 
   final String pinId;
@@ -27,6 +33,10 @@ class UsersDevicesPinRecord {
   final String status;
   final String sourceLabel;
   final String notes;
+  final int pinLength;
+  final String pinSecretAlgorithm;
+  final String pinSecretSalt;
+  final String pinSecretHash;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -39,6 +49,10 @@ class UsersDevicesPinRecord {
       status: json['status'] as String? ?? 'active',
       sourceLabel: json['source_label'] as String? ?? 'Local admin',
       notes: json['notes'] as String? ?? '',
+      pinLength: json['pin_length'] as int? ?? 0,
+      pinSecretAlgorithm: json['pin_secret_algorithm'] as String? ?? '',
+      pinSecretSalt: json['pin_secret_salt'] as String? ?? '',
+      pinSecretHash: json['pin_secret_hash'] as String? ?? '',
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now().toUtc(),
@@ -53,10 +67,16 @@ class UsersDevicesPinRecord {
       'pin_id': pinId,
       'user_id': userId,
       'label': label,
-      'pin_code': pinCode,
+      'pin_code': LocalPinSecretCodec.displayPinFromLength(
+        pinLength > 0 ? pinLength : pinCode.length,
+      ),
       'status': status,
       'source_label': sourceLabel,
       'notes': notes,
+      'pin_length': pinLength,
+      'pin_secret_algorithm': pinSecretAlgorithm,
+      'pin_secret_salt': pinSecretSalt,
+      'pin_secret_hash': pinSecretHash,
       'created_at': createdAt.toUtc().toIso8601String(),
       'updated_at': updatedAt.toUtc().toIso8601String(),
     };
@@ -68,6 +88,10 @@ class UsersDevicesPinRecord {
     String? status,
     String? sourceLabel,
     String? notes,
+    int? pinLength,
+    String? pinSecretAlgorithm,
+    String? pinSecretSalt,
+    String? pinSecretHash,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -79,6 +103,10 @@ class UsersDevicesPinRecord {
       status: status ?? this.status,
       sourceLabel: sourceLabel ?? this.sourceLabel,
       notes: notes ?? this.notes,
+      pinLength: pinLength ?? this.pinLength,
+      pinSecretAlgorithm: pinSecretAlgorithm ?? this.pinSecretAlgorithm,
+      pinSecretSalt: pinSecretSalt ?? this.pinSecretSalt,
+      pinSecretHash: pinSecretHash ?? this.pinSecretHash,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -211,6 +239,8 @@ class UsersDevicesPinRegistryService {
   final Duration lockoutDuration;
   final DateTime Function()? _nowProvider;
   final Random _idRandom = Random();
+  final Random _secureRandom = Random.secure();
+  static const String _pinSecretAlgorithm = LocalPinSecretCodec.algorithm;
   int _pinIdSequence = 0;
 
   Future<UsersDevicesPinRegistrySnapshot> loadSnapshot() async {
@@ -240,6 +270,7 @@ class UsersDevicesPinRegistryService {
   }) async {
     final pins = await _readPins();
     final now = _now();
+    final secret = await LocalPinSecretCodec.hashPinCode(pinCode);
     final updated = <UsersDevicesPinRecord>[
       for (final pin in pins)
         if (pin.userId == userId && pin.status == 'active')
@@ -250,10 +281,14 @@ class UsersDevicesPinRegistryService {
         pinId: _buildPinId(now, userId: userId),
         userId: userId,
         label: label,
-        pinCode: pinCode,
+        pinCode: LocalPinSecretCodec.displayPinFromLength(pinCode.length),
         status: 'active',
         sourceLabel: sourceLabel,
         notes: notes,
+        pinLength: secret.pinLength,
+        pinSecretAlgorithm: secret.algorithm,
+        pinSecretSalt: secret.saltBase64,
+        pinSecretHash: secret.hashBase64,
         createdAt: now,
         updatedAt: now,
       ),
@@ -271,15 +306,20 @@ class UsersDevicesPinRegistryService {
   }) async {
     final now = _now();
     final recoveryPin = _generateNumericPin(6);
+    final secret = await LocalPinSecretCodec.hashPinCode(recoveryPin);
     final pins = await _readPins();
     final record = UsersDevicesPinRecord(
       pinId: _buildPinId(now, userId: userId),
       userId: userId,
       label: label,
-      pinCode: recoveryPin,
+      pinCode: LocalPinSecretCodec.displayPinFromLength(recoveryPin.length),
       status: 'recovery',
       sourceLabel: sourceLabel,
       notes: notes,
+      pinLength: secret.pinLength,
+      pinSecretAlgorithm: secret.algorithm,
+      pinSecretSalt: secret.saltBase64,
+      pinSecretHash: secret.hashBase64,
       createdAt: now,
       updatedAt: now,
     );
@@ -293,7 +333,7 @@ class UsersDevicesPinRegistryService {
     ];
     await _writePins(updated);
     await _clearLockout(userId);
-    return record;
+    return record.copyWith(pinCode: recoveryPin);
   }
 
   Future<void> revokePin(String pinId) async {
@@ -368,7 +408,7 @@ class UsersDevicesPinRegistryService {
       );
     }
 
-    if (primaryPin != null && primaryPin.pinCode == pinCode) {
+    if (primaryPin != null && await _matchesPin(primaryPin, pinCode)) {
       await _clearLockout(userId);
       return UsersDevicesPinAccessDecision(
         allowed: true,
@@ -380,7 +420,7 @@ class UsersDevicesPinRegistryService {
     }
 
     for (final record in recoveryPins) {
-      if (record.pinCode == pinCode) {
+      if (await _matchesPin(record, pinCode)) {
         await _clearLockout(userId);
         return UsersDevicesPinAccessDecision(
           allowed: true,
@@ -442,7 +482,7 @@ class UsersDevicesPinRegistryService {
     await _migrateLegacyPinsIfNeeded();
     final rows = await db
         .customSelect(
-          'SELECT pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at '
+          'SELECT pin_id, user_id, label, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash, status, source_label, notes, created_at, updated_at '
           'FROM users_devices_control_pin_records ORDER BY created_at ASC',
         )
         .get();
@@ -453,7 +493,7 @@ class UsersDevicesPinRegistryService {
     await _seedDatabaseFromJson(db);
     final seededRows = await db
         .customSelect(
-          'SELECT pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at '
+          'SELECT pin_id, user_id, label, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash, status, source_label, notes, created_at, updated_at '
           'FROM users_devices_control_pin_records ORDER BY created_at ASC',
         )
         .get();
@@ -478,10 +518,10 @@ class UsersDevicesPinRegistryService {
       return;
     }
 
-    final records = decoded
-        .whereType<Map<String, dynamic>>()
-        .map(UsersDevicesPinRecord.fromJson)
-        .toList(growable: false);
+    final records = <UsersDevicesPinRecord>[];
+    for (final item in decoded.whereType<Map<String, dynamic>>()) {
+      records.add(await _secureRecordFromJson(item));
+    }
 
     if (records.isEmpty) {
       await file.delete();
@@ -503,13 +543,17 @@ class UsersDevicesPinRegistryService {
       for (final pin in pins) {
         await db.customInsert(
           'INSERT INTO users_devices_control_pin_records '
-          '(pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at) '
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          '(pin_id, user_id, label, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash, status, source_label, notes, created_at, updated_at) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           variables: [
             Variable<String>(pin.pinId),
             Variable<String>(pin.userId),
             Variable<String>(pin.label),
             Variable<String>(pin.pinCode),
+            Variable<int>(pin.pinLength),
+            Variable<String>(pin.pinSecretAlgorithm),
+            Variable<String>(pin.pinSecretSalt),
+            Variable<String>(pin.pinSecretHash),
             Variable<String>(pin.status),
             Variable<String>(pin.sourceLabel),
             Variable<String>(pin.notes),
@@ -654,13 +698,17 @@ class UsersDevicesPinRegistryService {
       for (final pin in records) {
         await db.customInsert(
           'INSERT INTO users_devices_control_pin_records '
-          '(pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at) '
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          '(pin_id, user_id, label, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash, status, source_label, notes, created_at, updated_at) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           variables: [
             Variable<String>(pin.pinId),
             Variable<String>(pin.userId),
             Variable<String>(pin.label),
             Variable<String>(pin.pinCode),
+            Variable<int>(pin.pinLength),
+            Variable<String>(pin.pinSecretAlgorithm),
+            Variable<String>(pin.pinSecretSalt),
+            Variable<String>(pin.pinSecretHash),
             Variable<String>(pin.status),
             Variable<String>(pin.sourceLabel),
             Variable<String>(pin.notes),
@@ -671,15 +719,23 @@ class UsersDevicesPinRegistryService {
       }
       if (records.isEmpty) {
         final now = _now();
+        final fallbackPin = _generateNumericPin(6);
+        final fallbackSecret = await LocalPinSecretCodec.hashPinCode(
+          fallbackPin,
+        );
         await db.customInsert(
           'INSERT INTO users_devices_control_pin_records '
-          '(pin_id, user_id, label, pin_code, status, source_label, notes, created_at, updated_at) '
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          '(pin_id, user_id, label, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash, status, source_label, notes, created_at, updated_at) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           variables: [
             Variable<String>(_buildPinId(now, userId: 'user_peter_owner')),
             const Variable<String>('user_peter_owner'),
             const Variable<String>('Primary PIN'),
-            Variable<String>(_generateNumericPin(6)),
+            Variable<String>(LocalPinSecretCodec.displayPinFromLength(6)),
+            Variable<int>(fallbackSecret.pinLength),
+            Variable<String>(fallbackSecret.algorithm),
+            Variable<String>(fallbackSecret.saltBase64),
+            Variable<String>(fallbackSecret.hashBase64),
             const Variable<String>('active'),
             const Variable<String>('Seed data'),
             const Variable<String>('Seeded fallback PIN record.'),
@@ -692,14 +748,24 @@ class UsersDevicesPinRegistryService {
   }
 
   UsersDevicesPinRecord _recordFromRow(dynamic row) {
+    final pinLength = row.read<int?>('pin_length') ?? 0;
+    final storedPinCode = row.read<String>('pin_code');
     return UsersDevicesPinRecord(
       pinId: row.read<String>('pin_id'),
       userId: row.read<String>('user_id'),
       label: row.read<String>('label'),
-      pinCode: row.read<String>('pin_code'),
+      pinCode: LocalPinSecretCodec.normalizeStoredDisplay(
+        storedPinCode: storedPinCode,
+        pinLength: pinLength,
+      ),
       status: row.read<String>('status'),
       sourceLabel: row.read<String>('source_label'),
       notes: row.read<String>('notes'),
+      pinLength: pinLength,
+      pinSecretAlgorithm:
+          row.read<String?>('pin_secret_algorithm') ?? _pinSecretAlgorithm,
+      pinSecretSalt: row.read<String?>('pin_secret_salt') ?? '',
+      pinSecretHash: row.read<String?>('pin_secret_hash') ?? '',
       createdAt:
           DateTime.tryParse(row.read<String>('created_at')) ??
           DateTime.now().toUtc(),
@@ -759,7 +825,44 @@ class UsersDevicesPinRegistryService {
   }
 
   String _generateNumericPin(int length) {
-    final random = Random();
+    final random = _secureRandom;
     return List.generate(length, (_) => random.nextInt(10)).join();
+  }
+
+  Future<UsersDevicesPinRecord> _secureRecordFromJson(
+    Map<String, dynamic> json,
+  ) async {
+    final record = UsersDevicesPinRecord.fromJson(json);
+    final secretAlreadyPresent =
+        record.pinSecretHash.isNotEmpty && record.pinSecretSalt.isNotEmpty;
+    if (secretAlreadyPresent) {
+      return record.copyWith(
+        pinCode: LocalPinSecretCodec.normalizeStoredDisplay(
+          storedPinCode: record.pinCode,
+          pinLength: record.pinLength,
+        ),
+      );
+    }
+
+    final secret = await LocalPinSecretCodec.hashPinCode(record.pinCode);
+    return record.copyWith(
+      pinCode: LocalPinSecretCodec.displayPinFromLength(secret.pinLength),
+      pinLength: secret.pinLength,
+      pinSecretAlgorithm: secret.algorithm,
+      pinSecretSalt: secret.saltBase64,
+      pinSecretHash: secret.hashBase64,
+    );
+  }
+
+  Future<bool> _matchesPin(UsersDevicesPinRecord record, String pinCode) async {
+    if (record.pinSecretHash.isEmpty || record.pinSecretSalt.isEmpty) {
+      return false;
+    }
+
+    return LocalPinSecretCodec.matchesPinCode(
+      pinCode: pinCode,
+      saltBase64: record.pinSecretSalt,
+      hashBase64: record.pinSecretHash,
+    );
   }
 }

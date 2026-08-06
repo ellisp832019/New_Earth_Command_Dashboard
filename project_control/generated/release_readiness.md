@@ -1,6 +1,5 @@
 # Release Readiness
 
-- Result: blocked
+- Result: not_ready
 - Reasons:
-  - An open P0 risk exists.
   - One or more open P1 risks remain.

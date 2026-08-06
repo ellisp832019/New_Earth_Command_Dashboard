@@ -11,7 +11,6 @@ Date: 2026-08-06
 
 ## Modules With Open Higher-Priority Risks
 
-- `users_devices_control` -> P0 risk about PIN storage and access-control handling
 - `voice_assistant` -> P1 risk about voice hardware and startup gating
 - `voice_intelligence` -> P1 risk through its voice dependency chain
 - `project_control` release readiness -> P1 CI/documentation readiness concerns remain open in the canonical risk register
