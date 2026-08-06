@@ -8634,6 +8634,21 @@ class $AppSettingsTable extends AppSettings
         ),
         defaultValue: const Constant(true),
       );
+  static const VerificationMeta _showGaiaEmployeeSurfaceMeta =
+      const VerificationMeta('showGaiaEmployeeSurface');
+  @override
+  late final GeneratedColumn<bool> showGaiaEmployeeSurface =
+      GeneratedColumn<bool>(
+        'show_gaia_employee_surface',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_gaia_employee_surface" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
   static const VerificationMeta _dailyTopTaskLimitMeta = const VerificationMeta(
     'dailyTopTaskLimit',
   );
@@ -8796,6 +8811,7 @@ class $AppSettingsTable extends AppSettings
     showKnowledgeLibraryDock,
     showVoiceConversationDock,
     showVoicePresenceChip,
+    showGaiaEmployeeSurface,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
@@ -8940,6 +8956,15 @@ class $AppSettingsTable extends AppSettings
         showVoicePresenceChip.isAcceptableOrUnknown(
           data['show_voice_presence_chip']!,
           _showVoicePresenceChipMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_gaia_employee_surface')) {
+      context.handle(
+        _showGaiaEmployeeSurfaceMeta,
+        showGaiaEmployeeSurface.isAcceptableOrUnknown(
+          data['show_gaia_employee_surface']!,
+          _showGaiaEmployeeSurfaceMeta,
         ),
       );
     }
@@ -9114,6 +9139,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}show_voice_presence_chip'],
       )!,
+      showGaiaEmployeeSurface: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_gaia_employee_surface'],
+      )!,
       dailyTopTaskLimit: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}daily_top_task_limit'],
@@ -9186,6 +9215,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showKnowledgeLibraryDock;
   final bool showVoiceConversationDock;
   final bool showVoicePresenceChip;
+  final bool showGaiaEmployeeSurface;
   final int dailyTopTaskLimit;
   final bool voiceRepliesEnabled;
   final bool voiceAssistantEnabled;
@@ -9213,6 +9243,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showKnowledgeLibraryDock,
     required this.showVoiceConversationDock,
     required this.showVoicePresenceChip,
+    required this.showGaiaEmployeeSurface,
     required this.dailyTopTaskLimit,
     required this.voiceRepliesEnabled,
     required this.voiceAssistantEnabled,
@@ -9251,6 +9282,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showVoiceConversationDock,
     );
     map['show_voice_presence_chip'] = Variable<bool>(showVoicePresenceChip);
+    map['show_gaia_employee_surface'] = Variable<bool>(showGaiaEmployeeSurface);
     map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit);
     map['voice_replies_enabled'] = Variable<bool>(voiceRepliesEnabled);
     map['voice_assistant_enabled'] = Variable<bool>(voiceAssistantEnabled);
@@ -9298,6 +9330,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showKnowledgeLibraryDock: Value(showKnowledgeLibraryDock),
       showVoiceConversationDock: Value(showVoiceConversationDock),
       showVoicePresenceChip: Value(showVoicePresenceChip),
+      showGaiaEmployeeSurface: Value(showGaiaEmployeeSurface),
       dailyTopTaskLimit: Value(dailyTopTaskLimit),
       voiceRepliesEnabled: Value(voiceRepliesEnabled),
       voiceAssistantEnabled: Value(voiceAssistantEnabled),
@@ -9353,6 +9386,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       ),
       showVoicePresenceChip: serializer.fromJson<bool>(
         json['showVoicePresenceChip'],
+      ),
+      showGaiaEmployeeSurface: serializer.fromJson<bool>(
+        json['showGaiaEmployeeSurface'],
       ),
       dailyTopTaskLimit: serializer.fromJson<int>(json['dailyTopTaskLimit']),
       voiceRepliesEnabled: serializer.fromJson<bool>(
@@ -9410,6 +9446,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
         showVoiceConversationDock,
       ),
       'showVoicePresenceChip': serializer.toJson<bool>(showVoicePresenceChip),
+      'showGaiaEmployeeSurface': serializer.toJson<bool>(
+        showGaiaEmployeeSurface,
+      ),
       'dailyTopTaskLimit': serializer.toJson<int>(dailyTopTaskLimit),
       'voiceRepliesEnabled': serializer.toJson<bool>(voiceRepliesEnabled),
       'voiceAssistantEnabled': serializer.toJson<bool>(voiceAssistantEnabled),
@@ -9452,6 +9491,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showKnowledgeLibraryDock,
     bool? showVoiceConversationDock,
     bool? showVoicePresenceChip,
+    bool? showGaiaEmployeeSurface,
     int? dailyTopTaskLimit,
     bool? voiceRepliesEnabled,
     bool? voiceAssistantEnabled,
@@ -9485,6 +9525,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showVoiceConversationDock:
         showVoiceConversationDock ?? this.showVoiceConversationDock,
     showVoicePresenceChip: showVoicePresenceChip ?? this.showVoicePresenceChip,
+    showGaiaEmployeeSurface:
+        showGaiaEmployeeSurface ?? this.showGaiaEmployeeSurface,
     dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
     voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
     voiceAssistantEnabled: voiceAssistantEnabled ?? this.voiceAssistantEnabled,
@@ -9550,6 +9592,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showVoicePresenceChip: data.showVoicePresenceChip.present
           ? data.showVoicePresenceChip.value
           : this.showVoicePresenceChip,
+      showGaiaEmployeeSurface: data.showGaiaEmployeeSurface.present
+          ? data.showGaiaEmployeeSurface.value
+          : this.showGaiaEmployeeSurface,
       dailyTopTaskLimit: data.dailyTopTaskLimit.present
           ? data.dailyTopTaskLimit.value
           : this.dailyTopTaskLimit,
@@ -9604,6 +9649,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('showKnowledgeLibraryDock: $showKnowledgeLibraryDock, ')
           ..write('showVoiceConversationDock: $showVoiceConversationDock, ')
           ..write('showVoicePresenceChip: $showVoicePresenceChip, ')
+          ..write('showGaiaEmployeeSurface: $showGaiaEmployeeSurface, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
@@ -9636,6 +9682,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showKnowledgeLibraryDock,
     showVoiceConversationDock,
     showVoicePresenceChip,
+    showGaiaEmployeeSurface,
     dailyTopTaskLimit,
     voiceRepliesEnabled,
     voiceAssistantEnabled,
@@ -9668,6 +9715,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showKnowledgeLibraryDock == this.showKnowledgeLibraryDock &&
           other.showVoiceConversationDock == this.showVoiceConversationDock &&
           other.showVoicePresenceChip == this.showVoicePresenceChip &&
+          other.showGaiaEmployeeSurface == this.showGaiaEmployeeSurface &&
           other.dailyTopTaskLimit == this.dailyTopTaskLimit &&
           other.voiceRepliesEnabled == this.voiceRepliesEnabled &&
           other.voiceAssistantEnabled == this.voiceAssistantEnabled &&
@@ -9698,6 +9746,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showKnowledgeLibraryDock;
   final Value<bool> showVoiceConversationDock;
   final Value<bool> showVoicePresenceChip;
+  final Value<bool> showGaiaEmployeeSurface;
   final Value<int> dailyTopTaskLimit;
   final Value<bool> voiceRepliesEnabled;
   final Value<bool> voiceAssistantEnabled;
@@ -9726,6 +9775,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showKnowledgeLibraryDock = const Value.absent(),
     this.showVoiceConversationDock = const Value.absent(),
     this.showVoicePresenceChip = const Value.absent(),
+    this.showGaiaEmployeeSurface = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
@@ -9755,6 +9805,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showKnowledgeLibraryDock = const Value.absent(),
     this.showVoiceConversationDock = const Value.absent(),
     this.showVoicePresenceChip = const Value.absent(),
+    this.showGaiaEmployeeSurface = const Value.absent(),
     this.dailyTopTaskLimit = const Value.absent(),
     this.voiceRepliesEnabled = const Value.absent(),
     this.voiceAssistantEnabled = const Value.absent(),
@@ -9786,6 +9837,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showKnowledgeLibraryDock,
     Expression<bool>? showVoiceConversationDock,
     Expression<bool>? showVoicePresenceChip,
+    Expression<bool>? showGaiaEmployeeSurface,
     Expression<int>? dailyTopTaskLimit,
     Expression<bool>? voiceRepliesEnabled,
     Expression<bool>? voiceAssistantEnabled,
@@ -9821,6 +9873,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
         'show_voice_conversation_dock': showVoiceConversationDock,
       if (showVoicePresenceChip != null)
         'show_voice_presence_chip': showVoicePresenceChip,
+      if (showGaiaEmployeeSurface != null)
+        'show_gaia_employee_surface': showGaiaEmployeeSurface,
       if (dailyTopTaskLimit != null) 'daily_top_task_limit': dailyTopTaskLimit,
       if (voiceRepliesEnabled != null)
         'voice_replies_enabled': voiceRepliesEnabled,
@@ -9861,6 +9915,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showKnowledgeLibraryDock,
     Value<bool>? showVoiceConversationDock,
     Value<bool>? showVoicePresenceChip,
+    Value<bool>? showGaiaEmployeeSurface,
     Value<int>? dailyTopTaskLimit,
     Value<bool>? voiceRepliesEnabled,
     Value<bool>? voiceAssistantEnabled,
@@ -9895,6 +9950,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           showVoiceConversationDock ?? this.showVoiceConversationDock,
       showVoicePresenceChip:
           showVoicePresenceChip ?? this.showVoicePresenceChip,
+      showGaiaEmployeeSurface:
+          showGaiaEmployeeSurface ?? this.showGaiaEmployeeSurface,
       dailyTopTaskLimit: dailyTopTaskLimit ?? this.dailyTopTaskLimit,
       voiceRepliesEnabled: voiceRepliesEnabled ?? this.voiceRepliesEnabled,
       voiceAssistantEnabled:
@@ -9976,6 +10033,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
         showVoicePresenceChip.value,
       );
     }
+    if (showGaiaEmployeeSurface.present) {
+      map['show_gaia_employee_surface'] = Variable<bool>(
+        showGaiaEmployeeSurface.value,
+      );
+    }
     if (dailyTopTaskLimit.present) {
       map['daily_top_task_limit'] = Variable<int>(dailyTopTaskLimit.value);
     }
@@ -10053,6 +10115,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('showKnowledgeLibraryDock: $showKnowledgeLibraryDock, ')
           ..write('showVoiceConversationDock: $showVoiceConversationDock, ')
           ..write('showVoicePresenceChip: $showVoicePresenceChip, ')
+          ..write('showGaiaEmployeeSurface: $showGaiaEmployeeSurface, ')
           ..write('dailyTopTaskLimit: $dailyTopTaskLimit, ')
           ..write('voiceRepliesEnabled: $voiceRepliesEnabled, ')
           ..write('voiceAssistantEnabled: $voiceAssistantEnabled, ')
@@ -18299,6 +18362,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showKnowledgeLibraryDock,
       Value<bool> showVoiceConversationDock,
       Value<bool> showVoicePresenceChip,
+      Value<bool> showGaiaEmployeeSurface,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
@@ -18329,6 +18393,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showKnowledgeLibraryDock,
       Value<bool> showVoiceConversationDock,
       Value<bool> showVoicePresenceChip,
+      Value<bool> showGaiaEmployeeSurface,
       Value<int> dailyTopTaskLimit,
       Value<bool> voiceRepliesEnabled,
       Value<bool> voiceAssistantEnabled,
@@ -18420,6 +18485,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get showVoicePresenceChip => $composableBuilder(
     column: $table.showVoicePresenceChip,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showGaiaEmployeeSurface => $composableBuilder(
+    column: $table.showGaiaEmployeeSurface,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18563,6 +18633,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showGaiaEmployeeSurface => $composableBuilder(
+    column: $table.showGaiaEmployeeSurface,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
     builder: (column) => ColumnOrderings(column),
@@ -18701,6 +18776,11 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get showGaiaEmployeeSurface => $composableBuilder(
+    column: $table.showGaiaEmployeeSurface,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get dailyTopTaskLimit => $composableBuilder(
     column: $table.dailyTopTaskLimit,
     builder: (column) => column,
@@ -18804,6 +18884,7 @@ class $$AppSettingsTableTableManager
                 Value<bool> showKnowledgeLibraryDock = const Value.absent(),
                 Value<bool> showVoiceConversationDock = const Value.absent(),
                 Value<bool> showVoicePresenceChip = const Value.absent(),
+                Value<bool> showGaiaEmployeeSurface = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
@@ -18833,6 +18914,7 @@ class $$AppSettingsTableTableManager
                 showKnowledgeLibraryDock: showKnowledgeLibraryDock,
                 showVoiceConversationDock: showVoiceConversationDock,
                 showVoicePresenceChip: showVoicePresenceChip,
+                showGaiaEmployeeSurface: showGaiaEmployeeSurface,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,
@@ -18864,6 +18946,7 @@ class $$AppSettingsTableTableManager
                 Value<bool> showKnowledgeLibraryDock = const Value.absent(),
                 Value<bool> showVoiceConversationDock = const Value.absent(),
                 Value<bool> showVoicePresenceChip = const Value.absent(),
+                Value<bool> showGaiaEmployeeSurface = const Value.absent(),
                 Value<int> dailyTopTaskLimit = const Value.absent(),
                 Value<bool> voiceRepliesEnabled = const Value.absent(),
                 Value<bool> voiceAssistantEnabled = const Value.absent(),
@@ -18893,6 +18976,7 @@ class $$AppSettingsTableTableManager
                 showKnowledgeLibraryDock: showKnowledgeLibraryDock,
                 showVoiceConversationDock: showVoiceConversationDock,
                 showVoicePresenceChip: showVoicePresenceChip,
+                showGaiaEmployeeSurface: showGaiaEmployeeSurface,
                 dailyTopTaskLimit: dailyTopTaskLimit,
                 voiceRepliesEnabled: voiceRepliesEnabled,
                 voiceAssistantEnabled: voiceAssistantEnabled,

@@ -60,6 +60,7 @@ AppSetting _testSettings() {
     showKnowledgeLibraryDock: true,
     showVoiceConversationDock: true,
     showVoicePresenceChip: true,
+    showGaiaEmployeeSurface: false,
     dailyTopTaskLimit: 3,
     voiceRepliesEnabled: true,
     voiceAssistantEnabled: true,

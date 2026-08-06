@@ -56,6 +56,7 @@ void main() {
                 showKnowledgeLibraryDock: true,
                 showVoiceConversationDock: true,
                 showVoicePresenceChip: true,
+                showGaiaEmployeeSurface: false,
                 dailyTopTaskLimit: 3,
                 voiceRepliesEnabled: false,
                 voiceAssistantEnabled: false,

@@ -170,7 +170,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (isSessionLocked) ...[
                         const SizedBox(height: 12),
                         SecurityLockedNoticeCard(
-                          title: 'Security controls are waiting on local unlock',
+                          title:
+                              'Security controls are waiting on local unlock',
                           message:
                               'Open Security Lock before you manage users, devices, or PINs from Settings.',
                           detail:
@@ -806,6 +807,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             onChanged: (value) => ref
                                 .read(settingsControllerProvider)
                                 .setShowVoicePresenceChip(value),
+                          ),
+                          SwitchListTile(
+                            key: const Key(
+                              'settingsShowGaiaEmployeeSurfaceToggle',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Show GAIA Read-Only Surface'),
+                            subtitle: const Text(
+                              'Expose the embedded GAIA workspace under More. It stays read-only and is off by default.',
+                            ),
+                            value: appSettings.showGaiaEmployeeSurface,
+                            onChanged: (value) => ref
+                                .read(settingsControllerProvider)
+                                .setShowGaiaEmployeeSurface(value),
                           ),
                         ],
                       ),

@@ -48,8 +48,7 @@ class SettingsRepository {
         showContentCard: showContentCard == null
             ? const Value.absent()
             : Value(showContentCard),
-        showProjectsWorkspaceSnapshot:
-            showProjectsWorkspaceSnapshot == null
+        showProjectsWorkspaceSnapshot: showProjectsWorkspaceSnapshot == null
             ? const Value.absent()
             : Value(showProjectsWorkspaceSnapshot),
         updatedAt: Value(timestamp),
@@ -175,6 +174,26 @@ class SettingsRepository {
     return _getOrCreateSettings();
   }
 
+  Future<AppSetting> updateGaiaEmployeeSurfaceVisibility({
+    bool? showGaiaEmployeeSurface,
+  }) async {
+    final settings = await _getOrCreateSettings();
+    final timestamp = DateTime.now();
+
+    await (_database.update(
+      _database.appSettings,
+    )..where((table) => table.settingsId.equals(settings.settingsId))).write(
+      AppSettingsCompanion(
+        showGaiaEmployeeSurface: showGaiaEmployeeSurface == null
+            ? const Value.absent()
+            : Value(showGaiaEmployeeSurface),
+        updatedAt: Value(timestamp),
+      ),
+    );
+
+    return _getOrCreateSettings();
+  }
+
   Future<AppSetting> _getOrCreateSettings() async {
     final existing = await (_database.select(
       _database.appSettings,
@@ -203,6 +222,7 @@ class SettingsRepository {
             showKnowledgeLibraryDock: const Value(true),
             showVoiceConversationDock: const Value(true),
             showVoicePresenceChip: const Value(true),
+            showGaiaEmployeeSurface: const Value(false),
             dailyTopTaskLimit: const Value(3),
             voiceRepliesEnabled: const Value(true),
             voiceAssistantEnabled: const Value(true),

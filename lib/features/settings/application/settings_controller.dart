@@ -103,6 +103,13 @@ class SettingsController {
     _invalidate();
   }
 
+  Future<void> setShowGaiaEmployeeSurface(bool value) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateGaiaEmployeeSurfaceVisibility(showGaiaEmployeeSurface: value);
+    _invalidate();
+  }
+
   Future<void> setShowProjectsWorkspaceSnapshot(bool value) async {
     await _ref
         .read(settingsRepositoryProvider)
@@ -126,17 +133,19 @@ class SettingsController {
     double? preferredTtsVoiceRate,
     double? preferredTtsVoicePitch,
   }) async {
-    await _ref.read(settingsRepositoryProvider).updateVoicePreferences(
-      voiceRepliesEnabled: voiceRepliesEnabled,
-      voiceAssistantEnabled: voiceAssistantEnabled,
-      voiceStartupGateEnabled: voiceStartupGateEnabled,
-      preferredTtsVoiceName: preferredTtsVoiceName,
-      preferredTtsVoiceLocale: preferredTtsVoiceLocale,
-      preferredTtsVoiceGender: preferredTtsVoiceGender,
-      preferredTtsVoiceIdentifier: preferredTtsVoiceIdentifier,
-      preferredTtsVoiceRate: preferredTtsVoiceRate,
-      preferredTtsVoicePitch: preferredTtsVoicePitch,
-    );
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateVoicePreferences(
+          voiceRepliesEnabled: voiceRepliesEnabled,
+          voiceAssistantEnabled: voiceAssistantEnabled,
+          voiceStartupGateEnabled: voiceStartupGateEnabled,
+          preferredTtsVoiceName: preferredTtsVoiceName,
+          preferredTtsVoiceLocale: preferredTtsVoiceLocale,
+          preferredTtsVoiceGender: preferredTtsVoiceGender,
+          preferredTtsVoiceIdentifier: preferredTtsVoiceIdentifier,
+          preferredTtsVoiceRate: preferredTtsVoiceRate,
+          preferredTtsVoicePitch: preferredTtsVoicePitch,
+        );
     _invalidate();
   }
 

@@ -35,6 +35,7 @@ import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/company_command_centre/presentation/company_command_centre_screen.dart';
 import '../../features/education_learning_hub/presentation/education_learning_hub_screen.dart';
 import '../../features/dashboard/presentation/command_palette_screen.dart';
+import '../../features/gaia/presentation/gaia_employee_screen.dart';
 import '../../features/inbox/presentation/add_inbox_item_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
 import '../../features/journal/presentation/add_edit_journal_entry_screen.dart';
@@ -430,6 +431,10 @@ final appRouter = GoRouter(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
               routes: [
+                GoRoute(
+                  path: 'ai-employee',
+                  builder: (context, state) => const GaiaEmployeeScreen(),
+                ),
                 GoRoute(
                   path: 'module-hub',
                   builder: (context, state) => const ModulesScreen(),

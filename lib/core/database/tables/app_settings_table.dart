@@ -34,10 +34,14 @@ class AppSettings extends Table {
   BoolColumn get showVoicePresenceChip => boolean()
       .named('show_voice_presence_chip')
       .withDefault(const Constant(true))();
+  BoolColumn get showGaiaEmployeeSurface => boolean()
+      .named('show_gaia_employee_surface')
+      .withDefault(const Constant(false))();
   IntColumn get dailyTopTaskLimit =>
       integer().named('daily_top_task_limit').withDefault(const Constant(3))();
-  BoolColumn get voiceRepliesEnabled =>
-      boolean().named('voice_replies_enabled').withDefault(const Constant(true))();
+  BoolColumn get voiceRepliesEnabled => boolean()
+      .named('voice_replies_enabled')
+      .withDefault(const Constant(true))();
   BoolColumn get voiceAssistantEnabled => boolean()
       .named('voice_assistant_enabled')
       .withDefault(const Constant(true))();
@@ -52,10 +56,12 @@ class AppSettings extends Table {
       text().named('preferred_tts_voice_gender').nullable()();
   TextColumn get preferredTtsVoiceIdentifier =>
       text().named('preferred_tts_voice_identifier').nullable()();
-  RealColumn get preferredTtsVoiceRate =>
-      real().named('preferred_tts_voice_rate').withDefault(const Constant(0.5))();
-  RealColumn get preferredTtsVoicePitch =>
-      real().named('preferred_tts_voice_pitch').withDefault(const Constant(1.0))();
+  RealColumn get preferredTtsVoiceRate => real()
+      .named('preferred_tts_voice_rate')
+      .withDefault(const Constant(0.5))();
+  RealColumn get preferredTtsVoicePitch => real()
+      .named('preferred_tts_voice_pitch')
+      .withDefault(const Constant(1.0))();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 

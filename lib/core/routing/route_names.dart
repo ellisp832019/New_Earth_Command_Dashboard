@@ -44,6 +44,7 @@ abstract final class RouteNames {
   static const newTask = '/tasks/new';
   static const planner = '/planner';
   static const more = '/more';
+  static const gaiaEmployee = '/more/ai-employee';
   static const aboutHelp = '/more/about-help';
   static const usersDevices = '/users-devices';
   static const usersDevicesUsers = '/users-devices/users';

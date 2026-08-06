@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/widgets/workspace_shell.dart';
+import '../../gaia/application/gaia_employee_providers.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
   static final _items = [
@@ -54,6 +56,14 @@ class MoreScreen extends StatelessWidget {
       icon: Icons.domain_outlined,
       route: RouteNames.companyCommandCentre,
       badge: 'Company',
+    ),
+    _MoreItem(
+      title: 'GAIA AI Employee',
+      description:
+          'Open the read-only GAIA workspace and hand off execution to the standalone Control Centre.',
+      icon: Icons.smart_toy_outlined,
+      route: RouteNames.gaiaEmployee,
+      badge: 'GAIA',
     ),
     _MoreItem(
       title: 'Education & Learning Hub',
@@ -204,7 +214,12 @@ class MoreScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gaiaEnabled = ref.watch(gaiaEmployeeFeatureEnabledProvider);
+    final items = [
+      for (final item in _items)
+        if (item.route != RouteNames.gaiaEmployee || gaiaEnabled) item,
+    ];
     final theme = Theme.of(context);
 
     return WorkspaceShell(
@@ -266,7 +281,7 @@ class MoreScreen extends StatelessWidget {
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _items.length,
+                itemCount: items.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 14,
@@ -274,7 +289,7 @@ class MoreScreen extends StatelessWidget {
                   childAspectRatio: crossAxisCount == 1 ? 3.2 : 2.7,
                 ),
                 itemBuilder: (context, index) {
-                  final item = _items[index];
+                  final item = items[index];
                   final isOmegaKnowledgeEngine =
                       item.route ==
                       RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE');

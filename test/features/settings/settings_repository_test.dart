@@ -20,6 +20,7 @@ void main() {
       expect(initial.settings.showBusinessCard, isTrue);
       expect(initial.settings.showLearningCard, isTrue);
       expect(initial.settings.showContentCard, isTrue);
+      expect(initial.settings.showGaiaEmployeeSurface, isFalse);
       expect(initial.appVersion, '1.0.0+1');
 
       final updated = await repository.updateDashboardCardVisibility(
@@ -44,5 +45,19 @@ void main() {
     final updated = await repository.updateThemeMode('Dark');
 
     expect(updated.themeMode, 'Dark');
+  });
+
+  test('settings repository updates the GAIA surface flag', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await SeedDataService(database).ensureSeedData();
+    final repository = SettingsRepository(database);
+
+    final updated = await repository.updateGaiaEmployeeSurfaceVisibility(
+      showGaiaEmployeeSurface: true,
+    );
+
+    expect(updated.showGaiaEmployeeSurface, isTrue);
   });
 }
