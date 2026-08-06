@@ -78,7 +78,20 @@
 - Exportable mentor report
 - Classroom / guardian summary
 
-## 10. Content Builder
+## 10. Reports
+- Mentor report review
+- Certificate draft review
+- Content pack output review
+- Learner focus filters
+- Time window filters
+
+## 11. Community / Classroom Mode
+- Learner group view
+- Role-aware support lens
+- Mentor / guardian handoff
+- Classroom summary
+
+## 12. Content Builder
 - Create pathway
 - Create unit
 - Create lesson
@@ -87,7 +100,7 @@
 - Add reflection
 - Package for offline use
 
-## 11. Settings
+## 13. Settings
 - Module root
 - Offline-first flag
 - Content pipeline

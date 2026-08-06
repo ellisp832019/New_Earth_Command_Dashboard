@@ -1,9 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as path;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../domain/education_models.dart';
+
+final RegExp _packVersionPattern = RegExp(r'^\d+\.\d+\.\d+$');
 
 abstract class EducationRepository {
   Future<EducationHubSnapshot> loadSnapshot();
@@ -19,7 +24,26 @@ abstract class EducationRepository {
     String note = '',
   });
 
+  Future<ReflectionEntry> saveReflectionEntry({
+    required String studentId,
+    required String title,
+    required String body,
+    required String mood,
+    String linkedLessonId,
+    String linkedProjectId,
+  });
+
+  Future<MentorReviewRecord> saveMentorReview({
+    required String studentId,
+    required String reviewer,
+    required String status,
+    required String handoffStatus,
+    required String notes,
+  });
+
   Future<File> exportSnapshotBundle({String? exportPath});
+
+  Future<File> exportContentPackDraft({String? exportPath});
 
   Future<EducationHubSnapshot> importSnapshotBundle({String? importPath});
 
@@ -48,7 +72,9 @@ class LocalEducationRepository implements EducationRepository {
   Future<EducationHubSnapshot> loadSnapshot() async {
     final cachedSnapshot = _cachedSnapshot;
     if (cachedSnapshot != null) {
-      return cachedSnapshot;
+      final normalizedCached = _normalizeSnapshot(cachedSnapshot);
+      _cachedSnapshot = normalizedCached;
+      return normalizedCached;
     }
 
     final settings = EducationHubSettings.defaults(
@@ -64,20 +90,23 @@ class LocalEducationRepository implements EducationRepository {
       assessments: _buildAssessments(),
       reflections: _buildReflections(),
       mentorNotes: _buildMentorNotes(),
+      mentorReviews: _buildMentorReviews(),
       certificates: _buildCertificates(),
       resources: _buildResources(),
       contentSources: _buildContentSources(),
       skillLibrary: _loadSkillLibrary(),
+      contentPackDraft: ContentPackDraft.defaults(),
     );
-    final snapshot = _mergePersistedState(baseSnapshot);
+    final snapshot = _normalizeSnapshot(_mergePersistedState(baseSnapshot));
     _cachedSnapshot = snapshot;
     return snapshot;
   }
 
   @override
   Future<void> saveSnapshot(EducationHubSnapshot snapshot) async {
-    _cachedSnapshot = snapshot;
-    await _writeState(snapshot);
+    final normalized = _normalizeSnapshot(snapshot);
+    _cachedSnapshot = normalized;
+    await _writeState(normalized);
   }
 
   @override
@@ -117,7 +146,63 @@ class LocalEducationRepository implements EducationRepository {
     return record;
   }
 
-  Future<ProgressRecord?> latestProgressFor(String studentId, String entityId) async {
+  @override
+  Future<ReflectionEntry> saveReflectionEntry({
+    required String studentId,
+    required String title,
+    required String body,
+    required String mood,
+    String linkedLessonId = '',
+    String linkedProjectId = '',
+  }) async {
+    final snapshot = await loadSnapshot();
+    final reflection = ReflectionEntry(
+      id: _buildReflectionId(),
+      studentId: studentId,
+      title: title.trim(),
+      body: body.trim(),
+      mood: mood.trim(),
+      createdAt: DateTime.now().toUtc(),
+      audiences: _reflectionAudiencesForStudent(snapshot, studentId),
+      linkedLessonId: linkedLessonId.trim(),
+      linkedProjectId: linkedProjectId.trim(),
+    );
+    final updated = snapshot.copyWith(
+      reflections: [...snapshot.reflections, reflection],
+    );
+    await saveSnapshot(updated);
+    return reflection;
+  }
+
+  @override
+  Future<MentorReviewRecord> saveMentorReview({
+    required String studentId,
+    required String reviewer,
+    required String status,
+    required String handoffStatus,
+    required String notes,
+  }) async {
+    final snapshot = await loadSnapshot();
+    final review = MentorReviewRecord(
+      id: _buildMentorReviewId(),
+      studentId: studentId,
+      reviewer: reviewer.trim(),
+      status: status.trim(),
+      handoffStatus: handoffStatus.trim(),
+      notes: notes.trim(),
+      reviewedAt: DateTime.now().toUtc(),
+    );
+    final updated = snapshot.copyWith(
+      mentorReviews: [...snapshot.mentorReviews, review],
+    );
+    await saveSnapshot(updated);
+    return review;
+  }
+
+  Future<ProgressRecord?> latestProgressFor(
+    String studentId,
+    String entityId,
+  ) async {
     final snapshot = await loadSnapshot();
     return snapshot.progressFor(studentId, entityId);
   }
@@ -139,12 +224,37 @@ class LocalEducationRepository implements EducationRepository {
       'exportedAt': DateTime.now().toUtc().toIso8601String(),
       'snapshot': snapshot.toJson(),
     };
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(payload));
+    await file.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(payload),
+    );
     return file;
   }
 
   @override
-  Future<EducationHubSnapshot> importSnapshotBundle({String? importPath}) async {
+  Future<File> exportContentPackDraft({String? exportPath}) async {
+    final snapshot = await loadSnapshot();
+    final draft = _normalizeContentPackDraft(snapshot.contentPackDraft);
+    final file = File(exportPath ?? _contentPackDraftFilePath());
+    await file.parent.create(recursive: true);
+    await file.writeAsString(_contentPackDraftText(snapshot, draft));
+    final pdfFile = File('${path.withoutExtension(file.path)}.pdf');
+    await pdfFile.writeAsBytes(
+      await _contentPackDraftPdfBytes(snapshot, draft),
+      flush: true,
+    );
+    final manifestFile = File('${path.withoutExtension(file.path)}.json');
+    await manifestFile.writeAsString(
+      const JsonEncoder.withIndent(
+        '  ',
+      ).convert(_contentPackDraftManifest(snapshot, draft)),
+    );
+    return file;
+  }
+
+  @override
+  Future<EducationHubSnapshot> importSnapshotBundle({
+    String? importPath,
+  }) async {
     final file = File(importPath ?? _exportFilePath());
     if (!file.existsSync()) {
       throw FileSystemException('Import bundle not found', file.path);
@@ -157,7 +267,9 @@ class LocalEducationRepository implements EducationRepository {
       if (nested is Map<String, dynamic>) {
         snapshotJson = nested;
       } else if (nested is Map) {
-        snapshotJson = nested.map((key, value) => MapEntry(key.toString(), value));
+        snapshotJson = nested.map(
+          (key, value) => MapEntry(key.toString(), value),
+        );
       } else {
         snapshotJson = decoded;
       }
@@ -167,7 +279,9 @@ class LocalEducationRepository implements EducationRepository {
       if (nested is Map<String, dynamic>) {
         snapshotJson = nested;
       } else if (nested is Map) {
-        snapshotJson = nested.map((key, value) => MapEntry(key.toString(), value));
+        snapshotJson = nested.map(
+          (key, value) => MapEntry(key.toString(), value),
+        );
       } else {
         snapshotJson = map;
       }
@@ -210,15 +324,17 @@ class LocalEducationRepository implements EducationRepository {
       throw ArgumentError.value(studentId, 'studentId', 'Student not found.');
     }
 
-    final completedAssessments = snapshot.completedAssessmentsForStudent(studentId);
+    final completedAssessments = snapshot.completedAssessmentsForStudent(
+      studentId,
+    );
     final readiness = snapshot.badgeReadinessForStudent(studentId);
     final badgeLevel = readiness >= 0.8
         ? 'Gold'
         : readiness >= 0.6
-            ? 'Silver'
-            : readiness >= 0.4
-                ? 'Bronze'
-                : 'Draft';
+        ? 'Silver'
+        : readiness >= 0.4
+        ? 'Bronze'
+        : 'Draft';
     final completedCount = completedAssessments.length;
     final assessmentSummary = completedAssessments.isEmpty
         ? 'Draft certificate generated from local progress only.'
@@ -236,16 +352,18 @@ class LocalEducationRepository implements EducationRepository {
 
     final certificates = snapshot.certificates.toList(growable: true)
       ..add(certificate);
-    final updatedStudents = snapshot.students.map((profile) {
-      if (profile.id != studentId) {
-        return profile;
-      }
-      final badgeIds = profile.badgeIds.toList(growable: true);
-      if (!badgeIds.contains(certificate.id)) {
-        badgeIds.add(certificate.id);
-      }
-      return profile.copyWith(badgeIds: badgeIds);
-    }).toList(growable: false);
+    final updatedStudents = snapshot.students
+        .map((profile) {
+          if (profile.id != studentId) {
+            return profile;
+          }
+          final badgeIds = profile.badgeIds.toList(growable: true);
+          if (!badgeIds.contains(certificate.id)) {
+            badgeIds.add(certificate.id);
+          }
+          return profile.copyWith(badgeIds: badgeIds);
+        })
+        .toList(growable: false);
 
     final updated = snapshot.copyWith(
       certificates: certificates,
@@ -257,7 +375,14 @@ class LocalEducationRepository implements EducationRepository {
       exportPath ?? _certificateDraftFilePath(studentId, certificate.id),
     );
     await certificateFile.parent.create(recursive: true);
-    await certificateFile.writeAsString(_certificateDraftText(updated, student, certificate));
+    await certificateFile.writeAsString(
+      _certificateDraftText(updated, student, certificate),
+    );
+    final pdfFile = File('${path.withoutExtension(certificateFile.path)}.pdf');
+    await pdfFile.writeAsBytes(
+      await _certificateDraftPdfBytes(updated, student, certificate),
+      flush: true,
+    );
     return certificate;
   }
 
@@ -283,12 +408,18 @@ class LocalEducationRepository implements EducationRepository {
           );
         }
         return snapshot.copyWith(
-          progressRecords: _recordsFromJson(decoded['progressRecords']) ??
+          progressRecords:
+              _recordsFromJson(decoded['progressRecords']) ??
               snapshot.progressRecords,
+          mentorReviews:
+              _mentorReviewsFromJson(decoded['mentorReviews']) ??
+              snapshot.mentorReviews,
         );
       }
       if (decoded is Map) {
-        final map = decoded.map((key, value) => MapEntry(key.toString(), value));
+        final map = decoded.map(
+          (key, value) => MapEntry(key.toString(), value),
+        );
         if (map['snapshot'] is Map<String, dynamic>) {
           return EducationHubSnapshot.fromJson(
             map['snapshot'] as Map<String, dynamic>,
@@ -302,8 +433,12 @@ class LocalEducationRepository implements EducationRepository {
           );
         }
         return snapshot.copyWith(
-          progressRecords: _recordsFromJson(map['progressRecords']) ??
+          progressRecords:
+              _recordsFromJson(map['progressRecords']) ??
               snapshot.progressRecords,
+          mentorReviews:
+              _mentorReviewsFromJson(map['mentorReviews']) ??
+              snapshot.mentorReviews,
         );
       }
     } catch (_) {
@@ -320,16 +455,15 @@ class LocalEducationRepository implements EducationRepository {
       'updatedAt': DateTime.now().toUtc().toIso8601String(),
       'snapshot': snapshot.toJson(),
     };
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(payload));
+    await file.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(payload),
+    );
   }
 
   File _stateFile() {
-    final resolved = stateFilePath ?? 
-        path.join(
-          moduleRootPath,
-          '10_LOCAL_FIRST_DATA',
-          'learning_state.json',
-        );
+    final resolved =
+        stateFilePath ??
+        path.join(moduleRootPath, '10_LOCAL_FIRST_DATA', 'learning_state.json');
     return File(resolved);
   }
 
@@ -340,6 +474,40 @@ class LocalEducationRepository implements EducationRepository {
       'exports',
       'education_snapshot_bundle.json',
     );
+  }
+
+  String _contentPackDraftFilePath() {
+    return path.join(
+      moduleRootPath,
+      '10_LOCAL_FIRST_DATA',
+      'exports',
+      'content_packs',
+      'content_pack_draft.md',
+    );
+  }
+
+  Map<String, dynamic> _contentPackDraftManifest(
+    EducationHubSnapshot snapshot,
+    ContentPackDraft draft,
+  ) {
+    return <String, dynamic>{
+      'generatedAt': DateTime.now().toUtc().toIso8601String(),
+      'bundleId': draft.bundleId,
+      'checksum': draft.checksum,
+      'title': draft.title,
+      'version': draft.version,
+      'audience': draft.audience,
+      'template': draft.template,
+      'validationReady': draft.validationReady,
+      'validationNotes': draft.validationNotes,
+      'coverage': <String, dynamic>{
+        'pathways': snapshot.pathwayCount,
+        'lessons': snapshot.lessonCount,
+        'projects': snapshot.projectCount,
+        'certificates': snapshot.certificateCount,
+        'sources': snapshot.contentSources.length,
+      },
+    };
   }
 
   String _mentorReportFilePath(String studentId) {
@@ -362,19 +530,272 @@ class LocalEducationRepository implements EducationRepository {
     );
   }
 
+  Future<Uint8List> _certificateDraftPdfBytes(
+    EducationHubSnapshot snapshot,
+    StudentProfile student,
+    Certificate certificate,
+  ) async {
+    final completedAssessments = snapshot.completedAssessmentsForStudent(
+      student.id,
+    );
+    final progressLabel = snapshot.progressLabelForStudent(student.id);
+    final readiness = snapshot.badgeReadinessForStudent(student.id);
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(28),
+        ),
+        build: (context) => [
+          pw.Text(
+            'Certificate draft: ${certificate.title}',
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 12),
+          pw.Text('Student: ${student.name}'),
+          pw.Text('Badge level: ${certificate.badgeLevel}'),
+          pw.Text('Issued by: ${certificate.issuedBy}'),
+          pw.Text('Awarded at: ${certificate.awardedAt.toIso8601String()}'),
+          pw.Text('Progress: $progressLabel'),
+          pw.Text('Readiness: ${(readiness * 100).round()}%'),
+          pw.Text('Completed assessments: ${completedAssessments.length}'),
+          pw.SizedBox(height: 16),
+          pw.Text(
+            'Summary',
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(certificate.summary),
+          if (completedAssessments.isNotEmpty) ...[
+            pw.SizedBox(height: 16),
+            pw.Text(
+              'Completed assessments',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                for (final assessment in completedAssessments.take(5))
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 4),
+                    child: pw.Text(
+                      '- ${assessment.title} (${assessment.score}/${assessment.maxScore})',
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  String _contentPackDraftText(
+    EducationHubSnapshot snapshot,
+    ContentPackDraft draft,
+  ) {
+    final buffer = StringBuffer()
+      ..writeln('# Content pack draft: ${draft.title}')
+      ..writeln()
+      ..writeln(
+        '- Bundle ID: ${draft.bundleId.isEmpty ? 'Pending' : draft.bundleId}',
+      )
+      ..writeln('- Version: ${draft.version}')
+      ..writeln('- Audience: ${draft.audience}')
+      ..writeln('- Template: ${draft.template}')
+      ..writeln(
+        '- Checksum: ${draft.checksum.isEmpty ? 'Pending' : draft.checksum}',
+      )
+      ..writeln(
+        '- Validation: ${draft.validationReady ? 'Ready' : 'Needs detail'}',
+      )
+      ..writeln('- Updated at: ${draft.updatedAt.toIso8601String()}')
+      ..writeln()
+      ..writeln('## Summary')
+      ..writeln(draft.summary)
+      ..writeln()
+      ..writeln('## Validation notes')
+      ..writeln(
+        draft.validationNotes.isEmpty
+            ? 'No validation notes.'
+            : draft.validationNotes,
+      )
+      ..writeln()
+      ..writeln('## Pack coverage')
+      ..writeln('- Pathways: ${snapshot.pathwayCount}')
+      ..writeln('- Lessons: ${snapshot.lessonCount}')
+      ..writeln('- Projects: ${snapshot.projectCount}')
+      ..writeln('- Certificates: ${snapshot.certificateCount}')
+      ..writeln('- Sources: ${snapshot.contentSources.length}');
+    return buffer.toString().trim();
+  }
+
+  Future<Uint8List> _contentPackDraftPdfBytes(
+    EducationHubSnapshot snapshot,
+    ContentPackDraft draft,
+  ) async {
+    final pdf = pw.Document();
+    final text = _contentPackDraftText(snapshot, draft);
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(28),
+        ),
+        build: (context) => [
+          pw.Text(
+            'Content pack draft: ${draft.title}',
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 12),
+          pw.Text(text),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
   List<ProgressRecord>? _recordsFromJson(dynamic raw) {
     if (raw is! List) {
       return null;
     }
     final records = raw
         .whereType<Map>()
-        .map((entry) => entry.map((key, value) => MapEntry(key.toString(), value)))
+        .map(
+          (entry) => entry.map((key, value) => MapEntry(key.toString(), value)),
+        )
         .map(ProgressRecord.fromJson)
         .toList(growable: false);
     return records;
   }
 
-  StudentProfile? _studentById(EducationHubSnapshot snapshot, String studentId) {
+  List<MentorReviewRecord>? _mentorReviewsFromJson(dynamic raw) {
+    if (raw is! List) {
+      return null;
+    }
+    final reviews = raw
+        .whereType<Map>()
+        .map(
+          (entry) => entry.map((key, value) => MapEntry(key.toString(), value)),
+        )
+        .map(MentorReviewRecord.fromJson)
+        .toList(growable: false);
+    return reviews;
+  }
+
+  EducationHubSnapshot _normalizeSnapshot(EducationHubSnapshot snapshot) {
+    return snapshot.copyWith(
+      contentPackDraft: _normalizeContentPackDraft(snapshot.contentPackDraft),
+    );
+  }
+
+  ContentPackDraft _normalizeContentPackDraft(ContentPackDraft draft) {
+    final cleanedTitle = draft.title.trim();
+    final cleanedVersion = draft.version.trim();
+    final cleanedAudience = draft.audience.trim();
+    final cleanedSummary = draft.summary.trim();
+    final cleanedTemplate = draft.template.trim();
+    final bundleId = _buildContentPackBundleId(draft);
+    final checksum = _buildContentPackChecksum(draft);
+    final validationNotes = _contentPackValidationNotes(
+      title: cleanedTitle,
+      version: cleanedVersion,
+      audience: cleanedAudience,
+      summary: cleanedSummary,
+      template: cleanedTemplate,
+    );
+    final validationReady = validationNotes.isEmpty;
+    return draft.copyWith(
+      title: cleanedTitle,
+      version: cleanedVersion,
+      audience: cleanedAudience,
+      summary: cleanedSummary,
+      template: cleanedTemplate,
+      bundleId: bundleId,
+      checksum: checksum,
+      validationReady: validationReady,
+      validationNotes: validationReady
+          ? (draft.validationNotes.trim().isEmpty
+                ? 'Ready for export.'
+                : draft.validationNotes.trim())
+          : validationNotes,
+    );
+  }
+
+  String _contentPackValidationNotes({
+    required String title,
+    required String version,
+    required String audience,
+    required String summary,
+    required String template,
+  }) {
+    final notes = <String>[];
+    if (title.isEmpty) {
+      notes.add('Add a pack title.');
+    }
+    if (version.isEmpty || !_packVersionPattern.hasMatch(version)) {
+      notes.add('Use semantic versioning like 0.1.0 or 1.0.0.');
+    }
+    if (audience.isEmpty) {
+      notes.add('Choose a primary audience.');
+    }
+    if (summary.length < 24) {
+      notes.add('Add a clearer summary so the pack is easy to review.');
+    }
+    if (template.isEmpty) {
+      notes.add('Choose a template preset.');
+    }
+    return notes.join(' ');
+  }
+
+  String _buildContentPackBundleId(ContentPackDraft draft) {
+    final slug = draft.title
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+    final version = draft.version.trim().isEmpty
+        ? '0.1.0'
+        : draft.version.trim();
+    final checksumSeed = _buildContentPackChecksumSeed(draft);
+    final shortSeed = checksumSeed.codeUnits.fold<int>(
+      0,
+      (sum, unit) => (sum + unit) & 0xffff,
+    );
+    final shortSuffix = shortSeed.toRadixString(16).padLeft(4, '0');
+    return 'edu-pack-${slug.isEmpty ? 'draft' : slug}-$version-$shortSuffix';
+  }
+
+  String _buildContentPackChecksum(ContentPackDraft draft) {
+    final seed = _buildContentPackChecksumSeed(draft);
+    var hash = 0x811c9dc5;
+    for (final unit in seed.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 0x01000193) & 0xffffffff;
+    }
+    return hash.toRadixString(16).padLeft(8, '0');
+  }
+
+  String _buildContentPackChecksumSeed(ContentPackDraft draft) {
+    return [
+      draft.title.trim(),
+      draft.version.trim(),
+      draft.audience.trim(),
+      draft.summary.trim(),
+      draft.template.trim(),
+      draft.validationReady.toString(),
+      draft.validationNotes.trim(),
+    ].join('|');
+  }
+
+  StudentProfile? _studentById(
+    EducationHubSnapshot snapshot,
+    String studentId,
+  ) {
     for (final student in snapshot.students) {
       if (student.id == studentId) {
         return student;
@@ -383,9 +804,13 @@ class LocalEducationRepository implements EducationRepository {
     return null;
   }
 
-  String _mentorReportText(EducationHubSnapshot snapshot, StudentProfile student) {
+  String _mentorReportText(
+    EducationHubSnapshot snapshot,
+    StudentProfile student,
+  ) {
     final progress = snapshot.progressForStudent(student.id);
     final notes = snapshot.notesForStudent(student.id);
+    final reviews = snapshot.reviewsForStudent(student.id);
     final reflections = snapshot.reflectionsForStudent(student.id);
     final assessments = snapshot.assessmentsForStudent(student.id);
     final completedAssessments = assessments
@@ -404,9 +829,12 @@ class LocalEducationRepository implements EducationRepository {
       ..writeln('- Active pathway: ${student.activePathwayId}')
       ..writeln('- Progress: $progressLabel')
       ..writeln('- Badge readiness: ${(readiness * 100).round()}%')
-      ..writeln('- Completed assessments: ${completedAssessments.length}/${assessments.length}')
+      ..writeln(
+        '- Completed assessments: ${completedAssessments.length}/${assessments.length}',
+      )
       ..writeln('- Reflections: ${reflections.length}')
       ..writeln('- Mentor notes: ${notes.length}')
+      ..writeln('- Mentor reviews: ${reviews.length}')
       ..writeln('- Certificates: ${certificates.length}')
       ..writeln();
 
@@ -415,6 +843,16 @@ class LocalEducationRepository implements EducationRepository {
       for (final note in notes.take(5)) {
         buffer.writeln(
           '- ${note.priority.isEmpty ? 'Note' : note.priority}: ${note.content}',
+        );
+      }
+      buffer.writeln();
+    }
+
+    if (reviews.isNotEmpty) {
+      buffer.writeln('## Mentor reviews');
+      for (final review in reviews.take(5)) {
+        buffer.writeln(
+          '- ${review.status} / ${review.handoffStatus}: ${review.notes}',
         );
       }
       buffer.writeln();
@@ -453,7 +891,9 @@ class LocalEducationRepository implements EducationRepository {
       ..writeln(
         '- Classroom/guardian view: ${student.role == 'parentGuardian' ? 'Guardian check-in focus' : 'Mentor review focus'}',
       )
-      ..writeln('- Suggested next step: Review one note, one assessment, and one support action.')
+      ..writeln(
+        '- Suggested next step: Review one note, one assessment, and one support action.',
+      )
       ..writeln('- Keep all decisions local until sign-off is needed.');
 
     return buffer.toString().trim();
@@ -464,7 +904,9 @@ class LocalEducationRepository implements EducationRepository {
     StudentProfile student,
     Certificate certificate,
   ) {
-    final completedAssessments = snapshot.completedAssessmentsForStudent(student.id);
+    final completedAssessments = snapshot.completedAssessmentsForStudent(
+      student.id,
+    );
     final progressLabel = snapshot.progressLabelForStudent(student.id);
     final readiness = snapshot.badgeReadinessForStudent(student.id);
     final buffer = StringBuffer()
@@ -484,7 +926,9 @@ class LocalEducationRepository implements EducationRepository {
       buffer.writeln();
       buffer.writeln('## Completed assessments');
       for (final assessment in completedAssessments.take(5)) {
-        buffer.writeln('- ${assessment.title} (${assessment.score}/${assessment.maxScore})');
+        buffer.writeln(
+          '- ${assessment.title} (${assessment.score}/${assessment.maxScore})',
+        );
       }
     }
     return buffer.toString().trim();
@@ -492,6 +936,40 @@ class LocalEducationRepository implements EducationRepository {
 
   String _buildProgressId() {
     return 'progress_${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  String _buildReflectionId() {
+    return 'reflection_${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  String _buildMentorReviewId() {
+    return 'mentor_review_${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  List<String> _reflectionAudiencesForStudent(
+    EducationHubSnapshot snapshot,
+    String studentId,
+  ) {
+    final student = _studentById(snapshot, studentId);
+    if (student == null) {
+      return const ['student', 'mentor', 'parentGuardian'];
+    }
+    final audiences = <String>{'student'};
+    switch (student.role.toLowerCase()) {
+      case 'mentor':
+        audiences.add('mentor');
+        break;
+      case 'parentguardian':
+        audiences.add('parentGuardian');
+        break;
+      case 'admin':
+        audiences.addAll(const ['mentor', 'parentGuardian', 'admin']);
+        break;
+      default:
+        audiences.addAll(const ['mentor', 'parentGuardian']);
+        break;
+    }
+    return audiences.toList(growable: false);
   }
 
   List<LearningPathway> _buildPathways() {
@@ -534,7 +1012,9 @@ class LocalEducationRepository implements EducationRepository {
   }
 
   List<Lesson> _importedLessonsFromDocs() {
-    final directory = Directory(path.join(moduleRootPath, '04_LEARNING_PATHWAYS'));
+    final directory = Directory(
+      path.join(moduleRootPath, '04_LEARNING_PATHWAYS'),
+    );
     if (!directory.existsSync()) {
       return const [];
     }
@@ -544,7 +1024,10 @@ class LocalEducationRepository implements EducationRepository {
         .listSync()
         .whereType<File>()
         .where((file) => path.extension(file.path).toLowerCase() == '.md')
-        .where((file) => path.basename(file.path).toUpperCase() != 'PATHWAYS_OVERVIEW.MD')
+        .where(
+          (file) =>
+              path.basename(file.path).toUpperCase() != 'PATHWAYS_OVERVIEW.MD',
+        )
         .toList(growable: false);
 
     for (final file in pathwayDocs) {
@@ -552,7 +1035,8 @@ class LocalEducationRepository implements EducationRepository {
       final pathwayId = _pathwayIdForFile(fileName);
       final content = _readText(file);
       final title = _markdownHeading(content) ?? _friendlyLabel(fileName);
-      final goal = _markdownSection(content, 'Goal') ??
+      final goal =
+          _markdownSection(content, 'Goal') ??
           _markdownSection(content, 'Summary') ??
           'Imported pathway lesson for $title.';
       final skills = _markdownBulletList(content, 'Skills gained');
@@ -567,7 +1051,9 @@ class LocalEducationRepository implements EducationRepository {
           summary: goal,
           objective: goal,
           estimatedMinutes: 25,
-          difficulty: fileName.contains('ADVANCED') ? 'Intermediate' : 'Beginner',
+          difficulty: fileName.contains('ADVANCED')
+              ? 'Intermediate'
+              : 'Beginner',
           audiences: const ['student', 'mentor', 'parentGuardian', 'admin'],
           tags: [
             'imported',
@@ -590,7 +1076,9 @@ class LocalEducationRepository implements EducationRepository {
       );
     }
 
-    final contentLibrary = Directory(path.join(moduleRootPath, '05_CONTENT_LIBRARY'));
+    final contentLibrary = Directory(
+      path.join(moduleRootPath, '05_CONTENT_LIBRARY'),
+    );
     if (contentLibrary.existsSync()) {
       for (final file in contentLibrary.listSync().whereType<File>()) {
         if (path.extension(file.path).toLowerCase() != '.md') {
@@ -604,12 +1092,14 @@ class LocalEducationRepository implements EducationRepository {
         final fileName = path.basenameWithoutExtension(file.path);
         final content = _readText(file);
         final title = _markdownHeading(content) ?? _friendlyLabel(fileName);
-        final summary = _markdownSection(content, 'Summary') ??
+        final summary =
+            _markdownSection(content, 'Summary') ??
             'Imported sample lesson from the module docs.';
         final outcomes = _markdownBulletList(content, 'Learning outcomes');
         final materials = _markdownBulletList(content, 'Materials');
         final activitySteps = _markdownNumberedList(content, 'Activity');
-        final reflectionPrompt = _markdownSection(content, 'Reflection') ??
+        final reflectionPrompt =
+            _markdownSection(content, 'Reflection') ??
             'What did this sample lesson help you notice?';
         lessons.add(
           Lesson(
@@ -624,12 +1114,10 @@ class LocalEducationRepository implements EducationRepository {
             estimatedMinutes: 25,
             difficulty: 'Beginner',
             audiences: const ['student', 'mentor', 'parentGuardian'],
-            tags: [
-              'imported',
-              ..._keywordsFrom(fileName, summary),
-            ],
+            tags: ['imported', ..._keywordsFrom(fileName, summary)],
             steps: [
-              if (materials.isNotEmpty) 'Materials: ${materials.take(4).join(', ')}',
+              if (materials.isNotEmpty)
+                'Materials: ${materials.take(4).join(', ')}',
               if (activitySteps.isNotEmpty) ...activitySteps.take(5),
               'Save one note or photo as evidence.',
             ],
@@ -682,6 +1170,12 @@ class LocalEducationRepository implements EducationRepository {
         .toList(growable: false);
   }
 
+  List<MentorReviewRecord> _buildMentorReviews() {
+    return _mentorReviewSeeds()
+        .map((entry) => MentorReviewRecord.fromJson(entry))
+        .toList(growable: false);
+  }
+
   List<Certificate> _buildCertificates() {
     return _certificateSeeds()
         .map((entry) => Certificate.fromJson(entry))
@@ -701,7 +1195,10 @@ class LocalEducationRepository implements EducationRepository {
     }
 
     final entries = <ContentSourceEntry>[];
-    for (final entity in rootDirectory.listSync(recursive: true, followLinks: false)) {
+    for (final entity in rootDirectory.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is! File) {
         continue;
       }
@@ -712,7 +1209,8 @@ class LocalEducationRepository implements EducationRepository {
         continue;
       }
 
-      if (path.basename(normalizedPath).toLowerCase() == 'module_manifest.json') {
+      if (path.basename(normalizedPath).toLowerCase() ==
+          'module_manifest.json') {
         continue;
       }
 
@@ -722,7 +1220,9 @@ class LocalEducationRepository implements EducationRepository {
           ? _friendlyLabel(pathParts.first)
           : 'Module';
       final kind = extension == '.json' ? 'Sample data' : 'Documentation';
-      final title = _friendlyLabel(path.basenameWithoutExtension(normalizedPath));
+      final title = _friendlyLabel(
+        path.basenameWithoutExtension(normalizedPath),
+      );
       entries.add(
         ContentSourceEntry(
           id: relativePath.replaceAll('\\', '/'),
@@ -759,9 +1259,8 @@ class LocalEducationRepository implements EducationRepository {
           final values = decoded
               .whereType<Map>()
               .map(
-                (item) => (item['name'] ?? item['title'] ?? '')
-                    .toString()
-                    .trim(),
+                (item) =>
+                    (item['name'] ?? item['title'] ?? '').toString().trim(),
               )
               .where((item) => item.isNotEmpty)
               .toList(growable: false);
@@ -875,7 +1374,9 @@ class LocalEducationRepository implements EducationRepository {
     if (source.contains('electronics')) keywords.add('electronics');
     if (source.contains('microgrow')) keywords.add('microgrow');
     if (source.contains('biocalm')) keywords.add('biocalm');
-    if (source.contains('ai ' ) || source.contains('ai-') || source.contains('ai_')) {
+    if (source.contains('ai ') ||
+        source.contains('ai-') ||
+        source.contains('ai_')) {
       keywords.add('ai');
     }
     if (source.contains('food')) keywords.add('food resilience');
@@ -908,9 +1409,19 @@ class LocalEducationRepository implements EducationRepository {
 
   List<String> _resourceIdsForPathway(String pathwayId) {
     return switch (pathwayId) {
-      'electronics_foundations' => ['res_electronics_intro', 'res_parts_reference'],
-      'embedded_systems' => ['res_board_setup', 'res_pin_map', 'res_debug_notes'],
-      'microgrow_operator' => ['res_microgrow_intro', 'res_microgrow_checklist'],
+      'electronics_foundations' => [
+        'res_electronics_intro',
+        'res_parts_reference',
+      ],
+      'embedded_systems' => [
+        'res_board_setup',
+        'res_pin_map',
+        'res_debug_notes',
+      ],
+      'microgrow_operator' => [
+        'res_microgrow_intro',
+        'res_microgrow_checklist',
+      ],
       'biocalm_foundations' => ['res_biocalm_intro'],
       'ai_literacy' => ['res_ai_prompting'],
       'food_resilience' => ['res_food_systems'],
@@ -925,7 +1436,8 @@ class LocalEducationRepository implements EducationRepository {
       _pathway(
         id: 'electronics_foundations',
         title: 'Electronics Foundations',
-        summary: 'Learn the calm basics of circuits, components, and safe build habits.',
+        summary:
+            'Learn the calm basics of circuits, components, and safe build habits.',
         level: 'Beginner',
         estimatedHours: 12,
         domain: 'Electronics',
@@ -937,7 +1449,10 @@ class LocalEducationRepository implements EducationRepository {
             title: 'Electronics basics',
             summary: 'Voltage, current, resistance, and breadboard habits.',
             estimatedHours: 4,
-            lessons: const ['lesson_circuits_intro', 'lesson_component_identification'],
+            lessons: const [
+              'lesson_circuits_intro',
+              'lesson_component_identification',
+            ],
           ),
           _unit(
             id: 'electronics_build',
@@ -951,7 +1466,8 @@ class LocalEducationRepository implements EducationRepository {
       _pathway(
         id: 'embedded_systems',
         title: 'Embedded Systems',
-        summary: 'Work with microcontrollers, sensors, and practical debugging.',
+        summary:
+            'Work with microcontrollers, sensors, and practical debugging.',
         level: 'Beginner to Intermediate',
         estimatedHours: 20,
         domain: 'Engineering',
@@ -977,7 +1493,8 @@ class LocalEducationRepository implements EducationRepository {
       _pathway(
         id: 'microgrow_operator',
         title: 'MicroGrow Operator',
-        summary: 'Run and support the MicroGrow learning path and field workflow.',
+        summary:
+            'Run and support the MicroGrow learning path and field workflow.',
         level: 'Beginner',
         estimatedHours: 10,
         domain: 'MicroGrow',
@@ -989,21 +1506,29 @@ class LocalEducationRepository implements EducationRepository {
             title: 'System overview',
             summary: 'Understand the grow cycle and local operating checks.',
             estimatedHours: 4,
-            lessons: const ['lesson_microgrow_intro', 'lesson_microgrow_checks'],
+            lessons: const [
+              'lesson_microgrow_intro',
+              'lesson_microgrow_checks',
+            ],
           ),
           _unit(
             id: 'microgrow_actions',
             title: 'Daily operator actions',
-            summary: 'Read the dashboard, record observations, and keep the system steady.',
+            summary:
+                'Read the dashboard, record observations, and keep the system steady.',
             estimatedHours: 6,
-            lessons: const ['lesson_microgrow_routine', 'lesson_microgrow_reflection'],
+            lessons: const [
+              'lesson_microgrow_routine',
+              'lesson_microgrow_reflection',
+            ],
           ),
         ],
       ),
       _pathway(
         id: 'biocalm_foundations',
         title: 'BioCalm Foundations',
-        summary: 'Explore calm wearable concepts, sensing, and human-centered design.',
+        summary:
+            'Explore calm wearable concepts, sensing, and human-centered design.',
         level: 'Beginner',
         estimatedHours: 8,
         domain: 'BioCalm',
@@ -1022,14 +1547,18 @@ class LocalEducationRepository implements EducationRepository {
             title: 'Practice build',
             summary: 'Build a calm prototype and document what it teaches.',
             estimatedHours: 4,
-            lessons: const ['lesson_biocalm_practice', 'lesson_biocalm_reflection'],
+            lessons: const [
+              'lesson_biocalm_practice',
+              'lesson_biocalm_reflection',
+            ],
           ),
         ],
       ),
       _pathway(
         id: 'ai_literacy',
         title: 'AI Literacy',
-        summary: 'Use AI safely, understand limitations, and ask better questions.',
+        summary:
+            'Use AI safely, understand limitations, and ask better questions.',
         level: 'Beginner',
         estimatedHours: 6,
         domain: 'AI',
@@ -1046,7 +1575,8 @@ class LocalEducationRepository implements EducationRepository {
           _unit(
             id: 'ai_safety',
             title: 'Safety and checking',
-            summary: 'Verify outputs, avoid over-trust, and keep adults in the loop.',
+            summary:
+                'Verify outputs, avoid over-trust, and keep adults in the loop.',
             estimatedHours: 3,
             lessons: const ['lesson_ai_safety', 'lesson_ai_checking'],
           ),
@@ -1055,7 +1585,8 @@ class LocalEducationRepository implements EducationRepository {
       _pathway(
         id: 'food_resilience',
         title: 'Food Resilience',
-        summary: 'Link growing, food systems, and practical resilience learning.',
+        summary:
+            'Link growing, food systems, and practical resilience learning.',
         level: 'Beginner',
         estimatedHours: 10,
         domain: 'Regeneration',
@@ -1081,7 +1612,8 @@ class LocalEducationRepository implements EducationRepository {
       _pathway(
         id: 'sustainability_regeneration',
         title: 'Sustainability & Regeneration',
-        summary: 'Connect projects to stewardship, repair, reuse, and gentle systems change.',
+        summary:
+            'Connect projects to stewardship, repair, reuse, and gentle systems change.',
         level: 'Intermediate',
         estimatedHours: 14,
         domain: 'Regeneration',
@@ -1093,21 +1625,28 @@ class LocalEducationRepository implements EducationRepository {
             title: 'Regeneration foundations',
             summary: 'Understand cycles, waste, and repair.',
             estimatedHours: 7,
-            lessons: const ['lesson_regeneration_intro', 'lesson_regeneration_cycles'],
+            lessons: const [
+              'lesson_regeneration_intro',
+              'lesson_regeneration_cycles',
+            ],
           ),
           _unit(
             id: 'regeneration_projects',
             title: 'Practical projects',
             summary: 'Link small repairs and stewardship to daily actions.',
             estimatedHours: 7,
-            lessons: const ['lesson_regeneration_practice', 'lesson_regeneration_review'],
+            lessons: const [
+              'lesson_regeneration_practice',
+              'lesson_regeneration_review',
+            ],
           ),
         ],
       ),
       _pathway(
         id: 'youth_innovation',
         title: 'Youth Innovation & Leadership',
-        summary: 'Support young people to build, present, and lead with confidence.',
+        summary:
+            'Support young people to build, present, and lead with confidence.',
         level: 'Beginner to Intermediate',
         estimatedHours: 12,
         domain: 'Community',
@@ -1119,21 +1658,28 @@ class LocalEducationRepository implements EducationRepository {
             title: 'Innovation skills',
             summary: 'Idea to prototype, one gentle step at a time.',
             estimatedHours: 6,
-            lessons: const ['lesson_innovation_intro', 'lesson_innovation_prototype'],
+            lessons: const [
+              'lesson_innovation_intro',
+              'lesson_innovation_prototype',
+            ],
           ),
           _unit(
             id: 'leadership_skills',
             title: 'Leadership habits',
             summary: 'Communication, decision making, and peer support.',
             estimatedHours: 6,
-            lessons: const ['lesson_leadership_intro', 'lesson_leadership_reflection'],
+            lessons: const [
+              'lesson_leadership_intro',
+              'lesson_leadership_reflection',
+            ],
           ),
         ],
       ),
       _pathway(
         id: 'workshop_safety',
         title: 'Workshop Safety',
-        summary: 'Keep builds calm, careful, and safe in physical learning spaces.',
+        summary:
+            'Keep builds calm, careful, and safe in physical learning spaces.',
         level: 'Beginner',
         estimatedHours: 5,
         domain: 'Safety',
@@ -1171,14 +1717,20 @@ class LocalEducationRepository implements EducationRepository {
             title: 'Enterprise basics',
             summary: 'Turn ideas into a practical plan.',
             estimatedHours: 4,
-            lessons: const ['lesson_enterprise_intro', 'lesson_enterprise_value'],
+            lessons: const [
+              'lesson_enterprise_intro',
+              'lesson_enterprise_value',
+            ],
           ),
           _unit(
             id: 'enterprise_delivery',
             title: 'Delivery and evidence',
             summary: 'Track what was made, learned, and proven.',
             estimatedHours: 4,
-            lessons: const ['lesson_enterprise_delivery', 'lesson_enterprise_review'],
+            lessons: const [
+              'lesson_enterprise_delivery',
+              'lesson_enterprise_review',
+            ],
           ),
         ],
       ),
@@ -1233,7 +1785,12 @@ class LocalEducationRepository implements EducationRepository {
         difficulty: 'Beginner',
         audiences: const ['student', 'mentor'],
         tags: const ['build', 'evidence'],
-        steps: const ['Prepare the board.', 'Wire the LED.', 'Test power.', 'Capture a photo.'],
+        steps: const [
+          'Prepare the board.',
+          'Wire the LED.',
+          'Test power.',
+          'Capture a photo.',
+        ],
         resourceIds: const ['res_calm_build_checklist'],
         reflectionPrompt: 'What helped you stay steady while building?',
       ),
@@ -1248,9 +1805,15 @@ class LocalEducationRepository implements EducationRepository {
         difficulty: 'Beginner',
         audiences: const ['student', 'mentor'],
         tags: const ['measurement', 'tools'],
-        steps: const ['Choose the setting.', 'Measure the value.', 'Note the reading.', 'Compare it calmly.'],
+        steps: const [
+          'Choose the setting.',
+          'Measure the value.',
+          'Note the reading.',
+          'Compare it calmly.',
+        ],
         resourceIds: const ['res_tool_safety'],
-        reflectionPrompt: 'What changed when you started measuring rather than guessing?',
+        reflectionPrompt:
+            'What changed when you started measuring rather than guessing?',
       ),
       _lesson(
         id: 'lesson_board_setup',
@@ -1263,7 +1826,12 @@ class LocalEducationRepository implements EducationRepository {
         difficulty: 'Beginner',
         audiences: const ['student', 'mentor', 'admin'],
         tags: const ['embedded', 'setup'],
-        steps: const ['Check the board.', 'Review the pins.', 'Connect power.', 'Confirm the toolchain.'],
+        steps: const [
+          'Check the board.',
+          'Review the pins.',
+          'Connect power.',
+          'Confirm the toolchain.',
+        ],
         resourceIds: const ['res_board_setup'],
         reflectionPrompt: 'Which step felt most important to check twice?',
       ),
@@ -1278,7 +1846,11 @@ class LocalEducationRepository implements EducationRepository {
         difficulty: 'Beginner',
         audiences: const ['student', 'mentor'],
         tags: const ['pins', 'mapping'],
-        steps: const ['Open the pin map.', 'Match the label.', 'Mark the intended use.'],
+        steps: const [
+          'Open the pin map.',
+          'Match the label.',
+          'Mark the intended use.',
+        ],
         resourceIds: const ['res_pin_map'],
         reflectionPrompt: 'What made the pin map easier to read?',
       ),
@@ -1293,7 +1865,12 @@ class LocalEducationRepository implements EducationRepository {
         difficulty: 'Beginner to Intermediate',
         audiences: const ['student', 'mentor'],
         tags: const ['debugging', 'logs'],
-        steps: const ['Start the monitor.', 'Read the output.', 'Identify a signal.', 'Write the next action.'],
+        steps: const [
+          'Start the monitor.',
+          'Read the output.',
+          'Identify a signal.',
+          'Write the next action.',
+        ],
         resourceIds: const ['res_debug_notes'],
         reflectionPrompt: 'Which line in the log helped you most?',
       ),
@@ -1308,7 +1885,12 @@ class LocalEducationRepository implements EducationRepository {
         difficulty: 'Intermediate',
         audiences: const ['student', 'mentor', 'admin'],
         tags: const ['debugging', 'analysis'],
-        steps: const ['Observe the issue.', 'Check power.', 'Check signal.', 'Document the fix.'],
+        steps: const [
+          'Observe the issue.',
+          'Check power.',
+          'Check signal.',
+          'Document the fix.',
+        ],
         resourceIds: const ['res_debug_flow'],
         reflectionPrompt: 'What helped you narrow the fault down?',
       ),
@@ -1327,7 +1909,12 @@ class LocalEducationRepository implements EducationRepository {
         audiences: const ['student', 'mentor', 'admin'],
         skillTags: const ['Sensor Observation', 'Systems Thinking'],
         materials: const ['Microcontroller board', 'Sensor', 'Notebook'],
-        steps: const ['Check the sensor.', 'Capture a baseline.', 'Compare readings.', 'Record the result.'],
+        steps: const [
+          'Check the sensor.',
+          'Capture a baseline.',
+          'Compare readings.',
+          'Record the result.',
+        ],
         resourceIds: const ['res_microgrow_intro', 'res_microgrow_checklist'],
       ),
       _project(
@@ -1339,19 +1926,29 @@ class LocalEducationRepository implements EducationRepository {
         audiences: const ['student', 'mentor'],
         skillTags: const ['Responsible AI Use', 'Systems Thinking'],
         materials: const ['Prototype board', 'Paper sketch', 'Colour markers'],
-        steps: const ['Sketch the flow.', 'Define the signal.', 'Review the safety note.'],
+        steps: const [
+          'Sketch the flow.',
+          'Define the signal.',
+          'Review the safety note.',
+        ],
         resourceIds: const ['res_biocalm_intro'],
       ),
       _project(
         id: 'project_food_resilience_observation',
         title: 'Food Resilience Observation Log',
-        summary: 'Track simple observations from a growing space and reflect on patterns.',
+        summary:
+            'Track simple observations from a growing space and reflect on patterns.',
         domain: 'Regeneration',
         estimatedHours: 4,
         audiences: const ['student', 'mentor', 'parentGuardian'],
         skillTags: const ['Reflective Learning', 'Systems Thinking'],
         materials: const ['Notebook', 'Camera', 'Observation sheet'],
-        steps: const ['Observe the space.', 'Write one note.', 'Capture evidence.', 'Reflect on the pattern.'],
+        steps: const [
+          'Observe the space.',
+          'Write one note.',
+          'Capture evidence.',
+          'Reflect on the pattern.',
+        ],
         resourceIds: const ['res_food_systems'],
       ),
       _project(
@@ -1363,7 +1960,11 @@ class LocalEducationRepository implements EducationRepository {
         audiences: const ['student', 'mentor', 'admin'],
         skillTags: const ['Responsible AI Use'],
         materials: const ['Prompt cards', 'Reflection log'],
-        steps: const ['Ask a question.', 'Check the response.', 'List what still needs human review.'],
+        steps: const [
+          'Ask a question.',
+          'Check the response.',
+          'List what still needs human review.',
+        ],
         resourceIds: const ['res_ai_prompting'],
       ),
       _project(
@@ -1375,7 +1976,11 @@ class LocalEducationRepository implements EducationRepository {
         audiences: const ['student', 'mentor', 'admin'],
         skillTags: const ['Safe Low-Voltage Working'],
         materials: const ['Checklist', 'Safety notes'],
-        steps: const ['Open the checklist.', 'Check the space.', 'Confirm readiness.'],
+        steps: const [
+          'Open the checklist.',
+          'Check the space.',
+          'Confirm readiness.',
+        ],
         resourceIds: const ['res_tool_safety'],
       ),
     ];
@@ -1481,7 +2086,8 @@ class LocalEducationRepository implements EducationRepository {
         id: 'assessment_ai_reflection',
         title: 'AI reflection check',
         kind: 'Reflection review',
-        summary: 'Explain what the AI helped with and what still needs a human check.',
+        summary:
+            'Explain what the AI helped with and what still needs a human check.',
         maxScore: 8,
         score: 0,
         studentId: 'student_peter',
@@ -1509,7 +2115,8 @@ class LocalEducationRepository implements EducationRepository {
         id: 'reflection_hayley_2',
         studentId: 'student_hayley',
         title: 'Sensor reading day',
-        body: 'I noticed that careful checking helped me trust the sensor result.',
+        body:
+            'I noticed that careful checking helped me trust the sensor result.',
         mood: 'Focused',
         createdAt: DateTime.utc(2026, 7, 2, 10, 30),
         audiences: const ['student', 'mentor'],
@@ -1556,13 +2163,37 @@ class LocalEducationRepository implements EducationRepository {
     ];
   }
 
+  List<Map<String, dynamic>> _mentorReviewSeeds() {
+    return [
+      _mentorReview(
+        id: 'review_hayley_1',
+        studentId: 'student_hayley',
+        reviewer: 'Peter Ellis',
+        status: 'Ready for sign-off',
+        handoffStatus: 'Guardian handoff ready',
+        notes: 'Learner is steady and ready for the next guided step.',
+        reviewedAt: DateTime.utc(2026, 7, 2, 12, 10),
+      ),
+      _mentorReview(
+        id: 'review_peter_1',
+        studentId: 'student_peter',
+        reviewer: 'Peter Ellis',
+        status: 'Needs follow-up',
+        handoffStatus: 'Mentor review in progress',
+        notes: 'Keep the next session short and check the evidence pack.',
+        reviewedAt: DateTime.utc(2026, 7, 1, 10, 20),
+      ),
+    ];
+  }
+
   List<Map<String, dynamic>> _certificateSeeds() {
     return [
       _certificate(
         id: 'certificate_safe_starter',
         studentId: 'student_hayley',
         title: 'Safe Starter Badge',
-        summary: 'Completed the workshop safety introduction and evidence review.',
+        summary:
+            'Completed the workshop safety introduction and evidence review.',
         badgeLevel: 'Bronze',
         issuedBy: 'New Earth Learning Hub',
         awardedAt: DateTime.utc(2026, 6, 30, 16, 50),
@@ -1891,7 +2522,11 @@ class LocalEducationRepository implements EducationRepository {
             difficulty: 'Beginner',
             audiences: const ['student', 'mentor', 'admin'],
             tags: const ['learning', 'practice'],
-            steps: const ['Read the note.', 'Do the activity.', 'Write a reflection.'],
+            steps: const [
+              'Read the note.',
+              'Do the activity.',
+              'Write a reflection.',
+            ],
             resourceIds: const ['res_calm_build_checklist'],
             reflectionPrompt: 'What helped this lesson feel manageable?',
           ),
@@ -2113,6 +2748,26 @@ class LocalEducationRepository implements EducationRepository {
     };
   }
 
+  Map<String, dynamic> _mentorReview({
+    required String id,
+    required String studentId,
+    required String reviewer,
+    required String status,
+    required String handoffStatus,
+    required String notes,
+    required DateTime reviewedAt,
+  }) {
+    return {
+      'id': id,
+      'studentId': studentId,
+      'reviewer': reviewer,
+      'status': status,
+      'handoffStatus': handoffStatus,
+      'notes': notes,
+      'reviewedAt': reviewedAt.toUtc().toIso8601String(),
+    };
+  }
+
   Map<String, dynamic> _certificate({
     required String id,
     required String studentId,
@@ -2158,7 +2813,11 @@ class LocalEducationRepository implements EducationRepository {
         title: 'Embedded Systems',
         category: 'Learning pathways',
         kind: 'Documentation',
-        path: path.join(moduleRootPath, '04_LEARNING_PATHWAYS', 'EMBEDDED_SYSTEMS.md'),
+        path: path.join(
+          moduleRootPath,
+          '04_LEARNING_PATHWAYS',
+          'EMBEDDED_SYSTEMS.md',
+        ),
         description: 'Fallback content index for the embedded systems pathway.',
         exists: false,
       ),
@@ -2167,7 +2826,11 @@ class LocalEducationRepository implements EducationRepository {
         title: 'Lesson Template',
         category: 'Content library',
         kind: 'Documentation',
-        path: path.join(moduleRootPath, '05_CONTENT_LIBRARY', 'LESSON_TEMPLATE.md'),
+        path: path.join(
+          moduleRootPath,
+          '05_CONTENT_LIBRARY',
+          'LESSON_TEMPLATE.md',
+        ),
         description: 'Fallback content index for lesson structure and reuse.',
         exists: false,
       ),

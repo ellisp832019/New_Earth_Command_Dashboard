@@ -27,8 +27,8 @@ This module turns the dashboard into a guided learning operating system:
 8. Lab Notebook
 9. Mentor / Guardian View
 10. Content Builder
-11. Community / Classroom Mode
-12. Reports
+11. Reports
+12. Community / Classroom Mode
 13. Settings
 
 ## Dashboard route
@@ -45,16 +45,32 @@ Current placeholders include:
 - role-aware tutor prompts for student, mentor, parent/guardian, and admin views
 - badge and certificate readiness summaries based on local progress data
 - mentor report export for learner handoff and classroom review
+- mentor review workflow with local sign-off and handoff status
+- mentor review workflow with review breakdown chips, sign-off notes, and handoff status
 - draft certificate issuance from completed assessment evidence
 - latest local mentor/certificate outputs surfaced in Settings
+- latest content-pack draft surfaced in Settings with PDF shortcut
+- Reports workspace for mentor report, certificate draft, and content pack outputs
+- Reports workspace with learner and time-window filters
+- Community / Classroom Mode for group support and guardian handoff
 - learner progress review summary with next-step guidance
 - filter reset controls for pathways and lessons
 - reflection journal prompts and mentor note starter flow
+- local reflection entry creation with mood, title, and body capture
+- reflection entries can link back to the related lesson or project
 - assessment review guide with clearer status labels
+- assessment audience and status filters with calm review chips
+- assessment cards surface mentor notes, rubric bands, and evidence refs
 - project workspaces with local evidence checkpoints and linked source items
+- pathway cards with unit and lesson completion cues for the active learner
 - offline snapshot export/import for content packs and local restore
-- content builder workspace for drafting offline learning packs
+- settings now surface the offline pack import/export controls directly
+- content builder workspace for drafting offline learning packs, version tags, and validation checks
+- content-pack export creates markdown, PDF preview, and manifest artifacts
 - passport summary copy flow for certificates and badges
+- certificate preview card with local eligibility rules before draft issuance
+- certificate PDF draft export alongside the markdown note
+- content pack draft save flow so version, checksum, and validation survive export/import
 
 ## Future content areas
 - Electronics
