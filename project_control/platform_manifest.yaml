@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "platform_id": "new_earth_command_dashboard",
+  "platform_name": "New Earth Command Dashboard",
+  "description": "Local-first Flutter command dashboard for managing New Earth projects, tasks and supporting systems.",
+  "repository_url": "https://github.com/ellisp832019/New_Earth_Command_Dashboard",
+  "repository_root_hint": ".",
+  "current_branch": "feature/new-earth-dashboard-platform-control-hardening-2026-08-06",
+  "current_commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+  "application_version": "1.0.0+1",
+  "platform_maturity": "beta",
+  "supported_platforms": ["windows", "desktop", "local-development"],
+  "primary_platform": "windows",
+  "local_first": true,
+  "data_ownership": "User-owned local data with repository-scoped storage.",
+  "telemetry_policy": "No telemetry by default.",
+  "cloud_dependency": "none",
+  "release_policy": "Internal release evidence required before any wider rollout.",
+  "default_branch_policy": "feature branches merge through reviewed checkpoints.",
+  "canonical_documentation": [
+    "docs/project_control/START_HERE.md",
+    "docs/project_control/HOW_TO_USE_PROJECT_CONTROL.md",
+    "docs/project_control/TECHNICAL_READING_PATH.md",
+    "docs/project_control/MODULE_STATUS_GUIDE.md",
+    "docs/project_control/RISK_AND_READINESS_GUIDE.md"
+  ],
+  "last_verified_commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+  "last_verified_date": "2026-08-06",
+  "last_verified_build": {
+    "windows_executable": "build/windows/x64/runner/Release/new_earth_command_dashboard.exe",
+    "sha256": "6EDE098A249BFB179FF3FBEE5CE1885614A7AFD79A4A7BCC71F28C61E1FD0FCA",
+    "size_bytes": 92160
+  },
+  "last_scan": {
+    "scan_id": "baseline-2026-08-06",
+    "date": "2026-08-06",
+    "commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d"
+  },
+  "release_readiness": "not_ready",
+  "known_limitations": [
+    "No in-app Project Control Centre has been built yet.",
+    "Release evidence is still being assembled into canonical registries.",
+    "Some module documentation is partial or missing."
+  ]
+}

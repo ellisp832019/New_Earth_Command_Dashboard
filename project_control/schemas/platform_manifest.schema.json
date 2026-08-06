@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "required": ["schema_version", "platform_id", "platform_name", "current_branch", "current_commit"],
+  "properties": {
+    "schema_version": {"type": "integer"},
+    "platform_id": {"type": "string"},
+    "platform_name": {"type": "string"},
+    "current_branch": {"type": "string"},
+    "current_commit": {"type": "string"}
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "layers": ["presentation", "application", "domain", "data", "infrastructure"],
+  "rules": [
+    "Presentation may depend on application and domain contracts.",
+    "Presentation must not directly implement persistence.",
+    "Domain must not depend on Flutter widgets.",
+    "Data implementations must satisfy domain contracts.",
+    "Infrastructure integrations must be isolated.",
+    "Optional hardware must not block core dashboard startup.",
+    "Modules must not directly access another module's storage.",
+    "Shared services must have explicit ownership.",
+    "Generated reports must not become canonical source records.",
+    "Secrets and credentials must not appear in logs, exports or evidence.",
+    "Local-first operation must remain available when integrations are unavailable."
+  ],
+  "observations": [
+    {"module": "voice_intelligence", "issue": "Depends on voice assistant startup and hardware assumptions."},
+    {"module": "repo_intelligence_bridge", "issue": "Touches repository paths and should remain repository-relative."},
+    {"module": "users_devices_control", "issue": "Security-sensitive data requires careful local storage handling."},
+    {"module": "system_backup", "issue": "Backup evidence needs separate verification from the main UI flow."}
+  ]
+}

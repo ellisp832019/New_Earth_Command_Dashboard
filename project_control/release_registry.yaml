@@ -1,0 +1,16 @@
+[
+  {
+    "release_id": "RLS-001",
+    "version": "1.0.0+1",
+    "maturity": "beta",
+    "commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+    "tag": "",
+    "status": "unverified_historical",
+    "included_modules": ["dashboard", "tasks", "planner", "projects", "journal", "learning", "content", "business", "wellbeing", "assets", "treasury", "meeting_system", "voice_intelligence", "omega_knowledge_engine", "omega_engineering_studio", "launchpad", "users_devices_control", "education_learning_hub", "system_backup", "knowledge_library", "funding_grants_command_centre", "repo_intelligence_bridge", "settings", "about_help", "command_deck", "project_intelligence", "systems", "visual_capture", "more", "security", "voice_assistant", "repo_research_engine"],
+    "verification_ids": ["V-003", "V-004", "V-005"],
+    "known_risks": ["P0 PIN storage risk remains open", "Project control CLI still under construction"],
+    "build_artifacts": ["build/windows/x64/runner/Release/new_earth_command_dashboard.exe"],
+    "release_date": "2026-08-06",
+    "notes": "No release tag exists yet; this record preserves the current green baseline only."
+  }
+]
