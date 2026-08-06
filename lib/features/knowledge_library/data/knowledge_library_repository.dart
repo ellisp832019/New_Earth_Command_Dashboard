@@ -7,7 +7,8 @@ class KnowledgeLibraryRepository {
     : baseUri = baseUri ?? Uri.parse('http://127.0.0.1:8787');
 
   final Uri baseUri;
-  final HttpClient _client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
+  final HttpClient _client = HttpClient()
+    ..connectionTimeout = const Duration(seconds: 8);
 
   void dispose() {
     _client.close(force: true);
@@ -20,10 +21,7 @@ class KnowledgeLibraryRepository {
     final json = await _getJson(
       baseUri.replace(
         path: '/library',
-        queryParameters: {
-          'limit': '$limit',
-          'offset': '$offset',
-        },
+        queryParameters: {'limit': '$limit', 'offset': '$offset'},
       ),
     );
     return KnowledgeLibraryPage.fromJson(json);
@@ -41,19 +39,20 @@ class KnowledgeLibraryRepository {
     final json = await _getJson(
       baseUri.replace(
         path: '/library/search',
-        queryParameters: {
-          'q': query,
-          'limit': '$limit',
-        },
+        queryParameters: {'q': query, 'limit': '$limit'},
       ),
     );
 
     final items = json['items'];
     final parsedItems = items is List
         ? items
-        .whereType<Map>()
-        .map((item) => KnowledgeLibraryItem.fromJson(Map<String, dynamic>.from(item)))
-        .toList(growable: false)
+              .whereType<Map>()
+              .map(
+                (item) => KnowledgeLibraryItem.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .toList(growable: false)
         : const <KnowledgeLibraryItem>[];
 
     return KnowledgeLibrarySearchResult(
@@ -171,9 +170,7 @@ class KnowledgeLibraryRepository {
 
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
     final request = await _client.getUrl(uri);
-    final response = await request.close().timeout(
-      const Duration(seconds: 20),
-    );
+    final response = await request.close().timeout(const Duration(seconds: 20));
 
     final body = await response.transform(utf8.decoder).join();
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -185,7 +182,9 @@ class KnowledgeLibraryRepository {
 
     final decoded = jsonDecode(body);
     if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Knowledge Library API response was invalid.');
+      throw const FormatException(
+        'Knowledge Library API response was invalid.',
+      );
     }
 
     return decoded;
@@ -215,13 +214,13 @@ class KnowledgeLibraryPage {
       offset: _intValue(json['offset']),
       items: rawItems is List
           ? rawItems
-              .whereType<Map>()
-              .map(
-                (item) => KnowledgeLibraryItem.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
-              )
-              .toList(growable: false)
+                .whereType<Map>()
+                .map(
+                  (item) => KnowledgeLibraryItem.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ),
+                )
+                .toList(growable: false)
           : const [],
     );
   }
@@ -393,9 +392,7 @@ class KnowledgeLibraryExtractionStatus {
 
   bool get hasFailures => failed > 0;
 
-  factory KnowledgeLibraryExtractionStatus.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory KnowledgeLibraryExtractionStatus.fromJson(Map<String, dynamic> json) {
     return KnowledgeLibraryExtractionStatus(
       totalPdfs: _intValue(json['total_pdfs']),
       textExtractable: _intValue(json['text_extractable']),

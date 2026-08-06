@@ -192,7 +192,8 @@ _ProjectFixture _projectFixture() {
   return _ProjectFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: AssetFolderService.requiredFolders,
@@ -208,10 +209,7 @@ _ProjectFixture _projectFixture() {
 }
 
 class _ProjectFixture {
-  const _ProjectFixture({
-    required this.snapshot,
-    required this.summaries,
-  });
+  const _ProjectFixture({required this.snapshot, required this.summaries});
 
   final AssetWorkspaceSnapshot snapshot;
   final List<AssetProjectSummary> summaries;

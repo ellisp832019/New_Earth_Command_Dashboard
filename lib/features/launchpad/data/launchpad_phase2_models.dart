@@ -87,10 +87,7 @@ class LaunchpadPhase2Record {
         _stringValue(json['campaignId']),
         campaignIdFallback,
       ]),
-      section: _firstNonEmpty([
-        _stringValue(json['section']),
-        sectionFallback,
-      ]),
+      section: _firstNonEmpty([_stringValue(json['section']), sectionFallback]),
       title: _stringValue(json['title']),
       status: _firstNonEmpty([_stringValue(json['status']), 'Draft']),
       primaryLabel: _firstNonEmpty([

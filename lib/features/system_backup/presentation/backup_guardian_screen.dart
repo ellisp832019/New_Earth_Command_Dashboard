@@ -792,12 +792,11 @@ class _AutomationCard extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 2),
                           child: Text(
                             detail,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(
-                              color: AppColours.darkMutedText,
-                              height: 1.3,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColours.darkMutedText,
+                                  height: 1.3,
+                                ),
                           ),
                         ),
                     ],

@@ -34,12 +34,14 @@ class LearningPathwayService {
   final EducationHubSnapshot snapshot;
 
   List<LearningPathway> pathwaysForAudience(EducationAudience audience) {
-    return snapshot.pathways.where((pathway) {
-      if (audience == EducationAudience.all) {
-        return true;
-      }
-      return pathway.audiences.contains(audience.name);
-    }).toList(growable: false);
+    return snapshot.pathways
+        .where((pathway) {
+          if (audience == EducationAudience.all) {
+            return true;
+          }
+          return pathway.audiences.contains(audience.name);
+        })
+        .toList(growable: false);
   }
 
   LearningPathway? pathwayById(String id) {
@@ -58,12 +60,14 @@ class LessonService {
   final EducationHubSnapshot snapshot;
 
   List<Lesson> lessonsForAudience(EducationAudience audience) {
-    return snapshot.lessons.where((lesson) {
-      if (audience == EducationAudience.all) {
-        return true;
-      }
-      return lesson.audiences.contains(audience.name);
-    }).toList(growable: false);
+    return snapshot.lessons
+        .where((lesson) {
+          if (audience == EducationAudience.all) {
+            return true;
+          }
+          return lesson.audiences.contains(audience.name);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -91,12 +95,14 @@ class AssessmentService {
   final EducationHubSnapshot snapshot;
 
   List<Assessment> assessmentsForAudience(EducationAudience audience) {
-    return snapshot.assessments.where((assessment) {
-      if (audience == EducationAudience.all) {
-        return true;
-      }
-      return assessment.audiences.contains(audience.name);
-    }).toList(growable: false);
+    return snapshot.assessments
+        .where((assessment) {
+          if (audience == EducationAudience.all) {
+            return true;
+          }
+          return assessment.audiences.contains(audience.name);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -106,12 +112,14 @@ class ReflectionService {
   final EducationHubSnapshot snapshot;
 
   List<ReflectionEntry> reflectionsForAudience(EducationAudience audience) {
-    return snapshot.reflections.where((reflection) {
-      if (audience == EducationAudience.all) {
-        return true;
-      }
-      return reflection.audiences.contains(audience.name);
-    }).toList(growable: false);
+    return snapshot.reflections
+        .where((reflection) {
+          if (audience == EducationAudience.all) {
+            return true;
+          }
+          return reflection.audiences.contains(audience.name);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -121,16 +129,18 @@ class CertificateService {
   final EducationHubSnapshot snapshot;
 
   List<Certificate> certificatesForAudience(EducationAudience audience) {
-    return snapshot.certificates.where((certificate) {
-      if (audience == EducationAudience.all) {
-        return true;
-      }
-      final student = snapshot.students
-          .where((profile) => profile.id == certificate.studentId)
-          .cast<StudentProfile?>()
-          .firstOrNull;
-      return student == null || student.badgeIds.isNotEmpty;
-    }).toList(growable: false);
+    return snapshot.certificates
+        .where((certificate) {
+          if (audience == EducationAudience.all) {
+            return true;
+          }
+          final student = snapshot.students
+              .where((profile) => profile.id == certificate.studentId)
+              .cast<StudentProfile?>()
+              .firstOrNull;
+          return student == null || student.badgeIds.isNotEmpty;
+        })
+        .toList(growable: false);
   }
 }
 
@@ -199,7 +209,11 @@ class SearchService {
     }
 
     for (final resource in snapshot.resources) {
-      if (_contains(needle, [resource.title, resource.description, resource.path])) {
+      if (_contains(needle, [
+        resource.title,
+        resource.description,
+        resource.path,
+      ])) {
         hits.add(
           EducationSearchHit(
             title: resource.title,
@@ -225,18 +239,15 @@ class SearchService {
     }
 
     for (final student in snapshot.students) {
-      if (_contains(
-        needle,
-        [
-          student.name,
-          student.role,
-          student.stage,
-          student.mentorName,
-          student.guardianName,
-          student.activePathwayId,
-          ...student.badgeIds,
-        ],
-      )) {
+      if (_contains(needle, [
+        student.name,
+        student.role,
+        student.stage,
+        student.mentorName,
+        student.guardianName,
+        student.activePathwayId,
+        ...student.badgeIds,
+      ])) {
         hits.add(
           EducationSearchHit(
             title: student.name,
@@ -249,16 +260,13 @@ class SearchService {
     }
 
     for (final assessment in snapshot.assessments) {
-      if (_contains(
-        needle,
-        [
-          assessment.title,
-          assessment.summary,
-          assessment.kind,
-          assessment.mentorFeedback,
-          ...assessment.criteria,
-        ],
-      )) {
+      if (_contains(needle, [
+        assessment.title,
+        assessment.summary,
+        assessment.kind,
+        assessment.mentorFeedback,
+        ...assessment.criteria,
+      ])) {
         hits.add(
           EducationSearchHit(
             title: assessment.title,
@@ -271,7 +279,11 @@ class SearchService {
     }
 
     for (final reflection in snapshot.reflections) {
-      if (_contains(needle, [reflection.title, reflection.body, reflection.mood])) {
+      if (_contains(needle, [
+        reflection.title,
+        reflection.body,
+        reflection.mood,
+      ])) {
         hits.add(
           EducationSearchHit(
             title: reflection.title,
@@ -284,15 +296,12 @@ class SearchService {
     }
 
     for (final certificate in snapshot.certificates) {
-      if (_contains(
-        needle,
-        [
-          certificate.title,
-          certificate.summary,
-          certificate.badgeLevel,
-          certificate.issuedBy,
-        ],
-      )) {
+      if (_contains(needle, [
+        certificate.title,
+        certificate.summary,
+        certificate.badgeLevel,
+        certificate.issuedBy,
+      ])) {
         hits.add(
           EducationSearchHit(
             title: certificate.title,
@@ -364,7 +373,8 @@ class TutorService {
         nextStep: completionLabel.isEmpty
             ? 'Try asking about a lesson, a project, or a build obstacle.'
             : 'Try asking about a lesson, a project, or the current ${completionLabel.toLowerCase()}.',
-        safetyNote: 'The tutor stays in suggestion mode only and keeps a human in the loop.',
+        safetyNote:
+            'The tutor stays in suggestion mode only and keeps a human in the loop.',
         practiceQuestions: [
           'What do you want to understand?',
           'What have you already tried?',
@@ -404,7 +414,8 @@ class TutorService {
         summary: contextLabel.isEmpty
             ? 'Use the pathway view to choose one route and move only one step forward.'
             : 'Use the pathway view for $contextLabel to choose one route and move only one step forward.',
-        nextStep: 'Open the matching pathway, review the unit list, and select the next lesson.',
+        nextStep:
+            'Open the matching pathway, review the unit list, and select the next lesson.',
         safetyNote:
             'The tutor keeps recommendations local and avoids making decisions for the learner.',
         practiceQuestions: [
@@ -415,7 +426,9 @@ class TutorService {
       );
     }
 
-    if (normalized.contains('progress') || normalized.contains('badge') || normalized.contains('certificate')) {
+    if (normalized.contains('progress') ||
+        normalized.contains('badge') ||
+        normalized.contains('certificate')) {
       return EducationTutorResponse(
         summary: contextLabel.isEmpty
             ? 'Progress is tracked locally, so the next useful action is to complete one visible step.'
@@ -433,12 +446,15 @@ class TutorService {
       );
     }
 
-    if (normalized.contains('mentor') || normalized.contains('guardian') || normalized.contains('support')) {
+    if (normalized.contains('mentor') ||
+        normalized.contains('guardian') ||
+        normalized.contains('support')) {
       return EducationTutorResponse(
         summary: contextLabel.isEmpty
             ? 'Mentor support should stay calm, specific, and tied to one practical outcome.'
             : 'For $contextLabel, mentor support should stay calm, specific, and tied to one practical outcome.',
-        nextStep: 'Review one note, one assessment, and one support action before changing the plan.',
+        nextStep:
+            'Review one note, one assessment, and one support action before changing the plan.',
         safetyNote:
             'Keep any important learner support decisions human-reviewed and documented locally.',
         practiceQuestions: [

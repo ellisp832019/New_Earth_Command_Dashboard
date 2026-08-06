@@ -2240,11 +2240,7 @@ class _StatusTile extends StatelessWidget {
                 child: Icon(icon, color: accent),
               ),
               const Spacer(),
-              _Pill(
-                label: value,
-                icon: icon,
-                accent: accent,
-              ),
+              _Pill(label: value, icon: icon, accent: accent),
             ],
           ),
           const SizedBox(height: 18),

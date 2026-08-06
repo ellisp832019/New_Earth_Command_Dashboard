@@ -314,7 +314,9 @@ class BackupGuardianService {
       config: config,
     );
     final schedulerReadout = _buildSchedulerReadout(schedulerStatus);
-    final schedulerHealthState = _schedulerHealthStateFrom(schedulerStatus.state);
+    final schedulerHealthState = _schedulerHealthStateFrom(
+      schedulerStatus.state,
+    );
 
     final warnings = <String>[
       ...status.warnings,

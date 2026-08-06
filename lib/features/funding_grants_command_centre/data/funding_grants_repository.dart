@@ -10,20 +10,22 @@ import '../models/readiness_score.dart';
 import '../services/folder_template_service.dart';
 import 'funding_grants_paths.dart';
 
-final fundingGrantsRepositoryProvider = Provider<FundingGrantsRepository>((ref) {
+final fundingGrantsRepositoryProvider = Provider<FundingGrantsRepository>((
+  ref,
+) {
   return FundingGrantsRepository();
 });
 
 class FundingGrantsRepository {
   FundingGrantsRepository({FolderTemplateService? folderTemplateService})
-      : _folderTemplateService = folderTemplateService ?? FolderTemplateService();
+    : _folderTemplateService = folderTemplateService ?? FolderTemplateService();
 
   final FolderTemplateService _folderTemplateService;
 
   Future<void> bootstrapWorkspace() async {
-    await Directory(FundingGrantsPaths.trackerMasterFolder).create(
-      recursive: true,
-    );
+    await Directory(
+      FundingGrantsPaths.trackerMasterFolder,
+    ).create(recursive: true);
 
     for (final folderPath in [
       FundingGrantsPaths.activeApplicationsPath,
@@ -102,7 +104,8 @@ class FundingGrantsRepository {
 
     final persisted = await _persistGrantWorkspace(
       grant,
-      previous: previous ?? (existingIndex == -1 ? null : grants[existingIndex]),
+      previous:
+          previous ?? (existingIndex == -1 ? null : grants[existingIndex]),
     );
 
     if (existingIndex == -1) {
@@ -129,8 +132,12 @@ class FundingGrantsRepository {
     await exportsDir.create(recursive: true);
 
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-    final jsonTarget = File(path.join(exportsDir.path, 'grant_tracker_$timestamp.json'));
-    final csvTarget = File(path.join(exportsDir.path, 'grant_tracker_$timestamp.csv'));
+    final jsonTarget = File(
+      path.join(exportsDir.path, 'grant_tracker_$timestamp.json'),
+    );
+    final csvTarget = File(
+      path.join(exportsDir.path, 'grant_tracker_$timestamp.csv'),
+    );
     final jsonSource = File(FundingGrantsPaths.trackerJsonPath);
     final csvSource = File(FundingGrantsPaths.trackerCsvPath);
 
@@ -152,8 +159,11 @@ class FundingGrantsRepository {
 
     final ext = path.extension(sourcePath).toLowerCase();
     if (ext == '.json') {
-      final decoded = jsonDecode(await source.readAsString()) as Map<String, dynamic>;
-      final grants = _grantsFromDecodedJson(decoded).map(_normalizeGrant).toList();
+      final decoded =
+          jsonDecode(await source.readAsString()) as Map<String, dynamic>;
+      final grants = _grantsFromDecodedJson(
+        decoded,
+      ).map(_normalizeGrant).toList();
       await _writeTrackerFiles(grants);
       return;
     }
@@ -164,7 +174,9 @@ class FundingGrantsRepository {
       return;
     }
 
-    throw UnsupportedError('Only grant_tracker JSON or CSV files can be imported.');
+    throw UnsupportedError(
+      'Only grant_tracker JSON or CSV files can be imported.',
+    );
   }
 
   Future<GrantRecord> updateGrantStatus(
@@ -226,7 +238,8 @@ class FundingGrantsRepository {
       return <GrantRecord>[];
     }
 
-    final decoded = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(await file.readAsString()) as Map<String, dynamic>;
     return _grantsFromDecodedJson(decoded);
   }
 
@@ -244,7 +257,8 @@ class FundingGrantsRepository {
       return <GrantRecord>[];
     }
 
-    final decoded = jsonDecode(await seedFile.readAsString()) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(await seedFile.readAsString()) as Map<String, dynamic>;
     final grants = decoded['grants'] as List<dynamic>? ?? const <dynamic>[];
     return grants
         .whereType<Map<String, dynamic>>()
@@ -305,7 +319,11 @@ class FundingGrantsRepository {
     for (var i = 1; i < lines.length; i++) {
       final cells = _parseCsvLine(lines[i]);
       final row = <String, dynamic>{};
-      for (var index = 0; index < headers.length && index < cells.length; index++) {
+      for (
+        var index = 0;
+        index < headers.length && index < cells.length;
+        index++
+      ) {
         row[headers[index]] = cells[index];
       }
       grants.add(_grantFromCsvRow(row));
@@ -321,7 +339,8 @@ class FundingGrantsRepository {
       project: row['project']?.toString() ?? '',
       fundingBody: row['funding_body']?.toString() ?? '',
       fundingType: row['funding_type']?.toString() ?? '',
-      amountRequested: double.tryParse(row['amount_requested']?.toString() ?? '') ?? 0,
+      amountRequested:
+          double.tryParse(row['amount_requested']?.toString() ?? '') ?? 0,
       matchFundingRequired: row['match_funding_required']?.toString() ?? '',
       status: GrantStatusLabel.fromLabel(row['status']?.toString() ?? ''),
       deadline: row['deadline']?.toString().isNotEmpty == true
@@ -415,8 +434,8 @@ class FundingGrantsRepository {
     final existing = previous?.folderPath.trim().isNotEmpty == true
         ? path.basename(previous!.folderPath)
         : grant.folderPath.trim().isNotEmpty
-            ? path.basename(grant.folderPath)
-            : '';
+        ? path.basename(grant.folderPath)
+        : '';
     if (existing.isNotEmpty) {
       return existing;
     }

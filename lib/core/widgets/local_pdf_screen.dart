@@ -4,11 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 class LocalPdfScreen extends StatelessWidget {
-  const LocalPdfScreen({
-    super.key,
-    required this.title,
-    required this.pdfPath,
-  });
+  const LocalPdfScreen({super.key, required this.title, required this.pdfPath});
 
   final String title;
   final String pdfPath;

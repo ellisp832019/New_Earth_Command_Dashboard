@@ -386,12 +386,14 @@ class _QrLabelStudioScreenState extends ConsumerState<QrLabelStudioScreen> {
                                               statusMessage: _statusMessage,
                                             ),
                                             const SizedBox(height: 20),
-                      _PreviewCard(
-                        preview: _preview,
-                        currentDraft: currentDraft,
-                        selectedPrinterProfile: selectedPrinterProfile,
-                        printerProfileCount: printerProfiles.length,
-                      ),
+                                            _PreviewCard(
+                                              preview: _preview,
+                                              currentDraft: currentDraft,
+                                              selectedPrinterProfile:
+                                                  selectedPrinterProfile,
+                                              printerProfileCount:
+                                                  printerProfiles.length,
+                                            ),
                                           ],
                                         );
 
@@ -2103,8 +2105,9 @@ class _PrinterConnectionCard extends StatelessWidget {
             children: [
               Chip(
                 label: Text(_printerStatusChip()),
-                backgroundColor:
-                    _printerStatusChipColor(context).withValues(alpha: 0.15),
+                backgroundColor: _printerStatusChipColor(
+                  context,
+                ).withValues(alpha: 0.15),
                 labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkText,
                   fontWeight: FontWeight.w600,
@@ -2113,8 +2116,9 @@ class _PrinterConnectionCard extends StatelessWidget {
               if (printers.isNotEmpty)
                 Chip(
                   label: Text('${printers.length} detected'),
-                  backgroundColor:
-                      AppColours.darkSurfaceAlt.withValues(alpha: 0.9),
+                  backgroundColor: AppColours.darkSurfaceAlt.withValues(
+                    alpha: 0.9,
+                  ),
                   labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColours.darkText,
                     fontWeight: FontWeight.w600,
@@ -2122,8 +2126,7 @@ class _PrinterConnectionCard extends StatelessWidget {
                 ),
               Chip(
                 label: Text(_pm260ProfileChipLabel()),
-                backgroundColor:
-                    _pm260ProfileColour().withValues(alpha: 0.15),
+                backgroundColor: _pm260ProfileColour().withValues(alpha: 0.15),
                 labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkText,
                   fontWeight: FontWeight.w600,
@@ -2131,8 +2134,7 @@ class _PrinterConnectionCard extends StatelessWidget {
               ),
               Chip(
                 label: Text(_pm260DeviceChipLabel()),
-                backgroundColor:
-                    _pm260DeviceColour().withValues(alpha: 0.15),
+                backgroundColor: _pm260DeviceColour().withValues(alpha: 0.15),
                 labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColours.darkText,
                   fontWeight: FontWeight.w600,
@@ -2200,7 +2202,9 @@ class _PrinterConnectionCard extends StatelessWidget {
               child: DropdownButtonFormField<String>(
                 isExpanded: true,
                 initialValue: selectedPrinter?.url,
-                decoration: const InputDecoration(labelText: 'Selected printer'),
+                decoration: const InputDecoration(
+                  labelText: 'Selected printer',
+                ),
                 items: printers
                     .map(
                       (printer) => DropdownMenuItem<String>(
@@ -2272,8 +2276,9 @@ class _PrinterConnectionCard extends StatelessWidget {
                         ? AppColours.darkText
                         : AppColours.darkText,
                     height: 1.35,
-                    fontWeight:
-                        _pm260DirectMatch() ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: _pm260DirectMatch()
+                        ? FontWeight.w600
+                        : FontWeight.w500,
                   ),
                 ),
               ),
@@ -2461,26 +2466,35 @@ class _PrinterProfilesCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _StatusPill(
-                label: '${profiles.length} profile${profiles.length == 1 ? '' : 's'}',
+                label:
+                    '${profiles.length} profile${profiles.length == 1 ? '' : 's'}',
                 accent: AppColours.darkSecondary,
               ),
               _StatusPill(
-                label: profiles.any((row) {
-                  final name = (row['printer_name'] ?? '').trim().toLowerCase();
-                  final id = (row['profile_id'] ?? '').trim().toLowerCase();
-                  return name.contains('pm260') ||
-                      id == QrLabelPrintService.pm260Preset.profileId
+                label:
+                    profiles.any((row) {
+                      final name = (row['printer_name'] ?? '')
+                          .trim()
                           .toLowerCase();
-                })
+                      final id = (row['profile_id'] ?? '').trim().toLowerCase();
+                      return name.contains('pm260') ||
+                          id ==
+                              QrLabelPrintService.pm260Preset.profileId
+                                  .toLowerCase();
+                    })
                     ? 'PM260 preset ready'
                     : 'PM260 preset missing',
-                accent: profiles.any((row) {
-                  final name = (row['printer_name'] ?? '').trim().toLowerCase();
-                  final id = (row['profile_id'] ?? '').trim().toLowerCase();
-                  return name.contains('pm260') ||
-                      id == QrLabelPrintService.pm260Preset.profileId
+                accent:
+                    profiles.any((row) {
+                      final name = (row['printer_name'] ?? '')
+                          .trim()
                           .toLowerCase();
-                })
+                      final id = (row['profile_id'] ?? '').trim().toLowerCase();
+                      return name.contains('pm260') ||
+                          id ==
+                              QrLabelPrintService.pm260Preset.profileId
+                                  .toLowerCase();
+                    })
                     ? AppColours.darkSuccess
                     : AppColours.darkAmber,
               ),
@@ -2930,14 +2944,18 @@ class _EditLabelRegisterDialogState extends State<_EditLabelRegisterDialog> {
                   Expanded(
                     child: TextField(
                       controller: _labelTypeController,
-                      decoration: const InputDecoration(labelText: 'Label type'),
+                      decoration: const InputDecoration(
+                        labelText: 'Label type',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _labelSizeController,
-                      decoration: const InputDecoration(labelText: 'Label size'),
+                      decoration: const InputDecoration(
+                        labelText: 'Label size',
+                      ),
                     ),
                   ),
                 ],
@@ -2950,7 +2968,9 @@ class _EditLabelRegisterDialogState extends State<_EditLabelRegisterDialog> {
               const SizedBox(height: 12),
               TextField(
                 controller: _locationController,
-                decoration: const InputDecoration(labelText: 'Location / project'),
+                decoration: const InputDecoration(
+                  labelText: 'Location / project',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -2967,14 +2987,18 @@ class _EditLabelRegisterDialogState extends State<_EditLabelRegisterDialog> {
                   Expanded(
                     child: TextField(
                       controller: _printStatusController,
-                      decoration: const InputDecoration(labelText: 'Print status'),
+                      decoration: const InputDecoration(
+                        labelText: 'Print status',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _printedDateController,
-                      decoration: const InputDecoration(labelText: 'Printed date'),
+                      decoration: const InputDecoration(
+                        labelText: 'Printed date',
+                      ),
                     ),
                   ),
                 ],

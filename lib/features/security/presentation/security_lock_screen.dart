@@ -332,7 +332,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
           return;
         }
         if (kDebugMode) {
-          debugPrint('Security unlock handoff -> ${_routeAfterUnlock(context: context)}');
+          debugPrint(
+            'Security unlock handoff -> ${_routeAfterUnlock(context: context)}',
+          );
         }
         appRouter.go(_routeAfterUnlock(context: context));
       });

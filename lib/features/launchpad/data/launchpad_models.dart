@@ -94,7 +94,8 @@ class LaunchpadCampaignFinanceModel {
   }) {
     return LaunchpadCampaignFinanceModel(
       fundingGoalGbp: fundingGoalGbp ?? this.fundingGoalGbp,
-      manufacturingCostsGbp: manufacturingCostsGbp ?? this.manufacturingCostsGbp,
+      manufacturingCostsGbp:
+          manufacturingCostsGbp ?? this.manufacturingCostsGbp,
       shippingGbp: shippingGbp ?? this.shippingGbp,
       vatPercent: vatPercent ?? this.vatPercent,
       kickstarterFeePercent:
@@ -131,10 +132,7 @@ class LaunchpadCampaignFinanceModel {
         json['kickstarter_fee_percent'],
         fallback: 0,
       ),
-      paymentFeePercent: _doubleValue(
-        json['payment_fee_percent'],
-        fallback: 0,
-      ),
+      paymentFeePercent: _doubleValue(json['payment_fee_percent'], fallback: 0),
       contingencyPercent: _doubleValue(
         json['contingency_percent'],
         fallback: 0,
@@ -547,7 +545,9 @@ class LaunchpadCampaignRecord {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'progress_percentage': progressPercentage,
-      'rewards': rewards.map((reward) => reward.toJson()).toList(growable: false),
+      'rewards': rewards
+          .map((reward) => reward.toJson())
+          .toList(growable: false),
       'story_blocks': storyBlocks
           .map((story) => story.toJson())
           .toList(growable: false),
@@ -581,17 +581,13 @@ class LaunchpadCampaignRecord {
       progressPercentage: _intValue(json['progress_percentage'], fallback: 0),
       rewards: _readTypedList<LaunchpadRewardTier>(
         json['rewards'],
-        (item) => LaunchpadRewardTier.fromJson(
-          item,
-          campaignIdFallback: campaignId,
-        ),
+        (item) =>
+            LaunchpadRewardTier.fromJson(item, campaignIdFallback: campaignId),
       ),
       storyBlocks: _readTypedList<LaunchpadStoryBlock>(
         json['story_blocks'],
-        (item) => LaunchpadStoryBlock.fromJson(
-          item,
-          campaignIdFallback: campaignId,
-        ),
+        (item) =>
+            LaunchpadStoryBlock.fromJson(item, campaignIdFallback: campaignId),
       ),
       readinessItems: _readTypedList<LaunchpadReadinessItem>(
         json['readiness_items'],
@@ -602,10 +598,8 @@ class LaunchpadCampaignRecord {
       ),
       risks: _readTypedList<LaunchpadRiskRecord>(
         json['risks'],
-        (item) => LaunchpadRiskRecord.fromJson(
-          item,
-          campaignIdFallback: campaignId,
-        ),
+        (item) =>
+            LaunchpadRiskRecord.fromJson(item, campaignIdFallback: campaignId),
       ),
       phase2Records: _readTypedList<LaunchpadPhase2Record>(
         json['phase2_records'],
@@ -686,9 +680,9 @@ class LaunchpadWorkspace {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'updated_at': updatedAt?.toIso8601String(),
-      'campaigns': campaigns.map((campaign) => campaign.toJson()).toList(
-        growable: false,
-      ),
+      'campaigns': campaigns
+          .map((campaign) => campaign.toJson())
+          .toList(growable: false),
     };
   }
 

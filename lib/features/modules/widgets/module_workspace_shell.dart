@@ -177,10 +177,7 @@ class _ModuleWorkspaceHeader extends StatelessWidget {
                   spacing: 12,
                   runSpacing: 10,
                   crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    selector,
-                    launchToggle,
-                  ],
+                  children: [selector, launchToggle],
                 ),
                 if (trailingActions.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -287,9 +284,7 @@ class _ModuleLaunchTargetToggleState
             .saveLaunchTarget(widget.module.id, nextTarget);
       },
       showSelectedIcon: false,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-      ),
+      style: ButtonStyle(visualDensity: VisualDensity.compact),
     );
   }
 }

@@ -15,9 +15,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: KnowledgeLibraryScreen(repository: repository),
-      ),
+      MaterialApp(home: KnowledgeLibraryScreen(repository: repository)),
     );
 
     await tester.pumpAndSettle();
@@ -39,7 +37,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Found 1 result for "guide two".'), findsWidgets);
+    expect(
+      find.textContaining('Found 1 result for "guide two".'),
+      findsWidgets,
+    );
     expect(find.text('Guide Two'), findsWidgets);
 
     await tester.tap(find.byTooltip('Clear search'));
@@ -179,14 +180,8 @@ class _FakeKnowledgeLibraryRepository extends KnowledgeLibraryRepository {
   Future<KnowledgeLibraryStats> loadStats() async {
     return const KnowledgeLibraryStats(
       totalPdfs: 3,
-      bySourceSection: <String, int>{
-        'Operations': 2,
-        'Research': 1,
-      },
-      byCategory: <String, int>{
-        'Guides': 2,
-        'Notes': 1,
-      },
+      bySourceSection: <String, int>{'Operations': 2, 'Research': 1},
+      byCategory: <String, int>{'Guides': 2, 'Notes': 1},
       textExtractable: 2,
       ocrRequired: 1,
       audioGenerated: 1,

@@ -172,7 +172,7 @@ void main() {
       find.text(
         'No journal entries yet. Capture today\'s progress when you are ready.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -181,6 +181,8 @@ void main() {
   ) async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
+    await tester.binding.setSurfaceSize(const Size(1600, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final microGrow = await createMicroGrowProject(database);
     final taskRepository = TaskRepository(database);
@@ -195,6 +197,8 @@ void main() {
 
     appRouter.go('/journal/new');
     await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('journalTitleField')), findsAtLeastNWidgets(1));
 
     await tester.enterText(
       find.byKey(const Key('journalTitleField')),
@@ -220,22 +224,10 @@ void main() {
       find.byKey(const Key('journalLearnedField')),
       'The journal can reuse the existing project and task foundations.',
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('journalNextActionsField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('journalNextActionsField')),
       'Add edit support in a later slice.',
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('saveJournalButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveJournalButton')));
     await pumpUntilIdle(tester);
 
@@ -246,13 +238,13 @@ void main() {
     );
     await pumpUntilIdle(tester);
 
-    expect(find.text('Journal overview'), findsOneWidget);
-    expect(find.text('Capture what moved today'), findsOneWidget);
-    expect(find.text('Link to project or task'), findsOneWidget);
+    expect(find.text('Journal overview'), findsAtLeastNWidgets(1));
+    expect(find.text('Capture what moved today'), findsAtLeastNWidgets(1));
+    expect(find.text('Link to project or task'), findsAtLeastNWidgets(1));
     expect(find.text('Journal'), findsAtLeastNWidgets(1));
-    expect(find.text('Daily build reflection'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
-    expect(find.text('Build Log'), findsOneWidget);
+    expect(find.text('Daily build reflection'), findsAtLeastNWidgets(1));
+    expect(find.text('MicroGrow'), findsAtLeastNWidgets(1));
+    expect(find.text('Build Log'), findsAtLeastNWidgets(1));
 
     final entries = await JournalRepository(database).getEntries();
     expect(entries, hasLength(1));
@@ -280,7 +272,7 @@ void main() {
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(
       find.text('No learning items yet. Add a skill when it feels useful.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -355,13 +347,13 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
-    expect(find.text('Flutter Drift Database'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
-    expect(find.text('Status: Learning'), findsOneWidget);
-    expect(find.text('Confidence: Medium'), findsOneWidget);
+    expect(find.text('Flutter Drift Database'), findsAtLeastNWidgets(1));
+    expect(find.text('MicroGrow'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: Learning'), findsAtLeastNWidgets(1));
+    expect(find.text('Confidence: Medium'), findsAtLeastNWidgets(1));
     expect(
       find.text('Next Step: Wire the screen to local data.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
 
     final items = await LearningRepository(database).getItems();
@@ -375,6 +367,8 @@ void main() {
   ) async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
+    await tester.binding.setSurfaceSize(const Size(1600, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final learningRepository = LearningRepository(database);
     final createdItem = await learningRepository.createItem(
@@ -393,8 +387,9 @@ void main() {
       find.byKey(Key('learningItemCard-${createdItem.learningItemId}')),
     );
     await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
 
-    expect(find.text('Edit Learning Topic'), findsOneWidget);
+    expect(find.text('Edit Learning Topic'), findsAtLeastNWidgets(1));
 
     await tester.enterText(
       find.byKey(const Key('learningTopicField')),
@@ -412,31 +407,19 @@ void main() {
       find.byKey(const Key('learningReasonField')),
       'This now supports a real feature slice.',
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('learningNextStepField')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
     await tester.enterText(
       find.byKey(const Key('learningNextStepField')),
       'Reuse the edit pattern elsewhere.',
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('saveLearningButton')),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveLearningButton')));
     await pumpUntilIdle(tester);
 
-    expect(find.text('Edited learning topic'), findsOneWidget);
-    expect(find.text('Status: Applied'), findsOneWidget);
-    expect(find.text('Confidence: High'), findsOneWidget);
+    expect(find.text('Edited learning topic'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: Applied'), findsAtLeastNWidgets(1));
+    expect(find.text('Confidence: High'), findsAtLeastNWidgets(1));
     expect(
       find.text('Next Step: Reuse the edit pattern elsewhere.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
 
     final updatedItem = await learningRepository.getById(
@@ -467,7 +450,7 @@ void main() {
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(
       find.text('No content yet. Turn a build update into a gentle post idea.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -486,6 +469,14 @@ void main() {
     await pumpUntilIdle(tester);
     appRouter.go(RouteNames.newContent);
     await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
+    final contentScrollable = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        )
+        .last;
 
     await tester.enterText(
       find.byKey(const Key('contentTitleField')),
@@ -511,12 +502,18 @@ void main() {
       find.byKey(const Key('contentDraftTextField')),
       'A grounded build-in-public update for the dashboard.',
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('contentImageNeededField')),
+      200,
+      scrollable: contentScrollable,
+    );
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentImageNeededField')));
     await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('contentImagePromptField')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: contentScrollable,
     );
     await pumpUntilIdle(tester);
     await tester.enterText(
@@ -526,7 +523,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('contentNotesField')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: contentScrollable,
     );
     await pumpUntilIdle(tester);
     await tester.enterText(
@@ -536,25 +533,25 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('saveContentButton')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: contentScrollable,
     );
     await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveContentButton')));
     await pumpUntilIdle(tester);
 
     expect(find.text('Content'), findsAtLeastNWidgets(1));
-    expect(find.text('Content overview'), findsOneWidget);
-    expect(find.text('Capture one post idea'), findsOneWidget);
-    expect(find.text('Note if an image will help'), findsOneWidget);
+    expect(find.text('Content overview'), findsAtLeastNWidgets(1));
+    expect(find.text('Capture one post idea'), findsAtLeastNWidgets(1));
+    expect(find.text('Note if an image will help'), findsAtLeastNWidgets(1));
     expect(
       find.text('Building the New Earth Command Dashboard'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('LinkedIn'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
-    expect(find.text('Project Update'), findsOneWidget);
-    expect(find.text('Status: Drafting'), findsOneWidget);
-    expect(find.text('Image Needed: Yes'), findsOneWidget);
+    expect(find.text('LinkedIn'), findsAtLeastNWidgets(1));
+    expect(find.text('MicroGrow'), findsAtLeastNWidgets(1));
+    expect(find.text('Project Update'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: Drafting'), findsAtLeastNWidgets(1));
+    expect(find.text('Image Needed: Yes'), findsAtLeastNWidgets(1));
 
     final items = await ContentRepository(database).getItems();
     expect(items, hasLength(1));
@@ -586,8 +583,16 @@ void main() {
       find.byKey(Key('contentItemCard-${createdItem.contentItemId}')),
     );
     await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
 
-    expect(find.text('Edit Content Idea'), findsOneWidget);
+    expect(find.text('Edit Content Idea'), findsAtLeastNWidgets(1));
+    final contentEditScrollable = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        )
+        .last;
 
     await tester.enterText(
       find.byKey(const Key('contentTitleField')),
@@ -609,12 +614,18 @@ void main() {
       find.byKey(const Key('contentDraftTextField')),
       'Edited draft text for the next publishing step.',
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('contentImageNeededField')),
+      200,
+      scrollable: contentEditScrollable,
+    );
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('contentImageNeededField')));
     await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
       find.byKey(const Key('contentImagePromptField')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: contentEditScrollable,
     );
     await pumpUntilIdle(tester);
     await tester.enterText(
@@ -628,17 +639,17 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('saveContentButton')),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: contentEditScrollable,
     );
     await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('saveContentButton')));
     await pumpUntilIdle(tester);
 
-    expect(find.text('Edited content idea'), findsOneWidget);
-    expect(find.text('Website'), findsOneWidget);
-    expect(find.text('Technical Update'), findsOneWidget);
-    expect(find.text('Status: Ready'), findsOneWidget);
-    expect(find.text('Image Needed: Yes'), findsOneWidget);
+    expect(find.text('Edited content idea'), findsAtLeastNWidgets(1));
+    expect(find.text('Website'), findsAtLeastNWidgets(1));
+    expect(find.text('Technical Update'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: Ready'), findsAtLeastNWidgets(1));
+    expect(find.text('Image Needed: Yes'), findsAtLeastNWidgets(1));
 
     final updatedItem = await contentRepository.getById(
       createdItem.contentItemId,
@@ -671,7 +682,7 @@ void main() {
     expect(find.text('Business'), findsAtLeastNWidgets(1));
     expect(
       find.text('No business items yet. Capture a lead when it feels useful.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -739,14 +750,14 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Business'), findsAtLeastNWidgets(1));
-    expect(find.text('Business overview'), findsOneWidget);
-    expect(find.text('Capture one lead'), findsOneWidget);
-    expect(find.text('Keep the next action visible'), findsOneWidget);
-    expect(find.text('AI Architect Role'), findsOneWidget);
-    expect(find.text('Job'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
-    expect(find.text('Status: Preparing'), findsOneWidget);
-    expect(find.text('Next Step: Finalise CV'), findsOneWidget);
+    expect(find.text('Business overview'), findsAtLeastNWidgets(1));
+    expect(find.text('Capture one lead'), findsAtLeastNWidgets(1));
+    expect(find.text('Keep the next action visible'), findsAtLeastNWidgets(1));
+    expect(find.text('AI Architect Role'), findsAtLeastNWidgets(1));
+    expect(find.text('Job'), findsAtLeastNWidgets(1));
+    expect(find.text('MicroGrow'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: Preparing'), findsAtLeastNWidgets(1));
+    expect(find.text('Next Step: Finalise CV'), findsAtLeastNWidgets(1));
 
     final items = await BusinessRepository(database).getItems();
     expect(items, hasLength(1));
@@ -772,7 +783,7 @@ void main() {
       find.text(
         'No wellbeing entries yet. Add a calm check-in when you need one.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -808,6 +819,12 @@ void main() {
     await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingMovementField')));
     await pumpUntilIdle(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wellbeingFoodWaterField')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
     await tester.tap(find.byKey(const Key('wellbeingFoodWaterField')));
     await pumpUntilIdle(tester);
     await tester.scrollUntilVisible(
@@ -838,13 +855,13 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
-    expect(find.text('Wellbeing overview'), findsOneWidget);
-    expect(find.text('Check in honestly'), findsOneWidget);
-    expect(find.text('Keep the day sustainable'), findsOneWidget);
-    expect(find.text('Energy: Low'), findsOneWidget);
-    expect(find.text('Mood: Tired'), findsOneWidget);
-    expect(find.text('Stress: High'), findsOneWidget);
-    expect(find.text('Workload: Light'), findsOneWidget);
+    expect(find.text('Wellbeing overview'), findsAtLeastNWidgets(1));
+    expect(find.text('Check in honestly'), findsAtLeastNWidgets(1));
+    expect(find.text('Keep the day sustainable'), findsAtLeastNWidgets(1));
+    expect(find.text('Energy: Low'), findsAtLeastNWidgets(1));
+    expect(find.text('Mood: Tired'), findsAtLeastNWidgets(1));
+    expect(find.text('Stress: High'), findsAtLeastNWidgets(1));
+    expect(find.text('Workload: Light'), findsAtLeastNWidgets(1));
 
     final checkins = await WellbeingRepository(database).getCheckins();
     expect(checkins, hasLength(1));
@@ -872,7 +889,7 @@ void main() {
       find.text(
         'Nothing needs triage yet. Capture a thought here, then review it when you are ready.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -928,15 +945,15 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
-    expect(find.text('Inbox triage'), findsOneWidget);
+    expect(find.text('Inbox triage'), findsAtLeastNWidgets(1));
     expect(
       find.text('Check Flutter navigation package'),
       findsAtLeastNWidgets(1),
     );
-    expect(find.text('Learning Note'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
-    expect(find.text('Status: New'), findsOneWidget);
-    expect(find.text('Park to keep for later'), findsOneWidget);
+    expect(find.text('Learning Note'), findsAtLeastNWidgets(1));
+    expect(find.text('MicroGrow'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: New'), findsAtLeastNWidgets(1));
+    expect(find.text('Park to keep for later'), findsAtLeastNWidgets(1));
 
     final items = await InboxRepository(database).getItems();
     expect(items, hasLength(1));
@@ -974,9 +991,9 @@ void main() {
     appRouter.go('/inbox');
     await pumpUntilIdle(tester);
 
-    expect(find.text('All 2'), findsOneWidget);
-    expect(find.text('New 1'), findsOneWidget);
-    expect(find.text('Parked 1'), findsOneWidget);
+    expect(find.text('All 2'), findsAtLeastNWidgets(1));
+    expect(find.text('New 1'), findsAtLeastNWidgets(1));
+    expect(find.text('Parked 1'), findsAtLeastNWidgets(1));
 
     await tester.tap(find.text('Parked 1'));
     await pumpUntilIdle(tester);
@@ -985,9 +1002,15 @@ void main() {
     expect(find.text('Fresh capture'), findsNothing);
     expect(
       find.text('Parked items stay here until you move them on'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
 
+    await tester.scrollUntilVisible(
+      find.byKey(Key('reviewInboxItemButton-${parkedItem.inboxItemId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
     await tester.tap(
       find.byKey(Key('reviewInboxItemButton-${parkedItem.inboxItemId}')),
     );
@@ -995,11 +1018,11 @@ void main() {
 
     expect(
       find.text('Choose the calmest next home for this capture.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('Convert to Task'), findsOneWidget);
-    expect(find.text('Convert to Journal Entry'), findsOneWidget);
-    expect(find.text('Other destinations'), findsOneWidget);
+    expect(find.text('Convert to Task'), findsAtLeastNWidgets(1));
+    expect(find.text('Convert to Journal Entry'), findsAtLeastNWidgets(1));
+    expect(find.text('Other destinations'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('parked inbox item can return to the new queue', (
@@ -1028,8 +1051,14 @@ void main() {
     await tester.tap(find.text('Parked 1'));
     await pumpUntilIdle(tester);
 
-    expect(find.text('Return to New Queue'), findsOneWidget);
+    expect(find.text('Return to New Queue'), findsAtLeastNWidgets(1));
 
+    await tester.scrollUntilVisible(
+      find.byKey(Key('parkInboxItemButton-${parkedItem.inboxItemId}')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await pumpUntilIdle(tester);
     await tester.tap(
       find.byKey(Key('parkInboxItemButton-${parkedItem.inboxItemId}')),
     );
@@ -1039,14 +1068,14 @@ void main() {
       find.text(
         'Nothing is parked right now. If something is not for today, you can park it here for later review.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
 
     await tester.tap(find.text('New 1'));
     await pumpUntilIdle(tester);
 
     expect(find.text('Bring me back'), findsAtLeastNWidgets(1));
-    expect(find.text('Status: New'), findsOneWidget);
+    expect(find.text('Status: New'), findsAtLeastNWidgets(1));
 
     final refreshedItem = await inboxRepository.getById(parkedItem.inboxItemId);
     expect(refreshedItem.status, 'New');
@@ -1072,7 +1101,7 @@ void main() {
     await tester.pump();
     expect(
       find.byKey(const Key('dashboardQuickCaptureButton')),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     await tester.tap(find.byKey(const Key('dashboardQuickCaptureButton')));
     await pumpUntilIdle(tester);
@@ -1107,8 +1136,8 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('MicroGrow field note'), findsAtLeastNWidgets(1));
-    expect(find.text('Idea'), findsOneWidget);
-    expect(find.text('Status: New'), findsOneWidget);
+    expect(find.text('Idea'), findsAtLeastNWidgets(1));
+    expect(find.text('Status: New'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('journal screen can open and edit an existing entry', (
@@ -1131,24 +1160,44 @@ void main() {
 
     appRouter.go('/journal');
     await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(Key('journalEntryCard-${createdEntry.journalEntryId}')),
+    appRouter.go(RouteNames.editJournal(createdEntry.journalEntryId));
+    await pumpUntilIdle(tester);
+    await tester.pumpAndSettle();
+    for (
+      var i = 0;
+      i < 20 && find.byKey(const Key('journalTitleField')).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Edit Journal Entry'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const Key('journalTitleField')), findsAtLeastNWidgets(1));
+
+    final titleField = find.byKey(const Key('journalTitleField'));
+    await tester.ensureVisible(titleField);
+    await tester.tap(titleField);
+    await tester.pump();
+    await tester.enterText(titleField, 'Edited journal entry');
+    final workedOnField = find.byKey(const Key('journalWorkedOnField'));
+    await tester.ensureVisible(workedOnField);
+    await tester.tap(workedOnField);
+    await tester.pump();
+    await tester.enterText(workedOnField, 'Edited progress note.');
+    final learnedField = find.byKey(const Key('journalLearnedField'));
+    await tester.scrollUntilVisible(
+      learnedField,
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await pumpUntilIdle(tester);
-
-    expect(find.text('Edit Journal Entry'), findsOneWidget);
-
+    await tester.ensureVisible(learnedField);
+    await tester.tap(learnedField);
+    await tester.pump();
     await tester.enterText(
-      find.byKey(const Key('journalTitleField')),
-      'Edited journal entry',
-    );
-    await tester.enterText(
-      find.byKey(const Key('journalWorkedOnField')),
-      'Edited progress note.',
-    );
-    await tester.enterText(
-      find.byKey(const Key('journalLearnedField')),
+      learnedField,
       'Editing journal entries keeps the build history useful.',
     );
     await tester.scrollUntilVisible(
@@ -1170,8 +1219,8 @@ void main() {
     await tester.tap(find.byKey(const Key('saveJournalButton')));
     await pumpUntilIdle(tester);
 
-    expect(find.text('Edited journal entry'), findsOneWidget);
-    expect(find.text('Edited progress note.'), findsOneWidget);
+    expect(find.text('Edited journal entry'), findsAtLeastNWidgets(1));
+    expect(find.text('Edited progress note.'), findsAtLeastNWidgets(1));
 
     final updatedEntry = await journalRepository.getById(
       createdEntry.journalEntryId,

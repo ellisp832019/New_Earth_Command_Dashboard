@@ -123,81 +123,81 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
         ),
       ],
       child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: _panelDecoration(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Jump anywhere in the dashboard.',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColours.darkText,
-                    ),
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: _panelDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Jump anywhere in the dashboard.',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: AppColours.darkText,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Search pages, projects, tasks, and calm create actions from one place.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColours.darkMutedText,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Search pages, projects, tasks, and calm create actions from one place.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColours.darkMutedText,
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    key: const Key('commandPaletteSearchField'),
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: 'Search pages, projects, tasks, and actions',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchController.text.isEmpty
-                          ? null
-                          : IconButton(
-                              key: const Key('clearCommandPaletteSearchButton'),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {});
-                              },
-                              icon: const Icon(Icons.clear),
-                            ),
-                    ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  key: const Key('commandPaletteSearchField'),
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search pages, projects, tasks, and actions',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : IconButton(
+                            key: const Key('clearCommandPaletteSearchButton'),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.clear),
+                          ),
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: const [
-                      _PaletteHintChip(label: 'Pages'),
-                      _PaletteHintChip(label: 'Projects'),
-                      _PaletteHintChip(label: 'Tasks'),
-                      _PaletteHintChip(label: 'Create'),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: const [
+                    _PaletteHintChip(label: 'Pages'),
+                    _PaletteHintChip(label: 'Projects'),
+                    _PaletteHintChip(label: 'Tasks'),
+                    _PaletteHintChip(label: 'Create'),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 18),
-            if (query.isEmpty)
-              _RecentActionsCard(
-                recentActions: recentActions,
-                onOpenCommandDeck: () => context.go(RouteNames.commandDeck),
-                onOpenAction: _openRecentAction,
-              ),
-            if (query.isEmpty) const SizedBox(height: 18),
-            if (groupedEntries.isEmpty)
-              _PaletteEmptyState(query: query)
-            else
-              ...groupedEntries.entries.expand((entry) {
-                return [
-                  _PaletteGroupCard(title: entry.key, entries: entry.value),
-                  const SizedBox(height: 14),
-                ];
-              }),
-          ],
-        ),
+          ),
+          const SizedBox(height: 18),
+          if (query.isEmpty)
+            _RecentActionsCard(
+              recentActions: recentActions,
+              onOpenCommandDeck: () => context.go(RouteNames.commandDeck),
+              onOpenAction: _openRecentAction,
+            ),
+          if (query.isEmpty) const SizedBox(height: 18),
+          if (groupedEntries.isEmpty)
+            _PaletteEmptyState(query: query)
+          else
+            ...groupedEntries.entries.expand((entry) {
+              return [
+                _PaletteGroupCard(title: entry.key, entries: entry.value),
+                const SizedBox(height: 14),
+              ];
+            }),
+        ],
+      ),
     );
   }
 
@@ -276,8 +276,10 @@ class _CommandPaletteScreenState extends ConsumerState<CommandPaletteScreen> {
         group: 'Navigate',
         kind: 'Page',
         title: 'Voice Intelligence',
-        description: 'Open the new voice module with notes, meetings, and MicroGrow status.',
-        searchText: 'voice intelligence voice assistant speech wizard notes meetings microgrow',
+        description:
+            'Open the new voice module with notes, meetings, and MicroGrow status.',
+        searchText:
+            'voice intelligence voice assistant speech wizard notes meetings microgrow',
         icon: Icons.mic_outlined,
         onTap: () => context.go(RouteNames.voice),
       ),

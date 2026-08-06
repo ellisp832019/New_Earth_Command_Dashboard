@@ -761,7 +761,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       ),
       _HomeSectionLaunch(
         title: 'Reports',
-        description: 'Review knowledge notes, report previews, and release outputs.',
+        description:
+            'Review knowledge notes, report previews, and release outputs.',
         icon: Icons.description_outlined,
         section: 'reports',
       ),
@@ -1674,14 +1675,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'output' => run.outputDirectory.toLowerCase().contains(search),
       'repo' => run.repoPath.toLowerCase().contains(search),
       'profile' => run.profile.toLowerCase().contains(search),
-      'files' => run.reportFiles.any((file) => file.toLowerCase().contains(search)),
+      'files' => run.reportFiles.any(
+        (file) => file.toLowerCase().contains(search),
+      ),
       _ =>
         run.outputDirectory.toLowerCase().contains(search) ||
             run.repoPath.toLowerCase().contains(search) ||
             run.profile.toLowerCase().contains(search) ||
-            run.reportFiles.any(
-              (file) => file.toLowerCase().contains(search),
-            ),
+            run.reportFiles.any((file) => file.toLowerCase().contains(search)),
     };
   }
 
@@ -1828,8 +1829,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                     if (record != displayExports.last)
                       const SizedBox(height: 10),
                   ],
-        ],
-      ),
+              ],
+            ),
     );
   }
 
@@ -1845,10 +1846,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       'profile' => record.profileName.toLowerCase().contains(search),
       'repo' => record.repoPath.toLowerCase().contains(search),
       'folder' => record.exportedTo.toLowerCase().contains(search),
-      'files' =>
-        record.exportedFiles.any(
-          (file) => file.toLowerCase().contains(search),
-        ),
+      'files' => record.exportedFiles.any(
+        (file) => file.toLowerCase().contains(search),
+      ),
       _ =>
         record.repoName.toLowerCase().contains(search) ||
             record.repoPath.toLowerCase().contains(search) ||
@@ -2154,7 +2154,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           _knowledgeInsightBlock(
             context,
             title: 'Architecture Summary',
-            subtitle: 'A reviewable snapshot of the system structure and shape.',
+            subtitle:
+                'A reviewable snapshot of the system structure and shape.',
             body: architectureSummary?.isNotEmpty == true
                 ? architectureSummary!
                 : 'No architecture summary loaded',
@@ -2299,15 +2300,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 muted: false,
               ),
               _StatusChip(
-                label: '${_documentIndexFieldCount(documentIndex, 'links')} links',
+                label:
+                    '${_documentIndexFieldCount(documentIndex, 'links')} links',
                 muted: false,
               ),
               _StatusChip(
-                label: '${_documentIndexFieldCount(documentIndex, 'tables')} tables',
+                label:
+                    '${_documentIndexFieldCount(documentIndex, 'tables')} tables',
                 muted: false,
               ),
               _StatusChip(
-                label: '${_documentIndexFieldCount(documentIndex, 'notes')} notes',
+                label:
+                    '${_documentIndexFieldCount(documentIndex, 'notes')} notes',
                 muted: false,
               ),
             ],
@@ -2490,9 +2494,18 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             (_latestAnalysis['diagram_files'] as List).whereType<Map>(),
           )
         : <Map<String, dynamic>>[];
-    final screenshotAssets = _assetFilter(imageAssets, ['screenshot', 'screen', 'capture']);
+    final screenshotAssets = _assetFilter(imageAssets, [
+      'screenshot',
+      'screen',
+      'capture',
+    ]);
     final iconAssets = _assetFilter(imageAssets, ['icon', 'glyph', 'symbol']);
-    final designAssets = _assetFilter(imageAssets, ['design', 'mockup', 'layout', 'ui']);
+    final designAssets = _assetFilter(imageAssets, [
+      'design',
+      'mockup',
+      'layout',
+      'ui',
+    ]);
     final flaggedAssets = [
       ...imageAssets.where(_assetIsFlagged),
       ...diagramFiles.where(_assetIsFlagged),
@@ -2512,14 +2525,23 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             runSpacing: 8,
             children: [
               _StatusChip(label: '${imageAssets.length} images', muted: false),
-              _StatusChip(label: '${diagramFiles.length} diagrams', muted: false),
+              _StatusChip(
+                label: '${diagramFiles.length} diagrams',
+                muted: false,
+              ),
               _StatusChip(
                 label: '${screenshotAssets.length} screenshots',
                 muted: false,
               ),
               _StatusChip(label: '${iconAssets.length} icons', muted: false),
-              _StatusChip(label: '${designAssets.length} design assets', muted: false),
-              _StatusChip(label: '${flaggedAssets.length} flagged', muted: false),
+              _StatusChip(
+                label: '${designAssets.length} design assets',
+                muted: false,
+              ),
+              _StatusChip(
+                label: '${flaggedAssets.length} flagged',
+                muted: false,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -2555,16 +2577,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             flaggedAssets.isEmpty
                 ? const ['No flagged binaries were discovered.']
                 : flaggedAssets
-                    .take(8)
-                    .map(_assetPreviewSummary)
-                    .toList(growable: false),
+                      .take(8)
+                      .map(_assetPreviewSummary)
+                      .toList(growable: false),
           ),
           const SizedBox(height: 12),
           Text(
             'Binaries are listed for review only; the module does not parse them.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -2585,7 +2607,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         return true;
       }
       final text = value?.toString().trim().toLowerCase() ?? '';
-      if (['true', 'yes', '1', 'flagged', 'binary', 'suspicious'].contains(text)) {
+      if ([
+        'true',
+        'yes',
+        '1',
+        'flagged',
+        'binary',
+        'suspicious',
+      ].contains(text)) {
         return true;
       }
     }
@@ -2600,10 +2629,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     if (assets.isEmpty) {
       return const <Map<String, dynamic>>[];
     }
-    return assets.where((asset) {
-      final haystack = _assetSearchText(asset);
-      return keywords.any((keyword) => haystack.contains(keyword));
-    }).toList(growable: false);
+    return assets
+        .where((asset) {
+          final haystack = _assetSearchText(asset);
+          return keywords.any((keyword) => haystack.contains(keyword));
+        })
+        .toList(growable: false);
   }
 
   List<String> _assetPreviewItems(
@@ -2671,8 +2702,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final visibleTopLevel = search.isEmpty
         ? topLevel
         : topLevel
-            .where((node) => _repositoryTreeNodeVisible(node, search))
-            .toList(growable: false);
+              .where((node) => _repositoryTreeNodeVisible(node, search))
+              .toList(growable: false);
     final languageCounts = inventory['language_counts'] is Map
         ? Map<String, dynamic>.from(inventory['language_counts'] as Map)
         : <String, dynamic>{};
@@ -2698,7 +2729,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 muted: false,
               ),
               _StatusChip(
-                label: '${_comparisonCount(inventory['directory_count'])} folders',
+                label:
+                    '${_comparisonCount(inventory['directory_count'])} folders',
                 muted: false,
               ),
               _StatusChip(
@@ -2728,11 +2760,14 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             leftItems: visibleTopLevel.isEmpty
                 ? const ['No tree nodes match the current search.']
                 : visibleTopLevel
-                    .take(8)
-                    .map(_repositoryTreeSummary)
-                    .toList(growable: false),
+                      .take(8)
+                      .map(_repositoryTreeSummary)
+                      .toList(growable: false),
             rightTitle: 'Languages / Categories',
-            rightItems: _repositoryTreeSummaryPairs(languageCounts, categoryCounts),
+            rightItems: _repositoryTreeSummaryPairs(
+              languageCounts,
+              categoryCounts,
+            ),
           ),
           const SizedBox(height: 12),
           _MetadataRow(
@@ -2771,9 +2806,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final children = node['children'] is List
         ? (node['children'] as List).whereType<Map>().toList()
         : <Map>[];
-    return children.map((item) => Map<String, dynamic>.from(item)).toList(
-      growable: false,
-    );
+    return children
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
   }
 
   bool _repositoryTreeNodeVisible(Map<String, dynamic> node, String search) {
@@ -2833,17 +2868,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           dense: true,
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.insert_drive_file_outlined, size: 18),
-          title: Text(
-            nodeName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          title: Text(nodeName, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(
             '$nodePath - ${node['language'] ?? node['category'] ?? 'file'}',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: _StatusChip(label: '${node['suffix'] ?? 'file'}', muted: false),
+          trailing: _StatusChip(
+            label: '${node['suffix'] ?? 'file'}',
+            muted: false,
+          ),
         ),
       );
     }
@@ -2855,11 +2889,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 0),
         childrenPadding: const EdgeInsets.only(left: 8),
         leading: const Icon(Icons.folder_open_outlined),
-        title: Text(
-          nodeName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(nodeName, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           '$nodePath - $fileCount files, $directoryCount folders',
           maxLines: 2,
@@ -2916,10 +2946,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       return '${entry.key} - $value files';
     });
 
-    final results = <String>[
-      ...languages,
-      ...categories,
-    ];
+    final results = <String>[...languages, ...categories];
     if (results.isEmpty) {
       return const ['No summary data available.'];
     }
@@ -3142,7 +3169,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         })
         .toList(growable: false);
     final displayRecords = visibleRecords.take(6).toList(growable: false);
-    final latestRecord = displayRecords.isNotEmpty ? displayRecords.first : null;
+    final latestRecord = displayRecords.isNotEmpty
+        ? displayRecords.first
+        : null;
 
     return _panel(
       context,
@@ -3197,17 +3226,21 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                     ),
                   )
                 else
-                  for (var index = 0; index < displayRecords.length; index++) ...[
+                  for (
+                    var index = 0;
+                    index < displayRecords.length;
+                    index++
+                  ) ...[
                     _ChangeHistoryTile(
                       record: displayRecords[index],
                       isFirst: index == 0,
                       isLast: index == displayRecords.length - 1,
-                      onOpenBaseline: displayRecords[index].baselineInventoryPath.isEmpty
+                      onOpenBaseline:
+                          displayRecords[index].baselineInventoryPath.isEmpty
                           ? null
-                          : () =>
-                                _service.openPath(
-                                  displayRecords[index].baselineInventoryPath,
-                                ),
+                          : () => _service.openPath(
+                              displayRecords[index].baselineInventoryPath,
+                            ),
                     ),
                     if (index != displayRecords.length - 1)
                       const SizedBox(height: 10),
@@ -3237,14 +3270,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         : <Map<String, dynamic>>[];
     final dependencyFilterOptions = _graphFilterOptions(dependencyGraph);
     final architectureFilterOptions = _graphFilterOptions(architectureGraph);
-    final dependencyFilter = dependencyFilterOptions.contains(
-      _dependencyGraphFilter,
-    )
+    final dependencyFilter =
+        dependencyFilterOptions.contains(_dependencyGraphFilter)
         ? _dependencyGraphFilter
         : 'all';
-    final architectureFilter = architectureFilterOptions.contains(
-      _architectureGraphFilter,
-    )
+    final architectureFilter =
+        architectureFilterOptions.contains(_architectureGraphFilter)
         ? _architectureGraphFilter
         : 'all';
 
@@ -3600,15 +3631,19 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     final addedFiles = _comparisonFileSnapshots('added');
     final removedFiles = _comparisonFileSnapshots('removed');
     final modifiedFiles = _comparisonModifiedSummaries();
-    final currentRepo = comparison['current_repo']?.toString().isNotEmpty == true
+    final currentRepo =
+        comparison['current_repo']?.toString().isNotEmpty == true
         ? comparison['current_repo'].toString()
         : 'Current repo not loaded';
     final otherRepo = comparison['other_repo']?.toString().isNotEmpty == true
         ? comparison['other_repo'].toString()
         : 'Comparison target not loaded';
-    final fileDelta = _comparisonCount(comparison['files_added']) -
+    final fileDelta =
+        _comparisonCount(comparison['files_added']) -
         _comparisonCount(comparison['files_removed']);
-    final directoryDelta = _comparisonCount(comparison['directory_count_delta']);
+    final directoryDelta = _comparisonCount(
+      comparison['directory_count_delta'],
+    );
 
     return _panel(
       context,
@@ -3627,11 +3662,13 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 muted: false,
               ),
               _StatusChip(
-                label: '${_comparisonCount(comparison['files_removed'])} removed',
+                label:
+                    '${_comparisonCount(comparison['files_removed'])} removed',
                 muted: false,
               ),
               _StatusChip(
-                label: '${_comparisonCount(comparison['files_modified'])} modified',
+                label:
+                    '${_comparisonCount(comparison['files_modified'])} modified',
                 muted: false,
               ),
               _StatusChip(
@@ -3643,7 +3680,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 muted: false,
               ),
               _StatusChip(
-                label: '${_comparisonCount(dependencyChanges['removed'])} deps -',
+                label:
+                    '${_comparisonCount(dependencyChanges['removed'])} deps -',
                 muted: false,
               ),
             ],
@@ -3662,7 +3700,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             leftTitle: 'File Delta',
             leftItems: ['${fileDelta >= 0 ? '+' : ''}$fileDelta files'],
             rightTitle: 'Directory Delta',
-            rightItems: ['${directoryDelta >= 0 ? '+' : ''}$directoryDelta dirs'],
+            rightItems: [
+              '${directoryDelta >= 0 ? '+' : ''}$directoryDelta dirs',
+            ],
           ),
           const SizedBox(height: 12),
           _MetadataRow(
@@ -3845,18 +3885,24 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _StatusChip(label: '${_templateSets.length} template sets', muted: false),
+              _StatusChip(
+                label: '${_templateSets.length} template sets',
+                muted: false,
+              ),
               if (selectedPreset != null)
-                _StatusChip(label: 'Selected: ${selectedPreset.name}', muted: false),
+                _StatusChip(
+                  label: 'Selected: ${selectedPreset.name}',
+                  muted: false,
+                ),
             ],
           ),
           const SizedBox(height: 12),
           if (_templateSets.isEmpty)
             Text(
               'Template families are still loading.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Wrap(
@@ -3875,10 +3921,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     );
   }
 
-  Widget _templatePresetCard(
-    BuildContext context,
-    _TemplateSetPreset preset,
-  ) {
+  Widget _templatePresetCard(BuildContext context, _TemplateSetPreset preset) {
     final isSelected = preset.name == _selectedTemplateSet;
     final templateEntries = preset.templates.entries.toList(growable: false);
     return Container(
@@ -3937,9 +3980,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             const SizedBox(height: 8),
             Text(
               '+ ${templateEntries.length - 4} more templates',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             ),
           ],
           const SizedBox(height: 12),
@@ -3959,7 +4002,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
                 label: const Text('Select'),
               ),
               FilledButton.tonalIcon(
-                onPressed: _isRunning ? null : () => _applyTemplateSet(preset.name),
+                onPressed: _isRunning
+                    ? null
+                    : () => _applyTemplateSet(preset.name),
                 icon: const Icon(Icons.playlist_add_check),
                 label: const Text('Apply'),
               ),
@@ -4258,7 +4303,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       return const ['all'];
     }
     final nodes = graph['nodes'] is List
-        ? List<Map<String, dynamic>>.from((graph['nodes'] as List).whereType<Map>())
+        ? List<Map<String, dynamic>>.from(
+            (graph['nodes'] as List).whereType<Map>(),
+          )
         : <Map<String, dynamic>>[];
     final kinds = <String>{'all'};
     for (final node in nodes) {
@@ -4275,12 +4322,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     String kind = 'all',
   }) {
     final nodes = graph['nodes'] is List
-        ? List<Map<String, dynamic>>.from((graph['nodes'] as List).whereType<Map>())
+        ? List<Map<String, dynamic>>.from(
+            (graph['nodes'] as List).whereType<Map>(),
+          )
         : <Map<String, dynamic>>[];
-    final filtered = nodes.where((node) {
-      final nodeKind = node['kind']?.toString().trim() ?? '';
-      return kind == 'all' || nodeKind == kind;
-    }).toList(growable: false);
+    final filtered = nodes
+        .where((node) {
+          final nodeKind = node['kind']?.toString().trim() ?? '';
+          return kind == 'all' || nodeKind == kind;
+        })
+        .toList(growable: false);
     if (filtered.isEmpty) {
       return const ['No graph nodes match the selected filter.'];
     }
@@ -4303,12 +4354,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     String kind = 'all',
   }) {
     final edges = graph['edges'] is List
-        ? List<Map<String, dynamic>>.from((graph['edges'] as List).whereType<Map>())
+        ? List<Map<String, dynamic>>.from(
+            (graph['edges'] as List).whereType<Map>(),
+          )
         : <Map<String, dynamic>>[];
-    final filtered = edges.where((edge) {
-      final edgeKind = edge['kind']?.toString().trim() ?? '';
-      return kind == 'all' || edgeKind == kind;
-    }).toList(growable: false);
+    final filtered = edges
+        .where((edge) {
+          final edgeKind = edge['kind']?.toString().trim() ?? '';
+          return kind == 'all' || edgeKind == kind;
+        })
+        .toList(growable: false);
     if (filtered.isEmpty) {
       return const ['No graph edges match the selected filter.'];
     }
@@ -4347,14 +4402,16 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
     if (anchors.isEmpty) {
       return const ['No anchor nodes were captured in the graph summary.'];
     }
-    final filtered = anchors.where((item) {
-      if (kind == 'all') {
-        return true;
-      }
-      final anchorType = item['anchor_type']?.toString().trim() ?? '';
-      final category = item['category']?.toString().trim() ?? '';
-      return anchorType == kind || category == kind;
-    }).toList(growable: false);
+    final filtered = anchors
+        .where((item) {
+          if (kind == 'all') {
+            return true;
+          }
+          final anchorType = item['anchor_type']?.toString().trim() ?? '';
+          final category = item['category']?.toString().trim() ?? '';
+          return anchorType == kind || category == kind;
+        })
+        .toList(growable: false);
     if (filtered.isEmpty) {
       return const ['No anchors match the selected graph filter.'];
     }
@@ -4402,9 +4459,7 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         children: [
           DropdownButtonFormField<String>(
             initialValue: selectedFilter,
-            decoration: const InputDecoration(
-              labelText: 'Graph filter',
-            ),
+            decoration: const InputDecoration(labelText: 'Graph filter'),
             items: filterOptions
                 .map(
                   (option) => DropdownMenuItem<String>(
@@ -4424,17 +4479,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             rightItems: _graphEdgeGroupItems(graph),
           ),
           const SizedBox(height: 12),
-          _bulletSection(
-            context,
-            '$nodeSectionTitle (filtered)',
-            nodeItems,
-          ),
+          _bulletSection(context, '$nodeSectionTitle (filtered)', nodeItems),
           const SizedBox(height: 12),
-          _bulletSection(
-            context,
-            '$edgeSectionTitle (filtered)',
-            edgeItems,
-          ),
+          _bulletSection(context, '$edgeSectionTitle (filtered)', edgeItems),
           if (includeAnchors) ...[
             const SizedBox(height: 12),
             _bulletSection(context, 'Key Anchors', anchorItems),
@@ -4458,7 +4505,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
       return const ['No node groups available.'];
     }
     final entries = kindCounts.entries.toList()
-      ..sort((left, right) => (right.value as num).compareTo(left.value as num));
+      ..sort(
+        (left, right) => (right.value as num).compareTo(left.value as num),
+      );
     return entries
         .take(8)
         .map((entry) => '${entry.key} - ${entry.value} nodes')
@@ -4467,7 +4516,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
 
   List<String> _graphEdgeGroupItems(Map<String, dynamic> graph) {
     final edges = graph['edges'] is List
-        ? List<Map<String, dynamic>>.from((graph['edges'] as List).whereType<Map>())
+        ? List<Map<String, dynamic>>.from(
+            (graph['edges'] as List).whereType<Map>(),
+          )
         : <Map<String, dynamic>>[];
     if (edges.isEmpty) {
       return const ['No edge groups available.'];
@@ -4499,7 +4550,9 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
         ? Map<String, dynamic>.from(summary['kind_counts'] as Map)
         : <String, dynamic>{};
     final topKinds = kindCounts.entries.toList()
-      ..sort((left, right) => (right.value as num).compareTo(left.value as num));
+      ..sort(
+        (left, right) => (right.value as num).compareTo(left.value as num),
+      );
     final filteredAnchors = _graphAnchorItems(graph, kind: selectedFilter);
 
     return _panel(
@@ -4520,7 +4573,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           const SizedBox(height: 12),
           _MetadataRow(
             label: 'Architecture summary',
-            value: 'Nodes: ${summary['node_count'] ?? 0} | Edges: ${summary['edge_count'] ?? 0}',
+            value:
+                'Nodes: ${summary['node_count'] ?? 0} | Edges: ${summary['edge_count'] ?? 0}',
           ),
           const SizedBox(height: 8),
           _MetadataRow(
@@ -4528,16 +4582,12 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             value: topKinds.isEmpty
                 ? 'No node groups available'
                 : topKinds
-                    .take(4)
-                    .map((entry) => '${entry.key} (${entry.value})')
-                    .join(' | '),
+                      .take(4)
+                      .map((entry) => '${entry.key} (${entry.value})')
+                      .join(' | '),
           ),
           const SizedBox(height: 12),
-          _bulletSection(
-            context,
-            'Architecture Key Anchors',
-            filteredAnchors,
-          ),
+          _bulletSection(context, 'Architecture Key Anchors', filteredAnchors),
         ],
       ),
     );
@@ -4583,19 +4633,22 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
           if (_templateSets.isEmpty)
             Text(
               'Loading prompt template families...',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             )
           else
             DropdownButtonFormField<String>(
               initialValue:
-                  _templateSets.any((preset) => preset.name == _selectedTemplateSet)
+                  _templateSets.any(
+                    (preset) => preset.name == _selectedTemplateSet,
+                  )
                   ? _selectedTemplateSet
                   : null,
               decoration: const InputDecoration(
                 labelText: 'Prompt template family',
-                hintText: 'Choose the family that should shape generated prompts',
+                hintText:
+                    'Choose the family that should shape generated prompts',
               ),
               items: _templateSets
                   .map(
@@ -4622,7 +4675,10 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             ),
           const SizedBox(height: 12),
           if (selectedTemplateSet != null) ...[
-            _MetadataRow(label: 'Selected family', value: selectedTemplateSet.name),
+            _MetadataRow(
+              label: 'Selected family',
+              value: selectedTemplateSet.name,
+            ),
             const SizedBox(height: 8),
             _MetadataRow(
               label: 'Family description',
@@ -4633,7 +4689,8 @@ class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
             const SizedBox(height: 8),
             _MetadataRow(
               label: 'Vault note template',
-              value: selectedTemplateSet.templates['vault_note'] ??
+              value:
+                  selectedTemplateSet.templates['vault_note'] ??
                   'repo_research_note_template.md',
             ),
             const SizedBox(height: 12),
@@ -6268,10 +6325,7 @@ class _MetadataRow extends StatelessWidget {
 }
 
 class _HomeSectionTile extends StatelessWidget {
-  const _HomeSectionTile({
-    required this.launch,
-    required this.onTap,
-  });
+  const _HomeSectionTile({required this.launch, required this.onTap});
 
   final _HomeSectionLaunch launch;
   final VoidCallback onTap;
@@ -6725,8 +6779,8 @@ class _ChangeHistoryTile extends StatelessWidget {
     final added = record.fileChanges['added'] ?? const <String>[];
     final removed = record.fileChanges['removed'] ?? const <String>[];
     final modified = record.fileChanges['modified'] ?? const <String>[];
-    final riskDeltaLabel = record.newRiskPaths.isNotEmpty ||
-            record.resolvedRiskPaths.isNotEmpty
+    final riskDeltaLabel =
+        record.newRiskPaths.isNotEmpty || record.resolvedRiskPaths.isNotEmpty
         ? '${record.newRiskPaths.length} new risk path${record.newRiskPaths.length == 1 ? '' : 's'}, ${record.resolvedRiskPaths.length} resolved'
         : 'No risk shifts recorded';
     final previewFiles = <String>[
@@ -6786,16 +6840,20 @@ class _ChangeHistoryTile extends StatelessWidget {
                           record.currentRepo.isEmpty
                               ? 'Unknown current repo'
                               : record.currentRepo,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppColours.darkText,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: AppColours.darkText,
+                                fontWeight: FontWeight.w600,
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 10),
-                      _StatusChip(label: record.fileChangeSummary, muted: false),
+                      _StatusChip(
+                        label: record.fileChangeSummary,
+                        muted: false,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -6816,9 +6874,9 @@ class _ChangeHistoryTile extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'Baseline inventory: ${record.baselineInventoryPath}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColours.darkMutedText,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -6826,9 +6884,9 @@ class _ChangeHistoryTile extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       record.summary,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColours.darkText,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 10),

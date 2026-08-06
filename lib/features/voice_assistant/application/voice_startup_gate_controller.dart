@@ -51,14 +51,16 @@ final voiceStartupGateLandingProvider =
       VoiceStartupGateLandingNotifier.new,
     );
 
-final voiceStartupGateServiceProvider =
-    Provider<VoiceStartupGateService>((ref) {
-      final service = VoiceStartupGateService();
-      ref.onDispose(service.dispose);
-      return service;
-    });
+final voiceStartupGateServiceProvider = Provider<VoiceStartupGateService>((
+  ref,
+) {
+  final service = VoiceStartupGateService();
+  ref.onDispose(service.dispose);
+  return service;
+});
 
-final voiceStartupGateProvider =
-    FutureProvider<VoiceStartupGateResult>((ref) async {
-      return ref.read(voiceStartupGateServiceProvider).checkReady();
-    });
+final voiceStartupGateProvider = FutureProvider<VoiceStartupGateResult>((
+  ref,
+) async {
+  return ref.read(voiceStartupGateServiceProvider).checkReady();
+});

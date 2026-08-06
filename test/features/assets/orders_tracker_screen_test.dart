@@ -132,9 +132,7 @@ void main() {
       ProviderScope(
         overrides: [
           assetWorkspaceProvider.overrideWith((ref) async => fixture.snapshot),
-          assetOrdersTrackerProvider.overrideWith(
-            (ref) async => fixture.table,
-          ),
+          assetOrdersTrackerProvider.overrideWith((ref) async => fixture.table),
           assetRegisterRepositoryProvider.overrideWith((ref) => repository),
         ],
         child: const MaterialApp(home: OrdersTrackerScreen()),

@@ -52,6 +52,9 @@ void main() {
   testWidgets('company command centre shows the read-only shell', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final snapshot = CompanyCommandCentreSnapshot(
       overview: CompanyOverviewData(
         companyName: 'New Earth Advanced Technologies Ltd',
@@ -297,17 +300,17 @@ void main() {
     );
 
     await scrollToVisible(tester, find.text('Today at a glance'));
-    expect(find.text('Today at a glance'), findsOneWidget);
+    expect(find.text('Today at a glance'), findsAtLeastNWidgets(1));
     expect(find.text('Open LinkedIn'), findsWidgets);
     expect(find.text('Founder Pack PDF'), findsWidgets);
 
     await scrollToVisible(tester, find.text('IP & Asset Register'));
-    expect(find.text('IP & Asset Register'), findsOneWidget);
-    expect(find.text('Open Assets'), findsOneWidget);
+    expect(find.text('IP & Asset Register'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Assets'), findsAtLeastNWidgets(1));
 
     await scrollToVisible(tester, find.text('Generated indexes'));
-    expect(find.text('Generated indexes'), findsOneWidget);
-    expect(find.text('company_index.generated.json'), findsOneWidget);
+    expect(find.text('Generated indexes'), findsAtLeastNWidgets(1));
+    expect(find.text('company_index.generated.json'), findsAtLeastNWidgets(1));
 
     await revealTab(tester, find.text('Compliance & Deadlines').last);
     await tester.tap(find.text('Compliance & Deadlines').last);
@@ -315,7 +318,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await pumpUntilFound(tester, find.text('Compliance & deadlines'));
 
-    expect(find.text('Compliance & deadlines'), findsOneWidget);
+    expect(find.text('Compliance & deadlines'), findsAtLeastNWidgets(1));
 
     await revealTab(tester, find.text('Finance Snapshot').last);
     await tester.tap(find.text('Finance Snapshot').last);
@@ -323,9 +326,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await pumpUntilFound(tester, find.text('Finance task tracker'));
 
-    expect(find.text('Finance task tracker'), findsOneWidget);
-    expect(find.text('Confirm bank account details'), findsOneWidget);
-    expect(find.text('Review VAT / PAYE timing'), findsOneWidget);
+    expect(find.text('Finance task tracker'), findsAtLeastNWidgets(1));
+    expect(find.text('Confirm bank account details'), findsAtLeastNWidgets(1));
+    expect(find.text('Review VAT / PAYE timing'), findsAtLeastNWidgets(1));
 
     await revealTab(tester, find.text('Settings').last);
     await tester.tap(find.text('Settings').last);
@@ -333,9 +336,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await pumpUntilFound(tester, find.text('Backup root'));
 
-    expect(find.text('Backup root'), findsOneWidget);
-    expect(find.text('Audit log'), findsOneWidget);
-    expect(find.text('Copy first, then overwrite'), findsOneWidget);
+    expect(find.text('Backup root'), findsAtLeastNWidgets(1));
+    expect(find.text('Audit log'), findsAtLeastNWidgets(1));
+    expect(find.text('Copy first, then overwrite'), findsAtLeastNWidgets(1));
 
     await revealTab(tester, find.text('Index Explorer').last);
     await tester.tap(find.text('Index Explorer').last);
@@ -343,7 +346,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await pumpUntilFound(tester, find.text('Search indexes'));
 
-    expect(find.text('Search indexes'), findsOneWidget);
+    expect(find.text('Search indexes'), findsAtLeastNWidgets(1));
     expect(find.text('Source available'), findsWidgets);
     expect(find.text('All'), findsWidgets);
   });

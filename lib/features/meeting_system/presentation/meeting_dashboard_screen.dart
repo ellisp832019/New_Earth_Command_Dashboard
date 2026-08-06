@@ -237,11 +237,12 @@ class _MeetingDashboardScreenState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   LinearProgressIndicator(
-                                    value:
-                                        _importingRecordingIndeterminate
-                                            ? null
-                                            : _importingRecordingProgress
-                                                  .clamp(0.0, 1.0),
+                                    value: _importingRecordingIndeterminate
+                                        ? null
+                                        : _importingRecordingProgress.clamp(
+                                            0.0,
+                                            1.0,
+                                          ),
                                     minHeight: 6,
                                     borderRadius: BorderRadius.circular(999),
                                   ),
@@ -276,9 +277,9 @@ class _MeetingDashboardScreenState
                                     child: TextButton.icon(
                                       onPressed:
                                           _importingRecording &&
-                                                  !_importCancelRequested
-                                              ? _cancelImport
-                                              : null,
+                                              !_importCancelRequested
+                                          ? _cancelImport
+                                          : null,
                                       icon: const Icon(Icons.close),
                                       label: Text(
                                         _importCancelRequested
@@ -312,10 +313,7 @@ class _MeetingDashboardScreenState
                           Flexible(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                actions,
-                                importStatus,
-                              ],
+                              children: [actions, importStatus],
                             ),
                           ),
                         ],
@@ -717,7 +715,8 @@ class _MeetingDashboardScreenState
       final distanceLabel = result.minutesFromScheduledWindow == 0
           ? 'It matched the scheduled window.'
           : 'It matched within ${result.minutesFromScheduledWindow} min of the scheduled window.';
-      final confidenceLabel = 'Match confidence: ${result.matchConfidenceLabel}.';
+      final confidenceLabel =
+          'Match confidence: ${result.matchConfidenceLabel}.';
       final harvestParts = <String>[
         if (result.harvestedActionCount > 0)
           '${result.harvestedActionCount} action${result.harvestedActionCount == 1 ? '' : 's'}',
@@ -756,11 +755,9 @@ class _MeetingDashboardScreenState
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       _stopWhisperAnimation();
       if (mounted) {
@@ -855,10 +852,7 @@ class _MeetingDashboardScreenState
 }
 
 class _ImportStatusChip extends StatelessWidget {
-  const _ImportStatusChip({
-    required this.label,
-    required this.accentColor,
-  });
+  const _ImportStatusChip({required this.label, required this.accentColor});
 
   final String label;
   final Color accentColor;

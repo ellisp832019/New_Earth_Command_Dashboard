@@ -28,18 +28,17 @@ class CompanyCommandCentreWriteService {
       'omegaPath',
       'omega_os_path',
     ]);
-    final effectiveOmegaPath =
-        configuredOmegaPath.isNotEmpty ? configuredOmegaPath : omegaOsPath;
-    final readOnly = _boolValue(
-      config,
-      const ['readOnly', 'read_only'],
-      fallback: true,
-    );
-    final backupBeforeWrite = _boolValue(
-      config,
-      const ['backupBeforeWrite', 'backup_before_write'],
-      fallback: true,
-    );
+    final effectiveOmegaPath = configuredOmegaPath.isNotEmpty
+        ? configuredOmegaPath
+        : omegaOsPath;
+    final readOnly = _boolValue(config, const [
+      'readOnly',
+      'read_only',
+    ], fallback: true);
+    final backupBeforeWrite = _boolValue(config, const [
+      'backupBeforeWrite',
+      'backup_before_write',
+    ], fallback: true);
 
     return CompanyCommandCentreWritePlan(
       moduleConfigPath: moduleConfigPath,
@@ -70,7 +69,8 @@ class CompanyCommandCentreWriteService {
     final plan = await loadPlan();
     if (plan.readOnly) {
       return CompanyCommandCentreWriteResult.failure(
-        message: 'Write mode is disabled. Switch the module out of read-only mode first.',
+        message:
+            'Write mode is disabled. Switch the module out of read-only mode first.',
         plan: plan,
       );
     }
@@ -126,18 +126,18 @@ class CompanyCommandCentreWriteService {
     final plan = await loadPlan();
     if (!plan.moduleConfigExists) {
       return CompanyCommandCentreWriteResult.failure(
-        message: 'Module config is missing, so the write toggle cannot be saved.',
+        message:
+            'Module config is missing, so the write toggle cannot be saved.',
         plan: plan,
       );
     }
 
     final configFile = File(plan.moduleConfigPath);
     final config = await _readJsonMap(plan.moduleConfigPath);
-    final currentReadOnly = _boolValue(
-      config,
-      const ['readOnly', 'read_only'],
-      fallback: true,
-    );
+    final currentReadOnly = _boolValue(config, const [
+      'readOnly',
+      'read_only',
+    ], fallback: true);
     if (currentReadOnly == readOnly) {
       return CompanyCommandCentreWriteResult.success(
         plan: plan,
@@ -209,7 +209,10 @@ class CompanyCommandCentreWriteService {
       backupPath = await _createTimestampedBackup(
         sourceFile: reportFile,
         backupRootPath: plan.backupRootPath,
-        relativePath: path.join('reports', 'company_command_centre_audit_summary.md'),
+        relativePath: path.join(
+          'reports',
+          'company_command_centre_audit_summary.md',
+        ),
       );
     }
 
@@ -342,7 +345,9 @@ class CompanyCommandCentreWriteService {
           ..writeln('  - Action: ${entry.action}')
           ..writeln('  - Target: ${entry.targetPath}')
           ..writeln('  - Result: ${entry.result}')
-          ..writeln('  - Note: ${entry.note.isEmpty ? 'No note provided.' : entry.note}');
+          ..writeln(
+            '  - Note: ${entry.note.isEmpty ? 'No note provided.' : entry.note}',
+          );
         if (entry.backupPath != null && entry.backupPath!.isNotEmpty) {
           buffer.writeln('  - Backup: ${entry.backupPath}');
         }
@@ -354,7 +359,9 @@ class CompanyCommandCentreWriteService {
 
   String _resolveWithinRoot(String rootPath, String relativePath) {
     final cleanedRelativePath = _cleanRelativePath(relativePath);
-    final resolvedPath = path.normalize(path.join(rootPath, cleanedRelativePath));
+    final resolvedPath = path.normalize(
+      path.join(rootPath, cleanedRelativePath),
+    );
     if (!path.isWithin(path.normalize(rootPath), resolvedPath) &&
         path.normalize(rootPath) != resolvedPath) {
       throw ArgumentError.value(
@@ -457,7 +464,10 @@ class CompanyCommandCentreWriteService {
   DateTime _now() => now?.call() ?? DateTime.now();
 
   String _buildEntryId() {
-    final stamp = _now().toUtc().toIso8601String().replaceAll(RegExp(r'[^0-9]'), '');
+    final stamp = _now().toUtc().toIso8601String().replaceAll(
+      RegExp(r'[^0-9]'),
+      '',
+    );
     return 'company-write-$stamp';
   }
 
@@ -575,12 +585,11 @@ class CompanyCommandCentreAuditEntry {
     };
   }
 
-  factory CompanyCommandCentreAuditEntry.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory CompanyCommandCentreAuditEntry.fromJson(Map<String, dynamic> json) {
     return CompanyCommandCentreAuditEntry(
       id: (json['id'] ?? '').toString(),
-      timestamp: DateTime.tryParse((json['timestamp'] ?? '').toString()) ??
+      timestamp:
+          DateTime.tryParse((json['timestamp'] ?? '').toString()) ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       action: (json['action'] ?? '').toString(),
       targetPath: (json['target_path'] ?? '').toString(),

@@ -7,8 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'package:new_earth_command_dashboard/features/meeting_system/data/meeting_folder_service.dart';
 
-class _FakeMeetingRecordingTranscriber
-    implements MeetingRecordingTranscriber {
+class _FakeMeetingRecordingTranscriber implements MeetingRecordingTranscriber {
   _FakeMeetingRecordingTranscriber(this.transcript);
 
   final String transcript;
@@ -16,9 +15,9 @@ class _FakeMeetingRecordingTranscriber
 
   @override
   Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
-    String sourcePath,
-    {String? draftOutputPath}
-  ) async {
+    String sourcePath, {
+    String? draftOutputPath,
+  }) async {
     lastSourcePath = sourcePath;
     return MeetingRecordingTranscriptionJob(
       result: Future<String?>.value(transcript),
@@ -718,7 +717,9 @@ Old notes.
       expect(await File(result.recordingStoredPath).exists(), isTrue);
       expect(await File(result.transcriptPath).exists(), isTrue);
 
-      final transcriptMarkdown = await File(result.transcriptPath).readAsString();
+      final transcriptMarkdown = await File(
+        result.transcriptPath,
+      ).readAsString();
       expect(transcriptMarkdown, contains('This is the imported transcript.'));
       expect(transcriptMarkdown, contains('Recording Match Test'));
 
@@ -861,12 +862,10 @@ Old notes.
 
 String _dateLabel(DateTime value) {
   final local = value.toLocal();
-  return
-      '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+  return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
 }
 
 String _timeLabel(DateTime value) {
   final local = value.toLocal();
-  return
-      '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+  return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }

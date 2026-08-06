@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -98,11 +98,10 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     super.dispose();
   }
 
-  List<KnowledgeLibraryItem> get _items =>
-      _currentItems
-          .where(_filter.matches)
-          .where(_matchesCategory)
-          .toList(growable: false);
+  List<KnowledgeLibraryItem> get _items => _currentItems
+      .where(_filter.matches)
+      .where(_matchesCategory)
+      .toList(growable: false);
 
   List<KnowledgeLibraryItem> get _visibleItems =>
       _items.where(_matchesSourceSection).toList(growable: false);
@@ -201,7 +200,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
                             _sourceSectionFilter = null;
                             _ensureSelectionStillVisible();
                           });
-                      },
+                        },
                 ),
               if (stats != null) const SizedBox(height: 14),
               if (stats != null)
@@ -408,9 +407,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     }
 
     if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       await _refreshAll();
       return;
     }
@@ -804,9 +803,9 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
     }
 
     if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
 
@@ -1992,7 +1991,9 @@ class _DetailPanel extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
+                        color: AppColours.darkSurfaceAlt.withValues(
+                          alpha: 0.92,
+                        ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColours.darkOutline),
                       ),
@@ -2041,9 +2042,7 @@ class _DetailPanel extends StatelessWidget {
                               ),
                               TextButton.icon(
                                 onPressed: () => onOpenManifest(current),
-                                icon: const Icon(
-                                  Icons.inventory_2_outlined,
-                                ),
+                                icon: const Icon(Icons.inventory_2_outlined),
                                 label: const Text('Open manifest'),
                               ),
                             ],

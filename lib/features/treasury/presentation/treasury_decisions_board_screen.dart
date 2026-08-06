@@ -228,8 +228,7 @@ class _DecisionsActionCard extends StatelessWidget {
               label: const Text('Open entry form'),
             ),
             TextButton.icon(
-              onPressed: () =>
-                  context.push(RouteNames.treasuryMonthlySummary),
+              onPressed: () => context.push(RouteNames.treasuryMonthlySummary),
               icon: const Icon(Icons.assessment_outlined),
               label: const Text('Open monthly summary'),
             ),

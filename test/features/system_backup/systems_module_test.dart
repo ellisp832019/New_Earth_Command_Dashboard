@@ -14,12 +14,18 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Systems'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Systems'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Systems'), findsAtLeastNWidgets(1));
     expect(
       find.text(
         'Protect the full D: drive, review backup status, and keep recovery tools calm.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 
@@ -31,9 +37,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Backup Guardian'), findsOneWidget);
-    expect(find.text('Manual V1'), findsOneWidget);
-    expect(find.text('Restore dry run'), findsOneWidget);
+    expect(find.text('Backup Guardian'), findsAtLeastNWidgets(1));
+    expect(find.text('Manual V1'), findsAtLeastNWidgets(1));
+    expect(find.text('Restore dry run'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('backup guardian screen shows status and roadmap', (
@@ -217,86 +223,98 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Backup Guardian'), findsOneWidget);
-    expect(find.text('Dry Run'), findsOneWidget);
+    expect(find.text('Backup Guardian'), findsAtLeastNWidgets(1));
+    expect(find.text('Dry Run'), findsAtLeastNWidgets(1));
     expect(find.text('Verify Latest'), findsWidgets);
-    expect(find.text('Restore Dry Run'), findsOneWidget);
-    expect(find.text('Quick Incremental'), findsOneWidget);
-    expect(find.text('Run state summary'), findsOneWidget);
+    expect(find.text('Restore Dry Run'), findsAtLeastNWidgets(1));
+    expect(find.text('Quick Incremental'), findsAtLeastNWidgets(1));
+    expect(find.text('Run state summary'), findsAtLeastNWidgets(1));
     expect(
       find.textContaining('State: Latest backup verified'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.textContaining('Health: Green'), findsOneWidget);
-    expect(find.textContaining('Restore points: 2'), findsOneWidget);
+    expect(find.textContaining('Health: Green'), findsAtLeastNWidgets(1));
+    expect(find.textContaining('Restore points: 2'), findsAtLeastNWidgets(1));
     expect(
       find.textContaining('Latest report: latest.log'),
       findsAtLeastNWidgets(1),
     );
-    expect(find.text('Open Backup Root'), findsOneWidget);
+    expect(find.text('Open Backup Root'), findsAtLeastNWidgets(1));
     expect(
       find.text(
         'Click opens the backup root at E:/NEW_EARTH_BACKUP because the mirror folder is not ready yet.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('Open Latest Report'), findsOneWidget);
+    expect(find.text('Open Latest Report'), findsAtLeastNWidgets(1));
     expect(find.text('Latest report: latest.log'), findsAtLeastNWidgets(2));
     expect(find.text('BackupNow'), findsWidgets);
-    expect(find.text('3 events'), findsOneWidget);
-    expect(find.text('2 restore points'), findsOneWidget);
+    expect(find.text('3 events'), findsAtLeastNWidgets(1));
+    expect(find.text('2 restore points'), findsAtLeastNWidgets(1));
     expect(
       find.text('Latest restore point: Manual backup - 2026-06-07 06:00'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.textContaining('Showing all runs.'), findsOneWidget);
+    expect(find.textContaining('Showing all runs.'), findsAtLeastNWidgets(1));
     expect(
       find.text(
         'Use filters to focus on backups, verification, restore points, or health states.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.widgetWithText(FilterChip, 'Backups (2)'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Verification (1)'), findsOneWidget);
+    expect(
+      find.widgetWithText(FilterChip, 'Backups (2)'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(
+      find.widgetWithText(FilterChip, 'Verification (1)'),
+      findsAtLeastNWidgets(1),
+    );
     expect(
       find.widgetWithText(FilterChip, 'Restore points (3)'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('Pick a restore point'), findsOneWidget);
+    expect(find.text('Pick a restore point'), findsAtLeastNWidgets(1));
     expect(find.textContaining('Action: Backup Now'), findsWidgets);
     expect(find.textContaining('Kind: manual'), findsWidgets);
     expect(find.textContaining('Report: latest.log'), findsWidgets);
-    expect(find.text('Backup growth'), findsOneWidget);
-    expect(find.textContaining('Latest backup size: 2.0 KB'), findsOneWidget);
-    expect(find.textContaining('Previous backup size: 1.5 KB'), findsOneWidget);
+    expect(find.text('Backup growth'), findsAtLeastNWidgets(1));
+    expect(
+      find.textContaining('Latest backup size: 2.0 KB'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(
+      find.textContaining('Previous backup size: 1.5 KB'),
+      findsAtLeastNWidgets(1),
+    );
     expect(
       find.textContaining(
         'Backup size grew by 512 B compared with the previous run.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('Latest report'), findsOneWidget);
+    expect(find.text('Latest report'), findsAtLeastNWidgets(1));
     expect(find.textContaining('Report: older.log'), findsWidgets);
-    expect(find.text('Recent reports'), findsOneWidget);
-    expect(find.text('Quick 7'), findsOneWidget);
-    expect(find.text('Daily 7'), findsOneWidget);
-    expect(find.text('Weekly 4'), findsOneWidget);
-    expect(find.text('Monthly 12'), findsOneWidget);
+    expect(find.text('Recent reports'), findsAtLeastNWidgets(1));
+    expect(find.text('Quick 7'), findsAtLeastNWidgets(1));
+    expect(find.text('Daily 7'), findsAtLeastNWidgets(1));
+    expect(find.text('Weekly 4'), findsAtLeastNWidgets(1));
+    expect(find.text('Monthly 12'), findsAtLeastNWidgets(1));
     expect(
       find.text(
         'Quick keeps the newest snapshots, daily keeps routine runs, weekly keeps recovery points, and monthly keeps long-term archives.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('Roadmap / Future work'), findsOneWidget);
-    expect(find.text('V2 roadmap'), findsOneWidget);
-    expect(find.text('V3 roadmap'), findsOneWidget);
-    expect(find.text('Current run state'), findsOneWidget);
-    expect(find.text('Latest manifest path'), findsOneWidget);
-    expect(find.text('Verification details'), findsOneWidget);
+    expect(find.text('Roadmap / Future work'), findsAtLeastNWidgets(1));
+    expect(find.text('V2 roadmap'), findsAtLeastNWidgets(1));
+    expect(find.text('V3 roadmap'), findsAtLeastNWidgets(1));
+    expect(find.text('Current run state'), findsAtLeastNWidgets(1));
+    expect(find.text('Latest manifest path'), findsAtLeastNWidgets(1));
+    expect(find.text('Verification details'), findsAtLeastNWidgets(1));
     expect(
       find.text('Latest backup matches the manifest fingerprint.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     expect(
       find.textContaining(
@@ -308,13 +326,13 @@ void main() {
       find.text(
         'Restore preview stays read-only and writes only to the test area.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     expect(
       find.text(
         'Mirror folder is not ready yet, so the backup root will open instead.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 }

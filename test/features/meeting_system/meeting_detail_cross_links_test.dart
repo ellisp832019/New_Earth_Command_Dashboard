@@ -26,13 +26,18 @@ void main() {
       ProviderScope(
         overrides: [
           meetingFolderServiceProvider.overrideWithValue(service),
-          meetingDetailProvider.overrideWith((ref, meetingId) async =>
-              _FakeMeetingFolderService._detail),
-          projectsProvider.overrideWith((ref) async =>
-              [_FakeMeetingFolderService._project]),
+          meetingDetailProvider.overrideWith(
+            (ref, meetingId) async => _FakeMeetingFolderService._detail,
+          ),
+          projectsProvider.overrideWith(
+            (ref) async => [_FakeMeetingFolderService._project],
+          ),
         ],
         child: const MaterialApp(
-          home: MeetingDetailScreen(meetingId: 'meeting-001', initialTabIndex: 6),
+          home: MeetingDetailScreen(
+            meetingId: 'meeting-001',
+            initialTabIndex: 6,
+          ),
         ),
       ),
     );

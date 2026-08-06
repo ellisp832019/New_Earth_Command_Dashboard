@@ -21,7 +21,8 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
 
     return WorkspaceShell(
       title: 'Launchpad',
-      subtitle: 'Mission launch control for crowdfunding, grants, investors, and delivery planning.',
+      subtitle:
+          'Mission launch control for crowdfunding, grants, investors, and delivery planning.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(
@@ -56,10 +57,8 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
                 activeCampaign: activeCampaign,
                 readiness: readiness,
                 finance: finance,
-                onCreateCampaign: () => _showCampaignDialog(
-                  context: context,
-                  ref: ref,
-                ),
+                onCreateCampaign: () =>
+                    _showCampaignDialog(context: context, ref: ref),
                 onExportPack: () async {
                   final path = await ref
                       .read(launchpadRepositoryProvider)
@@ -93,15 +92,15 @@ class LaunchpadOverviewScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _CampaignCard(
                       campaign: campaign,
-                      onOpen: () => context.go(
-                        RouteNames.launchpadCampaign(campaign.id),
-                      ),
+                      onOpen: () =>
+                          context.go(RouteNames.launchpadCampaign(campaign.id)),
                       onEdit: () => _showCampaignDialog(
                         context: context,
                         ref: ref,
                         campaign: campaign,
                       ),
-                      onArchive: campaign.status == LaunchpadCampaignStatus.archived
+                      onArchive:
+                          campaign.status == LaunchpadCampaignStatus.archived
                           ? null
                           : () => _archiveCampaignWithConfirmation(
                               context: context,
@@ -152,7 +151,8 @@ class LaunchpadCampaignScreen extends ConsumerStatefulWidget {
       _LaunchpadCampaignScreenState();
 }
 
-class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScreen> {
+class _LaunchpadCampaignScreenState
+    extends ConsumerState<LaunchpadCampaignScreen> {
   @override
   Widget build(BuildContext context) {
     final workspaceSnapshot = ref.watch(launchpadWorkspaceProvider);
@@ -206,10 +206,12 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
                 sections: sections,
                 selectedSection: widget.section,
                 onSelected: (section) {
-                  context.go(RouteNames.launchpadCampaignSection(
-                    widget.campaignId,
-                    section,
-                  ));
+                  context.go(
+                    RouteNames.launchpadCampaignSection(
+                      widget.campaignId,
+                      section,
+                    ),
+                  );
                 },
               );
 
@@ -231,11 +233,7 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
 
               return ListView(
                 padding: const EdgeInsets.all(20),
-                children: [
-                  navigation,
-                  const SizedBox(height: 16),
-                  content,
-                ],
+                children: [navigation, const SizedBox(height: 16), content],
               );
             },
           );
@@ -272,9 +270,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
                   returnToLaunchpad: true,
                 ),
           onDelete: () async {
-            await ref.read(launchpadRepositoryProvider).deleteCampaign(
-              campaign.id,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .deleteCampaign(campaign.id);
             ref.invalidate(launchpadWorkspaceProvider);
             if (context.mounted) {
               context.go(RouteNames.launchpad);
@@ -285,10 +283,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
         return _RewardManagerSection(
           campaign: campaign,
           onChanged: (rewards) async {
-            await ref.read(launchpadRepositoryProvider).saveRewards(
-              campaign.id,
-              rewards,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .saveRewards(campaign.id, rewards);
             ref.invalidate(launchpadWorkspaceProvider);
           },
         );
@@ -296,10 +293,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
         return _StoryBuilderSection(
           campaign: campaign,
           onSave: (blocks) async {
-            await ref.read(launchpadRepositoryProvider).saveStoryBlocks(
-              campaign.id,
-              blocks,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .saveStoryBlocks(campaign.id, blocks);
             ref.invalidate(launchpadWorkspaceProvider);
           },
           onExport: () async {
@@ -320,10 +316,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
           campaign: campaign,
           finance: finance,
           onSave: (updatedFinance) async {
-            await ref.read(launchpadRepositoryProvider).saveFinanceModel(
-              campaign.id,
-              updatedFinance,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .saveFinanceModel(campaign.id, updatedFinance);
             ref.invalidate(launchpadWorkspaceProvider);
           },
         );
@@ -331,10 +326,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
         return _RiskRegisterSection(
           campaign: campaign,
           onChanged: (risks) async {
-            await ref.read(launchpadRepositoryProvider).saveRisks(
-              campaign.id,
-              risks,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .saveRisks(campaign.id, risks);
             ref.invalidate(launchpadWorkspaceProvider);
           },
         );
@@ -343,10 +337,9 @@ class _LaunchpadCampaignScreenState extends ConsumerState<LaunchpadCampaignScree
           campaign: campaign,
           readiness: readiness,
           onChanged: (items) async {
-            await ref.read(launchpadRepositoryProvider).saveReadinessItems(
-              campaign.id,
-              items,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .saveReadinessItems(campaign.id, items);
             ref.invalidate(launchpadWorkspaceProvider);
           },
         );
@@ -455,9 +448,8 @@ class _OverviewHero extends StatelessWidget {
                 label: const Text('New Campaign'),
               ),
               TextButton.icon(
-                onPressed: () => context.go(
-                  RouteNames.launchpadCampaign(activeCampaign.id),
-                ),
+                onPressed: () =>
+                    context.go(RouteNames.launchpadCampaign(activeCampaign.id)),
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open MicroGrow'),
               ),
@@ -491,7 +483,8 @@ class _OverviewHero extends StatelessWidget {
                       width: summaryWidth,
                       child: _SummaryCard(
                         title: 'Active',
-                        value: '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
+                        value:
+                            '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
                         accent: AppColours.darkSuccess,
                       ),
                     ),
@@ -499,7 +492,8 @@ class _OverviewHero extends StatelessWidget {
                       width: summaryWidth,
                       child: _SummaryCard(
                         title: 'Readiness',
-                        value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                        value:
+                            '${readiness.overallPercent.toStringAsFixed(0)}%',
                         accent: AppColours.darkPrimary,
                       ),
                     ),
@@ -507,7 +501,8 @@ class _OverviewHero extends StatelessWidget {
                       width: summaryWidth,
                       child: _SummaryCard(
                         title: 'Net Funds',
-                        value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                        value:
+                            '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
                         accent: finance.netAvailableFundsGbp >= 0
                             ? AppColours.darkSuccess
                             : AppColours.darkAmber,
@@ -540,7 +535,7 @@ class _OverviewHero extends StatelessWidget {
                           width: summaryWidth,
                           child: _SummaryCard(
                             title: 'Campaigns',
-                        value: '${workspace.campaigns.length}',
+                            value: '${workspace.campaigns.length}',
                             accent: AppColours.darkSecondary,
                           ),
                         ),
@@ -548,7 +543,8 @@ class _OverviewHero extends StatelessWidget {
                           width: summaryWidth,
                           child: _SummaryCard(
                             title: 'Active',
-                        value: '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
+                            value:
+                                '${workspace.campaigns.where((campaign) => campaign.status != LaunchpadCampaignStatus.archived).length}',
                             accent: AppColours.darkSuccess,
                           ),
                         ),
@@ -556,7 +552,8 @@ class _OverviewHero extends StatelessWidget {
                           width: summaryWidth,
                           child: _SummaryCard(
                             title: 'Readiness',
-                        value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+                            value:
+                                '${readiness.overallPercent.toStringAsFixed(0)}%',
                             accent: AppColours.darkPrimary,
                           ),
                         ),
@@ -564,7 +561,8 @@ class _OverviewHero extends StatelessWidget {
                           width: summaryWidth,
                           child: _SummaryCard(
                             title: 'Net Funds',
-                        value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                            value:
+                                '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
                             accent: finance.netAvailableFundsGbp >= 0
                                 ? AppColours.darkSuccess
                                 : AppColours.darkAmber,
@@ -583,7 +581,6 @@ class _OverviewHero extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _WorkspaceSummaryGrid extends StatelessWidget {
@@ -603,7 +600,7 @@ class _WorkspaceSummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-          final crossAxisCount = constraints.maxWidth >= 1080
+        final crossAxisCount = constraints.maxWidth >= 1080
             ? 4
             : constraints.maxWidth >= 720
             ? 2
@@ -681,7 +678,9 @@ class _CampaignCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final readiness = calculateLaunchpadReadinessSummary(campaign.readinessItems);
+    final readiness = calculateLaunchpadReadinessSummary(
+      campaign.readinessItems,
+    );
     final launchLabel = campaign.launchDate == null
         ? 'Launch date not set'
         : DateFormat('d MMM y').format(campaign.launchDate!.toLocal());
@@ -722,10 +721,17 @@ class _CampaignCard extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  _Tag(label: campaign.project, accent: AppColours.darkSecondary),
-                  _Tag(label: 'Goal £${campaign.fundingGoalGbp.toStringAsFixed(0)}'),
                   _Tag(
-                    label: 'Readiness ${readiness.overallPercent.toStringAsFixed(0)}%',
+                    label: campaign.project,
+                    accent: AppColours.darkSecondary,
+                  ),
+                  _Tag(
+                    label:
+                        'Goal £${campaign.fundingGoalGbp.toStringAsFixed(0)}',
+                  ),
+                  _Tag(
+                    label:
+                        'Readiness ${readiness.overallPercent.toStringAsFixed(0)}%',
                     accent: AppColours.darkSuccess,
                   ),
                   _Tag(label: launchLabel, accent: AppColours.darkPrimary),
@@ -760,7 +766,10 @@ class _CampaignCard extends StatelessWidget {
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open'),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
               ),
@@ -769,7 +778,10 @@ class _CampaignCard extends StatelessWidget {
                 icon: const Icon(Icons.edit),
                 label: const Text('Edit'),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   visualDensity: VisualDensity.compact,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -780,7 +792,10 @@ class _CampaignCard extends StatelessWidget {
                   icon: const Icon(Icons.archive_outlined),
                   label: const Text('Archive'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -791,11 +806,7 @@ class _CampaignCard extends StatelessWidget {
           if (!wide) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                left,
-                const SizedBox(height: 14),
-                actions,
-              ],
+              children: [left, const SizedBox(height: 14), actions],
             );
           }
 
@@ -842,7 +853,8 @@ class _CampaignManagerSection extends StatelessWidget {
       children: [
         _SectionHeader(
           title: 'Campaign Manager',
-          subtitle: 'Manage the core record: status, funding target, launch date, and progress.',
+          subtitle:
+              'Manage the core record: status, funding target, launch date, and progress.',
           actions: [
             TextButton.icon(
               onPressed: onEdit,
@@ -885,7 +897,8 @@ class _CampaignManagerSection extends StatelessWidget {
                   width: summaryWidth,
                   child: _SummaryCard(
                     title: 'Net Funds',
-                    value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+                    value:
+                        '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
                     accent: finance.netAvailableFundsGbp >= 0
                         ? AppColours.darkSuccess
                         : AppColours.darkAmber,
@@ -919,12 +932,27 @@ class _CampaignManagerSection extends StatelessWidget {
             _InlineStat(label: 'Project', value: campaign.project),
             _InlineStat(label: 'Owner', value: campaign.owner),
             _InlineStat(label: 'Status', value: campaign.status.label),
-            _InlineStat(label: 'Funding target', value: '£${campaign.fundingGoalGbp.toStringAsFixed(0)}'),
+            _InlineStat(
+              label: 'Funding target',
+              value: '£${campaign.fundingGoalGbp.toStringAsFixed(0)}',
+            ),
             _InlineStat(label: 'Launch date', value: launchDateLabel),
-            _InlineStat(label: 'Progress', value: '${campaign.progressPercentage}%'),
-            _InlineStat(label: 'Readiness', value: '${readiness.overallPercent.toStringAsFixed(0)}%'),
-            _InlineStat(label: 'Net funds', value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}'),
-            _InlineStat(label: 'Break-even', value: '${finance.breakEvenBackers} backers'),
+            _InlineStat(
+              label: 'Progress',
+              value: '${campaign.progressPercentage}%',
+            ),
+            _InlineStat(
+              label: 'Readiness',
+              value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+            ),
+            _InlineStat(
+              label: 'Net funds',
+              value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+            ),
+            _InlineStat(
+              label: 'Break-even',
+              value: '${finance.breakEvenBackers} backers',
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -932,7 +960,6 @@ class _CampaignManagerSection extends StatelessWidget {
       ],
     );
   }
-
 }
 
 class _RewardManagerSection extends StatelessWidget {
@@ -1146,7 +1173,9 @@ class _ReadinessSectionState extends State<_ReadinessSection> {
               onPressed: () {
                 final updated = items
                     .map(
-                      (item) => item.copyWith(status: _statuses[item.id] ?? item.status),
+                      (item) => item.copyWith(
+                        status: _statuses[item.id] ?? item.status,
+                      ),
                     )
                     .toList(growable: false);
                 widget.onChanged(updated);
@@ -1312,10 +1341,7 @@ class _FinancialModellerSectionState extends State<_FinancialModellerSection> {
 }
 
 class _RiskRegisterSection extends StatelessWidget {
-  const _RiskRegisterSection({
-    required this.campaign,
-    required this.onChanged,
-  });
+  const _RiskRegisterSection({required this.campaign, required this.onChanged});
 
   final LaunchpadCampaignRecord campaign;
   final ValueChanged<List<LaunchpadRiskRecord>> onChanged;
@@ -1362,7 +1388,9 @@ class _RiskRegisterSection extends StatelessWidget {
                   return;
                 }
                 onChanged(
-                  risks.map((item) => item.id == risk.id ? updated : item).toList(),
+                  risks
+                      .map((item) => item.id == risk.id ? updated : item)
+                      .toList(),
                 );
               },
               onDelete: () {
@@ -1377,10 +1405,7 @@ class _RiskRegisterSection extends StatelessWidget {
 }
 
 class _ArchiveSection extends StatelessWidget {
-  const _ArchiveSection({
-    required this.workspace,
-    required this.onRestore,
-  });
+  const _ArchiveSection({required this.workspace, required this.onRestore});
 
   final LaunchpadWorkspace workspace;
   final ValueChanged<LaunchpadCampaignRecord> onRestore;
@@ -1388,7 +1413,9 @@ class _ArchiveSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final archived = workspace.campaigns
-        .where((campaign) => campaign.status == LaunchpadCampaignStatus.archived)
+        .where(
+          (campaign) => campaign.status == LaunchpadCampaignStatus.archived,
+        )
         .toList(growable: false);
 
     return Column(
@@ -1410,7 +1437,8 @@ class _ArchiveSection extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: _CampaignCard(
                 campaign: campaign,
-                onOpen: () => context.go(RouteNames.launchpadCampaign(campaign.id)),
+                onOpen: () =>
+                    context.go(RouteNames.launchpadCampaign(campaign.id)),
                 onEdit: () => onRestore(campaign),
                 onArchive: null,
               ),
@@ -1422,10 +1450,7 @@ class _ArchiveSection extends StatelessWidget {
 }
 
 class _PhaseTwoPlaceholder extends StatelessWidget {
-  const _PhaseTwoPlaceholder({
-    required this.title,
-    required this.body,
-  });
+  const _PhaseTwoPlaceholder({required this.title, required this.body});
 
   final String title;
   final String body;
@@ -1490,10 +1515,11 @@ class _LaunchpadSectionRail extends StatelessWidget {
             selectedIndex: mathMax(
               0,
               sections.indexWhere(
-              (section) => section.routeSegment == selectedSection,
+                (section) => section.routeSegment == selectedSection,
               ),
             ),
-            onDestinationSelected: (index) => onSelected(sections[index].routeSegment),
+            onDestinationSelected: (index) =>
+                onSelected(sections[index].routeSegment),
             labelType: NavigationRailLabelType.all,
             minWidth: 72,
             destinations: sections
@@ -1658,7 +1684,9 @@ Future<void> _showCampaignDialog({
       campaign: campaign,
       onSave: (draft) async {
         if (campaign == null) {
-          await ref.read(launchpadRepositoryProvider).createCampaign(
+          await ref
+              .read(launchpadRepositoryProvider)
+              .createCampaign(
                 name: draft.name,
                 project: draft.project,
                 owner: draft.owner,
@@ -1682,10 +1710,8 @@ Future<LaunchpadRewardTier?> _showRewardDialog(
 }) {
   return showDialog<LaunchpadRewardTier>(
     context: context,
-    builder: (dialogContext) => _RewardEditDialog(
-      campaignId: campaignId,
-      reward: reward,
-    ),
+    builder: (dialogContext) =>
+        _RewardEditDialog(campaignId: campaignId, reward: reward),
   );
 }
 
@@ -1696,10 +1722,8 @@ Future<LaunchpadRiskRecord?> _showRiskDialog(
 }) {
   return showDialog<LaunchpadRiskRecord>(
     context: context,
-    builder: (dialogContext) => _RiskEditDialog(
-      campaignId: campaignId,
-      risk: risk,
-    ),
+    builder: (dialogContext) =>
+        _RiskEditDialog(campaignId: campaignId, risk: risk),
   );
 }
 
@@ -1744,9 +1768,9 @@ Future<void> _archiveCampaignWithConfirmation({
     context.go(RouteNames.launchpad);
   }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('${campaign.name} archived.')),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('${campaign.name} archived.')));
 }
 
 Future<void> _restoreArchivedCampaign({
@@ -1761,16 +1785,13 @@ Future<void> _restoreArchivedCampaign({
     return;
   }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('${campaign.name} restored.')),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('${campaign.name} restored.')));
 }
 
 class _CampaignEditDialog extends StatefulWidget {
-  const _CampaignEditDialog({
-    required this.onSave,
-    this.campaign,
-  });
+  const _CampaignEditDialog({required this.onSave, this.campaign});
 
   final LaunchpadCampaignRecord? campaign;
   final Future<void> Function(LaunchpadCampaignRecord draft) onSave;
@@ -1842,10 +1863,9 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Campaign name'),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty)
-                          ? 'Add a campaign name.'
-                          : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Add a campaign name.'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -1860,7 +1880,9 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _fundingGoalController,
-                  decoration: const InputDecoration(labelText: 'Funding target (£)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Funding target (£)',
+                  ),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -1882,14 +1904,24 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                   initialValue: _type,
                   decoration: const InputDecoration(labelText: 'Type'),
                   items: const [
-                    DropdownMenuItem(value: 'kickstarter', child: Text('Kickstarter')),
-                    DropdownMenuItem(value: 'indiegogo', child: Text('Indiegogo')),
+                    DropdownMenuItem(
+                      value: 'kickstarter',
+                      child: Text('Kickstarter'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'indiegogo',
+                      child: Text('Indiegogo'),
+                    ),
                     DropdownMenuItem(value: 'grant', child: Text('Grant')),
-                    DropdownMenuItem(value: 'investor', child: Text('Investor')),
+                    DropdownMenuItem(
+                      value: 'investor',
+                      child: Text('Investor'),
+                    ),
                     DropdownMenuItem(value: 'pilot', child: Text('Pilot')),
                     DropdownMenuItem(value: 'other', child: Text('Other')),
                   ],
-                  onChanged: (value) => setState(() => _type = value ?? 'other'),
+                  onChanged: (value) =>
+                      setState(() => _type = value ?? 'other'),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<LaunchpadCampaignStatus>(
@@ -1913,14 +1945,17 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _summaryController,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.2,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.2),
                   decoration: const InputDecoration(
                     labelText: 'Summary',
                     alignLabelWithHint: true,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                   ),
                   maxLines: 4,
                 ),
@@ -1958,28 +1993,42 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
                     summary: _summaryController.text.trim(),
                     createdAt: widget.campaign?.createdAt ?? DateTime.now(),
                     updatedAt: DateTime.now(),
-                    progressPercentage: _parseMoney(_progressController.text).round().clamp(0, 100),
-                    rewards: widget.campaign?.rewards ?? const <LaunchpadRewardTier>[],
-                    storyBlocks: widget.campaign?.storyBlocks ?? const <LaunchpadStoryBlock>[],
-                    readinessItems: widget.campaign?.readinessItems ?? const <LaunchpadReadinessItem>[],
-                    risks: widget.campaign?.risks ?? const <LaunchpadRiskRecord>[],
+                    progressPercentage: _parseMoney(
+                      _progressController.text,
+                    ).round().clamp(0, 100),
+                    rewards:
+                        widget.campaign?.rewards ??
+                        const <LaunchpadRewardTier>[],
+                    storyBlocks:
+                        widget.campaign?.storyBlocks ??
+                        const <LaunchpadStoryBlock>[],
+                    readinessItems:
+                        widget.campaign?.readinessItems ??
+                        const <LaunchpadReadinessItem>[],
+                    risks:
+                        widget.campaign?.risks ?? const <LaunchpadRiskRecord>[],
                     phase2Records:
                         widget.campaign?.phase2Records ??
                         const <LaunchpadPhase2Record>[],
-                    finance: (widget.campaign?.finance ??
-                            LaunchpadCampaignFinanceModel(
-                              fundingGoalGbp: _parseMoney(_fundingGoalController.text),
-                              manufacturingCostsGbp: 0,
-                              shippingGbp: 0,
-                              vatPercent: 0,
-                              kickstarterFeePercent: 5,
-                              paymentFeePercent: 3,
-                              contingencyPercent: 10,
-                              fixedCostsGbp: 0,
-                            ))
-                        .copyWith(
-                          fundingGoalGbp: _parseMoney(_fundingGoalController.text),
-                        ),
+                    finance:
+                        (widget.campaign?.finance ??
+                                LaunchpadCampaignFinanceModel(
+                                  fundingGoalGbp: _parseMoney(
+                                    _fundingGoalController.text,
+                                  ),
+                                  manufacturingCostsGbp: 0,
+                                  shippingGbp: 0,
+                                  vatPercent: 0,
+                                  kickstarterFeePercent: 5,
+                                  paymentFeePercent: 3,
+                                  contingencyPercent: 10,
+                                  fixedCostsGbp: 0,
+                                ))
+                            .copyWith(
+                              fundingGoalGbp: _parseMoney(
+                                _fundingGoalController.text,
+                              ),
+                            ),
                   );
 
                   setState(() => _saving = true);
@@ -2002,10 +2051,7 @@ class _CampaignEditDialogState extends State<_CampaignEditDialog> {
 }
 
 class _RewardEditDialog extends StatefulWidget {
-  const _RewardEditDialog({
-    required this.campaignId,
-    this.reward,
-  });
+  const _RewardEditDialog({required this.campaignId, this.reward});
 
   final String campaignId;
   final LaunchpadRewardTier? reward;
@@ -2029,7 +2075,9 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
     super.initState();
     final reward = widget.reward;
     _nameController = TextEditingController(text: reward?.name ?? '');
-    _priceController = TextEditingController(text: reward?.priceGbp.toStringAsFixed(0) ?? '');
+    _priceController = TextEditingController(
+      text: reward?.priceGbp.toStringAsFixed(0) ?? '',
+    );
     _limitController = TextEditingController(
       text: reward?.quantityLimit?.toString() ?? '',
     );
@@ -2039,7 +2087,9 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
     _shippingController = TextEditingController(
       text: reward?.estimatedShippingGbp.toStringAsFixed(0) ?? '',
     );
-    _deliveryController = TextEditingController(text: reward?.deliveryEstimate ?? '');
+    _deliveryController = TextEditingController(
+      text: reward?.deliveryEstimate ?? '',
+    );
     _notesController = TextEditingController(text: reward?.notes ?? '');
   }
 
@@ -2080,7 +2130,9 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _limitController,
-                  decoration: const InputDecoration(labelText: 'Quantity limit'),
+                  decoration: const InputDecoration(
+                    labelText: 'Quantity limit',
+                  ),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -2098,19 +2150,24 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _deliveryController,
-                  decoration: const InputDecoration(labelText: 'Delivery estimate'),
+                  decoration: const InputDecoration(
+                    labelText: 'Delivery estimate',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _notesController,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.2,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.2),
                   decoration: const InputDecoration(
                     labelText: 'Notes',
                     alignLabelWithHint: true,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                   ),
                   maxLines: 3,
                 ),
@@ -2131,7 +2188,8 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
             }
             Navigator.of(context).pop(
               LaunchpadRewardTier(
-                id: widget.reward?.id ??
+                id:
+                    widget.reward?.id ??
                     _slugify(
                       '${widget.campaignId}-${_nameController.text}-${DateTime.now().millisecondsSinceEpoch}',
                     ),
@@ -2154,10 +2212,7 @@ class _RewardEditDialogState extends State<_RewardEditDialog> {
 }
 
 class _RiskEditDialog extends StatefulWidget {
-  const _RiskEditDialog({
-    required this.campaignId,
-    this.risk,
-  });
+  const _RiskEditDialog({required this.campaignId, this.risk});
 
   final String campaignId;
   final LaunchpadRiskRecord? risk;
@@ -2218,7 +2273,8 @@ class _RiskEditDialogState extends State<_RiskEditDialog> {
                     DropdownMenuItem(value: 'Medium', child: Text('Medium')),
                     DropdownMenuItem(value: 'High', child: Text('High')),
                   ],
-                  onChanged: (value) => setState(() => _severity = value ?? 'Medium'),
+                  onChanged: (value) =>
+                      setState(() => _severity = value ?? 'Medium'),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -2229,33 +2285,40 @@ class _RiskEditDialogState extends State<_RiskEditDialog> {
                     DropdownMenuItem(value: 'Medium', child: Text('Medium')),
                     DropdownMenuItem(value: 'High', child: Text('High')),
                   ],
-                  onChanged: (value) => setState(() => _likelihood = value ?? 'Medium'),
+                  onChanged: (value) =>
+                      setState(() => _likelihood = value ?? 'Medium'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _mitigationController,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.2,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.2),
                   decoration: const InputDecoration(
                     labelText: 'Mitigation',
                     alignLabelWithHint: true,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                   ),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _publicNoteController,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.2,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.2),
                   decoration: const InputDecoration(
                     labelText: 'Public note',
                     alignLabelWithHint: true,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                   ),
                   maxLines: 3,
                 ),
@@ -2276,7 +2339,8 @@ class _RiskEditDialogState extends State<_RiskEditDialog> {
             }
             Navigator.of(context).pop(
               LaunchpadRiskRecord(
-                id: widget.risk?.id ??
+                id:
+                    widget.risk?.id ??
                     _slugify(
                       '${widget.campaignId}-${_titleController.text}-${DateTime.now().millisecondsSinceEpoch}',
                     ),
@@ -2361,7 +2425,10 @@ class _FinancialInputGrid extends StatelessWidget {
     );
   }
 
-  _FinancialFieldSpec _numberField(String label, TextEditingController controller) {
+  _FinancialFieldSpec _numberField(
+    String label,
+    TextEditingController controller,
+  ) {
     return _FinancialFieldSpec(label: label, controller: controller);
   }
 }
@@ -2377,17 +2444,50 @@ class _FinancialOutputPanel extends StatelessWidget {
       title: 'Financial Output',
       body: 'The finance model turns launch costs into a calm operating view.',
       children: [
-        _InlineStat(label: 'Gross funding', value: '£${summary.grossFundingGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Platform fees', value: '£${summary.platformFeesGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Payment fees', value: '£${summary.paymentFeesGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'VAT reserve', value: '£${summary.vatReserveGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Contingency', value: '£${summary.contingencyReserveGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Manufacturing', value: '£${summary.manufacturingCostsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Shipping', value: '£${summary.shippingGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Fixed costs', value: '£${summary.fixedCostsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Net available', value: '£${summary.netAvailableFundsGbp.toStringAsFixed(0)}'),
-        _InlineStat(label: 'Profit margin', value: '${summary.profitMarginPercent.toStringAsFixed(1)}%'),
-        _InlineStat(label: 'Break-even', value: '${summary.breakEvenBackers} backers'),
+        _InlineStat(
+          label: 'Gross funding',
+          value: '£${summary.grossFundingGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Platform fees',
+          value: '£${summary.platformFeesGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Payment fees',
+          value: '£${summary.paymentFeesGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'VAT reserve',
+          value: '£${summary.vatReserveGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Contingency',
+          value: '£${summary.contingencyReserveGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Manufacturing',
+          value: '£${summary.manufacturingCostsGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Shipping',
+          value: '£${summary.shippingGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Fixed costs',
+          value: '£${summary.fixedCostsGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Net available',
+          value: '£${summary.netAvailableFundsGbp.toStringAsFixed(0)}',
+        ),
+        _InlineStat(
+          label: 'Profit margin',
+          value: '${summary.profitMarginPercent.toStringAsFixed(1)}%',
+        ),
+        _InlineStat(
+          label: 'Break-even',
+          value: '${summary.breakEvenBackers} backers',
+        ),
       ],
     );
   }
@@ -2402,15 +2502,37 @@ class _ReadinessSummaryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return _DetailPanel(
       title: 'Readiness score',
-      body: 'The six launch categories are scored from the current tracker items.',
+      body:
+          'The six launch categories are scored from the current tracker items.',
       children: [
-        _InlineStat(label: 'Hardware', value: '${readiness.hardwarePercent.toStringAsFixed(0)}%'),
-        _InlineStat(label: 'Firmware', value: '${readiness.firmwarePercent.toStringAsFixed(0)}%'),
-        _InlineStat(label: 'Software', value: '${readiness.softwarePercent.toStringAsFixed(0)}%'),
-        _InlineStat(label: 'Manufacturing', value: '${readiness.manufacturingPercent.toStringAsFixed(0)}%'),
-        _InlineStat(label: 'Documentation', value: '${readiness.documentationPercent.toStringAsFixed(0)}%'),
-        _InlineStat(label: 'Marketing', value: '${readiness.marketingPercent.toStringAsFixed(0)}%'),
-        _InlineStat(label: 'Overall', value: '${readiness.overallPercent.toStringAsFixed(0)}%'),
+        _InlineStat(
+          label: 'Hardware',
+          value: '${readiness.hardwarePercent.toStringAsFixed(0)}%',
+        ),
+        _InlineStat(
+          label: 'Firmware',
+          value: '${readiness.firmwarePercent.toStringAsFixed(0)}%',
+        ),
+        _InlineStat(
+          label: 'Software',
+          value: '${readiness.softwarePercent.toStringAsFixed(0)}%',
+        ),
+        _InlineStat(
+          label: 'Manufacturing',
+          value: '${readiness.manufacturingPercent.toStringAsFixed(0)}%',
+        ),
+        _InlineStat(
+          label: 'Documentation',
+          value: '${readiness.documentationPercent.toStringAsFixed(0)}%',
+        ),
+        _InlineStat(
+          label: 'Marketing',
+          value: '${readiness.marketingPercent.toStringAsFixed(0)}%',
+        ),
+        _InlineStat(
+          label: 'Overall',
+          value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+        ),
       ],
     );
   }
@@ -2476,7 +2598,10 @@ class _ReadinessItemCard extends StatelessWidget {
                 items: const [
                   DropdownMenuItem(value: 'Todo', child: Text('Todo')),
                   DropdownMenuItem(value: 'Draft', child: Text('Draft')),
-                  DropdownMenuItem(value: 'In Progress', child: Text('In Progress')),
+                  DropdownMenuItem(
+                    value: 'In Progress',
+                    child: Text('In Progress'),
+                  ),
                   DropdownMenuItem(value: 'Done', child: Text('Done')),
                   DropdownMenuItem(value: 'Blocked', child: Text('Blocked')),
                 ],
@@ -2490,7 +2615,10 @@ class _ReadinessItemCard extends StatelessWidget {
           ];
 
           if (wide) {
-            return Row(crossAxisAlignment: CrossAxisAlignment.start, children: row);
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: row,
+            );
           }
 
           return Column(
@@ -2508,10 +2636,7 @@ class _ReadinessItemCard extends StatelessWidget {
 }
 
 class _StoryBlockCard extends StatelessWidget {
-  const _StoryBlockCard({
-    required this.block,
-    required this.controller,
-  });
+  const _StoryBlockCard({required this.block, required this.controller});
 
   final LaunchpadStoryBlock block;
   final TextEditingController controller;
@@ -2545,14 +2670,17 @@ class _StoryBlockCard extends StatelessWidget {
             minLines: 3,
             maxLines: 8,
             textAlignVertical: TextAlignVertical.top,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              height: 1.2,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.2),
             decoration: const InputDecoration(
               labelText: 'Body',
               alignLabelWithHint: true,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
             ),
           ),
         ],
@@ -2605,10 +2733,23 @@ class _RewardCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _Tag(label: reward.quantityLimit == null ? 'Unlimited' : 'Limit ${reward.quantityLimit}', accent: AppColours.darkPrimary),
-              _Tag(label: 'COGS £${reward.estimatedCogsGbp.toStringAsFixed(0)}'),
-              _Tag(label: 'Ship £${reward.estimatedShippingGbp.toStringAsFixed(0)}'),
-              _Tag(label: reward.deliveryEstimate, accent: AppColours.darkSuccess),
+              _Tag(
+                label: reward.quantityLimit == null
+                    ? 'Unlimited'
+                    : 'Limit ${reward.quantityLimit}',
+                accent: AppColours.darkPrimary,
+              ),
+              _Tag(
+                label: 'COGS £${reward.estimatedCogsGbp.toStringAsFixed(0)}',
+              ),
+              _Tag(
+                label:
+                    'Ship £${reward.estimatedShippingGbp.toStringAsFixed(0)}',
+              ),
+              _Tag(
+                label: reward.deliveryEstimate,
+                accent: AppColours.darkSuccess,
+              ),
             ],
           ),
           if (reward.notes.isNotEmpty) ...[
@@ -2631,7 +2772,10 @@ class _RewardCard extends StatelessWidget {
                 label: const Text('Edit'),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
@@ -2641,7 +2785,10 @@ class _RewardCard extends StatelessWidget {
                 label: const Text('Delete'),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
@@ -2691,17 +2838,17 @@ class _RiskCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             risk.mitigation,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (risk.publicNote.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               risk.publicNote,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkSecondary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkSecondary),
             ),
           ],
           const SizedBox(height: 8),
@@ -2884,9 +3031,9 @@ class _RiskIndicatorsPanel extends StatelessWidget {
           if (risks.isEmpty)
             Text(
               'No immediate financial risk indicators are currently triggered.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             )
           else
             ...risks.map(
@@ -2918,7 +3065,9 @@ class _StatusTag extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkPrimary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColours.darkPrimary.withValues(alpha: 0.24)),
+        border: Border.all(
+          color: AppColours.darkPrimary.withValues(alpha: 0.24),
+        ),
       ),
       child: Text(
         label,
@@ -2932,10 +3081,7 @@ class _StatusTag extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag({
-    required this.label,
-    this.accent = AppColours.darkSecondary,
-  });
+  const _Tag({required this.label, this.accent = AppColours.darkSecondary});
 
   final String label;
   final Color accent;
@@ -3017,7 +3163,12 @@ class _SectionHeader extends StatelessWidget {
           children: [
             Expanded(child: header),
             const SizedBox(width: 16),
-            Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: actions),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: actions,
+            ),
           ],
         );
       },
@@ -3050,9 +3201,9 @@ class _EmptyPanel extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             body,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -3061,10 +3212,7 @@ class _EmptyPanel extends StatelessWidget {
 }
 
 class _LaunchpadError extends StatelessWidget {
-  const _LaunchpadError({
-    required this.message,
-    required this.onRetry,
-  });
+  const _LaunchpadError({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -3087,9 +3235,9 @@ class _LaunchpadError extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -3223,4 +3371,3 @@ String _slugify(String value) {
       .replaceAll(RegExp(r'-+'), '-')
       .replaceAll(RegExp(r'^-|-$'), '');
 }
-

@@ -167,13 +167,17 @@ class _FundingGrantsCommandCentreScreenState
     _tagsController.text = grant.tags.join(', ');
     _submissionDateController.text = grant.submissionDate ?? '';
     _decisionDateController.text = grant.decisionDate ?? '';
-    _projectSummaryController.text = grant.readinessScore.projectSummary.toString();
+    _projectSummaryController.text = grant.readinessScore.projectSummary
+        .toString();
     _budgetController.text = grant.readinessScore.budget.toString();
     _evidenceController.text = grant.readinessScore.evidence.toString();
-    _partnerSupportController.text = grant.readinessScore.partnerSupport.toString();
+    _partnerSupportController.text = grant.readinessScore.partnerSupport
+        .toString();
     _impactCaseController.text = grant.readinessScore.impactCase.toString();
-    _commercialPlanController.text = grant.readinessScore.commercialPlan.toString();
-    _riskManagementController.text = grant.readinessScore.riskManagement.toString();
+    _commercialPlanController.text = grant.readinessScore.commercialPlan
+        .toString();
+    _riskManagementController.text = grant.readinessScore.riskManagement
+        .toString();
     _draftStatus = grant.status;
   }
 
@@ -286,7 +290,8 @@ class _FundingGrantsCommandCentreScreenState
       project: _projectController.text.trim(),
       fundingBody: _fundingBodyController.text.trim(),
       fundingType: _fundingTypeController.text.trim(),
-      amountRequested: double.tryParse(_amountRequestedController.text.trim()) ?? 0,
+      amountRequested:
+          double.tryParse(_amountRequestedController.text.trim()) ?? 0,
       matchFundingRequired: _matchFundingController.text.trim(),
       status: _draftStatus,
       deadline: _deadlineController.text.trim().isEmpty
@@ -543,17 +548,15 @@ class _FundingGrantsCommandCentreScreenState
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final summary = _summaryFor(_grants);
@@ -669,7 +672,9 @@ class _FundingGrantsCommandCentreScreenState
                       onExport: _fileOpsBusy ? null : _exportTracker,
                       onImport: _fileOpsBusy ? null : _importTracker,
                       onStatusAction: _applyGrantStatus,
-                      onPreviousGrant: _canGoToPreviousGrant ? _goToPreviousGrant : null,
+                      onPreviousGrant: _canGoToPreviousGrant
+                          ? _goToPreviousGrant
+                          : null,
                       onNextGrant: _canGoToNextGrant ? _goToNextGrant : null,
                     ),
                   ),
@@ -740,7 +745,9 @@ class _FundingGrantsCommandCentreScreenState
                 onExport: _fileOpsBusy ? null : _exportTracker,
                 onImport: _fileOpsBusy ? null : _importTracker,
                 onStatusAction: _applyGrantStatus,
-                onPreviousGrant: _canGoToPreviousGrant ? _goToPreviousGrant : null,
+                onPreviousGrant: _canGoToPreviousGrant
+                    ? _goToPreviousGrant
+                    : null,
                 onNextGrant: _canGoToNextGrant ? _goToNextGrant : null,
               ),
             ],
@@ -755,8 +762,9 @@ class _FundingGrantsCommandCentreScreenState
       0,
       (sum, grant) => sum + grant.amountRequested,
     );
-    final readyCount =
-        grants.where((grant) => grant.status == GrantStatus.readyToSubmit).length;
+    final readyCount = grants
+        .where((grant) => grant.status == GrantStatus.readyToSubmit)
+        .length;
     final submittedCount = grants
         .where(
           (grant) =>
@@ -779,15 +787,19 @@ class _FundingGrantsCommandCentreScreenState
               grant.status == GrantStatus.rejected,
         )
         .length;
-    final missingNextActionsCount =
-        grants.where((grant) => grant.nextAction.trim().isEmpty).length;
+    final missingNextActionsCount = grants
+        .where((grant) => grant.nextAction.trim().isEmpty)
+        .length;
     final dueSoonCount = _dueSoonCount(grants);
     final overdueCount = _overdueCount(grants);
     final readinessAverage = grants.isEmpty
         ? 0
-        : (grants.fold<int>(0, (sum, grant) => sum + grant.readinessScore.total) /
-                grants.length)
-            .round();
+        : (grants.fold<int>(
+                    0,
+                    (sum, grant) => sum + grant.readinessScore.total,
+                  ) /
+                  grants.length)
+              .round();
 
     return FundingGrantsSummary(
       totalGrants: grants.length,
@@ -1028,10 +1040,7 @@ class _HeaderCard extends StatelessWidget {
                 label: 'Submitted',
                 value: '${summary.submittedCount}',
               ),
-              _MetricChip(
-                label: 'Approved',
-                value: '${summary.approvedCount}',
-              ),
+              _MetricChip(label: 'Approved', value: '${summary.approvedCount}'),
               _MetricChip(
                 label: 'Paused / rejected',
                 value: '${summary.pausedCount}',
@@ -1259,9 +1268,9 @@ class _GrantListPanel extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Grant pipeline',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColours.darkText,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
               ),
             ],
           ),
@@ -1309,7 +1318,8 @@ class _GrantListPanel extends StatelessWidget {
               _FilterChip(
                 label: 'Ready',
                 selected: statusFilter == GrantStatusFilter.ready,
-                onSelected: () => onStatusFilterChanged(GrantStatusFilter.ready),
+                onSelected: () =>
+                    onStatusFilterChanged(GrantStatusFilter.ready),
               ),
               _FilterChip(
                 label: 'Submitted',
@@ -1326,17 +1336,18 @@ class _GrantListPanel extends StatelessWidget {
               _FilterChip(
                 label: 'Paused',
                 selected: statusFilter == GrantStatusFilter.paused,
-                onSelected: () => onStatusFilterChanged(GrantStatusFilter.paused),
+                onSelected: () =>
+                    onStatusFilterChanged(GrantStatusFilter.paused),
               ),
               TextButton.icon(
                 onPressed:
                     searchQuery.isEmpty && statusFilter == GrantStatusFilter.all
-                        ? null
-                        : () {
-                            searchController.clear();
-                            onSearchChanged('');
-                            onStatusFilterChanged(GrantStatusFilter.all);
-                          },
+                    ? null
+                    : () {
+                        searchController.clear();
+                        onSearchChanged('');
+                        onStatusFilterChanged(GrantStatusFilter.all);
+                      },
                 icon: const Icon(Icons.tune_outlined),
                 label: const Text('Reset view'),
               ),
@@ -1355,10 +1366,7 @@ class _GrantListPanel extends StatelessWidget {
                 value: GrantSortMode.readinessHighest,
                 child: Text('Readiness highest'),
               ),
-              DropdownMenuItem(
-                value: GrantSortMode.name,
-                child: Text('Name'),
-              ),
+              DropdownMenuItem(value: GrantSortMode.name, child: Text('Name')),
             ],
             onChanged: (value) {
               if (value != null) {
@@ -1371,18 +1379,18 @@ class _GrantListPanel extends StatelessWidget {
             grants.isEmpty
                 ? 'No grants match your current view.'
                 : '${grants.length} grant${grants.length == 1 ? '' : 's'} in view',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           if (grants.isEmpty)
             Text(
               searchQuery.trim().isEmpty
                   ? 'No grants found yet. Start a new draft to create the first tracker entry.'
                   : 'No grants matched “$searchQuery”. Try a broader search or clear the filters.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             )
           else
             ListView.separated(
@@ -1485,15 +1493,17 @@ class _GrantEditorPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = selectedGrant;
-    final readiness = selected?.readinessScore ?? const ReadinessScore(
-      projectSummary: 0,
-      budget: 0,
-      evidence: 0,
-      partnerSupport: 0,
-      impactCase: 0,
-      commercialPlan: 0,
-      riskManagement: 0,
-    );
+    final readiness =
+        selected?.readinessScore ??
+        const ReadinessScore(
+          projectSummary: 0,
+          budget: 0,
+          evidence: 0,
+          partnerSupport: 0,
+          impactCase: 0,
+          commercialPlan: 0,
+          riskManagement: 0,
+        );
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1515,8 +1525,8 @@ class _GrantEditorPanel extends StatelessWidget {
                   child: Text(
                     selected == null ? 'New grant draft' : 'Grant details',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColours.darkText,
-                        ),
+                      color: AppColours.darkText,
+                    ),
                   ),
                 ),
                 if (selected != null) _StatusTag(status: selected.status),
@@ -1539,7 +1549,8 @@ class _GrantEditorPanel extends StatelessWidget {
               const SizedBox(height: 8),
               _DetailRow(
                 label: 'Readiness',
-                value: '${readiness.total}/${readiness.max} - ${readiness.band}',
+                value:
+                    '${readiness.total}/${readiness.max} - ${readiness.band}',
               ),
               const SizedBox(height: 16),
             ],
@@ -1650,7 +1661,9 @@ class _GrantEditorPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(child: _textField('Match funding', matchFundingController)),
+                Expanded(
+                  child: _textField('Match funding', matchFundingController),
+                ),
               ],
             ),
             Row(
@@ -1683,7 +1696,11 @@ class _GrantEditorPanel extends StatelessWidget {
                 Expanded(child: _textField('Priority', priorityController)),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _textField('Owner', ownerController, validator: _required),
+                  child: _textField(
+                    'Owner',
+                    ownerController,
+                    validator: _required,
+                  ),
                 ),
               ],
             ),
@@ -1693,9 +1710,16 @@ class _GrantEditorPanel extends StatelessWidget {
             _textField('Tags, comma separated', tagsController),
             Row(
               children: [
-                Expanded(child: _textField('Submission date', submissionDateController)),
+                Expanded(
+                  child: _textField(
+                    'Submission date',
+                    submissionDateController,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _textField('Decision date', decisionDateController)),
+                Expanded(
+                  child: _textField('Decision date', decisionDateController),
+                ),
               ],
             ),
             const SizedBox(height: 18),
@@ -1709,9 +1733,9 @@ class _GrantEditorPanel extends StatelessWidget {
               selected == null
                   ? 'Create a new draft, then save it to generate the grant folder, tracker entry, and standard template pack.'
                   : 'Saving will keep the tracker updated and move the grant folder to the right Omega OS status area when needed.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ],
         ),
@@ -1743,11 +1767,7 @@ class _GrantEditorPanel extends StatelessWidget {
           );
         }
 
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: fields,
-        );
+        return Wrap(spacing: 10, runSpacing: 10, children: fields);
       },
     );
   }
@@ -1786,9 +1806,9 @@ class _GrantEditorPanel extends StatelessWidget {
   Widget _sectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColours.darkText,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
     );
   }
 
@@ -1898,9 +1918,9 @@ class _ParkedGrantTile extends StatelessWidget {
                   child: Text(
                     grant.grantName,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColours.darkText,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 _StatusTag(status: grant.status),
@@ -1909,9 +1929,9 @@ class _ParkedGrantTile extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '${grant.project} - ${grant.owner}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
             ),
             const SizedBox(height: 10),
             Row(
@@ -1922,8 +1942,8 @@ class _ParkedGrantTile extends StatelessWidget {
                         ? 'No next action captured yet.'
                         : grant.nextAction,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColours.darkMutedText,
-                        ),
+                      color: AppColours.darkMutedText,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1982,8 +2002,8 @@ class _GrantListTile extends StatelessWidget {
                   child: Text(
                     grant.grantName,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColours.darkText,
-                        ),
+                      color: AppColours.darkText,
+                    ),
                   ),
                 ),
                 _StatusTag(status: grant.status),
@@ -1992,9 +2012,9 @@ class _GrantListTile extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               grant.project,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -2005,7 +2025,8 @@ class _GrantListTile extends StatelessWidget {
                 _MiniTag(label: grant.priority),
                 _MiniTag(label: _money(grant.amountRequested)),
                 _MiniTag(label: '${readiness.total}/70'),
-                if (grant.hasDeadline) _MiniTag(label: 'Deadline ${grant.deadline}'),
+                if (grant.hasDeadline)
+                  _MiniTag(label: 'Deadline ${grant.deadline}'),
                 if (grant.nextAction.trim().isEmpty)
                   _MiniTag(label: 'Needs next action'),
                 if (_deadlineWarningLabel(grant) != null)
@@ -2017,10 +2038,12 @@ class _GrantListTile extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              grant.nextAction.isEmpty ? 'No next action yet.' : grant.nextAction,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColours.darkText,
-                  ),
+              grant.nextAction.isEmpty
+                  ? 'No next action yet.'
+                  : grant.nextAction,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkText),
             ),
             const SizedBox(height: 8),
             ClipRRect(
@@ -2057,9 +2080,9 @@ class _StatusTag extends StatelessWidget {
       child: Text(
         status.label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -2081,19 +2104,16 @@ class _MiniTag extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColours.darkText,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: AppColours.darkText),
       ),
     );
   }
 }
 
 class _DeadlineTag extends StatelessWidget {
-  const _DeadlineTag({
-    required this.label,
-    required this.overdue,
-  });
+  const _DeadlineTag({required this.label, required this.overdue});
 
   final String label;
   final bool overdue;
@@ -2111,9 +2131,9 @@ class _DeadlineTag extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -2137,9 +2157,9 @@ class _FilterChip extends StatelessWidget {
       selected: selected,
       onSelected: (_) => onSelected(),
       labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: selected ? AppColours.darkBackground : AppColours.darkText,
-            fontWeight: FontWeight.w700,
-          ),
+        color: selected ? AppColours.darkBackground : AppColours.darkText,
+        fontWeight: FontWeight.w700,
+      ),
       selectedColor: AppColours.darkPrimary,
       backgroundColor: AppColours.darkSurfaceAlt,
       side: BorderSide(
@@ -2150,28 +2170,19 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _StatusActionButton extends StatelessWidget {
-  const _StatusActionButton({
-    required this.label,
-    required this.onPressed,
-  });
+  const _StatusActionButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.tonal(
-      onPressed: onPressed,
-      child: Text(label),
-    );
+    return FilledButton.tonal(onPressed: onPressed, child: Text(label));
   }
 }
 
 class _CompactStatTile extends StatelessWidget {
-  const _CompactStatTile({
-    required this.label,
-    required this.value,
-  });
+  const _CompactStatTile({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -2192,18 +2203,18 @@ class _CompactStatTile extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -2233,18 +2244,18 @@ class _MetricChip extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                ),
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -2266,16 +2277,16 @@ class _DetailRow extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: AppColours.darkSecondary,
-                fontWeight: FontWeight.w700,
-              ),
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           value.isEmpty ? 'Not set' : value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
         ),
       ],
     );
@@ -2298,9 +2309,9 @@ class _ErrorBanner extends StatelessWidget {
       ),
       child: Text(
         message,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.red.shade200,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: Colors.red.shade200),
       ),
     );
   }
@@ -2342,11 +2353,7 @@ enum GrantStatusFilter {
   paused,
 }
 
-enum GrantSortMode {
-  deadlineSoonest,
-  readinessHighest,
-  name,
-}
+enum GrantSortMode { deadlineSoonest, readinessHighest, name }
 
 BoxDecoration _panelDecoration() {
   return BoxDecoration(

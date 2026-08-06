@@ -43,7 +43,9 @@ class VoiceConversationThreadRepository {
   Map<String, dynamic> decodePayload(String payloadJson) {
     final decoded = jsonDecode(payloadJson);
     if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Voice thread payload was not a JSON object.');
+      throw const FormatException(
+        'Voice thread payload was not a JSON object.',
+      );
     }
 
     return decoded;

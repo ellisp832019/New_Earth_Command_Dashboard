@@ -79,10 +79,7 @@ class CalmUiDemoScreen extends StatelessWidget {
               child: const Text('Primary Action'),
             ),
             const SizedBox(height: AppSpacing.md),
-            CalmButton(
-              onPressed: () {},
-              child: const Text('Secondary Action'),
-            ),
+            CalmButton(onPressed: () {}, child: const Text('Secondary Action')),
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Top3View Example',

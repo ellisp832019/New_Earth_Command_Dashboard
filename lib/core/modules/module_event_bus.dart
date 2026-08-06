@@ -2,11 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum ModuleEventType {
-  enabledChanged,
-  dockPositionChanged,
-  registryReloaded,
-}
+enum ModuleEventType { enabledChanged, dockPositionChanged, registryReloaded }
 
 extension ModuleEventTypeLabel on ModuleEventType {
   String get label {

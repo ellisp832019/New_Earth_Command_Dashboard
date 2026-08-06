@@ -61,10 +61,10 @@ void main() {
     final items = await inboxRepository.getItems();
 
     expect(items, hasLength(2));
-    expect(items.map((item) => item.item.title), containsAll([
-      'Active capture',
-      'Parked capture',
-    ]));
+    expect(
+      items.map((item) => item.item.title),
+      containsAll(['Active capture', 'Parked capture']),
+    );
     expect(
       items.map((item) => item.item.title),
       isNot(contains('Processed capture')),

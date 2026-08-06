@@ -10,9 +10,9 @@ String buildAssetSummaryReport({
   required AssetTreasuryLinkSummary treasurySummary,
   DateTime? generatedAt,
 }) {
-  final now = DateFormat('yyyy-MM-dd HH:mm').format(
-    generatedAt ?? DateTime.now(),
-  );
+  final now = DateFormat(
+    'yyyy-MM-dd HH:mm',
+  ).format(generatedAt ?? DateTime.now());
   final buffer = StringBuffer()
     ..writeln('# Asset Intelligence Summary')
     ..writeln()
@@ -31,9 +31,7 @@ String buildAssetSummaryReport({
     ..writeln(
       '- Reorder estimated spend: ${treasurySummary.reorderEstimatedSpend.toStringAsFixed(2)}',
     )
-    ..writeln(
-      '- Linked finance IDs: ${treasurySummary.linkedFinanceIdCount}',
-    )
+    ..writeln('- Linked finance IDs: ${treasurySummary.linkedFinanceIdCount}')
     ..writeln(
       '- Broken equipment count: ${treasurySummary.brokenEquipmentCount}',
     )

@@ -26,11 +26,7 @@ class LaunchpadRepository {
 
     while (true) {
       final candidate = Directory(
-        path.join(
-          directory.path,
-          'modules',
-          'new_earth_launchpad_module',
-        ),
+        path.join(directory.path, 'modules', 'new_earth_launchpad_module'),
       );
       if (candidate.existsSync()) {
         return directory;
@@ -67,13 +63,15 @@ class LaunchpadRepository {
         if (decoded is Map<String, dynamic>) {
           final campaigns = _campaignsFromWorkspaceJson(decoded);
           final seedCampaigns = await _loadSeedCampaigns(seedRoot, issues);
-          final mergedCampaigns = campaigns.map((campaign) {
-            final seedCampaign = seedCampaigns.firstWhere(
-              (seed) => seed.id == campaign.id,
-              orElse: () => campaign,
-            );
-            return _mergeSeedPhase2Data(campaign, seedCampaign);
-          }).toList(growable: false);
+          final mergedCampaigns = campaigns
+              .map((campaign) {
+                final seedCampaign = seedCampaigns.firstWhere(
+                  (seed) => seed.id == campaign.id,
+                  orElse: () => campaign,
+                );
+                return _mergeSeedPhase2Data(campaign, seedCampaign);
+              })
+              .toList(growable: false);
           return LaunchpadWorkspace(
             configPath: runtimeFile.path,
             runtimePath: runtimeFile.path,
@@ -277,7 +275,10 @@ class LaunchpadRepository {
       ),
     );
     await exportFile.parent.create(recursive: true);
-    await _writeTextFileWithBackup(exportFile, buildCampaignStoryMarkdown(campaign));
+    await _writeTextFileWithBackup(
+      exportFile,
+      buildCampaignStoryMarkdown(campaign),
+    );
     return exportFile.path;
   }
 
@@ -289,10 +290,7 @@ class LaunchpadRepository {
     }
 
     final exportDir = Directory(
-      path.join(
-        workspace.exportRootPath,
-        '${_safeFileName(campaignId)}_pack',
-      ),
+      path.join(workspace.exportRootPath, '${_safeFileName(campaignId)}_pack'),
     );
     await exportDir.create(recursive: true);
 
@@ -307,7 +305,9 @@ class LaunchpadRepository {
     await _writeTextFileWithBackup(
       File(path.join(exportDir.path, 'rewards.json')),
       const JsonEncoder.withIndent('  ').convert(
-        campaign.rewards.map((reward) => reward.toJson()).toList(growable: false),
+        campaign.rewards
+            .map((reward) => reward.toJson())
+            .toList(growable: false),
       ),
     );
     await _writeTextFileWithBackup(
@@ -384,7 +384,9 @@ class LaunchpadRepository {
       ..writeln('- Campaign ID: ${campaign.id}')
       ..writeln('- Project: ${campaign.project}')
       ..writeln('- Status: ${campaign.status.label}')
-      ..writeln('- Funding goal: GBP ${campaign.fundingGoalGbp.toStringAsFixed(0)}')
+      ..writeln(
+        '- Funding goal: GBP ${campaign.fundingGoalGbp.toStringAsFixed(0)}',
+      )
       ..writeln('- Rewards: $rewards')
       ..writeln('- Readiness items: $readiness')
       ..writeln('- Risks: $risks')
@@ -396,7 +398,9 @@ class LaunchpadRepository {
       buffer.writeln('- None yet');
     } else {
       for (final entry in sections.entries) {
-        buffer.writeln('- ${launchpadCampaignSectionLabel(entry.key)}: ${entry.value}');
+        buffer.writeln(
+          '- ${launchpadCampaignSectionLabel(entry.key)}: ${entry.value}',
+        );
       }
     }
 
@@ -426,23 +430,25 @@ class LaunchpadRepository {
   Future<LaunchpadCampaignRecord> restoreCampaign(String campaignId) async {
     return _updateCampaign(
       campaignId,
-      (campaign) => campaign.copyWith(status: LaunchpadCampaignStatus.prototype),
+      (campaign) =>
+          campaign.copyWith(status: LaunchpadCampaignStatus.prototype),
     );
   }
 
   Future<LaunchpadCampaignRecord> _updateCampaign(
     String campaignId,
-    LaunchpadCampaignRecord Function(LaunchpadCampaignRecord campaign)
-    updater,
+    LaunchpadCampaignRecord Function(LaunchpadCampaignRecord campaign) updater,
   ) async {
     final workspace = await loadWorkspace();
-    final updatedCampaigns = workspace.campaigns.map((campaign) {
-      if (campaign.id != campaignId) {
-        return campaign;
-      }
+    final updatedCampaigns = workspace.campaigns
+        .map((campaign) {
+          if (campaign.id != campaignId) {
+            return campaign;
+          }
 
-      return updater(campaign).copyWith(updatedAt: DateTime.now());
-    }).toList(growable: false);
+          return updater(campaign).copyWith(updatedAt: DateTime.now());
+        })
+        .toList(growable: false);
 
     final updatedCampaign = updatedCampaigns.firstWhere(
       (campaign) => campaign.id == campaignId,
@@ -458,12 +464,8 @@ class LaunchpadRepository {
     List<String> issues,
   ) async {
     if (!await seedRoot.exists()) {
-      issues.add(
-        'Launchpad seed folder was not found at ${seedRoot.path}.',
-      );
-      return <LaunchpadCampaignRecord>[
-        _defaultCampaign(),
-      ];
+      issues.add('Launchpad seed folder was not found at ${seedRoot.path}.');
+      return <LaunchpadCampaignRecord>[_defaultCampaign()];
     }
 
     final campaigns = <LaunchpadCampaignRecord>[];
@@ -479,7 +481,9 @@ class LaunchpadRepository {
     }
 
     for (final campaignFolder in campaignFolders) {
-      final campaignFile = File(path.join(campaignFolder.path, 'campaign.json'));
+      final campaignFile = File(
+        path.join(campaignFolder.path, 'campaign.json'),
+      );
       if (!await campaignFile.exists()) {
         continue;
       }
@@ -491,13 +495,20 @@ class LaunchpadRepository {
         }
 
         final campaign = LaunchpadCampaignRecord.fromJson(decoded);
-        final rewardsFile = File(path.join(campaignFolder.path, 'rewards.json'));
-        final readinessFile = File(path.join(campaignFolder.path, 'readiness.csv'));
+        final rewardsFile = File(
+          path.join(campaignFolder.path, 'rewards.json'),
+        );
+        final readinessFile = File(
+          path.join(campaignFolder.path, 'readiness.csv'),
+        );
         final phase2File = File(path.join(campaignFolder.path, 'phase2.json'));
         campaigns.add(
           campaign.copyWith(
             rewards: await _loadRewardSeed(rewardsFile, campaign.id),
-            readinessItems: await _loadReadinessSeed(readinessFile, campaign.id),
+            readinessItems: await _loadReadinessSeed(
+              readinessFile,
+              campaign.id,
+            ),
             phase2Records: await _loadPhase2Seed(phase2File, campaign.id),
             storyBlocks: _defaultStoryBlocks(
               campaign.name,
@@ -509,9 +520,13 @@ class LaunchpadRepository {
           ),
         );
       } on FormatException {
-        issues.add('Seed campaign data could not be parsed for ${campaignFolder.path}.');
+        issues.add(
+          'Seed campaign data could not be parsed for ${campaignFolder.path}.',
+        );
       } on FileSystemException {
-        issues.add('Seed campaign data could not be opened for ${campaignFolder.path}.');
+        issues.add(
+          'Seed campaign data could not be opened for ${campaignFolder.path}.',
+        );
       }
     }
 
@@ -601,7 +616,10 @@ class LaunchpadRepository {
 
     return rawCampaigns
         .whereType<Map>()
-        .map((item) => LaunchpadCampaignRecord.fromJson(item.cast<String, dynamic>()))
+        .map(
+          (item) =>
+              LaunchpadCampaignRecord.fromJson(item.cast<String, dynamic>()),
+        )
         .toList(growable: false);
   }
 
@@ -766,8 +784,7 @@ class LaunchpadRepository {
         estimatedCogsGbp: 5,
         estimatedShippingGbp: 0,
         deliveryEstimate: 'During campaign',
-        notes:
-            'Private build updates, voting on grow profiles, early docs.',
+        notes: 'Private build updates, voting on grow profiles, early docs.',
       ),
       const LaunchpadRewardTier(
         id: 'DEV_KIT_149',
@@ -778,8 +795,7 @@ class LaunchpadRepository {
         estimatedCogsGbp: 65,
         estimatedShippingGbp: 8,
         deliveryEstimate: '8-10 weeks after campaign',
-        notes:
-            'ESP32 dev kit, sensor bundle, low-voltage relay board, docs.',
+        notes: 'ESP32 dev kit, sensor bundle, low-voltage relay board, docs.',
       ),
       const LaunchpadRewardTier(
         id: 'STARTER_299',
@@ -790,8 +806,7 @@ class LaunchpadRepository {
         estimatedCogsGbp: 145,
         estimatedShippingGbp: 15,
         deliveryEstimate: '10-14 weeks after campaign',
-        notes:
-            'Pre-assembled starter prototype kit subject to final scope.',
+        notes: 'Pre-assembled starter prototype kit subject to final scope.',
       ),
       const LaunchpadRewardTier(
         id: 'PARTNER_499',
@@ -802,8 +817,7 @@ class LaunchpadRepository {
         estimatedCogsGbp: 220,
         estimatedShippingGbp: 20,
         deliveryEstimate: 'Priority delivery',
-        notes:
-            'Limited founding edition, deeper onboarding and recognition.',
+        notes: 'Limited founding edition, deeper onboarding and recognition.',
       ),
     ];
   }
@@ -1219,7 +1233,9 @@ class LaunchpadRepository {
     ];
   }
 
-  List<LaunchpadStoryBlock> _sortedStoryBlocks(List<LaunchpadStoryBlock> blocks) {
+  List<LaunchpadStoryBlock> _sortedStoryBlocks(
+    List<LaunchpadStoryBlock> blocks,
+  ) {
     final copy = [...blocks];
     copy.sort((a, b) => a.order.compareTo(b.order));
     return copy;

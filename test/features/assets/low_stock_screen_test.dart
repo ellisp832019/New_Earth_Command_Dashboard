@@ -56,8 +56,12 @@ void main() {
       ProviderScope(
         overrides: [
           assetWorkspaceProvider.overrideWith((ref) async => data.snapshot),
-          assetPartsRegisterProvider.overrideWith((ref) async => data.partsTable),
-          assetLowStockPartsProvider.overrideWith((ref) async => data.lowStockRows),
+          assetPartsRegisterProvider.overrideWith(
+            (ref) async => data.partsTable,
+          ),
+          assetLowStockPartsProvider.overrideWith(
+            (ref) async => data.lowStockRows,
+          ),
         ],
         child: const MaterialApp(home: LowStockScreen()),
       ),
@@ -91,8 +95,12 @@ void main() {
       ProviderScope(
         overrides: [
           assetWorkspaceProvider.overrideWith((ref) async => data.snapshot),
-          assetPartsRegisterProvider.overrideWith((ref) async => data.partsTable),
-          assetLowStockPartsProvider.overrideWith((ref) async => data.lowStockRows),
+          assetPartsRegisterProvider.overrideWith(
+            (ref) async => data.partsTable,
+          ),
+          assetLowStockPartsProvider.overrideWith(
+            (ref) async => data.lowStockRows,
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -142,7 +150,8 @@ _LowStockFixture _lowStockFixture() {
   return _LowStockFixture(
     snapshot: AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: const <String>[],
       requiredFolders: AssetFolderService.requiredFolders,

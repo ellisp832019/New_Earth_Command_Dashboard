@@ -19,9 +19,8 @@ Widget buildDatabaseBackedTestApp(
     routes: [
       GoRoute(
         path: '/business',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Business')),
-        ),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('Business'))),
         routes: [
           GoRoute(
             path: 'new',
@@ -83,17 +82,17 @@ SettingsSnapshot _testSettings() {
       settingsId: 'settings-test',
       themeMode: 'Dark',
       defaultDashboardView: 'Dashboard',
-        showWellbeingCard: true,
-        showBusinessCard: true,
-        showLearningCard: true,
-        showContentCard: true,
-        showProjectsWorkspaceSnapshot: true,
-        showDockOverlays: false,
-        showBackupGuardianDock: false,
-        showTreasuryDock: false,
-        showKnowledgeLibraryDock: false,
-        showVoiceConversationDock: false,
-        showVoicePresenceChip: false,
+      showWellbeingCard: true,
+      showBusinessCard: true,
+      showLearningCard: true,
+      showContentCard: true,
+      showProjectsWorkspaceSnapshot: true,
+      showDockOverlays: false,
+      showBackupGuardianDock: false,
+      showTreasuryDock: false,
+      showKnowledgeLibraryDock: false,
+      showVoiceConversationDock: false,
+      showVoicePresenceChip: false,
       dailyTopTaskLimit: 3,
       voiceRepliesEnabled: false,
       voiceAssistantEnabled: false,

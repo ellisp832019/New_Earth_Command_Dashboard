@@ -25,27 +25,30 @@ class CompanyCommandCentreRepository {
     final actionBoard = await _readActionBoard();
     final productPortfolio = await _readProductPortfolio();
     final grantsPipeline = await _readGrantsPipeline();
-    final indexSnapshot = await const CompanyCommandCentreIndexService().scanAndGenerate();
+    final indexSnapshot = await const CompanyCommandCentreIndexService()
+        .scanAndGenerate();
     final omegaOsPath = overview.omegaOsPath.isNotEmpty
         ? overview.omegaOsPath
         : companyCommandCentreOmegaOsPath;
     final sourcePathExists = Directory(omegaOsPath).existsSync();
-    final configExists = File(companyCommandCentreModuleConfigPath).existsSync();
-    final configSnapshot = await _readJsonMap(companyCommandCentreModuleConfigPath);
+    final configExists = File(
+      companyCommandCentreModuleConfigPath,
+    ).existsSync();
+    final configSnapshot = await _readJsonMap(
+      companyCommandCentreModuleConfigPath,
+    );
     final configuredPath = _stringValue(configSnapshot, const [
       'omegaPath',
       'omega_os_path',
     ]);
-    final moduleReadOnly = _boolValue(
-      configSnapshot,
-      const ['readOnly', 'read_only'],
-      fallback: true,
-    );
-    final moduleBackupBeforeWrite = _boolValue(
-      configSnapshot,
-      const ['backupBeforeWrite', 'backup_before_write'],
-      fallback: true,
-    );
+    final moduleReadOnly = _boolValue(configSnapshot, const [
+      'readOnly',
+      'read_only',
+    ], fallback: true);
+    final moduleBackupBeforeWrite = _boolValue(configSnapshot, const [
+      'backupBeforeWrite',
+      'backup_before_write',
+    ], fallback: true);
     final backupRootPath = path.join(
       omegaOsPath,
       'backups',
@@ -81,20 +84,26 @@ class CompanyCommandCentreRepository {
   Future<CompanyOverviewData> _readOverview() async {
     final raw = await _readJsonMap(companyCommandCentreOverviewPath);
     return CompanyOverviewData(
-      companyName:
-          _stringValue(raw, const ['company_name', 'companyName'])
-              .trim(),
-      companyNumber:
-          _stringValue(raw, const ['company_number', 'companyNumber'])
-              .trim(),
+      companyName: _stringValue(raw, const [
+        'company_name',
+        'companyName',
+      ]).trim(),
+      companyNumber: _stringValue(raw, const [
+        'company_number',
+        'companyNumber',
+      ]).trim(),
       domain: _stringValue(raw, const ['domain']).trim(),
       bank: _stringValue(raw, const ['bank']).trim(),
-      omegaOsPath:
-          _stringValue(raw, const ['omega_os_path', 'omegaOsPath']).trim(),
+      omegaOsPath: _stringValue(raw, const [
+        'omega_os_path',
+        'omegaOsPath',
+      ]).trim(),
       status: _stringValue(raw, const ['status']).trim(),
       focus: _stringList(raw, const ['focus']),
-      nextMilestone:
-          _stringValue(raw, const ['next_milestone', 'nextMilestone']).trim(),
+      nextMilestone: _stringValue(raw, const [
+        'next_milestone',
+        'nextMilestone',
+      ]).trim(),
     );
   }
 
@@ -123,10 +132,10 @@ class CompanyCommandCentreRepository {
             name: _stringValue(item, const ['name']).trim(),
             type: _stringValue(item, const ['type']).trim(),
             status: _stringValue(item, const ['status']).trim(),
-            commercialReadiness: _stringValue(
-              item,
-              const ['commercial_readiness', 'commercialReadiness'],
-            ).trim(),
+            commercialReadiness: _stringValue(item, const [
+              'commercial_readiness',
+              'commercialReadiness',
+            ]).trim(),
           ),
         )
         .toList(growable: false);
@@ -142,8 +151,10 @@ class CompanyCommandCentreRepository {
             name: _stringValue(item, const ['name']).trim(),
             stage: _stringValue(item, const ['stage']).trim(),
             fit: _stringValue(item, const ['fit']).trim(),
-            nextAction: _stringValue(item, const ['next_action', 'nextAction'])
-                .trim(),
+            nextAction: _stringValue(item, const [
+              'next_action',
+              'nextAction',
+            ]).trim(),
           ),
         )
         .toList(growable: false);

@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:new_earth_command_dashboard/features/modules/modules_screen.dart';
 
 void main() {
-  testWidgets(
-    'module hub screen keeps the shared registry shell visible',
-    (tester) async {
+  testWidgets('module hub screen keeps the shared registry shell visible', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const ProviderScope(child: MaterialApp(home: ModulesScreen())),
     );

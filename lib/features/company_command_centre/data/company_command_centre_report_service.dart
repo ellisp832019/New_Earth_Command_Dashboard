@@ -136,7 +136,9 @@ String buildCompanyCommandCentreSummaryReport({
     ..writeln('- Main focus items: ${snapshot.overview.focus.length}')
     ..writeln('- Next milestone: ${snapshot.overview.nextMilestone}')
     ..writeln('- Omega OS source path: ${snapshot.configuredOmegaPath}')
-    ..writeln('- Source path available: ${snapshot.overview.omegaOsPathExists ? 'yes' : 'no'}')
+    ..writeln(
+      '- Source path available: ${snapshot.overview.omegaOsPathExists ? 'yes' : 'no'}',
+    )
     ..writeln()
     ..writeln('## Source-linked trackers')
     ..writeln(
@@ -162,14 +164,30 @@ String buildCompanyCommandCentreSummaryReport({
     ..writeln('- Action board items: ${snapshot.actionBoard.length}')
     ..writeln('- Product portfolio items: ${snapshot.productPortfolio.length}')
     ..writeln('- Grants pipeline items: ${snapshot.grantsPipeline.length}')
-    ..writeln('- Indexed markdown files: ${snapshot.indexSnapshot.sourceMarkdownCount}')
-    ..writeln('- Generated company index: ${snapshot.indexSnapshot.companyIndexPath}')
-    ..writeln('- Generated action index: ${snapshot.indexSnapshot.actionItemsIndexPath}')
-    ..writeln('- Generated deadlines index: ${snapshot.indexSnapshot.deadlinesIndexPath}')
-    ..writeln('- Generated products index: ${snapshot.indexSnapshot.productsIndexPath}')
-    ..writeln('- Generated grants index: ${snapshot.indexSnapshot.grantsIndexPath}')
-    ..writeln('- Generated IP assets index: ${snapshot.indexSnapshot.ipAssetsIndexPath}')
-    ..writeln('- Generated evidence index: ${snapshot.indexSnapshot.evidenceIndexPath}')
+    ..writeln(
+      '- Indexed markdown files: ${snapshot.indexSnapshot.sourceMarkdownCount}',
+    )
+    ..writeln(
+      '- Generated company index: ${snapshot.indexSnapshot.companyIndexPath}',
+    )
+    ..writeln(
+      '- Generated action index: ${snapshot.indexSnapshot.actionItemsIndexPath}',
+    )
+    ..writeln(
+      '- Generated deadlines index: ${snapshot.indexSnapshot.deadlinesIndexPath}',
+    )
+    ..writeln(
+      '- Generated products index: ${snapshot.indexSnapshot.productsIndexPath}',
+    )
+    ..writeln(
+      '- Generated grants index: ${snapshot.indexSnapshot.grantsIndexPath}',
+    )
+    ..writeln(
+      '- Generated IP assets index: ${snapshot.indexSnapshot.ipAssetsIndexPath}',
+    )
+    ..writeln(
+      '- Generated evidence index: ${snapshot.indexSnapshot.evidenceIndexPath}',
+    )
     ..writeln()
     ..writeln('## Recent linked files');
 
@@ -181,7 +199,9 @@ String buildCompanyCommandCentreSummaryReport({
         ..writeln('- ${record.title}')
         ..writeln('  - Source: ${record.relativePath}')
         ..writeln('  - Labels: ${record.labels.join(', ')}')
-        ..writeln('  - Due dates: ${record.dueDates.isEmpty ? 'None' : record.dueDates.join(', ')}');
+        ..writeln(
+          '  - Due dates: ${record.dueDates.isEmpty ? 'None' : record.dueDates.join(', ')}',
+        );
     }
   }
 

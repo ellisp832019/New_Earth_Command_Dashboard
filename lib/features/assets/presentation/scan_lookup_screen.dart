@@ -61,8 +61,7 @@ class _ScanLookupScreenState extends ConsumerState<ScanLookupScreen> {
                       ),
                       data: (equipment) {
                         return partsAsync.when(
-                          loading: () =>
-                              const _LoadingCard(label: 'Parts'),
+                          loading: () => const _LoadingCard(label: 'Parts'),
                           error: (error, stackTrace) => _ErrorCard(
                             label: 'Parts',
                             onReload: () =>
@@ -137,7 +136,9 @@ class _ScanLookupScreenState extends ConsumerState<ScanLookupScreen> {
       (match) => match.kind == ScanLookupKind.part && match.isExact,
       orElse: () => const ScanLookupMatch.none(),
     );
-    final fallback = matches.isNotEmpty ? matches.first : const ScanLookupMatch.none();
+    final fallback = matches.isNotEmpty
+        ? matches.first
+        : const ScanLookupMatch.none();
     final selected = exactEquipment.isPresent
         ? exactEquipment
         : exactPart.isPresent
@@ -317,16 +318,16 @@ class _HeroCard extends StatelessWidget {
               Text(
                 'Scan Lookup',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColours.darkText,
-                    ),
+                  color: AppColours.darkText,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Paste or type a QR value, then jump straight to the matching asset, part, or label record.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColours.darkMutedText,
-                      height: 1.35,
-                    ),
+                  color: AppColours.darkMutedText,
+                  height: 1.35,
+                ),
               ),
             ],
           );
@@ -393,7 +394,10 @@ class _HeroCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 20),
-              SizedBox(width: 360, child: Align(alignment: Alignment.topRight, child: actions)),
+              SizedBox(
+                width: 360,
+                child: Align(alignment: Alignment.topRight, child: actions),
+              ),
             ],
           );
         },
@@ -427,18 +431,18 @@ class _LookupSummary extends StatelessWidget {
             lookupText == null || lookupText!.isEmpty
                 ? 'Paste a QR payload to begin.'
                 : 'Searching for "$lookupText".',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 12),
           if (bestMatch == null || !bestMatch!.isPresent)
             Text(
               'No exact match yet. Check the results below or try a different code.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkAmber,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColours.darkAmber,
+                fontWeight: FontWeight.w600,
+              ),
             )
           else ...[
             _MatchBadge(match: bestMatch!),
@@ -476,18 +480,24 @@ class _ResultsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const _PanelTitle(title: 'Matches', icon: Icons.view_list_outlined),
+              const _PanelTitle(
+                title: 'Matches',
+                icon: Icons.view_list_outlined,
+              ),
               const Spacer(),
-              _InlineBadge(count: matches.length, accent: AppColours.darkSecondary),
+              _InlineBadge(
+                count: matches.length,
+                accent: AppColours.darkSecondary,
+              ),
             ],
           ),
           const SizedBox(height: 10),
           if (matches.isEmpty)
             Text(
               'No matches yet. Try scanning a different code or paste a full asset ID.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             )
           else
             Column(
@@ -534,33 +544,29 @@ class _MatchCard extends StatelessWidget {
                 Text(
                   match.title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   match.subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColours.darkMutedText,
-                      ),
+                    color: AppColours.darkMutedText,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   match.primaryId,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColours.darkSecondary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ),
-          _InlineBadge(
-            count: 1,
-            accent: accent,
-            label: match.kind.name,
-          ),
+          _InlineBadge(count: 1, accent: accent, label: match.kind.name),
         ],
       ),
     );
@@ -585,7 +591,11 @@ class _MatchBadge extends StatelessWidget {
       runSpacing: 8,
       children: [
         _InlineBadge(count: 1, accent: accent, label: match.kind.name),
-        _InlineBadge(count: 1, accent: AppColours.darkSecondary, label: match.primaryId),
+        _InlineBadge(
+          count: 1,
+          accent: AppColours.darkSecondary,
+          label: match.primaryId,
+        ),
       ],
     );
   }
@@ -658,9 +668,9 @@ class _PanelTitle extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-                fontWeight: FontWeight.w700,
-              ),
+            color: AppColours.darkText,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -668,11 +678,7 @@ class _PanelTitle extends StatelessWidget {
 }
 
 class _InlineBadge extends StatelessWidget {
-  const _InlineBadge({
-    required this.count,
-    required this.accent,
-    this.label,
-  });
+  const _InlineBadge({required this.count, required this.accent, this.label});
 
   final int count;
   final Color accent;
@@ -690,9 +696,9 @@ class _InlineBadge extends StatelessWidget {
       child: Text(
         label ?? '$count',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -708,11 +714,11 @@ class ScanLookupMatch {
   });
 
   const ScanLookupMatch.none()
-      : kind = ScanLookupKind.none,
-        primaryId = '',
-        title = '',
-        subtitle = '',
-        isExact = false;
+    : kind = ScanLookupKind.none,
+      primaryId = '',
+      title = '',
+      subtitle = '',
+      isExact = false;
 
   factory ScanLookupMatch.equipment({
     required String primaryId,

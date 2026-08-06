@@ -466,9 +466,7 @@ class TreasuryFolderService {
     return TreasuryWorkspaceSnapshot(
       configPath: configFile.path,
       financeRootPath: financeRootPath,
-      isReady: issues.isEmpty &&
-          missingFolders.isEmpty &&
-          missingFiles.isEmpty,
+      isReady: issues.isEmpty && missingFolders.isEmpty && missingFiles.isEmpty,
       issues: issues,
       requiredFolders: requiredFolders,
       missingFolders: missingFolders,
@@ -563,8 +561,9 @@ class TreasuryFolderService {
     await financeRoot.create(recursive: true);
 
     for (final relativeFolder in requiredFolders) {
-      await Directory(path.join(financeRoot.path, relativeFolder))
-          .create(recursive: true);
+      await Directory(
+        path.join(financeRoot.path, relativeFolder),
+      ).create(recursive: true);
     }
 
     for (final relativeFile in requiredFiles) {

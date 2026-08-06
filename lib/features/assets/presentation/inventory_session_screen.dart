@@ -159,7 +159,9 @@ class _InventorySessionScreenState
                             title: 'Inventory Session',
                             subtitle: 'Inventory session workspace',
                             onBack: () => context.go(RouteNames.assets),
-                            child: const Center(child: CircularProgressIndicator()),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           ),
                           error: (error, stackTrace) => WorkspaceShell(
                             title: 'Inventory Session',
@@ -220,243 +222,281 @@ class _InventorySessionScreenState
                                   children: [
                                     CustomScrollView(
                                       slivers: [
-                                    SliverPadding(
-                                      padding: const EdgeInsets.all(20),
-                                      sliver: SliverToBoxAdapter(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            _InventoryHeroCard(
-                                              workspacePath:
-                                                  workspace.assetsRootPath,
-                                              equipmentCount: equipmentCount,
-                                              partsCount: partsCount,
-                                              labeledEquipmentCount:
-                                                  labeledEquipmentCount,
-                                              unlabeledEquipmentCount:
-                                                  unlabeledEquipmentCount,
-                                              lowStockCount: lowStockCount,
-                                              onBack: () =>
-                                                  context.go(RouteNames.assets),
-                                              onOpenEquipment: () =>
-                                                  context.push(
-                                                    RouteNames.assetEquipment,
+                                        SliverPadding(
+                                          padding: const EdgeInsets.all(20),
+                                          sliver: SliverToBoxAdapter(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                _InventoryHeroCard(
+                                                  workspacePath:
+                                                      workspace.assetsRootPath,
+                                                  equipmentCount:
+                                                      equipmentCount,
+                                                  partsCount: partsCount,
+                                                  labeledEquipmentCount:
+                                                      labeledEquipmentCount,
+                                                  unlabeledEquipmentCount:
+                                                      unlabeledEquipmentCount,
+                                                  lowStockCount: lowStockCount,
+                                                  onBack: () => context.go(
+                                                    RouteNames.assets,
                                                   ),
-                                              onOpenParts: () => context.push(
-                                                RouteNames.assetParts,
-                                              ),
-                                              onOpenLowStock: () =>
-                                                  context.push(
-                                                    RouteNames.assetLowStock,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            _InventoryPlanCard(
-                                              sessionNameController:
-                                                  _sessionNameController,
-                                              notesController: _notesController,
-                                              countedByController:
-                                                  _countedByController,
-                                              onSetCountedBy: (value) {
-                                                setState(() {
-                                                  _countedByController.text =
-                                                      value;
-                                                });
-                                              },
-                                              onBuildPack:
-                                                  _isBuilding ||
-                                                      workspace
-                                                              .assetsRootPath ==
-                                                          null
-                                                  ? null
-                                                  : () => _buildPack(
-                                                      workspace.assetsRootPath!,
-                                                      equipmentTable.rows,
-                                                      partsTable.rows,
-                                                      qrLabelsByAssetId,
-                                                      lowStockCount,
+                                                  onOpenEquipment: () =>
+                                                      context.push(
+                                                        RouteNames
+                                                            .assetEquipment,
+                                                      ),
+                                                  onOpenParts: () =>
+                                                      context.push(
+                                                        RouteNames.assetParts,
+                                                      ),
+                                                  onOpenLowStock: () =>
+                                                      context.push(
+                                                        RouteNames
+                                                            .assetLowStock,
+                                                      ),
+                                                ),
+                                                const SizedBox(height: 20),
+                                                _InventoryPlanCard(
+                                                  sessionNameController:
+                                                      _sessionNameController,
+                                                  notesController:
+                                                      _notesController,
+                                                  countedByController:
+                                                      _countedByController,
+                                                  onSetCountedBy: (value) {
+                                                    setState(() {
+                                                      _countedByController
+                                                              .text =
+                                                          value;
+                                                    });
+                                                  },
+                                                  onBuildPack:
+                                                      _isBuilding ||
+                                                          workspace
+                                                                  .assetsRootPath ==
+                                                              null
+                                                      ? null
+                                                      : () => _buildPack(
+                                                          workspace
+                                                              .assetsRootPath!,
+                                                          equipmentTable.rows,
+                                                          partsTable.rows,
+                                                          qrLabelsByAssetId,
+                                                          lowStockCount,
+                                                        ),
+                                                  onOpenLatestPack:
+                                                      _latestPack == null
+                                                      ? null
+                                                      : () => _openFile(
+                                                          _latestPack!.pdfFile,
+                                                        ),
+                                                  isBusy: _isBuilding,
+                                                  latestPack: _latestPack,
+                                                ),
+                                                const SizedBox(height: 20),
+                                                _InventoryWorkflowCards(
+                                                  onOpenQrLabels: () =>
+                                                      context.push(
+                                                        RouteNames
+                                                            .assetQrLabelRegister,
+                                                      ),
+                                                  onOpenQrStudio: () =>
+                                                      context.push(
+                                                        RouteNames
+                                                            .assetQrLabelStudio,
+                                                      ),
+                                                  onOpenPrintQueue: () =>
+                                                      context.push(
+                                                        RouteNames
+                                                            .assetQrPrintQueue,
+                                                      ),
+                                                  onOpenQrHistory: () =>
+                                                      context.push(
+                                                        RouteNames
+                                                            .assetQrLabelHistory,
+                                                      ),
+                                                  onOpenChecklist: () =>
+                                                      _openRepoFile(
+                                                        path.join(
+                                                          'docs',
+                                                          'hayley_assets',
+                                                          'HAYLEY_INVENTORY_SESSION_CHECKLIST.md',
+                                                        ),
+                                                      ),
+                                                  onOpenQrGuide: () =>
+                                                      _openRepoFile(
+                                                        path.join(
+                                                          'docs',
+                                                          'hayley_assets',
+                                                          'HAYLEY_QR_LABEL_GUIDE.md',
+                                                        ),
+                                                      ),
+                                                  onOpenSessionsFolder:
+                                                      assetsRootPath == null
+                                                      ? null
+                                                      : () =>
+                                                            _openInventorySessionsFolder(
+                                                              assetsRootPath,
+                                                            ),
+                                                ),
+                                                const SizedBox(height: 20),
+                                                _InventoryFollowUpCard(
+                                                  countedBy:
+                                                      _countedByController.text
+                                                          .trim(),
+                                                  unlabeledRows:
+                                                      unlabeledEquipmentRows,
+                                                  lowStockRows:
+                                                      lowStockFollowUpRows,
+                                                  onExportUnlabeled:
+                                                      unlabeledEquipmentRows
+                                                          .isEmpty
+                                                      ? null
+                                                      : () => _exportFollowUpRows(
+                                                          workspace
+                                                              .assetsRootPath!,
+                                                          fileStem:
+                                                              '${_sessionNameController.text}_unlabeled_follow_up',
+                                                          rows:
+                                                              unlabeledEquipmentRows,
+                                                          title:
+                                                              'unlabeled equipment',
+                                                        ),
+                                                  onExportLowStock:
+                                                      lowStockFollowUpRows
+                                                          .isEmpty
+                                                      ? null
+                                                      : () => _exportFollowUpRows(
+                                                          workspace
+                                                              .assetsRootPath!,
+                                                          fileStem:
+                                                              '${_sessionNameController.text}_low_stock_follow_up',
+                                                          rows:
+                                                              lowStockFollowUpRows,
+                                                          title:
+                                                              'low stock parts',
+                                                        ),
+                                                ),
+                                                const SizedBox(height: 20),
+                                                if (_latestPack != null) ...[
+                                                  _LatestPackCard(
+                                                    pack: _latestPack!,
+                                                    onOpenFolder: () =>
+                                                        _openFolder(
+                                                          _latestPack!
+                                                              .pdfFile
+                                                              .parent,
+                                                        ),
+                                                    onOpenCsv: () => _openFile(
+                                                      _latestPack!.csvFile,
                                                     ),
-                                              onOpenLatestPack:
-                                                  _latestPack == null
-                                                  ? null
-                                                  : () => _openFile(
+                                                    onOpenPdf: () => _openFile(
                                                       _latestPack!.pdfFile,
                                                     ),
-                                              isBusy: _isBuilding,
-                                              latestPack: _latestPack,
-                                            ),
-                                            const SizedBox(height: 20),
-                                            _InventoryWorkflowCards(
-                                              onOpenQrLabels: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrLabelRegister,
-                                                  ),
-                                              onOpenQrStudio: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrLabelStudio,
-                                                  ),
-                                              onOpenPrintQueue: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrPrintQueue,
-                                                  ),
-                                              onOpenQrHistory: () =>
-                                                  context.push(
-                                                    RouteNames
-                                                        .assetQrLabelHistory,
-                                                  ),
-                                              onOpenChecklist: () => _openRepoFile(
-                                                path.join(
-                                                  'docs',
-                                                  'hayley_assets',
-                                                  'HAYLEY_INVENTORY_SESSION_CHECKLIST.md',
-                                                ),
-                                              ),
-                                              onOpenQrGuide: () => _openRepoFile(
-                                                path.join(
-                                                  'docs',
-                                                  'hayley_assets',
-                                                  'HAYLEY_QR_LABEL_GUIDE.md',
-                                                ),
-                                              ),
-                                              onOpenSessionsFolder:
-                                                  assetsRootPath == null
-                                                  ? null
-                                                  : () =>
-                                                        _openInventorySessionsFolder(
-                                                          assetsRootPath,
+                                                    onCopyCsvPath: () =>
+                                                        _copyPath(
+                                                          _latestPack!
+                                                              .csvFile
+                                                              .path,
                                                         ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            _InventoryFollowUpCard(
-                                              countedBy: _countedByController
-                                                  .text
-                                                  .trim(),
-                                              unlabeledRows:
-                                                  unlabeledEquipmentRows,
-                                              lowStockRows:
-                                                  lowStockFollowUpRows,
-                                              onExportUnlabeled:
-                                                  unlabeledEquipmentRows.isEmpty
-                                                  ? null
-                                                  : () => _exportFollowUpRows(
-                                                      workspace.assetsRootPath!,
-                                                      fileStem:
-                                                          '${_sessionNameController.text}_unlabeled_follow_up',
-                                                      rows:
-                                                          unlabeledEquipmentRows,
-                                                      title:
-                                                          'unlabeled equipment',
-                                                    ),
-                                              onExportLowStock:
-                                                  lowStockFollowUpRows.isEmpty
-                                                  ? null
-                                                  : () => _exportFollowUpRows(
-                                                      workspace.assetsRootPath!,
-                                                      fileStem:
-                                                          '${_sessionNameController.text}_low_stock_follow_up',
-                                                      rows:
-                                                          lowStockFollowUpRows,
-                                                      title: 'low stock parts',
-                                                    ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            if (_latestPack != null) ...[
-                                              _LatestPackCard(
-                                                pack: _latestPack!,
-                                                onOpenFolder: () => _openFolder(
-                                                  _latestPack!.pdfFile.parent,
-                                                ),
-                                                onOpenCsv: () => _openFile(
-                                                  _latestPack!.csvFile,
-                                                ),
-                                                onOpenPdf: () => _openFile(
-                                                  _latestPack!.pdfFile,
-                                                ),
-                                                onCopyCsvPath: () => _copyPath(
-                                                  _latestPack!.csvFile.path,
-                                                ),
-                                                onCopyPdfPath: () => _copyPath(
-                                                  _latestPack!.pdfFile.path,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 20),
-                                            ],
-                                            LayoutBuilder(
-                                              builder: (context, constraints) {
-                                                final wide =
-                                                    constraints.maxWidth >= 960;
-                                                final left = Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    _SessionNotesCard(
-                                                      title:
-                                                          'How to run the count',
-                                                      items: const [
-                                                        'Print the inventory pack first.',
-                                                        'Walk equipment and parts together, shelf by shelf.',
-                                                        'Use the QR labels to confirm IDs before you count.',
-                                                        'Record anything missing or broken in the notes column.',
+                                                    onCopyPdfPath: () =>
+                                                        _copyPath(
+                                                          _latestPack!
+                                                              .pdfFile
+                                                              .path,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 20),
+                                                ],
+                                                LayoutBuilder(
+                                                  builder: (context, constraints) {
+                                                    final wide =
+                                                        constraints.maxWidth >=
+                                                        960;
+                                                    final left = Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        _SessionNotesCard(
+                                                          title:
+                                                              'How to run the count',
+                                                          items: const [
+                                                            'Print the inventory pack first.',
+                                                            'Walk equipment and parts together, shelf by shelf.',
+                                                            'Use the QR labels to confirm IDs before you count.',
+                                                            'Record anything missing or broken in the notes column.',
+                                                          ],
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 18,
+                                                        ),
+                                                        _SessionNotesCard(
+                                                          title:
+                                                              'What this pack covers',
+                                                          items: [
+                                                            '$equipmentCount equipment items',
+                                                            '$partsCount parts rows',
+                                                            '$labeledEquipmentCount equipment items already linked to QR labels',
+                                                            '$unlabeledEquipmentCount equipment items still missing a QR label',
+                                                          ],
+                                                        ),
                                                       ],
-                                                    ),
-                                                    const SizedBox(height: 18),
-                                                    _SessionNotesCard(
-                                                      title:
-                                                          'What this pack covers',
-                                                      items: [
-                                                        '$equipmentCount equipment items',
-                                                        '$partsCount parts rows',
-                                                        '$labeledEquipmentCount equipment items already linked to QR labels',
-                                                        '$unlabeledEquipmentCount equipment items still missing a QR label',
+                                                    );
+
+                                                    final right =
+                                                        _SessionLogCard(
+                                                          sessions:
+                                                              sessionLogTable
+                                                                  .rows,
+                                                        );
+
+                                                    if (wide) {
+                                                      return Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Expanded(child: left),
+                                                          const SizedBox(
+                                                            width: 18,
+                                                          ),
+                                                          Expanded(
+                                                            child: right,
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }
+
+                                                    return Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        left,
+                                                        const SizedBox(
+                                                          height: 18,
+                                                        ),
+                                                        right,
                                                       ],
-                                                    ),
-                                                  ],
-                                                );
-
-                                                final right = _SessionLogCard(
-                                                  sessions:
-                                                      sessionLogTable.rows,
-                                                );
-
-                                                if (wide) {
-                                                  return Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Expanded(child: left),
-                                                      const SizedBox(width: 18),
-                                                      Expanded(child: right),
-                                                    ],
-                                                  );
-                                                }
-
-                                                return Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    left,
-                                                    const SizedBox(height: 18),
-                                                    right,
-                                                  ],
-                                                );
-                                              },
+                                                    );
+                                                  },
+                                                ),
+                                              ],
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                    ),
                                       ],
                                     ),
                                     Positioned(
                                       right: 20,
                                       bottom: 20,
                                       child: FloatingActionButton.extended(
-                                        onPressed: _isBuilding ||
+                                        onPressed:
+                                            _isBuilding ||
                                                 workspace.assetsRootPath == null
                                             ? null
                                             : () => _buildPack(
@@ -470,13 +510,17 @@ class _InventorySessionScreenState
                                             ? const SizedBox(
                                                 width: 16,
                                                 height: 16,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
                                               )
                                             : const Icon(Icons.playlist_add),
-                                        label:
-                                            Text(_isBuilding ? 'Building' : 'Build Pack'),
+                                        label: Text(
+                                          _isBuilding
+                                              ? 'Building'
+                                              : 'Build Pack',
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -971,9 +1015,7 @@ class _InventoryWorkflowCards extends StatelessWidget {
         );
 
         if (!wide) {
-          return Column(
-            children: [thermal, const SizedBox(height: 20), paper],
-          );
+          return Column(children: [thermal, const SizedBox(height: 20), paper]);
         }
 
         return Row(

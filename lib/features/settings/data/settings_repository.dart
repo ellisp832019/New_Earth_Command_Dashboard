@@ -48,8 +48,7 @@ class SettingsRepository {
         showContentCard: showContentCard == null
             ? const Value.absent()
             : Value(showContentCard),
-        showProjectsWorkspaceSnapshot:
-            showProjectsWorkspaceSnapshot == null
+        showProjectsWorkspaceSnapshot: showProjectsWorkspaceSnapshot == null
             ? const Value.absent()
             : Value(showProjectsWorkspaceSnapshot),
         updatedAt: Value(timestamp),

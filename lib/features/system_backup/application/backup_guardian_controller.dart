@@ -6,8 +6,8 @@ final backupGuardianServiceProvider = Provider<BackupGuardianService>((ref) {
   return BackupGuardianService();
 });
 
-final backupGuardianSnapshotProvider =
-    FutureProvider<BackupGuardianSnapshot>((ref) async {
+final backupGuardianSnapshotProvider = FutureProvider<BackupGuardianSnapshot>((
+  ref,
+) async {
   return ref.read(backupGuardianServiceProvider).loadSnapshot();
 });
-

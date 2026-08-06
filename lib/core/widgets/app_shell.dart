@@ -59,7 +59,9 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     if (kDebugMode) {
-      debugPrint('AppShell build: branch=${widget.navigationShell.currentIndex}');
+      debugPrint(
+        'AppShell build: branch=${widget.navigationShell.currentIndex}',
+      );
     }
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 1100;
@@ -688,8 +690,8 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                         widget.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                              style: theme.textTheme.titleMedium
-                                                  ?.copyWith(
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
                                               color: AppColours.darkText,
                                               fontWeight: FontWeight.w800,
                                               fontSize: 22,
@@ -717,7 +719,7 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        selectedModule?.description ?? 
+                                        selectedModule?.description ??
                                             widget.subtitle,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -737,8 +739,8 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                         widget.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                              style: theme.textTheme.titleMedium
-                                                  ?.copyWith(
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
                                               color: AppColours.darkText,
                                               fontWeight: FontWeight.w800,
                                               fontSize: 22,
@@ -752,14 +754,11 @@ class _DesktopWindowBarState extends ConsumerState<_DesktopWindowBar> {
                                             child: ModuleSwitcherDropdown(
                                               modules: modules,
                                               selectedModule: selectedModule,
-                                              launchTargetResolver: (module) =>
-                                                  ref
-                                                      .read(
-                                                        moduleHubStateRepositoryProvider,
-                                                      )
-                                                      .loadLaunchTarget(
-                                                        module.id,
-                                                      ),
+                                              launchTargetResolver: (module) => ref
+                                                  .read(
+                                                    moduleHubStateRepositoryProvider,
+                                                  )
+                                                  .loadLaunchTarget(module.id),
                                               onSelected: (module) {
                                                 final target = ref
                                                     .read(

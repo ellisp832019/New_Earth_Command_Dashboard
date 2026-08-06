@@ -288,9 +288,9 @@ class QrPrintQueueScreen extends ConsumerWidget {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyErrorMessage(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyErrorMessage(error))));
     }
   }
 

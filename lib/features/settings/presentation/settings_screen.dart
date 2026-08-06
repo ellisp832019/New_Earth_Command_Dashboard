@@ -170,7 +170,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (isSessionLocked) ...[
                         const SizedBox(height: 12),
                         SecurityLockedNoticeCard(
-                          title: 'Security controls are waiting on local unlock',
+                          title:
+                              'Security controls are waiting on local unlock',
                           message:
                               'Open Security Lock before you manage users, devices, or PINs from Settings.',
                           detail:

@@ -106,10 +106,7 @@ class ModuleManifest {
   }
 }
 
-IconData moduleIconFor(
-  String iconKey, {
-  ModuleCategory? category,
-}) {
+IconData moduleIconFor(String iconKey, {ModuleCategory? category}) {
   switch (iconKey.trim().toLowerCase()) {
     case 'science':
     case 'science_outlined':

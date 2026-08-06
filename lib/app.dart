@@ -561,7 +561,12 @@ class _TopRightStatusClusterState extends State<_TopRightStatusCluster> {
           alignment: Alignment.topRight,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: width),
-            child: _expanded ? _ExpandedTopRightStatus(session: widget.session, showVoicePresence: widget.showVoicePresence) : _CollapsedTopRightStatus(session: widget.session),
+            child: _expanded
+                ? _ExpandedTopRightStatus(
+                    session: widget.session,
+                    showVoicePresence: widget.showVoicePresence,
+                  )
+                : _CollapsedTopRightStatus(session: widget.session),
           ),
         ),
       ),

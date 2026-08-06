@@ -16,11 +16,12 @@ final businessItemsProvider = FutureProvider<List<BusinessListItem>>((
   return ref.watch(businessRepositoryProvider).getItems();
 });
 
-final businessItemProvider =
-    FutureProvider.family<BusinessOpportunity, String>((ref, businessId) async {
-  await ref.watch(databaseReadyProvider.future);
-  return ref.watch(businessRepositoryProvider).getById(businessId);
-});
+final businessItemProvider = FutureProvider.family<BusinessOpportunity, String>(
+  (ref, businessId) async {
+    await ref.watch(databaseReadyProvider.future);
+    return ref.watch(businessRepositoryProvider).getById(businessId);
+  },
+);
 
 final businessActionsControllerProvider = Provider<BusinessActionsController>((
   ref,

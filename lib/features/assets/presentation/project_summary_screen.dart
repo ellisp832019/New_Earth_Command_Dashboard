@@ -13,17 +13,15 @@ class ProjectSummaryScreen extends ConsumerWidget {
     final summaries = ref.watch(assetProjectSummaryProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _ProjectSummaryError(
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return summaries.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _ProjectSummaryError(
             onReload: () => ref.invalidate(assetProjectSummaryProvider),
           ),
@@ -162,10 +160,7 @@ class _ProjectSummaryHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -257,10 +252,7 @@ class _ProjectSummaryListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelTitle(
-            title: 'Projects',
-            icon: Icons.groups_2_outlined,
-          ),
+          const _PanelTitle(title: 'Projects', icon: Icons.groups_2_outlined),
           const SizedBox(height: 12),
           if (projects.isEmpty)
             Text(
@@ -291,17 +283,18 @@ class _ProjectSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAttention = summary.brokenCount > 0 ||
+    final hasAttention =
+        summary.brokenCount > 0 ||
         summary.lowStockCount > 0 ||
         summary.needsDecisionCount > 0;
     final accent = hasAttention ? AppColours.darkAmber : AppColours.darkSuccess;
     final focus = summary.brokenCount > 0
         ? 'Repair attention first'
         : summary.lowStockCount > 0
-            ? 'Check reorder pressure'
-            : summary.needsDecisionCount > 0
-                ? 'Needs a clear decision'
-                : 'Looks settled';
+        ? 'Check reorder pressure'
+        : summary.needsDecisionCount > 0
+        ? 'Needs a clear decision'
+        : 'Looks settled';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -319,9 +312,9 @@ class _ProjectSummaryCard extends StatelessWidget {
                 child: Text(
                   summary.projectName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(label: focus, accent: accent),
@@ -348,9 +341,9 @@ class _ProjectSummaryCard extends StatelessWidget {
           Text(
             'Keep the project view simple: what exists, what needs attention, and what can wait.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -370,7 +363,9 @@ class _ProjectSummaryFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Row(
         children: [
@@ -379,9 +374,9 @@ class _ProjectSummaryFooter extends StatelessWidget {
           Expanded(
             child: Text(
               '$projectCount projects are represented in the summary. Keep the view short, useful, and easy to review.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ),
         ],
@@ -412,17 +407,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '$value',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -479,9 +474,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -505,9 +500,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -531,15 +526,18 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceAlt.withValues(alpha: 0.96)

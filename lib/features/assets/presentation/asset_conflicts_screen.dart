@@ -103,8 +103,12 @@ class AssetConflictsScreen extends ConsumerWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.cleaning_services_outlined),
-                                  label: const Text('Compact journal to latest'),
+                                  icon: const Icon(
+                                    Icons.cleaning_services_outlined,
+                                  ),
+                                  label: const Text(
+                                    'Compact journal to latest',
+                                  ),
                                 ),
                               ),
                             if (conflictRows.isNotEmpty)
@@ -183,7 +187,10 @@ class _AssetConflictsHeader extends StatelessWidget {
             runSpacing: 10,
             children: [
               _InfoChip(label: assetPath ?? 'Asset folder not linked'),
-              _InfoChip(label: '$conflictCount conflict${conflictCount == 1 ? '' : 's'}'),
+              _InfoChip(
+                label:
+                    '$conflictCount conflict${conflictCount == 1 ? '' : 's'}',
+              ),
             ],
           );
 
@@ -201,10 +208,7 @@ class _AssetConflictsHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -236,9 +240,9 @@ class _AssetConflictCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lastChangeLabel = DateFormat('yMMMd, h:mm a').format(
-      conflict.lastChangeAt.toLocal(),
-    );
+    final lastChangeLabel = DateFormat(
+      'yMMMd, h:mm a',
+    ).format(conflict.lastChangeAt.toLocal());
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -252,9 +256,9 @@ class _AssetConflictCard extends StatelessWidget {
                 child: Text(
                   '${conflict.recordType} ${conflict.recordId}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
@@ -277,9 +281,9 @@ class _AssetConflictCard extends StatelessWidget {
           Text(
             'Review these edits before compacting the journal to the latest clean record.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -298,9 +302,9 @@ class _AssetConflictsEmptyState extends StatelessWidget {
       child: Text(
         'No conflicts are showing right now. Keep the journal calm and the changes easy to review.',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-              height: 1.35,
-            ),
+          color: AppColours.darkMutedText,
+          height: 1.35,
+        ),
       ),
     );
   }
@@ -362,17 +366,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '$value',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -397,9 +401,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -423,15 +427,18 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-BoxDecoration _panelDecoration(BuildContext context, {bool highlighted = false}) {
+BoxDecoration _panelDecoration(
+  BuildContext context, {
+  bool highlighted = false,
+}) {
   return BoxDecoration(
     color: highlighted
         ? AppColours.darkSurfaceAlt.withValues(alpha: 0.96)

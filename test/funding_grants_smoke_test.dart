@@ -65,7 +65,11 @@ void main() {
       );
 
       final createdPath = await service.createGrantFolder(
-        targetFolderPath: path.join(tempRoot.path, '01_ACTIVE_APPLICATIONS', 'GRANT-TEST'),
+        targetFolderPath: path.join(
+          tempRoot.path,
+          '01_ACTIVE_APPLICATIONS',
+          'GRANT-TEST',
+        ),
         grant: grant,
       );
 
@@ -92,7 +96,11 @@ void main() {
 
       final movedPath = await service.moveGrantFolder(
         sourceFolderPath: createdPath,
-        targetFolderPath: path.join(tempRoot.path, '02_SUBMITTED_APPLICATIONS', 'GRANT-TEST'),
+        targetFolderPath: path.join(
+          tempRoot.path,
+          '02_SUBMITTED_APPLICATIONS',
+          'GRANT-TEST',
+        ),
       );
 
       expect(Directory(movedPath).existsSync(), isTrue);

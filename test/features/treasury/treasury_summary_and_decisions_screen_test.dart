@@ -276,4 +276,3 @@ void main() {
     expect(find.text('Open monthly summary'), findsWidgets);
   });
 }
-

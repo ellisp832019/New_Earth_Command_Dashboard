@@ -4,10 +4,10 @@ enum AssetChangeAction { create, update, delete }
 
 extension AssetChangeActionCodec on AssetChangeAction {
   String get wireName => switch (this) {
-        AssetChangeAction.create => 'create',
-        AssetChangeAction.update => 'update',
-        AssetChangeAction.delete => 'delete',
-      };
+    AssetChangeAction.create => 'create',
+    AssetChangeAction.update => 'update',
+    AssetChangeAction.delete => 'delete',
+  };
 
   static AssetChangeAction fromWireName(String value) {
     switch (value.trim().toLowerCase()) {
@@ -72,7 +72,8 @@ class AssetChangeJournalEntry {
       recordId: (row['record_id'] ?? '').trim(),
       recordType: (row['record_type'] ?? '').trim(),
       action: AssetChangeActionCodec.fromWireName(row['action'] ?? 'update'),
-      timestamp: DateTime.tryParse((row['timestamp'] ?? '').trim()) ??
+      timestamp:
+          DateTime.tryParse((row['timestamp'] ?? '').trim()) ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       machineId: (row['machine_id'] ?? '').trim(),
       userLabel: (row['user_label'] ?? '').trim(),

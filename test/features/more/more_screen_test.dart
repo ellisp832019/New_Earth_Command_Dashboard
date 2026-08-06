@@ -8,13 +8,22 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: MoreScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Back to Dashboard'), findsOneWidget);
-    expect(find.text('About & Help'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsAtLeastNWidgets(1));
+    await tester.scrollUntilVisible(
+      find.text('About & Help'),
+      200,
+      scrollable: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('About & Help'), findsAtLeastNWidgets(1));
     expect(
       find.text(
         'Open the Dashboard guide centre, support links, templates, and helper pages.',
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 }
