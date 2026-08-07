@@ -69,10 +69,10 @@
     "evidence": ["voice startup gate", "voice assistant routes", "docs/architecture/decisions/ADR-NON-BLOCKING-VOICE-STARTUP.md"],
     "mitigation": "Keep voice hardware optional, surface explicit startup states, and report failures as warnings.",
     "owner": "Voice team",
-    "status": "mitigating",
+    "status": "resolved",
     "target_release": "project_control_cli_baseline",
     "created_date": "2026-08-06",
-    "last_reviewed_date": "2026-08-06"
+    "last_reviewed_date": "2026-08-07"
   },
   {
     "risk_id": "R-006",

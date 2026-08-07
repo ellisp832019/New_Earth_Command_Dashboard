@@ -384,8 +384,8 @@
     "/security-lock",
     "/more/repo-research-engine"
   ],
-  "scan_id": "scan-2026-08-06T15:47:56.756423Z",
-  "scan_timestamp": "2026-08-06T15:47:56.758425Z",
+  "scan_id": "scan-2026-08-06T15:50:42.358219Z",
+  "scan_timestamp": "2026-08-06T15:50:42.360219Z",
   "status_definition_version": "1",
   "test_files_found": [
     "test\\core\\modules\\module_event_bus_test.dart",
@@ -537,7 +537,7 @@
   "verification_registry_counts": {
     "failed": 1,
     "not_ready": 1,
-    "passed": 4
+    "passed": 5
   },
   "version_contradictions": [],
   "working_tree_state": "dirty"

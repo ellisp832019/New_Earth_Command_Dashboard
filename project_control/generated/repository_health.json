@@ -1,6 +1,6 @@
 {
   "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
-  "commit": "72ff6958832d2339da884f496e44d0a37968c84e",
+  "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
   "risk_totals": {
     "by_severity": {
       "P0": 1,
@@ -10,13 +10,13 @@
     },
     "by_status": {
       "deferred": 1,
-      "mitigating": 2,
+      "mitigating": 1,
       "open": 2,
-      "resolved": 1
+      "resolved": 2
     },
     "total": 6
   },
-  "scan_id": "scan-2026-08-06T15:50:42.358219Z",
+  "scan_id": "scan-2026-08-07T06:45:18.428987Z",
   "warnings": [
     "Working tree is dirty.",
     "No GitHub workflows were detected.",
