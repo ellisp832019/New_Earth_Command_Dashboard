@@ -79,3 +79,19 @@ Reference:
 - `docs/design/visual_direction.md`
 - `assets/branding/40_brand_style_guide.png`
 - `assets/screenshots/new_earth_command_dashboard_02_dashboard_mockup.png`
+
+## ADR 006 - GAIA v0.9 Project Context Read-Only
+
+Decision:
+
+Define GAIA v0.9 around a structured read-only Project Context contract that distinguishes live observation from recorded checkpoints and carries provenance/freshness metadata.
+
+Reason:
+
+GAIA needs evidence-aware reasoning without any execution authority, and the repository already contains live, recorded, generated, and historical state that must remain distinguishable.
+
+Reference:
+
+- `docs/integrations/gaia/v0.9/START_HERE.md`
+- `docs/integrations/gaia/v0.9/PROJECT_CONTEXT_CONTRACT.md`
+- `docs/architecture/decisions/ADR-GAIA-V0-9-PROJECT-CONTEXT-READ-ONLY.md`

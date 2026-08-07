@@ -1,0 +1,417 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project_context_v1.schema.json",
+  "title": "Project Context Snapshot V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "snapshotId",
+    "generatedAt",
+    "repository",
+    "platform",
+    "baseline",
+    "releaseReadiness",
+    "repositoryHealth",
+    "risks",
+    "modules",
+    "dependencies",
+    "verification",
+    "ci",
+    "releases",
+    "dataQuality",
+    "provenance"
+  ],
+  "properties": {
+    "contractVersion": { "const": "v1" },
+    "snapshotId": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "repository": { "$ref": "#/$defs/repositoryContext" },
+    "platform": { "$ref": "#/$defs/platformContext" },
+    "baseline": { "$ref": "#/$defs/baselineContext" },
+    "releaseReadiness": { "$ref": "#/$defs/readinessContext" },
+    "repositoryHealth": { "$ref": "#/$defs/healthContext" },
+    "risks": { "$ref": "#/$defs/risksContext" },
+    "modules": { "$ref": "#/$defs/modulesContext" },
+    "dependencies": { "$ref": "#/$defs/dependenciesContext" },
+    "verification": { "$ref": "#/$defs/verificationContext" },
+    "ci": { "$ref": "#/$defs/ciContext" },
+    "releases": { "$ref": "#/$defs/releasesContext" },
+    "dataQuality": { "$ref": "#/$defs/dataQualityContext" },
+    "provenance": { "$ref": "#/$defs/provenanceContext" }
+  },
+  "$defs": {
+    "repositoryContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repositoryId",
+        "repositoryName",
+        "remoteIdentity",
+        "defaultBranch",
+        "observedBranch",
+        "observedCommit",
+        "protectedBranch",
+        "dirtyState",
+        "observedAt"
+      ],
+      "properties": {
+        "repositoryId": { "type": "string" },
+        "repositoryName": { "type": "string" },
+        "remoteIdentity": { "type": "string" },
+        "defaultBranch": { "type": "string" },
+        "observedBranch": { "type": "string" },
+        "observedCommit": { "type": "string" },
+        "protectedBranch": { "$ref": "#/$defs/protectedBranchContext" },
+        "dirtyState": { "type": "string", "enum": ["clean", "dirty", "unknown"] },
+        "aheadBehind": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ahead": { "type": "integer" },
+            "behind": { "type": "integer" }
+          }
+        },
+        "observedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "protectedBranchContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "commit", "requiredChecks"],
+      "properties": {
+        "name": { "type": "string" },
+        "commit": { "type": "string" },
+        "requiredChecks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "platformContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dashboardVersion",
+        "dashboardMaturity",
+        "gaiaIntegrationVersion",
+        "gaiaDependencyRef"
+      ],
+      "properties": {
+        "dashboardVersion": { "type": "string" },
+        "dashboardMaturity": { "type": "string" },
+        "gaiaIntegrationVersion": { "type": "string" },
+        "gaiaDependencyRef": { "type": "string" },
+        "liveStateLabel": { "type": "string" }
+      }
+    },
+    "baselineContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baselineTag",
+        "baselineCommit",
+        "recordedManifestCommit",
+        "comparisonBase",
+        "historicalOnly"
+      ],
+      "properties": {
+        "baselineTag": { "type": "string" },
+        "baselineCommit": { "type": "string" },
+        "recordedManifestCommit": { "type": "string" },
+        "comparisonBase": { "type": "string" },
+        "recordedAt": { "type": "string", "format": "date-time" },
+        "historicalOnly": { "type": "boolean" }
+      }
+    },
+    "readinessContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["blocked", "not_ready", "ready_with_conditions", "ready"]
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "healthContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "workingTreeState", "warnings"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["good", "degraded", "stale", "conflicting", "missing"]
+        },
+        "workingTreeState": {
+          "type": "string",
+          "enum": ["clean", "dirty", "unknown"]
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "risksContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/riskItem" }
+        }
+      }
+    },
+    "riskItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "riskId",
+        "title",
+        "severity",
+        "status",
+        "affectedModules",
+        "lastReviewed",
+        "evidenceReferences"
+      ],
+      "properties": {
+        "riskId": { "type": "string" },
+        "title": { "type": "string" },
+        "severity": { "type": "string" },
+        "likelihood": { "type": "string" },
+        "status": { "type": "string" },
+        "affectedModules": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "owner": { "type": "string" },
+        "targetRelease": { "type": "string" },
+        "lastReviewed": { "type": "string" },
+        "evidenceReferences": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "modulesContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/moduleItem" }
+        }
+      }
+    },
+    "moduleItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "moduleId",
+        "name",
+        "version",
+        "maturity",
+        "verificationStatus",
+        "documentationStatus",
+        "lastVerifiedCommit",
+        "dependencies"
+      ],
+      "properties": {
+        "moduleId": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "maturity": { "type": "string" },
+        "verificationStatus": { "type": "string" },
+        "documentationStatus": { "type": "string" },
+        "lastVerifiedCommit": { "type": "string" },
+        "route": { "type": "string" },
+        "knownRisks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "dependenciesContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["moduleDependencies", "sharedServices"],
+      "properties": {
+        "moduleDependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["module", "dependsOn"],
+            "properties": {
+              "module": { "type": "string" },
+              "dependsOn": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "sharedServices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["service", "usedBy"],
+            "properties": {
+              "service": { "type": "string" },
+              "usedBy": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "verificationContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/verificationItem" }
+        }
+      }
+    },
+    "verificationItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verificationId",
+        "scope",
+        "commit",
+        "branch",
+        "result",
+        "date",
+        "evidencePaths"
+      ],
+      "properties": {
+        "verificationId": { "type": "string" },
+        "scope": { "type": "string" },
+        "commit": { "type": "string" },
+        "branch": { "type": "string" },
+        "environment": { "type": "string" },
+        "result": { "type": "string" },
+        "date": { "type": "string" },
+        "evidencePaths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "ciContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observedHead", "requiredChecks", "runs"],
+      "properties": {
+        "observedHead": { "type": "string" },
+        "requiredChecks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "runId", "status", "headSha", "url"],
+            "properties": {
+              "name": { "type": "string" },
+              "runId": { "type": "string" },
+              "status": { "type": "string" },
+              "headSha": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "releasesContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/releaseItem" }
+        }
+      }
+    },
+    "releaseItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["releaseId", "version", "maturity", "commit", "status"],
+      "properties": {
+        "releaseId": { "type": "string" },
+        "version": { "type": "string" },
+        "maturity": { "type": "string" },
+        "commit": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "dataQualityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "warnings", "staleFields", "missingFields"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["good", "degraded", "stale", "conflicting", "missing"]
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "staleFields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "missingFields": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "provenanceContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceAllowlist", "evidenceReferences"],
+      "properties": {
+        "sourceAllowlist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "evidenceReferences": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

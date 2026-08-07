@@ -1,0 +1,211 @@
+{
+  "contractVersion": "v1",
+  "snapshotId": "pcx-2026-08-07T12:00:00Z-8d9b361d",
+  "generatedAt": "2026-08-07T12:00:00Z",
+  "repository": {
+    "repositoryId": "ellisp832019/New_Earth_Command_Dashboard",
+    "repositoryName": "New Earth Command Dashboard",
+    "remoteIdentity": "origin",
+    "defaultBranch": "main",
+    "observedBranch": "design/gaia-v0.9-project-officer-context-contract-2026-08-07",
+    "observedCommit": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+    "protectedBranch": {
+      "name": "main",
+      "commit": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+      "requiredChecks": [
+        "Flutter Quality",
+        "Project Control Validation",
+        "Windows Release Build"
+      ]
+    },
+    "dirtyState": "clean",
+    "aheadBehind": { "ahead": 0, "behind": 0 },
+    "observedAt": "2026-08-07T12:00:00Z"
+  },
+  "platform": {
+    "dashboardVersion": "1.0.0+1",
+    "dashboardMaturity": "beta",
+    "gaiaIntegrationVersion": "0.7.0",
+    "gaiaDependencyRef": "cd889be8e7f10a4c7105b6f72d52361aea33b31b",
+    "liveStateLabel": "read-only embedded operations workspace"
+  },
+  "baseline": {
+    "baselineTag": "dashboard-controlled-baseline-2026-08-07",
+    "baselineCommit": "5e7ccbc7aa057dd393b72b4d19c8c6d48398ba8b",
+    "recordedManifestCommit": "26bbb9c717ac3c752bc0ea9723a6874aecd3326d",
+    "comparisonBase": "origin/main",
+    "recordedAt": "2026-08-07T11:45:00Z",
+    "historicalOnly": true
+  },
+  "releaseReadiness": {
+    "status": "ready_with_conditions",
+    "reasons": [
+      "Historical evidence exists for the current beta baseline.",
+      "R-002 semantics remain under review for live-versus-recorded meaning."
+    ]
+  },
+  "repositoryHealth": {
+    "status": "degraded",
+    "workingTreeState": "clean",
+    "warnings": [
+      "Generated reports are derived evidence only.",
+      "Live GitHub enrichment is optional."
+    ]
+  },
+  "risks": {
+    "items": [
+      {
+        "riskId": "R-002",
+        "title": "Version mismatch and documentation drift",
+        "severity": "P2",
+        "likelihood": "medium",
+        "status": "mitigating",
+        "affectedModules": [
+          "platform_manifest",
+          "documentation"
+        ],
+        "owner": "Release owner",
+        "targetRelease": "project_control_cli_baseline",
+        "lastReviewed": "2026-08-07",
+        "evidenceReferences": [
+          "project_control/platform_manifest.yaml",
+          "docs/project_control/evidence/2026-08-07/SOURCE_OF_TRUTH_VERSION_RECONCILIATION.md"
+        ]
+      }
+    ]
+  },
+  "modules": {
+    "items": [
+      {
+        "moduleId": "gaia_employee_surface",
+        "name": "GAIA AI Employee",
+        "version": "0.7.0",
+        "maturity": "beta",
+        "verificationStatus": "passed",
+        "documentationStatus": "partial",
+        "lastVerifiedCommit": "cd889be8e7f10a4c7105b6f72d52361aea33b31b",
+        "route": "/more/ai-employee",
+        "knownRisks": [
+          "Read-only boundary must remain intact."
+        ],
+        "dependencies": [
+          "gaia_integration_client",
+          "gaia_dashboard_module"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "moduleDependencies": [
+      {
+        "module": "gaia_employee_surface",
+        "dependsOn": [
+          "gaia_integration_client",
+          "gaia_dashboard_module"
+        ]
+      }
+    ],
+    "sharedServices": [
+      {
+        "service": "routing",
+        "usedBy": [
+          "gaia_employee_surface"
+        ]
+      }
+    ]
+  },
+  "verification": {
+    "items": [
+      {
+        "verificationId": "V-009",
+        "scope": "CI remote verification on latest PR head",
+        "commit": "2344b1a25f6fd57d46d5cad09b55b4042e807191",
+        "branch": "ci/dashboard-github-actions-and-branch-controls-2026-08-07",
+        "environment": "GitHub Actions / PR #7",
+        "result": "passed",
+        "date": "2026-08-07",
+        "evidencePaths": [
+          "docs/project_control/evidence/2026-08-07/CI_REMOTE_VERIFICATION.md",
+          "docs/project_control/evidence/2026-08-07/BRANCH_CONTROL_REVIEW.md"
+        ],
+        "limitations": [
+          "GitHub verification records CI checks only."
+        ]
+      }
+    ]
+  },
+  "ci": {
+    "observedHead": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+    "requiredChecks": [
+      "Flutter Quality",
+      "Project Control Validation",
+      "Windows Release Build"
+    ],
+    "runs": [
+      {
+        "name": "Flutter Quality",
+        "runId": "31180327461",
+        "status": "success",
+        "headSha": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+        "url": "https://github.com/ellisp832019/New_Earth_Command_Dashboard/actions/runs/31180327461"
+      },
+      {
+        "name": "Project Control Validation",
+        "runId": "31180327474",
+        "status": "success",
+        "headSha": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+        "url": "https://github.com/ellisp832019/New_Earth_Command_Dashboard/actions/runs/31180327474"
+      },
+      {
+        "name": "Windows Release Build",
+        "runId": "31180327431",
+        "status": "success",
+        "headSha": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+        "url": "https://github.com/ellisp832019/New_Earth_Command_Dashboard/actions/runs/31180327431"
+      }
+    ]
+  },
+  "releases": {
+    "items": [
+      {
+        "releaseId": "RLS-001",
+        "version": "1.0.0+1",
+        "maturity": "beta",
+        "commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+        "status": "unverified_historical"
+      }
+    ]
+  },
+  "dataQuality": {
+    "status": "degraded",
+    "warnings": [
+      "Historical checkpoint values are preserved and should not be treated as live truth.",
+      "Some evidence remains historical by design."
+    ],
+    "staleFields": [
+      "baseline.recordedManifestCommit",
+      "verification.items[0].commit"
+    ],
+    "missingFields": []
+  },
+  "provenance": {
+    "sourceAllowlist": [
+      "git status",
+      "git rev-parse HEAD",
+      "git branch --show-current",
+      "project_control/*.yaml",
+      "project_control/generated/*.json",
+      "docs/project_control/evidence/2026-08-07/*",
+      "docs/architecture/decisions/ADR-GAIA-V0-9-PROJECT-CONTEXT-READ-ONLY.md"
+    ],
+    "evidenceReferences": [
+      "docs/project_control/evidence/2026-08-07/SOURCE_OF_TRUTH_VERSION_RECONCILIATION.md",
+      "docs/project_control/evidence/2026-08-07/MAIN_BRANCH_PROTECTION.md",
+      "docs/project_control/evidence/2026-08-07/CI_REMOTE_VERIFICATION.md"
+    ],
+    "notes": [
+      "This example illustrates distinct live and recorded state.",
+      "The controlled baseline tag is historical provenance."
+    ]
+  }
+}
