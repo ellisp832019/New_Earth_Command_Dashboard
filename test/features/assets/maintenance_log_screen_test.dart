@@ -85,10 +85,7 @@ void main() {
     expect(repository.lastMaintenanceRow!['asset_id'], 'NE-EQ-0001');
     expect(repository.lastMaintenanceRow!['item'], 'Field scanner');
     expect(repository.lastMaintenanceRow!['issue'], 'Screen flickering');
-    expect(
-      repository.lastMaintenanceRow!['linked_finance_record'],
-      'FIN-123',
-    );
+    expect(repository.lastMaintenanceRow!['linked_finance_record'], 'FIN-123');
   });
 }
 
@@ -112,7 +109,8 @@ _MaintenanceFixture _fixture({bool empty = false}) {
   return _MaintenanceFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: <String>[],
@@ -131,18 +129,14 @@ _MaintenanceFixture _fixture({bool empty = false}) {
 }
 
 class _MaintenanceFixture {
-  const _MaintenanceFixture({
-    required this.snapshot,
-    required this.table,
-  });
+  const _MaintenanceFixture({required this.snapshot, required this.table});
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetCsvTable table;
 }
 
 class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
-  _RecordingAssetRegisterRepository()
-      : super(csvService: AssetCsvService());
+  _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastMaintenanceRow;
 

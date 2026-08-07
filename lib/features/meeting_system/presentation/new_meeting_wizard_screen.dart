@@ -435,7 +435,9 @@ class _NewMeetingWizardScreenState
     if (durationMinutes == null || durationMinutes <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a meeting duration of at least 1 minute.'),
+          content: Text(
+            'Please enter a meeting duration of at least 1 minute.',
+          ),
         ),
       );
       return;
@@ -490,7 +492,8 @@ class _NewMeetingWizardScreenState
   }
 
   Future<void> _pickTime(BuildContext context) async {
-    final initialTime = _parseClock(_timeController.text) ??
+    final initialTime =
+        _parseClock(_timeController.text) ??
         TimeOfDay.fromDateTime(DateTime.now().add(const Duration(hours: 1)));
     final picked = await showTimePicker(
       context: context,
@@ -500,9 +503,9 @@ class _NewMeetingWizardScreenState
       return;
     }
 
-    _timeController.text = DateFormat('HH:mm').format(
-      DateTime(1970, 1, 1, picked.hour, picked.minute),
-    );
+    _timeController.text = DateFormat(
+      'HH:mm',
+    ).format(DateTime(1970, 1, 1, picked.hour, picked.minute));
     _syncPreview();
   }
 
@@ -579,13 +582,13 @@ class _NewMeetingWizardScreenState
       }
     }
 
-      return _MeetingSchedulePreviewData(
+    return _MeetingSchedulePreviewData(
       meetingZoneLabel: meetingZoneLabel,
       localZoneLabel: localZoneLabel,
       meetingDateLabel: DateFormat('EEE, d MMM y').format(date),
-      meetingTimeLabel: DateFormat('HH:mm').format(
-        DateTime(1970, 1, 1, time.hour, time.minute),
-      ),
+      meetingTimeLabel: DateFormat(
+        'HH:mm',
+      ).format(DateTime(1970, 1, 1, time.hour, time.minute)),
       localTimeLabel: DateFormat('EEE, d MMM y, HH:mm').format(localDateTime),
       localEndLabel: DateFormat('HH:mm').format(endLocal),
       differenceLabel: _formatDifferenceLabel(differenceMinutes),
@@ -662,10 +665,7 @@ class _MeetingRecordConflict {
 }
 
 class _SchedulePreviewPanel extends StatelessWidget {
-  const _SchedulePreviewPanel({
-    required this.data,
-    this.loadingError,
-  });
+  const _SchedulePreviewPanel({required this.data, this.loadingError});
 
   final _MeetingSchedulePreviewData? data;
   final String? loadingError;
@@ -686,7 +686,8 @@ class _SchedulePreviewPanel extends StatelessWidget {
     if (data == null) {
       return _SchedulePreviewShell(
         title: 'Schedule preview',
-        subtitle: 'Add a time and timezone to see the instant local conversion.',
+        subtitle:
+            'Add a time and timezone to see the instant local conversion.',
         icon: Icons.event_available_outlined,
         child: const Text(
           'Pick a date, time, and timezone to see the converted local time.',
@@ -718,23 +719,23 @@ class _SchedulePreviewPanel extends StatelessWidget {
           Text(
             '${preview.meetingDateLabel} at ${preview.meetingTimeLabel}',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Local time: ${preview.localTimeLabel} to ${preview.localEndLabel}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkText),
           ),
           const SizedBox(height: 6),
           Text(
             preview.differenceLabel,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           if (conflict != null) ...[
             const SizedBox(height: 12),
@@ -751,9 +752,9 @@ class _SchedulePreviewPanel extends StatelessWidget {
               child: Text(
                 'Overlap warning: this will clash with "${conflict.title}" (${conflict.scheduleLabel}).',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColours.darkAmber,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppColours.darkAmber,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -784,7 +785,9 @@ class _SchedulePreviewShell extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceRaised.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.8)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.8),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -796,18 +799,18 @@ class _SchedulePreviewShell extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColours.darkSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColours.darkSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 12),
           child,
@@ -823,11 +826,7 @@ const _timezoneOptions = <_MeetingTimezoneOption>[
     label: 'Local time (device)',
     offsetMinutes: null,
   ),
-  _MeetingTimezoneOption(
-    id: 'utc',
-    label: 'UTC+00:00',
-    offsetMinutes: 0,
-  ),
+  _MeetingTimezoneOption(id: 'utc', label: 'UTC+00:00', offsetMinutes: 0),
   _MeetingTimezoneOption(
     id: 'london',
     label: 'UTC+00:00 London',
@@ -938,6 +937,12 @@ String _initialTimeText() {
   final now = DateTime.now().add(const Duration(hours: 1));
   final roundedMinute = now.minute < 30 ? 30 : 0;
   final roundedHour = now.minute < 30 ? now.hour : now.hour + 1;
-  final normalized = DateTime(now.year, now.month, now.day, roundedHour, roundedMinute);
+  final normalized = DateTime(
+    now.year,
+    now.month,
+    now.day,
+    roundedHour,
+    roundedMinute,
+  );
   return DateFormat('HH:mm').format(normalized);
 }

@@ -46,15 +46,17 @@ class ModuleLoader {
           (stateRepository ?? ModuleHubStateRepository()).loadEnabledStates(),
     );
 
-    final dockLayoutState =
-        (stateRepository ?? ModuleHubStateRepository()).loadDockLayoutState();
-    final dockAppliedModules = appliedModules.map((module) {
-      final savedPosition = dockLayoutState.positionFor(module.id);
-      if (savedPosition == null) {
-        return module;
-      }
-      return module.copyWith(defaultDockPosition: savedPosition);
-    }).toList(growable: false);
+    final dockLayoutState = (stateRepository ?? ModuleHubStateRepository())
+        .loadDockLayoutState();
+    final dockAppliedModules = appliedModules
+        .map((module) {
+          final savedPosition = dockLayoutState.positionFor(module.id);
+          if (savedPosition == null) {
+            return module;
+          }
+          return module.copyWith(defaultDockPosition: savedPosition);
+        })
+        .toList(growable: false);
 
     return ModuleRegistry(seed: dockAppliedModules);
   }

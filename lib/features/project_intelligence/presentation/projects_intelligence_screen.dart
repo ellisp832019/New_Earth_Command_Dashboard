@@ -810,7 +810,8 @@ class _ProjectWorkflowSpotlightCard extends StatelessWidget {
                 label: const Text('Open detail'),
               ),
               FilledButton.tonalIcon(
-                onPressed: () => context.push(RouteNames.repoIntelligenceBridge),
+                onPressed: () =>
+                    context.push(RouteNames.repoIntelligenceBridge),
                 icon: const Icon(Icons.account_tree_outlined),
                 label: const Text('Open bridge'),
               ),

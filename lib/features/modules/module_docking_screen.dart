@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,15 +41,17 @@ class _ModuleDockingScreenState extends ConsumerState<ModuleDockingScreen> {
     await ref
         .read(moduleHubStateRepositoryProvider)
         .saveDockPosition(widget.module.id, position);
-    ref.read(moduleEventBusProvider).publish(
-      ModuleEvent(
-        moduleId: widget.module.id,
-        type: ModuleEventType.dockPositionChanged,
-        timestamp: DateTime.now(),
-        message: 'Dock position saved locally.',
-        details: <String, dynamic>{'position': position.name},
-      ),
-    );
+    ref
+        .read(moduleEventBusProvider)
+        .publish(
+          ModuleEvent(
+            moduleId: widget.module.id,
+            type: ModuleEventType.dockPositionChanged,
+            timestamp: DateTime.now(),
+            message: 'Dock position saved locally.',
+            details: <String, dynamic>{'position': position.name},
+          ),
+        );
   }
 
   @override
@@ -260,5 +262,3 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
-
-

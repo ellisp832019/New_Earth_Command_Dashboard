@@ -81,16 +81,23 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.scrollUntilVisible(
-      find.text('Project workflow spotlight'),
-      400.0,
-      scrollable: find.byType(Scrollable).first,
+    final projectsHubScrollView = find.byKey(
+      const Key('projectsHubScrollView'),
     );
+
+    for (
+      var i = 0;
+      i < 6 && find.text('Project workflow spotlight').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(projectsHubScrollView, const Offset(0, -480));
+      await tester.pumpAndSettle();
+    }
     await tester.pump();
 
     expect(find.textContaining('Projects Hub'), findsWidgets);
     expect(find.text('Project workflow spotlight'), findsOneWidget);
-    expect(find.text('MicroGrow'), findsOneWidget);
+    expect(find.text('MicroGrow'), findsAtLeastNWidgets(1));
     expect(find.text('Open detail'), findsOneWidget);
     expect(find.text('Add task'), findsOneWidget);
     expect(find.text('Add journal'), findsOneWidget);

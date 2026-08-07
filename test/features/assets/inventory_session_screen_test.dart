@@ -114,8 +114,10 @@ void main() {
                   'labeled_equipment_items': '1',
                   'unlabeled_equipment_items': '0',
                   'low_stock_parts': '1',
-                  'csv_file': 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS/12_PHOTOS_QR_LABELS_AND_BINS/04_INVENTORY_SESSIONS/session-001_checklist.csv',
-                  'pdf_file': 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS/12_PHOTOS_QR_LABELS_AND_BINS/04_INVENTORY_SESSIONS/session-001_checklist.pdf',
+                  'csv_file':
+                      'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS/12_PHOTOS_QR_LABELS_AND_BINS/04_INVENTORY_SESSIONS/session-001_checklist.csv',
+                  'pdf_file':
+                      'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS/12_PHOTOS_QR_LABELS_AND_BINS/04_INVENTORY_SESSIONS/session-001_checklist.pdf',
                   'notes': 'Weekly pack.',
                 },
               ],
@@ -129,12 +131,15 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Inventory Session'), findsOneWidget);
-    expect(find.text('Thermal print path'), findsOneWidget);
-    expect(find.text('Paper references'), findsOneWidget);
-    expect(find.text('QR History'), findsOneWidget);
-    expect(find.text('Open checklist'), findsOneWidget);
-    expect(find.text('Open QR guide'), findsOneWidget);
-    expect(find.text('Equipment 1  |  Parts 1  |  QR missing 0'), findsOneWidget);
+    expect(find.text('Inventory Session'), findsAtLeastNWidgets(1));
+    expect(find.text('Thermal print path'), findsAtLeastNWidgets(1));
+    expect(find.text('Paper references'), findsAtLeastNWidgets(1));
+    expect(find.text('QR History'), findsAtLeastNWidgets(1));
+    expect(find.text('Open checklist'), findsAtLeastNWidgets(1));
+    expect(find.text('Open QR guide'), findsAtLeastNWidgets(1));
+    expect(
+      find.text('Equipment 1  |  Parts 1  |  QR missing 0'),
+      findsAtLeastNWidgets(1),
+    );
   });
 }

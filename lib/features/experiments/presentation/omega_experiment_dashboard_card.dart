@@ -30,7 +30,9 @@ class OmegaExperimentDashboardCard extends ConsumerWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: _panelDecoration(),
-        child: const Text('Omega Experiment Workspace could not load right now.'),
+        child: const Text(
+          'Omega Experiment Workspace could not load right now.',
+        ),
       ),
       data: (workspace) {
         return Container(
@@ -62,17 +64,26 @@ class OmegaExperimentDashboardCard extends ConsumerWidget {
                   Text(
                     'Test plans, evidence, and lessons learned stay connected to the local module tree.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColours.darkMutedText,
-                        ),
+                      color: AppColours.darkMutedText,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      _MetricChip(label: 'Active', value: '${workspace.activeExperimentCount}'),
-                      _MetricChip(label: 'Tools', value: '${workspace.supportedTools.length}'),
-                      _MetricChip(label: 'Reports', value: '${workspace.reportTemplates.length}'),
+                      _MetricChip(
+                        label: 'Active',
+                        value: '${workspace.activeExperimentCount}',
+                      ),
+                      _MetricChip(
+                        label: 'Tools',
+                        value: '${workspace.supportedTools.length}',
+                      ),
+                      _MetricChip(
+                        label: 'Reports',
+                        value: '${workspace.reportTemplates.length}',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -81,9 +92,9 @@ class OmegaExperimentDashboardCard extends ConsumerWidget {
                         ? 'No seeded experiments found yet.'
                         : 'Latest: ${workspace.experiments.last.title}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColours.darkText,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: AppColours.darkText,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               );
@@ -94,7 +105,8 @@ class OmegaExperimentDashboardCard extends ConsumerWidget {
                 alignment: WrapAlignment.end,
                 children: [
                   FilledButton.icon(
-                    onPressed: () => context.push(RouteNames.experimentWorkspace),
+                    onPressed: () =>
+                        context.push(RouteNames.experimentWorkspace),
                     icon: const Icon(Icons.open_in_new),
                     label: const Text('Open workspace'),
                   ),
@@ -110,11 +122,7 @@ class OmegaExperimentDashboardCard extends ConsumerWidget {
               if (!wide) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    content,
-                    const SizedBox(height: 12),
-                    actions,
-                  ],
+                  children: [content, const SizedBox(height: 12), actions],
                 );
               }
 
@@ -157,9 +165,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -186,16 +194,16 @@ class _MetricChip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColours.darkMutedText),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColours.darkText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: AppColours.darkText),
           ),
         ],
       ),
@@ -226,9 +234,9 @@ class _InlineTag extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: foreground ?? accent,
-              fontWeight: FontWeight.w600,
-            ),
+          color: foreground ?? accent,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

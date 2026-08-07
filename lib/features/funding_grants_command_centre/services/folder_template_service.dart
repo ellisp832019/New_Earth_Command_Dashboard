@@ -21,9 +21,9 @@ class FolderTemplateService {
       await file.writeAsString(content, flush: true);
     }
 
-    await Directory(path.join(target.path, 'attachments')).create(
-      recursive: true,
-    );
+    await Directory(
+      path.join(target.path, 'attachments'),
+    ).create(recursive: true);
 
     return target.path;
   }

@@ -163,12 +163,7 @@ class MeetingEmptyPanel extends StatelessWidget {
           ),
           action == null
               ? const SizedBox.shrink()
-              : Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    action!,
-                  ],
-                ),
+              : Column(children: [const SizedBox(height: 16), action!]),
         ],
       ),
     );

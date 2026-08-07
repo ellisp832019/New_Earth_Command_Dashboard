@@ -4,10 +4,7 @@ import '../../../core/theme/app_colours.dart';
 import '../application/voice_thread_controller.dart';
 
 class VoiceThreadSummaryStrip extends StatelessWidget {
-  const VoiceThreadSummaryStrip({
-    super.key,
-    required this.thread,
-  });
+  const VoiceThreadSummaryStrip({super.key, required this.thread});
 
   final VoiceConversationThreadState thread;
 

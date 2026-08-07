@@ -32,17 +32,13 @@ Future<String?> launchKnowledgeEngine() async {
   }
 
   try {
-    await Process.start(
-      'powershell.exe',
-      [
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        scriptPath,
-      ],
-      mode: ProcessStartMode.detached,
-    );
+    await Process.start('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      scriptPath,
+    ], mode: ProcessStartMode.detached);
     return null;
   } catch (error) {
     return 'Could not start the Knowledge Engine: $error';

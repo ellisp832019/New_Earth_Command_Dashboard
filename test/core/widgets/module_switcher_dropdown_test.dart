@@ -70,7 +70,7 @@ void main() {
 
       expect(find.text('Dashboard'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('module-switcher-dropdown')));
+      await tester.tap(find.byKey(const Key('module-switcher-dropdown')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Omega Engineering Studio').last);
       await tester.pumpAndSettle();

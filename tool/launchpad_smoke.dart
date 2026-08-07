@@ -37,8 +37,12 @@ Future<void> main() async {
 
     stdout.writeln('Launchpad smoke test passed.');
     stdout.writeln('Campaigns: ${workspace.campaigns.length}');
-    stdout.writeln('Readiness: ${readiness.overallPercent.toStringAsFixed(0)}%');
-    stdout.writeln('Net funds: £${finance.netAvailableFundsGbp.toStringAsFixed(0)}');
+    stdout.writeln(
+      'Readiness: ${readiness.overallPercent.toStringAsFixed(0)}%',
+    );
+    stdout.writeln(
+      'Net funds: £${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+    );
   } finally {
     if (await tempRoot.exists()) {
       await tempRoot.delete(recursive: true);
@@ -103,12 +107,14 @@ Future<void> _writeLaunchpadSeedPack(Directory root) async {
     ]),
   );
 
-  await File(p.join(campaignDir.path, 'readiness.csv')).writeAsString('''category,title,status,notes
+  await File(p.join(campaignDir.path, 'readiness.csv')).writeAsString(
+    '''category,title,status,notes
 Hardware,One ESP32 node demo,In Progress,Frankenstein prototype box
 Firmware,Live /data endpoint,Done,Current firmware foundation
 Software,Flutter dashboard reads node,Done,Existing app foundation
 Manufacturing,PCB V0.1 plan,Draft,Low-voltage dev-board carrier
 Documentation,Risk disclosure drafted,Todo,Especially delivery/certification
 Marketing,3-5 minute demo video,Todo,Kickstarter proof asset
-''');
+''',
+  );
 }

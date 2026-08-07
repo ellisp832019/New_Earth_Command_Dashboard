@@ -24,7 +24,8 @@ class PlannerScreen extends ConsumerWidget {
 
     return WorkspaceShell(
       title: 'Daily Planner',
-      subtitle: 'A calm place to set the day, choose the Top 3, and review it gently.',
+      subtitle:
+          'A calm place to set the day, choose the Top 3, and review it gently.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(

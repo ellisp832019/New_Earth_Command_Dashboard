@@ -62,6 +62,8 @@ void main() {
   testWidgets('startup gate can request voice assistant from the screen', (
     tester,
   ) async {
+    addTearDown(() => voiceStartupGateLandingRoute.value = null);
+
     const result = VoiceStartupGateResult(
       isReady: false,
       message: 'Checking for a connected headset...',
@@ -73,37 +75,27 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp.router(
-          routerConfig: _buildRouter(
-            Builder(
-              builder: (context) {
-                return Consumer(
-                  builder: (context, ref, _) {
-                    final landingRoute = ref.watch(
-                      voiceStartupGateLandingProvider,
-                    );
-                    return Column(
-                      children: [
-                        Expanded(child: VoiceStartupGateScreen(result: result)),
-                        Text('Landing: ${landingRoute ?? "none"}'),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+          routerConfig: _buildRouter(VoiceStartupGateScreen(result: result)),
         ),
       ),
     );
 
-    expect(find.text('Landing: none'), findsOneWidget);
-    await tester.ensureVisible(find.text('Continue with Voice'));
-    await tester.tap(find.text('Continue with Voice'));
-    await tester.pump();
-    expect(find.text('Landing: ${RouteNames.voiceAssistant}'), findsOneWidget);
+    expect(voiceStartupGateLandingRoute.value, isNull);
+    final continueButton = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('Continue with Voice'),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    continueButton.onPressed?.call();
+    await tester.pumpAndSettle();
+    expect(voiceStartupGateLandingRoute.value, RouteNames.voiceAssistant);
+    expect(find.text('Voice Assistant'), findsOneWidget);
   });
 
   testWidgets('no voice requests the dashboard landing', (tester) async {
+    addTearDown(() => voiceStartupGateLandingRoute.value = null);
+
     const result = VoiceStartupGateResult(
       isReady: false,
       message: 'Checking for a connected headset...',
@@ -113,27 +105,21 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp.router(
-          routerConfig: _buildRouter(
-            Consumer(
-              builder: (context, ref, _) {
-                final landingRoute = ref.watch(voiceStartupGateLandingProvider);
-                return Column(
-                  children: [
-                    Expanded(child: VoiceStartupGateScreen(result: result)),
-                    Text('Landing: ${landingRoute ?? "none"}'),
-                  ],
-                );
-              },
-            ),
-          ),
+          routerConfig: _buildRouter(VoiceStartupGateScreen(result: result)),
         ),
       ),
     );
 
-    expect(find.text('Landing: none'), findsOneWidget);
-    await tester.ensureVisible(find.text('Skip Voice'));
-    await tester.tap(find.text('Skip Voice'));
-    await tester.pump();
-    expect(find.text('Landing: ${RouteNames.dashboard}'), findsOneWidget);
+    expect(voiceStartupGateLandingRoute.value, isNull);
+    final skipButton = tester.widget<OutlinedButton>(
+      find.ancestor(
+        of: find.text('Skip Voice'),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    skipButton.onPressed?.call();
+    await tester.pumpAndSettle();
+    expect(voiceStartupGateLandingRoute.value, RouteNames.dashboard);
+    expect(find.text('Dashboard'), findsOneWidget);
   });
 }

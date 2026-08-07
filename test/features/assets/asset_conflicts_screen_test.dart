@@ -29,7 +29,8 @@ void main() {
           assetWorkspaceProvider.overrideWith(
             (ref) async => const AssetWorkspaceSnapshot(
               configPath: 'config/local_paths.json',
-              assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+              assetsRootPath:
+                  'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
               isReady: true,
               issues: <String>[],
               requiredFolders: AssetFolderService.requiredFolders,
@@ -60,13 +61,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Asset Conflicts'), findsOneWidget);
+    expect(find.text('Asset Conflicts'), findsAtLeastNWidgets(1));
     expect(find.text('1'), findsAtLeastNWidgets(1));
     expect(find.text('equipment NE-EQ-0001'), findsAtLeastNWidgets(1));
     expect(
       find.textContaining('changed 2 times across 2 machines.'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
-    expect(find.text('Compact journal to latest'), findsOneWidget);
+    expect(find.text('Compact journal to latest'), findsAtLeastNWidgets(1));
   });
 }

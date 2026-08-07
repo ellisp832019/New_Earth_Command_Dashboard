@@ -332,7 +332,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
           return;
         }
         if (kDebugMode) {
-          debugPrint('Security unlock handoff -> ${_routeAfterUnlock(context: context)}');
+          debugPrint(
+            'Security unlock handoff -> ${_routeAfterUnlock(context: context)}',
+          );
         }
         appRouter.go(_routeAfterUnlock(context: context));
       });
@@ -1099,6 +1101,7 @@ class _SecuritySidePanel extends StatelessWidget {
               const SizedBox(height: 8),
               if (showIdentityPicker) ...[
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: selectedUserId,
                   decoration: const InputDecoration(
                     labelText: 'Local user',
@@ -1124,6 +1127,7 @@ class _SecuritySidePanel extends StatelessWidget {
                   )
                 else
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: selectedDeviceId,
                     decoration: const InputDecoration(
                       labelText: 'Trusted device',

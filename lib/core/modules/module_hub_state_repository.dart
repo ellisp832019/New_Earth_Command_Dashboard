@@ -93,9 +93,7 @@ class ModuleHubStateRepository {
     await saveLaunchTargets(states);
   }
 
-  Future<void> saveLaunchTargets(
-    Map<String, ModuleLaunchTarget> states,
-  ) async {
+  Future<void> saveLaunchTargets(Map<String, ModuleLaunchTarget> states) async {
     final payload = _readPayload();
     payload['launchTargetById'] = states.map(
       (key, value) => MapEntry(key, moduleLaunchTargetToStorage(value)),

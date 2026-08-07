@@ -17,17 +17,15 @@ class EvidenceLibraryScreen extends ConsumerWidget {
     final orders = ref.watch(assetOrdersTrackerProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _EvidenceError(
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return equipment.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _EvidenceError(
             onReload: () => ref.invalidate(assetEquipmentRegisterProvider),
           ),
@@ -40,18 +38,26 @@ class EvidenceLibraryScreen extends ConsumerWidget {
                 onReload: () => ref.invalidate(assetOrdersTrackerProvider),
               ),
               data: (ordersTable) {
-                final equipmentReceiptRows = equipmentTable.rows.where((row) {
-                  return _hasValue(row['receipt_link']);
-                }).toList(growable: false);
-                final warrantyRows = equipmentTable.rows.where((row) {
-                  return _hasValue(row['warranty_until']);
-                }).toList(growable: false);
-                final manualRows = equipmentTable.rows.where((row) {
-                  return _looksLikeManualPointer(row);
-                }).toList(growable: false);
-                final orderReceiptRows = ordersTable.rows.where((row) {
-                  return _hasValue(row['receipt_link']);
-                }).toList(growable: false);
+                final equipmentReceiptRows = equipmentTable.rows
+                    .where((row) {
+                      return _hasValue(row['receipt_link']);
+                    })
+                    .toList(growable: false);
+                final warrantyRows = equipmentTable.rows
+                    .where((row) {
+                      return _hasValue(row['warranty_until']);
+                    })
+                    .toList(growable: false);
+                final manualRows = equipmentTable.rows
+                    .where((row) {
+                      return _looksLikeManualPointer(row);
+                    })
+                    .toList(growable: false);
+                final orderReceiptRows = ordersTable.rows
+                    .where((row) {
+                      return _hasValue(row['receipt_link']);
+                    })
+                    .toList(growable: false);
 
                 return Scaffold(
                   backgroundColor: Colors.transparent,
@@ -84,8 +90,9 @@ class EvidenceLibraryScreen extends ConsumerWidget {
                                 _EvidenceActionStrip(
                                   onOpenEquipment: () =>
                                       context.push(RouteNames.assetEquipment),
-                                  onOpenOrders: () =>
-                                      context.push(RouteNames.assetOrdersTracker),
+                                  onOpenOrders: () => context.push(
+                                    RouteNames.assetOrdersTracker,
+                                  ),
                                   onOpenValuation: () => context.push(
                                     RouteNames.assetValuationSummary,
                                   ),
@@ -98,24 +105,25 @@ class EvidenceLibraryScreen extends ConsumerWidget {
                                       'No equipment receipts are linked yet.',
                                   rows: equipmentReceiptRows,
                                   buildCard: (row) => _EvidenceRowCard(
-                                    title: _firstNonEmpty(
-                                      row,
-                                      const ['name', 'asset_id'],
-                                      fallback: 'Unnamed equipment',
-                                    ),
+                                    title: _firstNonEmpty(row, const [
+                                      'name',
+                                      'asset_id',
+                                    ], fallback: 'Unnamed equipment'),
                                     subtitle:
                                         'Receipt: ${_firstNonEmpty(row, const ['receipt_link'], fallback: 'No receipt link')}',
                                     chips: [
-                                      _InfoChip(label: row['asset_id'] ?? 'No ID'),
                                       _InfoChip(
-                                        label: _firstNonEmpty(
-                                          row,
-                                          const ['project'],
-                                          fallback: 'No project',
-                                        ),
+                                        label: row['asset_id'] ?? 'No ID',
                                       ),
                                       _InfoChip(
-                                        label: _warrantyLabel(row['warranty_until']),
+                                        label: _firstNonEmpty(row, const [
+                                          'project',
+                                        ], fallback: 'No project'),
+                                      ),
+                                      _InfoChip(
+                                        label: _warrantyLabel(
+                                          row['warranty_until'],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -128,25 +136,25 @@ class EvidenceLibraryScreen extends ConsumerWidget {
                                       'No warranty dates are linked yet.',
                                   rows: warrantyRows,
                                   buildCard: (row) => _EvidenceRowCard(
-                                    title: _firstNonEmpty(
-                                      row,
-                                      const ['name', 'asset_id'],
-                                      fallback: 'Unnamed equipment',
-                                    ),
+                                    title: _firstNonEmpty(row, const [
+                                      'name',
+                                      'asset_id',
+                                    ], fallback: 'Unnamed equipment'),
                                     subtitle:
                                         'Warranty until: ${row['warranty_until']?.trim() ?? ''}',
                                     chips: [
-                                      _InfoChip(label: row['asset_id'] ?? 'No ID'),
                                       _InfoChip(
-                                        label: _firstNonEmpty(
-                                          row,
-                                          const ['location'],
-                                          fallback: 'No location',
-                                        ),
+                                        label: row['asset_id'] ?? 'No ID',
                                       ),
                                       _InfoChip(
-                                        label:
-                                            _receiptLabel(row['receipt_link']),
+                                        label: _firstNonEmpty(row, const [
+                                          'location',
+                                        ], fallback: 'No location'),
+                                      ),
+                                      _InfoChip(
+                                        label: _receiptLabel(
+                                          row['receipt_link'],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -159,25 +167,25 @@ class EvidenceLibraryScreen extends ConsumerWidget {
                                       'No manual pointers were found in the current notes yet.',
                                   rows: manualRows,
                                   buildCard: (row) => _EvidenceRowCard(
-                                    title: _firstNonEmpty(
-                                      row,
-                                      const ['name', 'asset_id'],
-                                      fallback: 'Unnamed equipment',
-                                    ),
+                                    title: _firstNonEmpty(row, const [
+                                      'name',
+                                      'asset_id',
+                                    ], fallback: 'Unnamed equipment'),
                                     subtitle:
                                         'Notes: ${_manualHint(row['notes'])}',
                                     chips: [
-                                      _InfoChip(label: row['asset_id'] ?? 'No ID'),
                                       _InfoChip(
-                                        label: _firstNonEmpty(
-                                          row,
-                                          const ['type'],
-                                          fallback: 'No type',
-                                        ),
+                                        label: row['asset_id'] ?? 'No ID',
                                       ),
                                       _InfoChip(
-                                        label:
-                                            _receiptLabel(row['receipt_link']),
+                                        label: _firstNonEmpty(row, const [
+                                          'type',
+                                        ], fallback: 'No type'),
+                                      ),
+                                      _InfoChip(
+                                        label: _receiptLabel(
+                                          row['receipt_link'],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -190,28 +198,25 @@ class EvidenceLibraryScreen extends ConsumerWidget {
                                       'No order receipts are linked yet.',
                                   rows: orderReceiptRows,
                                   buildCard: (row) => _EvidenceRowCard(
-                                    title: _firstNonEmpty(
-                                      row,
-                                      const ['item', 'order_id'],
-                                      fallback: 'Untitled order',
-                                    ),
+                                    title: _firstNonEmpty(row, const [
+                                      'item',
+                                      'order_id',
+                                    ], fallback: 'Untitled order'),
                                     subtitle:
                                         'Receipt: ${_firstNonEmpty(row, const ['receipt_link'], fallback: 'No receipt link')}',
                                     chips: [
-                                      _InfoChip(label: row['order_id'] ?? 'No ID'),
                                       _InfoChip(
-                                        label: _firstNonEmpty(
-                                          row,
-                                          const ['supplier'],
-                                          fallback: 'No supplier',
-                                        ),
+                                        label: row['order_id'] ?? 'No ID',
                                       ),
                                       _InfoChip(
-                                        label: _firstNonEmpty(
-                                          row,
-                                          const ['status'],
-                                          fallback: 'No status',
-                                        ),
+                                        label: _firstNonEmpty(row, const [
+                                          'supplier',
+                                        ], fallback: 'No supplier'),
+                                      ),
+                                      _InfoChip(
+                                        label: _firstNonEmpty(row, const [
+                                          'status',
+                                        ], fallback: 'No status'),
                                       ),
                                     ],
                                   ),
@@ -282,7 +287,11 @@ class _EvidenceHeader extends StatelessWidget {
             children: [
               _InfoChip(label: assetPath ?? 'Asset folder not linked'),
               _InfoChip(
-                label: _countLabel(receiptCount, 'receipt linked', 'receipts linked'),
+                label: _countLabel(
+                  receiptCount,
+                  'receipt linked',
+                  'receipts linked',
+                ),
               ),
               _InfoChip(
                 label: _countLabel(
@@ -315,10 +324,7 @@ class _EvidenceHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -566,7 +572,9 @@ class _EvidenceRowCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,9 +659,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

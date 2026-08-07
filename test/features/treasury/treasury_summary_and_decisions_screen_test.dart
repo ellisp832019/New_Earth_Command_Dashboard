@@ -128,11 +128,22 @@ void main() {
     expect(find.text('Monthly Summary'), findsWidgets);
     expect(find.textContaining('30.00'), findsWidgets);
     expect(find.textContaining('12.99'), findsWidgets);
-    await tester.scrollUntilVisible(
-      find.textContaining('Top project', skipOffstage: false),
-      200,
-      scrollable: find.byType(Scrollable).first,
+
+    final treasuryMonthlySummaryScrollView = find.byKey(
+      const Key('treasuryMonthlySummaryScrollView'),
     );
+
+    for (
+      var i = 0;
+      i < 6 && find.textContaining('Top project').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(
+        treasuryMonthlySummaryScrollView,
+        const Offset(0, -480),
+      );
+      await tester.pumpAndSettle();
+    }
     await tester.pump();
 
     expect(find.textContaining('Top project'), findsWidgets);
@@ -140,21 +151,33 @@ void main() {
     expect(find.textContaining('Weekly'), findsWidgets);
     expect(find.textContaining('2026-05-28'), findsWidgets);
 
-    await tester.scrollUntilVisible(
-      find.text('Project spend', skipOffstage: false),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    for (
+      var i = 0;
+      i < 6 && find.text('Project spend').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(
+        treasuryMonthlySummaryScrollView,
+        const Offset(0, -480),
+      );
+      await tester.pumpAndSettle();
+    }
     await tester.pump();
 
     expect(find.text('Project spend'), findsWidgets);
     expect(find.text('Recurring costs'), findsWidgets);
 
-    await tester.scrollUntilVisible(
-      find.text('Decisions register', skipOffstage: false),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    for (
+      var i = 0;
+      i < 6 && find.text('Decisions register').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(
+        treasuryMonthlySummaryScrollView,
+        const Offset(0, -480),
+      );
+      await tester.pumpAndSettle();
+    }
     await tester.pump();
 
     expect(find.text('Decisions register'), findsOneWidget);
@@ -276,4 +299,3 @@ void main() {
     expect(find.text('Open monthly summary'), findsWidgets);
   });
 }
-

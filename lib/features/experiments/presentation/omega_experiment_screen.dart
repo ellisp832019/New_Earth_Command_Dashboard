@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -172,7 +172,9 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
 
   final _titleController = TextEditingController();
   final _projectController = TextEditingController(text: 'MicroGrow');
-  final _projectLinkController = TextEditingController(text: 'projects/microgrow');
+  final _projectLinkController = TextEditingController(
+    text: 'projects/microgrow',
+  );
   final _ownerController = TextEditingController(text: 'Peter Ellis');
   final _objectiveController = TextEditingController();
   final _hypothesisController = TextEditingController();
@@ -225,9 +227,7 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
   List<OmegaExperimentRecord> _filteredExperiments(
     Iterable<OmegaExperimentRecord> experiments,
   ) {
-    return experiments
-        .where(_matchesEvidenceFilter)
-        .toList(growable: false);
+    return experiments.where(_matchesEvidenceFilter).toList(growable: false);
   }
 
   bool _matchesEvidenceFilter(OmegaExperimentRecord experiment) {
@@ -235,20 +235,25 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
       OmegaExperimentEvidenceFilter.all => true,
       OmegaExperimentEvidenceFilter.ready => experiment.hasEvidence,
       OmegaExperimentEvidenceFilter.needsEvidence => experiment.needsEvidence,
-      OmegaExperimentEvidenceFilter.note =>
-        experiment.evidenceTypes.contains(OmegaExperimentEvidenceType.note),
-      OmegaExperimentEvidenceFilter.data =>
-        experiment.evidenceTypes.contains(OmegaExperimentEvidenceType.data),
-      OmegaExperimentEvidenceFilter.log =>
-        experiment.evidenceTypes.contains(OmegaExperimentEvidenceType.log),
-      OmegaExperimentEvidenceFilter.image =>
-        experiment.evidenceTypes.contains(OmegaExperimentEvidenceType.image),
+      OmegaExperimentEvidenceFilter.note => experiment.evidenceTypes.contains(
+        OmegaExperimentEvidenceType.note,
+      ),
+      OmegaExperimentEvidenceFilter.data => experiment.evidenceTypes.contains(
+        OmegaExperimentEvidenceType.data,
+      ),
+      OmegaExperimentEvidenceFilter.log => experiment.evidenceTypes.contains(
+        OmegaExperimentEvidenceType.log,
+      ),
+      OmegaExperimentEvidenceFilter.image => experiment.evidenceTypes.contains(
+        OmegaExperimentEvidenceType.image,
+      ),
       OmegaExperimentEvidenceFilter.screenshot =>
         experiment.evidenceTypes.contains(
           OmegaExperimentEvidenceType.screenshot,
         ),
-      OmegaExperimentEvidenceFilter.file =>
-        experiment.evidenceTypes.contains(OmegaExperimentEvidenceType.file),
+      OmegaExperimentEvidenceFilter.file => experiment.evidenceTypes.contains(
+        OmegaExperimentEvidenceType.file,
+      ),
     };
   }
 
@@ -283,7 +288,8 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
       OmegaExperimentTemplate.projectValidation => 'projects/microgrow',
       OmegaExperimentTemplate.workflowTest => 'projects/new-earth-dashboard',
       OmegaExperimentTemplate.buildCheck => 'projects/microgrow',
-      OmegaExperimentTemplate.learningExperiment => 'projects/new-earth-dashboard',
+      OmegaExperimentTemplate.learningExperiment =>
+        'projects/new-earth-dashboard',
       OmegaExperimentTemplate.researchCheck => 'projects/microgrow',
     };
 
@@ -340,7 +346,8 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
     };
 
     _evidenceController.text = switch (template) {
-      OmegaExperimentTemplate.projectValidation => 'notes/validation-summary.md',
+      OmegaExperimentTemplate.projectValidation =>
+        'notes/validation-summary.md',
       OmegaExperimentTemplate.workflowTest => 'notes/workflow-observation.md',
       OmegaExperimentTemplate.buildCheck => 'data/build-log.txt',
       OmegaExperimentTemplate.learningExperiment => 'notes/learning-journal.md',
@@ -350,9 +357,11 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
     _measurementsController.text = switch (template) {
       OmegaExperimentTemplate.projectValidation =>
         'confidence\nrisk level\nnext action',
-      OmegaExperimentTemplate.workflowTest => 'steps completed\nfriction points',
+      OmegaExperimentTemplate.workflowTest =>
+        'steps completed\nfriction points',
       OmegaExperimentTemplate.buildCheck => 'pass/fail\nnotes\nmeasurements',
-      OmegaExperimentTemplate.learningExperiment => 'lesson clarity\npractice result',
+      OmegaExperimentTemplate.learningExperiment =>
+        'lesson clarity\npractice result',
       OmegaExperimentTemplate.researchCheck => 'source count\nagreement level',
     };
 
@@ -396,9 +405,8 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
     final workspaceAsync = ref.watch(omegaExperimentWorkspaceProvider);
 
     return workspaceAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => Scaffold(
         appBar: AppBar(
           leading: BackButton(onPressed: () => _goBack(context)),
@@ -429,24 +437,25 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            leading: BackButton(
-              onPressed: () => _goBack(context),
-            ),
+            leading: BackButton(onPressed: () => _goBack(context)),
             title: const Text('Experiment workspace'),
             actions: [
               IconButton(
                 tooltip: 'Workspace',
-                onPressed: () => _navigateTo(context, OmegaExperimentScreenSection.registry),
+                onPressed: () =>
+                    _navigateTo(context, OmegaExperimentScreenSection.registry),
                 icon: const Icon(Icons.view_list_outlined),
               ),
               IconButton(
                 tooltip: 'New draft',
-                onPressed: () => _navigateTo(context, OmegaExperimentScreenSection.create),
+                onPressed: () =>
+                    _navigateTo(context, OmegaExperimentScreenSection.create),
                 icon: const Icon(Icons.add_circle_outline),
               ),
               IconButton(
                 tooltip: 'Settings',
-                onPressed: () => _navigateTo(context, OmegaExperimentScreenSection.settings),
+                onPressed: () =>
+                    _navigateTo(context, OmegaExperimentScreenSection.settings),
                 icon: const Icon(Icons.settings_outlined),
               ),
             ],
@@ -463,120 +472,122 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
               const SizedBox(height: 16),
               switch (_section) {
                 OmegaExperimentScreenSection.registry => _RegistrySection(
-                    workspace: workspace,
-                    visibleExperiments: visibleExperiments,
-                    selectedExperiment: selectedExperimentRecord,
-                    onSelectExperiment: (id) {
-                      setState(() => _selectedExperimentId = id);
-                    },
-                    evidenceFilter: _evidenceFilter,
-                    onEvidenceFilterChanged: _setEvidenceFilter,
-                    onOpenCreate: () =>
-                        _navigateTo(context, OmegaExperimentScreenSection.create),
-                  ),
+                  workspace: workspace,
+                  visibleExperiments: visibleExperiments,
+                  selectedExperiment: selectedExperimentRecord,
+                  onSelectExperiment: (id) {
+                    setState(() => _selectedExperimentId = id);
+                  },
+                  evidenceFilter: _evidenceFilter,
+                  onEvidenceFilterChanged: _setEvidenceFilter,
+                  onOpenCreate: () =>
+                      _navigateTo(context, OmegaExperimentScreenSection.create),
+                ),
                 OmegaExperimentScreenSection.create => _CreateSection(
-                    workspace: workspace,
-                    selectedTemplate: _selectedTemplate,
-                    titleController: _titleController,
-                    projectController: _projectController,
-                    projectLinkController: _projectLinkController,
-                    ownerController: _ownerController,
-                    objectiveController: _objectiveController,
-                    hypothesisController: _hypothesisController,
-                    testPlanController: _testPlanController,
-                    setupNotesController: _setupNotesController,
-                    evidenceController: _evidenceController,
-                    measurementsController: _measurementsController,
-                    resultsController: _resultsController,
-                    conclusionController: _conclusionController,
-                    lessonController: _lessonController,
-                    nextActionsController: _nextActionsController,
-                    repoCommitsController: _repoCommitsController,
-                    issuesController: _issuesController,
-                    obsidianController: _obsidianController,
-                    nextExperimentId: repo.nextExperimentId(workspace.experiments),
-                    createStatus: _createStatus,
-                    createCategory: _createCategory,
-                    onTemplateSelected: _applyTemplate,
-                    onStatusChanged: (status) =>
-                        setState(() => _createStatus = status),
-                    onCategoryChanged: (category) =>
-                        setState(() => _createCategory = category),
-                    onSave: () async {
-                      final repo =
-                          ref.read(omegaExperimentRepositoryProvider);
-                      final nextId =
-                          repo.nextExperimentId(workspace.experiments);
-                      final draft = OmegaExperimentRecord(
-                        experimentId: nextId,
-                        title: _titleController.text.trim().isEmpty
-                            ? 'Untitled Experiment'
-                            : _titleController.text.trim(),
-                        project: _projectController.text.trim().isEmpty
-                            ? 'Unassigned'
-                            : _projectController.text.trim(),
-                        projectLink: _projectLinkController.text.trim(),
-                        status: _createStatus,
-                        category: _createCategory,
-                        owner: _ownerController.text.trim(),
-                        createdDate:
-                            DateTime.now().toIso8601String().split('T').first,
-                        objective: _objectiveController.text.trim(),
-                        hypothesis: _hypothesisController.text.trim(),
-                        testPlan: _testPlanController.text.trim(),
-                        setupNotes: _setupNotesController.text.trim(),
-                        evidenceFiles: _splitLines(_evidenceController.text),
-                        measurements: _splitLines(
-                          _measurementsController.text,
-                        ),
-                        softwareUsed: const ['Flutter dashboard'],
-                        hardwareUsed: const [],
-                        results: _resultsController.text.trim(),
-                        conclusion: _conclusionController.text.trim(),
-                        lessonLearned: _lessonController.text.trim(),
-                        nextActions: _splitLines(_nextActionsController.text),
-                        relatedRepoCommits:
-                            _splitLines(_repoCommitsController.text),
-                        relatedGithubIssues: _splitLines(_issuesController.text),
-                        relatedObsidianNotes:
-                            _splitLines(_obsidianController.text),
-                      );
-                      final path = await repo.createDraft(draft);
-                      if (!context.mounted) {
-                        return;
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Draft saved to $path')),
-                      );
-                      setState(() {
-                        _selectedExperimentId = nextId;
-                        _section = OmegaExperimentScreenSection.registry;
-                      });
-                    },
+                  workspace: workspace,
+                  selectedTemplate: _selectedTemplate,
+                  titleController: _titleController,
+                  projectController: _projectController,
+                  projectLinkController: _projectLinkController,
+                  ownerController: _ownerController,
+                  objectiveController: _objectiveController,
+                  hypothesisController: _hypothesisController,
+                  testPlanController: _testPlanController,
+                  setupNotesController: _setupNotesController,
+                  evidenceController: _evidenceController,
+                  measurementsController: _measurementsController,
+                  resultsController: _resultsController,
+                  conclusionController: _conclusionController,
+                  lessonController: _lessonController,
+                  nextActionsController: _nextActionsController,
+                  repoCommitsController: _repoCommitsController,
+                  issuesController: _issuesController,
+                  obsidianController: _obsidianController,
+                  nextExperimentId: repo.nextExperimentId(
+                    workspace.experiments,
+                  ),
+                  createStatus: _createStatus,
+                  createCategory: _createCategory,
+                  onTemplateSelected: _applyTemplate,
+                  onStatusChanged: (status) =>
+                      setState(() => _createStatus = status),
+                  onCategoryChanged: (category) =>
+                      setState(() => _createCategory = category),
+                  onSave: () async {
+                    final repo = ref.read(omegaExperimentRepositoryProvider);
+                    final nextId = repo.nextExperimentId(workspace.experiments);
+                    final draft = OmegaExperimentRecord(
+                      experimentId: nextId,
+                      title: _titleController.text.trim().isEmpty
+                          ? 'Untitled Experiment'
+                          : _titleController.text.trim(),
+                      project: _projectController.text.trim().isEmpty
+                          ? 'Unassigned'
+                          : _projectController.text.trim(),
+                      projectLink: _projectLinkController.text.trim(),
+                      status: _createStatus,
+                      category: _createCategory,
+                      owner: _ownerController.text.trim(),
+                      createdDate: DateTime.now()
+                          .toIso8601String()
+                          .split('T')
+                          .first,
+                      objective: _objectiveController.text.trim(),
+                      hypothesis: _hypothesisController.text.trim(),
+                      testPlan: _testPlanController.text.trim(),
+                      setupNotes: _setupNotesController.text.trim(),
+                      evidenceFiles: _splitLines(_evidenceController.text),
+                      measurements: _splitLines(_measurementsController.text),
+                      softwareUsed: const ['Flutter dashboard'],
+                      hardwareUsed: const [],
+                      results: _resultsController.text.trim(),
+                      conclusion: _conclusionController.text.trim(),
+                      lessonLearned: _lessonController.text.trim(),
+                      nextActions: _splitLines(_nextActionsController.text),
+                      relatedRepoCommits: _splitLines(
+                        _repoCommitsController.text,
+                      ),
+                      relatedGithubIssues: _splitLines(_issuesController.text),
+                      relatedObsidianNotes: _splitLines(
+                        _obsidianController.text,
+                      ),
+                    );
+                    final path = await repo.createDraft(draft);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Draft saved to $path')),
+                    );
+                    setState(() {
+                      _selectedExperimentId = nextId;
+                      _section = OmegaExperimentScreenSection.registry;
+                    });
+                  },
                 ),
                 OmegaExperimentScreenSection.evidence => _EvidenceSection(
-                    workspace: workspace,
-                    visibleExperiments: visibleExperiments,
-                    evidenceFilter: _evidenceFilter,
-                    onEvidenceFilterChanged: _setEvidenceFilter,
-                  ),
+                  workspace: workspace,
+                  visibleExperiments: visibleExperiments,
+                  evidenceFilter: _evidenceFilter,
+                  onEvidenceFilterChanged: _setEvidenceFilter,
+                ),
                 OmegaExperimentScreenSection.results => _ResultsSection(
-                    workspace: workspace,
-                  ),
+                  workspace: workspace,
+                ),
                 OmegaExperimentScreenSection.lessons => _LessonsSection(
-                    workspace: workspace,
-                  ),
+                  workspace: workspace,
+                ),
                 OmegaExperimentScreenSection.reports => _ReportsSection(
-                    workspace: workspace,
-                  ),
+                  workspace: workspace,
+                ),
                 OmegaExperimentScreenSection.integrations =>
                   _IntegrationsSection(workspace: workspace),
                 OmegaExperimentScreenSection.aiReview => _AiReviewSection(
-                    workspace: workspace,
-                  ),
+                  workspace: workspace,
+                ),
                 OmegaExperimentScreenSection.settings => _SettingsSection(
-                    workspace: workspace,
-                  ),
+                  workspace: workspace,
+                ),
               },
             ],
           ),
@@ -616,23 +627,27 @@ class _OmegaExperimentScreenState extends ConsumerState<OmegaExperimentScreen> {
     }
   }
 
-  void _navigateTo(
-    BuildContext context,
-    OmegaExperimentScreenSection section,
-  ) {
+  void _navigateTo(BuildContext context, OmegaExperimentScreenSection section) {
     setState(() => _section = section);
 
     final route = switch (section) {
       OmegaExperimentScreenSection.registry => RouteNames.experimentWorkspace,
-      OmegaExperimentScreenSection.create => RouteNames.experimentWorkspaceCreate,
-      OmegaExperimentScreenSection.evidence => RouteNames.experimentWorkspaceEvidence,
-      OmegaExperimentScreenSection.results => RouteNames.experimentWorkspaceResults,
-      OmegaExperimentScreenSection.lessons => RouteNames.experimentWorkspaceLessons,
-      OmegaExperimentScreenSection.reports => RouteNames.experimentWorkspaceReports,
+      OmegaExperimentScreenSection.create =>
+        RouteNames.experimentWorkspaceCreate,
+      OmegaExperimentScreenSection.evidence =>
+        RouteNames.experimentWorkspaceEvidence,
+      OmegaExperimentScreenSection.results =>
+        RouteNames.experimentWorkspaceResults,
+      OmegaExperimentScreenSection.lessons =>
+        RouteNames.experimentWorkspaceLessons,
+      OmegaExperimentScreenSection.reports =>
+        RouteNames.experimentWorkspaceReports,
       OmegaExperimentScreenSection.integrations =>
         RouteNames.experimentWorkspaceIntegrations,
-      OmegaExperimentScreenSection.aiReview => RouteNames.experimentWorkspaceAiReview,
-      OmegaExperimentScreenSection.settings => RouteNames.experimentWorkspaceSettings,
+      OmegaExperimentScreenSection.aiReview =>
+        RouteNames.experimentWorkspaceAiReview,
+      OmegaExperimentScreenSection.settings =>
+        RouteNames.experimentWorkspaceSettings,
     };
 
     context.go(route);
@@ -670,9 +685,7 @@ class _HeroCard extends StatelessWidget {
                   style: theme.textTheme.labelLarge,
                 ),
                 const Spacer(),
-                Chip(
-                  label: Text('Workspace ready'),
-                ),
+                Chip(label: Text('Workspace ready')),
               ],
             ),
             const SizedBox(height: 8),
@@ -690,12 +703,30 @@ class _HeroCard extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _MetricTile(label: 'Experiments', value: '${workspace.experimentCount}'),
-                _MetricTile(label: 'Active', value: '${workspace.activeExperimentCount}'),
-                _MetricTile(label: 'Evidence ready', value: '${workspace.evidenceReadyCount}'),
-                _MetricTile(label: 'Needs evidence', value: '${workspace.needsEvidenceCount}'),
-                _MetricTile(label: 'Tools', value: '${workspace.supportedTools.length}'),
-                _MetricTile(label: 'Reports', value: '${workspace.reportTemplates.length}'),
+                _MetricTile(
+                  label: 'Experiments',
+                  value: '${workspace.experimentCount}',
+                ),
+                _MetricTile(
+                  label: 'Active',
+                  value: '${workspace.activeExperimentCount}',
+                ),
+                _MetricTile(
+                  label: 'Evidence ready',
+                  value: '${workspace.evidenceReadyCount}',
+                ),
+                _MetricTile(
+                  label: 'Needs evidence',
+                  value: '${workspace.needsEvidenceCount}',
+                ),
+                _MetricTile(
+                  label: 'Tools',
+                  value: '${workspace.supportedTools.length}',
+                ),
+                _MetricTile(
+                  label: 'Reports',
+                  value: '${workspace.reportTemplates.length}',
+                ),
               ],
             ),
           ],
@@ -706,10 +737,7 @@ class _HeroCard extends StatelessWidget {
 }
 
 class _SectionTabs extends StatelessWidget {
-  const _SectionTabs({
-    required this.section,
-    required this.onSelected,
-  });
+  const _SectionTabs({required this.section, required this.onSelected});
 
   final OmegaExperimentScreenSection section;
   final ValueChanged<OmegaExperimentScreenSection> onSelected;
@@ -769,7 +797,10 @@ class _RegistrySection extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text('Experiment workspace', style: theme.textTheme.titleLarge),
+              child: Text(
+                'Experiment workspace',
+                style: theme.textTheme.titleLarge,
+              ),
             ),
             FilledButton.icon(
               onPressed: onOpenCreate,
@@ -783,10 +814,24 @@ class _RegistrySection extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _MetricTile(label: 'Ready to review', value: '${workspace.experiments.where((experiment) => experiment.hasAllCoreFields).length}'),
-            _MetricTile(label: 'Evidence ready', value: '${workspace.evidenceReadyCount}'),
-            _MetricTile(label: 'Needs evidence', value: '${workspace.needsEvidenceCount}'),
-            _MetricTile(label: 'Projects', value: '${workspace.experiments.map((experiment) => experiment.project).toSet().length}'),
+            _MetricTile(
+              label: 'Ready to review',
+              value:
+                  '${workspace.experiments.where((experiment) => experiment.hasAllCoreFields).length}',
+            ),
+            _MetricTile(
+              label: 'Evidence ready',
+              value: '${workspace.evidenceReadyCount}',
+            ),
+            _MetricTile(
+              label: 'Needs evidence',
+              value: '${workspace.needsEvidenceCount}',
+            ),
+            _MetricTile(
+              label: 'Projects',
+              value:
+                  '${workspace.experiments.map((experiment) => experiment.project).toSet().length}',
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -813,7 +858,8 @@ class _RegistrySection extends StatelessWidget {
                 for (final experiment in visibleExperiments) ...[
                   _ExperimentCard(
                     experiment: experiment,
-                    selected: selectedExperiment?.experimentId ==
+                    selected:
+                        selectedExperiment?.experimentId ==
                         experiment.experimentId,
                     onTap: () => onSelectExperiment(experiment.experimentId),
                   ),
@@ -860,9 +906,7 @@ class _RegistrySection extends StatelessWidget {
               switchOutCurve: Curves.easeIn,
               child: KeyedSubtree(
                 key: ValueKey(selectedExperiment!.experimentId),
-                child: _ExperimentDetailPanel(
-                  experiment: selectedExperiment!,
-                ),
+                child: _ExperimentDetailPanel(experiment: selectedExperiment!),
               ),
             ),
         ],
@@ -872,10 +916,7 @@ class _RegistrySection extends StatelessWidget {
 }
 
 class _EvidenceFilterBar extends StatelessWidget {
-  const _EvidenceFilterBar({
-    required this.filter,
-    required this.onChanged,
-  });
+  const _EvidenceFilterBar({required this.filter, required this.onChanged});
 
   final OmegaExperimentEvidenceFilter filter;
   final ValueChanged<OmegaExperimentEvidenceFilter> onChanged;
@@ -976,7 +1017,10 @@ class _CreateSection extends StatelessWidget {
               runSpacing: 12,
               children: [
                 _MetricTile(label: 'Next ID', value: nextExperimentId),
-                _MetricTile(label: 'Draft root', value: workspace.storageRootPath),
+                _MetricTile(
+                  label: 'Draft root',
+                  value: workspace.storageRootPath,
+                ),
                 _MetricTile(label: 'Dry-run safe', value: 'Yes'),
               ],
             ),
@@ -1006,10 +1050,7 @@ class _CreateSection extends StatelessWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            _SectionField(
-              controller: titleController,
-              label: 'Title',
-            ),
+            _SectionField(controller: titleController, label: 'Title'),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -1189,8 +1230,14 @@ class _EvidenceSection extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _MetricTile(label: 'Evidence ready', value: '${workspace.evidenceReadyCount}'),
-            _MetricTile(label: 'Needs evidence', value: '${workspace.needsEvidenceCount}'),
+            _MetricTile(
+              label: 'Evidence ready',
+              value: '${workspace.evidenceReadyCount}',
+            ),
+            _MetricTile(
+              label: 'Needs evidence',
+              value: '${workspace.needsEvidenceCount}',
+            ),
             for (final entry in workspace.evidenceTypeCounts.entries)
               _MetricTile(label: entry.key.label, value: '${entry.value}'),
           ],
@@ -1213,9 +1260,15 @@ class _EvidenceSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(experiment.experimentId, style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    experiment.experimentId,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   const SizedBox(height: 4),
-                  Text(experiment.title, style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    experiment.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -1231,9 +1284,11 @@ class _EvidenceSection extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     experiment.hasEvidence
-                        ? (workspace.config.isSafePath(workspace.config.experimentsRoot)
-                            ? 'Evidence should remain inside the approved Omega OS roots.'
-                            : 'Evidence root needs a local path check before sync is trusted.')
+                        ? (workspace.config.isSafePath(
+                                workspace.config.experimentsRoot,
+                              )
+                              ? 'Evidence should remain inside the approved Omega OS roots.'
+                              : 'Evidence root needs a local path check before sync is trusted.')
                         : 'This experiment still needs proof before review is complete.',
                   ),
                 ],
@@ -1281,7 +1336,8 @@ class _ResultsSectionState extends State<_ResultsSection> {
     final experimentIds = widget.workspace.experiments
         .map((experiment) => experiment.experimentId)
         .toSet();
-    if (_leftExperimentId != null && !experimentIds.contains(_leftExperimentId)) {
+    if (_leftExperimentId != null &&
+        !experimentIds.contains(_leftExperimentId)) {
       _leftExperimentId = widget.workspace.experiments.isNotEmpty
           ? widget.workspace.experiments.last.experimentId
           : null;
@@ -1307,10 +1363,11 @@ class _ResultsSectionState extends State<_ResultsSection> {
   }
 
   void _compareTopRepeatedTheme() {
-    final repeatedTheme = widget.workspace.lessonThemeCounts.entries
-        .where((entry) => entry.value > 1 && entry.key.isNotEmpty)
-        .toList(growable: false)
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final repeatedTheme =
+        widget.workspace.lessonThemeCounts.entries
+            .where((entry) => entry.value > 1 && entry.key.isNotEmpty)
+            .toList(growable: false)
+          ..sort((a, b) => b.value.compareTo(a.value));
 
     if (repeatedTheme.isEmpty) {
       return;
@@ -1318,9 +1375,11 @@ class _ResultsSectionState extends State<_ResultsSection> {
 
     final targetTheme = repeatedTheme.first.key;
     final matches = widget.workspace.experiments
-        .where((experiment) =>
-            experiment.lessonThemeKey.isNotEmpty &&
-            experiment.lessonThemeKey == targetTheme)
+        .where(
+          (experiment) =>
+              experiment.lessonThemeKey.isNotEmpty &&
+              experiment.lessonThemeKey == targetTheme,
+        )
         .toList(growable: false);
 
     if (matches.length < 2) {
@@ -1376,7 +1435,9 @@ class _ResultsSectionState extends State<_ResultsSection> {
     final leftExperiment = _experimentById(_leftExperimentId);
     final rightExperiment = _experimentById(_rightExperimentId);
     final comparisonReady =
-        leftExperiment != null && rightExperiment != null && leftExperiment != rightExperiment;
+        leftExperiment != null &&
+        rightExperiment != null &&
+        leftExperiment != rightExperiment;
     final comparisonTheme = _comparisonThemeKey;
     final comparisonThemeCount = comparisonTheme == null
         ? null
@@ -1393,7 +1454,10 @@ class _ResultsSectionState extends State<_ResultsSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Pick experiments to compare', style: theme.textTheme.titleMedium),
+                Text(
+                  'Pick experiments to compare',
+                  style: theme.textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Choose any two experiment records and compare their lifecycle, lesson, and next step side by side.',
@@ -1408,13 +1472,15 @@ class _ResultsSectionState extends State<_ResultsSection> {
                         label: 'Left experiment',
                         value: _leftExperimentId,
                         experiments: widget.workspace.experiments,
-                        onChanged: (value) => setState(() => _leftExperimentId = value),
+                        onChanged: (value) =>
+                            setState(() => _leftExperimentId = value),
                       ),
                       _ComparisonSelector(
                         label: 'Right experiment',
                         value: _rightExperimentId,
                         experiments: widget.workspace.experiments,
-                        onChanged: (value) => setState(() => _rightExperimentId = value),
+                        onChanged: (value) =>
+                            setState(() => _rightExperimentId = value),
                       ),
                     ];
 
@@ -1459,11 +1525,7 @@ class _ResultsSectionState extends State<_ResultsSection> {
 
                       if (!wide) {
                         return Column(
-                          children: [
-                            left,
-                            const SizedBox(height: 12),
-                            right,
-                          ],
+                          children: [left, const SizedBox(height: 12), right],
                         );
                       }
 
@@ -1544,8 +1606,10 @@ class _ResultsSectionState extends State<_ResultsSection> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: widget.workspace.lessonThemeCounts.entries.any(
-                              (entry) => entry.value > 1 && entry.key.isNotEmpty,
+                        onPressed:
+                            widget.workspace.lessonThemeCounts.entries.any(
+                              (entry) =>
+                                  entry.value > 1 && entry.key.isNotEmpty,
                             )
                             ? _compareTopRepeatedTheme
                             : null,
@@ -1554,7 +1618,9 @@ class _ResultsSectionState extends State<_ResultsSection> {
                       ),
                       if (comparisonTheme != null)
                         Chip(
-                          avatar: const Icon(Icons.local_fire_department_outlined),
+                          avatar: const Icon(
+                            Icons.local_fire_department_outlined,
+                          ),
                           label: Text(
                             comparisonThemeCount == null
                                 ? comparisonTheme
@@ -1639,10 +1705,7 @@ class _ResultsSectionState extends State<_ResultsSection> {
 }
 
 class _ComparisonCard extends StatelessWidget {
-  const _ComparisonCard({
-    required this.label,
-    required this.experiment,
-  });
+  const _ComparisonCard({required this.label, required this.experiment});
 
   final String label;
   final OmegaExperimentRecord experiment;
@@ -1668,14 +1731,13 @@ class _ComparisonCard extends StatelessWidget {
               children: [
                 Chip(label: Text(experiment.status.lifecycleLabel)),
                 Chip(label: Text(experiment.category.label)),
-                Chip(label: Text('${experiment.evidenceFiles.length} evidence')),
+                Chip(
+                  label: Text('${experiment.evidenceFiles.length} evidence'),
+                ),
               ],
             ),
             const SizedBox(height: 10),
-            Text(
-              'Lesson',
-              style: theme.textTheme.labelMedium,
-            ),
+            Text('Lesson', style: theme.textTheme.labelMedium),
             Text(
               experiment.lessonLearned.isEmpty
                   ? 'No lesson recorded yet.'
@@ -1683,10 +1745,7 @@ class _ComparisonCard extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 8),
-            Text(
-              'Next',
-              style: theme.textTheme.labelMedium,
-            ),
+            Text('Next', style: theme.textTheme.labelMedium),
             Text(
               experiment.nextActions.isEmpty
                   ? 'No next action recorded yet.'
@@ -1808,7 +1867,9 @@ class _ReportsSectionState extends State<_ReportsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final latestExperiments = widget.workspace.experiments.reversed.take(3).toList();
+    final latestExperiments = widget.workspace.experiments.reversed
+        .take(3)
+        .toList();
     final reportMarkdown = _buildWorkspaceReportMarkdown(
       widget.workspace,
       latestExperiments,
@@ -1826,7 +1887,10 @@ class _ReportsSectionState extends State<_ReportsSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Template set', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Template set',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 for (final template in widget.workspace.reportTemplates)
                   Text('- $template'),
@@ -1930,7 +1994,10 @@ class _ReportsSectionState extends State<_ReportsSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Saved reports', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Saved reports',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 if (savedReports.isEmpty)
                   Text(
@@ -1962,8 +2029,9 @@ class _ReportsSectionState extends State<_ReportsSection> {
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(dialogContext).pop(false),
+                                      onPressed: () => Navigator.of(
+                                        dialogContext,
+                                      ).pop(false),
                                       child: const Text('Cancel'),
                                     ),
                                     FilledButton.tonal(
@@ -2003,7 +2071,7 @@ class _ReportsSectionState extends State<_ReportsSection> {
                                 ),
                               );
                             } catch (_) {
-                            if (!mounted) {
+                              if (!mounted) {
                                 return;
                               }
 
@@ -2079,7 +2147,10 @@ class _SavedReportPreviewCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Report preview', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Report preview',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             if (reports.isEmpty)
               Text(
@@ -2107,10 +2178,7 @@ class _SavedReportPreviewCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               if (report != null) ...[
-                Text(
-                  report.path,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text(report.path, style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 12),
                 Container(
                   constraints: const BoxConstraints(maxHeight: 280),
@@ -2158,7 +2226,9 @@ class _SavedReportListTile extends StatelessWidget {
 
     return ListTile(
       selected: selected,
-      selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.28),
+      selectedTileColor: theme.colorScheme.primaryContainer.withValues(
+        alpha: 0.28,
+      ),
       contentPadding: EdgeInsets.zero,
       leading: Icon(
         Icons.description_outlined,
@@ -2189,14 +2259,8 @@ class _SavedReportListTile extends StatelessWidget {
           }
         },
         itemBuilder: (context) => [
-          const PopupMenuItem<String>(
-            value: 'open',
-            child: Text('Open'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'delete',
-            child: Text('Delete'),
-          ),
+          const PopupMenuItem<String>(value: 'open', child: Text('Open')),
+          const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
         ],
       ),
     );
@@ -2207,10 +2271,11 @@ String _buildWorkspaceReportMarkdown(
   OmegaExperimentWorkspace workspace,
   List<OmegaExperimentRecord> latestExperiments,
 ) {
-  final repeatedThemes = workspace.lessonThemeCounts.entries
-      .where((entry) => entry.value > 1)
-      .toList()
-    ..sort((a, b) => b.value.compareTo(a.value));
+  final repeatedThemes =
+      workspace.lessonThemeCounts.entries
+          .where((entry) => entry.value > 1)
+          .toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
 
   final buffer = StringBuffer()
     ..writeln('# Omega Experiment Workspace Report')
@@ -2323,12 +2388,13 @@ List<File> _listWorkspaceReports(OmegaExperimentWorkspace workspace) {
     return const [];
   }
 
-  final files = reportsDir
-      .listSync(followLinks: false)
-      .whereType<File>()
-      .where((file) => p.extension(file.path).toLowerCase() == '.md')
-      .toList()
-    ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+  final files =
+      reportsDir
+          .listSync(followLinks: false)
+          .whereType<File>()
+          .where((file) => p.extension(file.path).toLowerCase() == '.md')
+          .toList()
+        ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
 
   return files;
 }
@@ -2358,7 +2424,10 @@ class _IntegrationsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Software integrations', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'Software integrations',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -2435,11 +2504,20 @@ class _SettingsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _DetailRow(label: 'Omega root', value: config.omegaRoot),
-                _DetailRow(label: 'Experiments root', value: config.experimentsRoot),
-                _DetailRow(label: 'Knowledge root', value: config.knowledgeRoot),
+                _DetailRow(
+                  label: 'Experiments root',
+                  value: config.experimentsRoot,
+                ),
+                _DetailRow(
+                  label: 'Knowledge root',
+                  value: config.knowledgeRoot,
+                ),
                 _DetailRow(label: 'AI root', value: config.aiRoot),
                 _DetailRow(label: 'Visual root', value: config.visualRoot),
-                _DetailRow(label: 'Obsidian vault', value: config.obsidianVault),
+                _DetailRow(
+                  label: 'Obsidian vault',
+                  value: config.obsidianVault,
+                ),
                 _DetailRow(label: 'GitHub owner', value: config.githubOwner),
                 _DetailRow(label: 'GitHub repo', value: config.githubRepo),
               ],
@@ -2453,10 +2531,12 @@ class _SettingsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Safe path validation', style: theme.textTheme.titleMedium),
+                Text(
+                  'Safe path validation',
+                  style: theme.textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
-                for (final root in config.approvedRoots)
-                  Text('- $root'),
+                for (final root in config.approvedRoots) Text('- $root'),
               ],
             ),
           ),
@@ -2552,9 +2632,17 @@ class _ExperimentCard extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     Chip(label: Text(experiment.category.label)),
-                    Chip(label: Text('${experiment.nextActions.length} next actions')),
+                    Chip(
+                      label: Text(
+                        '${experiment.nextActions.length} next actions',
+                      ),
+                    ),
                     if (experiment.hasEvidence) ...[
-                      Chip(label: Text('${experiment.evidenceFiles.length} evidence')),
+                      Chip(
+                        label: Text(
+                          '${experiment.evidenceFiles.length} evidence',
+                        ),
+                      ),
                       for (final type in experiment.evidenceTypes.take(2))
                         Chip(label: Text(type.label)),
                     ] else
@@ -2599,10 +2687,7 @@ class _ExperimentDetailPanel extends StatelessWidget {
             const SizedBox(height: 8),
             Text(experiment.title, style: theme.textTheme.headlineSmall),
             const SizedBox(height: 8),
-            Text(
-              experiment.objective,
-              style: theme.textTheme.bodyMedium,
-            ),
+            Text(experiment.objective, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -2620,11 +2705,20 @@ class _ExperimentDetailPanel extends StatelessWidget {
             _DetailRow(label: 'Hypothesis', value: experiment.hypothesis),
             _DetailRow(label: 'Test plan', value: experiment.testPlan),
             _DetailRow(label: 'Setup notes', value: experiment.setupNotes),
-            _DetailRow(label: 'Measurements', value: experiment.measurements.join('\n')),
+            _DetailRow(
+              label: 'Measurements',
+              value: experiment.measurements.join('\n'),
+            ),
             _DetailRow(label: 'Results', value: experiment.results),
             _DetailRow(label: 'Conclusion', value: experiment.conclusion),
-            _DetailRow(label: 'Lesson learned', value: experiment.lessonLearned),
-            _DetailRow(label: 'Next actions', value: experiment.nextActions.join('\n')),
+            _DetailRow(
+              label: 'Lesson learned',
+              value: experiment.lessonLearned,
+            ),
+            _DetailRow(
+              label: 'Next actions',
+              value: experiment.nextActions.join('\n'),
+            ),
             _DetailRow(
               label: 'Repo commits',
               value: experiment.relatedRepoCommits.join('\n'),
@@ -2792,7 +2886,8 @@ class _ExperimentDetailPanel extends StatelessWidget {
                                 projectId: experiment.linkedProjectId,
                                 topic: experiment.title,
                                 reason: experiment.objective,
-                                resourceLink: experiment.relatedObsidianNotes.isNotEmpty
+                                resourceLink:
+                                    experiment.relatedObsidianNotes.isNotEmpty
                                     ? experiment.relatedObsidianNotes.first
                                     : experiment.projectLink,
                                 notes: [
@@ -2861,10 +2956,7 @@ class _EmptyDetailPanel extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -2958,10 +3050,7 @@ class _DropdownField<T> extends StatelessWidget {
       ),
       items: [
         for (final item in items)
-          DropdownMenuItem<T>(
-            value: item,
-            child: Text(labelFor(item)),
-          ),
+          DropdownMenuItem<T>(value: item, child: Text(labelFor(item))),
       ],
       onChanged: (value) {
         if (value != null) {
@@ -2979,5 +3068,3 @@ List<String> _splitLines(String value) {
       .where((line) => line.isNotEmpty)
       .toList(growable: false);
 }
-
-

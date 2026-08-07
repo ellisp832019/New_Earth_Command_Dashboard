@@ -119,7 +119,10 @@ void main() {
 
       expect(refreshedInboxItems, isEmpty);
       expect(journalEntries, hasLength(1));
-      expect(journalEntries.single.entry.title, 'Reflect on the calmer dashboard pass');
+      expect(
+        journalEntries.single.entry.title,
+        'Reflect on the calmer dashboard pass',
+      );
       expect(journalEntries.single.entry.projectId, project.projectId);
       expect(
         journalEntries.single.entry.whatIWorkedOn,
@@ -305,7 +308,10 @@ void main() {
 
       expect(refreshedInboxItems, isEmpty);
       expect(businessItems, hasLength(1));
-      expect(businessItems.single.item.name, 'Research a calmer support workflow');
+      expect(
+        businessItems.single.item.name,
+        'Research a calmer support workflow',
+      );
       expect(businessItems.single.item.projectId, project.projectId);
       expect(
         businessItems.single.item.notes,
@@ -384,7 +390,9 @@ void main() {
           .returnToNewQueue(inboxItem.inboxItemId);
 
       final inboxItems = await container.read(inboxItemsProvider.future);
-      final refreshedItem = await inboxRepository.getById(inboxItem.inboxItemId);
+      final refreshedItem = await inboxRepository.getById(
+        inboxItem.inboxItemId,
+      );
 
       expect(inboxItems, hasLength(1));
       expect(inboxItems.single.item.status, 'New');

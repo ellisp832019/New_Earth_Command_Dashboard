@@ -67,71 +67,78 @@ class _ReorderListScreenState extends ConsumerState<ReorderListScreen> {
                   SafeArea(
                     child: CustomScrollView(
                       slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.all(20),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _RegisterHeader(
-                              title: 'Reorder List',
-                              subtitle:
-                                  'Keep future purchases visible without forcing them into the main low-stock list.',
-                              countLabel:
-                                  '${table.rows.length} reorder entries loaded.',
-                              actionLabel: workspaceData.assetsRootPath == null
-                                  ? 'Asset folder not linked yet'
-                                  : workspaceData.assetsRootPath!,
-                              onReload: () {
-                                ref.invalidate(assetReorderListProvider);
-                              },
-                              onBack: () => Navigator.of(context).maybePop(),
-                            ),
-                            const SizedBox(height: 20),
-                            _RegisterSummaryRow(
-                              items: [
-                                _SummaryMetric(
-                                  label: 'Urgent',
-                                  value: urgentCount,
-                                  accent: AppColours.darkAmber,
+                        SliverPadding(
+                          padding: const EdgeInsets.all(20),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _RegisterHeader(
+                                  title: 'Reorder List',
+                                  subtitle:
+                                      'Keep future purchases visible without forcing them into the main low-stock list.',
+                                  countLabel:
+                                      '${table.rows.length} reorder entries loaded.',
+                                  actionLabel:
+                                      workspaceData.assetsRootPath == null
+                                      ? 'Asset folder not linked yet'
+                                      : workspaceData.assetsRootPath!,
+                                  onReload: () {
+                                    ref.invalidate(assetReorderListProvider);
+                                  },
+                                  onBack: () =>
+                                      Navigator.of(context).maybePop(),
                                 ),
-                                _SummaryMetric(
-                                  label: 'Linked suppliers',
-                                  value: linkedSuppliers,
-                                  accent: AppColours.darkSecondary,
+                                const SizedBox(height: 20),
+                                _RegisterSummaryRow(
+                                  items: [
+                                    _SummaryMetric(
+                                      label: 'Urgent',
+                                      value: urgentCount,
+                                      accent: AppColours.darkAmber,
+                                    ),
+                                    _SummaryMetric(
+                                      label: 'Linked suppliers',
+                                      value: linkedSuppliers,
+                                      accent: AppColours.darkSecondary,
+                                    ),
+                                    _SummaryMetric(
+                                      label: 'Estimated spend',
+                                      value: _estimateSpend(table.rows),
+                                      accent: AppColours.darkSuccess,
+                                    ),
+                                  ],
                                 ),
-                                _SummaryMetric(
-                                  label: 'Estimated spend',
-                                  value: _estimateSpend(table.rows),
-                                  accent: AppColours.darkSuccess,
-                                ),
+                                const SizedBox(height: 20),
+                                if (table.rows.isEmpty)
+                                  _EmptyRegisterState(
+                                    title: 'No reorder entries yet',
+                                    message:
+                                        'Add the first item to keep future purchasing decisions gentle and visible.',
+                                    onAdd: workspaceData.assetsRootPath == null
+                                        ? null
+                                        : () => _addRecord(
+                                            workspaceData.assetsRootPath!,
+                                          ),
+                                  )
+                                else
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: table.rows.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: 12),
+                                    itemBuilder: (context, index) {
+                                      return _ReorderCard(
+                                        row: table.rows[index],
+                                      );
+                                    },
+                                  ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            if (table.rows.isEmpty)
-                              _EmptyRegisterState(
-                                title: 'No reorder entries yet',
-                                message:
-                                    'Add the first item to keep future purchasing decisions gentle and visible.',
-                                onAdd: workspaceData.assetsRootPath == null
-                                    ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
-                              )
-                            else
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: table.rows.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(height: 12),
-                                itemBuilder: (context, index) {
-                                  return _ReorderCard(row: table.rows[index]);
-                                },
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
                       ],
                     ),
                   ),
@@ -139,7 +146,8 @@ class _ReorderListScreenState extends ConsumerState<ReorderListScreen> {
                     right: 20,
                     bottom: 20,
                     child: FloatingActionButton.extended(
-                      onPressed: _isSaving || workspaceData.assetsRootPath == null
+                      onPressed:
+                          _isSaving || workspaceData.assetsRootPath == null
                           ? null
                           : () => _addRecord(workspaceData.assetsRootPath!),
                       icon: _isSaving
@@ -176,17 +184,16 @@ class _ReorderListScreenState extends ConsumerState<ReorderListScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendReorderRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendReorderRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetReorderListProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reorder entry saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Reorder entry saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -243,14 +250,16 @@ class _ReorderCard extends StatelessWidget {
                       ? row['item']!.trim()
                       : 'Unnamed reorder item',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
                 label: priority,
-                accent: isUrgent ? AppColours.darkAmber : AppColours.darkSecondary,
+                accent: isUrgent
+                    ? AppColours.darkAmber
+                    : AppColours.darkSecondary,
               ),
             ],
           ),
@@ -261,11 +270,10 @@ class _ReorderCard extends StatelessWidget {
             children: [
               _InfoChip(label: row['date'] ?? 'No date'),
               _InfoChip(label: row['project'] ?? 'No project'),
+              _InfoChip(label: 'Qty ${row['quantity_needed'] ?? '0'}'),
               _InfoChip(
-                label: 'Qty ${row['quantity_needed'] ?? '0'}',
-              ),
-              _InfoChip(
-                label: 'Spend ${row['estimated_cost']?.trim().isNotEmpty == true ? row['estimated_cost']!.trim() : '0'}',
+                label:
+                    'Spend ${row['estimated_cost']?.trim().isNotEmpty == true ? row['estimated_cost']!.trim() : '0'}',
               ),
             ],
           ),
@@ -283,9 +291,9 @@ class _ReorderCard extends StatelessWidget {
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -313,18 +321,9 @@ class _ReorderDialogState extends State<_ReorderDialog> {
   String _priority = 'normal';
   String _status = 'open';
 
-  static const _priorityOptions = [
-    'normal',
-    'urgent',
-    'watch',
-  ];
+  static const _priorityOptions = ['normal', 'urgent', 'watch'];
 
-  static const _statusOptions = [
-    'open',
-    'watch',
-    'ordered',
-    'parked',
-  ];
+  static const _statusOptions = ['open', 'watch', 'ordered', 'parked'];
 
   @override
   void initState() {
@@ -363,7 +362,11 @@ class _ReorderDialogState extends State<_ReorderDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _field(controller: _dateController, label: 'Date', hintText: '2026-05-28'),
+                _field(
+                  controller: _dateController,
+                  label: 'Date',
+                  hintText: '2026-05-28',
+                ),
                 const SizedBox(height: 12),
                 _field(
                   controller: _itemController,
@@ -377,7 +380,11 @@ class _ReorderDialogState extends State<_ReorderDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _projectController, label: 'Project', hintText: 'MicroGrow'),
+                _field(
+                  controller: _projectController,
+                  label: 'Project',
+                  hintText: 'MicroGrow',
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -411,17 +418,19 @@ class _ReorderDialogState extends State<_ReorderDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _supplierController, label: 'Supplier', hintText: 'RS Components'),
+                _field(
+                  controller: _supplierController,
+                  label: 'Supplier',
+                  hintText: 'RS Components',
+                ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _priority,
                   decoration: const InputDecoration(labelText: 'Priority'),
                   items: _priorityOptions
                       .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ),
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -436,10 +445,8 @@ class _ReorderDialogState extends State<_ReorderDialog> {
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: _statusOptions
                       .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ),
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -635,8 +642,7 @@ class _RegisterSummaryRow extends StatelessWidget {
       builder: (context, constraints) {
         final useWideLayout = constraints.maxWidth >= 840;
         final children = [
-          for (final item in items)
-            Expanded(child: _SummaryTile(metric: item)),
+          for (final item in items) Expanded(child: _SummaryTile(metric: item)),
         ];
 
         if (useWideLayout) {
@@ -680,17 +686,17 @@ class _SummaryTile extends StatelessWidget {
           Text(
             metric.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: metric.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: metric.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${metric.value}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -721,16 +727,16 @@ class _EmptyRegisterState extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -810,9 +816,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -836,9 +842,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

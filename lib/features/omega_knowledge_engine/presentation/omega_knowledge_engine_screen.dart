@@ -681,11 +681,7 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
       child: SafeArea(
         child: Column(
           children: [
-            TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabs: tabs,
-            ),
+            TabBar(controller: _tabController, isScrollable: true, tabs: tabs),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -711,7 +707,8 @@ class _OmegaKnowledgeEngineScreenState extends State<OmegaKnowledgeEngineScreen>
                         _openLocalPath(snapshot.settings.outputDir),
                     onOpenObsidianExportFolder: () =>
                         _openLocalPath(snapshot.settings.obsidianExportDir),
-                    onCopyOutputPath: () => _copyText(snapshot.settings.outputDir),
+                    onCopyOutputPath: () =>
+                        _copyText(snapshot.settings.outputDir),
                     onScanFinished: _handleTerminalScanFinished,
                   ),
                   _RepositoriesTab(

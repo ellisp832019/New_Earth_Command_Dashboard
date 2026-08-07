@@ -11,7 +11,8 @@ Future<void> showRepoIntelligenceBridgeSyncTerminalDialog({
   required String title,
   required Future<RepoIntelligenceBridgeSyncResult> Function(
     void Function(String line) onOutputLine,
-  ) run,
+  )
+  run,
   VoidCallback? onOpenLog,
 }) {
   return showDialog<void>(
@@ -35,7 +36,8 @@ class _RepoIntelligenceBridgeSyncTerminalDialog extends StatefulWidget {
   final String title;
   final Future<RepoIntelligenceBridgeSyncResult> Function(
     void Function(String line) onOutputLine,
-  ) run;
+  )
+  run;
   final VoidCallback? onOpenLog;
 
   @override
@@ -174,11 +176,12 @@ class _RepoIntelligenceBridgeSyncTerminalDialogState
                         padding: const EdgeInsets.only(bottom: 4),
                         child: SelectableText(
                           line,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: accent,
-                            fontFamily: 'monospace',
-                            height: 1.35,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: accent,
+                                fontFamily: 'monospace',
+                                height: 1.35,
+                              ),
                         ),
                       );
                     },
@@ -187,10 +190,7 @@ class _RepoIntelligenceBridgeSyncTerminalDialogState
               ),
             ),
             const SizedBox(height: 12),
-            _SummaryPanel(
-              result: result,
-              error: _error,
-            ),
+            _SummaryPanel(result: result, error: _error),
             const SizedBox(height: 12),
             if (result != null)
               Wrap(
@@ -246,12 +246,11 @@ class _SummaryPanel extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColours.darkSurfaceAlt.withValues(alpha: 0.94),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColours.darkAmber.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: AppColours.darkAmber.withValues(alpha: 0.3),
+          ),
         ),
-        child: Text(
-          error.toString(),
-          style: summaryTextStyle,
-        ),
+        child: Text(error.toString(), style: summaryTextStyle),
       );
     }
 

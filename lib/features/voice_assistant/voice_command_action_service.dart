@@ -141,7 +141,9 @@ class VoiceCommandActionService {
       progressPercentage: 0,
       currentMilestone: null,
       nextAction: suggestion?.extractedProjectNextAction ?? cleanTranscript,
-      notes: suggestion?.extractedProjectNotes ?? 'Captured from the Voice Assistant.',
+      notes:
+          suggestion?.extractedProjectNotes ??
+          'Captured from the Voice Assistant.',
     );
   }
 

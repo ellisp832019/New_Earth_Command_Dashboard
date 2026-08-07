@@ -99,125 +99,132 @@ class _EquipmentRegisterScreenState
                   SafeArea(
                     child: CustomScrollView(
                       slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.all(20),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _RegisterHeader(
-                              title: 'Equipment Register',
-                              subtitle:
-                                  'Keep equipment clear, calm, and easy to find by name, project, or status.',
-                              countLabel:
-                                  '${filteredRows.length} of ${table.rows.length} equipment items shown.',
-                              actionLabel: workspaceData.assetsRootPath == null
-                                  ? 'Asset folder not linked yet'
-                                  : workspaceData.assetsRootPath!,
-                              onReload: () {
-                                ref.invalidate(assetEquipmentRegisterProvider);
-                              },
-                              onBack: () => Navigator.of(context).maybePop(),
-                            ),
-                            const SizedBox(height: 20),
-                            _RegisterSearchBar(
-                              controller: _searchController,
-                              hintText:
-                                  'Search equipment by name, ID, project, location, or status',
-                              activeFilter: _activeFilter,
-                              filterLabels: const {
-                                'all': 'All',
-                                'available': 'Ready',
-                                'attention': 'Attention',
-                              },
-                              onFilterChanged: (value) {
-                                setState(() => _activeFilter = value);
-                              },
-                              onClear: () {
-                                setState(() {
-                                  _activeFilter = 'all';
-                                  _searchController.clear();
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _RegisterSummaryRow(
-                              items: [
-                                _SummaryMetric(
-                                  label: 'Available',
-                                  value: _countStatuses(table.rows, const [
-                                    'available',
-                                    'in_use',
-                                    'in_storage',
-                                  ]),
-                                  accent: AppColours.darkSuccess,
+                        SliverPadding(
+                          padding: const EdgeInsets.all(20),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _RegisterHeader(
+                                  title: 'Equipment Register',
+                                  subtitle:
+                                      'Keep equipment clear, calm, and easy to find by name, project, or status.',
+                                  countLabel:
+                                      '${filteredRows.length} of ${table.rows.length} equipment items shown.',
+                                  actionLabel:
+                                      workspaceData.assetsRootPath == null
+                                      ? 'Asset folder not linked yet'
+                                      : workspaceData.assetsRootPath!,
+                                  onReload: () {
+                                    ref.invalidate(
+                                      assetEquipmentRegisterProvider,
+                                    );
+                                  },
+                                  onBack: () =>
+                                      Navigator.of(context).maybePop(),
                                 ),
-                                _SummaryMetric(
-                                  label: 'Broken / Repair',
-                                  value: _countStatuses(table.rows, const [
-                                    'broken',
-                                    'repairing',
-                                  ]),
-                                  accent: const Color(0xFFE26B6B),
+                                const SizedBox(height: 20),
+                                _RegisterSearchBar(
+                                  controller: _searchController,
+                                  hintText:
+                                      'Search equipment by name, ID, project, location, or status',
+                                  activeFilter: _activeFilter,
+                                  filterLabels: const {
+                                    'all': 'All',
+                                    'available': 'Ready',
+                                    'attention': 'Attention',
+                                  },
+                                  onFilterChanged: (value) {
+                                    setState(() => _activeFilter = value);
+                                  },
+                                  onClear: () {
+                                    setState(() {
+                                      _activeFilter = 'all';
+                                      _searchController.clear();
+                                    });
+                                  },
                                 ),
-                                _SummaryMetric(
-                                  label: 'Linked Projects',
-                                  value: _countDistinctProjects(table.rows),
-                                  accent: AppColours.darkSecondary,
+                                const SizedBox(height: 16),
+                                _RegisterSummaryRow(
+                                  items: [
+                                    _SummaryMetric(
+                                      label: 'Available',
+                                      value: _countStatuses(table.rows, const [
+                                        'available',
+                                        'in_use',
+                                        'in_storage',
+                                      ]),
+                                      accent: AppColours.darkSuccess,
+                                    ),
+                                    _SummaryMetric(
+                                      label: 'Broken / Repair',
+                                      value: _countStatuses(table.rows, const [
+                                        'broken',
+                                        'repairing',
+                                      ]),
+                                      accent: const Color(0xFFE26B6B),
+                                    ),
+                                    _SummaryMetric(
+                                      label: 'Linked Projects',
+                                      value: _countDistinctProjects(table.rows),
+                                      accent: AppColours.darkSecondary,
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 20),
+                                if (filteredRows.isEmpty)
+                                  if (table.rows.isEmpty)
+                                    _EmptyRegisterState(
+                                      title: 'No equipment yet',
+                                      message:
+                                          'Add your first item to start building a calm equipment register.',
+                                      onAdd:
+                                          workspaceData.assetsRootPath == null
+                                          ? null
+                                          : () => _addRecord(
+                                              workspaceData.assetsRootPath!,
+                                            ),
+                                    )
+                                  else
+                                    _EmptyFilterState(
+                                      title: 'No equipment matches this view',
+                                      message:
+                                          'Try a different search or switch the filter back to All.',
+                                      onClear: _clearFilters,
+                                    )
+                                else
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: filteredRows.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: 12),
+                                    itemBuilder: (context, index) {
+                                      final row = filteredRows[index];
+                                      return _EquipmentCard(
+                                        row: row,
+                                        onEdit:
+                                            workspaceData.assetsRootPath == null
+                                            ? null
+                                            : () => _editRecord(
+                                                workspaceData.assetsRootPath!,
+                                                row,
+                                              ),
+                                        onDelete:
+                                            workspaceData.assetsRootPath == null
+                                            ? null
+                                            : () => _deleteRecord(
+                                                workspaceData.assetsRootPath!,
+                                                row,
+                                              ),
+                                      );
+                                    },
+                                  ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            if (filteredRows.isEmpty)
-                              if (table.rows.isEmpty)
-                                _EmptyRegisterState(
-                                  title: 'No equipment yet',
-                                  message:
-                                      'Add your first item to start building a calm equipment register.',
-                                  onAdd: workspaceData.assetsRootPath == null
-                                      ? null
-                                      : () => _addRecord(
-                                          workspaceData.assetsRootPath!,
-                                        ),
-                                )
-                              else
-                                _EmptyFilterState(
-                                  title: 'No equipment matches this view',
-                                  message:
-                                      'Try a different search or switch the filter back to All.',
-                                  onClear: _clearFilters,
-                                )
-                            else
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: filteredRows.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(height: 12),
-                                itemBuilder: (context, index) {
-                                  final row = filteredRows[index];
-                                  return _EquipmentCard(
-                                    row: row,
-                                    onEdit: workspaceData.assetsRootPath == null
-                                        ? null
-                                        : () => _editRecord(
-                                            workspaceData.assetsRootPath!,
-                                            row,
-                                          ),
-                                    onDelete:
-                                        workspaceData.assetsRootPath == null
-                                        ? null
-                                        : () => _deleteRecord(
-                                            workspaceData.assetsRootPath!,
-                                            row,
-                                          ),
-                                  );
-                                },
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
                       ],
                     ),
                   ),
@@ -225,7 +232,8 @@ class _EquipmentRegisterScreenState
                     right: 20,
                     bottom: 20,
                     child: FloatingActionButton.extended(
-                      onPressed: _isSaving || workspaceData.assetsRootPath == null
+                      onPressed:
+                          _isSaving || workspaceData.assetsRootPath == null
                           ? null
                           : () => _addRecord(workspaceData.assetsRootPath!),
                       icon: _isSaving
@@ -419,9 +427,11 @@ class _EquipmentRegisterScreenState
       return;
     }
 
-    final match = rows.where((row) {
-      return (row['asset_id'] ?? '').trim() == initialAssetId;
-    }).toList(growable: false);
+    final match = rows
+        .where((row) {
+          return (row['asset_id'] ?? '').trim() == initialAssetId;
+        })
+        .toList(growable: false);
     if (match.isEmpty) {
       return;
     }

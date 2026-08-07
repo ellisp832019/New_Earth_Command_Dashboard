@@ -184,8 +184,7 @@ class _ModuleMenuItem extends StatelessWidget {
                         style: theme.textTheme.labelSmall,
                       ),
                     ),
-                    if (launchTarget != null)
-                      const SizedBox(width: 5),
+                    if (launchTarget != null) const SizedBox(width: 5),
                     if (launchTarget != null)
                       _ModuleStatusPill(
                         label: launchTarget!.label,
@@ -198,8 +197,8 @@ class _ModuleMenuItem extends StatelessWidget {
                   module.routes.isEmpty
                       ? 'No route registered'
                       : launchTarget == ModuleLaunchTarget.home
-                          ? module.routes.first
-                          : 'Package shell',
+                      ? module.routes.first
+                      : 'Package shell',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(

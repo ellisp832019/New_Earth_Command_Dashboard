@@ -6,6 +6,17 @@ import 'package:new_earth_command_dashboard/core/routing/route_names.dart';
 import 'package:new_earth_command_dashboard/features/education_learning_hub/presentation/education_learning_hub_screen.dart';
 
 void main() {
+  Future<void> dragUntilVisible(
+    WidgetTester tester,
+    Finder scrollable,
+    Finder target,
+  ) async {
+    for (var i = 0; i < 6 && target.evaluate().isEmpty; i++) {
+      await tester.drag(scrollable, const Offset(0, -480));
+      await tester.pumpAndSettle();
+    }
+  }
+
   testWidgets('education learning hub shows the calm tab shell', (
     tester,
   ) async {
@@ -41,8 +52,16 @@ void main() {
 
     await tester.tap(find.text('Lesson Library').last);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Open lesson').first);
-    await tester.pumpAndSettle();
+
+    final lessonLibraryScrollView = find.byKey(
+      const Key('educationLessonLibraryScrollView'),
+    );
+
+    await dragUntilVisible(
+      tester,
+      lessonLibraryScrollView,
+      find.text('Open lesson'),
+    );
     await tester.tap(find.text('Open lesson').first);
     await tester.pumpAndSettle();
     expect(find.text('Lesson steps'), findsWidgets);

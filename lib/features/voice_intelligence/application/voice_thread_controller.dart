@@ -328,7 +328,9 @@ class VoiceConversationThreadController
     }
 
     _hasHydrated = true;
-    final repository = VoiceConversationThreadRepository(ref.read(appDatabaseProvider));
+    final repository = VoiceConversationThreadRepository(
+      ref.read(appDatabaseProvider),
+    );
     final payloadJson = await repository.loadPersistedThreadPayload();
     if (payloadJson == null || _hasDirtyChanges) {
       return;
@@ -355,7 +357,9 @@ class VoiceConversationThreadController
   Future<void> _savePersistedThread(
     VoiceConversationThreadState currentState,
   ) async {
-    final repository = VoiceConversationThreadRepository(ref.read(appDatabaseProvider));
+    final repository = VoiceConversationThreadRepository(
+      ref.read(appDatabaseProvider),
+    );
     await repository.savePersistedThreadPayload(
       repository.encodePayload(_stateToJson(currentState)),
     );
@@ -364,24 +368,29 @@ class VoiceConversationThreadController
   VoiceConversationThreadState _stateFromJson(Map<String, dynamic> json) {
     return VoiceConversationThreadState(
       threadTitle: _stringValue(json['threadTitle']) ?? 'No thread yet',
-      summary: _stringValue(json['summary']) ??
+      summary:
+          _stringValue(json['summary']) ??
           'Start with a note, meeting, assistant question, or MicroGrow status check.',
-      nextStep: _stringValue(json['nextStep']) ??
+      nextStep:
+          _stringValue(json['nextStep']) ??
           'Pick a calm starting point and keep the flow review-first.',
-      reviewPrompt: _stringValue(json['reviewPrompt']) ??
+      reviewPrompt:
+          _stringValue(json['reviewPrompt']) ??
           'Review before saving keeps the flow local and safe.',
       resumeRoute: _stringValue(json['resumeRoute']) ?? RouteNames.voiceNotes,
       latestCaptureLabel:
           _stringValue(json['latestCaptureLabel']) ?? 'Nothing captured yet',
-      latestCapturePreview: _stringValue(json['latestCapturePreview']) ??
+      latestCapturePreview:
+          _stringValue(json['latestCapturePreview']) ??
           'Your latest capture will appear here.',
-      lastThingYouSaid: _stringValue(json['lastThingYouSaid']) ?? 'Nothing yet.',
-      prompts: _listValue(json['prompts'])
-          .map(_promptFromJson)
-          .toList(growable: false),
-      conversationEntries: _listValue(json['conversationEntries'])
-          .map(_messageFromJson)
-          .toList(growable: false),
+      lastThingYouSaid:
+          _stringValue(json['lastThingYouSaid']) ?? 'Nothing yet.',
+      prompts: _listValue(
+        json['prompts'],
+      ).map(_promptFromJson).toList(growable: false),
+      conversationEntries: _listValue(
+        json['conversationEntries'],
+      ).map(_messageFromJson).toList(growable: false),
       pinnedTurnTitle: _stringValue(json['pinnedTurnTitle']),
       pinnedTurnBody: _stringValue(json['pinnedTurnBody']),
       pinnedTurnNote: _stringValue(json['pinnedTurnNote']),
@@ -402,8 +411,9 @@ class VoiceConversationThreadController
       'latestCapturePreview': value.latestCapturePreview,
       'lastThingYouSaid': value.lastThingYouSaid,
       'prompts': value.prompts.map(_promptToJson).toList(growable: false),
-      'conversationEntries':
-          value.conversationEntries.map(_messageToJson).toList(growable: false),
+      'conversationEntries': value.conversationEntries
+          .map(_messageToJson)
+          .toList(growable: false),
       'pinnedTurnTitle': value.pinnedTurnTitle,
       'pinnedTurnBody': value.pinnedTurnBody,
       'pinnedTurnNote': value.pinnedTurnNote,
@@ -448,11 +458,11 @@ class VoiceConversationThreadController
     );
 
     return VoiceConversationMessage(
-      id: _stringValue(json['id']) ??
-          _messageId(kind.name),
+      id: _stringValue(json['id']) ?? _messageId(kind.name),
       kind: kind,
       body: _stringValue(json['body']) ?? '',
-      timestamp: DateTime.tryParse(_stringValue(json['timestamp']) ?? '') ??
+      timestamp:
+          DateTime.tryParse(_stringValue(json['timestamp']) ?? '') ??
           DateTime.now(),
       title: _stringValue(json['title']),
       intent: _stringValue(json['intent']),

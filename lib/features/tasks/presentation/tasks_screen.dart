@@ -157,7 +157,8 @@ class _TaskListView extends ConsumerWidget {
             parkedCount: parkedCount,
             carryForwardNotes: carryForwardNotes,
             onReviewParked: () => _showParkedWork(ref),
-            onOpenPlanner: () => context.push('${RouteNames.planner}?section=carryForward'),
+            onOpenPlanner: () =>
+                context.push('${RouteNames.planner}?section=carryForward'),
           )
         : null;
 
@@ -367,7 +368,8 @@ class _TaskListView extends ConsumerWidget {
     return ListView.separated(
       key: const Key('tasksScrollView'),
       padding: const EdgeInsets.all(20),
-      itemCount: filteredTasks.length + 1 + (carryForwardBanner == null ? 0 : 1),
+      itemCount:
+          filteredTasks.length + 1 + (carryForwardBanner == null ? 0 : 1),
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index == 0) {
@@ -538,7 +540,10 @@ class _CarryForwardBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.inventory_2_outlined, color: AppColours.darkAmber),
+              const Icon(
+                Icons.inventory_2_outlined,
+                color: AppColours.darkAmber,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

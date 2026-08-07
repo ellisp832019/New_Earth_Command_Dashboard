@@ -34,7 +34,9 @@ class CompanyCommandCentreIndexService {
     final sourcePath = configuredPath.isNotEmpty ? configuredPath : omegaOsPath;
     final sourceDirectory = Directory(sourcePath);
     final sourceExists = await sourceDirectory.exists();
-    final outputDirectory = Directory(path.join(moduleRootPath, 'omega_os_bridge', 'indexes'));
+    final outputDirectory = Directory(
+      path.join(moduleRootPath, 'omega_os_bridge', 'indexes'),
+    );
     await outputDirectory.create(recursive: true);
 
     final records = sourceExists
@@ -56,7 +58,9 @@ class CompanyCommandCentreIndexService {
       sourcePath: sourcePath,
       sourceExists: sourceExists,
       generatedAt: generatedAt,
-      records: records.where((record) => record.checkboxCount > 0).toList(growable: false),
+      records: records
+          .where((record) => record.checkboxCount > 0)
+          .toList(growable: false),
     );
     final deadlinesPath = await _writeIndexFile(
       outputDirectory,
@@ -64,7 +68,9 @@ class CompanyCommandCentreIndexService {
       sourcePath: sourcePath,
       sourceExists: sourceExists,
       generatedAt: generatedAt,
-      records: records.where((record) => record.dueDates.isNotEmpty).toList(growable: false),
+      records: records
+          .where((record) => record.dueDates.isNotEmpty)
+          .toList(growable: false),
     );
     final productsPath = await _writeIndexFile(
       outputDirectory,
@@ -72,7 +78,9 @@ class CompanyCommandCentreIndexService {
       sourcePath: sourcePath,
       sourceExists: sourceExists,
       generatedAt: generatedAt,
-      records: records.where((record) => record.labels.contains('product')).toList(growable: false),
+      records: records
+          .where((record) => record.labels.contains('product'))
+          .toList(growable: false),
     );
     final grantsPath = await _writeIndexFile(
       outputDirectory,
@@ -80,7 +88,9 @@ class CompanyCommandCentreIndexService {
       sourcePath: sourcePath,
       sourceExists: sourceExists,
       generatedAt: generatedAt,
-      records: records.where((record) => record.labels.contains('grant')).toList(growable: false),
+      records: records
+          .where((record) => record.labels.contains('grant'))
+          .toList(growable: false),
     );
     final ipAssetsPath = await _writeIndexFile(
       outputDirectory,
@@ -88,7 +98,9 @@ class CompanyCommandCentreIndexService {
       sourcePath: sourcePath,
       sourceExists: sourceExists,
       generatedAt: generatedAt,
-      records: records.where((record) => record.labels.contains('ip_asset')).toList(growable: false),
+      records: records
+          .where((record) => record.labels.contains('ip_asset'))
+          .toList(growable: false),
     );
     final evidencePath = await _writeIndexFile(
       outputDirectory,
@@ -96,7 +108,9 @@ class CompanyCommandCentreIndexService {
       sourcePath: sourcePath,
       sourceExists: sourceExists,
       generatedAt: generatedAt,
-      records: records.where((record) => record.isEvidence).toList(growable: false),
+      records: records
+          .where((record) => record.isEvidence)
+          .toList(growable: false),
     );
 
     return CompanyCommandCentreIndexSnapshot(
@@ -119,18 +133,20 @@ class CompanyCommandCentreIndexService {
   Future<List<CompanyCommandCentreMarkdownRecord>> _scanMarkdownFiles(
     Directory sourceDirectory,
   ) async {
-    final files = sourceDirectory
-        .listSync(recursive: true, followLinks: false)
-        .whereType<File>()
-        .where((file) => file.path.toLowerCase().endsWith('.md'))
-        .toList(growable: false)
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final files =
+        sourceDirectory
+            .listSync(recursive: true, followLinks: false)
+            .whereType<File>()
+            .where((file) => file.path.toLowerCase().endsWith('.md'))
+            .toList(growable: false)
+          ..sort((a, b) => a.path.compareTo(b.path));
 
     final records = <CompanyCommandCentreMarkdownRecord>[];
     for (final file in files) {
       final text = await _readTextFile(file);
       final relativePath = path.relative(file.path, from: sourceDirectory.path);
-      final title = _firstHeading(text) ?? path.basenameWithoutExtension(file.path);
+      final title =
+          _firstHeading(text) ?? path.basenameWithoutExtension(file.path);
       final frontmatter = _parseFrontmatter(text);
       final checkboxItems = _checkboxItems(text);
       final dueDates = _dueDates(text);
@@ -149,8 +165,12 @@ class CompanyCommandCentreIndexService {
           relativePath: relativePath,
           sourcePath: file.path,
           checkboxCount: checkboxItems.length,
-          openCheckboxCount: checkboxItems.where((item) => !item.completed).length,
-          closedCheckboxCount: checkboxItems.where((item) => item.completed).length,
+          openCheckboxCount: checkboxItems
+              .where((item) => !item.completed)
+              .length,
+          closedCheckboxCount: checkboxItems
+              .where((item) => item.completed)
+              .length,
           dueDates: dueDates,
           frontmatter: frontmatter,
           labels: labels,
@@ -175,7 +195,9 @@ class CompanyCommandCentreIndexService {
       'source_path': sourcePath,
       'source_exists': sourceExists,
       'record_count': records.length,
-      'records': records.map((record) => record.toJson()).toList(growable: false),
+      'records': records
+          .map((record) => record.toJson())
+          .toList(growable: false),
     };
     await file.writeAsString(
       const JsonEncoder.withIndent('  ').convert(payload),
@@ -228,7 +250,10 @@ class CompanyCommandCentreIndexService {
 
   List<CompanyCommandCentreCheckboxItem> _checkboxItems(String text) {
     final items = <CompanyCommandCentreCheckboxItem>[];
-    final checkboxPattern = RegExp(r'^\s*[-*]\s+\[( |x|X)\]\s+(.*)$', multiLine: true);
+    final checkboxPattern = RegExp(
+      r'^\s*[-*]\s+\[( |x|X)\]\s+(.*)$',
+      multiLine: true,
+    );
 
     for (final match in checkboxPattern.allMatches(text)) {
       final completed = match.group(1)?.trim().toLowerCase() == 'x';
@@ -236,7 +261,9 @@ class CompanyCommandCentreIndexService {
       if (label.isEmpty) {
         continue;
       }
-      items.add(CompanyCommandCentreCheckboxItem(label: label, completed: completed));
+      items.add(
+        CompanyCommandCentreCheckboxItem(label: label, completed: completed),
+      );
     }
     return items;
   }
@@ -260,7 +287,9 @@ class CompanyCommandCentreIndexService {
     required List<String> dueDates,
   }) {
     final labels = <String>{'company'};
-    final combined = '$relativePath $title ${frontmatter.values.join(' ')} $text'.toLowerCase();
+    final combined =
+        '$relativePath $title ${frontmatter.values.join(' ')} $text'
+            .toLowerCase();
 
     if (checkboxCount > 0) {
       labels.add('action');
@@ -268,16 +297,44 @@ class CompanyCommandCentreIndexService {
     if (dueDates.isNotEmpty) {
       labels.add('deadline');
     }
-    if (_containsAny(combined, const ['product', 'microgrow', 'biocalm', 'omega dashboard', 'field scanner'])) {
+    if (_containsAny(combined, const [
+      'product',
+      'microgrow',
+      'biocalm',
+      'omega dashboard',
+      'field scanner',
+    ])) {
       labels.add('product');
     }
-    if (_containsAny(combined, const ['grant', 'funding', 'award', 'application', 'uk research', 'innovation'])) {
+    if (_containsAny(combined, const [
+      'grant',
+      'funding',
+      'award',
+      'application',
+      'uk research',
+      'innovation',
+    ])) {
       labels.add('grant');
     }
-    if (_containsAny(combined, const ['asset', 'assets', 'equipment', 'valuation', 'qr', 'ip', 'intellectual property'])) {
+    if (_containsAny(combined, const [
+      'asset',
+      'assets',
+      'equipment',
+      'valuation',
+      'qr',
+      'ip',
+      'intellectual property',
+    ])) {
       labels.add('ip_asset');
     }
-    if (_containsAny(combined, const ['checklist', 'template', 'guide', 'doc', 'evidence', 'record'])) {
+    if (_containsAny(combined, const [
+      'checklist',
+      'template',
+      'guide',
+      'doc',
+      'evidence',
+      'record',
+    ])) {
       labels.add('evidence');
     }
 

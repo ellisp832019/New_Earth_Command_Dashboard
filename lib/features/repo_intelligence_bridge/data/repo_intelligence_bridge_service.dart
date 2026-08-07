@@ -58,7 +58,9 @@ class RepoIntelligenceBridgeService {
         .cast<File>()
         .toList();
 
-    entries.sort((a, b) => path.basename(a.path).compareTo(path.basename(b.path)));
+    entries.sort(
+      (a, b) => path.basename(a.path).compareTo(path.basename(b.path)),
+    );
 
     final profiles = <RepoIntelligenceBridgeProfile>[];
     for (final file in entries) {
@@ -237,11 +239,13 @@ class RepoIntelligenceBridgeService {
     final stdoutDone = process.stdout
         .transform(utf8.decoder)
         .transform(const LineSplitter())
-        .listen((line) => emit('stdout', line)).asFuture<void>();
+        .listen((line) => emit('stdout', line))
+        .asFuture<void>();
     final stderrDone = process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
-        .listen((line) => emit('stderr', line)).asFuture<void>();
+        .listen((line) => emit('stderr', line))
+        .asFuture<void>();
 
     final exitCode = await process.exitCode;
     await Future.wait<void>([stdoutDone, stderrDone]);
@@ -388,8 +392,9 @@ class RepoIntelligenceBridgeService {
   ) {
     final resolvedProfile = _resolveActiveProfile(profiles, state);
     return resolvedProfile.copyWith(
-      obsidianVaultPath:
-          state.obsidianVaultPath.isNotEmpty ? state.obsidianVaultPath : resolvedProfile.obsidianVaultPath,
+      obsidianVaultPath: state.obsidianVaultPath.isNotEmpty
+          ? state.obsidianVaultPath
+          : resolvedProfile.obsidianVaultPath,
       dashboardExportPath: state.dashboardExportRoot.isNotEmpty
           ? state.dashboardExportRoot
           : resolvedProfile.dashboardExportPath,

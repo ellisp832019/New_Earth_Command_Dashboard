@@ -116,7 +116,10 @@ final meetingAttachmentsProvider =
     });
 
 final meetingTranscriptFilesProvider =
-    FutureProvider.family<List<MeetingAttachmentRecord>, String>((ref, meetingId) {
+    FutureProvider.family<List<MeetingAttachmentRecord>, String>((
+      ref,
+      meetingId,
+    ) {
       final service = ref.watch(meetingFolderServiceProvider);
       return service.listTranscriptFiles(meetingId);
     });

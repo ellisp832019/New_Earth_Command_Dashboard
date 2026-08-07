@@ -227,6 +227,7 @@ class MoreScreen extends ConsumerWidget {
       subtitle: 'Supporting modules, reference tools, and adjacent workflows.',
       onBack: () => context.go(RouteNames.dashboard),
       child: ListView(
+        key: const Key('moreScreenList'),
         padding: const EdgeInsets.all(20),
         children: [
           Container(

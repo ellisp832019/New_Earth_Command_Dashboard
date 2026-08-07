@@ -293,7 +293,9 @@ class _PackageBody extends StatelessWidget {
                       },
                       icon: const Icon(Icons.dashboard_outlined),
                       label: Text(
-                        routes.isEmpty ? 'No overview sections' : 'Open overview',
+                        routes.isEmpty
+                            ? 'No overview sections'
+                            : 'Open overview',
                       ),
                     ),
                   ],

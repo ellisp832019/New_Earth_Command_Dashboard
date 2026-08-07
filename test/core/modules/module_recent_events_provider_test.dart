@@ -7,9 +7,7 @@ void main() {
   test('recent events provider updates from bus', () async {
     final bus = ModuleEventBus();
     final container = ProviderContainer(
-      overrides: [
-        moduleEventBusProvider.overrideWithValue(bus),
-      ],
+      overrides: [moduleEventBusProvider.overrideWithValue(bus)],
     );
     addTearDown(container.dispose);
 

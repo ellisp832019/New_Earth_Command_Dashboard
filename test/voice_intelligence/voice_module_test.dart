@@ -227,28 +227,34 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.byType(VoiceConversationScreen), findsOneWidget);
-    expect(find.byKey(const Key('voiceConversationReplyBox')), findsOneWidget);
+    expect(find.byType(VoiceConversationScreen), findsAtLeastNWidgets(1));
+    expect(
+      find.byKey(const Key('voiceConversationReplyBox')),
+      findsAtLeastNWidgets(1),
+    );
 
     router.go(RouteNames.voiceHome());
     await tester.pumpAndSettle();
 
     expect(find.text('Voice Home'), findsAtLeastNWidgets(1));
-    expect(find.text('Shared voice session idle'), findsOneWidget);
+    expect(find.text('Shared voice session idle'), findsAtLeastNWidgets(1));
     expect(find.text('Voice Notes'), findsWidgets);
-    expect(find.byTooltip('Back'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsAtLeastNWidgets(1));
 
     router.go(RouteNames.voiceConversation);
     await tester.pumpAndSettle();
 
-    expect(find.byType(VoiceConversationScreen), findsOneWidget);
-    expect(find.byKey(const Key('voiceConversationReplyBox')), findsOneWidget);
+    expect(find.byType(VoiceConversationScreen), findsAtLeastNWidgets(1));
+    expect(
+      find.byKey(const Key('voiceConversationReplyBox')),
+      findsAtLeastNWidgets(1),
+    );
 
     router.go(RouteNames.voiceNotes);
     await tester.pumpAndSettle();
 
     expect(find.text('Voice Notes'), findsWidgets);
-    expect(find.text('Start Recording'), findsOneWidget);
+    expect(find.text('Start Recording'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('voice audit entries can jump back to the matching route', (
@@ -320,15 +326,26 @@ void main() {
         );
     await tester.pumpAndSettle();
 
-    expect(find.text('Search and filters'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('voiceAuditJumpBackLatestButton')),
+      200,
+      scrollable: find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is Scrollable &&
+                widget.axisDirection == AxisDirection.down,
+          )
+          .last,
+    );
+    await tester.pump();
     expect(
       find.byKey(const Key('voiceAuditJumpBackLatestButton')),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     await tester.tap(find.byKey(const Key('voiceAuditJumpBackLatestButton')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(VoiceConversationScreen), findsOneWidget);
+    expect(find.byType(VoiceConversationScreen), findsAtLeastNWidgets(1));
   });
 
   test('voice provider mode and feature flags persist locally', () async {

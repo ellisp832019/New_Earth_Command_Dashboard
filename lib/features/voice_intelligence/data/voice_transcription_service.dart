@@ -13,10 +13,6 @@ class VoiceTranscriptionService {
     required String prompt,
     required VoiceRuntimeConfig config,
   }) async {
-    return provider.transcribe(
-      mode: mode,
-      prompt: prompt,
-      config: config,
-    );
+    return provider.transcribe(mode: mode, prompt: prompt, config: config);
   }
 }

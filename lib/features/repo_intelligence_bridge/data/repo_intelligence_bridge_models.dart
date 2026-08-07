@@ -366,7 +366,8 @@ class RepoIntelligenceBridgeSyncManifest {
     Map<String, dynamic> json,
   ) {
     return RepoIntelligenceBridgeSyncManifest(
-      generatedAt: json['generated_at']?.toString() ??
+      generatedAt:
+          json['generated_at']?.toString() ??
           json['last_sync']?.toString() ??
           '',
       project: json['project']?.toString() ?? '',

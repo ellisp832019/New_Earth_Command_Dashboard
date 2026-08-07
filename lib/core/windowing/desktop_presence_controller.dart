@@ -25,10 +25,7 @@ class DesktopPresenceController with TrayListener, wm.WindowListener {
       'assets/branding/new_earth_command_dashboard_tray_icon_v8.png';
   static final HotKey _wakeHotKey = HotKey(
     key: PhysicalKeyboardKey.keyW,
-    modifiers: const [
-      HotKeyModifier.control,
-      HotKeyModifier.alt,
-    ],
+    modifiers: const [HotKeyModifier.control, HotKeyModifier.alt],
   );
 
   bool _initialized = false;
@@ -65,19 +62,10 @@ class DesktopPresenceController with TrayListener, wm.WindowListener {
     await trayManager.setContextMenu(
       Menu(
         items: [
-          MenuItem(
-            key: 'show_dashboard',
-            label: 'Wake Dashboard',
-          ),
-          MenuItem(
-            key: 'sleep',
-            label: 'Sleep Quietly',
-          ),
+          MenuItem(key: 'show_dashboard', label: 'Wake Dashboard'),
+          MenuItem(key: 'sleep', label: 'Sleep Quietly'),
           MenuItem.separator(),
-          MenuItem(
-            key: 'shutdown',
-            label: 'Exit Completely',
-          ),
+          MenuItem(key: 'shutdown', label: 'Exit Completely'),
         ],
       ),
     );
@@ -124,28 +112,28 @@ class DesktopPresenceController with TrayListener, wm.WindowListener {
     final shouldShutdown = context == null
         ? true
         : await showDialog<bool>(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: const Text('Exit completely?'),
-                  content: const Text(
-                    'This will close New Earth Command Dashboard completely. '
-                    'Use Sleep Quietly if you just want to tuck it away for later.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Exit completely?'),
+                    content: const Text(
+                      'This will close New Earth Command Dashboard completely. '
+                      'Use Sleep Quietly if you just want to tuck it away for later.',
                     ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Exit Completely'),
-                    ),
-                  ],
-                );
-              },
-            ) ??
-            false;
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Exit Completely'),
+                      ),
+                    ],
+                  );
+                },
+              ) ??
+              false;
 
     if (!shouldShutdown) {
       return;

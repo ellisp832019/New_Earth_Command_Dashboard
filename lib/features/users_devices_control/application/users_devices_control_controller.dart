@@ -5,16 +5,16 @@ import '../data/users_devices_control_repository.dart';
 
 final usersDevicesControlRepositoryProvider =
     Provider<UsersDevicesControlRepository>((ref) {
-  return UsersDevicesControlRepository(
-    database: ref.watch(appDatabaseProvider),
-  );
-});
+      return UsersDevicesControlRepository(
+        database: ref.watch(appDatabaseProvider),
+      );
+    });
 
 final usersDevicesControlSnapshotProvider =
     FutureProvider<UsersDevicesControlSnapshot>((ref) async {
-  final repository = ref.watch(usersDevicesControlRepositoryProvider);
-  return repository.loadSnapshot();
-});
+      final repository = ref.watch(usersDevicesControlRepositoryProvider);
+      return repository.loadSnapshot();
+    });
 
 final usersDevicesControlMigrationHealthProvider =
     FutureProvider<UsersDevicesControlMigrationHealthSnapshot>((ref) async {

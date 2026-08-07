@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../services/seed_data_service.dart';
 import '../services/daily_plan_service.dart';
+import '../utils/local_pin_secret_codec.dart';
 import 'tables/app_settings_table.dart';
 import 'tables/business_opportunities_table.dart';
 import 'tables/content_items_table.dart';
@@ -73,6 +74,10 @@ class AppDatabase extends _$AppDatabase {
               user_id TEXT NOT NULL,
               label TEXT NOT NULL,
               pin_code TEXT NOT NULL,
+              pin_length INTEGER NOT NULL DEFAULT 0,
+              pin_secret_algorithm TEXT NOT NULL DEFAULT '',
+              pin_secret_salt TEXT NOT NULL DEFAULT '',
+              pin_secret_hash TEXT NOT NULL DEFAULT '',
               status TEXT NOT NULL,
               source_label TEXT NOT NULL,
               notes TEXT NOT NULL DEFAULT '',
@@ -177,6 +182,30 @@ class AppDatabase extends _$AppDatabase {
                 updated_at TEXT NOT NULL
               )
             ''');
+      }
+
+      if (from < 16) {
+        await _addPinColumnIfMissing(
+          migrator,
+          'pin_length',
+          'INTEGER NOT NULL DEFAULT 0',
+        );
+        await _addPinColumnIfMissing(
+          migrator,
+          'pin_secret_algorithm',
+          "TEXT NOT NULL DEFAULT ''",
+        );
+        await _addPinColumnIfMissing(
+          migrator,
+          'pin_secret_salt',
+          "TEXT NOT NULL DEFAULT ''",
+        );
+        await _addPinColumnIfMissing(
+          migrator,
+          'pin_secret_hash',
+          "TEXT NOT NULL DEFAULT ''",
+        );
+        await _migratePinSecrets(migrator);
       }
 
       if (from < 4) {
@@ -396,6 +425,61 @@ Future<void> _addColumnIfMissing(
     return;
   }
   await migrator.addColumn(table, column as dynamic);
+}
+
+Future<void> _addPinColumnIfMissing(
+  Migrator migrator,
+  String columnName,
+  String columnDefinition,
+) async {
+  if (await _columnExists(
+    migrator,
+    'users_devices_control_pin_records',
+    columnName,
+  )) {
+    return;
+  }
+
+  await migrator.database.customStatement(
+    'ALTER TABLE users_devices_control_pin_records ADD COLUMN $columnName $columnDefinition',
+  );
+}
+
+Future<void> _migratePinSecrets(Migrator migrator) async {
+  if (!await _tableExists(migrator, 'users_devices_control_pin_records')) {
+    return;
+  }
+
+  final rows = await migrator.database
+      .customSelect(
+        'SELECT pin_id, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash FROM users_devices_control_pin_records',
+      )
+      .get();
+
+  for (final row in rows) {
+    final pinId = row.read<String>('pin_id');
+    final existingHash = row.read<String?>('pin_secret_hash') ?? '';
+    final existingSalt = row.read<String?>('pin_secret_salt') ?? '';
+    if (existingHash.isNotEmpty && existingSalt.isNotEmpty) {
+      continue;
+    }
+
+    final pinCode = row.read<String>('pin_code');
+    final secret = await LocalPinSecretCodec.hashPinCode(pinCode);
+    await migrator.database.customStatement(
+      'UPDATE users_devices_control_pin_records '
+      'SET pin_code = ?, pin_length = ?, pin_secret_algorithm = ?, pin_secret_salt = ?, pin_secret_hash = ? '
+      'WHERE pin_id = ?',
+      [
+        LocalPinSecretCodec.displayPinFromLength(secret.pinLength),
+        secret.pinLength,
+        secret.algorithm,
+        secret.saltBase64,
+        secret.hashBase64,
+        pinId,
+      ],
+    );
+  }
 }
 
 Future<bool> _tableExists(Migrator migrator, String tableName) async {

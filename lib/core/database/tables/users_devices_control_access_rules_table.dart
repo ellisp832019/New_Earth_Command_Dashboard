@@ -16,8 +16,9 @@ class UsersDevicesControlAccessRules extends Table {
       text().named('control_permission').withDefault(const Constant(''))();
   IntColumn get requiresTrustLevel =>
       integer().named('requires_trust_level').withDefault(const Constant(0))();
-  TextColumn get requiresApprovalForJson =>
-      text().named('requires_approval_for_json').withDefault(const Constant('[]'))();
+  TextColumn get requiresApprovalForJson => text()
+      .named('requires_approval_for_json')
+      .withDefault(const Constant('[]'))();
   TextColumn get payloadJson => text().named('payload_json')();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();

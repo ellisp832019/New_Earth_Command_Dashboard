@@ -111,9 +111,9 @@ class MeetingRecordingImportResult {
 
 abstract interface class MeetingRecordingTranscriber {
   Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
-    String sourcePath,
-    {String? draftOutputPath}
-  );
+    String sourcePath, {
+    String? draftOutputPath,
+  });
 }
 
 class MeetingRecordingTranscriptionJob {
@@ -136,9 +136,9 @@ class DesktopMeetingRecordingTranscriber
 
   @override
   Future<MeetingRecordingTranscriptionJob?> startTranscribeFile(
-    String sourcePath,
-    {String? draftOutputPath}
-  ) async {
+    String sourcePath, {
+    String? draftOutputPath,
+  }) async {
     final bridgeJob = await _bridgeService.startTranscribeFile(
       sourcePath,
       draftOutputPath: draftOutputPath,
@@ -185,10 +185,7 @@ class DesktopMeetingRecordingTranscriber
 }
 
 class _RecordingFileCandidate {
-  const _RecordingFileCandidate({
-    required this.path,
-    required this.modifiedAt,
-  });
+  const _RecordingFileCandidate({required this.path, required this.modifiedAt});
 
   final String path;
   final DateTime modifiedAt;
@@ -2463,12 +2460,10 @@ class MeetingFolderService {
   }
 
   Future<MeetingRecordingImportResult> importLatestRecordingFromFolder(
-    String folderPath,
-    {
+    String folderPath, {
     void Function(String status)? onStatus,
     bool Function()? isCancelled,
-  }
-  ) async {
+  }) async {
     onStatus?.call('Scanning recording folder...');
     if (isCancelled?.call() == true) {
       throw StateError('Import cancelled.');
@@ -2501,12 +2496,10 @@ class MeetingFolderService {
   }
 
   Future<MeetingRecordingImportResult> importRecordingFile(
-    String sourceFilePath,
-    {
+    String sourceFilePath, {
     void Function(String status)? onStatus,
     bool Function()? isCancelled,
-  }
-  ) async {
+  }) async {
     onStatus?.call('Reading meeting schedule...');
     if (isCancelled?.call() == true) {
       throw StateError('Import cancelled.');
@@ -2537,15 +2530,22 @@ class MeetingFolderService {
     await transcriptsFolder.create(recursive: true);
 
     final stamp = _timestampSlug(recordingModifiedAt);
-    final sourceName = _folderPart(path.basenameWithoutExtension(sourceFile.path));
+    final sourceName = _folderPart(
+      path.basenameWithoutExtension(sourceFile.path),
+    );
     final extension = path.extension(sourceFile.path).toLowerCase();
     final recordingTargetPath = path.join(
       transcriptsFolder.path,
-      '$stamp' '_' '$sourceName$extension',
+      '$stamp'
+      '_'
+      '$sourceName$extension',
     );
     final transcriptTargetPath = path.join(
       transcriptsFolder.path,
-      '$stamp' '_' '$sourceName' '_transcript.md',
+      '$stamp'
+      '_'
+      '$sourceName'
+      '_transcript.md',
     );
     final draftTranscriptPath = '$transcriptTargetPath.draft.md';
 
@@ -2585,10 +2585,9 @@ class MeetingFolderService {
       minutesFromScheduledWindow: match.minutesFromScheduledWindow,
       transcript: cleanedTranscript,
     );
-    await File(transcriptTargetPath).writeAsString(
-      transcriptMarkdown,
-      flush: true,
-    );
+    await File(
+      transcriptTargetPath,
+    ).writeAsString(transcriptMarkdown, flush: true);
 
     final harvest = await _harvestTranscriptArtifacts(
       meeting: match.meeting,
@@ -3743,7 +3742,10 @@ $rows
     final candidates = <_RecordingFileCandidate>[];
 
     try {
-      await for (final entity in folder.list(recursive: true, followLinks: false)) {
+      await for (final entity in folder.list(
+        recursive: true,
+        followLinks: false,
+      )) {
         if (entity is! File) {
           continue;
         }

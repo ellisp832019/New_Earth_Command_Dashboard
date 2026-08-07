@@ -15,10 +15,13 @@ import 'package:new_earth_command_dashboard/features/omega_engineering_studio/do
 
 void main() {
   test('engineering manifest routes stay aligned with the section enum', () {
-    final manifest = jsonDecode(
-      File('modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/module_manifest.json')
-          .readAsStringSync(),
-    ) as Map<String, dynamic>;
+    final manifest =
+        jsonDecode(
+              File(
+                'modules/01_OMEGA_ENGINEERING_STUDIO_MODULE/module_manifest.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
 
     expect(manifest['id'], '01_OMEGA_ENGINEERING_STUDIO_MODULE');
     expect(

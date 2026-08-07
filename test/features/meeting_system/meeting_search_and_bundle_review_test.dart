@@ -18,15 +18,27 @@ void main() {
       ProviderScope(
         overrides: [
           meetingFolderServiceProvider.overrideWithValue(service),
-          meetingWorkspaceProvider.overrideWith((ref) async => _FakeMeetingFolderService._workspace),
-          meetingOmegaHubProvider.overrideWith((ref) async => _FakeMeetingFolderService._hub),
-          meetingMasterIndexProvider.overrideWith((ref) async => _FakeMeetingFolderService._masterIndex),
-          meetingStatusSummaryProvider.overrideWith((ref) async => _FakeMeetingFolderService._summary),
-          meetingListRowsProvider.overrideWith((ref) async => [
-                _FakeMeetingFolderService._searchRow,
-                _FakeMeetingFolderService._secondRow,
-              ]),
-          meetingLatestMeetingProvider.overrideWith((ref) async => _FakeMeetingFolderService._meeting),
+          meetingWorkspaceProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._workspace,
+          ),
+          meetingOmegaHubProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._hub,
+          ),
+          meetingMasterIndexProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._masterIndex,
+          ),
+          meetingStatusSummaryProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._summary,
+          ),
+          meetingListRowsProvider.overrideWith(
+            (ref) async => [
+              _FakeMeetingFolderService._searchRow,
+              _FakeMeetingFolderService._secondRow,
+            ],
+          ),
+          meetingLatestMeetingProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._meeting,
+          ),
         ],
         child: const MaterialApp(home: MeetingSettingsScreen()),
       ),
@@ -63,12 +75,15 @@ void main() {
       ProviderScope(
         overrides: [
           meetingFolderServiceProvider.overrideWithValue(service),
-          meetingDashboardSnapshotProvider.overrideWith((ref) async =>
-              _FakeMeetingFolderService._dashboard),
-          meetingLatestMeetingProvider.overrideWith((ref) async =>
-              _FakeMeetingFolderService._meeting),
-          meetingStatusSummaryProvider.overrideWith((ref) async =>
-              _FakeMeetingFolderService._summary),
+          meetingDashboardSnapshotProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._dashboard,
+          ),
+          meetingLatestMeetingProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._meeting,
+          ),
+          meetingStatusSummaryProvider.overrideWith(
+            (ref) async => _FakeMeetingFolderService._summary,
+          ),
         ],
         child: const MaterialApp(
           home: Scaffold(
@@ -151,7 +166,8 @@ class _FakeMeetingFolderService extends MeetingFolderService {
   static final MeetingWorkspaceSnapshot _workspace = MeetingWorkspaceSnapshot(
     configPath: 'config/local_paths.json',
     omegaRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK',
-    meetingsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS',
+    meetingsRootPath:
+        'D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS',
     isReady: true,
     issues: const <String>[],
     requiredFolders: const <String>[],
@@ -184,14 +200,16 @@ class _FakeMeetingFolderService extends MeetingFolderService {
     issues: const <String>[],
   );
 
-  static final MeetingMasterIndexSnapshot _masterIndex =
-      MeetingMasterIndexSnapshot(
-        indexPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS/meeting_index.csv',
-        masterLogPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS/meeting_index.json',
-        meetingCount: 2,
-        preview: 'alpha meeting preview',
-        exists: true,
-      );
+  static final MeetingMasterIndexSnapshot
+  _masterIndex = MeetingMasterIndexSnapshot(
+    indexPath:
+        'D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS/meeting_index.csv',
+    masterLogPath:
+        'D:/NEW_EARTH_OMEGA_OS_PACK/21_PROJECTS_AND_PROGRAMMES/MEETINGS/meeting_index.json',
+    meetingCount: 2,
+    preview: 'alpha meeting preview',
+    exists: true,
+  );
 
   static final MeetingStatusSummarySnapshot _summary =
       MeetingStatusSummarySnapshot(
@@ -235,8 +253,10 @@ class _FakeMeetingFolderService extends MeetingFolderService {
   static final MeetingBundleReviewSnapshot _bundleReview =
       MeetingBundleReviewSnapshot(
         bundlePath: 'D:/meetings/meeting-001/bundles/meeting-001_bundle',
-        summaryPath: 'D:/meetings/meeting-001/bundles/meeting-001_bundle/summary.md',
-        manifestPath: 'D:/meetings/meeting-001/bundles/meeting-001_bundle/manifest.json',
+        summaryPath:
+            'D:/meetings/meeting-001/bundles/meeting-001_bundle/summary.md',
+        manifestPath:
+            'D:/meetings/meeting-001/bundles/meeting-001_bundle/manifest.json',
         fileCount: 4,
         exists: true,
       );
@@ -252,12 +272,13 @@ class _FakeMeetingFolderService extends MeetingFolderService {
       _masterIndex;
 
   @override
-  Future<List<MeetingListRow>> listMeetingRows() async =>
-      [_searchRow, _secondRow];
+  Future<List<MeetingListRow>> listMeetingRows() async => [
+    _searchRow,
+    _secondRow,
+  ];
 
   @override
-  Future<MeetingDashboardSnapshot> loadDashboardSnapshot() async =>
-      _dashboard;
+  Future<MeetingDashboardSnapshot> loadDashboardSnapshot() async => _dashboard;
 
   @override
   Future<MeetingStatusSummarySnapshot> loadStatusSummary() async => _summary;

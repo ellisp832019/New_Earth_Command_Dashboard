@@ -35,10 +35,7 @@ class GaiaCommand {
 }
 
 class GaiaDecision {
-  GaiaDecision({
-    required this.decision,
-    this.reason = '',
-  });
+  GaiaDecision({required this.decision, this.reason = ''});
 
   final String decision;
   final String reason;
@@ -77,8 +74,8 @@ class GaiaConversationResponse {
 
 class GaiaBridge {
   GaiaBridge({Uri? baseUri})
-      : baseUri = baseUri ?? Uri.parse('http://127.0.0.1:8765'),
-        _client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
+    : baseUri = baseUri ?? Uri.parse('http://127.0.0.1:8765'),
+      _client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
 
   final Uri baseUri;
   final HttpClient _client;
@@ -115,11 +112,13 @@ class GaiaBridge {
     final uri = baseUri.replace(path: '/conversation');
     final request = await _client.postUrl(uri);
     request.headers.contentType = ContentType.json;
-    request.write(jsonEncode({
-      'query': query,
-      'transcript': transcript,
-      'context': context ?? {},
-    }));
+    request.write(
+      jsonEncode({
+        'query': query,
+        'transcript': transcript,
+        'context': context ?? {},
+      }),
+    );
 
     final response = await request.close().timeout(const Duration(seconds: 30));
     final body = await response.transform(utf8.decoder).join();
@@ -138,7 +137,9 @@ class GaiaBridge {
 
     final conversation = decoded['conversation'];
     if (conversation is! Map<String, dynamic>) {
-      throw FormatException('GAIA bridge returned invalid conversation payload');
+      throw FormatException(
+        'GAIA bridge returned invalid conversation payload',
+      );
     }
 
     return GaiaConversationResponse.fromJson(

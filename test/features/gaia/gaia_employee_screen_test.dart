@@ -122,9 +122,7 @@ void main() {
       ProviderScope(
         overrides: [
           gaiaEmployeeFeatureEnabledProvider.overrideWithValue(true),
-          gaiaEmployeeHttpClientProvider.overrideWithValue(
-            _offlineClient(),
-          ),
+          gaiaEmployeeHttpClientProvider.overrideWithValue(_offlineClient()),
         ],
         child: const MaterialApp(home: GaiaEmployeeScreen()),
       ),

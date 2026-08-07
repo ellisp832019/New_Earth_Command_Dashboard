@@ -44,12 +44,10 @@ String moduleLaunchTargetToStorage(ModuleLaunchTarget target) {
   };
 }
 
-String moduleLaunchRoute(
-  ModuleManifest module,
-  ModuleLaunchTarget target,
-) {
+String moduleLaunchRoute(ModuleManifest module, ModuleLaunchTarget target) {
   return switch (target) {
-    ModuleLaunchTarget.home => moduleHomeRoute(module) ?? modulePackageRoute(module),
+    ModuleLaunchTarget.home =>
+      moduleHomeRoute(module) ?? modulePackageRoute(module),
     ModuleLaunchTarget.package => modulePackageRoute(module),
   };
 }

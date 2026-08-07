@@ -57,7 +57,10 @@ void main() {
 
       expect(find.text('Alpha Module Settings'), findsOneWidget);
       expect(find.text('Local placeholders and notes'), findsOneWidget);
-      expect(find.text('Settings are local placeholders for now.'), findsOneWidget);
+      expect(
+        find.text('Settings are local placeholders for now.'),
+        findsOneWidget,
+      );
       expect(find.text('Enabled'), findsOneWidget);
       expect(find.text('Launch preference'), findsOneWidget);
 

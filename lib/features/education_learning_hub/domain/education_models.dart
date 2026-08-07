@@ -1155,18 +1155,19 @@ class EducationHubSnapshot {
     final assessmentCompletion = studentAssessments.isEmpty
         ? 0.0
         : completedAssessments / studentAssessments.length;
-    final reflectionEngagement =
-        (reflectionCount / 3).clamp(0.0, 1.0).toDouble();
+    final reflectionEngagement = (reflectionCount / 3)
+        .clamp(0.0, 1.0)
+        .toDouble();
     final mentorReviewCoverage = (reviewCount / 2).clamp(0.0, 1.0).toDouble();
     final badgeCoverage = (certificateCount / 2).clamp(0.0, 1.0).toDouble();
-    final overall = (
-      lessonCompletion * 0.25 +
-      projectCompletion * 0.15 +
-      assessmentCompletion * 0.3 +
-      reflectionEngagement * 0.15 +
-      mentorReviewCoverage * 0.1 +
-      badgeCoverage * 0.05
-    ).clamp(0.0, 1.0);
+    final overall =
+        (lessonCompletion * 0.25 +
+                projectCompletion * 0.15 +
+                assessmentCompletion * 0.3 +
+                reflectionEngagement * 0.15 +
+                mentorReviewCoverage * 0.1 +
+                badgeCoverage * 0.05)
+            .clamp(0.0, 1.0);
     return LearnerProgressScore(
       overall: overall,
       lessonCompletion: lessonCompletion,
@@ -1206,7 +1207,9 @@ class EducationHubSnapshot {
       return 'No progress yet';
     }
     final completedMilestones =
-        score.completedLessons + score.completedProjects + score.completedAssessments;
+        score.completedLessons +
+        score.completedProjects +
+        score.completedAssessments;
     final totalMilestones =
         score.totalLessons + score.totalProjects + score.totalAssessments;
     final label = switch (score.overall) {

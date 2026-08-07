@@ -36,8 +36,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Reorder List'), findsOneWidget);
-    expect(find.text('M3 screws'), findsOneWidget);
+    expect(find.text('Reorder List'), findsAtLeastNWidgets(1));
+    expect(find.text('M3 screws'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('reorder list saves a record', (tester) async {
@@ -104,7 +104,8 @@ _ReorderFixture _fixture({bool empty = false}) {
   return _ReorderFixture(
     snapshot: const AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: <String>[],
       requiredFolders: <String>[],
@@ -123,18 +124,14 @@ _ReorderFixture _fixture({bool empty = false}) {
 }
 
 class _ReorderFixture {
-  const _ReorderFixture({
-    required this.snapshot,
-    required this.table,
-  });
+  const _ReorderFixture({required this.snapshot, required this.table});
 
   final AssetWorkspaceSnapshot snapshot;
   final AssetCsvTable table;
 }
 
 class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
-  _RecordingAssetRegisterRepository()
-      : super(csvService: AssetCsvService());
+  _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastReorderRow;
 

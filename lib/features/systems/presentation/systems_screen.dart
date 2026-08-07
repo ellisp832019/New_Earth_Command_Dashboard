@@ -149,7 +149,9 @@ class SystemsScreen extends ConsumerWidget {
                   ],
                   highlightedTagLabel: _schedulerLabel(snapshot),
                   highlightedTagAccent: schedulerAccent,
-                  highlightedTagIcon: _schedulerIcon(snapshot.schedulerHealthState),
+                  highlightedTagIcon: _schedulerIcon(
+                    snapshot.schedulerHealthState,
+                  ),
                   footerText: _schedulerFooterText(snapshot),
                   footerAccent: schedulerAccent,
                   onTap: () => context.push(RouteNames.backupGuardian),

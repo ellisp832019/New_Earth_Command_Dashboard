@@ -529,7 +529,7 @@ void main() {
       final health = await repository.loadMigrationHealth();
 
       expect(health.usingDatabase, isTrue);
-      expect(health.schemaVersion, 15);
+      expect(health.schemaVersion, 16);
       expect(
         health.tables.any(
           (table) => table.tableName == 'users_devices_control_users',

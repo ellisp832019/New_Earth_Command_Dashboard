@@ -42,10 +42,7 @@ class ModuleDetailScreen extends ConsumerWidget {
           _DetailPanel(
             title: 'Overview',
             subtitle: module.description,
-            icon: moduleIconFor(
-              module.iconKey,
-              category: module.category,
-            ),
+            icon: moduleIconFor(module.iconKey, category: module.category),
             body: module.name,
             chips: [
               module.category.label,
@@ -66,33 +63,25 @@ class ModuleDetailScreen extends ConsumerWidget {
               ),
               FilledButton.tonal(
                 onPressed: () {
-                  context.push(
-                    RouteNames.moduleHubModuleSettings(module.id),
-                  );
+                  context.push(RouteNames.moduleHubModuleSettings(module.id));
                 },
                 child: const Text('Open settings'),
               ),
               FilledButton.tonal(
                 onPressed: () {
-                  context.push(
-                    RouteNames.moduleHubModuleOperations(module.id),
-                  );
+                  context.push(RouteNames.moduleHubModuleOperations(module.id));
                 },
                 child: const Text('Open operations'),
               ),
               FilledButton.tonal(
                 onPressed: () {
-                  context.push(
-                    RouteNames.moduleHubModuleDocking(module.id),
-                  );
+                  context.push(RouteNames.moduleHubModuleDocking(module.id));
                 },
                 child: const Text('Inspect docking'),
               ),
               FilledButton.tonal(
                 onPressed: () {
-                  context.push(
-                    RouteNames.moduleHubModuleGovernance(module.id),
-                  );
+                  context.push(RouteNames.moduleHubModuleGovernance(module.id));
                 },
                 child: const Text('Review governance'),
               ),
@@ -165,15 +154,12 @@ class ModuleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             _DetailPanel(
               title: 'Access control shortcuts',
-              subtitle: 'Jump straight into the local access gate and review paths',
+              subtitle:
+                  'Jump straight into the local access gate and review paths',
               icon: Icons.shield_outlined,
               body:
                   'Open the gate or the module route directly, depending on what you need to inspect.',
-              chips: const [
-                'Access gate',
-                'Local route',
-                'Audit aware',
-              ],
+              chips: const ['Access gate', 'Local route', 'Audit aware'],
               actions: [
                 FilledButton(
                   onPressed: () => context.go(preferredRoute),
@@ -185,7 +171,8 @@ class ModuleDetailScreen extends ConsumerWidget {
                     child: const Text('Open Users'),
                   ),
                   FilledButton.tonal(
-                    onPressed: () => context.push(RouteNames.usersDevicesDevices),
+                    onPressed: () =>
+                        context.push(RouteNames.usersDevicesDevices),
                     child: const Text('Open Devices'),
                   ),
                   FilledButton.tonal(
@@ -199,7 +186,8 @@ class ModuleDetailScreen extends ConsumerWidget {
                     child: const Text('Open Approvals'),
                   ),
                   FilledButton.tonal(
-                    onPressed: () => context.push(RouteNames.usersDevicesAuditLog),
+                    onPressed: () =>
+                        context.push(RouteNames.usersDevicesAuditLog),
                     child: const Text('Open Audit Log'),
                   ),
                 ],
@@ -216,7 +204,8 @@ class ModuleDetailScreen extends ConsumerWidget {
             chips: [
               module.health.state.label,
               module.health.backendStatus,
-              if (module.health.warnings.isNotEmpty) '${module.health.warnings.length} warnings',
+              if (module.health.warnings.isNotEmpty)
+                '${module.health.warnings.length} warnings',
             ],
             actions: const [],
             child: ModuleHealthPanel(module: module),
@@ -265,9 +254,7 @@ class ModuleDetailScreen extends ConsumerWidget {
                 ),
                 _InfoRow(
                   label: 'Tags',
-                  value: module.tags.isEmpty
-                      ? 'None'
-                      : module.tags.join(', '),
+                  value: module.tags.isEmpty ? 'None' : module.tags.join(', '),
                 ),
                 _InfoRow(
                   label: 'Notes',
@@ -298,52 +285,58 @@ class ModuleDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: module.permissions.isEmpty
-                  ? [const Text('No permissions have been defined for this module.')]
+                  ? [
+                      const Text(
+                        'No permissions have been defined for this module.',
+                      ),
+                    ]
                   : module.permissions
-                      .map(
-                        (permission) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.42),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          permission.label,
-                                          style: theme.textTheme.titleSmall,
+                        .map(
+                          (permission) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.42),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            permission.label,
+                                            style: theme.textTheme.titleSmall,
+                                          ),
                                         ),
-                                      ),
-                                      Chip(label: Text(permission.state.label)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _permissionSummary(permission),
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                                  if (permission.notes.isNotEmpty) ...[
+                                        Chip(
+                                          label: Text(permission.state.label),
+                                        ),
+                                      ],
+                                    ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      permission.notes,
-                                      style: theme.textTheme.bodySmall,
+                                      _permissionSummary(permission),
+                                      style: theme.textTheme.bodyMedium,
                                     ),
+                                    if (permission.notes.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        permission.notes,
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )
-                      .toList(),
+                        )
+                        .toList(),
             ),
           ),
           const SizedBox(height: 16),
@@ -444,35 +437,35 @@ String _gatePostureBody(String moduleId) {
 List<String> _gatePostureChips(String moduleId) {
   return switch (moduleId) {
     '01_USERS_AND_DEVICES_CONTROL' => const [
-        'Identity',
-        'Trust',
-        'Approval queue',
-        'Audit log',
-      ],
+      'Identity',
+      'Trust',
+      'Approval queue',
+      'Audit log',
+    ],
     'newearth.finance_treasury' => const [
-        'Finance',
-        'Role-based',
-        'Trusted device',
-        'Audited',
-      ],
+      'Finance',
+      'Role-based',
+      'Trusted device',
+      'Audited',
+    ],
     'repo_research_engine' => const [
-        'Research',
-        'Evidence',
-        'Local trail',
-        'Approval aware',
-      ],
+      'Research',
+      'Evidence',
+      'Local trail',
+      'Approval aware',
+    ],
     'NEW_EARTH_ALEXA_VOICE_GATEWAY_MODULE' => const [
-        'Voice gateway',
-        'Local trust',
-        'Controlled actions',
-        'Audited',
-      ],
+      'Voice gateway',
+      'Local trust',
+      'Controlled actions',
+      'Audited',
+    ],
     'gaia_voice_assistant' => const [
-        'Voice AI',
-        'Conversation history',
-        'Safe actions',
-        'Audit aware',
-      ],
+      'Voice AI',
+      'Conversation history',
+      'Safe actions',
+      'Audit aware',
+    ],
     _ => const ['Local-first', 'Trusted', 'Audited'],
   };
 }
@@ -575,7 +568,9 @@ class _DetailPanel extends StatelessWidget {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: chips.map((chip) => Chip(label: Text(chip))).toList(),
+                  children: chips
+                      .map((chip) => Chip(label: Text(chip)))
+                      .toList(),
                 ),
               ],
               if (actions.isNotEmpty) ...[

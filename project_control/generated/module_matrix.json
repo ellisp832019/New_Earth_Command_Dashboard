@@ -1,0 +1,50 @@
+{
+  "documentation_counts": {
+    "missing": 2,
+    "partial": 31
+  },
+  "maturity_counts": {
+    "beta": 13,
+    "functional": 12,
+    "prototype": 8
+  },
+  "module_ids": [
+    "dashboard",
+    "planner",
+    "projects",
+    "tasks",
+    "journal",
+    "learning",
+    "content",
+    "business",
+    "wellbeing",
+    "inbox",
+    "assets",
+    "treasury",
+    "meeting_system",
+    "voice_intelligence",
+    "omega_knowledge_engine",
+    "omega_engineering_studio",
+    "launchpad",
+    "users_devices_control",
+    "education_learning_hub",
+    "system_backup",
+    "knowledge_library",
+    "funding_grants_command_centre",
+    "repo_intelligence_bridge",
+    "settings",
+    "about_help",
+    "command_deck",
+    "project_intelligence",
+    "systems",
+    "visual_capture",
+    "more",
+    "voice_assistant",
+    "security",
+    "repo_research_engine"
+  ],
+  "scan_id": "scan-2026-08-07T11:18:20.365702Z",
+  "verification_counts": {
+    "passed": 33
+  }
+}

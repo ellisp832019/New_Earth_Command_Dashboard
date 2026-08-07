@@ -12,9 +12,8 @@ class VoiceStartupGateRouteScreen extends ConsumerWidget {
     final gate = ref.watch(voiceStartupGateProvider);
 
     return gate.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => Scaffold(
         body: Center(
           child: Padding(

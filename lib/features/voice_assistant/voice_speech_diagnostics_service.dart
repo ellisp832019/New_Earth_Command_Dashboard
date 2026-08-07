@@ -21,8 +21,8 @@ class VoiceSpeechDiagnosticsService {
   VoiceSpeechDiagnosticsService({
     VoiceStartupGateService? startupGateService,
     DesktopSpeechBridgeService? bridgeService,
-  })  : _startupGateService = startupGateService ?? VoiceStartupGateService(),
-        _bridgeService = bridgeService ?? DesktopSpeechBridgeService();
+  }) : _startupGateService = startupGateService ?? VoiceStartupGateService(),
+       _bridgeService = bridgeService ?? DesktopSpeechBridgeService();
 
   final VoiceStartupGateService _startupGateService;
   final DesktopSpeechBridgeService _bridgeService;
