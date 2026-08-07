@@ -47,7 +47,7 @@
 - Windows release build passed.
 - Project-control `release-readiness` now resolves to `ready_with_conditions` after the GitHub CI evidence closed `R-003`.
 - `project_control scan` refreshes timestamped generated evidence snapshots, so the CI validation workflow inspects those files and only fails on unexpected canonical YAML drift.
-- GitHub Actions later passed on the latest PR head SHA `0e6a39a7e6e6e42f6b4f1f4dd50214d0be4218ce`.
+- GitHub Actions later passed on the latest PR head SHA `a72c76a28b88d1250ea30b1e22811f2f58b2a930`.
 - The remote runs confirmed the same three required checks:
   - `Flutter Quality`
   - `Project Control Validation`

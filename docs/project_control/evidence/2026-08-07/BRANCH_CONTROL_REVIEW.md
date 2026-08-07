@@ -42,7 +42,7 @@
 
 ## GitHub Verification
 
-- PR #7 now has green GitHub Actions checks on the latest head SHA `0e6a39a7e6e6e42f6b4f1f4dd50214d0be4218ce`.
+- PR #7 now has green GitHub Actions checks on the latest head SHA `a72c76a28b88d1250ea30b1e22811f2f58b2a930`.
 - The required checks are proven on GitHub:
   - `Flutter Quality`
   - `Project Control Validation`
