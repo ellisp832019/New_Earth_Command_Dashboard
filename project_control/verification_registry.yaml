@@ -73,5 +73,50 @@
     "build_hashes": ["6EDE098A249BFB179FF3FBEE5CE1885614A7AFD79A4A7BCC71F28C61E1FD0FCA"],
     "date": "2026-08-06",
     "limitations": ["No manual deep workflow coverage"]
+  },
+  {
+    "verification_id": "V-006",
+    "scope": "Voice startup hardening source and project-control verification",
+    "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
+    "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
+    "environment": "local Windows development machine",
+    "commands": ["flutter analyze", "flutter test test/features/voice_intelligence/voice_startup_coordinator_test.dart --reporter expanded", "flutter test test/widget_test.dart test/widget_secondary_flows_test.dart --reporter expanded", "dart run tool/project_control.dart doctor", "dart run tool/project_control.dart scan", "dart run tool/project_control.dart validate", "dart run tool/project_control.dart report", "dart run tool/project_control.dart diff", "dart run tool/project_control.dart release-readiness"],
+    "result": "not_ready",
+    "warnings": ["Release readiness remains not_ready because one or more open P1 risks remain."],
+    "evidence_paths": ["docs/project_control/evidence/2026-08-07/VOICE_STARTUP_FINAL_ACCEPTANCE.md"],
+    "build_artifacts": [],
+    "build_hashes": [],
+    "date": "2026-08-07",
+    "limitations": ["Verification covers source tests and project-control reporting; release-readiness is still not ready"]
+  },
+  {
+    "verification_id": "V-007",
+    "scope": "Voice startup hardening Windows build and smoke test",
+    "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
+    "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
+    "environment": "local Windows development machine",
+    "commands": ["flutter build windows --release", "Get-FileHash build/windows/x64/runner/Release/new_earth_command_dashboard.exe -Algorithm SHA256", "Start-Process build/windows/x64/runner/Release/new_earth_command_dashboard.exe -WindowStyle Hidden", "Stop-Process after 10 seconds"],
+    "result": "passed",
+    "warnings": [],
+    "evidence_paths": ["docs/project_control/evidence/2026-08-07/VOICE_STARTUP_FINAL_ACCEPTANCE.md"],
+    "build_artifacts": ["build/windows/x64/runner/Release/new_earth_command_dashboard.exe"],
+    "build_hashes": ["4BFBEB4FBC3978D03A52A4A9F32823A2BC0AB4F98ED0AE373A7E77CDBC288EFB"],
+    "date": "2026-08-07",
+    "limitations": ["Smoke run was limited to a short hidden launch window"]
+  },
+  {
+    "verification_id": "V-008",
+    "scope": "Voice startup hardening final acceptance",
+    "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
+    "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
+    "environment": "local Windows development machine",
+    "commands": ["flutter analyze", "flutter test test/features/voice_intelligence/voice_startup_coordinator_test.dart --reporter expanded", "flutter test test/widget_test.dart test/widget_secondary_flows_test.dart --reporter expanded", "flutter build windows --release", "Get-FileHash build/windows/x64/runner/Release/new_earth_command_dashboard.exe -Algorithm SHA256", "Start-Process build/windows/x64/runner/Release/new_earth_command_dashboard.exe -WindowStyle Hidden", "Stop-Process after 10 seconds", "dart run tool/project_control.dart doctor", "dart run tool/project_control.dart scan", "dart run tool/project_control.dart validate", "dart run tool/project_control.dart report", "dart run tool/project_control.dart diff", "dart run tool/project_control.dart release-readiness"],
+    "result": "not_ready",
+    "warnings": ["Release readiness remains not_ready because one or more open P1 risks remain."],
+    "evidence_paths": ["docs/project_control/evidence/2026-08-07/VOICE_STARTUP_FINAL_ACCEPTANCE.md"],
+    "build_artifacts": ["build/windows/x64/runner/Release/new_earth_command_dashboard.exe"],
+    "build_hashes": ["4BFBEB4FBC3978D03A52A4A9F32823A2BC0AB4F98ED0AE373A7E77CDBC288EFB"],
+    "date": "2026-08-07",
+    "limitations": ["Acceptance is complete for R-005, but release-readiness remains blocked by the open P1 risk R-003"]
   }
 ]

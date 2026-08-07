@@ -1,6 +1,6 @@
 {
-  "branch": "feature/new-earth-dashboard-platform-control-hardening-2026-08-06",
-  "commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+  "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
+  "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
   "risk_totals": {
     "by_severity": {
       "P0": 1,
@@ -10,16 +10,16 @@
     },
     "by_status": {
       "deferred": 1,
-      "mitigating": 2,
-      "open": 3
+      "mitigating": 1,
+      "open": 2,
+      "resolved": 2
     },
     "total": 6
   },
-  "scan_id": "scan-2026-08-06T13:21:03.835246Z",
+  "scan_id": "scan-2026-08-07T06:45:18.428987Z",
   "warnings": [
     "Working tree is dirty.",
     "No GitHub workflows were detected.",
-    "Open P0 risk remains.",
     "Some modules lack documentation."
   ],
   "working_tree_state": "dirty"
