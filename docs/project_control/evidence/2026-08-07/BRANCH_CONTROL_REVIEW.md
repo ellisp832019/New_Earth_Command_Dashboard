@@ -39,3 +39,12 @@
 
 - No branch protection is currently configured, so these controls are advisory until repository settings are changed.
 - The current GitHub plan/API state has not been pushed to the point of applying protections automatically.
+
+## GitHub Verification
+
+- PR #7 now has green GitHub Actions checks on the latest head SHA `522a8dc802a756d5f2f0a1327e98d81597f8954e`.
+- The required checks are proven on GitHub:
+  - `Flutter Quality`
+  - `Project Control Validation`
+  - `Windows Release Build`
+- The branch is safe to mark ready for review, but it should not be merged until the final human review step is complete.

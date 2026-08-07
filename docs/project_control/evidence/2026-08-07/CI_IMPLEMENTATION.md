@@ -19,7 +19,10 @@
 - No branch protection is configured on `main`.
 - No branch protection is configured on the current integration branch.
 - No rulesets were returned by the GitHub API.
-- Required checks are not yet configured because the workflow check names still need their first successful GitHub runs.
+- The required checks are now proven on GitHub for PR #7:
+  - `Flutter Quality`
+  - `Project Control Validation`
+  - `Windows Release Build`
 
 ## Local Validation Completed Before Committing
 
@@ -42,8 +45,13 @@
 - Analyzer passed.
 - Full test suite passed.
 - Windows release build passed.
-- Project-control `release-readiness` remained `not_ready` because `R-003` is still open.
+- Project-control `release-readiness` now resolves to `ready_with_conditions` after the GitHub CI evidence closed `R-003`.
 - `project_control scan` refreshes timestamped generated evidence snapshots, so the CI validation workflow inspects those files and only fails on unexpected canonical YAML drift.
+- GitHub Actions later passed on the latest PR head SHA `522a8dc802a756d5f2f0a1327e98d81597f8954e`.
+- The remote runs confirmed the same three required checks:
+  - `Flutter Quality`
+  - `Project Control Validation`
+  - `Windows Release Build`
 
 ## Generated-Code Policy
 
@@ -52,4 +60,4 @@
 
 ## Next Step
 
-- Push the CI branch and observe the first real GitHub Actions runs before deciding whether `R-003` can be resolved.
+- Record the successful remote runs in the canonical CI evidence and close `R-003`.

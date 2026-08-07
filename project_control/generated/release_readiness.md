@@ -1,5 +1,5 @@
 # Release Readiness
 
-- Result: not_ready
+- Result: ready_with_conditions
 - Reasons:
-  - One or more open P1 risks remain.
+  - All required gates are satisfied.

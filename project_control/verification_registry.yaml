@@ -118,5 +118,20 @@
     "build_hashes": ["4BFBEB4FBC3978D03A52A4A9F32823A2BC0AB4F98ED0AE373A7E77CDBC288EFB"],
     "date": "2026-08-07",
     "limitations": ["Acceptance is complete for R-005, but release-readiness remains blocked by the open P1 risk R-003"]
+  },
+  {
+    "verification_id": "V-009",
+    "scope": "CI remote verification on latest PR head",
+    "commit": "522a8dc802a756d5f2f0a1327e98d81597f8954e",
+    "branch": "ci/dashboard-github-actions-and-branch-controls-2026-08-07",
+    "environment": "GitHub Actions / PR #7",
+    "commands": ["gh pr view 7 --json headRefOid,url,state,mergeable", "gh pr checks 7"],
+    "result": "passed",
+    "warnings": [],
+    "evidence_paths": ["docs/project_control/evidence/2026-08-07/CI_REMOTE_VERIFICATION.md", "docs/project_control/evidence/2026-08-07/BRANCH_CONTROL_REVIEW.md"],
+    "build_artifacts": [],
+    "build_hashes": [],
+    "date": "2026-08-07",
+    "limitations": ["GitHub verification records the CI checks only; no additional local build was required for the remote proof"]
   }
 ]
