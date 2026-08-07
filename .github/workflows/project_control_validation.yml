@@ -1,0 +1,73 @@
+name: Project Control Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/new-earth-dashboard-platform-control-hardening-2026-08-06
+      - ci/dashboard-github-actions-and-branch-controls-2026-08-07
+
+concurrency:
+  group: project-control-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  project_control_validation:
+    name: Project Control Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.7
+          channel: stable
+          cache: true
+
+      - name: Fetch packages
+        run: flutter pub get
+
+      - name: Run project-control doctor
+        run: dart run tool/project_control.dart doctor
+
+      - name: Run project-control scan
+        run: dart run tool/project_control.dart scan
+
+      - name: Fail on generated drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(git status --short -- project_control/generated docs/project_control/evidence)"
+          if [[ -n "$status" ]]; then
+            printf '%s\n' "$status"
+            echo "Project-control generated state is stale."
+            echo "Run:"
+            echo "dart run tool/project_control.dart scan"
+            echo "and commit the refreshed generated files."
+            exit 1
+          fi
+
+      - name: Run project-control validate
+        run: dart run tool/project_control.dart validate
+
+      - name: Run project-control report
+        run: dart run tool/project_control.dart report
+
+      - name: Run project-control release-readiness
+        shell: bash
+        run: |
+          set +e
+          output="$(dart run tool/project_control.dart release-readiness 2>&1)"
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          if [[ $status -ne 0 && "$output" != *"Release readiness: not_ready"* ]]; then
+            exit "$status"
+          fi
