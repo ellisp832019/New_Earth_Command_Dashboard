@@ -6,7 +6,7 @@ Local-first Flutter app for managing New Earth projects, tasks, daily focus, lea
 
 ## Current Status
 
-V0.1 foundation is live:
+Beta baseline is live:
 
 - Dashboard-first launch
 - Material 3 New Earth theme
