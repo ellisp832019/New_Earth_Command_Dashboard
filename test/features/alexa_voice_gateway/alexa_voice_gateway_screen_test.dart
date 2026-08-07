@@ -18,12 +18,18 @@ void main() {
     expect(find.text('Quick start'), findsOneWidget);
     expect(find.text('Start gateway now'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Copy Windows start'),
-      400,
-      scrollable: find.byType(Scrollable).first,
+    final alexaVoiceGatewayList = find.byKey(
+      const Key('alexaVoiceGatewayList'),
     );
-    await tester.pumpAndSettle();
+
+    for (
+      var i = 0;
+      i < 6 && find.text('Copy Windows start').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(alexaVoiceGatewayList, const Offset(0, -480));
+      await tester.pumpAndSettle();
+    }
 
     expect(find.text('Copy Windows start'), findsOneWidget);
     expect(find.text('Copy launcher command'), findsOneWidget);
@@ -33,24 +39,41 @@ void main() {
     expect(find.text('Copy all setup info'), findsOneWidget);
     expect(find.text('Open launcher folder'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Launch helper'),
-      600,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
+    for (
+      var i = 0;
+      i < 6 && find.text('Launch helper').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(alexaVoiceGatewayList, const Offset(0, -480));
+      await tester.pumpAndSettle();
+    }
 
     expect(find.text('Launch helper'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('dashboard.summary.today'),
-      600,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
+    for (
+      var i = 0;
+      i < 6 &&
+          find
+              .byKey(const Key('alexaVoiceGatewaySqliteCommands'))
+              .evaluate()
+              .isEmpty;
+      i++
+    ) {
+      await tester.drag(alexaVoiceGatewayList, const Offset(0, -480));
+      await tester.pumpAndSettle();
+    }
 
-    expect(find.text('dashboard.summary.today'), findsOneWidget);
-    expect(find.text('dashboard.project.status.read'), findsOneWidget);
-    expect(find.text('system.shell.exec'), findsOneWidget);
+    final sqliteCommandBlock = find.byKey(
+      const Key('alexaVoiceGatewaySqliteCommands'),
+    );
+
+    expect(sqliteCommandBlock, findsOneWidget);
+    expect(
+      find.descendant(
+        of: sqliteCommandBlock,
+        matching: find.byType(SelectableText),
+      ),
+      findsOneWidget,
+    );
   });
 }

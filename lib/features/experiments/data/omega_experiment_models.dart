@@ -203,21 +203,28 @@ class OmegaExperimentConfig {
   }
 
   bool isSafePath(String rawPath) {
-    if (rawPath.trim().isEmpty) {
+    final normalized = _normalizeComparablePath(rawPath);
+    if (normalized.isEmpty) {
       return false;
     }
 
-    final normalized = p.normalize(rawPath);
     return approvedRoots.any((root) {
-      if (root.trim().isEmpty) {
+      final rootNormalized = _normalizeComparablePath(root);
+      if (rootNormalized.isEmpty) {
         return false;
       }
-      final rootNormalized = p.normalize(root);
-      if (normalized.toLowerCase() == rootNormalized.toLowerCase()) {
-        return true;
-      }
-      return p.isWithin(rootNormalized, normalized);
+      return normalized == rootNormalized ||
+          normalized.startsWith('$rootNormalized/');
     });
+  }
+
+  static String _normalizeComparablePath(String value) {
+    final collapsed = value.trim().replaceAll('\\', '/');
+    if (collapsed.isEmpty) {
+      return '';
+    }
+
+    return collapsed.replaceAll(RegExp(r'/+'), '/').toLowerCase();
   }
 }
 

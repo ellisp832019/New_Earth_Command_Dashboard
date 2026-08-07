@@ -2,7 +2,7 @@
   "application_version": "1.0.0+1",
   "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
   "ci_status": "missing",
-  "commit": "72ff6958832d2339da884f496e44d0a37968c84e",
+  "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
   "database_schema_version": "16",
   "documentation_counts": {
     "missing": 2,
@@ -176,6 +176,7 @@
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_DATA_FLOW_AUDIT.md",
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_HARDENING_VERIFICATION.md",
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_PREFLIGHT.md",
+    "docs\\project_control\\evidence\\2026-08-07\\VOICE_STARTUP_FINAL_ACCEPTANCE.md",
     "docs\\roadmap\\README.md",
     "docs\\roadmap\\ai_10_task_roadmap.md",
     "docs\\roadmap\\app_roadmap.md",
@@ -343,9 +344,9 @@
     },
     "by_status": {
       "deferred": 1,
-      "mitigating": 2,
+      "mitigating": 1,
       "open": 2,
-      "resolved": 1
+      "resolved": 2
     },
     "total": 6
   },
@@ -384,8 +385,8 @@
     "/security-lock",
     "/more/repo-research-engine"
   ],
-  "scan_id": "scan-2026-08-06T15:50:42.358219Z",
-  "scan_timestamp": "2026-08-06T15:50:42.360219Z",
+  "scan_id": "scan-2026-08-07T06:45:18.428987Z",
+  "scan_timestamp": "2026-08-07T06:45:18.429987Z",
   "status_definition_version": "1",
   "test_files_found": [
     "test\\core\\modules\\module_event_bus_test.dart",
@@ -536,7 +537,7 @@
   },
   "verification_registry_counts": {
     "failed": 1,
-    "not_ready": 1,
+    "not_ready": 2,
     "passed": 5
   },
   "version_contradictions": [],

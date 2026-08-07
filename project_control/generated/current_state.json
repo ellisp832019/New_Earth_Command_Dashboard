@@ -1,8 +1,8 @@
 {
   "application_version": "1.0.0+1",
-  "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
+  "branch": "ci/dashboard-github-actions-and-branch-controls-2026-08-07",
   "ci_status": "missing",
-  "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a",
+  "commit": "4260272fb556ad2a1df3cf642fc38b185a01f5d9",
   "database_schema_version": "16",
   "documentation_counts": {
     "missing": 2,
@@ -176,6 +176,7 @@
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_DATA_FLOW_AUDIT.md",
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_HARDENING_VERIFICATION.md",
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_PREFLIGHT.md",
+    "docs\\project_control\\evidence\\2026-08-07\\CI_PREFLIGHT.md",
     "docs\\project_control\\evidence\\2026-08-07\\VOICE_STARTUP_FINAL_ACCEPTANCE.md",
     "docs\\roadmap\\README.md",
     "docs\\roadmap\\ai_10_task_roadmap.md",
@@ -385,8 +386,8 @@
     "/security-lock",
     "/more/repo-research-engine"
   ],
-  "scan_id": "scan-2026-08-07T06:45:18.428987Z",
-  "scan_timestamp": "2026-08-07T06:45:18.429987Z",
+  "scan_id": "scan-2026-08-07T07:16:50.133472Z",
+  "scan_timestamp": "2026-08-07T07:16:50.135480Z",
   "status_definition_version": "1",
   "test_files_found": [
     "test\\core\\modules\\module_event_bus_test.dart",

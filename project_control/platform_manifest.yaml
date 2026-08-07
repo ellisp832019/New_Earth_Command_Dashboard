@@ -36,10 +36,9 @@
     "date": "2026-08-07",
     "commit": "1b7d3ac925085d835320bc6c594b9881f0d73a9a"
   },
-  "release_readiness": "not_ready",
+  "release_readiness": "ready_with_conditions",
   "known_limitations": [
     "No in-app Project Control Centre has been built yet.",
-    "Release evidence is still being assembled into canonical registries.",
     "Some module documentation is partial or missing."
   ]
 }

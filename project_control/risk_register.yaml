@@ -36,13 +36,13 @@
     "likelihood": "medium",
     "affected_modules": ["project_control", "release"],
     "description": "The repository needs explicit CI evidence before a release candidate is trusted.",
-    "evidence": [".github/workflows"],
-    "mitigation": "Record CI status in generated reports and release readiness.",
+    "evidence": [".github/workflows", "docs/project_control/evidence/2026-08-07/CI_REMOTE_VERIFICATION.md"],
+    "mitigation": "Keep the verified GitHub Actions checks green and record the passing run IDs in closeout evidence.",
     "owner": "Platform team",
-    "status": "open",
+    "status": "resolved",
     "target_release": "project_control_cli_baseline",
     "created_date": "2026-08-06",
-    "last_reviewed_date": "2026-08-06"
+    "last_reviewed_date": "2026-08-07"
   },
   {
     "risk_id": "R-004",

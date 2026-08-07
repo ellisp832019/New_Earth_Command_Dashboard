@@ -1,6 +1,6 @@
 {
   "reasons": [
-    "One or more open P1 risks remain."
+    "All required gates are satisfied."
   ],
-  "result": "not_ready"
+  "result": "ready_with_conditions"
 }

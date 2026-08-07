@@ -1,8 +1,8 @@
 # Current State
 
-- Scan ID: scan-2026-08-07T06:45:18.428987Z
-- Branch: fix/dashboard-non-blocking-voice-startup-2026-08-06
-- Commit: 1b7d3ac925085d835320bc6c594b9881f0d73a9a
+- Scan ID: scan-2026-08-07T07:16:50.133472Z
+- Branch: ci/dashboard-github-actions-and-branch-controls-2026-08-07
+- Commit: 4260272fb556ad2a1df3cf642fc38b185a01f5d9
 - Working tree: dirty
 - Modules: 33
 - Risks: 6

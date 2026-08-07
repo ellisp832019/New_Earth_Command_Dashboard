@@ -1,0 +1,78 @@
+name: Windows Release Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/new-earth-dashboard-platform-control-hardening-2026-08-06
+      - ci/dashboard-github-actions-and-branch-controls-2026-08-07
+
+concurrency:
+  group: windows-release-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows_release_build:
+    name: Windows Release Build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.7
+          channel: stable
+          cache: true
+
+      - name: Fetch packages
+        run: flutter pub get
+
+      - name: Regenerate generated code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Validate formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Record executable hash
+        shell: pwsh
+        run: |
+          $exe = "build/windows/x64/runner/Release/new_earth_command_dashboard.exe"
+          if (-not (Test-Path $exe)) {
+            throw "Expected executable not found: $exe"
+          }
+
+          $hash = Get-FileHash $exe -Algorithm SHA256
+          New-Item -ItemType Directory -Force -Path "ci-artifacts/windows-release" | Out-Null
+          $content = @(
+            "commit_sha: $env:GITHUB_SHA"
+            "workflow_run_id: $env:GITHUB_RUN_ID"
+            "executable: $exe"
+            "sha256: $($hash.Hash)"
+            "build_timestamp_utc: $(Get-Date -AsUTC -Format o)"
+          )
+          $content | Set-Content -Path "ci-artifacts/windows-release/SHA256.txt" -Encoding utf8
+
+      - name: Upload Windows release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-earth-command-dashboard-windows-release
+          path: |
+            build/windows/x64/runner/Release
+            ci-artifacts/windows-release/SHA256.txt
+          retention-days: 21
