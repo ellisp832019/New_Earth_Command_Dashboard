@@ -122,7 +122,7 @@
   {
     "verification_id": "V-009",
     "scope": "CI remote verification on latest PR head",
-    "commit": "a72c76a28b88d1250ea30b1e22811f2f58b2a930",
+    "commit": "2344b1a25f6fd57d46d5cad09b55b4042e807191",
     "branch": "ci/dashboard-github-actions-and-branch-controls-2026-08-07",
     "environment": "GitHub Actions / PR #7",
     "commands": ["gh pr view 7 --json headRefOid,url,state,mergeable", "gh pr checks 7"],
