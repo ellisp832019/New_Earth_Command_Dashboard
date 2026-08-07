@@ -59,13 +59,14 @@ jobs:
 
           $hash = Get-FileHash $exe -Algorithm SHA256
           New-Item -ItemType Directory -Force -Path "ci-artifacts/windows-release" | Out-Null
-          @"
-commit_sha: $env:GITHUB_SHA
-workflow_run_id: $env:GITHUB_RUN_ID
-executable: $exe
-sha256: $($hash.Hash)
-build_timestamp_utc: $(Get-Date -AsUTC -Format o)
-"@ | Set-Content -Path "ci-artifacts/windows-release/SHA256.txt"
+          $content = @(
+            "commit_sha: $env:GITHUB_SHA"
+            "workflow_run_id: $env:GITHUB_RUN_ID"
+            "executable: $exe"
+            "sha256: $($hash.Hash)"
+            "build_timestamp_utc: $(Get-Date -AsUTC -Format o)"
+          )
+          $content | Set-Content -Path "ci-artifacts/windows-release/SHA256.txt" -Encoding utf8
 
       - name: Upload Windows release artifact
         uses: actions/upload-artifact@v4
